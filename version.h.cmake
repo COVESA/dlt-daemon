@@ -1,0 +1,7 @@
+#ifndef __VERSION_H_
+#define __VERSION_H_
+
+#define PACKAGE_VERSION_STATE "@PRINT_VERSION_STATE@"
+#define PACKAGE_VERSION "@PRINT_VERSION@"
+
+#endif

@@ -1,0 +1,302 @@
+DLT - Automotive Diagnostic Log and Trace
+
+Version: 2.2.0
+
+
+Introduction
+------------
+
+The DLT daemon is the central component in GENIVI, which gathers all logs and traces from the DLT user applications. The logs and traces are stored optionally directly in a file in the ECU. The DLT daemon forwards all logs and traces to a connected DLT client.
+The DLT client can send control messages to the daemon, e.g. to set individual log levels of applications and contexts or get the list of applications and contexts registered in the DLT daemon.
+
+
+License
+-------
+see file: License.txt
+
+Contact
+-------
+Alexander Wenzel
+BMW Group
+Alexander.AW.Wenzel@bmw.de
+
+
+Changes in this release
+-----------------------
+
+2.2.0:
+
+Improvements
+
+    * Moved build process completely to cmake
+    * Added commandline parameter -u to set ring buffer size
+
+Bugfixes
+
+    * Reduced cpu consumption needed by applications using DLT library
+    * Increased default ringbuffer size to 10024 bytes
+    * Changed delay in receiver routine to 100ms 
+
+
+2.1.0:
+
+Improvements
+
+ * DLT Viewer (QT)
+    * New dlt viewer (QT-based) implementated
+    * Moved to seperate project, see extra Release Notes for DLT Viewer (QT)
+
+ * DLT Viewer (WX) - Deprecated
+    * Old dlt viewer (WX) is removed now from package generation
+    * Moved to seperate project
+    * Removed filtering of messages during writing to a file
+
+ * DLT library:
+    * Functions dlt_file_read_raw() and dlt_file_read_header_raw() added
+    * Added support for raw messages in nonverbose mode
+    * Injection tables are now dynamically allocated
+    * Contexts are now dynamically allocated
+    * Added seperate file for platform float types (dlt_float_types.h)
+      and used this types.
+      Attention: This file must be adapted to each target platform.
+    * Removed signal handlers from dlt_user.c; SIGPIPE signal is ignored; atexit() handler still exists
+    * Function dlt_forward_msg() added
+ 
+ * DLT daemon:
+    * Small optimization in get_log_info() for one searched application with one searched context,
+      which is existing in the context table of the dlt daemon
+    * Optional syncing to serial header added
+    * Support for keep-alive messages, realized as seperate thread
+
+ * General:
+    * Combined dlt-test-user-multi and dlt-test-many to dlt-test-stress
+    * Extended dlt-test-client
+    * Added stress test3 to dlt-test-stress
+    * Added help to dlt-test-stress, printed if no test was selected
+    * Added dlt-test-internal
+    * Removed plugin support from dlt_receive and dlt_convert
+    * Extended documentation
+
+Bugfixes:
+    * dlt viewer (wx): Fixed minor bug, it's possible now to compile the dlt viewer (wx) again under mingw under Windows
+    * DLT test programs: Fixed minor bug in dlt-test-user, test3f: Wrong counter was used
+    * Removed DLT_LOG calls in injection functions due to problems (application hangs)
+
+
+2.0.5:
+
+Improvements
+
+ * DLT viewer:
+	* The default log level is now shown, if already known
+	* Renamed Filter->New.. to Filter->Delete all filter
+	* Enhanced performance
+
+ * DLT library:
+	* On crash or termination of application using the DLT library,
+	  the registered context and application IDs are removed properly
+	  (and are deregistered from DLT daemon)
+	* dlt_register_context_ll_ts() and Macro therefore added
+	* dlt_message_payload() has now additional type DLT_OUTPUT_ASCII_LIMITED
+	* dlt_message_header_flags() added
+
+ * DLT daemon:
+	* Support for dlt_register_context_ll_ts() added
+	* Enhanced support for get_log_info (all modes, 1 app all contexts, 1 app 1 context, all apps all contexts)
+	* Added -r option, for automatic sending context information to dlt client; if no client connection is available, 
+      this information is stored in history buffer in dlt daemon
+	* Several internal performance optimizations:
+		* dlt_daemon_context_find(), dlt_daemon_application_find(): Now O(log n) instead O(n)
+		* Several functions optimized
+		* Unnecessary functions removed
+
+ * General:
+	* Moved definition of struct DltUser from dlt_user_private.h to dlt_user.h
+	* dlt.h includes now dlt_common.h	
+	* Extended dlt-test-user and dlt-test-client applications
+
+Bugfixes:
+ * DLT daemon/DLT library: Fixed bug in Filter Delete
+ * DLT daemon: Fixed bug in dlt daemon which leads to a crash, when starting/stoping application, then sending
+     new log level to context of this (now not running) application.
+ * DLT daemon: Fixed bug in unregister application
+ * DLT daemon: Fixed bug in reattach to daemon
+ * DLT library: Fixed bug in send function
+ * DLT viewer: Fixed bug in set default log level
+
+2.0.4:
+
+Attention:
+ * License has changed from ADRLPD to ADRLRM
+
+Improvements
+
+ * DLT viewer:
+	* Support for non-verbose mode (as FIBEX plugin)
+
+ * DLT library:
+	* Support for non-verbose mode (as FIBEX plugin)
+	* dlt_message_print_* functions added
+	* Semaphore calls added to enable multi-threading
+	* Changed injection interface from direct usage to callback
+	* Requested log level and trace status is set immediately 
+          in dlt_set_application_ll_ts_limit()
+	* Implemented receiver thread in DLT library
+          (used for setting of log level/trace status and for injection handling)
+        * Added signal-handler and atexit-handler for cleanup (calls dlt_free())
+
+ * General:
+	* Added implementation of clientlib and testclient for Windows
+ 	* Both adaptors sends now log messages with log level DLT_LOG_INFO
+	* Multi-threading example in src/tests/dlt-test-user-multi added
+
+Bugfixes:
+ * DLT viewer: Right mouse button for loading plugin descriptions (MOST-/Fibex-XML File)
+     is now working (also in Windows)
+ * DLT library: Fixed bug in dlt_print_mixed_string()
+ * DLT library: Fixed bug in dlt_daemon_contexts_get_next_con_id()
+ * DLT daemon: dlt_daemon_process_user_message_unregister_application() also removes now 
+     all corresponding contexts
+ * DLT daemon: Added security check to dlt_daemon_control_get_log_info() in order to avoid crash
+     which occured under special circumstances
+ * DLT daemon: Register app now opens the connection to the DLT library, 
+     unregister app closes the connection (was before in register context)
+ * Added -lrt to package config file
+ * Resolved dependency from dlt_client.h to dlt_common.h -> dlt_common.h is now public
+
+2.0.3:
+
+Improvements
+
+ * DLT viewer:
+	* Reduced load if idle
+	* Modified behaviour of settings in dlt-viewer
+	* Always open tmpfile in dlt-viewer if nothing other is specified
+	* File->Clear added
+ * DLT daemon:
+	* Added several checks within code
+ * DLT library:
+	* Added several checks within code 
+	* Enhanced local print modes:
+	  a environment variable now can be used to control local print mode:
+	  Variable: DLT_LOCAL_PRINT_MODE
+	  Values  : "AUTOMATIC"             (local print only, if dlt-daemon connection is not
+		                             available at startup of program using DLT library)
+		    "FORCE_ON"              (always do local print)
+		    "FORCE_OFF"             (never do local print)
+	* A client library for writing console client applications (Linux) is now available.
+	  dlt-receiver and dlt-test-client uses this new library code
+ * General:
+	* Added seperate file for DltMostMessageHeader type
+	* Added seperate file for DLT protocol values
+	* Relaxed checks for passing trace messages to plugin handler
+	* Tested and improved MOST plugin
+	* Support for float (32 Bit) and double (64 Bit) values
+	* Code fragments for winclientlib and wintestclient added
+
+Bugfixes
+
+ * DLT library: Fixed bug in DLT_IMPORT_CONTEXT
+ * DLT library: Fixed bug in dlt_plugin_print() and dlt_most_payload()
+ * DLT daemon and library: Fixed bug in handling of description strings
+ * DLT viewer: Fixed bug in RMB Click for loading plugin description
+ * General: Fixed parsing and printing of MOST messages
+ * Several small bugs fixed
+
+2.0.2:
+
+Improvements
+ 
+ * DLT viewer:
+	* Showing timestamp
+	* Compiles now with MS Visual C++
+	* Support for loading multiple descriptions 
+	  of plugins is now possible (*)
+	* Plugin description can be loaded individually
+	  by Right-mouse-button (*) 
+ * DLT daemon:
+	* Overflow message is now stored in history buffer,
+	  if necessary 
+ * DLT library:
+	* Ring-buffer for injection messages implemented
+	* History Buffer for Startup + Overflow implemented
+	* Setting of maximum logged log level/trace status for 
+          application triggered by application is now possible
+	* Optional local output of Log message is now possible
+ * General:
+	* Support for ARTIS Box implemented (all, without GUI)
+	* Support for timestamp in standardheader extras added
+	* Support for ECU ID in standardheader extras added;
+	  this value can be overwritten by the DLT daemon
+
+(*) = feature not enabled in binary build
+
+Bugfixes
+
+ * DLT viewer:
+	* Store and load application and context description fixed
+	* Fixed crash on termination of Windows version
+ * DLT console utilities:
+	* Fixed printing of filter ids
+ * General:
+	* Big Endian/Little Endian support tested and fixed
+	* Fixed writing and reading of locally created dlt files
+	* Several smaller bugs fixed
+
+2.0.1:
+
+Improvements
+ 
+ * Full support for serial connection between DLT daemon and DLT Viewer
+
+Bugfixes
+
+ * Several small bugs fixed in DLT Viewer
+
+
+2.0.0:
+
+Improvments
+
+ * Initial Release of new DLT daemon Version 2 including the new DLT Client DLT Viewer
+
+Bug fixes
+
+ * Initial Release
+
+
+Known issues in this release
+----------------------------
+
+ * DLT library: Usage of dlt_user_log_write_float64() and DLT_FLOAT64() leads 
+                to "Illegal instruction (core dumped)" on ARM target.
+ * DLT library: Nested calls to DLT_LOG_ ... are not supported, and will lead to a deadlock.
+
+
+API Documentation:
+------------------
+
+ * GENIVI_UserManual_DLT_Daemon.odt
+   API Documentaion and Programming HowTo
+ * Doxygen documentation, can be created with "make doxygen", will then be located at
+   doc/html/index.htm, or doc/rtf/refman.rtf
+
+Other Documents
+----------------
+
+ * GENIVI_UserManual_DLT_Client.odt
+   User Manual for DLT programs   
+ * GENIVI_Specification_DLT_Daemon.odt
+   Internals of DLT daemon and DLT library 
+
+Notes
+-----
+
+ * Moved to cmake build process
+
+Software/Hardware
+-----------------
+
+ * Developped with:
+ 	* Ubuntu Linux 9.10 32-bit / Intel PC
+

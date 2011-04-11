@@ -1,0 +1,15 @@
+CMakeLists.txt
+(src|include|wxctb|testscripts|doc).*CMakeLists.txt
+(src|include|wxctb|testscripts).*\.(cpp|h|c|cxx)
+testscripts/dltdaemon
+testscripts/dltinfo\.sh
+doc/.*\.(odt|vsd)
+configure
+distfiles
+#automotive-dlt.spec.cheetah
+package/automotive-dlt.spec.in
+cmake_uninstall.cmake.in
+[^/]*\.cmake
+create-svnversion
+.*\.xpm
+LICENSE\.txt
