@@ -1,0 +1,20 @@
+Instructions for installing this software
+---
+
+This software uses cmake as its build tool. To build and install the
+DLT daemon, follow these steps;
+
+1. Create a build directory;
+
+$ mkdir build
+
+2. Move into that directory and call cmake;
+
+$ cd build && cmake ../
+
+3. The run make and make install;
+
+$ make
+# make install
+
+Note you'll have to be root to run make install, or do 'sudo make install'.
