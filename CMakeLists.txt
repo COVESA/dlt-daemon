@@ -231,17 +231,16 @@ CONFIGURE_FILE(
 
 EXPORT_LIBRARY_DEPENDENCIES( "${PROJECT_NAME}LibDeps.cmake" )
 
+
 #######################
 # CPack configuration #
 #######################
-SET(CPACK_COMPONENTS_ALL base devel ${DOC_COMPONENT} )
 
-SET(CPACK_COMPONENT_BASE_DISPLAY_NAME  "Basics" )
-SET(CPACK_COMPONENT_DEVEL_DISPLAY_NAME "Development files" )
-SET(CPACK_COMPONENT_DOC_DISPLAY_NAME   "Documentation" )
+SET(CPACK_GENERATOR "DEB;RPM;TGZ")
 
-SET(CPACK_COMPONENT_BASE_DESCRIPTION 
-"This component provides a standardised log and trace interface, based on the
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Alexander Wenzel") #required
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "automotive-dlt")
+SET(CPACK_PACKAGE_DESCRIPTION "This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT. 
 This component can be used by GENIVI components and other applications as 
 logging facility providing
@@ -250,16 +249,10 @@ logging facility providing
 - the DLT daemon adaptors
 - the DLT client console utilities
 - the DLT test applications ")
-SET(CPACK_COMPONENT_DEVEL_DESCRIPTION
-	"This component provides the development libraries and includes for automotive-dlt.")
-SET(CPACK_COMPONENT_DOC_DESCRIPTION
-	"This component provides the documentation for automotive-dlt.")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+SET(CPACK_PACKAGE_VERSION_MAJOR ${PRINT_MAJOR_VERSION})
+SET(CPACK_PACKAGE_VERSION_MINOR ${PRINT_MINOR_VERSION})
+SET(CPACK_PACKAGE_VERSION_PATCH ${PRINT_PATCH_LEVEL})
 
-SET(CPACK_COMPONENT_DEVEL_DEPENDS base)
-#SET(CPACK_COMPONENT_DOC_DEPENDS base)
-
-SET(CPACK_COMPONENT_BASE_REQUIRED)
-
-
-
-
+INCLUDE(CPack)
