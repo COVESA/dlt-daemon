@@ -3385,7 +3385,11 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     memcpy(&value64f_tmp_int64i,&value64f_tmp,sizeof(float64_t));
 					value64f_tmp_int64i_swaped=DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
 					memcpy(&value64f,&value64f_tmp_int64i_swaped,sizeof(float64_t));
+#ifdef __arm__
+					sprintf(text+strlen(text),"ILLEGAL");
+#else
 					sprintf(text+strlen(text),"%g",value64f);
+#endif
 				}
 				else
 				{
