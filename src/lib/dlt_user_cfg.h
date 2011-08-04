@@ -103,9 +103,6 @@
 /* Length of buffer for constructing text output */
 #define DLT_USER_TEXT_LENGTH         	   10024
 
-/* Stack size of receiver thread */
-#define DLT_USER_RECEIVERTHREAD_STACKSIZE 100000
-
 /* default value for storage to file, not used in daemon connection */
 #define DLT_USER_DEFAULT_ECU_ID "ECU1"
 
