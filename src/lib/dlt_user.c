@@ -104,7 +104,6 @@ static DltUser dlt_user;
 static int dlt_user_initialised = 0;
 
 static char str[DLT_USER_BUFFER_LENGTH];
-static char text[DLT_USER_TEXT_LENGTH];
 
 static sem_t dlt_mutex;
 static pthread_t dlt_receiverthread_handle;
@@ -2415,6 +2414,7 @@ int dlt_user_print_msg(DltMessage *msg, DltContextData *log)
 {
     uint8_t *databuffer_tmp;
     int32_t datasize_tmp;
+    static char text[DLT_USER_TEXT_LENGTH];
 
     if ((msg==0) || (log==0))
     {
