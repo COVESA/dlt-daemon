@@ -166,7 +166,8 @@ int dlt_daemon_init(DltDaemon *daemon,int verbose)
     dlt_set_id(daemon->ecuid,"");
 
     /* initialize ring buffer for client connection */
-    if (dlt_ringbuffer_init(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_SIZE)==-1)
+    
+    if (dlt_ringbuffer_init(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_SIZE,DLT_DAEMON_RINGBUFFER_INCREASE_SIZE,DLT_DAEMON_RINGBUFFER_MAXIMUM_SIZE)==-1)
     {
     	return -1;
     }
