@@ -131,7 +131,7 @@ static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
     return ret;
 }
 
-int dlt_daemon_init(DltDaemon *daemon,int verbose)
+int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -153,9 +153,21 @@ int dlt_daemon_init(DltDaemon *daemon,int verbose)
 
     daemon->runtime_context_cfg_loaded = 0;
 
+    /* prepare filenames for configuration */
+    if(runtime_directory)
+    	strcpy(daemon->runtime_application_cfg,runtime_directory);
+    else
+    	strcpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
+    strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG);
+    if(runtime_directory)
+    	strcpy(daemon->runtime_context_cfg,runtime_directory);
+    else
+    	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
+    strcat(daemon->runtime_context_cfg,DLT_RUNTIME_CONTEXT_CFG);
+
     /* Check for runtime cfg, if it is loadable, load it! */
-    if ((dlt_daemon_applications_load(daemon,DLT_RUNTIME_APPLICATION_CFG, verbose)==0) &&
-            (dlt_daemon_contexts_load(daemon,DLT_RUNTIME_CONTEXT_CFG, verbose)==0))
+    if ((dlt_daemon_applications_load(daemon,daemon->runtime_application_cfg, verbose)==0) &&
+            (dlt_daemon_contexts_load(daemon,daemon->runtime_context_cfg, verbose)==0))
     {
         daemon->runtime_context_cfg_loaded = 1;
     }
@@ -906,16 +918,16 @@ int dlt_daemon_control_process_control(int sock, DltDaemon *daemon, DltMessage *
         }
         case DLT_SERVICE_ID_STORE_CONFIG:
         {
-            if (dlt_daemon_applications_save(daemon, DLT_RUNTIME_APPLICATION_CFG, verbose)==0)
+            if (dlt_daemon_applications_save(daemon, daemon->runtime_application_cfg, verbose)==0)
             {
-				if (dlt_daemon_contexts_save(daemon, DLT_RUNTIME_CONTEXT_CFG, verbose)==0)
+				if (dlt_daemon_contexts_save(daemon, daemon->runtime_context_cfg, verbose)==0)
 				{
 					dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_OK,  verbose);
 				}
 				else
 				{
 					/* Delete saved files */
-					dlt_daemon_control_reset_to_factory_default(daemon, DLT_RUNTIME_APPLICATION_CFG, DLT_RUNTIME_CONTEXT_CFG, verbose);
+					dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, verbose);
 					dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
 				}
             }
@@ -927,7 +939,7 @@ int dlt_daemon_control_process_control(int sock, DltDaemon *daemon, DltMessage *
         }
         case DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT:
         {
-            dlt_daemon_control_reset_to_factory_default(daemon, DLT_RUNTIME_APPLICATION_CFG, DLT_RUNTIME_CONTEXT_CFG, verbose);
+            dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, verbose);
             dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_OK,  verbose);
             break;
         }

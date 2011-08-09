@@ -104,6 +104,7 @@ typedef struct
     char *bvalue;   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
     char *yvalue;   /**< (String: Devicename) Additional support for serial device */
     char *uvalue;   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
+    char *ivalue;   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
 } DltDaemonFlags;
 
 /**
