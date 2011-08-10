@@ -154,6 +154,7 @@ void usage()
     printf("  -o filename   Store DLT messages to local log file\n");
     printf("  -f filename   Enable filtering of messages\n");
     printf("  -u size       Size of the ringbuffer in bytes (Default: 10024)\n");
+    printf("  -i directory  Directory where to store the persistant configuration (Default: /tmp)\n");
 } /* usage() */
 
 /**
@@ -174,7 +175,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hvasxdlrmnf:o:e:b:y:u:")) != -1)
+    while ((c = getopt (argc, argv, "hvasxdlrmnf:o:e:b:y:u:i:")) != -1)
     {
         switch (c)
         {
@@ -251,6 +252,11 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         case 'u':
         {
             daemon_local->flags.uvalue = optarg;
+            break;
+        }
+        case 'i':
+        {
+            daemon_local->flags.ivalue = optarg;
             break;
         }
         case 'h':
@@ -488,7 +494,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Daemon data */
-    if (dlt_daemon_init(daemon,daemon_local->flags.vflag)==-1)
+    if (dlt_daemon_init(daemon,daemon_local->flags.ivalue,daemon_local->flags.vflag)==-1)
     {
     	dlt_log(LOG_ERR,"Could not initialize daemon data\n");
 		return -1;

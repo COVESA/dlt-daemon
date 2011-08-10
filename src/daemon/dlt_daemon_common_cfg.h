@@ -84,10 +84,12 @@
 /* Changable */
 /*************/
 
+/* Default Path for runtime configuration */
+#define DLT_RUNTIME_DEFAULT_DIRECTORY "/tmp"
 /* Path and filename for runtime configuration (applications) */
-#define DLT_RUNTIME_APPLICATION_CFG "/tmp/dlt-runtime-application.cfg"
+#define DLT_RUNTIME_APPLICATION_CFG "/dlt-runtime-application.cfg"
 /* Path and filename for runtime configuration (contexts) */
-#define DLT_RUNTIME_CONTEXT_CFG     "/tmp/dlt-runtime-context.cfg"
+#define DLT_RUNTIME_CONTEXT_CFG     "/dlt-runtime-context.cfg"
 
 /* Size of text buffer */
 #define DLT_DAEMON_TEXTBUFSIZE          255   

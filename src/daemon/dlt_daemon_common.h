@@ -153,16 +153,19 @@ typedef struct
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
 	DltRingBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
+	char runtime_application_cfg[256]; /**< Path and filename of persistent application configuration */
+	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
 } DltDaemon;
 
 /**
  * Initialise the dlt daemon structure
  * This function must be called before using further dlt daemon structure
  * @param daemon pointer to dlt daemon structure
+ * @param runtime_directory Directory of persistent configuration
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_init(DltDaemon *daemon,int verbose);
+int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory,int verbose);
 /**
  * De-Initialise the dlt daemon structure
  * @param daemon pointer to dlt daemon structure
