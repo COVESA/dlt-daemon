@@ -284,7 +284,7 @@ int dlt_init_common(void)
     dlt_user.dlt_ll_ts_max_num_entries = 0;
     dlt_user.dlt_ll_ts_num_entries = 0;
 
-    if (dlt_ringbuffer_init(&(dlt_user.rbuf), DLT_USER_RINGBUFFER_SIZE)==-1)
+    if (dlt_ringbuffer_init(&(dlt_user.rbuf), DLT_USER_RINGBUFFER_SIZE,DLT_USER_RINGBUFFER_INCREASE_SIZE,DLT_USER_RINGBUFFER_MAXIMUM_SIZE)==-1)
     {
 		dlt_user_initialised = 0;
         return -1;
@@ -2149,6 +2149,10 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
 			{
 				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
 			}
+			else
+			{
+				ret = DLT_RETURN_OK;
+			}
 
             DLT_SEM_FREE();
         }
@@ -2158,6 +2162,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
         case DLT_RETURN_PIPE_FULL:
         {
             /* data could not be written */
+            //printf("dlt_user overflow\n");
             dlt_user.overflow = 1;
             return -1;
         }

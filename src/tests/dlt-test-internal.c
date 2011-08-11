@@ -206,7 +206,7 @@ void internal1(void)
     for (size=8;size<=30;size++)
     {
 
-        dlt_ringbuffer_init(&mybuf, size);
+        dlt_ringbuffer_init(&mybuf, size,size,10*size);
 
         memset(result,0,1024);
 
