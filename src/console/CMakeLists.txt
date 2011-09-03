@@ -37,11 +37,17 @@
 
 set(dlt_convert_SRCS dlt-convert)
 add_executable(dlt-convert ${dlt_convert_SRCS} ${dlt_most_SRCS})
+IF(GPROF_DLT_CONSOLE)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_CONSOLE)
 target_link_libraries(dlt-convert dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-convert PROPERTIES LINKER_LANGUAGE C)
 
 set(dlt_receive_SRCS dlt-receive)
 add_executable(dlt-receive ${dlt_receive_SRCS} ${dlt_most_SRCS})
+IF(GPROF_DLT_CONSOLE)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_CONSOLE)
 target_link_libraries(dlt-receive dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-receive PROPERTIES LINKER_LANGUAGE C)
 

@@ -37,21 +37,33 @@
 
 set(dlt_test_user_SRCS dlt-test-user)
 add_executable(dlt-test-user ${dlt_test_user_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-user dlt)
 set_target_properties(dlt-test-user PROPERTIES LINKER_LANGUAGE C)
 
 set(dlt_test_client_SRCS dlt-test-client)
 add_executable(dlt-test-client ${dlt_test_client_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-client dlt)
 set_target_properties(dlt-test-client PROPERTIES LINKER_LANGUAGE C)
 
 set(dlt_test_stress_SRCS dlt-test-stress)
 add_executable(dlt-test-stress ${dlt_test_stress_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-stress dlt)
 set_target_properties(dlt-test-stress PROPERTIES LINKER_LANGUAGE C)
 
 set(dlt_test_internal_SRCS dlt-test-internal)
 add_executable(dlt-test-internal ${dlt_test_internal_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-internal dlt)
 set_target_properties(dlt-test-internal PROPERTIES LINKER_LANGUAGE C)
 
