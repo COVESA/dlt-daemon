@@ -39,6 +39,10 @@ set(dlt_LIB_SRCS dlt_user dlt_client ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c
 
 add_library(dlt ${dlt_LIB_SRCS})
 
+IF(GPROF_DLT_LIB)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_LIB)
+
 target_link_libraries(dlt rt ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(dlt PROPERTIES VERSION 2.2.0 SOVERSION 2)

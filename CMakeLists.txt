@@ -42,7 +42,7 @@ SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 PROJECT( automotive-dlt )
 
-# set version parameters
+# Set version parameters
 SET( ${PROJECT_NAME}_MAJOR_VERSION 2 )
 SET( ${PROJECT_NAME}_MINOR_VERSION 2 )
 SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
@@ -65,15 +65,28 @@ MESSAGE("REVISION ${PRINT_VERSION_REVISION}")
 
 ##################### RPM CONFIG ########################
 
-set( GENIVI_RPM_RELEASE "1${SVN_REVISION}")
+SET( GENIVI_RPM_RELEASE "1${SVN_REVISION}")
 SET( LICENSE "LGPL v2.1 with special exception" )
-set(SPEC_DIR "package")
+SET( SPEC_DIR "package")
 
 #########################################################
-set(GENIVI_BUILDSYSTEM_AVAILABLE $ENV{GENIVI_BUILDSYSTEM})
+SET(GENIVI_BUILDSYSTEM_AVAILABLE $ENV{GENIVI_BUILDSYSTEM})
 IF(GENIVI_BUILDSYSTEM_AVAILABLE)
-include($ENV{GENIVI_BUILDSYSTEM}/cmake_extensions/GeniviCMakeExtensions.cmake)
+INCLUDE($ENV{GENIVI_BUILDSYSTEM}/cmake_extensions/GeniviCMakeExtensions.cmake)
 ENDIF(GENIVI_BUILDSYSTEM_AVAILABLE)
+
+
+###################### GPROF Settings ###################
+# Adds compile flag for gprof to target
+# Run the binary
+# Output: gmon.out in build directory
+# Run: gprof <path/to/binary> > profile.output
+SET( GPROF_DLT_DAEMON OFF )
+SET( GPROF_DLT_LIB OFF )
+SET( GPROF_DLT_EXAMPLES OFF) 
+SET( GPROF_DLT_TESTS OFF) 
+SET( GPROF_DLT_CONSOLE OFF)
+SET( GPROF_DLT_ADAPTOR OFF)
 
 SET( prefix ${CMAKE_INSTALL_PREFIX})
 SET( libdir "\${exec_prefix}/lib" )

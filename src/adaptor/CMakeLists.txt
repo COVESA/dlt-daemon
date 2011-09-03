@@ -37,11 +37,17 @@
 
 set(dlt_adaptor_stdin_SRCS dlt-adaptor-stdin)
 add_executable(dlt-adaptor-stdin ${dlt_adaptor_stdin_SRCS})
+IF(GPROF_DLT_ADAPTOR)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_ADAPTOR)
 target_link_libraries(dlt-adaptor-stdin dlt)
 set_target_properties(dlt-adaptor-stdin PROPERTIES LINKER_LANGUAGE C)
 
 set(dlt_adaptor_udp_SRCS dlt-adaptor-udp)
 add_executable(dlt-adaptor-udp ${dlt_adaptor_udp_SRCS})
+IF(GPROF_DLT_ADAPTOR)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_ADAPTOR)
 target_link_libraries(dlt-adaptor-udp dlt)
 set_target_properties(dlt-adaptor-udp PROPERTIES LINKER_LANGUAGE C)
 
