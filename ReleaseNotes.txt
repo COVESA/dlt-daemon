@@ -23,6 +23,14 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
+2.3.0
+
+Improvements
+   
+    * [GSW-62] DLT Library version check
+    * [GSW-28] Directory where persistent data is stored is not configurable 
+    * [GSW-46] DLT client library sets a huge stack size for internal thread 
+    * [GSW-59] Statically allocated large array 
 
 2.2.0:
 

@@ -98,9 +98,6 @@
 #include <sys/time.h>
 #include <linux/stat.h>
 
-#include "version.h"
-#include "svnversion.h"
-
 #include "dlt_types.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"

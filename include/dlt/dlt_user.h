@@ -382,7 +382,7 @@ int dlt_free();
  * @param description long name of the application
  * @return negative value if there was an error
  */
-int dlt_register_app(const char *appid, const char * description);
+int dlt_register_app(const char *appid, const char * description, const char * user_major_version, const char * user_minor_version);
 
 /**
  * Unregister an application in the daemon.
@@ -438,6 +438,14 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
  *
  */
 int dlt_verbose_mode(void);
+
+/**
+ * Check the version of dlt library with library version used of the application.
+ * @param Major version number of application - see dlt_version.h
+ * @param Minor version number of application - see dlt_version.h
+ * @return negative value if there is a mismatch
+ */
+int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version);
 
 /**
  * Switch to non-verbose mode

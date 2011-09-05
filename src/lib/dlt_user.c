@@ -124,6 +124,24 @@ static int dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static int dlt_user_log_send_overflow(void);
 
+int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version){
+
+	char str[200];
+	char lib_major_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
+	char lib_minor_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
+
+	dlt_get_major_version( lib_major_version);
+	dlt_get_minor_version( lib_minor_version);
+
+	if( (strcmp(lib_major_version,user_major_version)!=0) || (strcmp(lib_minor_version,user_minor_version)!=0))
+	{
+		sprintf(str,"DLT Library version check failed! Installed DLT library version is %s.%s - Application using DLT library version %s.%s\n",lib_major_version,lib_minor_version,user_major_version,user_minor_version);
+		dlt_log(LOG_WARNING, str);
+		return -1;
+	}
+	return 0;
+}
+
 int dlt_init(void)
 {
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
@@ -372,7 +390,7 @@ int dlt_free(void)
 
 
 
-int dlt_register_app(const char *appid, const char * description)
+int dlt_register_app(const char *appid, const char * description, const char * user_major_version,const char * user_minor_version)
 {
     int ret;
 
@@ -382,6 +400,8 @@ int dlt_register_app(const char *appid, const char * description)
         {
             return -1;
         }
+
+        dlt_user_check_library_version(user_major_version, user_minor_version);
     }
 
     if ((appid==0) || (appid[0]=='\0'))
