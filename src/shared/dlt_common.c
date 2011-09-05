@@ -86,8 +86,7 @@
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
 
-#include "version.h"
-#include "svnversion.h"
+#include "dlt_version.h"
 
 #if defined (__WIN32__) || defined (_MSC_VER)
 #include <winsock2.h> /* for socket(), connect(), send(), and recv() */
@@ -3081,8 +3080,19 @@ speed_t dlt_convert_serial_speed(int baudrate)
 void dlt_get_version(char *buf)
 {
     sprintf(buf,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n",
-            PACKAGE_VERSION, PACKAGE_VERSION_STATE, SVN_VERSION, __DATE__ , __TIME__ );
+            PACKAGE_VERSION, PACKAGE_VERSION_STATE, PACKAGE_REVISION, __DATE__ , __TIME__ );
 }
+
+void dlt_get_major_version(char *buf)
+{
+	sprintf(buf,"%s",PACKAGE_MAJOR_VERSION);
+}
+
+void dlt_get_minor_version(char *buf)
+{
+    sprintf(buf,"%s",PACKAGE_MINOR_VERSION);
+}
+
 
 uint32_t dlt_uptime(void)
 {

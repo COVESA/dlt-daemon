@@ -35,41 +35,40 @@
  * @licence end@
  */
 
+/*******************************************************************************
+ **                                                                            **
+ **  SRC-MODULE: dlt_user_macros.h                                             **
+ **                                                                            **
+ **  TARGET    : linux                                                         **
+ **                                                                            **
+ **  PROJECT   : DLT                                                           **
+ **                                                                            **
+ **  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
+ **              Markus Klein                                                  **
+ **                                                                            **
+ **  PURPOSE   :                                                               **
+ **                                                                            **
+ **  REMARKS   :                                                               **
+ **                                                                            **
+ **  PLATFORM DEPENDANT [yes/no]: yes                                          **
+ **                                                                            **
+ **  TO BE CHANGED BY USER [yes/no]: no                                        **
+ **                                                                            **
+ *******************************************************************************/
 
 /*******************************************************************************
-**                                                                            **
-**  SRC-MODULE: dlt_user_macros.h                                             **
-**                                                                            **
-**  TARGET    : linux                                                         **
-**                                                                            **
-**  PROJECT   : DLT                                                           **
-**                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**              Markus Klein                                                  **
-**                                                                            **
-**  PURPOSE   :                                                               **
-**                                                                            **
-**  REMARKS   :                                                               **
-**                                                                            **
-**  PLATFORM DEPENDANT [yes/no]: yes                                          **
-**                                                                            **
-**  TO BE CHANGED BY USER [yes/no]: no                                        **
-**                                                                            **
-*******************************************************************************/
+ **                      Author Identity                                       **
+ ********************************************************************************
+ **                                                                            **
+ ** Initials     Name                       Company                            **
+ ** --------     -------------------------  ---------------------------------- **
+ **  aw          Alexander Wenzel           BMW                                **
+ **  mk          Markus Klein               Fraunhofer ESK                     **
+ *******************************************************************************/
 
 /*******************************************************************************
-**                      Author Identity                                       **
-********************************************************************************
-**                                                                            **
-** Initials     Name                       Company                            **
-** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
-*******************************************************************************/
-
-/*******************************************************************************
-**                      Revision Control History                              **
-*******************************************************************************/
+ **                      Revision Control History                              **
+ *******************************************************************************/
 
 /*
  * $LastChangedRevision: 1515 $
@@ -82,15 +81,17 @@
 #ifndef DLT_USER_MACROS_H
 #define DLT_USER_MACORS_H
 
+#include "dlt_version.h"
+
 /**
-  \defgroup userapi DLT User API
-  \addtogroup userapi
-  \{
-*/
+ \defgroup userapi DLT User API
+ \addtogroup userapi
+ \{
+ */
 
 /**************************************************************************************************
-* The folowing macros define a macro interface for DLT
-**************************************************************************************************/
+ * The folowing macros define a macro interface for DLT
+ **************************************************************************************************/
 
 /**
  * Create an object for a new context.
@@ -114,7 +115,8 @@ extern DltContext CONTEXT;
  * @param DESCRIPTION ASCII string containing description
  */
 #define DLT_REGISTER_APP(APPID,DESCRIPTION) \
-    dlt_register_app( APPID, DESCRIPTION);
+		dlt_register_app( APPID, DESCRIPTION, PACKAGE_MAJOR_VERSION, PACKAGE_MINOR_VERSION );
+
 
 /**
  * Unregister application.
@@ -137,9 +139,9 @@ extern DltContext CONTEXT;
  * @param CONTEXTID context id with maximal four characters
  * @param DESCRIPTION ASCII string containing description
  * @param LOGLEVEL log level to be pre-set for this context
-          (DLT_LOG_DEFAULT is not allowed here)
+ (DLT_LOG_DEFAULT is not allowed here)
  * @param TRACESTATUS trace status to be pre-set for this context
-		  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+ (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  */
 #define DLT_REGISTER_CONTEXT_LL_TS(CONTEXT,CONTEXTID,DESCRIPTION,LOGLEVEL,TRACESTATUS) \
 	dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);
@@ -167,8 +169,8 @@ extern DltContext CONTEXT;
  * @param ARGS variable list of arguments
  */
 #ifdef _MSC_VER
-  /* DLT_LOG is not supported by MS Visual C++ */
-  /* use function interface instead            */
+/* DLT_LOG is not supported by MS Visual C++ */
+/* use function interface instead            */
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
 	{ \
@@ -187,12 +189,12 @@ extern DltContext CONTEXT;
  * @param LOGLEVEL the log level of the log message
  * @param MSGID the message id of log message
  * @param ARGS variable list of arguments: 
-          calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
-          DLT_INT(), DLT_UINT(), DLT_RAW()
+ calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
+ DLT_INT(), DLT_UINT(), DLT_RAW()
  */
 #ifdef _MSC_VER
-  /* DLT_LOG_ID is not supported by MS Visual C++ */
-  /* use function interface instead               */
+/* DLT_LOG_ID is not supported by MS Visual C++ */
+/* use function interface instead               */
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
 	{ \
@@ -311,7 +313,6 @@ extern DltContext CONTEXT;
         dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
     }
 
-
 /**
  * Send log message with string parameter and integer parameter.
  * @param CONTEXT object containing information about one special logging context
@@ -408,7 +409,7 @@ extern DltContext CONTEXT;
 	dlt_disable_local_print();
 
 /**
-  \}
-*/
+ \}
+ */
 
 #endif /* DLT_USER_MACROS_H */

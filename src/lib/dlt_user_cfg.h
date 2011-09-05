@@ -104,6 +104,9 @@
 /* Maximu length of a filename string */
 #define DLT_USER_MAX_FILENAME_LENGTH         255
 
+/* Maximum length of a single version number */
+#define DLT_USER_MAX_LIB_VERSION_LENGTH		3
+
 /* Length of buffer for constructing text output */
 #define DLT_USER_TEXT_LENGTH         	   10024
 

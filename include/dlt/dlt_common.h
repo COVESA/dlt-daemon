@@ -1044,6 +1044,18 @@ extern "C"
      */
     void dlt_get_version(char *buf);
 
+    /**
+    * Print dlt major version to buffer
+    * @param buf Pointer to buffer
+    */
+    void dlt_get_major_version(char *buf);
+
+    /**
+    * Print dlt minor version to buffer
+    * @param buf Pointer to buffer
+    */
+    void dlt_get_minor_version(char *buf);
+
 #endif
 
     /* Function prototypes which should be used only internally */
