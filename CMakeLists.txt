@@ -85,6 +85,11 @@ SET( GPROF_DLT_TESTS OFF)
 SET( GPROF_DLT_CONSOLE OFF)
 SET( GPROF_DLT_ADAPTOR OFF)
 
+###################### systemd Settings #################
+SET( DLT_SYSLOG_APPID "SYS" )
+SET( DLT_SYSLOG_CTID "LOG" )
+SET( DLT_SYSLOG_PORT 4712 )
+
 SET( prefix ${CMAKE_INSTALL_PREFIX})
 SET( libdir "\${exec_prefix}/lib" )
 SET( includedir "\${exec_prefix}/include" )
@@ -173,6 +178,8 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h @
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h.cmake ${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doxygen.cfg @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.pc.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.pc @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt.service @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service @ONLY)
 #CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/package/automotive-dlt.spec.cmake ${CMAKE_SOURCE_DIR}/package/automotive-dlt.spec ESCAPE_QUOTES)
 
 OPTION(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
@@ -243,13 +250,9 @@ CONFIGURE_FILE(
 EXPORT_LIBRARY_DEPENDENCIES( "${PROJECT_NAME}LibDeps.cmake" )
 
 
-#######################
-# CPack configuration #
-#######################
-
+################ CPack configuration #################
 SET(CPACK_GENERATOR "DEB;RPM;TGZ")
-
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Alexander Wenzel") #required
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Alexander Wenzel")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "automotive-dlt")
 SET(CPACK_PACKAGE_DESCRIPTION "This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT. 
@@ -261,7 +264,7 @@ logging facility providing
 - the DLT client console utilities
 - the DLT test applications ")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
-SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${PRINT_MAJOR_VERSION})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRINT_MINOR_VERSION})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRINT_PATCH_LEVEL})
