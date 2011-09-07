@@ -1,0 +1,24 @@
+Source: dlt-daemon
+Section: autmotive
+Priority: extra
+Maintainer: Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
+Uploaders: jeremiah.foster@pelagicore.com
+Build-Depends: debhelper (>= 7.0.50~), cmake
+Standards-Version: 3.9.1
+Homepage: https://collab.genivi.org/wiki/display/geniviproj/Automotive+DLT+%28Diagnostic+Log+and+Trace%29
+Vcs-Git: https://git.genivi.org/srv/git/dlt-daemon
+Vcs-Browser: https://git.genivi.org/git/gitweb.cgi?p=DLT-daemon;a=summary
+
+Package: dlt-daemon
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: The daemon part of Diagnostic Log and Trace
+ Diagnostic Log and Trace is the standard diagnostic log and 
+ trace mechanism used within GENIVI. DLT is based on the 
+ AUTOSAR 4.0 DLT standard
+ .
+ DLT Daemon is the central software component, which receives all log 
+ and trace messages, controls the log levels and forwards the log 
+ and trace messages to the DLT Client
+
+ 
