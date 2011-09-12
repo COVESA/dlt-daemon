@@ -97,10 +97,6 @@ extern "C" {
 
 #define DLT_DAEMON_RINGBUFFER_SIZE 100000 /**< Ring buffer size for storing log messages while no client is connected */
 
-#define DLT_DAEMON_RINGBUFFER_INCREASE_SIZE  DLT_DAEMON_RINGBUFFER_SIZE
-
-#define DLT_DAEMON_RINGBUFFER_MAXIMUM_SIZE 100*DLT_DAEMON_RINGBUFFER_INCREASE_SIZE    
-
 #define DLT_DAEMON_STORE_TO_BUFFER -2   /**< Constant value to identify the command "store to buffer" */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */

@@ -2231,7 +2231,7 @@ int dlt_check_storageheader(DltStorageHeader *storageheader)
              (storageheader->pattern[3] == 1));
 }
 
-int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size, uint32_t increasesize, uint32_t maxsize)
+int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size)
 {
 
     if (dltbuf==0)
@@ -2244,17 +2244,13 @@ int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size, uint32_t increases
         return -1;
     }
 
-	dltbuf->minimum_size = size;
-    dltbuf->buffer=(char*)malloc(dltbuf->minimum_size);
-    
+    dltbuf->buffer=(char*)malloc(size);
     if (dltbuf->buffer==0)
     {
         return -1;
     }
 
-    dltbuf->size= dltbuf->minimum_size;
-    dltbuf->increasing_size = increasesize;
-    dltbuf->maximum_size = maxsize;
+    dltbuf->size=size;
 
     dltbuf->pos_write=0;
     dltbuf->pos_read=0;
@@ -2291,7 +2287,7 @@ int dlt_ringbuffer_free(DltRingBuffer *dltbuf)
 
 int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size)
 {
-	uint32_t sui, part1, part2;	 
+    uint32_t sui, part1, part2;
 
     if (dltbuf==0)
     {
@@ -2310,12 +2306,12 @@ int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size)
 
     sui = sizeof(uint32_t);
 
-	dlt_ringbuffer_checkandfreespace(dltbuf, (size+sui));
-    
     if ((size+sui)>dltbuf->size)
     {
         return -1;
     }
+
+    dlt_ringbuffer_checkandfreespace(dltbuf, (size+sui));
 
     if (dltbuf->pos_write >= dltbuf->size)
     {
@@ -2323,8 +2319,16 @@ int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size)
     }
 
     /* Not enough space for one uint available before end of linear buffer */
-	dlt_ringbuffer_putMessageSize(dltbuf, &size,sui); 
-   
+    /* Start at begin of linear buffer */
+    if ((dltbuf->size - dltbuf->pos_write) < sui)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Write length of following data to buffer */
+    memcpy(&(dltbuf->buffer[dltbuf->pos_write]), &size, sui);
+    dltbuf->pos_write+=sui;
+
     if (dltbuf->pos_write >= dltbuf->size)
     {
         dltbuf->pos_write = 0;
@@ -2354,59 +2358,9 @@ int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size)
     return 0;
 }
 
-// This function is for writting messages size into buffer
-void dlt_ringbuffer_putMessageSize(DltRingBuffer *dltbuf,uint32_t * data_size, uint32_t unit_size)
-{
-	unsigned char firstByte;
-	unsigned char secondByte;
-	unsigned char thirdByte;
-	unsigned char fourthByte;	
-	
-	if ((dltbuf->size - dltbuf->pos_write) < unit_size)
-    {
-		firstByte = (*data_size)>>0;
-		secondByte = (*data_size)>>8;
-		thirdByte = (*data_size)>>16;
-		fourthByte = (*data_size)>>24;
-		
-		switch(dltbuf->size - dltbuf->pos_write)
-		{
-			case 1:
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write]), &firstByte, 1);
-				dltbuf->pos_write = 0;
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&secondByte,1);
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&thirdByte,1);
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&fourthByte,1);
-				break;			
-			case 2:
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]), &firstByte, 1);			
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write]),&secondByte,1);
-				dltbuf->pos_write = 0;
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&thirdByte,1);
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&fourthByte,1);			
-				break;			
-			case 3:
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]), &firstByte, 1);			
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&secondByte,1);			
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write]),&thirdByte,1);
-				dltbuf->pos_write = 0;
-				memcpy(&(dltbuf->buffer[dltbuf->pos_write++]),&fourthByte,1);			
-				break;
-		}	
-      
-    }
-    else
-	{
-		/* Write length of following data to buffer */
-		memcpy(&(dltbuf->buffer[dltbuf->pos_write]), data_size, unit_size);
-		dltbuf->pos_write +=unit_size;		
-	}	
-}
-
 
 int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void *data2, uint32_t size2, void *data3, uint32_t size3)
 {
-   
     uint32_t sui, part1, part2;
     uint32_t total_size;
 
@@ -2424,21 +2378,28 @@ int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void
 
     total_size = size1+size2+size3;
 
-	dlt_ringbuffer_checkandfreespace(dltbuf, (total_size+sui));
-    
     if ((total_size+sui)>dltbuf->size)
     {
         return -1;
-    }   
+    }
+
+    dlt_ringbuffer_checkandfreespace(dltbuf, (total_size+sui));
 
     if (dltbuf->pos_write >= dltbuf->size)
     {
         dltbuf->pos_write = 0;
     }
 
-    //Write size of data
     /* Not enough space for one uint available before end of linear buffer */
-    dlt_ringbuffer_putMessageSize(dltbuf, &total_size,sui); 
+    /* Start at begin of linear buffer */
+    if ((dltbuf->size - dltbuf->pos_write) < sui)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Write length of following data to buffer */
+    memcpy(&(dltbuf->buffer[dltbuf->pos_write]), &total_size, sui);
+    dltbuf->pos_write+=sui;
 
     if (dltbuf->pos_write >= dltbuf->size)
     {
@@ -2549,8 +2510,15 @@ int dlt_ringbuffer_get(DltRingBuffer *dltbuf, void *data, size_t *size)
         dltbuf->pos_read = 0;
     }
 
-  // get size of data 
-	tmpsize = dlt_ringbuffer_getMessageSize(dltbuf, sui);		    
+    if ((dltbuf->size - dltbuf->pos_read) < sui)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    /* printf("Reading at offset: %d\n", dltbuf->pos_read); */
+
+    memcpy(&tmpsize,&(dltbuf->buffer[dltbuf->pos_read]), sui);
+    dltbuf->pos_read += sui;
 
     if (dltbuf->pos_read >= dltbuf->size)
     {
@@ -2590,66 +2558,6 @@ int dlt_ringbuffer_get(DltRingBuffer *dltbuf, void *data, size_t *size)
     return 0;
 }
 
-int dlt_ringbuffer_getMessageSize(DltRingBuffer *dltbuf, uint32_t unit_size)
-{
-	uint32_t temp;
-	uint32_t retVal;
-	unsigned char firstByte = 0;
-	unsigned char secondByte = 0;
-	unsigned char thirdByte = 0;
-	unsigned char fourthByte = 0;	
-	
-	if ((dltbuf->size - dltbuf->pos_read) < unit_size)
-    {
-		switch(dltbuf->size - dltbuf->pos_read)
-		{
-			case 1:
-				memcpy(&firstByte,&(dltbuf->buffer[dltbuf->pos_read]), 1);
-				dltbuf->pos_read = 0;
-				memcpy(&secondByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);
-				memcpy(&thirdByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);
-				memcpy(&fourthByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);			
-				break;
-			case 2:
-				memcpy(&firstByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);				
-				memcpy(&secondByte,&(dltbuf->buffer[dltbuf->pos_read]), 1);
-				dltbuf->pos_read = 0;
-				memcpy(&thirdByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);
-				memcpy(&fourthByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);			
-				break;
-			case 3:
-				memcpy(&firstByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);				
-				memcpy(&secondByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);
-				memcpy(&thirdByte,&(dltbuf->buffer[dltbuf->pos_read]), 1);
-				dltbuf->pos_read = 0;
-				memcpy(&fourthByte,&(dltbuf->buffer[dltbuf->pos_read++]), 1);			
-				break;
-		}		
-		
-		retVal = firstByte;
-		
-		temp = secondByte;
-		temp = temp<<8;
-		retVal |= temp;
-		
-		temp = thirdByte;
-		temp = temp<<16;
-		retVal |= temp;
-		
-		temp = fourthByte;
-		temp = temp<<24;
-		retVal |= temp;
-	}
-    else
-    {
-		/* printf("Reading at offset: %d\n", dltbuf->pos_read); */
-		memcpy(&retVal,&(dltbuf->buffer[dltbuf->pos_read]), unit_size);
-		dltbuf->pos_read += unit_size;
-	}
-	
-	return retVal;	
-}
-
 int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf)
 {
     uint32_t tmpsize=0;
@@ -2678,9 +2586,15 @@ int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf)
     {
         dltbuf->pos_read = 0;
     }
-    
-	tmpsize = dlt_ringbuffer_getMessageSize(dltbuf, sui);
-	
+
+    if ((dltbuf->size - dltbuf->pos_read) < sui)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    memcpy(&tmpsize,&(dltbuf->buffer[dltbuf->pos_read]), sui);
+    dltbuf->pos_read += sui;
+
     if (dltbuf->pos_read >= dltbuf->size)
     {
         dltbuf->pos_read = 0;
@@ -2707,7 +2621,6 @@ int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf)
 
     return 0;
 }
-
 
 int dlt_ringbuffer_freespacewrite(DltRingBuffer *dltbuf, uint32_t *freespace)
 {
@@ -2747,9 +2660,7 @@ int dlt_ringbuffer_freespacewrite(DltRingBuffer *dltbuf, uint32_t *freespace)
 int dlt_ringbuffer_checkandfreespace(DltRingBuffer *dltbuf, uint32_t reqspace)
 {
     uint32_t space_left;
-    uint32_t newSize;
-    uint32_t sizeOfNonReadData; 
-    
+
     if (dltbuf==0)
     {
         return -1;
@@ -2757,75 +2668,30 @@ int dlt_ringbuffer_checkandfreespace(DltRingBuffer *dltbuf, uint32_t reqspace)
 
     if (dlt_ringbuffer_freespacewrite(dltbuf,&space_left) == -1)
     {
-       return -1;
+        return -1;
     }
 
     /* printf("Now reading at: %d, space_left = %d, req = %d, r=%d, w=%d, count=%d \n",
               dltbuf->pos_read,space_left, reqspace, dltbuf->pos_read, dltbuf->pos_write, dltbuf->count); */
 
-	if(space_left<reqspace)
-	{
-		if(dltbuf->size < dltbuf->maximum_size)
-		{
-			char * extendedBuffer;
-			
-			newSize = dltbuf->increasing_size + dltbuf->size;
-			if(newSize > dltbuf->maximum_size)
-			{
-				newSize = dltbuf->maximum_size;
-			}
-			
-			extendedBuffer = (char *) malloc(newSize);
-			
-		
-			if(dltbuf->pos_write > dltbuf->pos_read)
-			{
-				//printf("Buffer read < write \n");
-				sizeOfNonReadData = dltbuf->pos_write - dltbuf->pos_read;			
-				memcpy(extendedBuffer,&(dltbuf->buffer[dltbuf->pos_read]),sizeOfNonReadData);
-				free(dltbuf->buffer);
-				dltbuf->buffer = extendedBuffer;
-				dltbuf->pos_read = dltbuf->buffer[0];
-				dltbuf->pos_write = sizeOfNonReadData;
-				dltbuf->size = newSize;
-			}
-			else if(dltbuf->pos_write <= dltbuf->pos_read && dltbuf->count >0)
-			{
-				
-				//printf("Buffer read = write \n");
-				sizeOfNonReadData = (dltbuf->size - dltbuf->pos_read) + (dltbuf->pos_write - dltbuf->buffer[0]);		
-				memcpy(extendedBuffer,&(dltbuf->buffer[dltbuf->pos_read]),dltbuf->size - dltbuf->pos_read);
-				memcpy(&(extendedBuffer[dltbuf->size - dltbuf->pos_read]),&(dltbuf->buffer[0]),dltbuf->pos_write - dltbuf->buffer[0]);		
-				free(dltbuf->buffer);
-				dltbuf->buffer = extendedBuffer;
-				dltbuf->pos_read = dltbuf->buffer[0];
-				dltbuf->pos_write = sizeOfNonReadData;
-				dltbuf->size = newSize;
-			}						
-			//printf("Buffer size is increased to %d!\n",newSize);
-		}
-		else
-		{
-			//printf("Maximum buffer size reached!\n");
-			while (space_left<reqspace)
-			{
-				/* Overwrite, correct read position */
-				/* Read and skip one element */
-				dlt_ringbuffer_get_skip(dltbuf);
-				
-				/* Space until pos_read */
-				if (dlt_ringbuffer_freespacewrite(dltbuf,&space_left) == -1)
-				{
-					return -1;
-				}
-				
-				/* printf("Overwrite: Now reading at: %d, space_left = %d, req = %d, r=%d, w=%d, count=%d \n",
-						  dltbuf->pos_read,space_left, reqspace, dltbuf->pos_read, dltbuf->pos_write, dltbuf->count); */
-			} 
-		}					
-	}
-	
-	return 0; 
+    while (space_left<reqspace)
+    {
+        /* Overwrite, correct read position */
+
+        /* Read and skip one element */
+        dlt_ringbuffer_get_skip(dltbuf);
+
+        /* Space until pos_read */
+        if (dlt_ringbuffer_freespacewrite(dltbuf,&space_left) == -1)
+	    {
+		    return -1;
+	    }
+
+        /* printf("Overwrite: Now reading at: %d, space_left = %d, req = %d, r=%d, w=%d, count=%d \n",
+                  dltbuf->pos_read,space_left, reqspace, dltbuf->pos_read, dltbuf->pos_write, dltbuf->count); */
+    }
+
+    return 0;
 }
 
 #if !defined (__WIN32__)

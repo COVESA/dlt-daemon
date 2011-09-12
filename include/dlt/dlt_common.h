@@ -555,10 +555,6 @@ typedef struct
     uint32_t    pos_write;  /**< current writing position in bytes*/
     uint32_t    pos_read;   /**< current reading position in bytes*/
     uint32_t    count;      /**< nr. of entries */
-    uint32_t	minimum_size;	/**< minimum value for the buffer  */
-    uint32_t	increasing_size;	/**< increasing value for the buffer	*/
-    uint32_t	maximum_size;	/**< maximum value for the buffer*/
-    
 } DltRingBuffer;
 
 #ifdef __cplusplus
@@ -942,7 +938,7 @@ extern "C"
      * @param size Maximum size of buffer in bytes
      * @return negative value if there was an error
      */
-    int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size, uint32_t increase_size, uint32_t max_size);
+    int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size);
 
     /**
      * Release and free memory used by ringbuffer
@@ -973,21 +969,6 @@ extern "C"
      */
     int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void *data2, uint32_t size2, void *data3, uint32_t size3);
 
-	 /**
-     * This method writes the size of message
-     * @param dltbuf Pointer to ringbuffer structure
-     * @param data_size Pointer to size of data to be written
-     * @param unit_size Size of uint32_t   
-     */
-	void dlt_ringbuffer_putMessageSize(DltRingBuffer *dltbuf,uint32_t * data_size, uint32_t unit_size);
-	
-	 /**
-     * This method reads the size of a message 
-     * @param dltbuf Pointer to ringbuffer structure
-     * @param unit_size Size of uint32_t 
-     * @return size of the message  
-     */
-	int dlt_ringbuffer_getMessageSize(DltRingBuffer *dltbuf, uint32_t unit_size);
     /**
      * Read one entry from ringbuffer
      * @param dltbuf Pointer to ringbuffer structure
