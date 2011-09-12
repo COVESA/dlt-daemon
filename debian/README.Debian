@@ -1,0 +1,21 @@
+dlt-daemon for Debian
+---------------------
+This document describes how you build the DLT-viewer and DLT-daemon
+software from GENIVI. This document applies to the Cassini version
+of DLT.
+
+The sources for DLT-daemon and DLT-viewer are held in the git repos
+at GENIVI which require a log in. Check out the repos this way;
+
+$ git clone https://git.genivi.org/srv/git/DLT-daemon
+$ git clone https://git.genivi.org/srv/git/DLT-viewer
+
+DLT uses cmake as part of its build system which means you'll need
+cmake installed on your build machine in order to build using cmake.
+
+$ mkdir build && cd build
+$ cmake ../
+$ make
+$ make install
+
+ -- jeremiah <jeremiah.foster@pelagicore.com>  Tue, 16 Aug 2011 02:31:49 -0900
