@@ -154,12 +154,12 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->runtime_context_cfg_loaded = 0;
 
     /* prepare filenames for configuration */
-    if(runtime_directory)
+    if(runtime_directory[0])
     	strcpy(daemon->runtime_application_cfg,runtime_directory);
     else
     	strcpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG);
-    if(runtime_directory)
+    if(runtime_directory[0])
     	strcpy(daemon->runtime_context_cfg,runtime_directory);
     else
     	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);

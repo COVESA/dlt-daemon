@@ -98,13 +98,13 @@ typedef struct
     int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
-    char *ovalue;   /**< (String: Filename) Store DLT messages to local log file */
-    char *fvalue;   /**< (String: Filename) Enable filtering of messages */
-    char *evalue;   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
-    char *bvalue;   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
-    char *yvalue;   /**< (String: Devicename) Additional support for serial device */
-    char *uvalue;   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
-    char *ivalue;   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
+    char ovalue[256];   /**< (String: Filename) Store DLT messages to local log file */
+    char fvalue[256];   /**< (String: Filename) Enable filtering of messages */
+    char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
+    char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
+    char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
+    char uvalue[256];   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
+    char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
 } DltDaemonFlags;
 
 /**
