@@ -152,6 +152,7 @@ void usage()
     printf("  -f filename   Enable filtering of messages\n");
     printf("  -u size       Size of the ringbuffer in bytes (Default: 10024)\n");
     printf("  -i directory  Directory where to store the persistant configuration (Default: /tmp)\n");
+    printf("  -c filename   DLT daemon configuration file (Default: /etc/dlt.conf)\n");
 } /* usage() */
 
 /**
@@ -172,7 +173,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hvasxdlrmnf:o:e:b:y:u:i:")) != -1)
+    while ((c = getopt (argc, argv, "hvasxdlrmnf:o:e:b:y:u:i:c:")) != -1)
     {
         switch (c)
         {
@@ -256,6 +257,11 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
             strncpy(daemon_local->flags.ivalue,optarg,sizeof(daemon_local->flags.ivalue));
             break;
         }
+        case 'c':
+        {
+            strncpy(daemon_local->flags.cvalue,optarg,sizeof(daemon_local->flags.cvalue));
+            break;
+        }
         case 'h':
         {
             usage();
@@ -263,7 +269,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'f' || optopt == 'o' || optopt == 'e' || optopt == 'b' || optopt == 'y' || optopt == 'u')
+            if (optopt == 'f' || optopt == 'o' || optopt == 'e' || optopt == 'b' || optopt == 'y' || optopt == 'u' || optopt == 'c')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -300,9 +306,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	char line[1024];
 	char token[1024];
 	char value[1024];
-    char * pch;
-		
-	pFile = fopen ("/home/alex/dlt.conf","r");
+    char *pch;
+    const char *filename;
+
+
+	/* open configuration file */
+	if(daemon_local->flags.cvalue[0])
+		filename = daemon_local->flags.cvalue;
+	else
+		filename = "/etc/dlt.conf";
+    printf("Load configuration from file: %s\n",filename);
+	pFile = fopen (filename,"r");
+
 	if (pFile!=NULL)
 	{
 		while(1)
@@ -333,7 +348,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 					pch = strtok (NULL, " =\r\n");
 				  }
 				  
-				  if(token[0])
+				  if(token[0] && value[0])
 				  {
 						/* parse arguments here */
 						printf("%s = %s\n",token,value);						
@@ -414,7 +429,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	}
 	else
 	{
-		printf("Configuration file cannot be opened\n");
+		fprintf(stderr, "Cannot open configuration file: %s\n",filename);
 	}	
 
 	return 0;
