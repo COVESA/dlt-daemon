@@ -19,7 +19,7 @@ DESC=dlt-daemon             # Introduce a short description here
 NAME=dlt-daemon             # Introduce the short server's name here
 DAEMON=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon # Introduce the server's location here
 DAEMON_ARGS="-d"             # Arguments to run the daemon with
-PIDFILE=/var/run/$NAME.pid
+PIDFILE=/tmp/dltd.lock       # Path is configured with DLT configuration of DLT_USER_DIR/DLT_DAEMON_LOCK_FILE
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -64,7 +64,8 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	# default: --retry=TERM/30/KILL/5
+	start-stop-daemon --stop --quiet --retry=TERM/1/KILL/1 --pidfile $PIDFILE --name $NAME
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -73,7 +74,8 @@ do_stop()
 	# that waits for the process to drop all resources that could be
 	# needed by services started subsequently.  A last resort is to
 	# sleep for some time.
-	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	# default: --retry=0/30/KILL/5
+	start-stop-daemon --stop --quiet --oknodo --retry=0/1/KILL/1 --exec $DAEMON
 	[ "$?" = 2 ] && return 2
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
@@ -123,15 +125,13 @@ case "$1" in
 			cat /var/log/syslog | grep -a DLT | tail
 		fi
 		
-       status_of_proc "$DAEMON" "$NAME" || exit $?
-       
-        pidofdlt=`pidof $DESC`
+		pidofdlt=`pidof $DESC`
 		if [ $pidofdlt ]
 		then
 			log_daemon_msg "$NAME has the PID:$pidofdlt"
 		fi
-
 		
+        status_of_proc "$DAEMON" "$NAME" || exit $?
        ;;
   #reload|force-reload)
 	#
@@ -170,3 +170,5 @@ case "$1" in
 	exit 3
 	;;
 esac
+
+:
