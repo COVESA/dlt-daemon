@@ -61,8 +61,8 @@ IF(NOT DEFINED PRINT_REVISION)
 	OUTPUT_STRIP_TRAILING_WHITESPACE)
 ENDIF(NOT DEFINED PRINT_REVISION)
 
-##################### RPM CONFIG ########################
-SET( GENIVI_RPM_RELEASE "1${IDLT_VERSION}")
+##################### RPM SPEC CONFIG ########################
+SET( GENIVI_RPM_RELEASE "1${PRINT_REVISION}")
 SET( LICENSE "LGPL v2.1 with special exception" )
 SET( SPEC_DIR "package")
 
@@ -180,7 +180,9 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doxygen
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.pc.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.pc @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt.service @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service @ONLY)
-#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/package/automotive-dlt.spec.cmake ${CMAKE_SOURCE_DIR}/package/automotive-dlt.spec ESCAPE_QUOTES)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.spec.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.spec ESCAPE_QUOTES)
 
 OPTION(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION(ENABLE_BUILD_DOC "Set to ON to build Documentation" OFF)
@@ -228,15 +230,6 @@ INSTALL(FILES automotive-dlt.pc
 INSTALL(FILES LICENSE.txt
 	DESTINATION doc/dlt2 
 	COMPONENT base)
-
-message(STATUS "python ${CMAKE_CURRENT_SOURCE_DIR}/transform_spec_file.py ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec.cheetah ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec BUILD_DOC=${ENABLE_BUILD_DOC}")
-
-add_custom_command(OUTPUT "${CMAKE_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec"
-  COMMAND "python" "${CMAKE_CURRENT_SOURCE_DIR}/transform_spec_file.py" "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec.cheetah" "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec" "BUILD_DOC=${ENABLE_BUILD_DOC}"
-  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}.spec.cheetah")
-
-add_custom_target(specfile 
-  DEPENDS "${CMAKE_PROJECT_NAME}.spec")
 
 CONFIGURE_FILE(
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"

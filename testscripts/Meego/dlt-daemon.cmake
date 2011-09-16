@@ -11,7 +11,7 @@
 
 
 processname=dlt-daemon
-processpath=/usr/bin
+processpath=@CMAKE_INSTALL_PREFIX@/bin
 servicename=dlt-daemon
 
 
@@ -19,7 +19,7 @@ servicename=dlt-daemon
 
 start() {
     echo -n $"Starting $processname daemon: "
-    /usr/bin/dlt-daemon -d
+    @CMAKE_INSTALL_PREFIX@/bin/dlt-daemon -d
 }
 
 stop() {
@@ -54,6 +54,25 @@ case "$1" in
         ;;
     status)
         status $processname
+        pidofdlt=`pidof $processname`
+        if [ $pidofdlt ]
+		 then
+		   echo "DLT Deamon is running with PID:$pidofdlt"
+		 else
+		  echo "DLT Daemon is NOT running"
+		fi
+
+		if [ -f /var/log/messages ] 
+		 then
+		echo "------- messages  ----------------"
+		cat /var/log/messages | grep -a DLT | tail
+		fi
+
+		if [ -f /var/log/syslog ] 
+		 then
+		 echo "------- SYSLOG -------------------"
+		 cat /var/log/syslog | grep -a DLT | tail
+		fi
     RETVAL=$?
         ;;
     *)

@@ -1,8 +1,8 @@
-Name: automotive-dlt
+Name: @PROJECT_NAME@
 Summary: %{name} - Diagnostic Log and Trace
-Version: 2.2.0
-Release: 1
-License: LGPLv2.1 with special exception
+Version: @PRINT_MAJOR_VERSION@.@PRINT_MINOR_VERSION@.@PRINT_PATCH_LEVEL@
+Release: @GENIVI_RPM_RELEASE@
+License: @LICENSE@
 Group: System Environment/Base
 Vendor: BMW Group AG
 Source: %{name}-%{version}.tar.gz
@@ -40,28 +40,23 @@ This component provides the development libraries and includes for %{name}.
 echo "building package automotive-dlt"
 
 %build
-#if $BUILD_DOC == "ON"
-%configure --enable-build-doc
-#else
 %configure
-#end if
 make
 
 %install
-rm -rf \$RPM_BUILD_ROOT
-make install DESTDIR=\$RPM_BUILD_ROOT
-mkdir -p \$RPM_BUILD_ROOT/etc/init.d
-/usr/bin/install -c -m 755 testscripts/dltdaemon \$RPM_BUILD_ROOT/etc/init.d
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/etc/init.d
+/usr/bin/install -c -m 755 testscripts/Ubuntu/dlt-daemon $RPM_BUILD_ROOT/etc/init.d
 
 %clean
-rm -rf \$RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 
 %files
-/etc/init.d/dltdaemon
+/etc/init.d/dlt-daemon
 %{_libdir}/libdlt.so.2
 %{_libdir}/libdlt.so.2.2.0
 %{_libdir}/libdlt.so
-%attr(0755,root,root) %{_bindir}/dltinfo.sh
 %{_bindir}/dlt-convert
 %{_bindir}/dlt-receive
 %{_bindir}/dlt-adaptor-stdin
@@ -73,20 +68,11 @@ rm -rf \$RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/dlt-daemon
 %{_bindir}/dlt-example-user
 %{_bindir}/dlt-example-user-func
-%{_bindir}/dltdaemon
+
 
 
 %files doc
 %{_usr}/doc/dlt2/LICENSE.txt
-#if $BUILD_DOC == "ON"
-/usr/local/doc/%{name}/GENIVI_UserManual_DLT_Daemon.odt
-/usr/local/doc/%{name}/GENIVI_UserManual_DLT_Daemon.pdf
-/usr/local/doc/%{name}/GENIVI_Specification_DLT_Daemon.odt
-/usr/local/doc/%{name}/GENIVI_Specification_DLT_Daemon.pdf
-/usr/local/doc/%{name}/GENIVI_UserManual_DLT_Client.odt
-/usr/local/doc/%{name}/GENIVI_UserManual_DLT_Client.pdf
-/usr/local/doc/%{name}/GENIVI_Specification_DLT_Daemon.vsd
-#end if
 
 
 %files devel
