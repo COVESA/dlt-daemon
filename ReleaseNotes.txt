@@ -30,6 +30,11 @@ Improvements
     * [GSW-62] DLT Library version check
     * [GSW-28] Directory where persistent data is stored is not configurable  
     * [GSW-59] Statically allocated large array 
+    * Added init script for Ubuntu
+    * Optional adding of gprof compile flags
+
+Bugfixes
+    * sprintf with float64 fails on ARM platform; disabled this function on QRM platform.
 
 2.2.0:
 
