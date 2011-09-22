@@ -197,12 +197,18 @@ int dlt_init(void)
         return -1;
     }
 
-    /* Initialize thread */
+    /* Set default thread stack size */
     if (pthread_attr_init(&dlt_receiverthread_attr)<0)
     {
-        dlt_log(LOG_WARNING, "Initialization of thread failed!\n");
-        return -1;
-    }   
+        dlt_log(LOG_WARNING, "Initialization of default thread stack size failed!\n");
+    }
+    else
+    {
+        if (pthread_attr_setstacksize(&dlt_receiverthread_attr,DLT_USER_RECEIVERTHREAD_STACKSIZE)<0)
+        {
+            dlt_log(LOG_WARNING, "Setting of default thread stack size failed!\n");
+        }
+    }
 
     /* Start receiver thread */
     if (pthread_create(&(dlt_receiverthread_handle),
