@@ -64,7 +64,6 @@ ENDIF(NOT DEFINED PRINT_REVISION)
 ##################### RPM SPEC CONFIG ########################
 SET( GENIVI_RPM_RELEASE "1${PRINT_REVISION}")
 SET( LICENSE "LGPL v2.1 with special exception" )
-SET( SPEC_DIR "package")
 
 #########################################################
 SET(GENIVI_BUILDSYSTEM_AVAILABLE $ENV{GENIVI_BUILDSYSTEM})
@@ -178,11 +177,11 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h @
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h.cmake ${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doxygen.cfg @ONLY)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.pc.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.pc @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt.service @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.spec.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.spec ESCAPE_QUOTES)
+#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt.service @ONLY)
+#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service @ONLY)
+#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon @ONLY)
+#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
+
 
 OPTION(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
 OPTION(ENABLE_BUILD_DOC "Set to ON to build Documentation" OFF)
@@ -241,25 +240,3 @@ CONFIGURE_FILE(
 #  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 EXPORT_LIBRARY_DEPENDENCIES( "${PROJECT_NAME}LibDeps.cmake" )
-
-
-################ CPack configuration #################
-SET(CPACK_GENERATOR "DEB;RPM;TGZ")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Alexander Wenzel")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "automotive-dlt")
-SET(CPACK_PACKAGE_DESCRIPTION "This component provides a standardised log and trace interface, based on the
-standardised protocol specified in the AUTOSAR standard 4.0 DLT. 
-This component can be used by GENIVI components and other applications as 
-logging facility providing
-- the DLT shared library
-- the DLT daemon, including startup scripts
-- the DLT daemon adaptors
-- the DLT client console utilities
-- the DLT test applications ")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
-SET(CPACK_PACKAGE_VERSION_MAJOR ${PRINT_MAJOR_VERSION})
-SET(CPACK_PACKAGE_VERSION_MINOR ${PRINT_MINOR_VERSION})
-SET(CPACK_PACKAGE_VERSION_PATCH ${PRINT_PATCH_LEVEL})
-
-INCLUDE(CPack)

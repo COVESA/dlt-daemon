@@ -34,37 +34,3 @@
  #
  # @licence end@
 ########
-if(UNIX)
-  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-	if(EXISTS "/etc/issue")
-      FILE(READ "/etc/issue" LINUX_ISSUE)
-	  # Fedora case
-      if(LINUX_ISSUE MATCHES "Fedora")
-        set(DISTRIBUTION "Fedora")      
-      endif(LINUX_ISSUE MATCHES "Fedora")
-      # Ubuntu case
-      if(LINUX_ISSUE MATCHES "Ubuntu")
-        set(DISTRIBUTION "Ubuntu")   
-      endif(LINUX_ISSUE MATCHES "Ubuntu")
-      # Debian case
-      if(LINUX_ISSUE MATCHES "Debian")
-        set(DISTRIBUTION "Debian")       
-      endif(LINUX_ISSUE MATCHES "Debian")      
-      # Open SuSE case
-      if(LINUX_ISSUE MATCHES "SUSE") 
-        set(DISTRIBUTION "SUSE")       
-      endif(LINUX_ISSUE MATCHES "SUSE")
-      if(LINUX_ISSUE MATCHES "Meego") 
-        set(DISTRIBUTION "Meego")       
-      endif(LINUX_ISSUE MATCHES "Meego")
-      
-      install(PROGRAMS ${DISTRIBUTION}/dlt-daemon
-        DESTINATION /etc/init.d/
-	COMPONENT base)
-      
-    endif(EXISTS "/etc/issue")      
-  endif(CMAKE_SYSTEM_NAME MATCHES "Linux")
-endif(UNIX)
-
-
-
