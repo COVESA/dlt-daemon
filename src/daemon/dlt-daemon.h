@@ -130,6 +130,7 @@ typedef struct
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
     size_t ringbufferSize;    /**< Size of the ringbuffer */
+    DltShm dlt_shm;
 } DltDaemonLocal;
 
 typedef struct

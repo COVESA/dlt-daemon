@@ -35,7 +35,7 @@
  # @licence end@
 ########
 
-set(dlt_daemon_SRCS dlt-daemon dlt_daemon_common ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c)
+set(dlt_daemon_SRCS dlt-daemon dlt_daemon_common ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
 add_executable(dlt-daemon ${dlt_daemon_SRCS})
 IF(GPROF_DLT_DAEMON)
 	SET(CMAKE_C_FLAGS "-pg")

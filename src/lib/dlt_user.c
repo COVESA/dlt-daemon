@@ -159,9 +159,17 @@ int dlt_init(void)
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
 
+	/* init shared memory */
+    if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY,DLT_SHM_SIZE) < 0)
+    {
+        sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+        dlt_log(LOG_WARNING, str);
+        return 0; 
+    }   
+
     /* create and open DLT user FIFO */
     sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
-    
+     
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
     
@@ -197,12 +205,18 @@ int dlt_init(void)
         return -1;
     }
 
-    /* Initialize thread */
+    /* Set default thread stack size */
     if (pthread_attr_init(&dlt_receiverthread_attr)<0)
     {
-        dlt_log(LOG_WARNING, "Initialization of thread failed!\n");
-        return -1;
-    }   
+        dlt_log(LOG_WARNING, "Initialization of default thread stack size failed!\n");
+    }
+    else
+    {
+        if (pthread_attr_setstacksize(&dlt_receiverthread_attr,DLT_USER_RECEIVERTHREAD_STACKSIZE)<0)
+        {
+            dlt_log(LOG_WARNING, "Setting of default thread stack size failed!\n");
+        }
+    }
 
     /* Start receiver thread */
     if (pthread_create(&(dlt_receiverthread_handle),
@@ -351,6 +365,9 @@ int dlt_free(void)
 
         unlink(filename);
     }
+
+	/* free shared memory */
+	dlt_shm_free_client(&dlt_user.dlt_shm);
 
     if (dlt_user.dlt_log_handle!=-1)
     {
@@ -2151,12 +2168,15 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             }
         }
 
+		dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
+									log->buffer, log->size,0,0);                   
+
         /* log to FIFO */
         ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                 &(userheader), sizeof(DltUserHeader),
-                                msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-                                log->buffer, log->size);
-
+                                0, 0,
+                                0, 0);
+        		
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
