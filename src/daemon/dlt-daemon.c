@@ -1781,7 +1781,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		if (dlt_message_read(&(daemon_local->msg),rcv_buffer,size,0,verbose)==0)
 		{
 			/* set overwrite ecu id */
-			if (daemon_local->flags.evalue!=0)
+			if (daemon_local->flags.evalue[0])
 			{
 				/* Set header extra parameters */
 				dlt_set_id(daemon_local->msg.headerextra.ecu, daemon->ecuid );
@@ -1814,8 +1814,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				}
 			}
 
-			if ((daemon_local->flags.fvalue==0) ||
-				(daemon_local->flags.fvalue && (dlt_message_filter_check(&(daemon_local->msg),&(daemon_local->filter),verbose)==1)))
+			if ((daemon_local->flags.fvalue[0]==0) ||
+				(daemon_local->flags.fvalue[0] && (dlt_message_filter_check(&(daemon_local->msg),&(daemon_local->filter),verbose)==1)))
 			{
 				/* if no filter set or filter is matching display message */
 				if (daemon_local->flags.xflag)
@@ -1842,7 +1842,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				} /* if */
 
 				/* if file output enabled write message */
-				if (daemon_local->flags.ovalue)
+				if (daemon_local->flags.ovalue[0])
 				{
 					/* write message to output buffer */
 					if (dlt_user_log_out2(daemon_local->ohandle,
@@ -1889,7 +1889,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 
 							sent=1;
 						} /* if */
-						else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue!=0))
+						else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue[0]))
 						{
 							DLT_DAEMON_SEM_LOCK();
 
