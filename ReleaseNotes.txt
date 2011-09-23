@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.2.0
+Version: 2.3.0
 
 
 Introduction
