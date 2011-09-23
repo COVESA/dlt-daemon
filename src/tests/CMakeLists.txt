@@ -51,6 +51,22 @@ ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-client dlt)
 set_target_properties(dlt-test-client PROPERTIES LINKER_LANGUAGE C)
 
+set(dlt_test_stress_user_SRCS dlt-test-stress-user)
+add_executable(dlt-test-stress-user ${dlt_test_stress_user_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
+target_link_libraries(dlt-test-stress-user dlt)
+set_target_properties(dlt-test-stress-user PROPERTIES LINKER_LANGUAGE C)
+
+set(dlt_test_stress_client_SRCS dlt-test-stress-client)
+add_executable(dlt-test-stress-client ${dlt_test_stress_client_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
+target_link_libraries(dlt-test-stress-client dlt)
+set_target_properties(dlt-test-stress-client PROPERTIES LINKER_LANGUAGE C)
+
 set(dlt_test_stress_SRCS dlt-test-stress)
 add_executable(dlt-test-stress ${dlt_test_stress_SRCS})
 IF(GPROF_DLT_TESTS)
@@ -67,6 +83,6 @@ ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-internal dlt)
 set_target_properties(dlt-test-internal PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-test-user dlt-test-client dlt-test-stress dlt-test-internal
+install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal
 	RUNTIME DESTINATION bin
 	COMPONENT base)
