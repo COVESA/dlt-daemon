@@ -28,9 +28,13 @@ Changes in this release
 Improvements
     * [GSW-16] Systemd configuration for syslog to DLT dapater
     * [GSW-62] DLT Library version check
-    * [GSW-28] Directory where persistent data is stored is not configurable 
-    * [GSW-46] DLT client library sets a huge stack size for internal thread 
+    * [GSW-28] Directory where persistent data is stored is not configurable  
     * [GSW-59] Statically allocated large array 
+    * Added init script for Ubuntu
+    * Optional adding of gprof compile flags
+
+Bugfixes
+    * sprintf with float64 fails on ARM platform; disabled this function on QRM platform.
 
 2.2.0:
 
