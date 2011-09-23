@@ -80,7 +80,8 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	return 0; /* OK */
 }
 
-int dlt_shm_init_client(DltShm *buf,int key,int size) {
+int dlt_shm_init_client(DltShm *buf,int key) {
+	struct shmid_ds shm_buf = { 0 };
 
 	// init parameters
 	buf->shm = NULL;
@@ -90,10 +91,17 @@ int dlt_shm_init_client(DltShm *buf,int key,int size) {
 	buf->mem = 0;
 
     // Create the segment.
-    if ((buf->shmid = shmget(key, size, 0666)) < 0) {
+    if ((buf->shmid = shmget(key, 0, 0666)) < 0) {
         perror("shmget");
         return -1; /* ERROR */
     }
+
+	// get the size of shm
+	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
+	{
+		perror("shmctl");
+        return -1; /* ERROR */
+	}	
 
     // Now we attach the segment to our data space.
     if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
@@ -110,7 +118,7 @@ int dlt_shm_init_client(DltShm *buf,int key,int size) {
 
 	// Init pointers
     buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-    buf->size = size - (buf->mem - buf->shm);
+    buf->size = shm_buf.shm_segsz - (buf->mem - buf->shm);
     
 	return 0; /* OK */
 }
@@ -207,6 +215,9 @@ int dlt_shm_push(DltShm *buf,const char *data1, int size1,const char *data2, int
 	*((unsigned char*)(buf->mem+write)) = 1;  // set write status
 	*((int*)(buf->mem+write+sizeof(unsigned char))) = size1+size2+size3;  // set write size
 	
+	// free semaphore
+	DLT_SHM_SEM_FREE(buf->semid);
+
 	// write data
 	if(data1)
 		memcpy(buf->mem+write+sizeof(unsigned char)+sizeof(int),data1,size1);
@@ -217,9 +228,6 @@ int dlt_shm_push(DltShm *buf,const char *data1, int size1,const char *data2, int
 	
 	// update write status
 	*((unsigned char*)(buf->mem+write)) = 2;
-
-	// free semaphore
-	DLT_SHM_SEM_FREE(buf->semid);
 
 	return 0; // OK
 }
@@ -267,7 +275,7 @@ int dlt_shm_pull(DltShm *buf,char *data, int max_size)
 	
 	// check status
 	if(status != 2 ) {
-		printf("Buffer is not fully written\n");
+		//printf("Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	

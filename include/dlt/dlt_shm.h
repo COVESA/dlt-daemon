@@ -1,7 +1,7 @@
 
-#define DLT_SHM_KEY  	10002
+#define DLT_SHM_KEY  	11771
 #define DLT_SHM_SIZE	(1024*4000)
-#define DLT_SHM_SEM		20013
+#define DLT_SHM_SEM		22771
 
 typedef struct
 {
@@ -15,7 +15,7 @@ typedef struct
 #define DLT_SHM_SEM_GET(id) dlt_shm_pv(id,-1)
 #define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id,1)
 
-extern int dlt_shm_init_client(DltShm *buf,int key,int size);
+extern int dlt_shm_init_client(DltShm *buf,int key);
 extern int dlt_shm_init_server(DltShm *buf,int key,int size);
 
 extern int dlt_shm_push(DltShm *buf,const char *data1, int size1,const char *data2, int size2,const char *data3, int size3);

@@ -160,7 +160,7 @@ int dlt_init(void)
     dlt_user.overflow = 0;
 
 	/* init shared memory */
-    if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY,DLT_SHM_SIZE) < 0)
+    if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
     {
         sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
         dlt_log(LOG_WARNING, str);
