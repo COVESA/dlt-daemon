@@ -368,6 +368,131 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	return size; // OK
 }
 
+int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
+{
+	int write, read, count, size;
+	unsigned char status;
+	
+	if(!buf->mem) {
+		// shm not initialised
+		printf("SHM not initialised\n");
+		return -1; /* ERROR */
+	}
+
+	// get current write pointer
+	DLT_SHM_SEM_GET(buf->semid);
+	write = ((int*)(buf->shm))[0];
+	read = ((int*)(buf->shm))[1];
+	count = ((int*)(buf->shm))[2];
+	DLT_SHM_SEM_FREE(buf->semid);
+
+	// check if data is in there
+	if(count<=0) {
+		//printf("SHM is empty\n");
+		return -1; // ERROR		
+	}
+
+	// check if end of buffer is reached and read status and size
+	if((read+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
+		status =  *((unsigned char*)(buf->mem+read));
+		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+		if(status == 0) {
+			// data fits not end of shm
+			read = 0;
+			status =  *((unsigned char*)(buf->mem+read));
+			size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+		}
+	}
+	else {
+		read = 0;
+		status =  *((unsigned char*)(buf->mem+read));
+		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+	}
+	
+	// check status
+	if(status != 2 ) {
+		//printf("Buffer is not fully written\n");
+		return -1; // ERROR		
+	}
+	
+	// plausibility check of buffer size
+	if( (read+size) > buf->size) {
+		printf("Buffers size bigger than shm buffer\n");
+		return -1; // ERROR		
+	}
+	
+	// check max read size
+	if(size > max_size) {
+		printf("Buffer is bigger than max size\n");
+		return -1; // ERROR			
+	}
+	
+	// copy data
+	memcpy(data,buf->mem+read+sizeof(unsigned char)+sizeof(int),size);
+
+	return size; // OK
+}
+
+int dlt_shm_remove(DltShm *buf)
+{
+	int write, read, count, size;
+	unsigned char status;
+	
+	if(!buf->mem) {
+		// shm not initialised
+		printf("SHM not initialised\n");
+		return -1; /* ERROR */
+	}
+
+	// get current write pointer
+	DLT_SHM_SEM_GET(buf->semid);
+	write = ((int*)(buf->shm))[0];
+	read = ((int*)(buf->shm))[1];
+	count = ((int*)(buf->shm))[2];
+	DLT_SHM_SEM_FREE(buf->semid);
+
+	// check if data is in there
+	if(count<=0) {
+		//printf("SHM is empty\n");
+		return -1; // ERROR		
+	}
+
+	// check if end of buffer is reached and read status and size
+	if((read+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
+		status =  *((unsigned char*)(buf->mem+read));
+		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+		if(status == 0) {
+			// data fits not end of shm
+			read = 0;
+			status =  *((unsigned char*)(buf->mem+read));
+			size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+		}
+	}
+	else {
+		read = 0;
+		status =  *((unsigned char*)(buf->mem+read));
+		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
+	}
+	
+	// check status
+	if(status != 2 ) {
+		//printf("Buffer is not fully written\n");
+		return -1; // ERROR		
+	}
+	
+	// plausibility check of buffer size
+	if( (read+size) > buf->size) {
+		printf("Buffers size bigger than shm buffer\n");
+		return -1; // ERROR		
+	}
+		
+	// update buffer pointers
+	((int*)(buf->shm))[1] = read+sizeof(unsigned char)+sizeof(int)+size; // set new read pointer 	
+	((int*)(buf->shm))[2] -= 1; // decrease counter
+
+	return size; // OK
+}
+
 int dlt_shm_free_server(DltShm *buf) {
 
 	if(!buf->shm) {

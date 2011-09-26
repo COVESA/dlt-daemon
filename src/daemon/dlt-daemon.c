@@ -479,8 +479,6 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-	//return(0);
-
     /* Initialize logging facility */
     dlt_log_init(daemon_local.flags.dflag);
 
@@ -1771,7 +1769,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
     }
 
 	//dlt_shm_status(&(daemon_local->dlt_shm));
-	while ( (size = dlt_shm_pull(&(daemon_local->dlt_shm),rcv_buffer,10000)) > 0)
+	while ( (size = dlt_shm_copy(&(daemon_local->dlt_shm),rcv_buffer,10000)) > 0)
     {
 		if (dlt_message_read(&(daemon_local->msg),rcv_buffer,size,0,verbose)==0)
 		{
@@ -1784,6 +1782,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				if (dlt_message_set_extraparameters(&(daemon_local->msg),0)==-1)
 				{
 					dlt_log(LOG_ERR,"Can't set message extra parameters in process user message log\n");
+					dlt_shm_remove(&(daemon_local->dlt_shm));
 					return -1;
 				}
 
@@ -1797,6 +1796,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon_local->msg.headerextra.ecu)==-1)
 				{
 					dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+					dlt_shm_remove(&(daemon_local->dlt_shm));
 					return -1;
 				}
 			}
@@ -1805,11 +1805,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon->ecuid)==-1)
 				{
 					dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+					dlt_shm_remove(&(daemon_local->dlt_shm));
 					return -1;
 				}
 			}
 
-			/* if no filter set or filter is matching display message */
+			/* display message */
 			if (daemon_local->flags.xflag)
 			{
 				if (dlt_message_print_hex(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
@@ -1903,16 +1904,24 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 			/* Message was not sent to client, so store it in client ringbuffer */
 			if (sent==0)
 			{
-				if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
+				/* dlt message was not sent, keep in buffer */
+				break;
+				
+				/*if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
 									daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
 									daemon_local->msg.databuffer,daemon_local->msg.datasize,
 									0, 0
 								   )<0)
 				{
 					dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
-				}
+				}*/
 			}
-
+			else
+			{
+				/* dlt message was sent, remove from buffer */
+				dlt_shm_remove(&(daemon_local->dlt_shm));
+			}
+			
 			/* keep not read data in buffer */
 			/*bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader)+sizeof(DltUserHeader);
 			if (daemon_local->msg.found_serialheader)

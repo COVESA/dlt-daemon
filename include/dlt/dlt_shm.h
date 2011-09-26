@@ -86,6 +86,8 @@ extern int dlt_shm_init_server(DltShm *buf,int key,int size);
 
 extern int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
 extern int dlt_shm_pull(DltShm *buf,unsigned char *data, int size);
+extern int dlt_shm_copy(DltShm *buf,unsigned char *data, int size);
+extern int dlt_shm_remove(DltShm *buf);
 
 extern void dlt_shm_info(DltShm *buf);
 extern void dlt_shm_status(DltShm *buf);
