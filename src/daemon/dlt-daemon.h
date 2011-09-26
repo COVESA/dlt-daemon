@@ -105,6 +105,7 @@ typedef struct
     char uvalue[256];   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
     char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
+    int sharedMemorySize;	   /**< (String: Directory) FSize of shared memory (Default: 100000 */
 } DltDaemonFlags;
 
 /**

@@ -66,7 +66,7 @@
 *******************************************************************************/
 
 #define DLT_SHM_KEY  	11771
-#define DLT_SHM_SIZE	(1024*4000)
+#define DLT_SHM_SIZE	100000
 #define DLT_SHM_SEM		22771
 
 typedef struct

@@ -303,13 +303,15 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     char *pch;
     const char *filename;
 
+	/* set default values for configuration */
+	daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
 		filename = daemon_local->flags.cvalue;
 	else
 		filename = "/etc/dlt.conf";
-    printf("Load configuration from file: %s\n",filename);
+    //printf("Load configuration from file: %s\n",filename);
 	pFile = fopen (filename,"r");
 
 	if (pFile!=NULL)
@@ -345,66 +347,89 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 				  if(token[0] && value[0])
 				  {
 						/* parse arguments here */
-						printf("%s = %s\n",token,value);						
 						if(strcmp(token,"Verbose")==0)
 						{
-							daemon_local->flags.vflag = atoi(pch);
+							daemon_local->flags.vflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"PrintASCII")==0)
+						else if(strcmp(token,"PrintASCII")==0)
 						{
-							daemon_local->flags.aflag = atoi(pch);
+							daemon_local->flags.aflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"PrintHex")==0)
+						else if(strcmp(token,"PrintHex")==0)
 						{
-							daemon_local->flags.xflag = atoi(pch);
+							daemon_local->flags.xflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"PrintHeadersOnly")==0)
+						else if(strcmp(token,"PrintHeadersOnly")==0)
 						{
-							daemon_local->flags.sflag = atoi(pch);
+							daemon_local->flags.sflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"Daemonize")==0)
+						else if(strcmp(token,"Daemonize")==0)
 						{
-							daemon_local->flags.dflag = atoi(pch);
+							daemon_local->flags.dflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"SendSerialHeader")==0)
+						else if(strcmp(token,"SendSerialHeader")==0)
 						{
-							daemon_local->flags.lflag = atoi(pch);
+							daemon_local->flags.lflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"SendContextRegistration")==0)
+						else if(strcmp(token,"SendContextRegistration")==0)
 						{
-							daemon_local->flags.rflag = atoi(pch);
+							daemon_local->flags.rflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"RS232SyncSerialHeader")==0)
+						else if(strcmp(token,"RS232SyncSerialHeader")==0)
 						{
-							daemon_local->flags.mflag = atoi(pch);
+							daemon_local->flags.mflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"TCPSyncSerialHeader")==0)
+						else if(strcmp(token,"TCPSyncSerialHeader")==0)
 						{
-							daemon_local->flags.nflag = atoi(pch);
+							daemon_local->flags.nflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"RS232DeviceName")==0)
+						else if(strcmp(token,"RS232DeviceName")==0)
 						{
-							strncpy(daemon_local->flags.yvalue,pch,sizeof(daemon_local->flags.yvalue));
+							strncpy(daemon_local->flags.yvalue,value,sizeof(daemon_local->flags.yvalue));
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"RS232Baudrate")==0)
+						else if(strcmp(token,"RS232Baudrate")==0)
 						{
-							strncpy(daemon_local->flags.bvalue,pch,sizeof(daemon_local->flags.bvalue));
+							strncpy(daemon_local->flags.bvalue,value,sizeof(daemon_local->flags.bvalue));
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"ECUId")==0)
+						else if(strcmp(token,"ECUId")==0)
 						{
-							strncpy(daemon_local->flags.evalue,pch,sizeof(daemon_local->flags.evalue));
+							strncpy(daemon_local->flags.evalue,value,sizeof(daemon_local->flags.evalue));
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"LocalLogFilename")==0)
+						else if(strcmp(token,"LocalLogFilename")==0)
 						{
-							strncpy(daemon_local->flags.ovalue,pch,sizeof(daemon_local->flags.ovalue));
+							strncpy(daemon_local->flags.ovalue,value,sizeof(daemon_local->flags.ovalue));
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"RingbufferSize")==0)
+						else if(strcmp(token,"RingbufferSize")==0)
 						{
-							strncpy(daemon_local->flags.uvalue,pch,sizeof(daemon_local->flags.uvalue));
+							strncpy(daemon_local->flags.uvalue,value,sizeof(daemon_local->flags.uvalue));
+							printf("Option: %s=%s\n",token,value);
 						}
-						if(strcmp(token,"PersistanceStoragePath")==0)
+						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
-							strncpy(daemon_local->flags.ivalue,pch,sizeof(daemon_local->flags.ivalue));
+							strncpy(daemon_local->flags.ivalue,value,sizeof(daemon_local->flags.ivalue));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"SharedMemorySize")==0)
+						{
+							daemon_local->flags.sharedMemorySize = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else
+						{
+							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
 						}
 					}
 					//printf ("Token: %s\n",pch);
@@ -648,7 +673,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     dlt_log(LOG_NOTICE, str);
 
 	/* init shared memory */
-    if (dlt_shm_init_server(&(daemon_local->dlt_shm),DLT_SHM_KEY,DLT_SHM_SIZE)==-1)
+    if (dlt_shm_init_server(&(daemon_local->dlt_shm),DLT_SHM_KEY,daemon_local->flags.sharedMemorySize)==-1)
     {
     	dlt_log(LOG_ERR,"Could not initialize shared memory\n");
 		return -1;
