@@ -149,7 +149,6 @@ void usage()
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: ECU1)\n");
     printf("  -o filename   Store DLT messages to local log file\n");
-    printf("  -f filename   Enable filtering of messages\n");
     printf("  -u size       Size of the ringbuffer in bytes (Default: 10024)\n");
     printf("  -i directory  Directory where to store the persistant configuration (Default: /tmp)\n");
     printf("  -c filename   DLT daemon configuration file (Default: /etc/dlt.conf)\n");
@@ -173,7 +172,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hvasxdlrmnf:o:e:b:y:u:i:c:")) != -1)
+    while ((c = getopt (argc, argv, "hvasxdlrmno:e:b:y:u:i:c:")) != -1)
     {
         switch (c)
         {
@@ -220,11 +219,6 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         case 'n':
         {
             daemon_local->flags.nflag = 1;
-            break;
-        }
-        case 'f':
-        {
-            strncpy(daemon_local->flags.fvalue,optarg,sizeof(daemon_local->flags.fvalue));
             break;
         }
         case 'o':
@@ -403,10 +397,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						if(strcmp(token,"LocalLogFilename")==0)
 						{
 							strncpy(daemon_local->flags.ovalue,pch,sizeof(daemon_local->flags.ovalue));
-						}
-						if(strcmp(token,"FilterFilename")==0)
-						{
-							strncpy(daemon_local->flags.fvalue,pch,sizeof(daemon_local->flags.fvalue));
 						}
 						if(strcmp(token,"RingbufferSize")==0)
 						{
@@ -589,26 +579,6 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 		dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
 		return -1;
     }
-
-    /* first parse filter file if filter parameter is used */
-    if (daemon_local->flags.fvalue[0])
-    {
-        if (dlt_filter_load(&(daemon_local->filter),daemon_local->flags.fvalue,daemon_local->flags.vflag)<0)
-        {
-            dlt_log(LOG_ERR,"Could not load filters\n");
-            /* Return value ignored, dlt daemon will exit */
-            dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
-            return -1;
-        } /* if */
-
-        if (dlt_file_set_filter(&(daemon_local->file),&(daemon_local->filter),daemon_local->flags.vflag)==-1)
-        {
-        	dlt_log(LOG_ERR,"Could not apply filters\n");
-            /* Return value ignored, dlt daemon will exit */
-            dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
-            return -1;
-        }
-    } /* if */
 
     signal(SIGPIPE,SIG_IGN);
 
@@ -1759,10 +1729,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
 
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    int bytes_to_be_removed;
+    //int bytes_to_be_removed;
     int j,sent,third_value;
     ssize_t ret;
-    char rcv_buffer[10000];
+    uint8_t rcv_buffer[10000];
     int size;
 
     static char text[DLT_DAEMON_TEXTSIZE];
@@ -1814,114 +1784,110 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				}
 			}
 
-			if ((daemon_local->flags.fvalue[0]==0) ||
-				(daemon_local->flags.fvalue[0] && (dlt_message_filter_check(&(daemon_local->msg),&(daemon_local->filter),verbose)==1)))
+			/* if no filter set or filter is matching display message */
+			if (daemon_local->flags.xflag)
 			{
-				/* if no filter set or filter is matching display message */
-				if (daemon_local->flags.xflag)
+				if (dlt_message_print_hex(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 				{
-					if (dlt_message_print_hex(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
-					{
-						dlt_log(LOG_ERR,"dlt_message_print_hex() failed!\n");
-					}
-				} /*  if */
-				else if (daemon_local->flags.aflag)
-				{
-					if (dlt_message_print_ascii(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
-					{
-						dlt_log(LOG_ERR,"dlt_message_print_ascii() failed!\n");
-					}
-				} /* if */
-				else if (daemon_local->flags.sflag)
-				{
-					if (dlt_message_print_header(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
-					{
-						dlt_log(LOG_ERR,"dlt_message_print_header() failed!\n");
-					}
-					/* print message header only */
-				} /* if */
-
-				/* if file output enabled write message */
-				if (daemon_local->flags.ovalue[0])
-				{
-					/* write message to output buffer */
-					if (dlt_user_log_out2(daemon_local->ohandle,
-										  daemon_local->msg.headerbuffer,
-										  daemon_local->msg.headersize,
-										  daemon_local->msg.databuffer,
-										  daemon_local->msg.datasize) !=DLT_RETURN_OK)
-					{
-						dlt_log(LOG_ERR,"Writing to output file failed!\n");
-					}
-				} /* if */
-
-				sent=0;
-
-				/* look if TCP connection to client is available */
-				for (j = 0; j <= daemon_local->fdmax; j++)
-				{
-					/* send to everyone! */
-					if (FD_ISSET(j, &(daemon_local->master)))
-					{
-						/* except the listener and ourselves */
-						if (daemon_local->flags.yvalue!=0)
-						{
-							third_value = daemon_local->fdserial;
-						}
-						else
-						{
-							third_value = daemon_local->sock;
-						}
-
-						if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
-						{
-							DLT_DAEMON_SEM_LOCK();
-
-							if (daemon_local->flags.lflag)
-							{
-								send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
-							}
-
-							send(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),0);
-							send(j,daemon_local->msg.databuffer,daemon_local->msg.datasize,0);
-
-							DLT_DAEMON_SEM_FREE();
-
-							sent=1;
-						} /* if */
-						else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue[0]))
-						{
-							DLT_DAEMON_SEM_LOCK();
-
-							if (daemon_local->flags.lflag)
-							{
-								ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
-							}
-
-							ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader));
-							ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
-
-							DLT_DAEMON_SEM_FREE();
-
-							sent=1;
-						}
-					} /* if */
-				} /* for */
-
-				/* Message was not sent to client, so store it in client ringbuffer */
-				if (sent==0)
-				{
-					if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
-										daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-										daemon_local->msg.databuffer,daemon_local->msg.datasize,
-										0, 0
-									   )<0)
-					{
-						dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
-					}
+					dlt_log(LOG_ERR,"dlt_message_print_hex() failed!\n");
 				}
+			} /*  if */
+			else if (daemon_local->flags.aflag)
+			{
+				if (dlt_message_print_ascii(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
+				{
+					dlt_log(LOG_ERR,"dlt_message_print_ascii() failed!\n");
+				}
+			} /* if */
+			else if (daemon_local->flags.sflag)
+			{
+				if (dlt_message_print_header(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
+				{
+					dlt_log(LOG_ERR,"dlt_message_print_header() failed!\n");
+				}
+				/* print message header only */
+			} /* if */
 
+			/* if file output enabled write message */
+			if (daemon_local->flags.ovalue[0])
+			{
+				/* write message to output buffer */
+				if (dlt_user_log_out2(daemon_local->ohandle,
+									  daemon_local->msg.headerbuffer,
+									  daemon_local->msg.headersize,
+									  daemon_local->msg.databuffer,
+									  daemon_local->msg.datasize) !=DLT_RETURN_OK)
+				{
+					dlt_log(LOG_ERR,"Writing to output file failed!\n");
+				}
+			} /* if */
+
+			sent=0;
+
+			/* look if TCP connection to client is available */
+			for (j = 0; j <= daemon_local->fdmax; j++)
+			{
+				/* send to everyone! */
+				if (FD_ISSET(j, &(daemon_local->master)))
+				{
+					/* except the listener and ourselves */
+					if (daemon_local->flags.yvalue!=0)
+					{
+						third_value = daemon_local->fdserial;
+					}
+					else
+					{
+						third_value = daemon_local->sock;
+					}
+
+					if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
+					{
+						DLT_DAEMON_SEM_LOCK();
+
+						if (daemon_local->flags.lflag)
+						{
+							send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
+						}
+
+						send(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),0);
+						send(j,daemon_local->msg.databuffer,daemon_local->msg.datasize,0);
+
+						DLT_DAEMON_SEM_FREE();
+
+						sent=1;
+					} /* if */
+					else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue[0]))
+					{
+						DLT_DAEMON_SEM_LOCK();
+
+						if (daemon_local->flags.lflag)
+						{
+							ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
+						}
+
+						ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader));
+						ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
+
+						DLT_DAEMON_SEM_FREE();
+
+						sent=1;
+					}
+				} /* if */
+			} /* for */
+
+			/* Message was not sent to client, so store it in client ringbuffer */
+			if (sent==0)
+			{
+				if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
+									daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
+									daemon_local->msg.databuffer,daemon_local->msg.datasize,
+									0, 0
+								   )<0)
+				{
+					dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
+				}
 			}
+
 			/* keep not read data in buffer */
 			/*bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader)+sizeof(DltUserHeader);
 			if (daemon_local->msg.found_serialheader)

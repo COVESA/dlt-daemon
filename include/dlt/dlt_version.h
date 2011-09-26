@@ -7,6 +7,6 @@
 #define PACKAGE_MAJOR_VERSION "2"
 #define PACKAGE_MINOR_VERSION "3"
 #define PACKAGE_PATCH_LEVEL "0"
-#define PACKAGE_REVISION "v2.3.0-13-g0eaf6ec"
+#define PACKAGE_REVISION "v2.3.0-13-gd28ed93"
 
 #endif

@@ -99,7 +99,6 @@ typedef struct
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
     char ovalue[256];   /**< (String: Filename) Store DLT messages to local log file */
-    char fvalue[256];   /**< (String: Filename) Enable filtering of messages */
     char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
     char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
     char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
@@ -121,7 +120,6 @@ typedef struct
     fd_set master;            /**< master set of handles */
     fd_set read_fds;          /**< read set of handles */
     DltFile file;             /**< struct for file access */
-    DltFilter filter;         /**< struct for filter access */
     int ohandle;          /**< handle to output file */
     DltMessage msg;           /**< one dlt message */
     DltReceiver receiver;     /**< receiver for fifo connection */
