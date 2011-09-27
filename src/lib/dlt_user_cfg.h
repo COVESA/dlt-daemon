@@ -87,9 +87,6 @@
 /* Size of receive buffer */
 #define DLT_USER_RCVBUF_MAX_SIZE 10024 
 
-/* Size of ring buffer */      
-#define DLT_USER_RINGBUFFER_SIZE 10024       
-
 /* Temporary buffer length */
 #define DLT_USER_BUFFER_LENGTH               255
 

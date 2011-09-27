@@ -316,12 +316,6 @@ int dlt_init_common(void)
     dlt_user.dlt_ll_ts_max_num_entries = 0;
     dlt_user.dlt_ll_ts_num_entries = 0;
 
-    if (dlt_ringbuffer_init(&(dlt_user.rbuf), DLT_USER_RINGBUFFER_SIZE)==-1)
-    {
-		dlt_user_initialised = 0;
-        return -1;
-    }
-
     signal(SIGPIPE,SIG_IGN);                  /* ignore pipe signals */
 
     atexit(dlt_user_atexit_handler);
@@ -378,9 +372,6 @@ int dlt_free(void)
 
 	/* Ignore return value */
     dlt_receiver_free(&(dlt_user.receiver));
-
-	/* Ignore return value */
-    dlt_ringbuffer_free(&(dlt_user.rbuf));
 
     if (dlt_user.dlt_ll_ts)
     {
@@ -863,16 +854,8 @@ int dlt_forward_msg(void *msgdata,size_t size)
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
-            DLT_SEM_LOCK();
-
-            if (dlt_ringbuffer_put3(&(dlt_user.rbuf),
-                                &(userheader), sizeof(DltUserHeader),
-                                 msgdata, size, 0, 0)==-1)
-			{
-				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
-			}
-
-            DLT_SEM_FREE();
+			/* message could not be sent */
+			/* in old implementation messages was saved in ringbuffer */
         }
 
         switch (ret)
@@ -2180,17 +2163,8 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
-            DLT_SEM_LOCK();
-
-            if (dlt_ringbuffer_put3(&(dlt_user.rbuf),
-                                &(userheader), sizeof(DltUserHeader),
-                                msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-                                log->buffer, log->size)==-1)
-			{
-				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
-			}
-
-            DLT_SEM_FREE();
+			/* in old implementation message was stored in ringbuffer
+			 * if it was not able to be sent. */
         }
 
         switch (ret)
@@ -2686,14 +2660,10 @@ int dlt_user_log_check_user_message(void)
 
 void dlt_user_log_reattach_to_daemon(void)
 {
-    int num, count, reregistered=0;
-
-    uint8_t buf[DLT_USER_RINGBUFFER_SIZE];
-    size_t size;
+    int num, reregistered=0;
 
 	DltContext handle;
 	DltContextData log_new;
-	DltReturnValue ret;
 
     if (dlt_user.dlt_log_handle<0)
     {
@@ -2746,43 +2716,8 @@ void dlt_user_log_reattach_to_daemon(void)
 
             if (reregistered==1)
             {
-                /* Send content of ringbuffer */
-                DLT_SEM_LOCK();
-                count = dlt_user.rbuf.count;
-                DLT_SEM_FREE();
-
-                for (num=0;num<count;num++)
-                {
-
-                    DLT_SEM_LOCK();
-                    dlt_ringbuffer_get(&(dlt_user.rbuf),buf,&size);
-                    DLT_SEM_FREE();
-
-                    if (size>0)
-                    {
-                        /* log to FIFO */
-                        ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,size,0,0,0,0);
-
-                        /* in case of error, push message back to ringbuffer */
-                        if (ret!=DLT_RETURN_OK)
-                        {
-                            DLT_SEM_LOCK();
-                            if (dlt_ringbuffer_put(&(dlt_user.rbuf), buf, size)==-1)
-                            {
-								dlt_log(LOG_ERR,"Error pushing back message to history buffer. Message discarded.\n");
-                            }
-                            DLT_SEM_FREE();
-
-                            /* In case of: data could not be written, set overflow flag */
-                            if (ret==DLT_RETURN_PIPE_FULL)
-                            {
-                                dlt_user.overflow = 1;
-                            }
-                        }
-                    }
-
-                }
-            }
+                /* In old implementation Send content of ringbuffer */                
+			}
         }
     }
 }
