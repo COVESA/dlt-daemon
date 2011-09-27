@@ -226,6 +226,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
 	/* set default values for configuration */
 	daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
+	daemon_local->flags.sendMessageTime = 0;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -301,6 +302,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						else if(strcmp(token,"SendContextRegistration")==0)
 						{
 							daemon_local->flags.rflag = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"SendMessageTime")==0)
+						{
+							daemon_local->flags.sendMessageTime = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232SyncSerialHeader")==0)
@@ -619,7 +625,13 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
             dlt_log(LOG_WARNING, "Setting of default thread stack size failed!\n");
         }
     }
-
+    
+    /* configure sending timing packets */
+    if (daemon_local->flags.sendMessageTime)    
+    {
+		daemon->timingpackets = 1;
+	}
+	
     /* Binary semaphore for thread */
     if (sem_init(&dlt_daemon_mutex, 0, 1)==-1)
     {

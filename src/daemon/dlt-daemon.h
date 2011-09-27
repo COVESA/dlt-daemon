@@ -104,7 +104,8 @@ typedef struct
     char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
     char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
-    int sharedMemorySize;	   /**< (String: Directory) FSize of shared memory (Default: 100000 */
+    int sharedMemorySize;	   /**< (String: Directory) FSize of shared memory (Default: 100000) */
+    int sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
 } DltDaemonFlags;
 
 /**

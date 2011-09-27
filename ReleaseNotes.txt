@@ -27,7 +27,8 @@ Changes in this release
 
 Improvements
     * [GSW-61] Replace command line parameter by configuration file
-
+    * [GSW-13] Support for keep-alive messages as configuration parameter
+     
 Bugfixes
 	*
 	
