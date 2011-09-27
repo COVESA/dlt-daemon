@@ -134,23 +134,9 @@ void usage()
     printf("Usage: dlt-daemon [options]\n");
     printf("DLT logging daemon\n");
     printf("Options:\n");
-    printf("  -a            Print DLT messages; payload as ASCII\n");
-    printf("  -x            Print DLT messages; payload as hex\n");
-    printf("  -s            Print DLT messages; only headers\n");
     printf("  -d            Daemonize\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
-    printf("  -l            Send DLT messages with serial header\n");
-    printf("  -r            Send automatic get log info response during\n");
-    printf("                  context registration\n");
-    printf("  -m            Sync to serial header on serial connection\n");
-    printf("  -n            Sync to serial header on all TCP connections\n");
-    printf("  -y devname    Additional support for serial device\n");
-    printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
-    printf("  -e ecuid      Set ECU ID (Default: ECU1)\n");
-    printf("  -o filename   Store DLT messages to local log file\n");
-    printf("  -u size       Size of the ringbuffer in bytes (Default: 10024)\n");
-    printf("  -i directory  Directory where to store the persistant configuration (Default: /tmp)\n");
     printf("  -c filename   DLT daemon configuration file (Default: /etc/dlt.conf)\n");
 } /* usage() */
 
@@ -172,7 +158,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hvasxdlrmno:e:b:y:u:i:c:")) != -1)
+    while ((c = getopt (argc, argv, "hvdc:")) != -1)
     {
         switch (c)
         {
@@ -181,74 +167,9 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
             daemon_local->flags.vflag = 1;
             break;
         }
-        case 'a':
-        {
-            daemon_local->flags.aflag = 1;
-            break;
-        }
-        case 's':
-        {
-            daemon_local->flags.sflag = 1;
-            break;
-        }
-        case 'x':
-        {
-            daemon_local->flags.xflag = 1;
-            break;
-        }
         case 'd':
         {
             daemon_local->flags.dflag = 1;
-            break;
-        }
-        case 'l':
-        {
-            daemon_local->flags.lflag = 1;
-            break;
-        }
-        case 'r':
-        {
-            daemon_local->flags.rflag = 1;
-            break;
-        }
-        case 'm':
-        {
-            daemon_local->flags.mflag = 1;
-            break;
-        }
-        case 'n':
-        {
-            daemon_local->flags.nflag = 1;
-            break;
-        }
-        case 'o':
-        {
-            strncpy(daemon_local->flags.ovalue,optarg,sizeof(daemon_local->flags.ovalue));
-            break;
-        }
-        case 'e':
-        {
-            strncpy(daemon_local->flags.evalue,optarg,sizeof(daemon_local->flags.evalue));
-            break;
-        }
-        case 'b':
-        {
-            strncpy(daemon_local->flags.bvalue,optarg,sizeof(daemon_local->flags.bvalue));
-            break;
-        }
-        case 'y':
-        {
-            strncpy(daemon_local->flags.yvalue,optarg,sizeof(daemon_local->flags.yvalue));
-            break;
-        }
-        case 'u':
-        {
-            strncpy(daemon_local->flags.uvalue,optarg,sizeof(daemon_local->flags.uvalue));
-            break;
-        }
-        case 'i':
-        {
-            strncpy(daemon_local->flags.ivalue,optarg,sizeof(daemon_local->flags.ivalue));
             break;
         }
         case 'c':
@@ -263,7 +184,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'f' || optopt == 'o' || optopt == 'e' || optopt == 'b' || optopt == 'y' || optopt == 'u' || optopt == 'c')
+            if (optopt == 'c')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
