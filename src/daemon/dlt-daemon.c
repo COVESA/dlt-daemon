@@ -333,11 +333,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 							strncpy(daemon_local->flags.ovalue,value,sizeof(daemon_local->flags.ovalue));
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"RingbufferSize")==0)
-						{
-							strncpy(daemon_local->flags.uvalue,value,sizeof(daemon_local->flags.uvalue));
-							printf("Option: %s=%s\n",token,value);
-						}
 						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
 							strncpy(daemon_local->flags.ivalue,value,sizeof(daemon_local->flags.ivalue));
@@ -579,18 +574,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Set flag for optional sending of serial header */
     daemon->sendserialheader = daemon_local->flags.lflag;
 
-	/* prepare ringbuffer size */
-	if (daemon_local->flags.uvalue[0])
-	{
-		daemon_local->ringbufferSize = atoi(daemon_local->flags.uvalue);
-	}
-	else
-	{
-		daemon_local->ringbufferSize = DLT_DAEMON_RCVBUFSIZE;
-	}
-    sprintf(str,"Ringbuffer size: %d bytes\n",daemon_local->ringbufferSize);
-    dlt_log(LOG_NOTICE, str);
-
 	/* init shared memory */
     if (dlt_shm_init_server(&(daemon_local->dlt_shm),DLT_SHM_KEY,daemon_local->flags.sharedMemorySize)==-1)
     {
@@ -605,7 +588,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 		return -1;
     }
 
-    if (dlt_receiver_init(&(daemon_local->receiver),daemon_local->fp,daemon_local->ringbufferSize)==-1)
+    if (dlt_receiver_init(&(daemon_local->receiver),daemon_local->fp,DLT_DAEMON_RCVBUFSIZE)==-1)
     {
     	dlt_log(LOG_ERR,"Could not initialize receiver\n");
 		return -1;
@@ -615,7 +598,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     	dlt_log(LOG_ERR,"Could not initialize receiver for socket\n");
 		return -1;
     }
-
     if (daemon_local->flags.yvalue[0])
     {
         if (dlt_receiver_init(&(daemon_local->receiverSerial),daemon_local->fdserial,DLT_DAEMON_RCVBUFSIZESERIAL)==-1)
@@ -991,15 +973,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
 
     if (daemon_local->client_connections==1)
     {
-        if (daemon_local->flags.vflag)
-        {
-            dlt_log(LOG_INFO, "Send ring-buffer to client\n");
-        }
-        if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose)==-1)
-        {
-        	dlt_log(LOG_ERR,"Can't send contents of ringbuffer to clients\n");
-			return -1;
-        }
+		/* send ringbuffer done in old implementation */
+		/* nothing to do with shared memory */
     }
 
     return 0;
@@ -1828,14 +1803,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				/* dlt message was not sent, keep in buffer */
 				break;
 				
-				/*if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
-									daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-									daemon_local->msg.databuffer,daemon_local->msg.datasize,
-									0, 0
-								   )<0)
-				{
-					dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
-				}*/
 			}
 			else
 			{
@@ -1843,18 +1810,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				dlt_shm_remove(&(daemon_local->dlt_shm));
 			}
 			
-			/* keep not read data in buffer */
-			/*bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader)+sizeof(DltUserHeader);
-			if (daemon_local->msg.found_serialheader)
-			{
-				bytes_to_be_removed += sizeof(dltSerialHeader);
-			}
-
-			if (dlt_receiver_remove(&(daemon_local->receiver),bytes_to_be_removed)==-1)
-			{
-				dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
-				return -1;
-			}*/
 		}
 		else
 		{
@@ -1939,72 +1894,6 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLo
 		dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
 		return -1;
 	}
-
-    return 0;
-}
-
-int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
-{
-    static uint8_t data[DLT_DAEMON_RINGBUFFER_SIZE];
-    size_t length=0;
-    int j, third_value;
-    ssize_t ret;
-
-    PRINT_FUNCTION_VERBOSE(verbose);
-
-    if ((daemon==0)  || (daemon_local==0))
-    {
-    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_send_ringbuffer_to_client()\n");
-        return -1;
-    }
-
-	/* Attention: If the message can't be send at this time, it will be silently discarded. */
-    while ((dlt_ringbuffer_get(&(daemon->client_ringbuffer), data, &length ))!=-1)
-    {
-        /* look if TCP connection to client is available */
-        for (j = 0; j <= daemon_local->fdmax; j++)
-        {
-            /* send to everyone! */
-            if (FD_ISSET(j, &(daemon_local->master)))
-            {
-                /* except the listener and ourselves */
-                if (daemon_local->flags.yvalue[0])
-                {
-                    third_value = daemon_local->fdserial;
-                }
-                else
-                {
-                    third_value = daemon_local->sock;
-                }
-
-                if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
-                {
-                    DLT_DAEMON_SEM_LOCK();
-
-                    if (daemon_local->flags.lflag)
-                    {
-                        send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
-                    }
-                    send(j,data,length,0);
-
-                    DLT_DAEMON_SEM_FREE();
-
-                } /* if */
-                else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue[0]))
-                {
-                    DLT_DAEMON_SEM_LOCK();
-
-                    if (daemon_local->flags.lflag)
-                    {
-                        ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
-                    }
-                    ret=write(j,data,length);
-
-                    DLT_DAEMON_SEM_LOCK();
-                }
-            } /* if */
-        } /* for */
-    }
 
     return 0;
 }

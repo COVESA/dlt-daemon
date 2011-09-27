@@ -102,7 +102,6 @@ typedef struct
     char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
     char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
     char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
-    char uvalue[256];   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
     char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
     int sharedMemorySize;	   /**< (String: Directory) FSize of shared memory (Default: 100000 */
@@ -128,7 +127,6 @@ typedef struct
     DltReceiver receiverSerial; /**< receiver for serial connection */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
-    size_t ringbufferSize;    /**< Size of the ringbuffer */
     DltShm dlt_shm;
 } DltDaemonLocal;
 
@@ -165,7 +163,6 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
 int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 void dlt_daemon_timingpacket_thread(void *ptr);
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose);
