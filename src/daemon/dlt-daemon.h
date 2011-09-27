@@ -84,6 +84,8 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
+#include <dlt_offline_trace.h>
+
 /**
  * The flags of a dlt daemon.
  */
@@ -98,14 +100,16 @@ typedef struct
     int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
-    char ovalue[256];   /**< (String: Filename) Store DLT messages to local log file */
     char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
     char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
     char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
     char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
-    int sharedMemorySize;	   /**< (String: Directory) FSize of shared memory (Default: 100000) */
-    int sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
+    int  sharedMemorySize;	   /**< (int) Size of shared memory (Default: 100000) */
+    int  sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
+    char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
+    int  offlineTraceFileSize;	/**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
+    int  offlineTraceMaxSize;	/**< (int) Maximum size of all trace files (Default: 4000000) */
 } DltDaemonFlags;
 
 /**
@@ -121,14 +125,15 @@ typedef struct
     fd_set master;            /**< master set of handles */
     fd_set read_fds;          /**< read set of handles */
     DltFile file;             /**< struct for file access */
-    int ohandle;          /**< handle to output file */
+    //int ohandle;          /**< handle to output file */
     DltMessage msg;           /**< one dlt message */
     DltReceiver receiver;     /**< receiver for fifo connection */
     DltReceiver receiverSock; /**< receiver for socket connection */
     DltReceiver receiverSerial; /**< receiver for serial connection */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
-    DltShm dlt_shm;
+    DltShm dlt_shm;				/**< Shared memory handling */
+    DltOfflineTrace offlineTrace; /**< Offline trace handling */
 } DltDaemonLocal;
 
 typedef struct

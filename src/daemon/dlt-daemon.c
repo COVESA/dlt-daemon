@@ -227,6 +227,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	/* set default values for configuration */
 	daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
 	daemon_local->flags.sendMessageTime = 0;
+	daemon_local->flags.offlineTraceDirectory[0] = 0;
+	daemon_local->flags.offlineTraceFileSize = 1000000;
+	daemon_local->flags.offlineTraceMaxSize = 0;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -334,11 +337,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 							strncpy(daemon_local->flags.evalue,value,sizeof(daemon_local->flags.evalue));
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"LocalLogFilename")==0)
-						{
-							strncpy(daemon_local->flags.ovalue,value,sizeof(daemon_local->flags.ovalue));
-							printf("Option: %s=%s\n",token,value);
-						}
 						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
 							strncpy(daemon_local->flags.ivalue,value,sizeof(daemon_local->flags.ivalue));
@@ -347,6 +345,21 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						else if(strcmp(token,"SharedMemorySize")==0)
 						{
 							daemon_local->flags.sharedMemorySize = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"OfflineTraceDirectory")==0)
+						{
+							strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"OfflineTraceFileSize")==0)
+						{
+							daemon_local->flags.offlineTraceFileSize = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"OfflineTraceMaxSize")==0)
+						{
+							daemon_local->flags.offlineTraceMaxSize = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
 						else
@@ -532,6 +545,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT,  dlt_daemon_signal_handler);
 
+#if 0
     /* open DLT output file */
     daemon_local->ohandle=-1;
     if (daemon_local->flags.ovalue[0])
@@ -546,7 +560,17 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
             return -1;
         } /* if */
     } /* if */
-
+#endif
+	/* init offline trace */
+	if(daemon_local->flags.offlineTraceDirectory[0]) 
+	{
+		if (dlt_offline_trace_init(&(daemon_local->offlineTrace),daemon_local->flags.offlineTraceDirectory,daemon_local->flags.offlineTraceFileSize,daemon_local->flags.offlineTraceMaxSize)==-1)
+		{
+			dlt_log(LOG_ERR,"Could not initialize offline trace\n");
+			return -1;
+		}
+	}
+	
     return 0;
 }
 
@@ -822,10 +846,15 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     dlt_message_free(&(daemon_local->msg),daemon_local->flags.vflag);
     close(daemon_local->fp);
 
+	/* free shared memory */
+	if(daemon_local->flags.offlineTraceDirectory[0])
+		dlt_offline_trace_free(&(daemon_local->offlineTrace));
+#if 0
     if (daemon_local->flags.ovalue[0])
     {
         close(daemon_local->ohandle);
     } /* if */
+#endif
 
 	/* Ignore result */
     dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
@@ -1742,6 +1771,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				/* print message header only */
 			} /* if */
 
+#if 0
 			/* if file output enabled write message */
 			if (daemon_local->flags.ovalue[0])
 			{
@@ -1755,8 +1785,16 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 					dlt_log(LOG_ERR,"Writing to output file failed!\n");
 				}
 			} /* if */
-
+#endif			
 			sent=0;
+
+			/* write message to offline trace */
+			if(daemon_local->flags.offlineTraceDirectory[0])
+			{
+				dlt_offline_trace_write(&(daemon_local->offlineTrace),daemon_local->msg.headerbuffer,daemon_local->msg.headersize,
+										daemon_local->msg.databuffer,daemon_local->msg.datasize,0,0);
+				sent = 1;
+			}
 
 			/* look if TCP connection to client is available */
 			for (j = 0; j <= daemon_local->fdmax; j++)

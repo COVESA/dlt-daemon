@@ -65,6 +65,9 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
+#ifndef DLT_SHM_H
+#define DLT_SHM_H
+
 #define DLT_SHM_KEY  	11771
 #define DLT_SHM_SIZE	100000
 #define DLT_SHM_SEM		22771
@@ -94,3 +97,5 @@ extern void dlt_shm_status(DltShm *buf);
 
 extern int dlt_shm_free_client(DltShm *buf);
 extern int dlt_shm_free_server(DltShm *buf);
+
+#endif /* DLT_SHM_H */
