@@ -102,6 +102,7 @@ void dlt_shm_pv(int id,int operation)
 }
 
 int dlt_shm_init_server(DltShm *buf,int key,int size) {
+	struct shmid_ds shm_buf;
 
 	// Init parameters
 	buf->shm = NULL;
@@ -115,6 +116,13 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
         perror("shmget");
         return -1; /* ERROR */
     }
+
+	// get the size of shm
+	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
+	{
+		perror("shmctl");
+        return -1; /* ERROR */
+	}	
 
     // Now we attach the segment to our data space.
     if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
@@ -139,11 +147,15 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
     ((int*)(buf->shm))[1] = 0;  // pointer to read memory
     ((int*)(buf->shm))[2] = 0;  // number of packets
     buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-    buf->size = size - (buf->mem - buf->shm);
+    buf->size = shm_buf.shm_segsz - (buf->mem - buf->shm);
 
 	// clear memory
 	memset(buf->mem,0,buf->size);
     
+	//dlt_shm_status(buf);
+    //dlt_shm_info(buf);
+    printf("SHM: Size %d\n",buf->size);    
+
 	return 0; /* OK */
 }
 
@@ -187,6 +199,9 @@ int dlt_shm_init_client(DltShm *buf,int key) {
     buf->mem = (char*)(&(((int*)(buf->shm))[3]));
     buf->size = shm_buf.shm_segsz - (buf->mem - buf->shm);
     
+	//dlt_shm_status(buf);
+    //dlt_shm_info(buf);
+
 	return 0; /* OK */
 }
 
@@ -256,7 +271,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	}
 	else // read <= write
 	{
-		if((write + size1+size2+size3 + sizeof(unsigned char)+sizeof(int)) > buf->size) {
+		if((write+size1+size2+size3+sizeof(unsigned char)+sizeof(int)) > buf->size) {
 			// data does not fit at end of buffer
 			// try write at beginning
 			if((size1+size2+size3+sizeof(unsigned char)+sizeof(int)) > read) {
@@ -264,7 +279,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 				//printf("SHM is full at start\n");
 				return -1; // ERROR
 			}	
-			// write zero and start buffer at beginning
+			// write zero status and size at end if possible
 			if((write+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
 				*((unsigned char*)(buf->mem+write)) = 0;  // init write status to unused
 				*((int*)(buf->mem+write+sizeof(unsigned char))) = 0;  // init write size to unused
