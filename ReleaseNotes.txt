@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 3.0.0
+Version: 2.4.0
 
 
 Introduction
@@ -23,11 +23,12 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
-3.0.0
+2.4.0
 
 Improvements
     * [GSW-61] Replace command line parameter by configuration file
     * [GSW-13] Support for keep-alive messages as configuration parameter
+    * [GSW-60] Extended offline DLT Trace memory handling. 
      
 Bugfixes
 	*
