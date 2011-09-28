@@ -154,12 +154,12 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->runtime_context_cfg_loaded = 0;
 
     /* prepare filenames for configuration */
-    if(runtime_directory)
+    if(runtime_directory[0])
     	strcpy(daemon->runtime_application_cfg,runtime_directory);
     else
     	strcpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG);
-    if(runtime_directory)
+    if(runtime_directory[0])
     	strcpy(daemon->runtime_context_cfg,runtime_directory);
     else
     	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
@@ -176,12 +176,6 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->timingpackets = 0;
 
     dlt_set_id(daemon->ecuid,"");
-
-    /* initialize ring buffer for client connection */
-    if (dlt_ringbuffer_init(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_SIZE)==-1)
-    {
-    	return -1;
-    }
 
     return 0;
 }
@@ -2002,16 +1996,8 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
     }
     else
     {
-        /* Store message in history buffer */
-        if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
-                            msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
-                            msg->databuffer,msg->datasize,
-                            0, 0
-                           )<0)
-		{
-			dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
-			return;
-		}
+		/* message can not be sent */
+		/* in old implementation control message was stored in buffer */
     }
 }
 

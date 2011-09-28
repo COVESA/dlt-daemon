@@ -91,6 +91,7 @@
 #include "dlt_types.h"
 #include "dlt_common.h"
 #include "dlt_user_macros.h"
+#include "dlt_shm.h"
 
 #if !defined (__WIN32__)
 #include <semaphore.h>
@@ -225,7 +226,7 @@ typedef struct
     int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
 
-    DltRingBuffer rbuf;                   /**< Ring-buffer for buffering messages during startup and missing connection */
+    DltShm dlt_shm;
 } DltUser;
 
 /**************************************************************************************************

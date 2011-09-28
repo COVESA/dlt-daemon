@@ -35,6 +35,6 @@
  # @licence end@
 ########
 
-install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h dlt_common.h dlt_types.h dlt_version.h
+install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h dlt_common.h dlt_types.h dlt_version.h dlt_shm.h
         DESTINATION include/dlt
 	COMPONENT devel)

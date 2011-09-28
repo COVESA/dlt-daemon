@@ -1,6 +1,6 @@
 /*
- * Dlt Client test utilities - Diagnostic Log and Trace
- * @licence app begin@
+* Dlt- Diagnostic Log and Trace user library
+* @licence app begin@
  *
  * Copyright (C) 2011, BMW AG - Alexander Wenzel <alexander.wenzel@bmw.de>
  * 
@@ -33,19 +33,18 @@
  * also makes it possible to release a modified version which carries forward this exception.
  *
  * @licence end@
- */
+*/
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-internal.c                                           **
+**  SRC-MODULE: dlt_shm.h                                                     **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
 **  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**              Markus Klein                                                  **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -64,125 +63,124 @@
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
 **  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
 *******************************************************************************/
 
-/*******************************************************************************
-**                      Revision Control History                              **
-*******************************************************************************/
+#ifndef DLT_SHM_H
+#define DLT_SHM_H
 
-/*
- * $LastChangedRevision: 1670 $
- * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
- * $LastChangedBy$
- Initials    Date         Comment
- aw          08.10.2010   initial
- */
+/* shared memory key */
+/* must be the same for server and cleint */
+#define DLT_SHM_KEY  	11771
 
-#include <ctype.h>      /* for isprint() */
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
+/* default size of shared memory */
+/* size is extended during creation to fit segment size */
+/* client retreives real size from shm buffer */
+#define DLT_SHM_SIZE	100000
 
-#include "dlt.h"
-#include "dlt_common.h" /* for dlt_get_version() */
+/* Id of the used semaphore */
+/* used for synchronisation of write and read access of multiple clients and server */
+/* must be the same for server and client */
+#define DLT_SHM_SEM		22771
 
-#define MAX_TESTS 1
+typedef struct
+{
+	int shmid;	/* Id of shared memory */
+	int semid;	/* Id of semaphore */
+	char* shm;	/* pointer to beginning of shared memory */
+	int size; 	/* size of data area in shared memory */
+	char* mem;	/* pointer to data area in shared memory */
+} DltShm;
 
-int vflag = 0;
-int tests_passed = 0;
-int tests_failed = 0;
-
-void internal1(void);
+#define DLT_SHM_SEM_GET(id) dlt_shm_pv(id,-1)
+#define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id,1)
 
 /**
- * Print usage information of tool.
+ * Initialise the shared memory on the client side.
+ * This function must be called before using further shm functions.
+ * @param buf pointer to shm structure
+ * @param key the identifier of the shm, must be the same for server and client
+ * @return negative value if there was an error
  */
-void usage()
-{
-    char version[255];
-
-    dlt_get_version(version);
-
-    printf("Usage: dlt-test-internal [options]\n");
-    printf("Test application executing several internal tests.\n");
-    printf("%s \n", version);
-    printf("Options:\n");
-    printf("  -v            Verbose mode\n");
-    printf("  -1            Execute test 1 (Test ringbuffer)\n");
-}
+extern int dlt_shm_init_client(DltShm *buf,int key);
 
 /**
- * Main function of tool.
+ * Initialise the shared memory on the server side.
+ * This function must be called before using further shm functions.
+ * @param buf pointer to shm structure
+ * @param key the identifier of the shm, must be the same for server and client
+ * @param size the requested size of the shm
+ * @return negative value if there was an error
  */
-int main(int argc, char* argv[])
-{
-    int test[MAX_TESTS];
+extern int dlt_shm_init_server(DltShm *buf,int key,int size);
 
-    int i,c,help;
+/**
+ * Push data from client onto the shm.
+ * @param buf pointer to shm structure
+ * @param data1 pointer to first data block to be written, null if not used
+ * @param size1 size in bytes of first data block to be written, 0 if not used
+ * @param data2 pointer to second data block to be written, null if not used
+ * @param size2 size in bytes of second data block to be written, 0 if not used
+ * @param data3 pointer to third data block to be written, null if not used
+ * @param size3 size in bytes of third data block to be written, 0 if not used
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
 
-    for (i=0;i<MAX_TESTS;i++)
-    {
-        test[i]=0;
-    }
+/**
+ * Pull data from shm.
+ * This function should be called from client.
+ * Data is deleted from shm after this call.
+ * @param buf pointer to shm structure
+ * @param data pointer to buffer where data is to be written
+ * @param size maximum size to be written into buffer
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_pull(DltShm *buf,unsigned char *data, int size);
 
-    opterr = 0;
+/**
+ * Copy message from shm.
+ * This function should be called from server.
+ * Data is not deleted from shm after this call.
+ * @param buf pointer to shm structure
+ * @param data pointer to buffer where data is to be written
+ * @param size maximum size to be written into buffer
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_copy(DltShm *buf,unsigned char *data, int size);
 
-    while ((c = getopt (argc, argv, "v1")) != -1)
-    {
-        switch (c)
-        {
-        case 'v':
-        {
-            vflag = 1;
-            break;
-        }
-        case '1':
-        {
-            test[0] = 1;
-            break;
-        }
-        case '?':
-        {
-            if (isprint (optopt))
-            {
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
-            else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
-            /* unknown or wrong option used, show usage information and terminate */
-            usage();
-            return -1;
-        }
-        default:
-        {
-            abort ();
-        }
-        }
-    }
+/**
+ * Delete message from shm.
+ * This function should be called from server.
+ * This function should be called after each succesful copy.
+ * @param buf pointer to shm structure
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_remove(DltShm *buf);
 
-    help=0;
-    for (i=0;i<MAX_TESTS;i++)
-    {
-        if (test[i]==1)
-        {
-            help=1;
-            break;
-        }
-    }
+/**
+ * Print information about shm.
+ * @param buf pointer to shm structure
+ */
+extern void dlt_shm_info(DltShm *buf);
 
-    if (help==0)
-    {
-        usage();
-        return -1;
-    }
+/**
+ * Print status about shm.
+ * @param buf pointer to shm structure
+ */
+extern void dlt_shm_status(DltShm *buf);
 
-    printf("\n");
-    printf("%d tests passed\n",tests_passed);
-    printf("%d tests failed\n",tests_failed);
+/**
+ * Deinitialise the shared memory on the client side.
+ * @param buf pointer to shm structure
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_free_client(DltShm *buf);
 
-    return 0;
-}
+/**
+ * Deinitialise the shared memory on the server side.
+ * @param buf pointer to shm structure
+ * @return negative value if there was an error
+ */
+extern int dlt_shm_free_server(DltShm *buf);
 
+#endif /* DLT_SHM_H */

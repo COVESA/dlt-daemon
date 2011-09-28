@@ -98,7 +98,7 @@ typedef struct
 } thread_data_t;
 
 #define STRESS1_NUM_CONTEXTS    3000
-#define STRESS2_MAX_NUM_THREADS  256
+#define STRESS2_MAX_NUM_THREADS  64
 #define STRESS3_MAX_NUM_MESSAGES 512
 
 #define MAX_TESTS 3
@@ -319,10 +319,7 @@ void stress2(void)
 
     for (index=0;index<STRESS2_MAX_NUM_THREADS;index++)
     {
-        if (thread[index]!=0)
-        {
-            pthread_join(thread[index], NULL);
-        }
+		pthread_join(thread[index], NULL);
     }
 
     printf("Finished stress test2 \n\n");
@@ -366,7 +363,7 @@ void stress3(void)
     {
         buffer[num] = num;
         DLT_LOG(context_stress3,DLT_LOG_INFO,DLT_INT(num),DLT_RAW(buffer,num));
-        usleep(1);
+        usleep(10000);
     }
 
     printf("Finished stress test3 \n\n");

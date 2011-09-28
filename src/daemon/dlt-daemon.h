@@ -84,6 +84,8 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
+#include <dlt_offline_trace.h>
+
 /**
  * The flags of a dlt daemon.
  */
@@ -98,13 +100,16 @@ typedef struct
     int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
-    char *ovalue;   /**< (String: Filename) Store DLT messages to local log file */
-    char *fvalue;   /**< (String: Filename) Enable filtering of messages */
-    char *evalue;   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
-    char *bvalue;   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
-    char *yvalue;   /**< (String: Devicename) Additional support for serial device */
-    char *uvalue;   /**< (String: Ringbuffer) Size of the ringbuffer in bytes (Default: 10024) */
-    char *ivalue;   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
+    char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
+    char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
+    char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
+    char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
+    char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
+    int  sharedMemorySize;	   /**< (int) Size of shared memory (Default: 100000) */
+    int  sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
+    char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
+    int  offlineTraceFileSize;	/**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
+    int  offlineTraceMaxSize;	/**< (int) Maximum size of all trace files (Default: 4000000) */
 } DltDaemonFlags;
 
 /**
@@ -120,15 +125,15 @@ typedef struct
     fd_set master;            /**< master set of handles */
     fd_set read_fds;          /**< read set of handles */
     DltFile file;             /**< struct for file access */
-    DltFilter filter;         /**< struct for filter access */
-    int ohandle;          /**< handle to output file */
+    //int ohandle;          /**< handle to output file */
     DltMessage msg;           /**< one dlt message */
     DltReceiver receiver;     /**< receiver for fifo connection */
     DltReceiver receiverSock; /**< receiver for socket connection */
     DltReceiver receiverSerial; /**< receiver for serial connection */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
-    size_t ringbufferSize;    /**< Size of the ringbuffer */
+    DltShm dlt_shm;				/**< Shared memory handling */
+    DltOfflineTrace offlineTrace; /**< Offline trace handling */
 } DltDaemonLocal;
 
 typedef struct
@@ -164,7 +169,6 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
 int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 void dlt_daemon_timingpacket_thread(void *ptr);
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose);

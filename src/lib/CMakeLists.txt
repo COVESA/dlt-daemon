@@ -35,7 +35,7 @@
  # @licence end@
 ########
 
-set(dlt_LIB_SRCS dlt_user dlt_client ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c )
+set(dlt_LIB_SRCS dlt_user dlt_client ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
 
 add_library(dlt ${dlt_LIB_SRCS})
 

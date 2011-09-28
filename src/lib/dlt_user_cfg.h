@@ -87,9 +87,6 @@
 /* Size of receive buffer */
 #define DLT_USER_RCVBUF_MAX_SIZE 10024 
 
-/* Size of ring buffer */      
-#define DLT_USER_RINGBUFFER_SIZE 10024       
-
 /* Temporary buffer length */
 #define DLT_USER_BUFFER_LENGTH               255
 
@@ -105,6 +102,9 @@
 
 /* Length of buffer for constructing text output */
 #define DLT_USER_TEXT_LENGTH         	   10024
+
+/* Stack size of receiver thread */
+#define DLT_USER_RECEIVERTHREAD_STACKSIZE 100000
 
 /* default value for storage to file, not used in daemon connection */
 #define DLT_USER_DEFAULT_ECU_ID "ECU1"

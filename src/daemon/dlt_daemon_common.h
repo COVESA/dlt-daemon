@@ -148,7 +148,6 @@ typedef struct
 	char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
-	DltRingBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
 	char runtime_application_cfg[256]; /**< Path and filename of persistent application configuration */
 	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
 } DltDaemon;
