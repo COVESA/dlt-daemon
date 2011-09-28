@@ -443,15 +443,15 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
     if ((dltdata->fvalue==0) || (dltdata->fvalue && dlt_message_filter_check(message,&(dltdata->filter),dltdata->vflag)==1))
     {
 
-        dlt_message_header(message,text,sizeof(text),dltdata->vflag);
+        //dlt_message_header(message,text,sizeof(text),dltdata->vflag);
         if (dltdata->aflag)
         {
-            printf("%s ",text);
+            //printf("%s ",text);
         }
-        dlt_message_payload(message,text,sizeof(text),DLT_OUTPUT_ASCII,dltdata->vflag);
+        //dlt_message_payload(message,text,sizeof(text),DLT_OUTPUT_ASCII,dltdata->vflag);
         if (dltdata->aflag)
         {
-            printf("[%s]\n",text);
+            //printf("[%s]\n",text);
         }
 
 		/* do something here */
@@ -462,7 +462,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 		// print number of received bytes
 		if((dlt_uptime() - dltdata->time_elapsed) > 10000)
 		{
-			printf("Received %lu Bytes/s\n",dltdata->bytes_received*10000/(dlt_uptime()-dltdata->time_elapsed));
+			printf("Received %lu Bytes/s\n",dltdata->bytes_received/**10000/(dlt_uptime()-dltdata->time_elapsed)*/);
+			//printf("Received %lu Bytes received\n",dltdata->bytes_received);
 			dltdata->time_elapsed = dlt_uptime();
 			dltdata->bytes_received = 0;
 		}
