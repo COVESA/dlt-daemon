@@ -1,9 +1,13 @@
-dlt-daemon for Debian
----------------------
+License
+-------
+See file: LICENSE.txt
+The full LGPL license: LGPL.txt
 
-<this file describes information about the source package, see Debian policy
-manual section 4.14. You WILL either need to modify or delete this file>
-
-
-
-
+Compiling in Linux:
+-------------------
+- create directory build
+- change into directory build
+- cmake ..
+- make
+- optional: sudo make install
+- optional: sudo ldconfig

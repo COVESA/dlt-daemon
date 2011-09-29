@@ -2,6 +2,7 @@ Source: dlt-daemon
 Section: autmotive
 Priority: extra
 Maintainer: dlt_maintainer@genivi.org 
+XSBC-Original-Maintainer: alexander.wenzel@bmw.de
 Uploaders: jeremiah.foster@pelagicore.com
 Build-Depends: debhelper (>= 7.0.50~), cmake
 Standards-Version: 3.9.1
