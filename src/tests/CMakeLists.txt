@@ -83,6 +83,14 @@ ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-internal dlt)
 set_target_properties(dlt-test-internal PROPERTIES LINKER_LANGUAGE C)
 
+set(dlt_test_filetransfer_SRCS dlt-test-filetransfer)
+add_executable(dlt-test-filetransfer ${dlt_test_filetransfer_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
+target_link_libraries(dlt-test-filetransfer dlt)
+set_target_properties(dlt-test-filetransfer PROPERTIES LINKER_LANGUAGE C)
+
 install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal
 	RUNTIME DESTINATION bin
 	COMPONENT base)
