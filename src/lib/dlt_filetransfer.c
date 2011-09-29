@@ -95,14 +95,24 @@ int isFile (const char* file)
  */
 void doTimeout(int timeout)
 {
-	if(timeout>MIN_TIMEOUT)
-	{	
-		usleep(timeout * 1000);
-	}
-	else
+	int total_size, used_size;
+	
+	dlt_user_check_buffer(&total_size, &used_size);
+	
+	/* sleep only if more than 50% of buffer used */
+	if((total_size - used_size) < (total_size/2))
 	{
-		usleep(MIN_TIMEOUT * 1000);
-	}	  	
+		printf("Wait %d of %d already used\n",used_size,total_size);
+
+		if(timeout>MIN_TIMEOUT)
+		{	
+			usleep(timeout * 1000);
+		}
+		else
+		{
+			usleep(MIN_TIMEOUT * 1000);
+		}	  			
+	}
 }
 
 //!Deletes the given file
@@ -298,8 +308,8 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
  */
 int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int packageToTransfer, int timeout){
 	FILE *file;
-	int i,pkgNumber;
-	long positionIndicator,readBytes;
+	int pkgNumber;
+	long readBytes;
 		
 	if(isFile(filename))
 	{

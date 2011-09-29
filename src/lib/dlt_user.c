@@ -2743,3 +2743,11 @@ int dlt_user_log_send_overflow(void)
     return ((ret==DLT_RETURN_OK)?0:-1);
 }
 
+int dlt_user_check_buffer(int *total_size, int *used_size)
+{
+	*total_size = dlt_shm_get_total_size(&(dlt_user.dlt_shm));
+	*used_size = dlt_shm_get_used_size(&(dlt_user.dlt_shm));
+	
+	return 0; /* ok */
+}
+

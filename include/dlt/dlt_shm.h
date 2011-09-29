@@ -177,6 +177,27 @@ extern void dlt_shm_status(DltShm *buf);
 extern int dlt_shm_free_client(DltShm *buf);
 
 /**
+ * Returns the total size of the shm.
+ * @param buf pointer to shm structure
+ * @return size of the shared memory.
+ */
+extern int dlt_shm_get_total_size(DltShm *buf);
+
+/**
+ * Returns the used size in the shm.
+ * @param buf pointer to shm structure
+ * @return size of the shared memory.
+ */
+extern int dlt_shm_get_used_size(DltShm *buf);
+
+/**
+ * Returns the number of messages in the shm.
+ * @param buf pointer to shm structure
+ * @return size of the shared memory.
+ */
+extern int dlt_shm_get_message_count(DltShm *buf);
+
+/**
  * Deinitialise the shared memory on the server side.
  * @param buf pointer to shm structure
  * @return negative value if there was an error

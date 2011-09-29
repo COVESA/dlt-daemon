@@ -16,16 +16,23 @@ char *file3;
 //!Just some variables
 int i,countPackages, transferResult, dltResult;
 
+extern int testF1P1();
+extern int testF1P2();
+extern int testF2P1();
+extern int testF2P2();
+extern int testF3P1();
+extern int testF3P2();
+extern int testF3P3();
 
 //!Main program dlt-test-filestransfer starts here
 int main(void)
 {	
 	//First file contains some text
-	file1 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-file";
+	file1 = "dlt-test-filetransfer-file";
 	//Second file is a picture	
-	file2 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png";
+	file2 = "dlt-test-filetransfer-image.png";
 	//Third file doesn't exist. Just to test the reaction when the file isn't available.
-	file3 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-doesntExist";
+	file3 = "dlt-test-filetransfer-doesntExist";
 	
 
 	//Register the application at the dlt-daemon

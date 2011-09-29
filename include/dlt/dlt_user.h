@@ -540,6 +540,16 @@ int dlt_log_raw(DltContext *handle,DltLogLevelType loglevel, void *data,uint16_t
  */
 int dlt_forward_msg(void *msgdata,size_t size);
 
+/**
+ * Get the total size and available size of the shared memory buffer between daemon and applications.
+ * This information is useful to control the flow control between applications and daemon.
+ * For example only 50% of the buffer should be used for file transfer.
+ * @param total_size total size of buffer in bytes
+ * @param used_size used size of buffer in bytes
+ * @return negative value if there was an error
+ */
+int dlt_user_check_buffer(int *total_size, int *used_size);
+
 #ifdef __cplusplus
 }
 #endif

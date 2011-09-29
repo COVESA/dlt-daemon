@@ -229,6 +229,33 @@ void dlt_shm_status(DltShm *buf)
 
 }
 
+int dlt_shm_get_total_size(DltShm *buf)
+{
+	return buf->size;
+}
+
+int dlt_shm_get_used_size(DltShm *buf)
+{
+	int write, read, count;
+
+	write = ((int*)(buf->shm))[0];
+	read = ((int*)(buf->shm))[1];
+	count = ((int*)(buf->shm))[2];
+
+	if(count == 0)
+		return 0;
+		
+	if(write>read)
+		return (write - read);
+	
+	return (buf->size - read + write);
+}
+
+int dlt_shm_get_message_count(DltShm *buf)
+{
+	return ((int*)(buf->shm))[2];
+}
+
 int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3)
 {
 	int write, read, count;
