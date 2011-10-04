@@ -35,11 +35,16 @@
  # @licence end@
 ########
 
-ADD_SUBDIRECTORY( lib )
-ADD_SUBDIRECTORY( console )
-ADD_SUBDIRECTORY( daemon )
-ADD_SUBDIRECTORY( examples )
-ADD_SUBDIRECTORY( adaptor )
-ADD_SUBDIRECTORY( tests )
-ADD_SUBDIRECTORY( system )
+set(dlt_system_SRCS dlt-system dlt-system-log)
+add_executable(dlt-system ${dlt_system_SRCS})
+IF(GPROF_DLT_SYSTEM)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_SYSTEM)
+target_link_libraries(dlt-system dlt)
+set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS dlt-system
+	RUNTIME DESTINATION bin
+	COMPONENT base)
+
 
