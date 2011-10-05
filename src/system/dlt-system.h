@@ -10,8 +10,10 @@ typedef struct {
 	char ApplicationId[256];
 	char SyslogContextId[256];
 	int  SyslogPort;
-	int  KernelVersionMode;
-	char KernelVersionContextId[256];
+	int  LogKernelVersionMode;
+	char LogKernelVersionContextId[256];
+	int  LogProcessesMode;
+	char LogProcessesContextId[256];
 } DltSystemOptions;
 
 #endif /* DLT_SYSTEM_H */

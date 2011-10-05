@@ -97,6 +97,7 @@
 
 DLT_DECLARE_CONTEXT(syslogContext);
 DLT_DECLARE_CONTEXT(kernelVersionContext);
+DLT_DECLARE_CONTEXT(processesContext);
 
 void dlt_system_init_options(DltSystemOptions *options)
 {
@@ -104,8 +105,10 @@ void dlt_system_init_options(DltSystemOptions *options)
 	strncpy(options->ApplicationId,DEFAULT_APPLICATION_ID,sizeof(options->ApplicationId));
 	strncpy(options->SyslogContextId,DEFAULT_SYSLOG_CONTEXT_ID,sizeof(options->SyslogContextId));
 	options->SyslogPort = DEFAULT_SYSLOG_PORT;
-	options->KernelVersionMode = DEFAULT_KERNEL_VERSION_MODE;		
-	strncpy(options->KernelVersionContextId,DEFAULT_KERNEL_VERSION_CONTEXT_ID,sizeof(options->KernelVersionContextId));
+	options->LogKernelVersionMode = DEFAULT_LOG_KERNEL_VERSION_MODE;		
+	strncpy(options->LogKernelVersionContextId,DEFAULT_LOG_KERNEL_VERSION_CONTEXT_ID,sizeof(options->LogKernelVersionContextId));
+	options->LogProcessesMode = DEFAULT_LOG_PROCESSES_MODE;		
+	strncpy(options->LogProcessesContextId,DEFAULT_LOG_PROCESSES_CONTEXT_ID,sizeof(options->LogProcessesContextId));
 }
 
 int dlt_system_parse_options(DltSystemOptions *options,int argc, char* argv[])
@@ -205,14 +208,24 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 							options->SyslogPort = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"KernelVersionMode")==0)
+						else if(strcmp(token,"LogKernelVersionMode")==0)
 						{
-							options->KernelVersionMode = atoi(value);
+							options->LogKernelVersionMode = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"KernelVersionContextId")==0)
+						else if(strcmp(token,"LogKernelVersionContextId")==0)
 						{
-							strncpy(options->KernelVersionContextId,value,sizeof(options->KernelVersionContextId));
+							strncpy(options->LogKernelVersionContextId,value,sizeof(options->LogKernelVersionContextId));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessesMode")==0)
+						{
+							options->LogProcessesMode = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessesContextId")==0)
+						{
+							strncpy(options->LogProcessesContextId,value,sizeof(options->LogProcessesContextId));
 							printf("Option: %s=%s\n",token,value);
 						}
 						else
@@ -271,8 +284,11 @@ int main(int argc, char* argv[])
  	
 	DLT_REGISTER_CONTEXT(syslogContext,options.SyslogContextId,"SYSLOG Adapter");
     
- 	if(options.KernelVersionMode != DLT_SYSTEM_MODE_OFF)
-		DLT_REGISTER_CONTEXT(kernelVersionContext,options.KernelVersionContextId,"Log Kernel version");
+ 	if(options.LogKernelVersionMode != DLT_SYSTEM_MODE_OFF)
+		DLT_REGISTER_CONTEXT(kernelVersionContext,options.LogKernelVersionContextId,"Log Kernel version");
+
+ 	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
+		DLT_REGISTER_CONTEXT(processesContext,options.LogProcessesContextId,"Log Processes");
 
 	/* create systemd socket */
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
@@ -320,9 +336,13 @@ int main(int argc, char* argv[])
 			/* one second elapsed */
 			lasttime = dlt_uptime();
 			
-			if(((options.KernelVersionMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
-			   (options.KernelVersionMode == DLT_SYSTEM_MODE_REGULAR) ) {
-				   dlt_system_log_kernel_version(&kernelVersionContext);
+			if(((options.LogKernelVersionMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
+			   (options.LogKernelVersionMode == DLT_SYSTEM_MODE_REGULAR) ) {
+				   dlt_system_log_kernel_version(&options,&kernelVersionContext);
+			}
+			if(((options.LogProcessesMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
+			   (options.LogProcessesMode == DLT_SYSTEM_MODE_REGULAR) ) {
+				   dlt_system_log_processes(&options,&processesContext);
 			}
 			
 			firsttime = 0;
@@ -344,7 +364,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					DLT_UNREGISTER_CONTEXT(syslogContext);
+					DLT_UNREGISTER_CONTEXT(processesContext);
 					DLT_UNREGISTER_CONTEXT(syslogContext);
 					DLT_UNREGISTER_APP();
 					exit(1);
@@ -360,9 +380,12 @@ int main(int argc, char* argv[])
 		}
     }
 
-	if(options.KernelVersionMode != DLT_SYSTEM_MODE_OFF)
+	if(options.LogKernelVersionMode != DLT_SYSTEM_MODE_OFF)
 		DLT_UNREGISTER_CONTEXT(kernelVersionContext);
     
+	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
+		DLT_UNREGISTER_CONTEXT(processesContext);
+		
     DLT_UNREGISTER_CONTEXT(syslogContext);
     DLT_UNREGISTER_APP();
 
