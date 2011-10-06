@@ -98,6 +98,7 @@
 DLT_DECLARE_CONTEXT(syslogContext);
 DLT_DECLARE_CONTEXT(kernelVersionContext);
 DLT_DECLARE_CONTEXT(processesContext);
+DLT_DECLARE_CONTEXT(filetransferContext);
 
 void dlt_system_init_options(DltSystemOptions *options)
 {
@@ -105,6 +106,10 @@ void dlt_system_init_options(DltSystemOptions *options)
 	strncpy(options->ApplicationId,DEFAULT_APPLICATION_ID,sizeof(options->ApplicationId));
 	strncpy(options->SyslogContextId,DEFAULT_SYSLOG_CONTEXT_ID,sizeof(options->SyslogContextId));
 	options->SyslogPort = DEFAULT_SYSLOG_PORT;
+	strncpy(options->FiletransferDirectory,DEFAULT_FILETRANSFER_DIRECTORY,sizeof(options->FiletransferDirectory));
+	strncpy(options->FiletransferContextId,DEFAULT_FILETRANSFER_CONTEXT_ID,sizeof(options->FiletransferContextId));
+	options->FiletransferTimeStartup = DEFAULT_FILETRANSFER_TIME_STARTUP;
+	options->FiletransferTimeDelay = DEFAULT_FILETRANSFER_TIME_DELAY;
 	options->LogKernelVersionMode = DEFAULT_LOG_KERNEL_VERSION_MODE;		
 	strncpy(options->LogKernelVersionContextId,DEFAULT_LOG_KERNEL_VERSION_CONTEXT_ID,sizeof(options->LogKernelVersionContextId));
 	options->LogProcessesMode = DEFAULT_LOG_PROCESSES_MODE;		
@@ -208,6 +213,26 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 							options->SyslogPort = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
+						else if(strcmp(token,"FiletransferDirectory")==0)
+						{
+							strncpy(options->FiletransferDirectory,value,sizeof(options->FiletransferDirectory));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"FiletransferContextId")==0)
+						{
+							strncpy(options->FiletransferContextId,value,sizeof(options->FiletransferContextId));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"FiletransferTimeStartup")==0)
+						{
+							options->FiletransferTimeStartup = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"FiletransferTimeDelay")==0)
+						{
+							options->FiletransferTimeDelay = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
 						else if(strcmp(token,"LogKernelVersionMode")==0)
 						{
 							options->LogKernelVersionMode = atoi(value);
@@ -265,6 +290,7 @@ int main(int argc, char* argv[])
     int firsttime = 1;
 
     DltSystemOptions options;
+    DltSystemRuntime runtime;
 
 	/* init options */
 	dlt_system_init_options(&options);
@@ -290,6 +316,9 @@ int main(int argc, char* argv[])
  	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
 		DLT_REGISTER_CONTEXT(processesContext,options.LogProcessesContextId,"Log Processes");
 
+	if(options.FiletransferDirectory[0]!=0)
+		DLT_REGISTER_CONTEXT(filetransferContext,options.FiletransferContextId,"Filetransfer");
+
 	/* create systemd socket */
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
     {
@@ -312,38 +341,66 @@ int main(int argc, char* argv[])
     FD_ZERO(&rfds);
     FD_SET(sock, &rfds);
 
+	/* init timers */
 	lasttime = dlt_uptime();
+	runtime.timeStartup = 0;
+	runtime.timeFiletransferDelay = 0;
+
+	/* initialise filetransfer manager */
+	dlt_system_filetransfer_init(&options,&runtime);
 
     while (1)
     {
 	    /* Wait up to one second. */
 		tv.tv_sec = 0;
-		tv.tv_usec = (dlt_uptime()-lasttime+10000)*100;
+		if(runtime.filetransferRunning)
+			tv.tv_usec = 10000;
+		else
+			tv.tv_usec = (dlt_uptime()-lasttime+10000)*100;
 
 		/* wait data to be received, or wait min time */
 		retval = select(1, &rfds, NULL, NULL, &tv);
-		/* Don't rely on the value of tv now! */
 
 		if (retval == -1)
 			perror("select()");
 		else if (retval)
-			printf("Data is available now.\n");
-		//else
-		//	printf("No data within one seconds.\n");
+			;//printf("Data is available now.\n");
+		else
+			;//printf("No data within one seconds.\n");
+
+		/* call filtransfer even in shorter time schedule */
+		if(runtime.filetransferRunning)
+			dlt_system_filetransfer_run(&options,&runtime,&filetransferContext);
 
 		if((dlt_uptime()-lasttime) >= 10000)
 		{
 			/* one second elapsed */
 			lasttime = dlt_uptime();
+			runtime.timeStartup++;
 			
+			/* filetransfer manager */
+			if(options.FiletransferDirectory[0]!=0) {
+				if(runtime.timeStartup > options.FiletransferTimeStartup) {
+					if(runtime.timeFiletransferDelay>0) {
+						runtime.timeFiletransferDelay--;
+					}
+					else {
+						dlt_system_filetransfer_run(&options,&runtime,&filetransferContext);
+					}
+				}
+			}
+			
+			/* log kernel version */
 			if(((options.LogKernelVersionMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
 			   (options.LogKernelVersionMode == DLT_SYSTEM_MODE_REGULAR) ) {
 				   dlt_system_log_kernel_version(&options,&kernelVersionContext);
 			}
+			
+			/* log processes information */
 			if(((options.LogProcessesMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
 			   (options.LogProcessesMode == DLT_SYSTEM_MODE_REGULAR) ) {
 				   dlt_system_log_processes(&options,&processesContext);
-			}
+			}			
 			
 			firsttime = 0;
 		}
@@ -364,9 +421,6 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					DLT_UNREGISTER_CONTEXT(processesContext);
-					DLT_UNREGISTER_CONTEXT(syslogContext);
-					DLT_UNREGISTER_APP();
 					exit(1);
 				}
 			}
@@ -386,7 +440,10 @@ int main(int argc, char* argv[])
 	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
 		DLT_UNREGISTER_CONTEXT(processesContext);
 		
-    DLT_UNREGISTER_CONTEXT(syslogContext);
+	if(options.FiletransferDirectory[0]!=0)
+		DLT_UNREGISTER_CONTEXT(filetransferContext);
+		
+    DLT_UNREGISTER_CONTEXT(syslogContext);	
     DLT_UNREGISTER_APP();
 
     return 0;
