@@ -121,24 +121,25 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	
 }
 
-void dlt_system_log_kernel_version(DltSystemOptions *options,DltContext *context) {
-		FILE * pFile;
-		char buffer[1024];
-		int bytes;
+void dlt_system_log_file(DltSystemOptions *options,DltContext *context,int num) {
+	FILE * pFile;
+	char buffer[1024];
+	int bytes;
+
+	pFile = fopen(options->LogFileFilename[num],"r");
 	
-		pFile = fopen("/proc/version","r");
-		
-		if(pFile>0)
-		{
+	if(pFile>0)
+	{
+		do {
 			bytes = fread(buffer,1,sizeof(buffer)-1,pFile);
 			
-			fclose(pFile);
-		
 			if(bytes>0) { 
 				buffer[bytes] = 0;
 				DLT_LOG(*context, DLT_LOG_INFO, DLT_STRING(buffer));				   	
 			}
-		}
+		} while (bytes>0);
+		fclose(pFile);
+	}
 }
 
 void dlt_system_log_processes(DltSystemOptions *options,DltContext *context) {

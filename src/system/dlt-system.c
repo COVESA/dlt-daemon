@@ -96,12 +96,14 @@
 #define MAXSTRLEN             1024
 
 DLT_DECLARE_CONTEXT(syslogContext);
-DLT_DECLARE_CONTEXT(kernelVersionContext);
 DLT_DECLARE_CONTEXT(processesContext);
 DLT_DECLARE_CONTEXT(filetransferContext);
+DltContext logFileContext[DLT_SYSTEM_LOG_FILE_MAX];
 
 void dlt_system_init_options(DltSystemOptions *options)
 {
+	int num;
+	
 	strncpy(options->ConfigurationFile,DEFAULT_CONFIGURATION_FILE,sizeof(options->ConfigurationFile));
 	strncpy(options->ApplicationId,DEFAULT_APPLICATION_ID,sizeof(options->ApplicationId));
 	strncpy(options->SyslogContextId,DEFAULT_SYSLOG_CONTEXT_ID,sizeof(options->SyslogContextId));
@@ -110,10 +112,15 @@ void dlt_system_init_options(DltSystemOptions *options)
 	strncpy(options->FiletransferContextId,DEFAULT_FILETRANSFER_CONTEXT_ID,sizeof(options->FiletransferContextId));
 	options->FiletransferTimeStartup = DEFAULT_FILETRANSFER_TIME_STARTUP;
 	options->FiletransferTimeDelay = DEFAULT_FILETRANSFER_TIME_DELAY;
-	options->LogKernelVersionMode = DEFAULT_LOG_KERNEL_VERSION_MODE;		
-	strncpy(options->LogKernelVersionContextId,DEFAULT_LOG_KERNEL_VERSION_CONTEXT_ID,sizeof(options->LogKernelVersionContextId));
 	options->LogProcessesMode = DEFAULT_LOG_PROCESSES_MODE;		
 	strncpy(options->LogProcessesContextId,DEFAULT_LOG_PROCESSES_CONTEXT_ID,sizeof(options->LogProcessesContextId));
+	options->LogFileNumber = 0;
+	for(num=0;num<DLT_SYSTEM_LOG_FILE_MAX;num++) {
+		options->LogFileFilename[num][0]=0;
+		options->LogFileMode[num]=0;
+		options->LogFileContextId[num][0]=0;
+		options->LogFileTimeDelay[num]=0;
+	}
 }
 
 int dlt_system_parse_options(DltSystemOptions *options,int argc, char* argv[])
@@ -233,15 +240,27 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 							options->FiletransferTimeDelay = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"LogKernelVersionMode")==0)
+						else if(strcmp(token,"LogFileFilename")==0)
 						{
-							options->LogKernelVersionMode = atoi(value);
+							strncpy(options->LogFileFilename[options->LogFileNumber],value,sizeof(options->LogFileFilename[options->LogFileNumber]));
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"LogKernelVersionContextId")==0)
+						else if(strcmp(token,"LogFileMode")==0)
 						{
-							strncpy(options->LogKernelVersionContextId,value,sizeof(options->LogKernelVersionContextId));
+							options->LogFileMode[options->LogFileNumber] = atoi(value);
 							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogFileTimeDelay")==0)
+						{
+							options->LogFileTimeDelay[options->LogFileNumber] = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogFileContextId")==0)
+						{
+							strncpy(options->LogFileContextId[options->LogFileNumber],value,sizeof(options->LogFileContextId[options->LogFileNumber]));
+							printf("Option: %s=%s\n",token,value);
+							if(options->LogFileNumber <  (DLT_SYSTEM_LOG_FILE_MAX-1) )
+								options->LogFileNumber++;
 						}
 						else if(strcmp(token,"LogProcessesMode")==0)
 						{
@@ -288,6 +307,7 @@ int main(int argc, char* argv[])
     int retval;
     uint32_t lasttime;
     int firsttime = 1;
+    int num;
 
     DltSystemOptions options;
     DltSystemRuntime runtime;
@@ -310,14 +330,18 @@ int main(int argc, char* argv[])
  	
 	DLT_REGISTER_CONTEXT(syslogContext,options.SyslogContextId,"SYSLOG Adapter");
     
- 	if(options.LogKernelVersionMode != DLT_SYSTEM_MODE_OFF)
-		DLT_REGISTER_CONTEXT(kernelVersionContext,options.LogKernelVersionContextId,"Log Kernel version");
-
  	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
 		DLT_REGISTER_CONTEXT(processesContext,options.LogProcessesContextId,"Log Processes");
 
 	if(options.FiletransferDirectory[0]!=0)
 		DLT_REGISTER_CONTEXT(filetransferContext,options.FiletransferContextId,"Filetransfer");
+
+	for(num=0;num<options.LogFileNumber;num++) {
+		if(options.LogFileFilename[num][0]!=0)
+			DLT_REGISTER_CONTEXT(logFileContext[num],options.LogFileContextId[num],options.LogFileFilename[num]);
+		runtime.timeLogFileDelay[num]=0;
+
+	}
 
 	/* create systemd socket */
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
@@ -391,9 +415,17 @@ int main(int argc, char* argv[])
 			}
 			
 			/* log kernel version */
-			if(((options.LogKernelVersionMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
-			   (options.LogKernelVersionMode == DLT_SYSTEM_MODE_REGULAR) ) {
-				   dlt_system_log_kernel_version(&options,&kernelVersionContext);
+			for(num=0;num<options.LogFileNumber;num++) {
+				if(((options.LogFileMode[num] == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
+				   (options.LogFileMode[num] == DLT_SYSTEM_MODE_REGULAR) ) {
+						if(runtime.timeLogFileDelay[num]<=0) {
+							dlt_system_log_file(&options,&logFileContext[num],num);
+							runtime.timeLogFileDelay[num]=options.LogFileTimeDelay[num]-1;
+					    }
+					    else {
+							runtime.timeLogFileDelay[num]--;
+						}
+				}
 			}
 			
 			/* log processes information */
@@ -434,14 +466,16 @@ int main(int argc, char* argv[])
 		}
     }
 
-	if(options.LogKernelVersionMode != DLT_SYSTEM_MODE_OFF)
-		DLT_UNREGISTER_CONTEXT(kernelVersionContext);
-    
 	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
 		DLT_UNREGISTER_CONTEXT(processesContext);
 		
 	if(options.FiletransferDirectory[0]!=0)
 		DLT_UNREGISTER_CONTEXT(filetransferContext);
+
+	for(num=0;num<options.LogFileNumber;num++) {
+		if(options.LogFileFilename[num][0]!=0)
+			DLT_UNREGISTER_CONTEXT(logFileContext[num]);
+	}
 		
     DLT_UNREGISTER_CONTEXT(syslogContext);	
     DLT_UNREGISTER_APP();
