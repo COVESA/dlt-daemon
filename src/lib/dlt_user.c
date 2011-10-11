@@ -2031,7 +2031,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     }
 
     /* also for Trace messages */
-    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG)==-1)
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_SHM)==-1)
     {
 		return -1;
     }
