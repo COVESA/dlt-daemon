@@ -149,6 +149,18 @@ typedef enum
         DLT_NW_TRACE_USER_DEFINED7 = 0x0F
 } DltNetworkTraceType;
 
+/**
+ * This are the log modes.
+ */
+typedef enum
+{
+	DLT_USER_MODE_UNDEFINED   =  -1,
+	DLT_USER_MODE_OFF         =  0,
+	DLT_USER_MODE_EXTERNAL 		  ,
+	DLT_USER_MODE_INTERNAL 		  ,
+	DLT_USER_MODE_BOTH
+} DltUserLogMode;
+
 #define DLT_USER_BUF_MAX_SIZE 2048               /**< maximum size of each user buffer, also used for injection buffer */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
@@ -423,6 +435,15 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
  * @return negative value if there was an error
  */
 int dlt_unregister_context(DltContext *handle);
+
+/**
+ * Set the logging mode used by the daemon.
+ * The logging mode is stored persistantly by the daemon.
+ * @see DltUserLogMode
+ * @param mode the new logging mode used by the daemon: off, extern, internal, both. 
+ * @return negative value if there was an error
+ */
+int dlt_set_log_mode(DltUserLogMode mode);
 
 /**
  * Register callback function called when injection message was received

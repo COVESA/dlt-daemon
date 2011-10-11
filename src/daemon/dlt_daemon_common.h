@@ -90,6 +90,7 @@
 
 #include <semaphore.h>
 #include "dlt_common.h"
+#include "dlt_user.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -150,6 +151,8 @@ typedef struct
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
 	char runtime_application_cfg[256]; /**< Path and filename of persistent application configuration */
 	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
+	char runtime_configuration[256]; /**< Path and filename of persistent configuration */
+    DltUserLogMode mode;	/**< Mode used for tracing: off, external, internal, both */
 } DltDaemon;
 
 /**
@@ -273,6 +276,23 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
  * @return negative value if there was an error
  */
 int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose);
+/**
+ * Load persistant configuration
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for loading
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int verbose);
+/**
+ * Save configuration persistantly
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_configuration_save(DltDaemon *daemon,const char *filename, int verbose);
+
 
 /**
  * Send user message DLT_USER_MESSAGE_LOG_LEVEL to user application

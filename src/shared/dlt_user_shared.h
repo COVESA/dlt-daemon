@@ -179,6 +179,23 @@ typedef struct
 	uint8_t trace_status;          /**< trace status */
 } PACKED DltUserControlMsgAppLogLevelTraceStatus;
 
+/**
+ * This is the internal message content to set the logging mode: off, external, internal, both.
+ */
+typedef struct
+{
+	uint8_t log_mode;          /**< the mode to be used for logging: off, external, internal, both */
+} PACKED DltUserControlMsgLogMode;
+
+/**
+ * This is the internal message content to get the logging state, broadcast to each application,
+ * when client connects or disconnects.
+ */
+typedef struct
+{
+	uint8_t log_state;          /**< the mode to be used for logging: off, on */
+} PACKED DltUserControlMsgLogState;
+
 /**************************************************************************************************
 * The folowing functions are used shared between the user lib and the daemon implementation
 **************************************************************************************************/

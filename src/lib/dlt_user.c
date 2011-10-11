@@ -119,6 +119,7 @@ static int dlt_user_log_send_unregister_application(void);
 static int dlt_user_log_send_register_context(DltContextData *log);
 static int dlt_user_log_send_unregister_context(DltContextData *log);
 static int dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTraceStatusType tracestatus);
+static int dlt_user_log_send_log_mode(DltUserLogMode mode);
 static int dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static int dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
@@ -809,6 +810,19 @@ int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType
     ret = dlt_send_app_ll_ts_limit(dlt_user.appID, loglevel, tracestatus);
 
     return ret;
+}
+
+int dlt_set_log_mode(DltUserLogMode mode)
+{
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+	return dlt_user_log_send_log_mode(mode);
 }
 
 int dlt_forward_msg(void *msgdata,size_t size)
@@ -2421,6 +2435,32 @@ int dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTra
 
     /* log to FIFO */
     ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgAppLogLevelTraceStatus));
+    return ((ret==DLT_RETURN_OK)?0:-1);
+}
+
+int dlt_user_log_send_log_mode(DltUserLogMode mode)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgLogMode logmode;
+
+    DltReturnValue ret;
+
+    /* set userheader */
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_MODE)==-1)
+    {
+    	return -1;
+    }
+
+    /* set data */
+    logmode.log_mode = (unsigned char) mode;
+
+    if (dlt_user.dlt_is_file)
+    {
+        return 0;
+    }
+
+    /* log to FIFO */
+    ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(logmode), sizeof(DltUserControlMsgLogMode));
     return ((ret==DLT_RETURN_OK)?0:-1);
 }
 

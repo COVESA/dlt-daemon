@@ -111,6 +111,7 @@ void usage()
     printf("  -n count      Number of messages to be generated (Default: 10)\n");
     printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
+    printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
 }
 
 /**
@@ -124,6 +125,7 @@ int main(int argc, char* argv[])
     char *dvalue = 0;
     char *fvalue = 0;
     char *nvalue = 0;
+    char *mvalue = 0;
     char *message = 0;
 
     int index;
@@ -135,7 +137,7 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vgad:f:n:")) != -1)
+    while ((c = getopt (argc, argv, "vgad:f:n:m:")) != -1)
     {
         switch (c)
         {
@@ -167,6 +169,11 @@ int main(int argc, char* argv[])
         case 'n':
         {
             nvalue = optarg;
+            break;
+        }
+        case 'm':
+        {
+            mvalue = optarg;
             break;
         }
         case '?':
@@ -223,6 +230,13 @@ int main(int argc, char* argv[])
     DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0xFFF, dlt_user_injection_callback);
 
     text = message;
+
+	if(mvalue)
+	{
+        printf("Set log mode to %d\n",atoi(mvalue));
+		dlt_set_log_mode(atoi(mvalue)); 
+	}
+	
 
     if (gflag)
     {

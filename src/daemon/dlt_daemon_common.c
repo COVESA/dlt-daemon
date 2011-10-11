@@ -152,6 +152,8 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
 
     daemon->runtime_context_cfg_loaded = 0;
+    
+    daemon->mode = DLT_USER_MODE_EXTERNAL;
 
     /* prepare filenames for configuration */
     if(runtime_directory[0])
@@ -164,6 +166,11 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     else
     	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_context_cfg,DLT_RUNTIME_CONTEXT_CFG);
+    if(runtime_directory[0])
+    	strcpy(daemon->runtime_configuration,runtime_directory);
+    else
+    	strcpy(daemon->runtime_configuration,DLT_RUNTIME_DEFAULT_DIRECTORY);
+    strcat(daemon->runtime_configuration,DLT_RUNTIME_CONFIGURATION);
 
     /* Check for runtime cfg, if it is loadable, load it! */
     if ((dlt_daemon_applications_load(daemon,daemon->runtime_application_cfg, verbose)==0) &&
@@ -171,7 +178,10 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     {
         daemon->runtime_context_cfg_loaded = 1;
     }
-
+    
+    /* load configuration if available */
+    dlt_daemon_configuration_load(daemon,daemon->runtime_configuration, verbose);
+    
     daemon->sendserialheader = 0;
     daemon->timingpackets = 0;
 
@@ -824,6 +834,99 @@ int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose
         }
     }
 
+    return 0;
+}
+
+int dlt_daemon_configuration_save(DltDaemon *daemon,const char *filename, int verbose)
+{
+    FILE *fd;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0) || (filename==0) ||( filename[0]=='\0'))
+    {
+        return -1;
+    }
+
+	fd=fopen(filename, "w");
+	if (fd!=0)
+	{
+		fprintf(fd,"# 0 = off, 1 = external, 2 = internal, 3 = both\n");
+		fprintf(fd,"LoggingMode = %d\n",daemon->mode);
+
+		fclose(fd);
+	}
+
+    return 0;
+}
+
+int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int verbose)
+{
+	FILE * pFile;
+	char line[1024];
+	char token[1024];
+	char value[1024];
+    char *pch;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+	pFile = fopen (filename,"r");
+
+	if (pFile!=NULL)
+	{
+		while(1)
+		{
+			/* fetch line from configuration file */
+			if ( fgets (line , 1024 , pFile) != NULL )
+			{
+				  pch = strtok (line," =\r\n");
+				  token[0]=0;
+				  value[0]=0;
+				  
+				  while (pch != NULL)
+				  {
+					if(strcmp(pch,"#")==0)
+						break;
+
+					if(token[0]==0)
+					{
+						strncpy(token,pch,sizeof(token));
+					}
+					else
+					{
+						strncpy(value,pch,sizeof(value));
+						break;
+					}
+
+					pch = strtok (NULL, " =\r\n");
+				  }
+				  
+				  if(token[0] && value[0])
+				  {
+						/* parse arguments here */
+						if(strcmp(token,"LoggingMode")==0)
+						{
+							daemon->mode = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else
+						{
+							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
+						}
+					}
+			}
+			else
+			{
+				break;
+			}
+		}
+		fclose (pFile);
+	}
+	else
+	{
+		fprintf(stderr, "Cannot open configuration file: %s\n",filename);
+	}	
+	
     return 0;
 }
 

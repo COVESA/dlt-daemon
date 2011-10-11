@@ -464,7 +464,7 @@ int main(int argc, char* argv[])
         {
             if (FD_ISSET(i, &(daemon_local.read_fds)))
             {
-                if (i == daemon_local.sock)
+                if (i == daemon_local.sock && ((daemon.mode == DLT_USER_MODE_EXTERNAL) || (daemon.mode == DLT_USER_MODE_BOTH)))
                 {
                     /* event from TCP server socket, new connection */
                     if (dlt_daemon_process_client_connect(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
@@ -562,7 +562,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     } /* if */
 #endif
 	/* init offline trace */
-	if(daemon_local->flags.offlineTraceDirectory[0]) 
+	if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0]) 
 	{
 		if (dlt_offline_trace_init(&(daemon_local->offlineTrace),daemon_local->flags.offlineTraceDirectory,daemon_local->flags.offlineTraceFileSize,daemon_local->flags.offlineTraceMaxSize)==-1)
 		{
@@ -1234,6 +1234,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             break;
         }
         case DLT_USER_MESSAGE_LOG:
+        case DLT_USER_MESSAGE_LOG_SHM:
         {
             if (dlt_daemon_process_user_message_log(daemon, daemon_local, daemon_local->flags.vflag)==-1)
             {
@@ -1260,6 +1261,14 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
         case DLT_USER_MESSAGE_APP_LL_TS:
         {
             if (dlt_daemon_process_user_message_set_app_ll_ts(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            {
+                run_loop=0;
+            }
+            break;
+        }
+        case DLT_USER_MESSAGE_LOG_MODE:
+        {
+            if (dlt_daemon_process_user_message_log_mode(daemon, daemon_local, daemon_local->flags.vflag)==-1)
             {
                 run_loop=0;
             }
@@ -1770,26 +1779,11 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				}
 				/* print message header only */
 			} /* if */
-
-#if 0
-			/* if file output enabled write message */
-			if (daemon_local->flags.ovalue[0])
-			{
-				/* write message to output buffer */
-				if (dlt_user_log_out2(daemon_local->ohandle,
-									  daemon_local->msg.headerbuffer,
-									  daemon_local->msg.headersize,
-									  daemon_local->msg.databuffer,
-									  daemon_local->msg.datasize) !=DLT_RETURN_OK)
-				{
-					dlt_log(LOG_ERR,"Writing to output file failed!\n");
-				}
-			} /* if */
-#endif			
+	
 			sent=0;
 
 			/* write message to offline trace */
-			if(daemon_local->flags.offlineTraceDirectory[0])
+			if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0])
 			{
 				dlt_offline_trace_write(&(daemon_local->offlineTrace),daemon_local->msg.headerbuffer,daemon_local->msg.headersize,
 										daemon_local->msg.databuffer,daemon_local->msg.datasize,0,0);
@@ -1797,7 +1791,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 			}
 
 			/* look if TCP connection to client is available */
-			for (j = 0; j <= daemon_local->fdmax; j++)
+			for (j = 0;((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&  (j <= daemon_local->fdmax); j++)
 			{
 				/* send to everyone! */
 				if (FD_ISSET(j, &(daemon_local->master)))
@@ -1848,16 +1842,16 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 			} /* for */
 
 			/* Message was not sent to client, so store it in client ringbuffer */
-			if (sent==0)
+			if (sent==1 || (daemon->mode == DLT_USER_MODE_OFF))
 			{
-				/* dlt message was not sent, keep in buffer */
-				break;
+				/* dlt message was sent, remove from buffer */
+				dlt_shm_remove(&(daemon_local->dlt_shm));
 				
 			}
 			else
 			{
-				/* dlt message was sent, remove from buffer */
-				dlt_shm_remove(&(daemon_local->dlt_shm));
+				/* dlt message was not sent, keep in buffer */
+				break;
 			}
 			
 		}
@@ -1944,6 +1938,42 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLo
 		dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
 		return -1;
 	}
+
+    return 0;
+}
+
+int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+	DltUserControlMsgLogMode *logmode;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0)  || (daemon_local==0))
+    {
+    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_log_mode()\n");
+        return -1;
+    }
+
+    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
+    {
+    	/* Not enough bytes received */
+        return -1;
+    }
+
+    logmode = (DltUserControlMsgLogMode*) (daemon_local->receiver.buf+sizeof(DltUserHeader));
+
+	/* set the new log mode */
+	daemon->mode = logmode->log_mode;
+
+	/* write configuration persistantly */
+	dlt_daemon_configuration_save(daemon, daemon->runtime_configuration, verbose);
+
+    /* keep not read data in buffer */
+    if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogMode))==-1)
+    {
+    	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message log mode\n");
+		return -1;
+    }
 
     return 0;
 }
