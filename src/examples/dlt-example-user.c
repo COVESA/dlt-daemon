@@ -134,6 +134,8 @@ int main(int argc, char* argv[])
 	char *text;
 	int num,maxnum;
 	int delay;
+	
+	int state=-1,newstate;
 
     opterr = 0;
 
@@ -280,7 +282,21 @@ int main(int argc, char* argv[])
     {
         printf("Send %d %s\n",num,text);
 
-
+		newstate = dlt_get_log_state();
+		if(state!=newstate)
+		{
+			state = newstate;
+			if(state == -1) {
+				printf("Client unknown state!\n");
+			}
+			else if(state == 0) {
+				printf("Client disconnected!\n");
+			}
+			else if(state == 1) {
+				printf("Client connected!\n");
+			}
+		}
+				
         if (gflag)
         {
             /* Non-verbose mode */

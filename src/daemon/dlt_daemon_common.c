@@ -969,6 +969,42 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context,i
     return ((ret==DLT_RETURN_OK)?0:-1);
 }
 
+int dlt_daemon_user_send_log_state(DltDaemon *daemon,DltDaemonApplication *app,int verbose)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgLogState logstate;
+    DltReturnValue ret;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0) || (app==0))
+    {
+        return -1;
+    }
+
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_STATE)==-1)
+    {
+    	return -1;
+    }
+
+    logstate.log_state = daemon->state;
+
+    /* log to FIFO */
+    ret = dlt_user_log_out2(app->user_handle, &(userheader), sizeof(DltUserHeader),  &(logstate), sizeof(DltUserControlMsgLogState));
+
+    if (ret!=DLT_RETURN_OK)
+    {
+        if (errno==EPIPE)
+        {
+            /* Close connection */
+            close(app->user_handle);
+            app->user_handle=0;
+        }
+    }
+
+    return ((ret==DLT_RETURN_OK)?0:-1);
+}
+
 int dlt_daemon_control_process_control(int sock, DltDaemon *daemon, DltMessage *msg, int verbose)
 {
     uint32_t id,id_tmp=0;
@@ -2175,6 +2211,35 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
                     }
                 }
             }
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
+{
+    int32_t count;
+    DltDaemonApplication *app;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return;
+    }
+
+    for (count=0;count<daemon->num_applications; count ++)
+    {
+        app = &(daemon->applications[count]);
+
+        if (app)
+        {
+			if (app->user_handle!=0)
+			{
+				if (dlt_daemon_user_send_log_state(daemon, app, verbose)==-1)
+				{
+					return;
+				}
+			}
         }
     }
 }

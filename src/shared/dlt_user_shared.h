@@ -184,16 +184,15 @@ typedef struct
  */
 typedef struct
 {
-	uint8_t log_mode;          /**< the mode to be used for logging: off, external, internal, both */
+	int8_t log_mode;          /**< the mode to be used for logging: off, external, internal, both */
 } PACKED DltUserControlMsgLogMode;
 
 /**
- * This is the internal message content to get the logging state, broadcast to each application,
- * when client connects or disconnects.
+ * This is the internal message content to get the logging state: 0 = off, 1 = external client connected.
  */
 typedef struct
 {
-	uint8_t log_state;          /**< the mode to be used for logging: off, on */
+	int8_t log_state;          /**< the state to be used for logging state: 0 = off, 1 = external client connected */
 } PACKED DltUserControlMsgLogState;
 
 /**************************************************************************************************

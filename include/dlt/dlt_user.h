@@ -238,6 +238,8 @@ typedef struct
     int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
 
+    int8_t log_state;					  /**< Log state of external connection: 1 client connected, 0 not connected, -1 unknown */
+
     DltShm dlt_shm;
 } DltUser;
 
@@ -444,6 +446,16 @@ int dlt_unregister_context(DltContext *handle);
  * @return negative value if there was an error
  */
 int dlt_set_log_mode(DltUserLogMode mode);
+
+/**
+ * Get the state of the connected client to the daemon.
+ * The user application gets a message, when client is connected or disconnected.
+ * This value contains the last state.
+ * It needs some time until the application gets state from the daemon.
+ * Until then the state is "unknown state".
+ * @return -1 = unknown state, 0 = client not connected, 1 = client connected
+ */
+int dlt_get_log_state();
 
 /**
  * Register callback function called when injection message was received

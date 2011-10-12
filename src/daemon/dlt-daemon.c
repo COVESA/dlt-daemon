@@ -1016,6 +1016,10 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     {
 		/* send ringbuffer done in old implementation */
 		/* nothing to do with shared memory */
+		
+		/* send new log state to all applications */
+		daemon->state = 1;		
+		dlt_daemon_user_send_all_log_state(daemon,verbose);
     }
 
     return 0;
@@ -1043,6 +1047,13 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
             daemon_local->client_connections--;
         }
 
+		if(daemon_local->client_connections==0)
+		{
+			/* send new log state to all applications */
+			daemon->state = 0;		
+			dlt_daemon_user_send_all_log_state(daemon,verbose);
+		}
+				
         if (daemon_local->flags.vflag)
         {
             sprintf(str, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
@@ -1388,6 +1399,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltD
     }
 
     application=dlt_daemon_application_add(daemon,usercontext->apid,usercontext->pid,description,verbose);
+
+	/* send log state to new application */
+	dlt_daemon_user_send_log_state(daemon,application,verbose);
 
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterApplication)+len)==-1)

@@ -153,6 +153,7 @@ typedef struct
 	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
 	char runtime_configuration[256]; /**< Path and filename of persistent configuration */
     DltUserLogMode mode;	/**< Mode used for tracing: off, external, internal, both */
+    char state;				/**< state for tracing: 0 = no client connected, 1 = client connected */
 } DltDaemon;
 
 /**
@@ -302,6 +303,16 @@ int dlt_daemon_configuration_save(DltDaemon *daemon,const char *filename, int ve
  * @return negative value if there was an error
  */
 int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context, int verbose);
+
+/**
+ * Send user message DLT_USER_MESSAGE_LOG_STATE to user application
+ * @param daemon pointer to dlt daemon structure
+ * @param app pointer to application for response
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_user_send_log_state(DltDaemon *daemon,DltDaemonApplication *app,int verbose);
+
 /**
  * Send user messages to all user applications using default context, or trace status
  * to update those values
@@ -309,6 +320,14 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context, 
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
+
+/**
+ * Send user messages to all user applications the log status
+ * everytime the client is connected or disconnected.
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
 
 /**
  * Process received control message from dlt client

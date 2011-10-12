@@ -279,6 +279,9 @@ int dlt_init_common(void)
         return -1;
     }
 
+	/* set to unknown state of connected client */
+	dlt_user.log_state = -1;
+
     dlt_user.dlt_log_handle=-1;
     dlt_user.dlt_user_handle=-1;
 
@@ -810,6 +813,11 @@ int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType
     ret = dlt_send_app_ll_ts_limit(dlt_user.appID, loglevel, tracestatus);
 
     return ret;
+}
+
+int dlt_get_log_state()
+{
+	return dlt_user.log_state;
 }
 
 int dlt_set_log_mode(DltUserLogMode mode)
@@ -2512,8 +2520,8 @@ int dlt_user_log_check_user_message(void)
     DltReceiver *receiver = &(dlt_user.receiver);
 
     DltUserControlMsgLogLevel *usercontextll;
-
     DltUserControlMsgInjection *usercontextinj;
+    DltUserControlMsgLogState *userlogstate;
     unsigned char *userbuffer;
     unsigned char *inject_buffer;
 
@@ -2668,6 +2676,25 @@ int dlt_user_log_check_user_message(void)
 							return -1;
 						}
                     }
+                }
+                break;
+                case DLT_USER_MESSAGE_LOG_STATE:
+                {
+                    /* At least, user header, user context, and service id and data_length of injected message is available */
+                    if (receiver->bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogState)))
+                    {
+                        leave_while = 1;
+                        break;
+                    }
+
+                    userlogstate = (DltUserControlMsgLogState*) (receiver->buf+sizeof(DltUserHeader));
+					dlt_user.log_state = userlogstate->log_state;
+
+					/* keep not read data in buffer */
+					if (dlt_receiver_remove(receiver,(sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogState)))==-1)
+					{
+						return -1;
+					}
                 }
                 break;
                 default:
