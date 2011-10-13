@@ -6,6 +6,7 @@
 #define DLT_SYSTEM_MODE_REGULAR 2
 
 #define DLT_SYSTEM_LOG_FILE_MAX 32
+#define DLT_SYSTEM_LOG_PROCESSES_MAX 32
 
 typedef struct {
 	char ConfigurationFile[256];
@@ -21,8 +22,12 @@ typedef struct {
 	int  LogFileMode[DLT_SYSTEM_LOG_FILE_MAX];
 	int  LogFileTimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
 	char LogFileContextId[DLT_SYSTEM_LOG_FILE_MAX][256];
-	int  LogProcessesMode;
 	char LogProcessesContextId[256];
+	int  LogProcessNumber;
+	char LogProcessName[DLT_SYSTEM_LOG_PROCESSES_MAX][256];
+	char LogProcessFilename[DLT_SYSTEM_LOG_PROCESSES_MAX][256];
+	int  LogProcessMode[DLT_SYSTEM_LOG_PROCESSES_MAX];
+	int  LogProcessTimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];
 } DltSystemOptions;
 
 typedef struct {
@@ -30,6 +35,7 @@ typedef struct {
 	int  timeFiletransferDelay;	/* time in seconds to start next filetransfer */
 	char filetransferFile[256];
 	int  timeLogFileDelay[DLT_SYSTEM_LOG_FILE_MAX];	/* time in seconds to start next file log */
+	int  timeLogProcessDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];	/* time in seconds to start next process log */
 	int	 filetransferRunning; 	/* 0 = stooped, 1 = running */
 	int  filetransferCountPackages; /* number of packets to be transfered */
 	int  filetransferLastSentPackage; /* last packet sent starting from 1 */

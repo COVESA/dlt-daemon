@@ -112,14 +112,20 @@ void dlt_system_init_options(DltSystemOptions *options)
 	strncpy(options->FiletransferContextId,DEFAULT_FILETRANSFER_CONTEXT_ID,sizeof(options->FiletransferContextId));
 	options->FiletransferTimeStartup = DEFAULT_FILETRANSFER_TIME_STARTUP;
 	options->FiletransferTimeDelay = DEFAULT_FILETRANSFER_TIME_DELAY;
-	options->LogProcessesMode = DEFAULT_LOG_PROCESSES_MODE;		
-	strncpy(options->LogProcessesContextId,DEFAULT_LOG_PROCESSES_CONTEXT_ID,sizeof(options->LogProcessesContextId));
 	options->LogFileNumber = 0;
 	for(num=0;num<DLT_SYSTEM_LOG_FILE_MAX;num++) {
 		options->LogFileFilename[num][0]=0;
 		options->LogFileMode[num]=0;
 		options->LogFileContextId[num][0]=0;
 		options->LogFileTimeDelay[num]=0;
+	}
+	options->LogProcessNumber = 0;
+	strncpy(options->LogProcessesContextId,DEFAULT_LOG_PROCESSES_CONTEXT_ID,sizeof(options->LogProcessesContextId));
+	for(num=0;num<DLT_SYSTEM_LOG_PROCESSES_MAX;num++) {
+		options->LogProcessName[num][0]=0;
+		options->LogProcessFilename[num][0]=0;
+		options->LogProcessMode[num]=0;
+		options->LogProcessTimeDelay[num]=0;
 	}
 }
 
@@ -262,15 +268,32 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 							if(options->LogFileNumber <  (DLT_SYSTEM_LOG_FILE_MAX-1) )
 								options->LogFileNumber++;
 						}
-						else if(strcmp(token,"LogProcessesMode")==0)
-						{
-							options->LogProcessesMode = atoi(value);
-							printf("Option: %s=%s\n",token,value);
-						}
 						else if(strcmp(token,"LogProcessesContextId")==0)
 						{
 							strncpy(options->LogProcessesContextId,value,sizeof(options->LogProcessesContextId));
 							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessName")==0)
+						{
+							strncpy(options->LogProcessName[options->LogProcessNumber],value,sizeof(options->LogProcessName[options->LogProcessNumber]));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessFilename")==0)
+						{
+							strncpy(options->LogProcessFilename[options->LogProcessNumber],value,sizeof(options->LogProcessFilename[options->LogProcessNumber]));
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessMode")==0)
+						{
+							options->LogProcessMode[options->LogProcessNumber] = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LogProcessTimeDelay")==0)
+						{
+							options->LogProcessTimeDelay[options->LogProcessNumber] = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+							if(options->LogProcessNumber <  (DLT_SYSTEM_LOG_PROCESSES_MAX-1) )
+								options->LogProcessNumber++;
 						}
 						else
 						{
@@ -330,8 +353,7 @@ int main(int argc, char* argv[])
  	
 	DLT_REGISTER_CONTEXT(syslogContext,options.SyslogContextId,"SYSLOG Adapter");
     
- 	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
-		DLT_REGISTER_CONTEXT(processesContext,options.LogProcessesContextId,"Log Processes");
+	DLT_REGISTER_CONTEXT(processesContext,options.LogProcessesContextId,"Log Processes");
 
 	if(options.FiletransferDirectory[0]!=0)
 		DLT_REGISTER_CONTEXT(filetransferContext,options.FiletransferContextId,"Filetransfer");
@@ -341,6 +363,10 @@ int main(int argc, char* argv[])
 			DLT_REGISTER_CONTEXT(logFileContext[num],options.LogFileContextId[num],options.LogFileFilename[num]);
 		runtime.timeLogFileDelay[num]=0;
 
+	}
+
+	for(num=0;num<options.LogProcessNumber;num++) {
+		runtime.timeLogProcessDelay[num]=0;
 	}
 
 	/* create systemd socket */
@@ -414,7 +440,7 @@ int main(int argc, char* argv[])
 				}
 			}
 			
-			/* log kernel version */
+			/* log files */
 			for(num=0;num<options.LogFileNumber;num++) {
 				if(((options.LogFileMode[num] == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
 				   (options.LogFileMode[num] == DLT_SYSTEM_MODE_REGULAR) ) {
@@ -429,10 +455,18 @@ int main(int argc, char* argv[])
 			}
 			
 			/* log processes information */
-			if(((options.LogProcessesMode == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
-			   (options.LogProcessesMode == DLT_SYSTEM_MODE_REGULAR) ) {
-				   dlt_system_log_processes(&options,&processesContext);
-			}			
+			for(num=0;num<options.LogProcessNumber;num++) {
+				if(((options.LogProcessMode[num] == DLT_SYSTEM_MODE_STARTUP) && firsttime) ||
+				   (options.LogProcessMode[num] == DLT_SYSTEM_MODE_REGULAR) ) {
+						if(runtime.timeLogProcessDelay[num]<=0) {
+							dlt_system_log_process(&options,&processesContext,num);
+							runtime.timeLogProcessDelay[num]=options.LogProcessTimeDelay[num]-1;
+					    }
+					    else {
+							runtime.timeLogProcessDelay[num]--;
+						}
+				}
+			}
 			
 			firsttime = 0;
 		}
@@ -466,8 +500,7 @@ int main(int argc, char* argv[])
 		}
     }
 
-	if(options.LogProcessesMode != DLT_SYSTEM_MODE_OFF)
-		DLT_UNREGISTER_CONTEXT(processesContext);
+	DLT_UNREGISTER_CONTEXT(processesContext);
 		
 	if(options.FiletransferDirectory[0]!=0)
 		DLT_UNREGISTER_CONTEXT(filetransferContext);

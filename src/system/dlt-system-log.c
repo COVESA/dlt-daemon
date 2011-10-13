@@ -142,48 +142,48 @@ void dlt_system_log_file(DltSystemOptions *options,DltContext *context,int num) 
 	}
 }
 
-void dlt_system_log_processes(DltSystemOptions *options,DltContext *context) {
+void dlt_system_log_process(DltSystemOptions *options,DltContext *context,int num) {
 	FILE * pFile;
 	struct dirent *dp;
 	char filename[256];
 	char buffer[1024];
 	int bytes;
-	int num;
+	int found = 0;
 
 	/* go through all dlt files in directory */
 	DIR *dir = opendir("/proc");
 	while ((dp=readdir(dir)) != NULL) {
-		if(dp->d_name[0]>'0' && dp->d_name[0]<'9') {
-			sprintf(filename,"/proc/%s/stat",dp->d_name);
-			pFile = fopen(filename,"r");
-			if(pFile>0)
-			{
-				bytes = fread(buffer,1,sizeof(buffer)-1,pFile);
-				fclose(pFile);
-			
-				if(bytes>0) { 
-					buffer[bytes] = 0;
-					DLT_LOG(*context, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING(buffer));				   	
-				}
-			}
+		if(dp->d_name[0]>'0' && dp->d_name[0]<'9') {		
+			buffer[0] = 0;	
 			sprintf(filename,"/proc/%s/cmdline",dp->d_name);
 			pFile = fopen(filename,"r");
 			if(pFile>0)
 			{
 				bytes = fread(buffer,1,sizeof(buffer)-1,pFile);
 				fclose(pFile);
-			
-				if(bytes>0) {
-					for(num=0;num<bytes;num++) {
-						if(buffer[num]==0) {							
-							buffer[num] = ' ';
-						}
+			}
+			if((strcmp(options->LogProcessFilename[num],"*")==0) || 
+			  (strcmp(buffer,options->LogProcessName[num])==0) ) {
+				found = 1;
+				sprintf(filename,"/proc/%s/%s",dp->d_name,options->LogProcessFilename[num]);
+				pFile = fopen(filename,"r");
+				if(pFile>0)
+				{
+					bytes = fread(buffer,1,sizeof(buffer)-1,pFile);
+					fclose(pFile);
+				
+					if(bytes>0) { 
+						buffer[bytes] = 0;
+						DLT_LOG(*context, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING(buffer));				   	
 					}
-					buffer[bytes] = 0;
-					DLT_LOG(*context, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING(buffer));				   	
 				}
+				break;
 			}
 		}
 	}	
 	closedir(dir);	
+	
+	if(!found) {
+			DLT_LOG(*context, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING(options->LogProcessName[num]),DLT_STRING("not running!"));				   	
+	}
 }
