@@ -57,6 +57,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libdlt.so.2
 %{_libdir}/libdlt.so.2.2.0
 %{_libdir}/libdlt.so
+%{_bindir}/dlt-system
 %{_bindir}/dlt-convert
 %{_bindir}/dlt-receive
 %{_bindir}/dlt-adaptor-stdin
