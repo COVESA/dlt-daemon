@@ -47,4 +47,6 @@ install(TARGETS dlt-system
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
-
+INSTALL(FILES 	${CMAKE_CURRENT_SOURCE_DIR}/dlt-system.conf
+	DESTINATION "etc"
+	COMPONENT base)

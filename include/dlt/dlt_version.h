@@ -3,10 +3,10 @@
 #define __VERSION_H_
 
 #define PACKAGE_VERSION_STATE ""
-#define PACKAGE_VERSION "2.3.0"
+#define PACKAGE_VERSION "2.4.0"
 #define PACKAGE_MAJOR_VERSION "2"
-#define PACKAGE_MINOR_VERSION "3"
+#define PACKAGE_MINOR_VERSION "4"
 #define PACKAGE_PATCH_LEVEL "0"
-#define PACKAGE_REVISION "v2.3.0-35-ga0e2ed4"
+#define PACKAGE_REVISION ""
 
 #endif
