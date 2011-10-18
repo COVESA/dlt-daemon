@@ -584,7 +584,6 @@ int dlt_shm_reset(DltShm *buf) {
 int dlt_shm_recover(DltShm *buf) {
 	int write, read, count;
 	char head[] = DLT_SHM_HEAD;
-	int num;
 
 	// initialise head
 	head[3] = 0x01;

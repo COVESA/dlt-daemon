@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 void internal1(void)
 {
     int index,result_index;
-    unsigned int c;
+	size_t c;
     unsigned int size;
 
     char buf[1024],result[1024];
@@ -225,7 +225,7 @@ void internal1(void)
 
             if (vflag)
             {
-                printf("W[%d], Bytes = %d, Hex: ", index, strlen(buf));
+                printf("W[%d], Bytes = %d, Hex: ", index, (int)strlen(buf));
                 dlt_print_hex((uint8_t *)buf, strlen(buf));
                 printf("\n");
             }
@@ -256,7 +256,7 @@ void internal1(void)
             {
                 if (vflag)
                 {
-                    printf("R[%d], Bytes = %d, Hex: ", index, c);
+                    printf("R[%d], Bytes = %d, Hex: ", index, (int)c);
                     dlt_print_hex((uint8_t *)buf, c);
                     printf("\n");
                 }

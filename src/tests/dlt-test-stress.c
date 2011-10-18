@@ -135,7 +135,7 @@ void usage()
  */
 int main(int argc, char* argv[])
 {
-    int  vflag = 0;
+    //int  vflag = 0;
     char *fvalue = 0;
     int test[MAX_TESTS];
 
@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
         {
         case 'v':
         {
-            vflag = 1;
+            //vflag = 1;
             break;
         }
         case 'f':
@@ -327,11 +327,11 @@ void stress2(void)
 
 void thread_function(void *ptr)
 {
-    thread_data_t *data;
+    //thread_data_t *data;
     DLT_DECLARE_CONTEXT(context_thread1);
     char ctid[5];
 
-    data = (thread_data_t *) ptr;
+    //data = (thread_data_t *) ptr;
 
     memset(ctid,0,5);
 

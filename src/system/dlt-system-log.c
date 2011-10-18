@@ -97,7 +97,6 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 {
 	struct dirent *dp;
 	char filename[256];
-	unsigned long size_oldest = 0;
 	struct stat status;
 	time_t time_oldest = 0;
 	int transferResult;
@@ -125,7 +124,6 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					stat(filename,&status);
 					if(time_oldest == 0 || status.st_mtime < time_oldest) {
 						time_oldest = status.st_mtime;
-						size_oldest = status.st_size;
 						strcpy(runtime->filetransferFile,filename);
 					}
 				}
@@ -140,7 +138,6 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					stat(filename,&status);
 					if(time_oldest == 0 || status.st_mtime < time_oldest) {
 						time_oldest = status.st_mtime;
-						size_oldest = status.st_size;
 						strcpy(runtime->filetransferFile,filename);
 					}
 				}

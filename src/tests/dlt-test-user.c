@@ -164,7 +164,7 @@ void usage()
  */
 int main(int argc, char* argv[])
 {
-    int vflag = 0;
+    //int vflag = 0;
     char *fvalue = 0;
     char *nvalue = 0;
 
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         {
         case 'v':
         {
-            vflag = 1;
+            //vflag = 1;
             break;
         }
         case 'f':

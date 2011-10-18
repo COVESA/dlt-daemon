@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+
 #include <dlt_filetransfer.h> 	/*Needed for transferring files with the dlt protocol*/
 #include <dlt.h>			/*Needed for dlt logging*/
 
@@ -44,13 +48,13 @@ void usage()
 //!Main program dlt-test-filestransfer starts here
 int main(int argc, char* argv[])
 {	
-	char str[MAXSTRLEN];
+	//char str[MAXSTRLEN];
     int opt, timeout, dltResult;;
 
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
     
-    char version[255];
+    //char version[255];
 
 	int dflag = 0;
 	int iflag = 0;
