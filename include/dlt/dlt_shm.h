@@ -82,6 +82,8 @@
 /* must be the same for server and client */
 #define DLT_SHM_SEM		22771
 
+#define DLT_SHM_HEAD 	"SHM"
+
 typedef struct
 {
 	int shmid;	/* Id of shared memory */
@@ -196,6 +198,20 @@ extern int dlt_shm_get_used_size(DltShm *buf);
  * @return size of the shared memory.
  */
 extern int dlt_shm_get_message_count(DltShm *buf);
+
+/**
+ * Reset pointers and counters when shm corrupted.
+ * @param buf pointer to shm structure
+ * @return size of the shared memory.
+ */
+extern int dlt_shm_reset(DltShm *buf);
+
+/**
+ * Recover to find next valid message.
+ * @param buf pointer to shm structure
+ * @return size of the shared memory.
+ */
+extern int dlt_shm_recover(DltShm *buf);
 
 /**
  * Deinitialise the shared memory on the server side.
