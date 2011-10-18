@@ -932,6 +932,76 @@ extern "C"
      */
     int dlt_check_storageheader(DltStorageHeader *storageheader);
 
+    /**
+     * Initialize ringbuffer of with a maximum size of size
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param size Maximum size of buffer in bytes
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size);
+
+    /**
+     * Release and free memory used by ringbuffer
+     * @param dltbuf Pointer to ringbuffer structure
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_free(DltRingBuffer *dltbuf);
+
+    /**
+     * Write one entry to ringbuffer
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param data Pointer to data to be written to ringbuffer
+     * @param size Size of data in bytes to be written to ringbuffer
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size);
+
+    /**
+     * Write one entry given as 3 chunks to ringbuffer
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param data1 Pointer to data1 to be written to ringbuffer
+     * @param size1 Size of data1 in bytes to be written to ringbuffer
+     * @param data2 Pointer to data2 to be written to ringbuffer
+     * @param size2 Size of data2 in bytes to be written to ringbuffer
+     * @param data3 Pointer to data3 to be written to ringbuffer
+     * @param size3 Size of data3 in bytes to be written to ringbuffer
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void *data2, uint32_t size2, void *data3, uint32_t size3);
+
+    /**
+     * Read one entry from ringbuffer
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param data Pointer to data read from ringbuffer
+     * @param size Size of read data in bytes from ringbuffer
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_get(DltRingBuffer *dltbuf, void *data, size_t *size);
+
+    /**
+     * Helper function: Skip one readable entry in ringbuffer
+     * @param dltbuf Pointer to ringbuffer structure
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf);
+
+    /**
+     * Helper function: Get free space in bytes for writting between write and read position
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param freespace Free Space in bytes for writting is returned
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_freespacewrite(DltRingBuffer *dltbuf, uint32_t *freespace);
+
+    /**
+     * Helper function: Check free space and if necessary discard entries, so that at least
+     * reqspace bytes are available for writting
+     * @param dltbuf Pointer to ringbuffer structure
+     * @param reqspace Requested space for writting in bytes
+     * @return negative value if there was an error
+     */
+    int dlt_ringbuffer_checkandfreespace(DltRingBuffer *dltbuf, uint32_t reqspace);
+
 #if !defined (__WIN32__)
 
     /**

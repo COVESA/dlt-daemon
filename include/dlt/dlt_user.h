@@ -240,6 +240,8 @@ typedef struct
 
     int8_t log_state;					  /**< Log state of external connection: 1 client connected, 0 not connected, -1 unknown */
 
+    DltRingBuffer rbuf;                   /**< Ring-buffer for buffering messages during startup and missing connection */
+    
     DltShm dlt_shm;
 } DltUser;
 

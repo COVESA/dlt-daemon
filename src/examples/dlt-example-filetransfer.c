@@ -1,5 +1,5 @@
-#include "dlt/dlt_filetransfer.h" 	/*Needed for transferring files with the dlt protocol*/
-#include "dlt/dlt.h"			/*Needed for dlt logging*/
+#include <dlt_filetransfer.h> 	/*Needed for transferring files with the dlt protocol*/
+#include <dlt.h>			/*Needed for dlt logging*/
 
 
 #define MAXSTRLEN 1024

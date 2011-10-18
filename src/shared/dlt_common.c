@@ -2231,6 +2231,469 @@ int dlt_check_storageheader(DltStorageHeader *storageheader)
              (storageheader->pattern[3] == 1));
 }
 
+int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size)
+{
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (size<=sizeof(uint32_t))
+    {
+        return -1;
+    }
+
+    dltbuf->buffer=(char*)malloc(size);
+    if (dltbuf->buffer==0)
+    {
+        return -1;
+    }
+
+    dltbuf->size=size;
+
+    dltbuf->pos_write=0;
+    dltbuf->pos_read=0;
+
+    dltbuf->count=0;
+
+    return 0;
+}
+
+int dlt_ringbuffer_free(DltRingBuffer *dltbuf)
+{
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->buffer)
+    {
+        free(dltbuf->buffer);
+    }
+
+    dltbuf->buffer=0;
+
+    dltbuf->size=0;
+
+    dltbuf->pos_write=0;
+    dltbuf->pos_read=0;
+
+    dltbuf->count=0;
+
+    return 0;
+}
+
+int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size)
+{
+    uint32_t sui, part1, part2;
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->buffer==0)
+    {
+        return -1;
+    }
+
+    if (data==0)
+    {
+        return -1;
+    }
+
+    sui = sizeof(uint32_t);
+
+    if ((size+sui)>dltbuf->size)
+    {
+        return -1;
+    }
+
+    dlt_ringbuffer_checkandfreespace(dltbuf, (size+sui));
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Not enough space for one uint available before end of linear buffer */
+    /* Start at begin of linear buffer */
+    if ((dltbuf->size - dltbuf->pos_write) < sui)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Write length of following data to buffer */
+    memcpy(&(dltbuf->buffer[dltbuf->pos_write]), &size, sui);
+    dltbuf->pos_write+=sui;
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    if ((dltbuf->size - dltbuf->pos_write) < size)
+    {
+        /* Not enough space til end of linear buffer, */
+        /* split up write call */
+        part1 = dltbuf->size - dltbuf->pos_write;
+        part2 = size - part1;
+
+        memcpy(dltbuf->buffer + dltbuf->pos_write, data, part1);
+        memcpy(dltbuf->buffer, ((char*)data) + part1, part2);
+        dltbuf->pos_write = part2;
+
+    }
+    else
+    {
+        /* Enough space til end of linear buffer */
+        memcpy(&(dltbuf->buffer[dltbuf->pos_write]), data, size);
+        dltbuf->pos_write+=size;
+    }
+
+    dltbuf->count++;
+
+    return 0;
+}
+
+
+int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void *data2, uint32_t size2, void *data3, uint32_t size3)
+{
+    uint32_t sui, part1, part2;
+    uint32_t total_size;
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->buffer==0)
+    {
+        return -1;
+    }
+
+    sui = sizeof(uint32_t);
+
+    total_size = size1+size2+size3;
+
+    if ((total_size+sui)>dltbuf->size)
+    {
+        return -1;
+    }
+
+    dlt_ringbuffer_checkandfreespace(dltbuf, (total_size+sui));
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Not enough space for one uint available before end of linear buffer */
+    /* Start at begin of linear buffer */
+    if ((dltbuf->size - dltbuf->pos_write) < sui)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Write length of following data to buffer */
+    memcpy(&(dltbuf->buffer[dltbuf->pos_write]), &total_size, sui);
+    dltbuf->pos_write+=sui;
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* First chunk of data (data1, size1) */
+    if ((dltbuf->size - dltbuf->pos_write) < size1)
+    {
+        /* Not enough space til end of linear buffer, */
+        /* split up write call */
+        part1 = dltbuf->size - dltbuf->pos_write;
+        part2 = size1 - part1;
+
+        memcpy(dltbuf->buffer + dltbuf->pos_write, data1, part1);
+        memcpy(dltbuf->buffer, ((char*)data1) + part1, part2);
+        dltbuf->pos_write = part2;
+
+    }
+    else
+    {
+        /* Enough space til end of linear buffer */
+        memcpy(&(dltbuf->buffer[dltbuf->pos_write]), data1, size1);
+        dltbuf->pos_write+=size1;
+    }
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Second chunk of data (data2, size2) */
+    if ((dltbuf->size - dltbuf->pos_write) < size2)
+    {
+        /* Not enough space til end of linear buffer, */
+        /* split up write call */
+        part1 = dltbuf->size - dltbuf->pos_write;
+        part2 = size2 - part1;
+
+        memcpy(dltbuf->buffer + dltbuf->pos_write, data2, part1);
+        memcpy(dltbuf->buffer, ((char*)data2) + part1, part2);
+        dltbuf->pos_write = part2;
+
+    }
+    else
+    {
+        /* Enough space til end of linear buffer */
+        memcpy(&(dltbuf->buffer[dltbuf->pos_write]), data2, size2);
+        dltbuf->pos_write+=size2;
+    }
+
+    if (dltbuf->pos_write >= dltbuf->size)
+    {
+        dltbuf->pos_write = 0;
+    }
+
+    /* Third chunk of data (data3, size3) */
+    if ((dltbuf->size - dltbuf->pos_write) < size3)
+    {
+        /* Not enough space til end of linear buffer, */
+        /* split up write call */
+        part1 = dltbuf->size - dltbuf->pos_write;
+        part2 = size3 - part1;
+
+        memcpy(dltbuf->buffer + dltbuf->pos_write, data3, part1);
+        memcpy(dltbuf->buffer, ((char*)data3) + part1, part2);
+        dltbuf->pos_write = part2;
+
+    }
+    else
+    {
+        /* Enough space til end of linear buffer */
+        memcpy(dltbuf->buffer + dltbuf->pos_write, data3, size3);
+        dltbuf->pos_write+=size3;
+    }
+
+    dltbuf->count++;
+
+    return 0;
+}
+
+int dlt_ringbuffer_get(DltRingBuffer *dltbuf, void *data, size_t *size)
+{
+    uint32_t tmpsize=0;
+    uint32_t sui;
+
+    uint32_t part1, part2;
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->buffer==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->count==0)
+    {
+        return -1;
+    }
+
+    sui = sizeof(uint32_t);
+
+    if (dltbuf->pos_read >= dltbuf->size)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    if ((dltbuf->size - dltbuf->pos_read) < sui)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    /* printf("Reading at offset: %d\n", dltbuf->pos_read); */
+
+    memcpy(&tmpsize,&(dltbuf->buffer[dltbuf->pos_read]), sui);
+    dltbuf->pos_read += sui;
+
+    if (dltbuf->pos_read >= dltbuf->size)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    if ((tmpsize>0) && ((tmpsize+sizeof(uint32_t))<=dltbuf->size))
+    {
+        if ((dltbuf->size - dltbuf->pos_read) < tmpsize)
+        {
+            /* Not enough space til end of linear buffer, */
+            /* split up read call */
+            part1 = dltbuf->size - dltbuf->pos_read;
+            part2 = tmpsize - part1;
+
+            memcpy(data, dltbuf->buffer + dltbuf->pos_read, part1);
+            memcpy(((char*)data)+part1, dltbuf->buffer, part2);
+            dltbuf->pos_read = part2;
+        }
+        else
+        {
+            /* Enough space til end of linear buffer */
+            /* no split up read call */
+            memcpy(data, &(dltbuf->buffer[dltbuf->pos_read]), tmpsize);
+            dltbuf->pos_read+=tmpsize;
+        }
+        *size = tmpsize;
+    }
+    else
+    {
+        data=0;
+        *size=0;
+    }
+
+    dltbuf->count--;
+
+    return 0;
+}
+
+int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf)
+{
+    uint32_t tmpsize=0;
+    uint32_t sui;
+
+    uint32_t part1, part2;
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->buffer==0)
+    {
+        return -1;
+    }
+
+    if (dltbuf->count==0)
+    {
+        return -1;
+    }
+
+    sui = sizeof(uint32_t);
+
+    if (dltbuf->pos_read >= dltbuf->size)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    if ((dltbuf->size - dltbuf->pos_read) < sui)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    memcpy(&tmpsize,&(dltbuf->buffer[dltbuf->pos_read]), sui);
+    dltbuf->pos_read += sui;
+
+    if (dltbuf->pos_read >= dltbuf->size)
+    {
+        dltbuf->pos_read = 0;
+    }
+
+    if ((tmpsize>0) && ((tmpsize+sui)<=dltbuf->size))
+    {
+        if ((dltbuf->size - dltbuf->pos_read) < tmpsize)
+        {
+            /* Not enough space til end of linear buffer */
+            part1 = dltbuf->size - dltbuf->pos_read;
+            part2 = tmpsize - part1;
+
+            dltbuf->pos_read = part2;
+        }
+        else
+        {
+            /* Enough space til end of linear buffer */
+            dltbuf->pos_read+=tmpsize;
+        }
+    }
+
+    dltbuf->count--;
+
+    return 0;
+}
+
+int dlt_ringbuffer_freespacewrite(DltRingBuffer *dltbuf, uint32_t *freespace)
+{
+    if ((dltbuf==0) || (freespace==0))
+    {
+        return -1;
+    }
+
+    *freespace=0;
+
+    /* Space til pos_read */
+    if (dltbuf->pos_read > dltbuf->pos_write)
+    {
+        *freespace=(dltbuf->pos_read - dltbuf->pos_write);
+        return 0;
+    }
+    else if (dltbuf->pos_read < dltbuf->pos_write)
+    {
+        *freespace=(dltbuf->size - dltbuf->pos_write + dltbuf->pos_read );
+        return 0;
+    }
+    else
+    {
+        if (dltbuf->count)
+        {
+            return 0;
+        }
+        else
+        {
+            *freespace=dltbuf->size;
+            return 0;
+        }
+    }
+    return 0;
+}
+
+int dlt_ringbuffer_checkandfreespace(DltRingBuffer *dltbuf, uint32_t reqspace)
+{
+    uint32_t space_left;
+
+    if (dltbuf==0)
+    {
+        return -1;
+    }
+
+    if (dlt_ringbuffer_freespacewrite(dltbuf,&space_left) == -1)
+    {
+        return -1;
+    }
+
+    /* printf("Now reading at: %d, space_left = %d, req = %d, r=%d, w=%d, count=%d \n",
+              dltbuf->pos_read,space_left, reqspace, dltbuf->pos_read, dltbuf->pos_write, dltbuf->count); */
+
+    while (space_left<reqspace)
+    {
+        /* Overwrite, correct read position */
+
+        /* Read and skip one element */
+        dlt_ringbuffer_get_skip(dltbuf);
+
+        /* Space until pos_read */
+        if (dlt_ringbuffer_freespacewrite(dltbuf,&space_left) == -1)
+	    {
+		    return -1;
+	    }
+
+        /* printf("Overwrite: Now reading at: %d, space_left = %d, req = %d, r=%d, w=%d, count=%d \n",
+                  dltbuf->pos_read,space_left, reqspace, dltbuf->pos_read, dltbuf->pos_write, dltbuf->count); */
+    }
+
+    return 0;
+}
+
 #if !defined (__WIN32__)
 
 int dlt_setup_serial(int fd, speed_t speed)
