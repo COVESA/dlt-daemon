@@ -51,7 +51,15 @@ ENDIF(GPROF_DLT_EXAMPLES)
 target_link_libraries(dlt-example-user-func dlt)
 set_target_properties(dlt-example-user-func PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-example-user dlt-example-user-func
+set(dlt_example_filetransfer_SRCS dlt-example-filetransfer)
+add_executable(	dlt-example-filetransfer ${dlt_example_filetransfer_SRCS})
+IF(GPROF_DLT_EXAMPLES)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_EXAMPLES)
+target_link_libraries(dlt-example-filetransfer dlt dlt-filetransfer )
+set_target_properties(dlt-example-filetransfer PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS dlt-example-user dlt-example-user-func dlt-example-filetransfer
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 

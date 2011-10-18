@@ -12,7 +12,11 @@ char *file1;
 //!Image which will be transferred.
 char *file2;
 //!Not existing file which will be transferred.
-char *file3;
+char *file3_1;
+//!Not existing file which will be transferred.
+char *file3_2;
+//!Not existing file which will be transferred.
+char *file3_3;
 //!Just some variables
 int i,countPackages, transferResult, dltResult;
 
@@ -32,8 +36,11 @@ int main(void)
 	//Second file is a picture	
 	file2 = "dlt-test-filetransfer-image.png";
 	//Third file doesn't exist. Just to test the reaction when the file isn't available.
-	file3 = "dlt-test-filetransfer-doesntExist";
-	
+	file3_1 = "dlt-test-filetransfer-doesntExist_1";
+	//Third file doesn't exist. Just to test the reaction when the file isn't available.
+	file3_2 = "dlt-test-filetransfer-doesntExist_2";
+	//Third file doesn't exist. Just to test the reaction when the file isn't available.
+	file3_3 = "dlt-test-filetransfer-doesntExist_3";
 
 	//Register the application at the dlt-daemon
 	dltResult = DLT_REGISTER_APP("FLTR","Test Application filetransfer");
@@ -262,16 +269,16 @@ int testF2P2(){
 int testF3P1(){
 	
 	//Just some log to the main context
-	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3));
+	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3_1));
 
 	//Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages
-	transferResult = dlt_user_log_file_complete(&fileContext,file3,0,20);
+	transferResult = dlt_user_log_file_complete(&fileContext,file3_1,0,20);
 	if(transferResult < 0)
 	{
 		//Error expected because file doesn't exist
 		//printf("Error: dlt_user_log_file_complete\n");
 		//Just some log to the main context
-		DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P1"),DLT_STRING(file3));
+		DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P1"),DLT_STRING(file3_1));
 		return transferResult;
 	}
 	return transferResult;
@@ -282,28 +289,28 @@ int testF3P1(){
 int testF3P2(){
 
 	//Get the information how many packages have the file
-	countPackages = dlt_user_log_file_packagesCount(&fileContext,file3);
+	countPackages = dlt_user_log_file_packagesCount(&fileContext,file3_2);
 	if(countPackages < 0 )
 	{
 			//Error expected because file doesn't exist
 			//printf("Error: dlt_user_log_file_packagesCount\n");
 			//Just some log to the main context
-			DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P1"),DLT_STRING(file3));
+			DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P1"),DLT_STRING(file3_2));
 			return -1;
 	}
 	//Just some log to the main context
-	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3));
+	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3_2));
 	
 	//Logs the header of the file transfer. For more details see Mainpage.c. 
 	//The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size
-	transferResult = dlt_user_log_file_header(&fileContext,file3);
+	transferResult = dlt_user_log_file_header(&fileContext,file3_2);
 	if( transferResult >= 0){
 	
 		//Loop to log all packages	
 		for(i=1;i<=countPackages;i++)
 		{
 			//Logs one single package to the file context
-			transferResult = dlt_user_log_file_data(&fileContext,file3,i,20);
+			transferResult = dlt_user_log_file_data(&fileContext,file3_2,i,20);
 			if(transferResult < 0)
 			{
 				printf("Error: dlt_user_log_file_data\n");
@@ -313,7 +320,7 @@ int testF3P2(){
 
 		//Logs the end of the file transfer. For more details see Mainpage.c
 		//The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer.
-		transferResult = dlt_user_log_file_end(&fileContext,file3,0);
+		transferResult = dlt_user_log_file_end(&fileContext,file3_2,0);
 		if(transferResult < 0)
 		{
 			printf("Error: dlt_user_log_file_end\n");
@@ -329,16 +336,16 @@ int testF3P2(){
 int testF3P3(){
 	
 	//Just some log to the main context
-	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P2"),DLT_STRING(file3));
+	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P2"),DLT_STRING(file3_3));
 	
 	//Here's the line where the dlt file file info is called. The method call logs some information to dlt about the file, filesize, file serial number and number of packages
-	transferResult = dlt_user_log_file_infoAbout(&fileContext,file3);
+	transferResult = dlt_user_log_file_infoAbout(&fileContext,file3_3);
 	if(transferResult < 0)
 	{
 		//Error expected because file doesn't exist
 		//printf("Error: dlt_user_log_file_infoAbout\n");
 		//Just some log to the main context
-		DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P2"),DLT_STRING(file3));
+		DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF3P2"),DLT_STRING(file3_3));
 
 		return transferResult;
 	}

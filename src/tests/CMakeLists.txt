@@ -91,6 +91,10 @@ ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-filetransfer dlt)
 set_target_properties(dlt-test-filetransfer PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal
+install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal dlt-test-filetransfer
 	RUNTIME DESTINATION bin
 	COMPONENT base)
+
+INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
+	DESTINATION share/dlt-filetransfer 
+)
