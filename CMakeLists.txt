@@ -227,9 +227,6 @@ ENDIF(ENABLE_BUILD_DOC)
 INSTALL(FILES automotive-dlt.pc
         DESTINATION lib/pkgconfig 
 	COMPONENT devel)
-INSTALL(FILES LICENSE.txt
-	DESTINATION doc/dlt2 
-	COMPONENT base)
 
 CONFIGURE_FILE(
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"

@@ -12,7 +12,6 @@ automotive-dlt.spec.in
 cmake_uninstall.cmake.in
 [^/]*\.cmake
 .*\.xpm
-LICENSE.txt
 README
 src/daemon/dlt.conf
 src/system/dlt-system.conf

@@ -78,12 +78,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-example-user-func
 %{_bindir}/dlt-example-filetransfer
 
-
-
-%files doc
-%{_usr}/doc/dlt2/LICENSE.txt
-
-
 %files devel
 %{_libdir}/pkgconfig/*.pc
 %{_includedir}/dlt/*.h
