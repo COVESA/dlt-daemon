@@ -14,3 +14,5 @@ cmake_uninstall.cmake.in
 .*\.xpm
 LICENSE.txt
 README
+src/daemon/dlt.conf
+src/system/dlt-system.conf

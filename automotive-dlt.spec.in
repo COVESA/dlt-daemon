@@ -62,6 +62,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 #/etc/init.d/dlt-daemon
+/etc/dlt-system.conf
+/etc/dlt.conf
 %{_libdir}/libdlt.so.@PRINT_MAJOR_VERSION@
 %{_libdir}/libdlt.so.@GENIVI_PROJECT_VERSION@
 %{_libdir}/libdlt.so

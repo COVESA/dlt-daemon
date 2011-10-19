@@ -53,9 +53,11 @@ mkdir -p $RPM_BUILD_ROOT/etc/init.d
 rm -rf $RPM_BUILD_ROOT
 
 %files
-/etc/init.d/dlt-daemon
-%{_libdir}/libdlt.so.2
-%{_libdir}/libdlt.so.2.2.0
+#/etc/init.d/dlt-daemon
+/etc/dlt-system.conf
+/etc/dlt.conf
+%{_libdir}/libdlt.so.@PRINT_MAJOR_VERSION@
+%{_libdir}/libdlt.so.@GENIVI_PROJECT_VERSION@
 %{_libdir}/libdlt.so
 %{_bindir}/dlt-system
 %{_bindir}/dlt-convert
