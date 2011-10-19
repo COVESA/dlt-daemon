@@ -48,5 +48,5 @@ install(TARGETS dlt-system
 	COMPONENT base)
 
 INSTALL(FILES 	${CMAKE_CURRENT_SOURCE_DIR}/dlt-system.conf
-	DESTINATION "etc"
+	DESTINATION /etc
 	COMPONENT base)

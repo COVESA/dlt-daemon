@@ -50,5 +50,5 @@ install(TARGETS dlt-daemon
 	COMPONENT base)
 
 INSTALL(FILES 	${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf
-	DESTINATION "etc"
+	DESTINATION /etc
 	COMPONENT base)
