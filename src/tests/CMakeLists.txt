@@ -96,5 +96,5 @@ install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stre
 	COMPONENT base)
 
 INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
-	DESTINATION share/dlt-filetransfer 
+	DESTINATION /usr/share/dlt-filetransfer
 )

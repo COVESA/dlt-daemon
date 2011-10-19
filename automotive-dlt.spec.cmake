@@ -56,6 +56,8 @@ rm -rf $RPM_BUILD_ROOT
 #/etc/init.d/dlt-daemon
 /etc/dlt-system.conf
 /etc/dlt.conf
+/usr/share/dlt-filetransfer/dlt-test-filetransfer-file
+/usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png
 %{_libdir}/libdlt.so.@PRINT_MAJOR_VERSION@
 %{_libdir}/libdlt.so.@GENIVI_PROJECT_VERSION@
 %{_libdir}/libdlt.so

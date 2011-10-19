@@ -16,3 +16,5 @@ LICENSE.txt
 README
 src/daemon/dlt.conf
 src/system/dlt-system.conf
+src/tests/dlt-test-filetransfer-file
+src/tests/dlt-test-filetransfer-image.png
