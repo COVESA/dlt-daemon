@@ -70,9 +70,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-test-user
 %{_bindir}/dlt-test-stress
 %{_bindir}/dlt-test-internal
-%attr(0755,root,root) %{_bindir}/dlt-daemon
+%{_bindir}/dlt-test-filetransfer
+
+%attr(0755,root,root) 
+%{_bindir}/dlt-daemon
 %{_bindir}/dlt-example-user
 %{_bindir}/dlt-example-user-func
+%{_bindir}/dlt-example-filetransfer
 
 
 
