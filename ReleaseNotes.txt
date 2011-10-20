@@ -26,12 +26,20 @@ Changes in this release
 2.4.0
 
 Improvements
+    * New config files /etc/dlt.conf and /etc/dlt-system.conf must be adapted to the needs
+    * New DLT user lib API dlt_get_log_state() to get DLT client state
+    * New DLT user lib API to manage flow control (needed for bulk data logging)
+    * New DLT user lib API dlt_set_log_mode() to enable/disable internal/external trace
+    * New application dlt-system (filtransfer, proc file system logger,syslog udp adapter included)
+    * [GSW-66] File transfer over DLT.
+    * [GSW-43] Performance improvement for bulk data over DLT.
     * [GSW-61] Replace command line parameter by configuration file
     * [GSW-13] Support for keep-alive messages as configuration parameter
-    * [GSW-60] Extended offline DLT Trace memory handling. 
+    * [GSW-60] Extended offline DLT Trace memory handling.
+    * Removed filter implementation 
      
 Bugfixes
-	*
+    *
 	
 2.3.0
 
