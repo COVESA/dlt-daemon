@@ -396,9 +396,12 @@ int dlt_free(void)
     return 0;
 }
 
+int dlt_check_library_version(const char * user_major_version,const char * user_minor_version)
+{
+	return dlt_user_check_library_version(user_major_version, user_minor_version);
+}
 
-
-int dlt_register_app(const char *appid, const char * description, const char * user_major_version,const char * user_minor_version)
+int dlt_register_app(const char *appid, const char * description)
 {
     int ret;
 
@@ -408,8 +411,6 @@ int dlt_register_app(const char *appid, const char * description, const char * u
         {
             return -1;
         }
-
-        dlt_user_check_library_version(user_major_version, user_minor_version);
     }
 
     if ((appid==0) || (appid[0]=='\0'))

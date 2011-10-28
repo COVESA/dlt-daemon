@@ -115,7 +115,8 @@ extern DltContext CONTEXT;
  * @param DESCRIPTION ASCII string containing description
  */
 #define DLT_REGISTER_APP(APPID,DESCRIPTION) \
-		dlt_register_app( APPID, DESCRIPTION, PACKAGE_MAJOR_VERSION, PACKAGE_MINOR_VERSION );
+		dlt_check_library_version(PACKAGE_MAJOR_VERSION, PACKAGE_MINOR_VERSION ); \
+		dlt_register_app( APPID, DESCRIPTION);
 
 
 /**

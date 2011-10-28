@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    dlt_register_app("LOG","Test Application for Logging", PACKAGE_MAJOR_VERSION,PACKAGE_MINOR_VERSION);
+    dlt_register_app("LOG","Test Application for Logging");
 
     dlt_register_context(&mycontext,"TEST","Test Context for Logging");
 

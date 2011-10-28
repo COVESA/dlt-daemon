@@ -394,12 +394,20 @@ int dlt_init_file(const char *name);
 int dlt_free();
 
 /**
+ * Check the library version of DLT library.
+ * @param user_major_version the major version to be compared
+ * @param user_minor_version the minor version to be compared
+ * @return negative value if there was an error
+ */
+int dlt_check_library_version(const char * user_major_version, const char * user_minor_version);
+
+/**
  * Register an application in the daemon.
  * @param appid four byte long character array with the application id
  * @param description long name of the application
  * @return negative value if there was an error
  */
-int dlt_register_app(const char *appid, const char * description, const char * user_major_version, const char * user_minor_version);
+int dlt_register_app(const char *appid, const char * description);
 
 /**
  * Unregister an application in the daemon.
