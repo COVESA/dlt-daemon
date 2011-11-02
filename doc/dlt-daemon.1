@@ -1,0 +1,46 @@
+.TH dlt-daemon 1  "October 31, 2011" "version 2.4.0" "USER COMMANDS"
+.SH NAME
+dlt-daemon \- DLT daemon for logging and tracing purpose
+.SH SYNOPSIS
+.B dlt-daemon
+[\-h] [\-d] [\-v] [\-c filename]
+.SH DESCRIPTION
+The DLT daemon is the central place where logs and traces are gathered
+from different applications, stored temporarily or permanently and
+transferred to a DLT client application, which can run directly on the
+GENIVI system or more likely on a external tester device.
+.PP
+dlt-daemon loads by default the configuration file /etc/dlt.conf. 
+See dlt.conf(1).
+.SH OPTIONS
+.TP
+\-h
+Display a short help text.
+.TP
+\-d
+Daemonize, needed in System V init systems.
+.TP
+\-v
+Display debug information from the running DLT daemon.
+.TP
+\-c
+Load an alternative configuration file. By default the configuration
+file /etc/dlt.conf is loaded.
+.SH EXAMPLES
+.TP
+Start DLT daemon in background mode:
+.B dlt-daemon
+\-d
+.PP
+.TP
+Start DLT daemon for debugging purpose with own configuration:
+.B dlt-daemon
+\-c ~/my-dlt-configuration.cfg \-v
+.PP
+.SH EXIT STATUS
+Non zero is returned in case of failure.
+.SH AUTHOR
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+.SH SEE ALSO
+dlt.conf(5)
+dlt-system(1)

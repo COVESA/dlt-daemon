@@ -1,0 +1,134 @@
+.TH dlt-system.conf 5  "October 31, 2011" "version 2.4.0" "USER COMMANDS"
+.SH NAME
+dlt-system.conf \- DLT system process configuration file
+.SH DESCRIPTION
+The DLT system logging process is the central application, which logs
+system information from the platform. It provides the features
+filetransfer, syslog adapater, logging of any kind of files and
+procfilesystem logger. The individual features can be enabled and
+disabled in the configuration file. 
+.PP
+The configuration file dlt-system.conf allows to configure the different
+runtime behaviour of dlt-system. The configuration file is loaded
+during startup of dlt-system.
+.PP
+dlt-system loads by default the configuration file /etc/dlt-system.conf.
+An alternative configuration file can be loaded with the option \-c.
+.SH GENERAL OPTIONS
+.TP
+.B ApplicationId
+The application Id used for the dlt-system process.
+.IP
+Default: SYS
+.SH SYSLOG ADAPTER OPTIONS
+.TP
+.B SyslogEnable
+If this option is set to 1, the syslog adapter feature is enabled.
+.IP
+Default: 0.
+.TP
+.B SyslogContextId
+This value defines context id of the syslog adapter. 
+.IP
+Default: SYSL
+.TP
+.B SyslogPort
+This value defines the UDP port opened for receiving log messages from
+syslog.
+.IP
+Default: 47111
+.SH FILETRANSFER OPTIONS
+.TP
+.B FiletransferEnable
+If this option is set to 1, the filetransfer feature is enabled.
+.IP
+Default: 0.
+.TP
+.B FiletransferDirectory1
+This is path to the first directory, which is scanned for new files to
+be transfered. If new files are found, these files are transfered to the
+client and then deleted after a configurable time.
+.IP
+Default: /tmp/filetransfer
+.TP
+.B FiletransferDirectory2
+This is path to the second directory, which is scanned for new files to
+be transfered. If new files are found, these files are transfered to the
+client and then deleted after a configurable time.
+.IP
+Default: /tmp/filetransfer2
+.TP
+.B SyslogContextId
+This value defines context id of the syslog adapter. 
+.IP
+Default: SYSL
+.TP
+.B FiletransferTimeStartup
+This value defines the amount of time in seconds after start of
+dlt-system, when dlt-system starts to send the first file.
+.IP
+Default: 30
+.TP
+.B FiletransferTimeDelay
+This value defines the amount of time after which a sent file is deleted
+and the next file is strated to be transmitted.
+.IP
+Default: 10
+.SH LOG FILES OPTIONS
+.TP
+.B LogFileEnable
+If this option is set to 1, the log files feature is enabled.
+.IP
+Default: 0.
+.TP
+.B LogFileFilename
+This value sets the full filename path to the file, which should be logged. 
+.TP
+.B LogFileMode
+This value the defines in which operation mode this file is logged.
+Possible values are: 0 = off, 1 = startup only, 2 = regular.
+In mode 1 the file is only logged once when dlt-system is started.
+In mode 2 the file is logged regularly every time LogFileTimeDelay timer
+elapses.
+.TP
+.B LogFileTimeDelay
+This value is used in mode 3 and defines the number of seconds, after
+which the defined file is logged.
+.TP
+.B LogFileContextId
+This value defines the context id, which is used for logging the file.
+.SH LOG PROCESSES OPTIONS
+.TP
+.B LogProcessesEnable
+If this option is set to 1, the log processes feature is enabled.
+.IP
+Default: 0.
+.TP
+.B LogProcessesContextId
+This value defines the context id, which is used for logging processes
+files.
+.TP
+.B LogProcessName
+This value defines the name of the process to be logged, as used in the
+file stat of each process. 
+If the value is defined as *, all processes are logged.
+.TP
+.B LogProcessFilename
+This value sets the relative filename path to the file, which should be
+logged. The path is relative to the procfilesystem folder of the
+process. 
+.TP
+.B LogProcessMode
+This value the defines in which operation mode this process file is
+logged. Possible values are: 0 = off, 1 = startup only, 2 = regular.
+In mode 1 the file is only logged once when dlt-system is started.
+In mode 2 the file is logged regularly every time LogFileTimeDelay timer
+elapses.
+.TP
+.B LogProcessTimeDelay
+This value is used in mode 3 and defines the number of seconds, after
+which the defined procfilesystem file is logged.
+.SH AUTHOR
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+.SH SEE ALSO
+dlt-system(1)

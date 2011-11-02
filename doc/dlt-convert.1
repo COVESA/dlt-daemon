@@ -1,0 +1,63 @@
+.TH dlt-convert 1  "October 31, 2011" "version 2.4.0" "USER COMMANDS"
+.SH NAME
+dlt-convert \- Convert DLT Logging files into ASCII
+.SH SYNOPSIS
+.B dlt-convert
+[\-h] [\-a] [\-x] [\-m] [\-s][\-o filename] [\-v] [\-c] [\-b number]
+[\-e number] [\-w] file1 [file2] [file3]
+.SH DESCRIPTION
+Read DLT files, print DLT messages as ASCII and store the messages again.
+Use Ranges and Output file to cut DLT files.
+Use two files and Output file to join DLT files. 
+.SH OPTIONS
+.TP
+\-h
+Display a short help text.
+.TP
+\-a
+Print DLT file; payload as ASCII.
+.TP
+\-x
+Print DLT file; payload as hex.
+.TP
+\-m
+Print DLT file; payload as hex and ASCII.
+.TP
+\-s
+Print DLT file; only headers.
+.TP
+\-o
+Output messages in new DLT file.
+.TP
+\-v
+Verbose mode.
+.TP
+\-c
+Count number of messages.
+.TP
+\-b
+First messages to be handled.
+.TP
+\-e
+Last message to be handled.
+.TP
+\-w
+Follow dlt file while file is increasing.
+.SH EXAMPLES
+.TP
+Convert DLT file into ASCII:
+.B dlt-convert
+\-a mylog.dlt
+.PP
+.TP
+Join two log files:
+.B dlt-convert
+\-o newlog.dlt mylog1.dlt mylog2.dlt
+.PP
+.SH EXIT STATUS
+Non zero is returned in case of failure.
+.SH AUTHOR
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+.SH SEE ALSO
+dlt-daemon(1)
+
