@@ -361,7 +361,9 @@ int main(int argc, char* argv[])
     socklen_t addr_len;
     char recv_data[MAXSTRLEN];
     struct sockaddr_in client_addr, server_addr;
-    fd_set rfds;
+    fd_set master_rfds;
+    fd_set read_rfds;
+    int fdmax;
     struct timeval tv;
     int retval;
     uint32_t lasttime;
@@ -425,9 +427,13 @@ int main(int argc, char* argv[])
 	}
 
    /* Watch sockets to see when it has input. */
-	FD_ZERO(&rfds);
+	FD_ZERO(&read_rfds);
+	FD_ZERO(&master_rfds);
+	fdmax = 0;
 	if(options.SyslogEnable) {
-		FD_SET(sock, &rfds);
+		FD_SET(sock, &master_rfds);
+		if(sock>fdmax)
+			fdmax=sock;
 	}
 
 	/* init timers */
@@ -449,7 +455,8 @@ int main(int argc, char* argv[])
 			tv.tv_usec = (dlt_uptime()-lasttime+10000)*100;
 
 		/* wait data to be received, or wait min time */
-		retval = select(1, &rfds, NULL, NULL, &tv);
+		read_rfds = master_rfds;
+		retval = select(fdmax+1, &read_rfds, NULL, NULL, &tv);
 
 		if (retval == -1)
 			perror("select()");
@@ -516,30 +523,33 @@ int main(int argc, char* argv[])
 		}
 
 		/* check syslog adapter socket */
-		if(options.SyslogEnable && FD_ISSET(sock, &rfds))
+		if(options.SyslogEnable)
 		{
-			bytes_read = 0;
-
-			bytes_read = recvfrom(sock, recv_data, MAXSTRLEN, 0,
-								  (struct sockaddr *)&client_addr, &addr_len);
-								  
-			if (bytes_read == -1)
+			if( FD_ISSET(sock, &read_rfds) )
 			{
-				if (errno == EINTR)
-				{
-					continue;
-				}
-				else
-				{
-					exit(1);
-				}
-			}
+				bytes_read = 0;
 
-			recv_data[bytes_read] = '\0';
+				bytes_read = recvfrom(sock, recv_data, MAXSTRLEN, 0,
+									  (struct sockaddr *)&client_addr, &addr_len);
+									  
+				if (bytes_read == -1)
+				{
+					if (errno == EINTR)
+					{
+						continue;
+					}
+					else
+					{
+						exit(1);
+					}
+				}
 
-			if (bytes_read != 0)
-			{
-				DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
+				recv_data[bytes_read] = '\0';
+
+				if (bytes_read != 0)
+				{
+					DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
+				}
 			}
 		}
     }
