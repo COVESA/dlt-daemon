@@ -159,14 +159,7 @@ int dlt_init(void)
 
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
-
-	/* init shared memory */
-    if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
-    {
-        sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
-        dlt_log(LOG_WARNING, str);
-        return 0; 
-    }   
+	memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
 
     /* create and open DLT user FIFO */
     sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
@@ -197,8 +190,19 @@ int dlt_init(void)
     {
         sprintf(str,"Loging disabled, FIFO %s cannot be opened with open()!\n",DLT_USER_FIFO);
         dlt_log(LOG_WARNING, str);
-        return 0;
+        //return 0;
     }
+	else
+	{
+		/* init shared memory */
+		if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
+		{
+			sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+			dlt_log(LOG_WARNING, str);
+			//return 0; 
+		}   
+	}
+		
 
     if (dlt_receiver_init(&(dlt_user.receiver),dlt_user.dlt_user_handle, DLT_USER_RCVBUF_MAX_SIZE)==-1)
 	{
@@ -2217,6 +2221,9 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             close(dlt_user.dlt_log_handle);
             dlt_user.dlt_log_handle = -1;
 
+			/* free shared memory */
+			dlt_shm_free_client(&dlt_user.dlt_shm);
+
             if (dlt_user.local_print_mode == DLT_PM_AUTOMATIC)
             {
                 dlt_user_print_msg(&msg, log);
@@ -2762,6 +2769,14 @@ void dlt_user_log_reattach_to_daemon(void)
             {
             	return;
             }
+
+			/* init shared memory */
+			if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
+			{
+				sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+				dlt_log(LOG_WARNING, str);
+				//return 0; 
+			}   
 
             dlt_log(LOG_NOTICE, "Logging re-enabled!\n");
 

@@ -74,6 +74,7 @@
 #include <string.h>
 
 #include <dlt_shm.h>
+#include <dlt_common.h>
 
 void dlt_shm_print_hex(char *ptr,int size)
 {
@@ -266,7 +267,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	
 	if(!buf->mem) {
 		// shm not initialised
-		printf("SHM: SHM not initialised\n");
+		//printf("SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
