@@ -45,7 +45,7 @@ ENDIF(GPROF_DLT_LIB)
 
 target_link_libraries(dlt rt ${CMAKE_THREAD_LIBS_INIT})
 
-set_target_properties(dlt PROPERTIES VERSION 2.4.0 SOVERSION 2)
+set_target_properties(dlt PROPERTIES VERSION 2.4.1 SOVERSION 2)
 
 install(TARGETS dlt
 	LIBRARY DESTINATION lib
