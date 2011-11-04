@@ -26,12 +26,14 @@ Changes in this release
 2.4.1 
 
 Improvements
+    * Added daemonise and signal handlers to dlt-system.
     * Added manual pages.
     * Added new API dlt_check_library_version() function.
     * DLT user library does not set the stack size of the receiver thread anymore.
 
 Bugfixes
-    * Fixes syslog adapter in dlt-system
+    * Fixed shared memory problem in DLT library during startup, if application is started before daemon.
+    * Fixed syslog adapter in dlt-system.
     * Reverted API changes in dlt_register_app() function.
 
 2.4.0

@@ -78,6 +78,16 @@
 #include <netinet/in.h>
 #include <errno.h>
 
+#include <netdb.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <pthread.h>
+
+#include <sys/timerfd.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <linux/stat.h>
+
 #include "dlt_common.h"
 #include "dlt_user.h"
 
@@ -93,12 +103,16 @@ DLT_DECLARE_CONTEXT(processesContext);
 DLT_DECLARE_CONTEXT(filetransferContext);
 DltContext logFileContext[DLT_SYSTEM_LOG_FILE_MAX];
 
+DltSystemOptions options;
+DltSystemRuntime runtime;
+
 void dlt_system_init_options(DltSystemOptions *options)
 {
 	int num;
 	
 	strncpy(options->ConfigurationFile,DEFAULT_CONFIGURATION_FILE,sizeof(options->ConfigurationFile));
 	strncpy(options->ApplicationId,DEFAULT_APPLICATION_ID,sizeof(options->ApplicationId));
+	options->daemonise = 0;
 
 	/* Syslog Adapter */
 	options->SyslogEnable = 0;
@@ -141,10 +155,15 @@ int dlt_system_parse_options(DltSystemOptions *options,int argc, char* argv[])
 	int opt;
     char version[255];
 	
-    while ((opt = getopt(argc, argv, "c:h")) != -1)
+    while ((opt = getopt(argc, argv, "c:hd")) != -1)
     {
         switch (opt)
         {
+			case 'd':
+			{
+				options->daemonise = 1;
+				break;
+			}
 			case 'c':
 			{
 				strncpy(options->ConfigurationFile,optarg,sizeof(options->ConfigurationFile));
@@ -158,6 +177,7 @@ int dlt_system_parse_options(DltSystemOptions *options,int argc, char* argv[])
 				printf("System information manager and forwarder to DLT daemon.\n");
 				printf("%s \n", version);
 				printf("Options:\n");
+				printf("-d           - Daemonize\n");
 				printf("-c filename  - Set configuration file (default: /etc/dlt-system.conf)\n");
 				printf("-h           - This help\n");
 				return -1;
@@ -354,6 +374,124 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 	return 0;
 }
 
+void dlt_system_daemonize()
+{
+    int i,lfp,bytes_written,ret;
+
+    /* Daemonize */
+    i=fork();
+    if (i<0)
+    {
+        exit(-1); /* fork error */
+    }
+
+    if (i>0)
+    {
+        exit(0); /* parent exits */
+    }
+    /* child (daemon) continues */
+
+    /* Process independency */
+
+     /* obtain a new process group */
+    if (setsid()==-1)
+    {
+        exit(-1); /* fork error */
+    }
+
+    /* Close descriptors */
+    for (i=getdtablesize();i>=0;--i)
+    {
+        close(i); /* close all descriptors */
+    }
+
+    /* Open standard descriptors stdin, stdout, stderr */
+    i=open("/dev/null",O_RDWR); /* open stdin */
+    ret=dup(i); /* stdout */
+    ret=dup(i); /* stderr */
+
+    /* Set umask */
+    //umask(DLT_DAEMON_UMASK);
+
+    /* Change to known directory */
+    //ret=chdir(DLT_USER_DIR);
+
+    /* Ensure single copy of daemon;
+       run only one instance at a time */
+#if 0
+    lfp=open(DLT_DAEMON_LOCK_FILE,O_RDWR|O_CREAT,DLT_DAEMON_LOCK_FILE_PERM);
+    if (lfp<0)
+    {
+    	dlt_log(LOG_CRIT, "can't open lock file, exiting DLT daemon\n");
+        exit(-1); /* can not open */
+    }
+    if (lockf(lfp,F_TLOCK,0)<0)
+    {
+    	dlt_log(LOG_CRIT, "can't lock lock file, exiting DLT daemon\n");
+        exit(-1); /* can not lock */
+    }
+    /* only first instance continues */
+
+    sprintf(str,"%d\n",getpid());
+    bytes_written=write(lfp,str,strlen(str)); /* record pid to lockfile */
+
+#endif
+    /* Catch signals */
+    signal(SIGCHLD,SIG_IGN); /* ignore child */
+    signal(SIGTSTP,SIG_IGN); /* ignore tty signals */
+    signal(SIGTTOU,SIG_IGN);
+    signal(SIGTTIN,SIG_IGN);
+
+} /* dlt_system_daemonize() */
+
+void dlt_system_cleanup()
+{
+	int num;
+	
+	if(options.SyslogEnable)
+		DLT_UNREGISTER_CONTEXT(syslogContext);	
+
+	if(options.FiletransferEnable)
+		DLT_UNREGISTER_CONTEXT(filetransferContext);
+
+	if(options.LogFileEnable) {
+		for(num=0;num<options.LogFileNumber;num++) {
+			if(options.LogFileFilename[num][0]!=0)
+				DLT_UNREGISTER_CONTEXT(logFileContext[num]);
+		}
+	}
+	
+	if(options.LogProcessesEnable)
+		DLT_UNREGISTER_CONTEXT(processesContext);
+		
+    DLT_UNREGISTER_APP();
+}
+
+void dlt_system_signal_handler(int sig)
+{
+    switch (sig)
+    {
+    case SIGHUP:
+    case SIGTERM:
+    case SIGINT:
+    case SIGQUIT:
+    {
+		dlt_system_cleanup();
+
+		printf("dlt-system stopped!\n");
+
+		/* Terminate program */
+        exit(0);
+        break;
+    }
+    default:
+    {
+	/* This case should never occur */
+	break;
+    }
+    } /* switch */
+} /* dlt_system_signal_handler() */
+
 int main(int argc, char* argv[])
 {
     int sock;
@@ -370,9 +508,6 @@ int main(int argc, char* argv[])
     int firsttime = 1;
     int num;
 
-    DltSystemOptions options;
-    DltSystemRuntime runtime;
-
 	/* init options */
 	dlt_system_init_options(&options);
 
@@ -380,6 +515,17 @@ int main(int argc, char* argv[])
 	if(dlt_system_parse_options(&options,argc,argv)) {
         return -1;
 	}
+
+	if(options.daemonise)
+	{
+		dlt_system_daemonize();
+	}
+
+	/* set signal handler */
+    signal(SIGTERM, dlt_system_signal_handler); /* software termination signal from kill */
+    signal(SIGHUP,  dlt_system_signal_handler); /* hangup signal */
+    signal(SIGQUIT, dlt_system_signal_handler);
+    signal(SIGINT,  dlt_system_signal_handler);
 
 	/* parse configuration file */
 	if(dlt_system_parse_configuration(&options)) {
@@ -554,23 +700,7 @@ int main(int argc, char* argv[])
 		}
     }
 
-	if(options.SyslogEnable)
-		DLT_UNREGISTER_CONTEXT(syslogContext);	
-
-	if(options.FiletransferEnable)
-		DLT_UNREGISTER_CONTEXT(filetransferContext);
-
-	if(options.LogFileEnable) {
-		for(num=0;num<options.LogFileNumber;num++) {
-			if(options.LogFileFilename[num][0]!=0)
-				DLT_UNREGISTER_CONTEXT(logFileContext[num]);
-		}
-	}
-	
-	if(options.LogProcessesEnable)
-		DLT_UNREGISTER_CONTEXT(processesContext);
-		
-    DLT_UNREGISTER_APP();
+	dlt_system_cleanup();
 
     return 0;
 }

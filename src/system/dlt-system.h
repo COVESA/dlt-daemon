@@ -81,6 +81,7 @@
 typedef struct {
 	char ConfigurationFile[256];
 	char ApplicationId[256];
+	int  daemonise;
 
 	int  SyslogEnable;
 	char SyslogContextId[256];
