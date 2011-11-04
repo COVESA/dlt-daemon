@@ -32,9 +32,9 @@ extern int testF3P3();
 int main(void)
 {	
 	//First file contains some text
-	file1 = "/usr/share/dlt-test-filetransfer-file";
+	file1 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-file";
 	//Second file is a picture	
-	file2 = "/usr/share/dlt-test-filetransfer-image.png";
+	file2 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png";
 	//Third file doesn't exist. Just to test the reaction when the file isn't available.
 	file3_1 = "dlt-test-filetransfer-doesntExist_1";
 	//Third file doesn't exist. Just to test the reaction when the file isn't available.
