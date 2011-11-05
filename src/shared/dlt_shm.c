@@ -132,8 +132,8 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
     }
 	
 	// Init semaphore
-	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|IPC_CREAT|IPC_EXCL)) == -1 ) {
-		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|IPC_EXCL)) == -1 ) {
+	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
+		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
 			perror("SHM: semget");
 			return -1; /* ERROR */
 		}
