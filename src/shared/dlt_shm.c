@@ -73,6 +73,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#if !defined(_MSC_VER)
+#include <unistd.h>
+#include <syslog.h>
+#endif
+
 #include <dlt_shm.h>
 #include <dlt_common.h>
 
@@ -98,12 +103,13 @@ void dlt_shm_pv(int id,int operation)
 	semaphor.sem_flg = SEM_UNDO;
 	
 	if(semop(id, &semaphor,1) == -1) {
-		perror("SHM: semop");
+		dlt_log(LOG_ERR,"SHM: semop");
 	}
 }
 
 int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	struct shmid_ds shm_buf;
+	char str[256];
 
 	// Init parameters
 	buf->shm = NULL;
@@ -114,32 +120,32 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 
     // Create the segment.
     if ((buf->shmid = shmget(key, size, IPC_CREAT | 0666)) < 0) {
-        perror("SHM: shmget");
+        dlt_log(LOG_ERR,"SHM: shmget");
         return -1; /* ERROR */
     }
 
 	// get the size of shm
 	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
 	{
-		perror("SHM: shmctl");
+		dlt_log(LOG_ERR,"SHM: shmctl");
         return -1; /* ERROR */
 	}	
 
     // Now we attach the segment to our data space.
     if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
-        perror("SHM: shmat");
+        dlt_log(LOG_ERR,"SHM: shmat");
         return -1; /* ERROR */
     }
 	
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
 		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
-			perror("SHM: semget");
+			dlt_log(LOG_ERR,"SHM: semget");
 			return -1; /* ERROR */
 		}
 	}
 	if( semctl(buf->semid,0,SETVAL,(int)1) == -1 ) {
-        perror("SHM: semctl");
+        dlt_log(LOG_ERR,"SHM: semctl");
         return -1; /* ERROR */
 	}
 	
@@ -153,9 +159,8 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	// clear memory
 	memset(buf->mem,0,buf->size);
     
-	//dlt_shm_status(buf);
-    //dlt_shm_info(buf);
-    printf("SHM: Size %d\n",buf->size);    
+	snprintf(str,sizeof(str),"SHM: Size %d\n",buf->size);
+	dlt_log(LOG_INFO, str);
 
 	return 0; /* OK */
 }
@@ -172,26 +177,26 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 
     // Create the segment.
     if ((buf->shmid = shmget(key, 0, 0666)) < 0) {
-        perror("SHM: shmget");
+        dlt_log(LOG_ERR,"SHM: shmget");
         return -1; /* ERROR */
     }
 
 	// get the size of shm
 	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
 	{
-		perror("SHM: shmctl");
+		dlt_log(LOG_ERR,"SHM: shmctl");
         return -1; /* ERROR */
 	}	
 
     // Now we attach the segment to our data space.
     if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
-        perror("shmat");
+        dlt_log(LOG_ERR,"shmat");
         return -1; /* ERROR */
     }
         	
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
-        perror("SHM: semget");
+        dlt_log(LOG_ERR,"SHM: semget");
         return -1; /* ERROR */
 	}
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -208,26 +213,34 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 
 void dlt_shm_info(DltShm *buf)
 {
+	char str[256];
 
-    printf("SHM: SHM id: %d\n",buf->shmid);    
-    printf("SHM: Available size: %d\n",buf->size);    
-    printf("SHM: SHM full start address: %lX\n",(unsigned long)buf->shm);        
-    printf("SHM: SHM start address: %lX\n",(unsigned long)buf->mem);        
+	snprintf(str,sizeof(str),"SHM: SHM id: %d\n",buf->shmid);
+	dlt_log(LOG_INFO, str);
+	snprintf(str,sizeof(str),"SHM: Available size: %d\n",buf->size);
+	dlt_log(LOG_INFO, str);
+	snprintf(str,sizeof(str),"SHM: SHM full start address: %lX\n",(unsigned long)buf->shm);
+	dlt_log(LOG_INFO, str);
+	snprintf(str,sizeof(str),"SHM: SHM start address: %lX\n",(unsigned long)buf->mem);
+	dlt_log(LOG_INFO, str);
 
 }
 
 void dlt_shm_status(DltShm *buf)
 {
 	int write, read, count;
+	char str[256];
 
 	write = ((int*)(buf->shm))[0];
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
 
-    printf("SHM: Write: %d\n",write);    
-    printf("SHM: Read: %d\n",read);    
-    printf("SHM: Count: %d\n",count);    
-
+	snprintf(str,sizeof(str),"SHM: Write: %d\n",write);
+	dlt_log(LOG_INFO, str);
+	snprintf(str,sizeof(str),"SHM: Read: %d\n",read);
+	dlt_log(LOG_INFO, str);
+	snprintf(str,sizeof(str),"SHM: Count: %d\n",count);
+	dlt_log(LOG_INFO, str);
 }
 
 int dlt_shm_get_total_size(DltShm *buf)
@@ -267,7 +280,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	
 	if(!buf->mem) {
 		// shm not initialised
-		//printf("SHM: SHM not initialised\n");
+		//dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
@@ -283,13 +296,13 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	if(read==write && count) {
 		// shm buffer is full
 		DLT_SHM_SEM_FREE(buf->semid);
-		//printf("SHM is totally full\n");
+		//dlt_log(LOG_ERR,"SHM is totally full\n");
 		return -1; // ERROR
 	}
 	else if(write >= buf->size) {
 		if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 			DLT_SHM_SEM_FREE(buf->semid);
-			//printf("SHM is full at start\n");
+			//dlt_log(LOG_ERR,"SHM is full at start\n");
 			return -1; // ERROR
 		}	
 		write = 0;
@@ -297,7 +310,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	else if(read > write) {
 		if((write + size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 			DLT_SHM_SEM_FREE(buf->semid);
-			//printf("SHM is full at end\n");
+			//dlt_log(LOG_ERR,"SHM is full at end\n");
 			return -1; // ERROR
 		}	
 	}
@@ -308,7 +321,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 			// try write at beginning
 			if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 				DLT_SHM_SEM_FREE(buf->semid);
-				//printf("SHM is full at start\n");
+				//dlt_log(LOG_ERR,"SHM is full at start\n");
 				return -1; // ERROR
 			}	
 			// write zero status and size at end if possible
@@ -359,7 +372,7 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	
 	if(!buf->mem) {
 		// shm not initialised
-		printf("SHM: SHM not initialised\n");
+		//dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
@@ -398,19 +411,19 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	
 	// check status
 	if(status != 2 ) {
-		//printf("Buffer is not fully written\n");
+		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
-		printf("SHM: Buffers size bigger than shm buffer\n");
+		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
 		return -1; // ERROR		
 	}
 	
 	// check max read size
 	if(size > max_size) {
-		printf("SHM: Buffer is bigger than max size\n");
+		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
 		return -1; // ERROR			
 	}
 	
@@ -442,7 +455,7 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 	
 	if(!buf->mem) {
 		// shm not initialised
-		printf("SHM: SHM not initialised\n");
+		dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -482,19 +495,19 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 	
 	// check status
 	if(status != 2 ) {
-		//printf("Buffer is not fully written\n");
+		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
-		printf("SHM: Buffers size bigger than shm buffer\n");
+		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
 		return -1; // ERROR		
 	}
 	
 	// check max read size
 	if((size-sizeof(head)) > max_size) {
-		printf("SHM: Buffer is bigger than max size\n");
+		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
 		return -1; // ERROR			
 	}
 	
@@ -511,7 +524,7 @@ int dlt_shm_remove(DltShm *buf)
 	
 	if(!buf->mem) {
 		// shm not initialised
-		printf("SHM: SHM not initialised\n");
+		dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
@@ -551,13 +564,13 @@ int dlt_shm_remove(DltShm *buf)
 	
 	// check status
 	if(status != 2 ) {
-		//printf("Buffer is not fully written\n");
+		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
-		printf("SHM: Buffers size bigger than shm buffer\n");
+		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
 		return -1; // ERROR		
 	}
 		
@@ -570,7 +583,7 @@ int dlt_shm_remove(DltShm *buf)
 
 int dlt_shm_reset(DltShm *buf) {
 	
-	printf("SHM: Pointer corrupted; reset triggered.\n");
+	dlt_log(LOG_EMERG,"SHM: Pointer corrupted; reset triggered.\n");
 
 	/* reset pointers and counters */	
 	DLT_SHM_SEM_GET(buf->semid);
@@ -589,7 +602,7 @@ int dlt_shm_recover(DltShm *buf) {
 	// initialise head
 	head[3] = 0x01;
 
-	printf("SHM: Head not found; try to recover.\n");
+	dlt_log(LOG_EMERG,"SHM: Head not found; try to recover.\n");
 
 	/* try to find next valid message */
 	DLT_SHM_SEM_GET(buf->semid);
@@ -643,22 +656,22 @@ int dlt_shm_recover(DltShm *buf) {
 int dlt_shm_free_server(DltShm *buf) {
 
 	if(!buf->shm) {
-        printf("SHM: Shared memory segment not attached\n");
+        dlt_log(LOG_ERR,"SHM: Shared memory segment not attached\n");
         return -1; /* ERROR */
     }
 		
 	if(shmdt(buf->shm)) {
-        perror("SHM: shmdt");
+        dlt_log(LOG_ERR,"SHM: shmdt");
         return -1; /* ERROR */
     }
 
 	if(shmctl(buf->shmid,IPC_RMID,NULL) == -1) {
-        perror("SHM: shmdt");
+        dlt_log(LOG_ERR,"SHM: shmdt");
         return -1; /* ERROR */
 	}
 
 	if(semctl(buf->semid,0,IPC_RMID,(int)0) == -1) {
-        perror("SHM: shmdt");
+        dlt_log(LOG_ERR,"SHM: shmdt");
         return -1; /* ERROR */
 	}
 
@@ -675,12 +688,12 @@ int dlt_shm_free_server(DltShm *buf) {
 int dlt_shm_free_client(DltShm *buf) {
 
 	if(!buf->shm) {
-        printf("SHM: Shared memory segment not attached\n");
+        dlt_log(LOG_ERR,"SHM: Shared memory segment not attached\n");
         return -1; /* ERROR */
     }
 		
 	if(shmdt(buf->shm)) {
-        perror("SHM: shmdt");
+        dlt_log(LOG_ERR,"SHM: shmdt");
         return -1; /* ERROR */
     }
 
