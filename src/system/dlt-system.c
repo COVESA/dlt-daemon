@@ -82,6 +82,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <sys/timerfd.h>
 #include <sys/stat.h>
@@ -101,6 +102,7 @@
 DLT_DECLARE_CONTEXT(syslogContext);
 DLT_DECLARE_CONTEXT(processesContext);
 DLT_DECLARE_CONTEXT(filetransferContext);
+DLT_DECLARE_CONTEXT(shellContext);
 DltContext logFileContext[DLT_SYSTEM_LOG_FILE_MAX];
 
 DltSystemOptions options;
@@ -463,6 +465,8 @@ void dlt_system_cleanup()
 	
 	if(options.LogProcessesEnable)
 		DLT_UNREGISTER_CONTEXT(processesContext);
+
+	DLT_UNREGISTER_CONTEXT(shellContext);	
 		
     DLT_UNREGISTER_APP();
 }
@@ -491,6 +495,34 @@ void dlt_system_signal_handler(int sig)
     }
     } /* switch */
 } /* dlt_system_signal_handler() */
+
+int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
+{
+    char text[1024];
+
+	strncpy(text,data,length);
+
+	switch(service_id)
+	{
+		case 0x1001:
+			/* Execute shell command */
+			//DLT_LOG(shellContext, DLT_LOG_INFO, DLT_STRING("Execute command:"), DLT_STRING(text));
+			printf("Execute command: %s\n",text);
+			system(text);
+			break;
+		default:
+			//DLT_LOG(shellContext, DLT_LOG_WARN, DLT_STRING("Unknown command received! Service ID:"), DLT_UINT32(service_id),DLT_STRING("Command:"),DLT_STRING(text));
+			printf("Unknown command received! Service ID: %u Command: %s\n",service_id,text);
+			break;
+	}
+
+    printf("Injection %d, Length=%d \n",service_id,length);
+    if (length>0)
+    {
+    }
+
+    return 0;
+}
 
 int main(int argc, char* argv[])
 {
@@ -551,6 +583,8 @@ int main(int argc, char* argv[])
 			runtime.timeLogProcessDelay[num]=0;
 		}
 	}
+	DLT_REGISTER_CONTEXT(shellContext,"CMD","Execute Shell commands");	
+    DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001, dlt_user_injection_callback);
 
 	/* create systemd socket */
 	if(options.SyslogEnable) {
