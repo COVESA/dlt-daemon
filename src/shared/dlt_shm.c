@@ -280,7 +280,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	
 	if(!buf->mem) {
 		// shm not initialised
-		//dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
+		dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
@@ -296,13 +296,13 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	if(read==write && count) {
 		// shm buffer is full
 		DLT_SHM_SEM_FREE(buf->semid);
-		//dlt_log(LOG_ERR,"SHM is totally full\n");
+		dlt_log(LOG_ERR,"SHM is totally full\n");
 		return -1; // ERROR
 	}
 	else if(write >= buf->size) {
 		if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 			DLT_SHM_SEM_FREE(buf->semid);
-			//dlt_log(LOG_ERR,"SHM is full at start\n");
+			dlt_log(LOG_ERR,"SHM is full at start\n");
 			return -1; // ERROR
 		}	
 		write = 0;
@@ -310,7 +310,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	else if(read > write) {
 		if((write + size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 			DLT_SHM_SEM_FREE(buf->semid);
-			//dlt_log(LOG_ERR,"SHM is full at end\n");
+			dlt_log(LOG_ERR,"SHM is full at end\n");
 			return -1; // ERROR
 		}	
 	}
@@ -321,7 +321,7 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 			// try write at beginning
 			if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
 				DLT_SHM_SEM_FREE(buf->semid);
-				//dlt_log(LOG_ERR,"SHM is full at start\n");
+				dlt_log(LOG_ERR,"SHM is full at start\n");
 				return -1; // ERROR
 			}	
 			// write zero status and size at end if possible
@@ -372,7 +372,7 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	
 	if(!buf->mem) {
 		// shm not initialised
-		//dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
+		dlt_log(LOG_ERR,"SHM: SHM not initialised\n");
 		return -1; /* ERROR */
 	}
 
@@ -411,19 +411,21 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	
 	// check status
 	if(status != 2 ) {
-		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
+		dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
 		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+		dlt_shm_reset(buf);
 		return -1; // ERROR		
 	}
 	
 	// check max read size
 	if(size > max_size) {
 		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
+		dlt_shm_reset(buf);
 		return -1; // ERROR			
 	}
 	
@@ -495,19 +497,21 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 	
 	// check status
 	if(status != 2 ) {
-		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
+		dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
 		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+		dlt_shm_reset(buf);
 		return -1; // ERROR		
 	}
 	
 	// check max read size
 	if((size-sizeof(head)) > max_size) {
 		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
+		dlt_shm_reset(buf);
 		return -1; // ERROR			
 	}
 	
@@ -564,13 +568,14 @@ int dlt_shm_remove(DltShm *buf)
 	
 	// check status
 	if(status != 2 ) {
-		//dlt_log(LOG_ERR,"Buffer is not fully written\n");
+		dlt_log(LOG_ERR,"Buffer is not fully written\n");
 		return -1; // ERROR		
 	}
 	
 	// plausibility check of buffer size
 	if( (read+size) > buf->size) {
 		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+		dlt_shm_reset(buf);
 		return -1; // ERROR		
 	}
 		
@@ -583,7 +588,7 @@ int dlt_shm_remove(DltShm *buf)
 
 int dlt_shm_reset(DltShm *buf) {
 	
-	dlt_log(LOG_EMERG,"SHM: Pointer corrupted; reset triggered.\n");
+	dlt_log(LOG_ERR,"SHM: Pointer corrupted; reset triggered.\n");
 
 	/* reset pointers and counters */	
 	DLT_SHM_SEM_GET(buf->semid);
@@ -602,7 +607,7 @@ int dlt_shm_recover(DltShm *buf) {
 	// initialise head
 	head[3] = 0x01;
 
-	dlt_log(LOG_EMERG,"SHM: Head not found; try to recover.\n");
+	dlt_log(LOG_ERR,"SHM: Head not found; try to recover.\n");
 
 	/* try to find next valid message */
 	DLT_SHM_SEM_GET(buf->semid);
