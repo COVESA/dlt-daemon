@@ -114,7 +114,11 @@ static char str[DLT_COMMON_BUFFER_LENGTH];
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D','L','S',1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D','L','S',1 };
 
-static int log_as_daemon = 0;
+/* internal logging parameters */
+static int logging_mode = 0;
+static int logging_level = 6;
+static char logging_filename[256] = "";
+static FILE *logging_handle = 0;
 
 char *message_type[] = {"log","app_trace","nw_trace","control","","","",""};
 char *log_info[] = {"","fatal","error","warn","info","debug","verbose","","","","","","","","",""};
@@ -1952,14 +1956,37 @@ int dlt_file_free(DltFile *file,int verbose)
     return dlt_message_free(&(file->msg),verbose);
 }
 
+void dlt_log_set_level(int level)
+{
+	logging_level = level;
+}
+
+void dlt_log_set_filename(const char *filename)
+{
+	strncpy(logging_filename,filename,sizeof(logging_filename));
+}
+
 void dlt_log_init(int mode)
 {
-    log_as_daemon = mode;
+    logging_mode = mode;
+    
+	if(logging_mode == 2)
+	{
+		/* internal logging to file */
+		logging_handle = fopen(logging_filename,"w");
+		if (logging_handle == 0)
+		{
+			printf("Internal log file %s cannot be opened!\n",logging_filename);
+			return;
+		}
+	}
 }
 
 void dlt_log_free(void)
 {
-    /* Nothing to be done yet */
+	if(logging_mode == 2) {
+		fclose(logging_handle);
+	}
 }
 
 int dlt_log(int prio, char *s)
@@ -1970,68 +1997,80 @@ int dlt_log(int prio, char *s)
     {
         return -1;
     }
+	if(logging_level<prio)
+	{
+		return 0;
+	}
 
     switch (prio)
     {
         case	LOG_EMERG:
         {
-            strcpy(logfmtstring,"DLT| EMERGENCY: %s");
+            strncpy(logfmtstring,"DLT| EMERGENCY: %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_ALERT:
         {
-            strcpy(logfmtstring,"DLT| ALERT:     %s");
+            strncpy(logfmtstring,"DLT| ALERT:     %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_CRIT:
         {
-            strcpy(logfmtstring,"DLT| CRITICAL:  %s");
+            strncpy(logfmtstring,"DLT| CRITICAL:  %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_ERR:
         {
-            strcpy(logfmtstring,"DLT| ERROR:     %s");
+            strncpy(logfmtstring,"DLT| ERROR:     %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_WARNING:
         {
-            strcpy(logfmtstring,"DLT| WARNING:   %s");
+            strncpy(logfmtstring,"DLT| WARNING:   %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_NOTICE:
         {
-            strcpy(logfmtstring,"DLT| NOTICE:    %s");
+            strncpy(logfmtstring,"DLT| NOTICE:    %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_INFO:
         {
-            strcpy(logfmtstring,"DLT| INFO:      %s");
+            strncpy(logfmtstring,"DLT| INFO:      %s",sizeof(logfmtstring));
             break;
         }
         case	LOG_DEBUG:
         {
-            strcpy(logfmtstring,"DLT| DEBUG:     %s");
+            strncpy(logfmtstring,"DLT| DEBUG:     %s",sizeof(logfmtstring));
             break;
         }
         default:
         {
-            strcpy(logfmtstring,"DLT|            %s");
+            strncpy(logfmtstring,"DLT|            %s",sizeof(logfmtstring));
             break;
         }
     }
 
+	switch(logging_mode)
+	{
+		case 0:
+			/* log to stdout */
+			printf(logfmtstring, s);
+			break;
+		case 1:
+			/* log to syslog */
 #if !defined (__WIN32__) && !defined(_MSC_VER)
-    if (log_as_daemon)
-    {
-        openlog("DLT",LOG_PID,LOG_DAEMON);
-        syslog(prio, logfmtstring, s);
-        closelog();
-    }
-    else
+			openlog("DLT",LOG_PID,LOG_DAEMON);
+			syslog(prio, logfmtstring, s);
+			closelog();
 #endif
-    {
-        printf(logfmtstring, s);
-    }
+			break;
+		case 2:
+			/* log to file */
+			if(logging_handle)
+				fprintf(logging_handle,logfmtstring, s);
+			break;
+	}
 
     return 0;
 }

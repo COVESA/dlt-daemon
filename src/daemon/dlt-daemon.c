@@ -135,7 +135,6 @@ void usage()
     printf("DLT logging daemon\n");
     printf("Options:\n");
     printf("  -d            Daemonize\n");
-    printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
     printf("  -c filename   DLT daemon configuration file (Default: /etc/dlt.conf)\n");
 } /* usage() */
@@ -158,15 +157,10 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hvdc:")) != -1)
+    while ((c = getopt (argc, argv, "hdc:")) != -1)
     {
         switch (c)
         {
-        case 'v':
-        {
-            daemon_local->flags.vflag = 1;
-            break;
-        }
         case 'd':
         {
             daemon_local->flags.dflag = 1;
@@ -230,6 +224,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceDirectory[0] = 0;
 	daemon_local->flags.offlineTraceFileSize = 1000000;
 	daemon_local->flags.offlineTraceMaxSize = 0;
+	daemon_local->flags.loggingMode = 0;
+	daemon_local->flags.loggingLevel = 6;
+	strncpy(daemon_local->flags.loggingFilename,"/tmp/dlt.log",sizeof(daemon_local->flags.loggingFilename));
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -246,7 +243,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 			/* fetch line from configuration file */
 			if ( fgets (line , 1024 , pFile) != NULL )
 			{
-				  //printf("Line: %s\n",line);
 				  pch = strtok (line," =\r\n");
 				  token[0]=0;
 				  value[0]=0;
@@ -275,100 +271,108 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						if(strcmp(token,"Verbose")==0)
 						{
 							daemon_local->flags.vflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PrintASCII")==0)
 						{
 							daemon_local->flags.aflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PrintHex")==0)
 						{
 							daemon_local->flags.xflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PrintHeadersOnly")==0)
 						{
 							daemon_local->flags.sflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
-						}
-						else if(strcmp(token,"Daemonize")==0)
-						{
-							daemon_local->flags.dflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SendSerialHeader")==0)
 						{
 							daemon_local->flags.lflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SendContextRegistration")==0)
 						{
 							daemon_local->flags.rflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SendMessageTime")==0)
 						{
 							daemon_local->flags.sendMessageTime = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232SyncSerialHeader")==0)
 						{
 							daemon_local->flags.mflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"TCPSyncSerialHeader")==0)
 						{
 							daemon_local->flags.nflag = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232DeviceName")==0)
 						{
 							strncpy(daemon_local->flags.yvalue,value,sizeof(daemon_local->flags.yvalue));
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232Baudrate")==0)
 						{
 							strncpy(daemon_local->flags.bvalue,value,sizeof(daemon_local->flags.bvalue));
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"ECUId")==0)
 						{
 							strncpy(daemon_local->flags.evalue,value,sizeof(daemon_local->flags.evalue));
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
 							strncpy(daemon_local->flags.ivalue,value,sizeof(daemon_local->flags.ivalue));
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LoggingMode")==0)
+						{
+							daemon_local->flags.loggingMode = atoi(value);
+							//printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LoggingLevel")==0)
+						{
+							daemon_local->flags.loggingLevel = atoi(value);
+							//printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"LoggingFilename")==0)
+						{
+							strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename));
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SharedMemorySize")==0)
 						{
 							daemon_local->flags.sharedMemorySize = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"OfflineTraceDirectory")==0)
 						{
 							strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory));
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"OfflineTraceFileSize")==0)
 						{
 							daemon_local->flags.offlineTraceFileSize = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"OfflineTraceMaxSize")==0)
 						{
 							daemon_local->flags.offlineTraceMaxSize = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							//printf("Option: %s=%s\n",token,value);
 						}
 						else
 						{
 							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
 						}
 					}
-					//printf ("Token: %s\n",pch);
-
 			}
 			else
 			{
@@ -414,8 +418,10 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-    /* Initialize logging facility */
-    dlt_log_init(daemon_local.flags.dflag);
+    /* Initialize internal logging facility */
+    dlt_log_set_filename(daemon_local.flags.loggingFilename);
+    dlt_log_set_level(daemon_local.flags.loggingLevel);
+    dlt_log_init(daemon_local.flags.loggingMode);
 
     /* Print version information */
     dlt_get_version(version);
@@ -545,22 +551,6 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT,  dlt_daemon_signal_handler);
 
-#if 0
-    /* open DLT output file */
-    daemon_local->ohandle=-1;
-    if (daemon_local->flags.ovalue[0])
-    {
-        daemon_local->ohandle = open(daemon_local->flags.ovalue,O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
-        if (daemon_local->ohandle == -1)
-        {
-        	/* Return value ignored, dlt daemon will exit */
-            dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
-            sprintf(str,"Output file %s cannot be opened!\n",daemon_local->flags.ovalue);
-            dlt_log(LOG_ERR, str);
-            return -1;
-        } /* if */
-    } /* if */
-#endif
 	/* init offline trace */
 	if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0]) 
 	{

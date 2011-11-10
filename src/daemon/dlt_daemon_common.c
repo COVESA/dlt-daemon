@@ -907,11 +907,13 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 						if(strcmp(token,"LoggingMode")==0)
 						{
 							daemon->mode = atoi(value);
-							printf("Option: %s=%s\n",token,value);
+							sprintf(str,"Runtime Option: %s=%d\n",token,daemon->mode);
+							dlt_log(LOG_INFO, str);
 						}
 						else
 						{
-							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
+							sprintf(str,"Unknown option: %s=%s\n",token,value);
+							dlt_log(LOG_ERR, str);
 						}
 					}
 			}
@@ -924,7 +926,8 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 	}
 	else
 	{
-		fprintf(stderr, "Cannot open configuration file: %s\n",filename);
+        sprintf(str,"Cannot open configuration file: %s\n",filename);
+        dlt_log(LOG_WARNING, str);
 	}	
 	
     return 0;

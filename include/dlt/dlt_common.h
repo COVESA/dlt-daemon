@@ -862,8 +862,18 @@ extern "C"
     int dlt_file_free(DltFile *file,int verbose);
 
     /**
+     * Set internal logging filename if mode 2
+     * @param filename the filename
+     */
+    void dlt_log_set_filename(const char *filename);
+    /**
+     * Set internal logging level
+     * @param level the level
+     */
+    void dlt_log_set_level(int level);
+    /**
      * Initialize (external) logging facility
-     * @param mode positive, if syslog should be used; zero for console output
+     * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file
      */
     void dlt_log_init(int mode);
     /**
