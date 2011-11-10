@@ -188,11 +188,11 @@ int dlt_shm_init_client(DltShm *buf,int key) {
             return -1; /* ERROR */
 	}	
 
-        // Now we attach the segment to our data space.
-        if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
-            dlt_log(LOG_ERR,"shmat");
-            return -1; /* ERROR */
-        }
+	// Now we attach the segment to our data space.
+	if ((buf->shm = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
+		dlt_log(LOG_ERR,"shmat");
+		return -1; /* ERROR */
+	}
         	
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
@@ -201,12 +201,9 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 	}
 
 	// Init pointers
-        buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-        buf->size = shm_buf.shm_segsz - (buf->mem - buf->shm);
+	buf->mem = (char*)(&(((int*)(buf->shm))[3]));
+	buf->size = shm_buf.shm_segsz - (buf->mem - buf->shm);
     
-	//dlt_shm_status(buf);
-        //dlt_shm_info(buf);
-
 	return 0; /* OK */
 }
 
@@ -271,13 +268,40 @@ int dlt_shm_get_message_count(DltShm *buf)
 	return ((int*)(buf->shm))[2];
 }
 
+void dlt_shm_write_block(DltShm *buf,int *write, const unsigned char *data,unsigned int size)
+{
+	if((*write+size) <= buf->size) {
+		// write one block
+		memcpy(buf->mem+*write,data,size);
+		*write += size;
+	}
+	else {
+		// write two blocks
+		memcpy(buf->mem+*write, data, buf->size-*write);
+		memcpy(buf->mem, data+buf->size-*write, size-buf->size+*write);
+		*write += size-buf->size;
+	}
+}
+
+void dlt_shm_read_block(DltShm *buf,int *read,unsigned char *data,unsigned int size)
+{
+	if((*read+size) <= buf->size) {
+		// read one block
+		memcpy(data,buf->mem+*read,size);
+		*read += size;
+	}
+	else {
+		// read two blocks
+		memcpy(data, buf->mem+*read, buf->size-*read);
+		memcpy(data+buf->size-*read, buf->mem, size-buf->size+*read);
+		*read += size-buf->size;
+	}
+}
 int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3)
 {
-	int write, read, count;
-	char head[] = DLT_SHM_HEAD;
-	
-	// initialise head
-	head[3] = 0x01;
+	int free_size;	
+	int write, read;
+	DltShmBlockHead head;
 	
 	if(!buf->mem) {
 		// shm not initialised
@@ -291,69 +315,42 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 	// get current write pointer
 	write = ((int*)(buf->shm))[0];
 	read = ((int*)(buf->shm))[1];
-	count = ((int*)(buf->shm))[2];
+
+	// check pointers
+	if((read>buf->size) || (write>buf->size))
+	{
+		dlt_log(LOG_ERR,"SHM: Pointer out of range\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR		
+	}
+
+	// calculate free size
+	if(read>write)
+		free_size = read - write;
+	else
+		free_size = buf->size - write + read;
 	
-	// check space and write pointer
-	if(read==write && count) {
-		// shm buffer is full
+	// check size
+	if(free_size < (sizeof(DltShmBlockHead)+size1+size2+size3)) {
 		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM is totally full\n");
+		dlt_log(LOG_ERR,"SHM: SHM is full\n");
 		return -1; // ERROR
 	}
-	else if(write >= buf->size) {
-		if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
-			DLT_SHM_SEM_FREE(buf->semid);
-			dlt_log(LOG_ERR,"SHM is full at start\n");
-			return -1; // ERROR
-		}	
-		write = 0;
-	}	
-	else if(read > write) {
-		if((write + size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
-			DLT_SHM_SEM_FREE(buf->semid);
-			dlt_log(LOG_ERR,"SHM is full at end\n");
-			return -1; // ERROR
-		}	
-	}
-	else // read <= write
-	{
-		if((write+size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > buf->size) {
-			// data does not fit at end of buffer
-			// try write at beginning
-			if((size1+size2+size3+sizeof(head)+sizeof(unsigned char)+sizeof(int)) > read) {
-				DLT_SHM_SEM_FREE(buf->semid);
-				dlt_log(LOG_ERR,"SHM is full at start\n");
-				return -1; // ERROR
-			}	
-			// write zero status and size at end if possible
-			if((write+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
-				*((unsigned char*)(buf->mem+write)) = 0;  // init write status to unused
-				*((int*)(buf->mem+write+sizeof(unsigned char))) = 0;  // init write size to unused
-			} 
-			
-			write = 0;
-		}
-	}	
-	
-	// update global shm pointers
-	((int*)(buf->shm))[0] = write+sizeof(unsigned char)+sizeof(int)+size1+size2+size3+sizeof(head); // set new write pointer 	
-	((int*)(buf->shm))[2] += 1; // increase counter
 
-	// update buffer pointers
-	*((unsigned char*)(buf->mem+write)) = 1;  // set write status
-	*((int*)(buf->mem+write+sizeof(unsigned char))) = size1+size2+size3+sizeof(head);  // set write size
-	
+	// set header
+	strcpy(head.head,DLT_SHM_HEAD);
+	head.status = 2;
+	head.size = size1+size2+size3;
+
 	// write data
-	memcpy(buf->mem+write+sizeof(unsigned char)+sizeof(int),head,sizeof(head));
-	if(data1)
-		memcpy(buf->mem+write+sizeof(head)+sizeof(unsigned char)+sizeof(int),data1,size1);
-	if(data2)
-		memcpy(buf->mem+write+sizeof(head)+sizeof(unsigned char)+sizeof(int)+size1,data2,size2);
-	if(data3)
-		memcpy(buf->mem+write+sizeof(head)+sizeof(unsigned char)+sizeof(int)+size1+size2,data3,size3);
-	
-	// update write status
-	*((unsigned char*)(buf->mem+write)) = 2;
+	dlt_shm_write_block(buf,&write,(unsigned char*)&head,sizeof(DltShmBlockHead));
+	if(size1) dlt_shm_write_block(buf,&write,data1,size1);
+	if(size2) dlt_shm_write_block(buf,&write,data2,size2);
+	if(size3) dlt_shm_write_block(buf,&write,data3,size3);
+
+	// update global shm pointers
+	((int*)(buf->shm))[0] = write; // set new write pointer 	
+	((int*)(buf->shm))[2] += 1; // increase counter
 
 	// free semaphore
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -363,13 +360,10 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 
 int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 {
-	int write, read, count, size;
-	unsigned char status;
-	char head[] = DLT_SHM_HEAD;
+	int used_size;	
+	int write, read, count;
 	char head_compare[] = DLT_SHM_HEAD;
-	
-	// initialise head
-	head[3] = 0x01;
+	DltShmBlockHead head;
 	
 	if(!buf->mem) {
 		// shm not initialised
@@ -383,84 +377,90 @@ int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
 
+	// check pointers
+	if((read>buf->size) || (write>buf->size) || (count<0))
+	{
+		dlt_log(LOG_ERR,"SHM: Pointer out of range\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR		
+	}
+
 	// check if data is in there
-	if(count<=0) {
-		if((write!=read) || (count<0))
+	if(count==0) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		if(write!=read)
 		{
+			dlt_log(LOG_ERR,"SHM: SHM should be empty, but is not\n");
 			dlt_shm_reset(buf);
 		}
-		DLT_SHM_SEM_FREE(buf->semid);
 		return -1; // ERROR		
 	}
 
-	// check if end of buffer is reached and read status and size
-	if((read+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		if(status == 0) {
-			// data fits not end of shm
-			read = 0;
-			status =  *((unsigned char*)(buf->mem+read));
-			size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		}
-	}
-	else {
-		read = 0;
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-	}
-	
-	// check status
-	if(status != 2 ) {
-		//printf("Buffer is not fully written\n");
+	// calculate used size
+	if(write>read)
+		used_size = write - read;
+	else	
+		used_size = buf->size - read + write;
+
+	// first check size
+	if(used_size < (sizeof(DltShmBlockHead))) {
 		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"Buffer is not fully written\n");
-		return -1; // ERROR		
-	}
-	
-	// plausibility check of buffer size
-	if( (read+size) > buf->size) {
-		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+		dlt_log(LOG_ERR,"SHM: Size check 1 failed\n");
 		dlt_shm_reset(buf);
-		return -1; // ERROR		
+		return -1; // ERROR
 	}
-	
-	// check max read size
-	if(size > max_size) {
-		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
-		dlt_shm_reset(buf);
-		return -1; // ERROR			
-	}
-	
-	// check head
-	memcpy(head_compare,buf->mem+read+sizeof(unsigned char)+sizeof(int),sizeof(head));
-	if(memcmp(head,head_compare,sizeof(head))!=0)
+
+	// read header
+	dlt_shm_read_block(buf,&read,(unsigned char*)&head,sizeof(DltShmBlockHead));
+
+	// check header
+	if(memcmp((unsigned char*)(head.head),head_compare,sizeof(head_compare))!=0)
 	{
-		/* SHM message header is not correct */
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Header head check failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
 	}
-	
-	// copy data
-	memcpy(data,buf->mem+read+sizeof(unsigned char)+sizeof(int)+sizeof(head),size-sizeof(head));
+	if(head.status != 2)
+	{
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Header status check failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// second check size
+	if(used_size < (sizeof(DltShmBlockHead)+head.size)) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Size check 2 failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// third check size
+	if(head.size > max_size) {
+		dlt_log(LOG_ERR,"SHM: Size check 3 failed\n");
+		// nothing to do but data does not fit provided buffer
+	}
+
+	// read data
+	dlt_shm_read_block(buf,&read,data,head.size);
 
 	// update buffer pointers
-	((int*)(buf->shm))[1] = read+sizeof(unsigned char)+sizeof(int)+size; // set new read pointer 	
+	((int*)(buf->shm))[1] = read; // set new read pointer 	
 	((int*)(buf->shm))[2] -= 1; // decrease counter
 
 	DLT_SHM_SEM_FREE(buf->semid);
 
-	return size-sizeof(head); // OK
+	return head.size; // OK
 }
 
 int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 {
-	int write, read, count, size;
-	unsigned char status;
-	char head[] = DLT_SHM_HEAD;
-	
-	// initialise head
-	head[3] = 0x01;
+	int used_size;	
+	int write, read, count;
+	char head_compare[] = DLT_SHM_HEAD;
+	DltShmBlockHead head;
 	
 	if(!buf->mem) {
 		// shm not initialised
@@ -474,69 +474,88 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
 
+	// check pointers
+	if((read>buf->size) || (write>buf->size) || (count<0))
+	{
+		dlt_log(LOG_ERR,"SHM: Pointer out of range\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR		
+	}
+
 	// check if data is in there
-	if(count<=0) {
-		if((write!=read) || (count<0))
+	if(count==0) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		if(write!=read)
 		{
+			dlt_log(LOG_ERR,"SHM: SHM should be empty, but is not\n");
 			dlt_shm_reset(buf);
 		}
-		DLT_SHM_SEM_FREE(buf->semid);
 		return -1; // ERROR		
 	}
 
+	// calculate used size
+	if(write>read)
+		used_size = write - read;
+	else	
+		used_size = buf->size - read + write;
 
-	// check if end of buffer is reached and read status and size
-	if((read+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		if(status == 0) {
-			// data fits not end of shm
-			read = 0;
-			status =  *((unsigned char*)(buf->mem+read));
-			size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		}
-	}
-	else {
-		read = 0;
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-	}
-	
-	// check status
-	if(status != 2 ) {
+	// first check size
+	if(used_size < (sizeof(DltShmBlockHead))) {
 		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"Buffer is not fully written\n");
-		return -1; // ERROR		
-	}
-	
-	// plausibility check of buffer size
-	if( (read+size) > buf->size) {
-		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+		dlt_log(LOG_ERR,"SHM: Size check 1 failed\n");
 		dlt_shm_reset(buf);
-		return -1; // ERROR		
+		return -1; // ERROR
 	}
-	
-	// check max read size
-	if((size-sizeof(head)) > max_size) {
+
+	// read header
+	dlt_shm_read_block(buf,&read,(unsigned char*)&head,sizeof(DltShmBlockHead));
+
+	// check header
+	if(memcmp((unsigned char*)(head.head),head_compare,sizeof(head_compare))!=0)
+	{
 		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM: Buffer is bigger than max size\n");
+		dlt_log(LOG_ERR,"SHM: Header head check failed\n");
 		dlt_shm_reset(buf);
-		return -1; // ERROR			
+		return -1; // ERROR
 	}
-	
-	// copy data
-	memcpy(data,buf->mem+read+sizeof(unsigned char)+sizeof(int)+sizeof(head),size-sizeof(head));
+	if(head.status != 2)
+	{
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Header status check failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// second check size
+	if(used_size < (sizeof(DltShmBlockHead)+head.size)) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Size check 2 failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// third check size
+	if(head.size > max_size) {
+		dlt_log(LOG_ERR,"SHM: Size check 3 failed\n");
+		// nothing to do but data does not fit provided buffer
+	}
+
+	// read data
+	dlt_shm_read_block(buf,&read,data,head.size);
+
+	// do not update pointers
 
 	DLT_SHM_SEM_FREE(buf->semid);
 
-	return size-sizeof(head); // OK
+	return head.size; // OK
 }
 
 int dlt_shm_remove(DltShm *buf)
 {
-	int write, read, count, size;
-	unsigned char status;
+	int used_size;	
+	int write, read, count;
+	char head_compare[] = DLT_SHM_HEAD;
+	DltShmBlockHead head;
 	
 	if(!buf->mem) {
 		// shm not initialised
@@ -550,128 +569,97 @@ int dlt_shm_remove(DltShm *buf)
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
 
-	// check if data is in there
-	if(count<=0) {
-		if((write!=read) || (count<0))
-		{
-			dlt_shm_reset(buf);
-		}
-		DLT_SHM_SEM_FREE(buf->semid);
-		return -1; // ERROR		
-	}
-
-
-	// check if end of buffer is reached and read status and size
-	if((read+sizeof(unsigned char)+sizeof(int)) <= buf->size) {
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		if(status == 0) {
-			// data fits not end of shm
-			read = 0;
-			status =  *((unsigned char*)(buf->mem+read));
-			size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-		}
-	}
-	else {
-		read = 0;
-		status =  *((unsigned char*)(buf->mem+read));
-		size = *((int*)(buf->mem+read+sizeof(unsigned char)));
-	}
-	
-	// check status
-	if(status != 2 ) {
-		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"Buffer is not fully written\n");
-		return -1; // ERROR		
-	}
-	
-	// plausibility check of buffer size
-	if( (read+size) > buf->size) {
-		DLT_SHM_SEM_FREE(buf->semid);
-		dlt_log(LOG_ERR,"SHM: Buffers size bigger than shm buffer\n");
+	// check pointers
+	if((read>buf->size) || (write>buf->size) || (count<0))
+	{
+		dlt_log(LOG_ERR,"SHM: Pointer out of range\n");
 		dlt_shm_reset(buf);
 		return -1; // ERROR		
 	}
-		
+
+	// check if data is in there
+	if(count==0) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		if(write!=read)
+		{
+			dlt_log(LOG_ERR,"SHM: SHM should be empty, but is not\n");
+			dlt_shm_reset(buf);
+		}
+		return -1; // ERROR		
+	}
+
+	// calculate used size
+	if(write>read)
+		used_size = write - read;
+	else	
+		used_size = buf->size - read + write;
+
+	// first check size
+	if(used_size < (sizeof(DltShmBlockHead))) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Size check 1 failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// read header
+	dlt_shm_read_block(buf,&read,(unsigned char*)&head,sizeof(DltShmBlockHead));
+
+	// check header
+	if(memcmp((unsigned char*)(head.head),head_compare,sizeof(head_compare))!=0)
+	{
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Header head check failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+	if(head.status != 2)
+	{
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Header status check failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// second check size
+	if(used_size < (sizeof(DltShmBlockHead)+head.size)) {
+		DLT_SHM_SEM_FREE(buf->semid);
+		dlt_log(LOG_ERR,"SHM: Size check 2 failed\n");
+		dlt_shm_reset(buf);
+		return -1; // ERROR
+	}
+
+	// do not copy data
+
 	// update buffer pointers
-	((int*)(buf->shm))[1] = read+sizeof(unsigned char)+sizeof(int)+size; // set new read pointer 	
+	if( (read+head.size) <= buf->size)
+		((int*)(buf->shm))[1] = read+head.size; // set new read pointer 	
+	else
+		((int*)(buf->shm))[1] = read+head.size-buf->size; // set new read pointer 		
 	((int*)(buf->shm))[2] -= 1; // decrease counter
 
 	DLT_SHM_SEM_FREE(buf->semid);
 
-	return size; // OK
+	return head.size; // OK	
 }
 
 int dlt_shm_reset(DltShm *buf) {
 	
-	dlt_log(LOG_ERR,"SHM: Pointer corrupted; reset triggered.\n");
+	dlt_log(LOG_ERR,"SHM: SHM reset triggered.\n");
 
 	/* reset pointers and counters */	
 	DLT_SHM_SEM_GET(buf->semid);
-        ((int*)(buf->shm))[0] = 0;  // pointer to write memory  
-        ((int*)(buf->shm))[1] = 0;  // pointer to read memory
-        ((int*)(buf->shm))[2] = 0;  // number of packets
+	((int*)(buf->shm))[0] = 0;  // pointer to write memory  
+	((int*)(buf->shm))[1] = 0;  // pointer to read memory
+	((int*)(buf->shm))[2] = 0;  // number of packets
 	DLT_SHM_SEM_FREE(buf->semid);
 
 	return 0; /* OK */
 }
 
 int dlt_shm_recover(DltShm *buf) {
-	int write, read, count;
-	char head[] = DLT_SHM_HEAD;
 
-	// initialise head
-	head[3] = 0x01;
-
-	dlt_log(LOG_ERR,"SHM: Head not found; try to recover.\n");
-
-	/* try to find next valid message */
-	DLT_SHM_SEM_GET(buf->semid);
-
-	write = ((int*)(buf->shm))[0];
-	read = ((int*)(buf->shm))[1];
-	count = ((int*)(buf->shm))[2];
-
-	while(1) {
-		if(memcmp(buf->mem+read,head,sizeof(head))==0) {
-			/* HEAD found */
-			if(read>=(sizeof(unsigned char)+sizeof(int))) {
-				/* HEAD not at beginning, recover */
-				count--;
-				break;				
-			}
-			else {
-				/* HEAD at beginning, cannot recover */
-				count--;
-			}
-		}
-		read++;
-		if(read==write) {			
-			/* nothing found */
-			break;
-		}
-		if(read>=buf->size) {
-			/* end reached, continue at beginning */
-			read = 0;
-		}
-	}
-
-	if(read==write) {
-		((int*)(buf->shm))[0] = 0;  // pointer to write memory   	
-		((int*)(buf->shm))[1] = 0;  // pointer to read memory   	
-		((int*)(buf->shm))[2] = 0;  // number of packets 
-	}
-	else {
-		((int*)(buf->shm))[1] = read - sizeof(unsigned char)+sizeof(int); // set new read pointer 	
-		if(count<0)
-			((int*)(buf->shm))[2] = 0; // decrease counter
-		else
-			((int*)(buf->shm))[2] = count; // decrease counter
-	}
-	
-	DLT_SHM_SEM_FREE(buf->semid);
-
-	return 0; /* OK */
+	return -1; /* OK */
 }
 
 int dlt_shm_free_server(DltShm *buf) {

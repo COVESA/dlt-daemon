@@ -93,6 +93,13 @@ typedef struct
 	char* mem;	/* pointer to data area in shared memory */
 } DltShm;
 
+typedef struct
+{
+	char head[4];
+	unsigned char status;
+	int size;	
+} DltShmBlockHead;
+
 #define DLT_SHM_SEM_GET(id) dlt_shm_pv(id,-1)
 #define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id,1)
 
