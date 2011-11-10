@@ -2048,7 +2048,11 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     }
 
     /* also for Trace messages */
+#ifdef DLT_SHM_ENABLE
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_SHM)==-1)
+#else
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG)==-1)
+#endif
     {
 		return -1;
     }
@@ -2182,6 +2186,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             }
         }
 
+#ifdef DLT_SHM_ENABLE
 		dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
 									log->buffer, log->size,0,0);                   
 
@@ -2190,7 +2195,14 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
                                 &(userheader), sizeof(DltUserHeader),
                                 0, 0,
                                 0, 0);
-        		
+#else
+        /* log to FIFO */
+        ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
+                                &(userheader), sizeof(DltUserHeader),
+                                msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
+                                log->buffer, log->size);
+
+#endif        		
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
@@ -2830,12 +2842,17 @@ void dlt_user_log_reattach_to_daemon(void)
 
                     if (size>0)
                     {
+#ifdef DLT_SHM_ENABLE						
 						dlt_shm_push(&dlt_user.dlt_shm,buf+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);                   
 
                         /* log to FIFO */
                         ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,sizeof(DltUserHeader),0,0,0,0);
+#else
+                        /* log to FIFO */
+                        ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,size,0,0,0,0);
+#endif
 
-                        /* in case of error, push message back to ringbuffer */
+                        /* in case of error, push message back to ringbuffer */                        
                         if (ret!=DLT_RETURN_OK)
                         {
                             DLT_SEM_LOCK();

@@ -350,7 +350,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 					DLT_STRING("FLDA")	
 				);
 				
-				doTimeout(timeout);
+				//doTimeout(timeout);
 					
 		} else {
 			pkgNumber = 0;
@@ -367,7 +367,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 					DLT_STRING("FLDA")		
 				);
 				
-				doTimeout(timeout); 
+				//doTimeout(timeout); 
 			}
 		}
 		

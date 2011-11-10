@@ -117,6 +117,11 @@ ${CMAKE_SOURCE_DIR}/src/daemon/ )
 
 ADD_DEFINITIONS( "-Wall" )
 
+###################### IPC settings #################
+# Disable following definition, if old Fifo version
+# should be used
+ADD_DEFINITIONS( -DDLT_SHM_ENABLE=1 )
+
 INCLUDE(TestBigEndian)
 
 TEST_BIG_ENDIAN( DLT_BIGENDIAN )

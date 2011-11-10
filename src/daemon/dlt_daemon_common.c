@@ -187,6 +187,12 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
 
     dlt_set_id(daemon->ecuid,"");
 
+    /* initialize ring buffer for client connection */
+    if (dlt_ringbuffer_init(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_SIZE)==-1)
+    {
+    	return -1;
+    }
+
     return 0;
 }
 
@@ -2138,8 +2144,16 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
     }
     else
     {
-		/* message can not be sent */
-		/* in old implementation control message was stored in buffer */
+        /* Store message in history buffer */
+        if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
+                            msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
+                            msg->databuffer,msg->datasize,
+                            0, 0
+                           )<0)
+		{
+			dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
+			return;
+		}
     }
 }
 

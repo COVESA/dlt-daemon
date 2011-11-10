@@ -630,7 +630,7 @@ int main(int argc, char* argv[])
 	    /* Wait up to one second. */
 		tv.tv_sec = 0;
 		if(runtime.filetransferRunning)
-			tv.tv_usec = 10000;
+			tv.tv_usec = 20000;
 		else
 			tv.tv_usec = (dlt_uptime()-lasttime+10000)*100;
 
