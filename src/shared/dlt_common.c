@@ -2067,8 +2067,10 @@ int dlt_log(int prio, char *s)
 			break;
 		case 2:
 			/* log to file */
-			if(logging_handle)
+			if(logging_handle) {
 				fprintf(logging_handle,logfmtstring, s);
+				fflush(logging_handle);
+			}
 			break;
 	}
 
