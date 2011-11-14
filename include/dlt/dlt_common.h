@@ -417,6 +417,7 @@ typedef struct
  */
 typedef struct
 {
+
     uint32_t service_id;            /**< service ID */
     char apid[DLT_ID_SIZE];                   /**< application id */
     char ctid[DLT_ID_SIZE];                   /**< context id */
@@ -556,6 +557,26 @@ typedef struct
     uint32_t    pos_read;   /**< current reading position in bytes*/
     uint32_t    count;      /**< nr. of entries */
 } DltRingBuffer;
+
+typedef struct
+{
+	char* shm;	/* pointer to beginning of shared memory */
+	int size; 	/* size of data area in shared memory */
+	char* mem;	/* pointer to data area in shared memory */	
+	
+    uint32_t    min_size;  /**< Minimum size of buffer */
+    uint32_t    max_size;  /**< Maximum size of buffer */
+    uint32_t    step_size; /**< Step size of buffer */
+} DltBuffer;
+
+#define DLT_BUFFER_HEAD 	"SHM"
+
+typedef struct
+{
+	char head[4];
+	unsigned char status;
+	int size;	
+} DltBufferBlockHead;
 
 #ifdef __cplusplus
 extern "C"
@@ -941,6 +962,29 @@ extern "C"
      * @return 0 no, 1 yes, negative value if there was an error
      */
     int dlt_check_storageheader(DltStorageHeader *storageheader);
+
+
+    int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+    int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+    int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size);
+    int dlt_buffer_free_static(DltBuffer *buf);
+    int dlt_buffer_free_dynamic(DltBuffer *buf);
+	int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
+	int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
+	int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size);
+	int dlt_buffer_copy(DltBuffer *buf,unsigned char *data, int max_size);
+	int dlt_buffer_remove(DltBuffer *buf);
+	void dlt_buffer_info(DltBuffer *buf);
+	void dlt_buffer_status(DltBuffer *buf);
+	int dlt_buffer_get_total_size(DltBuffer *buf);
+	int dlt_buffer_get_used_size(DltBuffer *buf);
+	int dlt_buffer_get_message_count(DltBuffer *buf);
+
+	int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete);
+	int dlt_buffer_reset(DltBuffer *buf);
+	void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size);
+	void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size);	
+
 
     /**
      * Initialize ringbuffer of with a maximum size of size

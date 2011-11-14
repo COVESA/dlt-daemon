@@ -68,6 +68,8 @@
 #ifndef DLT_SHM_H
 #define DLT_SHM_H
 
+#include <dlt_common.h>
+
 /* shared memory key */
 /* must be the same for server and cleint */
 #define DLT_SHM_KEY  	11771
@@ -88,9 +90,7 @@ typedef struct
 {
 	int shmid;	/* Id of shared memory */
 	int semid;	/* Id of semaphore */
-	char* shm;	/* pointer to beginning of shared memory */
-	int size; 	/* size of data area in shared memory */
-	char* mem;	/* pointer to data area in shared memory */
+	DltBuffer buffer;
 } DltShm;
 
 typedef struct
