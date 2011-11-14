@@ -1171,7 +1171,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
     }
 
     /* read data from FIFO */
-    if (dlt_receiver_receive_fd(&(daemon_local->receiver))<=0)
+    if (dlt_receiver_receive_fd(&(daemon_local->receiver))<0)
     {
         dlt_log(LOG_ERR, "dlt_receiver_receive_fd() for user messages failed!\n");
         return -1;
@@ -1855,7 +1855,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             /* Message was not sent to client, so store it in client ringbuffer */
             if (sent==0)
             {
-                if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
+                if (dlt_buffer_push3(&(daemon->client_ringbuffer),
                                     daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
                                     daemon_local->msg.databuffer,daemon_local->msg.datasize,
                                     0, 0
@@ -2182,8 +2182,8 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    static uint8_t data[DLT_DAEMON_RINGBUFFER_SIZE];
-    size_t length=0;
+    static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
+    int length;
     int j, third_value;
     ssize_t ret;
 
@@ -2196,7 +2196,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     }
 
 	/* Attention: If the message can't be send at this time, it will be silently discarded. */
-    while ((dlt_ringbuffer_get(&(daemon->client_ringbuffer), data, &length ))!=-1)
+    while ((length = dlt_buffer_pull(&(daemon->client_ringbuffer), data, sizeof(data) )) > 0)
     {
         /* look if TCP connection to client is available */
         for (j = 0; j <= daemon_local->fdmax; j++)
@@ -2241,6 +2241,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
                 }
             } /* if */
         } /* for */
+        length = sizeof(data);
     }
 
     return 0;

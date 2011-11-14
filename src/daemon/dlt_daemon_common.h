@@ -96,7 +96,9 @@
 extern "C" {
 #endif
 
-#define DLT_DAEMON_RINGBUFFER_SIZE 100000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_MIN_SIZE  100000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_MAX_SIZE  500000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_STEP_SIZE 100000 /**< Ring buffer size for storing log messages while no client is connected */
 
 #define DLT_DAEMON_STORE_TO_BUFFER -2   /**< Constant value to identify the command "store to buffer" */
 
@@ -149,7 +151,7 @@ typedef struct
 	char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
-	DltRingBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
+	DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
 	char runtime_application_cfg[256]; /**< Path and filename of persistent application configuration */
 	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
 	char runtime_configuration[256]; /**< Path and filename of persistent configuration */

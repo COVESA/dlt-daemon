@@ -181,11 +181,9 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 				printf("Error: dlt_user_log_file_data\n");
 				return;
 			}			
-#ifdef DLT_SHM_ENABLE
 			/* wait sending next package if more than 50% of buffer used */
 			dlt_user_check_buffer(&total_size, &used_size);
 			if((total_size - used_size) < (total_size/2))
-#endif
 				break;
 		}
 		if(runtime->filetransferLastSentPackage==runtime->filetransferCountPackages) {

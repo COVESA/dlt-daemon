@@ -560,14 +560,21 @@ typedef struct
 
 typedef struct
 {
-	char* shm;	/* pointer to beginning of shared memory */
+	unsigned char* shm;	/* pointer to beginning of shared memory */
 	int size; 	/* size of data area in shared memory */
-	char* mem;	/* pointer to data area in shared memory */	
+	unsigned char* mem;	/* pointer to data area in shared memory */	
 	
     uint32_t    min_size;  /**< Minimum size of buffer */
     uint32_t    max_size;  /**< Maximum size of buffer */
     uint32_t    step_size; /**< Step size of buffer */
 } DltBuffer;
+
+typedef struct
+{
+	int write;
+	int read;
+	int count;	
+} DltBufferHead;
 
 #define DLT_BUFFER_HEAD 	"SHM"
 
@@ -979,12 +986,6 @@ extern "C"
 	int dlt_buffer_get_total_size(DltBuffer *buf);
 	int dlt_buffer_get_used_size(DltBuffer *buf);
 	int dlt_buffer_get_message_count(DltBuffer *buf);
-
-	int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete);
-	int dlt_buffer_reset(DltBuffer *buf);
-	void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size);
-	void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size);	
-
 
     /**
      * Initialize ringbuffer of with a maximum size of size

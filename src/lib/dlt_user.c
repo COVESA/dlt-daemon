@@ -122,6 +122,7 @@ static int dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel,
 static int dlt_user_log_send_log_mode(DltUserLogMode mode);
 static int dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static int dlt_user_log_check_user_message(void);
+static int dlt_user_log_resend_buffer(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static int dlt_user_log_send_overflow(void);
 
@@ -311,7 +312,7 @@ int dlt_init_common(void)
     dlt_user.dlt_ll_ts_max_num_entries = 0;
     dlt_user.dlt_ll_ts_num_entries = 0;
 
-    if (dlt_ringbuffer_init(&(dlt_user.rbuf), DLT_USER_RINGBUFFER_SIZE)==-1)
+    if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer), DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE)==-1)
     {
 		dlt_user_initialised = 0;
         return -1;
@@ -375,7 +376,7 @@ int dlt_free(void)
     dlt_receiver_free(&(dlt_user.receiver));
 
 	/* Ignore return value */
-    dlt_ringbuffer_free(&(dlt_user.rbuf));
+    dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
 
     if (dlt_user.dlt_ll_ts)
     {
@@ -879,7 +880,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
         {
             DLT_SEM_LOCK();
 
-            if (dlt_ringbuffer_put3(&(dlt_user.rbuf),
+            if (dlt_buffer_push3(&(dlt_user.startup_buffer),
                                 &(userheader), sizeof(DltUserHeader),
                                  msgdata, size, 0, 0)==-1)
 			{
@@ -2020,7 +2021,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     DltUserHeader userheader;
     int32_t len;
 
-    DltReturnValue ret;
+    DltReturnValue ret = 0;
 
     if (log==0)
     {
@@ -2186,29 +2187,38 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             }
         }
 
+		/* try to resent old data first */
+		ret = 0;
+		if(dlt_user.dlt_log_handle!=-1)
+			ret = dlt_user_log_resend_buffer();
+		if(ret==0) 
+		{
+			/* resend ok or nothing to resent */
 #ifdef DLT_SHM_ENABLE
-		dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-									log->buffer, log->size,0,0);                   
+			if(dlt_user.dlt_log_handle!=-1)
+				dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
+											log->buffer, log->size,0,0);                   
 
-        /* log to FIFO */
-        ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
-                                &(userheader), sizeof(DltUserHeader),
-                                0, 0,
-                                0, 0);
+			/* log to FIFO */
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
+									&(userheader), sizeof(DltUserHeader),
+									0, 0,
+									0, 0);
 #else
-        /* log to FIFO */
-        ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
-                                &(userheader), sizeof(DltUserHeader),
-                                msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-                                log->buffer, log->size);
-
+			/* log to FIFO */
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
+									&(userheader), sizeof(DltUserHeader),
+									msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
+									log->buffer, log->size);		
 #endif        		
+		}
+		
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
             DLT_SEM_LOCK();
 
-            if (dlt_ringbuffer_put3(&(dlt_user.rbuf),
+            if (dlt_buffer_push3(&(dlt_user.startup_buffer),
                                 &(userheader), sizeof(DltUserHeader),
                                 msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
                                 log->buffer, log->size)==-1)
@@ -2755,19 +2765,77 @@ int dlt_user_log_check_user_message(void)
         } /* while receive */
     } /* if */
 
-    return 0;
+    return DLT_RETURN_OK;
+}
+
+int dlt_user_log_resend_buffer(void)
+{
+	int num,count;
+    uint8_t buf[DLT_USER_RCVBUF_MAX_SIZE];
+    int size;
+	DltReturnValue ret;
+	
+	/* Send content of ringbuffer */
+	DLT_SEM_LOCK();
+	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+	DLT_SEM_FREE();
+
+	for (num=0;num<count;num++)
+	{
+
+		DLT_SEM_LOCK();
+		size = dlt_buffer_copy(&(dlt_user.startup_buffer),buf,sizeof(buf));
+
+		if (size>0)
+		{
+#ifdef DLT_SHM_ENABLE						
+			dlt_shm_push(&dlt_user.dlt_shm,buf+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);                   
+
+			/* log to FIFO */
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,sizeof(DltUserHeader),0,0,0,0);
+#else
+			/* log to FIFO */
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,size,0,0,0,0);
+#endif
+
+			/* in case of error, keep message in ringbuffer */                        
+			if (ret==DLT_RETURN_OK)
+			{
+				dlt_buffer_remove(&(dlt_user.startup_buffer));
+				/*
+				DLT_SEM_LOCK();
+				if (dlt_buffer_push(&(dlt_user.startup_buffer), buf, size)==-1)
+				{
+					dlt_log(LOG_ERR,"Error pushing back message to history buffer. Message discarded.\n");
+				}
+				DLT_SEM_FREE();
+
+				// In case of: data could not be written, set overflow flag
+				if (ret==DLT_RETURN_PIPE_FULL)
+				{
+					dlt_user.overflow = 1;
+				}
+				*/
+			}
+			else
+			{
+				/* keep message in ringbuffer */   
+				DLT_SEM_FREE();
+				return -1;
+			}
+		}
+		DLT_SEM_FREE();
+	}
+	
+	return 0;
 }
 
 void dlt_user_log_reattach_to_daemon(void)
 {
-    int num, count, reregistered=0;
-
-    uint8_t buf[DLT_USER_RINGBUFFER_SIZE];
-    size_t size;
+    int num,reregistered=0;
 
 	DltContext handle;
 	DltContextData log_new;
-	DltReturnValue ret;
 
     if (dlt_user.dlt_log_handle<0)
     {
@@ -2828,49 +2896,7 @@ void dlt_user_log_reattach_to_daemon(void)
 
             if (reregistered==1)
             {
-                /* Send content of ringbuffer */
-                DLT_SEM_LOCK();
-                count = dlt_user.rbuf.count;
-                DLT_SEM_FREE();
-
-                for (num=0;num<count;num++)
-                {
-
-                    DLT_SEM_LOCK();
-                    dlt_ringbuffer_get(&(dlt_user.rbuf),buf,&size);
-                    DLT_SEM_FREE();
-
-                    if (size>0)
-                    {
-#ifdef DLT_SHM_ENABLE						
-						dlt_shm_push(&dlt_user.dlt_shm,buf+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);                   
-
-                        /* log to FIFO */
-                        ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,sizeof(DltUserHeader),0,0,0,0);
-#else
-                        /* log to FIFO */
-                        ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,size,0,0,0,0);
-#endif
-
-                        /* in case of error, push message back to ringbuffer */                        
-                        if (ret!=DLT_RETURN_OK)
-                        {
-                            DLT_SEM_LOCK();
-                            if (dlt_ringbuffer_put(&(dlt_user.rbuf), buf, size)==-1)
-                            {
-								dlt_log(LOG_ERR,"Error pushing back message to history buffer. Message discarded.\n");
-                            }
-                            DLT_SEM_FREE();
-
-                            /* In case of: data could not be written, set overflow flag */
-                            if (ret==DLT_RETURN_PIPE_FULL)
-                            {
-                                dlt_user.overflow = 1;
-                            }
-                        }
-                    }
-
-                }
+				dlt_user_log_resend_buffer();
             }
         }
     }
@@ -2899,8 +2925,13 @@ int dlt_user_log_send_overflow(void)
 
 int dlt_user_check_buffer(int *total_size, int *used_size)
 {
+#ifdef DLT_SHM_ENABLE
 	*total_size = dlt_shm_get_total_size(&(dlt_user.dlt_shm));
 	*used_size = dlt_shm_get_used_size(&(dlt_user.dlt_shm));
+#else
+	*total_size = dlt_buffer_get_total_size(&(dlt_user.startup_buffer));
+	*used_size = dlt_buffer_get_used_size(&(dlt_user.startup_buffer));
+#endif
 	
 	return 0; /* ok */
 }

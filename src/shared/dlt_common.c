@@ -132,6 +132,14 @@ static char *service_id[] = {"","set_log_level","set_trace_status","get_log_info
                             };
 static char *return_type[] = {"ok","not_supported","error","","","","","","no_matching_context_id"};
 
+/* internal function definitions */
+int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete);
+int dlt_buffer_reset(DltBuffer *buf);
+int dlt_buffer_increase_size(DltBuffer *buf);
+int dlt_buffer_minimize_size(DltBuffer *buf);
+void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size);
+void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size);	
+
 void dlt_print_hex(uint8_t *ptr,int size)
 {
     int num;
@@ -2286,6 +2294,7 @@ int dlt_check_storageheader(DltStorageHeader *storageheader)
 int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size)
 {
 	char str[256];
+	DltBufferHead *head;
 
 	// Init parameters
 	buf->shm = ptr;
@@ -2294,11 +2303,12 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 	buf->step_size = 0;
 	
 	// Init pointers
-    ((int*)(buf->shm))[0] = 0;  // pointer to write memory  
-    ((int*)(buf->shm))[1] = 0;  // pointer to read memory
-    ((int*)(buf->shm))[2] = 0;  // number of packets
-    buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-    buf->size = size - (buf->mem - buf->shm);
+ 	head = (DltBufferHead*)buf->shm;
+	head->read = 0;
+	head->write = 0;
+	head->count = 0;
+    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+	buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	// clear memory
 	memset(buf->mem,0,buf->size);
@@ -2312,6 +2322,7 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size)
 {
 	char str[256];
+	DltBufferHead *head;
 
 	// Init parameters
 	buf->shm = ptr;
@@ -2320,8 +2331,8 @@ int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint
 	buf->step_size = 0;
 	
 	// Init pointers
-    buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-    buf->size = size - (buf->mem - buf->shm);
+    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+    buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	snprintf(str,sizeof(str),"Buffer: Size %d\n",buf->size);
 	dlt_log(LOG_INFO, str);
@@ -2332,6 +2343,7 @@ int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint
 int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size)
 {
 	char str[256];
+	DltBufferHead *head;
 
 	// Init parameters
 	buf->min_size = min_size;
@@ -2339,7 +2351,7 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 	buf->step_size = step_size;
 
 	// allocat memory
-	buf->shm = malloc(buf->min_size+3*sizeof(int));
+	buf->shm = malloc(buf->min_size);
 	if(buf->shm == NULL) {
 		snprintf(str,sizeof(str),"Buffer: Cannot allocate %d bytes\n",buf->min_size);
 		dlt_log(LOG_EMERG, str);
@@ -2347,11 +2359,12 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 	}
 	
 	// Init pointers
-    ((int*)(buf->shm))[0] = 0;  // pointer to write memory  
-    ((int*)(buf->shm))[1] = 0;  // pointer to read memory
-    ((int*)(buf->shm))[2] = 0;  // number of packets
-    buf->mem = (char*)(&(((int*)(buf->shm))[3]));
-    buf->size = buf->min_size - 3 * sizeof(int);
+	head = (DltBufferHead*)buf->shm;
+	head->read = 0;
+	head->write = 0;
+	head->count = 0;
+    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+    buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	// clear memory
 	memset(buf->mem,0,buf->size);
@@ -2416,6 +2429,101 @@ void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned
 	}	
 }	
 
+int dlt_buffer_increase_size(DltBuffer *buf)
+{
+	DltBufferHead *head,*new_head;
+	unsigned char *new_ptr;
+
+	/* check size */
+	if(buf->step_size==0) {
+		/* cannot increase size */
+		return -1;
+	}
+
+	/* check size */
+	if((buf->size + sizeof(DltBufferHead) + buf->step_size) > buf->max_size) {
+		/* max size reached, do not increase */
+		return -1;
+	}
+
+	/* allocate new buffer */
+	new_ptr = malloc(buf->size + sizeof(DltBufferHead) + buf->step_size);
+	if(new_ptr == NULL) {
+		snprintf(str,sizeof(str),"Buffer: Cannot increase size because allocate %d bytes failed\n",buf->min_size);
+		dlt_log(LOG_WARNING, str);
+		return -1;
+	}
+		
+	/* copy data */
+	head = (DltBufferHead*)buf->shm;
+	new_head = (DltBufferHead*)new_ptr;
+	if(head->read < head->write) {
+		memcpy(new_ptr+sizeof(DltBufferHead) , buf->mem+head->read , head->write-head->read);
+		new_head->read = 0;	
+		new_head->write = head->write-head->read;	
+		new_head->count = head->count;	
+	}
+	else {
+		memcpy(new_ptr+sizeof(DltBufferHead) , buf->mem+head->read , buf->size-head->read);
+		memcpy(new_ptr+sizeof(DltBufferHead)+buf->size-head->read , buf->mem , head->write);
+		new_head->read = 0;	
+		new_head->write = buf->size-head->read+head->write;	
+		new_head->count = head->count;			
+	}
+	
+	/* free old data */
+	free(buf->shm);
+	
+	/* update data */
+	buf->shm = new_ptr;
+	buf->mem = new_ptr+sizeof(DltBufferHead);
+	buf->size += buf->step_size;
+	
+	snprintf(str,sizeof(str),"Buffer: Size increased to %d bytes\n",buf->size+sizeof(DltBufferHead));
+	dlt_log(LOG_INFO, str);
+
+	return 0; // OK		
+}
+
+int dlt_buffer_minimize_size(DltBuffer *buf)
+{
+	unsigned char *new_ptr;
+
+	if((buf->size + sizeof(DltBufferHead)) == buf->min_size)
+	{
+		/* already minimized */
+		return 0;
+	}
+
+	/* allocate new buffer */
+	new_ptr = malloc(buf->min_size);
+	if(new_ptr == NULL) {
+		snprintf(str,sizeof(str),"Buffer: Cannot set to min size of %d bytes\n",buf->min_size);
+		dlt_log(LOG_WARNING, str);
+		return -1;
+	}
+
+	/* free old data */
+	free(buf->shm);
+	
+	/* update data */
+	buf->shm = new_ptr;
+	buf->mem = new_ptr+sizeof(DltBufferHead);
+	buf->size = buf->min_size - sizeof(DltBufferHead);
+
+	/* reset pointers and counters */	
+	((int*)(buf->shm))[0] = 0;  // pointer to write memory  
+	((int*)(buf->shm))[1] = 0;  // pointer to read memory
+	((int*)(buf->shm))[2] = 0;  // number of packets
+
+	// clear memory
+	memset(buf->mem,0,buf->size);
+
+	dlt_log(LOG_INFO,"Buffer: Buffer minimized.\n");
+
+	return 0; /* OK */	
+}
+
 int dlt_buffer_reset(DltBuffer *buf)
 {
 	dlt_log(LOG_ERR,"Buffer: Buffer reset triggered.\n");
@@ -2468,8 +2576,15 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	
 	// check size
 	if(free_size < (sizeof(DltBufferBlockHead)+size1+size2+size3)) {
-		dlt_log(LOG_ERR,"Buffer: Buffer is full\n");
-		return -1; // ERROR
+		// try to increase size if possible
+		if(dlt_buffer_increase_size(buf)) {
+			/* increase size is not possible */
+			dlt_log(LOG_ERR,"Buffer: Buffer is full\n");
+			return -1; // ERROR
+		}
+		// update pointers
+		write = ((int*)(buf->shm))[0];
+		read = ((int*)(buf->shm))[1];
 	}
 
 	// set header
@@ -2592,6 +2707,12 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 	}
 	if(delete) {
 		((int*)(buf->shm))[2] -= 1; // decrease counter
+	
+		if(((int*)(buf->shm))[2] == 0)
+		{
+			// try to minimize size
+			dlt_buffer_minimize_size(buf);
+		}
 	}
 	
 	return head.size; // OK	
@@ -2644,7 +2765,7 @@ void dlt_buffer_status(DltBuffer *buf)
 
 int dlt_buffer_get_total_size(DltBuffer *buf)
 {
-	return buf->size;	
+	return buf->max_size;	
 }
 
 int dlt_buffer_get_used_size(DltBuffer *buf)

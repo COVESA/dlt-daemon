@@ -188,7 +188,7 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     dlt_set_id(daemon->ecuid,"");
 
     /* initialize ring buffer for client connection */
-    if (dlt_ringbuffer_init(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_SIZE)==-1)
+    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_MIN_SIZE,DLT_DAEMON_RINGBUFFER_MAX_SIZE,DLT_DAEMON_RINGBUFFER_STEP_SIZE)==-1)
     {
     	return -1;
     }
@@ -216,6 +216,9 @@ int dlt_daemon_free(DltDaemon *daemon,int verbose)
 	{
 		return -1;
     }
+
+	/* free ringbuffer */
+	dlt_buffer_free_dynamic(&(daemon->client_ringbuffer));
 
     return 0;
 }
@@ -2145,7 +2148,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
     else
     {
         /* Store message in history buffer */
-        if (dlt_ringbuffer_put3(&(daemon->client_ringbuffer),
+        if (dlt_buffer_push3(&(daemon->client_ringbuffer),
                             msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
                             msg->databuffer,msg->datasize,
                             0, 0
