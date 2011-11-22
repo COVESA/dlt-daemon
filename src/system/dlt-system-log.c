@@ -106,10 +106,16 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	if(runtime->filetransferRunning == 0) {
 		/* delete last transmitted file */
 		if(runtime->filetransferFile[0]!=0) {
-			printf("Remove File: %s\n",runtime->filetransferFile);
-			if(remove(runtime->filetransferFile)) {
-				printf("Remove file %s failed!\n",runtime->filetransferFile);
-				return; 
+			if(stat(runtime->filetransferFile,&status)==0) 
+			{
+				if(runtime->filetransferFilesize == status.st_size)
+				{
+					/* delete file only if size is not changed since starting transfer */
+					printf("Remove File: %s\n",runtime->filetransferFile);
+					if(remove(runtime->filetransferFile)) {
+						printf("Remove file %s failed!\n",runtime->filetransferFile);
+					}					
+				}
 			}
 			runtime->filetransferFile[0]=0; 
 		}
@@ -121,10 +127,13 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			while ((dp=readdir(dir)) != NULL) {
 				if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
 					sprintf(filename,"%s/%s",options->FiletransferDirectory1,dp->d_name);
-					stat(filename,&status);
-					if(time_oldest == 0 || status.st_mtime < time_oldest) {
-						time_oldest = status.st_mtime;
-						strcpy(runtime->filetransferFile,filename);
+					if(stat(filename,&status)==0)
+					{
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) ) {
+							time_oldest = status.st_mtime;
+							strcpy(runtime->filetransferFile,filename);
+							runtime->filetransferFilesize = status.st_size;						
+						}
 					}
 				}
 			}	
@@ -135,10 +144,13 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			while ((dp=readdir(dir)) != NULL) {
 				if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
 					sprintf(filename,"%s/%s",options->FiletransferDirectory2,dp->d_name);
-					stat(filename,&status);
-					if(time_oldest == 0 || status.st_mtime < time_oldest) {
-						time_oldest = status.st_mtime;
-						strcpy(runtime->filetransferFile,filename);
+					if(stat(filename,&status)==0)
+					{
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) ) {
+							time_oldest = status.st_mtime;
+							strcpy(runtime->filetransferFile,filename);
+							runtime->filetransferFilesize = status.st_size;						
+						}
 					}
 				}
 			}	
@@ -151,8 +163,10 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			runtime->filetransferCountPackages = dlt_user_log_file_packagesCount(context,runtime->filetransferFile);
 			if(runtime->filetransferCountPackages  < 0 )
 			{
+					/* a problem occured; stop filetransfer and continue with next file after timeout */
 					printf("Error: dlt_user_log_file_packagesCount\n");
 					runtime->filetransferCountPackages = 0;
+					runtime->filetransferRunning = 0;
 					runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
 					return;
 			}			
@@ -160,6 +174,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			transferResult = dlt_user_log_file_header(context,runtime->filetransferFile);
 			if(transferResult < 0)
 			{
+				/* a problem occured; stop filetransfer and continue with next file after timeout */
 				printf("Error: dlt_user_log_file_header\n");
 				runtime->filetransferCountPackages = 0;
 				runtime->filetransferRunning = 0;
@@ -178,7 +193,11 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			transferResult = dlt_user_log_file_data(context,runtime->filetransferFile,runtime->filetransferLastSentPackage,0);
 			if(transferResult < 0)
 			{
+				/* a problem occured; stop filetransfer and continue with next file after timeout */
 				printf("Error: dlt_user_log_file_data\n");
+				runtime->filetransferCountPackages = 0;
+				runtime->filetransferRunning = 0;
+				runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
 				return;
 			}			
 			/* wait sending next package if more than 50% of buffer used */
@@ -198,12 +217,8 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			}
 			runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
 			runtime->filetransferRunning = 0;
-		}				
-		
-	}
-
-
-	
+		}					
+	}	
 }
 
 void dlt_system_log_file(DltSystemOptions *options,DltContext *context,int num) {

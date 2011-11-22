@@ -109,7 +109,6 @@ void usage()
     printf("%s \n", version);
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
-    printf("  -1            Execute test 1 (Test ringbuffer)\n");
 }
 
 /**
@@ -128,18 +127,13 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "v1")) != -1)
+    while ((c = getopt (argc, argv, "v")) != -1)
     {
         switch (c)
         {
         case 'v':
         {
             vflag = 1;
-            break;
-        }
-        case '1':
-        {
-            test[0] = 1;
             break;
         }
         case '?':
@@ -190,118 +184,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-void internal1(void)
-{
-    int index,result_index;
-	size_t c;
-    unsigned int size;
-
-    char buf[1024],result[1024];
-
-    DltRingBuffer mybuf;
-
-    printf("Test1i: Ringbuffer, writing and reading \n");
-
-    for (size=8;size<=30;size++)
-    {
-
-        dlt_ringbuffer_init(&mybuf, size);
-
-        memset(result,0,1024);
-
-        if (vflag)
-        {
-        	printf("\nRingbuffer Size = %d \n\n",size);
-        }
-
-        /* Write several times to ringbuffer */
-        for (index=0; index<6; index++)
-        {
-            memset(buf,0,1024);
-
-            sprintf(buf,"%d",index);
-            dlt_ringbuffer_put(&mybuf,buf,strlen(buf));
-
-            if (vflag)
-            {
-                printf("W[%d], Bytes = %d, Hex: ", index, (int)strlen(buf));
-                dlt_print_hex((uint8_t *)buf, strlen(buf));
-                printf("\n");
-            }
-        }
-
-        if (vflag)
-        {
-			printf("\nCount=%d, Max. by buffer size %d = %d\n",mybuf.count, size, (int)(size/(strlen(buf)+sizeof(unsigned int))));
-        }
-
-        /* Check value of mybuf.count, counting the elements in ringbuffer */
-        if (mybuf.count!=(int)(size/(strlen(buf)+sizeof(unsigned int))))
-        {
-            tests_failed++;
-            printf("Test1i FAILED\n");
-
-            break;
-        }
-
-        result_index = 0;
-
-        /* Read several times from ringbuffer */
-        for (index=0; index<6; index++)
-        {
-            memset(buf,0,1024);
-
-            if (dlt_ringbuffer_get(&mybuf,buf,&c)!=-1)
-            {
-                if (vflag)
-                {
-                    printf("R[%d], Bytes = %d, Hex: ", index, (int)c);
-                    dlt_print_hex((uint8_t *)buf, c);
-                    printf("\n");
-                }
-
-                if (c==1)
-                {
-					result[result_index] = buf[0];
-                }
-                result_index++;
-            }
-        }
-
-        /* Check value of mybuf.count, counting the elements in ringbuffer, must be 0 now */
-        if (mybuf.count!=0)
-        {
-            tests_failed++;
-            printf("Test1i FAILED\n");
-
-            dlt_ringbuffer_free(&mybuf);
-            return;
-        }
-
-        /* Check the read elements */
-        for (index=0; index<result_index; index++)
-        {
-            sprintf(buf,"%d",((6-result_index)+index));
-            if (result[index]!=buf[0])
-            {
-                tests_failed++;
-                printf("Test1i FAILED\n");
-
-                dlt_ringbuffer_free(&mybuf);
-                return;
-            }
-        }
-
-        if (vflag)
-        {
-        	printf("\n");
-        }
-
-        dlt_ringbuffer_free(&mybuf);
-    }
-
-    tests_passed++;
-    printf("Test1i PASSED\n");
-}
-

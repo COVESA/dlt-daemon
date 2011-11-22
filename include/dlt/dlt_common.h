@@ -971,91 +971,139 @@ extern "C"
     int dlt_check_storageheader(DltStorageHeader *storageheader);
 
 
-    int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
-    int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
-    int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size);
-    int dlt_buffer_free_static(DltBuffer *buf);
-    int dlt_buffer_free_dynamic(DltBuffer *buf);
-	int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
-	int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
-	int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size);
-	int dlt_buffer_copy(DltBuffer *buf,unsigned char *data, int max_size);
-	int dlt_buffer_remove(DltBuffer *buf);
-	void dlt_buffer_info(DltBuffer *buf);
-	void dlt_buffer_status(DltBuffer *buf);
-	int dlt_buffer_get_total_size(DltBuffer *buf);
-	int dlt_buffer_get_used_size(DltBuffer *buf);
-	int dlt_buffer_get_message_count(DltBuffer *buf);
-
     /**
-     * Initialize ringbuffer of with a maximum size of size
-     * @param dltbuf Pointer to ringbuffer structure
+     * Initialise static ringbuffer with a size of size.
+     * Initialise as server. Init counters. 
+     * Memory is already allocated.
+     * @param buf Pointer to ringbuffer structure
+     * @param ptr Ptr to ringbuffer memory
      * @param size Maximum size of buffer in bytes
      * @return negative value if there was an error
      */
-    int dlt_ringbuffer_init(DltRingBuffer *dltbuf, uint32_t size);
+    int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
 
     /**
-     * Release and free memory used by ringbuffer
-     * @param dltbuf Pointer to ringbuffer structure
+     * Initialize static ringbuffer with a size of size.
+     * Initialise as a client. Do not change counters.
+     * Memory is already allocated.
+     * @param buf Pointer to ringbuffer structure
+     * @param ptr Ptr to ringbuffer memory
+     * @param size Maximum size of buffer in bytes
      * @return negative value if there was an error
      */
-    int dlt_ringbuffer_free(DltRingBuffer *dltbuf);
+    int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+
+    /**
+     * Initialize dynamic ringbuffer with a size of size.
+     * Initialise as a client. Do not change counters.
+     * Memory will be allocated starting with min_size.
+     * If more memory is needed size is increased wit step_size.
+     * The maximum size is max_size.
+     * @param buf Pointer to ringbuffer structure
+     * @param min_size Minimum size of buffer in bytes
+     * @param max_size Maximum size of buffer in bytes
+     * @param step_size size of which ringbuffer is increased
+     * @return negative value if there was an error
+     */
+    int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size);
+
+    /**
+     * Deinitilaise usage of static ringbuffer
+     * @param buf Pointer to ringbuffer structure
+     * @return negative value if there was an error
+     */
+    int dlt_buffer_free_static(DltBuffer *buf);
+
+    /**
+     * Release and free memory used by dynamic ringbuffer
+     * @param buf Pointer to ringbuffer structure
+     * @return negative value if there was an error
+     */
+    int dlt_buffer_free_dynamic(DltBuffer *buf);
 
     /**
      * Write one entry to ringbuffer
-     * @param dltbuf Pointer to ringbuffer structure
+     * @param buf Pointer to ringbuffer structure
      * @param data Pointer to data to be written to ringbuffer
      * @param size Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-    int dlt_ringbuffer_put(DltRingBuffer *dltbuf, void *data, uint32_t size);
+	int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
 
     /**
-     * Write one entry given as 3 chunks to ringbuffer
-     * @param dltbuf Pointer to ringbuffer structure
-     * @param data1 Pointer to data1 to be written to ringbuffer
-     * @param size1 Size of data1 in bytes to be written to ringbuffer
-     * @param data2 Pointer to data2 to be written to ringbuffer
-     * @param size2 Size of data2 in bytes to be written to ringbuffer
-     * @param data3 Pointer to data3 to be written to ringbuffer
-     * @param size3 Size of data3 in bytes to be written to ringbuffer
+     * Write up to three entries to ringbuffer.
+     * Entries are joined to one block.
+     * @param dlt Pointer to ringbuffer structure
+     * @param data1 Pointer to data to be written to ringbuffer
+     * @param size1 Size of data in bytes to be written to ringbuffer
+     * @param data2 Pointer to data to be written to ringbuffer
+     * @param size2 Size of data in bytes to be written to ringbuffer
+     * @param data3 Pointer to data to be written to ringbuffer
+     * @param size3 Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-    int dlt_ringbuffer_put3(DltRingBuffer *dltbuf, void *data1, uint32_t size1, void *data2, uint32_t size2, void *data3, uint32_t size3);
+	int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
 
     /**
-     * Read one entry from ringbuffer
-     * @param dltbuf Pointer to ringbuffer structure
+     * Read one entry from ringbuffer.
+     * Remove it from ringbuffer.
+     * @param buf Pointer to ringbuffer structure
      * @param data Pointer to data read from ringbuffer
-     * @param size Size of read data in bytes from ringbuffer
-     * @return negative value if there was an error
+     * @param max_size Max size of read data in bytes from ringbuffer
+     * @return size of read data, zero if no data available, negative value if there was an error
      */
-    int dlt_ringbuffer_get(DltRingBuffer *dltbuf, void *data, size_t *size);
+	int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size);
 
     /**
-     * Helper function: Skip one readable entry in ringbuffer
-     * @param dltbuf Pointer to ringbuffer structure
-     * @return negative value if there was an error
+     * Read one entry from ringbuffer.
+     * Do not remove it from ringbuffer.
+     * @param buf Pointer to ringbuffer structure
+     * @param data Pointer to data read from ringbuffer
+     * @param max_size Max size of read data in bytes from ringbuffer
+     * @return size of read data, zero if no data available, negative value if there was an error
      */
-    int dlt_ringbuffer_get_skip(DltRingBuffer *dltbuf);
+	int dlt_buffer_copy(DltBuffer *buf,unsigned char *data, int max_size);
 
     /**
-     * Helper function: Get free space in bytes for writting between write and read position
-     * @param dltbuf Pointer to ringbuffer structure
-     * @param freespace Free Space in bytes for writting is returned
-     * @return negative value if there was an error
+     * Remove entry from ringbuffer.
+     * @param buf Pointer to ringbuffer structure
+     * @return size of read data, zero if no data available, negative value if there was an error
      */
-    int dlt_ringbuffer_freespacewrite(DltRingBuffer *dltbuf, uint32_t *freespace);
+	int dlt_buffer_remove(DltBuffer *buf);
 
     /**
-     * Helper function: Check free space and if necessary discard entries, so that at least
-     * reqspace bytes are available for writting
-     * @param dltbuf Pointer to ringbuffer structure
-     * @param reqspace Requested space for writting in bytes
-     * @return negative value if there was an error
+     * Print information about buffer and log to internal DLT log.
+     * @param buf Pointer to ringbuffer structure
      */
-    int dlt_ringbuffer_checkandfreespace(DltRingBuffer *dltbuf, uint32_t reqspace);
+	void dlt_buffer_info(DltBuffer *buf);
+
+    /**
+     * Print status of buffer and log to internal DLT log.
+     * @param buf Pointer to ringbuffer structure
+     */
+	void dlt_buffer_status(DltBuffer *buf);
+
+    /**
+     * Get total size in bytes of ringbuffer.
+     * If buffer is dynamic, max size is returned.
+     * @param buf Pointer to ringbuffer structure
+     * @return total size of buffer
+     */
+	int dlt_buffer_get_total_size(DltBuffer *buf);
+
+    /**
+     * Get used size in bytes of ringbuffer.
+     * @param buf Pointer to ringbuffer structure
+     * @return used size of buffer
+     */
+	int dlt_buffer_get_used_size(DltBuffer *buf);
+
+    /**
+     * Get number of entries in ringbuffer.
+     * @param buf Pointer to ringbuffer structure
+     * @return number of entries
+     */
+	int dlt_buffer_get_message_count(DltBuffer *buf);
 
 #if !defined (__WIN32__)
 

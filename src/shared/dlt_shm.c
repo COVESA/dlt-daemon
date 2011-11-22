@@ -211,6 +211,10 @@ int dlt_shm_get_used_size(DltShm *buf)
 {
 	int ret;
 
+	/* check if buffer available */
+	if(!buf->buffer.mem)
+		return -1;
+
 	DLT_SHM_SEM_GET(buf->semid);
 	ret =  dlt_buffer_get_used_size(&(buf->buffer));
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -227,6 +231,10 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 {
 	int ret;
 
+	/* check if buffer available */
+	if(!buf->buffer.mem)
+		return -1;
+
 	DLT_SHM_SEM_GET(buf->semid);
 	ret =  dlt_buffer_push3(&(buf->buffer),data1,size1,data2,size2,data3,size3);
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -237,6 +245,10 @@ int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const
 int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 {
 	int ret;
+
+	/* check if buffer available */
+	if(!buf->buffer.mem)
+		return -1;
 
 	DLT_SHM_SEM_GET(buf->semid);
 	ret =  dlt_buffer_pull(&(buf->buffer),data,max_size);
@@ -249,6 +261,10 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 {
 	int ret;
 
+	/* check if buffer available */
+	if(!buf->buffer.mem)
+		return -1;
+
 	DLT_SHM_SEM_GET(buf->semid);
 	ret =  dlt_buffer_copy(&(buf->buffer),data,max_size);
 	DLT_SHM_SEM_FREE(buf->semid);
@@ -259,6 +275,10 @@ int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 int dlt_shm_remove(DltShm *buf)
 {
 	int ret;
+
+	/* check if buffer available */
+	if(!buf->buffer.mem)
+		return -1;
 
 	DLT_SHM_SEM_GET(buf->semid);
 	ret =  dlt_buffer_remove(&(buf->buffer));

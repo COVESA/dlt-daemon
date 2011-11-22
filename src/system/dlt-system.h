@@ -114,6 +114,7 @@ typedef struct {
 	int  timeStartup;	/* time in seconds since startup of dlt-system */
 	int  timeFiletransferDelay;	/* time in seconds to start next filetransfer */
 	char filetransferFile[256];
+	long int filetransferFilesize;
 	int  timeLogFileDelay[DLT_SYSTEM_LOG_FILE_MAX];	/* time in seconds to start next file log */
 	int  timeLogProcessDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];	/* time in seconds to start next process log */
 	int	 filetransferRunning; 	/* 0 = stooped, 1 = running */
