@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.4.1
+Version: 2.4.2
 
 
 Introduction
@@ -23,6 +23,17 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
+2.4.1 
+
+Improvements
+	* Added dynamic increasable ringbuffers to user lib and dlt-daemon.
+
+Bugfixes
+	* Created abstraction of shm buffer management.
+    * dlt-system filetransfer now recovers when file is deleted during filetransfer.
+    * Added check of file size when starting and deleting files during filetransfer.
+    * Added check of shm buffer availability when push to shm.
+
 2.4.1 
 
 Improvements
