@@ -551,15 +551,6 @@ typedef struct
 
 typedef struct
 {
-    char*   buffer;         /**< Ptr. to buffer */
-    uint32_t    size;       /**< Maximum size of buffer */
-    uint32_t    pos_write;  /**< current writing position in bytes*/
-    uint32_t    pos_read;   /**< current reading position in bytes*/
-    uint32_t    count;      /**< nr. of entries */
-} DltRingBuffer;
-
-typedef struct
-{
 	unsigned char* shm;	/* pointer to beginning of shared memory */
 	int size; 	/* size of data area in shared memory */
 	unsigned char* mem;	/* pointer to data area in shared memory */	

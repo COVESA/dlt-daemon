@@ -2547,7 +2547,7 @@ int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size)
 int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3)
 {
 	int free_size;	
-	int write, read;
+	int write, read, count;
 	DltBufferBlockHead head;
 	
 	if(!buf->mem) {
@@ -2559,6 +2559,7 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	// get current write pointer
 	write = ((int*)(buf->shm))[0];
 	read = ((int*)(buf->shm))[1];
+	count = ((int*)(buf->shm))[2];
 
 	// check pointers
 	if((read>buf->size) || (write>buf->size))
@@ -2571,6 +2572,8 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	// calculate free size
 	if(read>write)
 		free_size = read - write;
+	else if(count && (write == read))
+		free_size = 0;	
 	else
 		free_size = buf->size - write + read;
 	
