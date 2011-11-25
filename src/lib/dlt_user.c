@@ -160,7 +160,9 @@ int dlt_init(void)
 
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
+#ifdef DLT_SHM_ENABLE
 	memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
+#endif
 
     /* create and open DLT user FIFO */
     sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
@@ -195,6 +197,7 @@ int dlt_init(void)
     }
 	else
 	{
+#ifdef DLT_SHM_ENABLE
 		/* init shared memory */
 		if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
 		{
@@ -202,6 +205,7 @@ int dlt_init(void)
 			dlt_log(LOG_WARNING, str);
 			//return 0; 
 		}   
+#endif
 	}
 		
 
@@ -362,8 +366,10 @@ int dlt_free(void)
         unlink(filename);
     }
 
+#ifdef DLT_SHM_ENABLE
 	/* free shared memory */
 	dlt_shm_free_client(&dlt_user.dlt_shm);
+#endif
 
     if (dlt_user.dlt_log_handle!=-1)
     {
@@ -2243,8 +2249,10 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             close(dlt_user.dlt_log_handle);
             dlt_user.dlt_log_handle = -1;
 
+#ifdef DLT_SHM_ENABLE
 			/* free shared memory */
 			dlt_shm_free_client(&dlt_user.dlt_shm);
+#endif
 
             if (dlt_user.local_print_mode == DLT_PM_AUTOMATIC)
             {
@@ -2850,6 +2858,7 @@ void dlt_user_log_reattach_to_daemon(void)
             	return;
             }
 
+#ifdef DLT_SHM_ENABLE
 			/* init shared memory */
 			if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
 			{
@@ -2857,6 +2866,7 @@ void dlt_user_log_reattach_to_daemon(void)
 				dlt_log(LOG_WARNING, str);
 				//return 0; 
 			}   
+#endif
 
             dlt_log(LOG_NOTICE, "Logging re-enabled!\n");
 

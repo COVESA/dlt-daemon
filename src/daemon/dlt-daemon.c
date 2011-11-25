@@ -594,12 +594,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Set flag for optional sending of serial header */
     daemon->sendserialheader = daemon_local->flags.lflag;
 
+#ifdef DLT_SHM_ENABLE
 	/* init shared memory */
     if (dlt_shm_init_server(&(daemon_local->dlt_shm),DLT_SHM_KEY,daemon_local->flags.sharedMemorySize)==-1)
     {
     	dlt_log(LOG_ERR,"Could not initialize shared memory\n");
 		return -1;
     }
+#endif
 	
     /* prepare main loop */
     if (dlt_message_init(&(daemon_local->msg),daemon_local->flags.vflag)==-1)
@@ -852,8 +854,10 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     /* Try to delete existing pipe, ignore result of unlink() */
     unlink(DLT_USER_FIFO);
 
+#ifdef DLT_SHM_ENABLE
 	/* free shared memory */
 	dlt_shm_free_server(&(daemon_local->dlt_shm));
+#endif
 
     /* Try to delete lock file, ignore result of unlink() */
     unlink(DLT_DAEMON_LOCK_FILE);
@@ -1249,6 +1253,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             }
             break;
         }
+#ifdef DLT_SHM_ENABLE
         case DLT_USER_MESSAGE_LOG_SHM:
         {
             if (dlt_daemon_process_user_message_log_shm(daemon, daemon_local, daemon_local->flags.vflag)==-1)
@@ -1257,6 +1262,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             }
             break;
         }
+#endif
         case DLT_USER_MESSAGE_REGISTER_APPLICATION:
         {
             if (dlt_daemon_process_user_message_register_application(daemon, daemon_local, daemon_local->flags.vflag)==-1)
@@ -1888,6 +1894,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
     return 0;
 }
 
+#ifdef DLT_SHM_ENABLE
 int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     int bytes_to_be_removed=0;
@@ -2073,6 +2080,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
     
     return 0;
 }
+#endif
 
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {

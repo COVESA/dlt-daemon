@@ -135,7 +135,9 @@ typedef struct
     DltReceiver receiverSerial; /**< receiver for serial connection */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
+#ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;				/**< Shared memory handling */
+#endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
 } DltDaemonLocal;
 
@@ -171,7 +173,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
 int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+#ifdef DLT_SHM_ENABLE
 int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+#endif
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 

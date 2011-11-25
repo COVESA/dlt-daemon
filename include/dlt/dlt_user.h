@@ -243,7 +243,9 @@ typedef struct
     //DltRingBuffer rbuf;                 
 	DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
     
+#ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;
+#endif
 } DltUser;
 
 /**************************************************************************************************
