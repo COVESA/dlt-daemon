@@ -23,13 +23,26 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
+2.4.2
+
+Improvements
+   * Added dynamic increasable ringbuffers to user lib and daemon.
+   * dlt-system filetransfer now recovers when file is deleted during filetransfer.
+       * Added check of file size when starting and deleting files during filetransfer
+       * Added chekc of shm buffer availability when push to shm
+   * Create abstraction of shm buffer management.
+
+Bugfixes
+   * Fixed buffer overflow problem in buffer library.
+   * Disabled share memory by default - disabled completely shared memory if not enabled.
+
 2.4.1 
 
 Improvements
-	* Added dynamic increasable ringbuffers to user lib and dlt-daemon.
+    * Added dynamic increasable ringbuffers to user lib and dlt-daemon.
 
 Bugfixes
-	* Created abstraction of shm buffer management.
+    * Created abstraction of shm buffer management.
     * dlt-system filetransfer now recovers when file is deleted during filetransfer.
     * Added check of file size when starting and deleting files during filetransfer.
     * Added check of shm buffer availability when push to shm.
