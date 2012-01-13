@@ -109,7 +109,6 @@ void dlt_shm_pv(int id,int operation)
 
 int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	struct shmid_ds shm_buf;
-	char str[256];
 	unsigned char *ptr;
 
 	// Init parameters
@@ -130,7 +129,7 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	}	
 
     // Now we attach the segment to our data space.
-    if ((ptr = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
+    if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
         dlt_log(LOG_ERR,"SHM: shmat");
         return -1; /* ERROR */
     }
@@ -175,7 +174,7 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 	}	
 
 	// Now we attach the segment to our data space.
-	if ((ptr = shmat(buf->shmid, NULL, 0)) == (char *) -1) {
+	if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
 		dlt_log(LOG_ERR,"shmat");
 		return -1; /* ERROR */
 	}

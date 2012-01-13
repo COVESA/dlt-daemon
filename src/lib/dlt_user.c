@@ -337,7 +337,7 @@ void dlt_user_atexit_handler(void)
 
 	if(count != 0){
 		char tmp[256];
-		sprintf(&tmp,"Lost log messages in user buffer when exiting: %i\n",count);
+		sprintf(tmp,"Lost log messages in user buffer when exiting: %i\n",count);
 		dlt_log(LOG_ERR, tmp);
 	}
 
@@ -922,7 +922,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
             DLT_SEM_LOCK();
 
             if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                                &(userheader), sizeof(DltUserHeader),
+                                (unsigned char *)&(userheader), sizeof(DltUserHeader),
                                  msgdata, size, 0, 0)==-1)
 			{
 				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
@@ -2260,7 +2260,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
             DLT_SEM_LOCK();
 
             if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                                &(userheader), sizeof(DltUserHeader),
+                                (unsigned char *)&(userheader), sizeof(DltUserHeader),
                                 msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
                                 log->buffer, log->size)==-1)
 			{

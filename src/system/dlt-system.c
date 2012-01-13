@@ -378,7 +378,8 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 
 void dlt_system_daemonize()
 {
-    int i,lfp,bytes_written,ret;
+    int i,ret;
+    //int lfp,bytes_written;
 
     /* Daemonize */
     i=fork();
@@ -499,6 +500,7 @@ void dlt_system_signal_handler(int sig)
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
 {
     char text[1024];
+    int syserr = 0;
 
 	strncpy(text,data,length);
 
@@ -508,7 +510,10 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
 			/* Execute shell command */
 			//DLT_LOG(shellContext, DLT_LOG_INFO, DLT_STRING("Execute command:"), DLT_STRING(text));
 			printf("Execute command: %s\n",text);
-			system(text);
+			if((syserr = system(text)) != 0)
+			{
+				printf("Abnormal exit status from %s: %d\n",text,syserr);
+			}
 			break;
 		default:
 			//DLT_LOG(shellContext, DLT_LOG_WARN, DLT_STRING("Unknown command received! Service ID:"), DLT_UINT32(service_id),DLT_STRING("Command:"),DLT_STRING(text));
@@ -526,7 +531,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
 
 int main(int argc, char* argv[])
 {
-    int sock;
+    int sock = -1;
     int bytes_read;
     socklen_t addr_len;
     char recv_data[MAXSTRLEN];
@@ -593,7 +598,7 @@ int main(int argc, char* argv[])
 			perror("Socket");
 			exit(1);
 		}
-			server_addr.sin_family = AF_INET;
+		server_addr.sin_family = AF_INET;
 		server_addr.sin_port = htons(options.SyslogPort);
 		server_addr.sin_addr.s_addr = INADDR_ANY;
 		bzero(&(server_addr.sin_zero), 8);

@@ -2297,7 +2297,7 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 	DltBufferHead *head;
 
 	// Init parameters
-	buf->shm = ptr;
+	buf->shm = (unsigned char *)ptr;
 	buf->min_size = size;
 	buf->max_size = size;
 	buf->step_size = 0;
@@ -2307,7 +2307,7 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 	head->read = 0;
 	head->write = 0;
 	head->count = 0;
-    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+    buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
 	buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	// clear memory
@@ -2322,16 +2322,15 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size)
 {
 	char str[256];
-	DltBufferHead *head;
 
 	// Init parameters
-	buf->shm = ptr;
+	buf->shm = (unsigned char *)ptr;
 	buf->min_size = size;
 	buf->max_size = size;
 	buf->step_size = 0;
 	
 	// Init pointers
-    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+    buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
     buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	snprintf(str,sizeof(str),"Buffer: Size %d\n",buf->size);
@@ -2363,7 +2362,7 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 	head->read = 0;
 	head->write = 0;
 	head->count = 0;
-    buf->mem = (char*)(buf->shm + sizeof(DltBufferHead));
+    buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
     buf->size = buf->min_size - sizeof(DltBufferHead);
 
 	// clear memory

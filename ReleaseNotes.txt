@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.4.2
+Version: 2.4.3 BETA
 
 
 Introduction
@@ -23,6 +23,12 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
+2.4.3 BETA
+
+Improvements
+   * [GSW-138] API Extension to resend the log messages in the user buffer fixed
+   * [GSW-135] Fixed compile warnings 
+
 2.4.2
 
 Improvements
@@ -50,7 +56,7 @@ Bugfixes
 2.4.1 
 
 Improvements
-	* Added internal logging facility to stdout, syslog or local file, configurable in configuration file.
+    * Added internal logging facility to stdout, syslog or local file, configurable in configuration file.
     * Added deamonise and signal handlers to dlt-system.
     * Added manual pages.
     * Added new API dlt_check_library_version() function.
