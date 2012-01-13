@@ -6,15 +6,23 @@
 //!Defines the minimum timeout between two dlt logs. This is important because dlt should not be flooded with too many logs in a short period of time.
 #define MIN_TIMEOUT 20
 
-
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE -300
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE1 -301
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE2 -302
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE3 -303
+//! Error code for dlt_user_log_file_head
 #define ERROR_FILE_HEAD -400
+//! Error code for dlt_user_log_file_data
 #define ERROR_FILE_DATA -500
+//! Error code for dlt_user_log_file_end
 #define ERROR_FILE_END -600
+//! Error code for dlt_user_log_file_infoAbout
 #define ERROR_INFO_ABOUT -700
+//! Error code for dlt_user_log_file_packagesCount
 #define ERROR_PACKAGE_COUNT -800
 
 

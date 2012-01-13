@@ -102,14 +102,23 @@ Here is the content of the information package:
 
 \subsection File transfer error
 \code
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE -300
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE1 -301
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE2 -302
+//! Error code for dlt_user_log_file_complete
 #define ERROR_FILE_COMPLETE3 -303
+//! Error code for dlt_user_log_file_head
 #define ERROR_FILE_HEAD -400
+//! Error code for dlt_user_log_file_data
 #define ERROR_FILE_DATA -500
+//! Error code for dlt_user_log_file_end
 #define ERROR_FILE_END -600
+//! Error code for dlt_user_log_file_infoAbout
 #define ERROR_INFO_ABOUT -700
+//! Error code for dlt_user_log_file_packagesCount
 #define ERROR_PACKAGE_COUNT -800
 \endcode
 If an error happens during file transfer, the library will execute the mehtod:
@@ -153,34 +162,21 @@ If the file doesn't exist, the conent of the error package is a little bit diffe
 |----------------------------------------------------|
 \endcode
 
-\section Compile
-Use the following commands to compile the dlt filetransfer:
-\code
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
-\endcode
-If you want to generate the doc, you must set ENABLE_BUILD_DOC=ON at cmake.
-
-
 \section Using Using DLT Filetransfer
 There are two ways to use the filetransfer
-	\li Automatic filetransfer in one step (this is the easiest way to go)
+	\li Automatic filetransfer in one step
 	\li Header, data and end package order handeld by the user
 
 \subsection Automatic Automatic 
-If you won't want to carry about the header, data and end packages ordering, you should use
-this method call
+Call
 	\li dlt_user_log_file_complete
 	
 The method needs the following arguments:
 	\li fileContext -> Context for logging the file to dlt
 	\li filename -> Use the absolute file path to the file
 	\li deleteFlag -> Flag if the file will be deleted after transfer. 1->delete, 0->notDelete
-	\li timeout -> Timeout in ms to wait between some logs. Important: The FIFO of dlt should not be flooded with to many messages in a short period of time. The timeout can not be smaller than MIN_TIMEOUT.
-
+	\li timeout -> Deprecated.
+	
 The order of the packages is to send at first the header, then one or more data packages (depends on the filesize) and in the end the end package.
 The advantage of this method is, that you must not handle the package ordering by your own.
 
@@ -224,19 +220,19 @@ When you call "sudo make install", some automatic tests will be installed. Start
 dlt-test-filetransfer
 \endcode
 It's important that the dlt-filetransfer example files are installed in /usr/share/dlt-filetransfer which will be done automatically by using "sudo make install".
-\subsection testF1P1
+\subsection testFile1Run1
 Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using dlt_user_log_file_complete.
-\subsection testF1P2
+\subsection testFile1Run2
 Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer 
-\subsection testF2P1
+\subsection testFile2Run1
 Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using dlt_user_log_file_complete.
-\subsection testF2P2
+\subsection testFile2Run2
 Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer
-\subsection testF3P1
+\subsection testFile3Run1
 Test the file transfer with the condition that the transferred file does not exist using dlt_user_log_file_complete.
-\subsection testF3P2
+\subsection testFile3Run2
 Test the file transfer with the condition that the transferred file does not exist using single package transfer
-\subsection testF3P3
+\subsection testFile3Run3
 Test which logs some information about the file.
 
 
