@@ -596,6 +596,14 @@ int dlt_forward_msg(void *msgdata,size_t size);
  */
 int dlt_user_check_buffer(int *total_size, int *used_size);
 
+/**
+ * Try to resend log message in the user buffer. Stops if the dlt_uptime is bigger than
+ * dlt_uptime() + DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT. A pause between the resending
+ * attempts can be defined with DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP
+ * @return number of messages in the user buffer
+ */
+int dlt_user_atexit_blow_out_user_buffer(void);
+
 #ifdef __cplusplus
 }
 #endif

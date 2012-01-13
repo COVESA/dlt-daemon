@@ -331,6 +331,16 @@ int dlt_init_common(void)
 
 void dlt_user_atexit_handler(void)
 {
+
+	/* Try to resend potential log messages in the user buffer */
+	int count = dlt_user_atexit_blow_out_user_buffer();
+
+	if(count != 0){
+		char tmp[256];
+		sprintf(&tmp,"Lost log messages in user buffer when exiting: %i\n",count);
+		dlt_log(LOG_ERR, tmp);
+	}
+
     /* Unregister app (this also unregisters all contexts in daemon) */
     /* Ignore return value */
     dlt_unregister_app();
@@ -338,6 +348,31 @@ void dlt_user_atexit_handler(void)
     /* Cleanup */
     /* Ignore return value */
     dlt_free();
+}
+
+int dlt_user_atexit_blow_out_user_buffer(void){
+
+	int count,ret;
+
+	uint32_t exitTime = dlt_uptime() + DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT;
+
+	while(dlt_uptime() < exitTime ){
+
+		ret = dlt_user_log_resend_buffer();
+
+		if(ret == 0)
+		{
+				return 0;
+		}
+
+		usleep(DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP);
+	}
+
+	DLT_SEM_LOCK();
+	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+	DLT_SEM_FREE();
+
+	return count;
 }
 
 int dlt_free(void)

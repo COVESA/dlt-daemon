@@ -132,6 +132,13 @@
 /* Name of environment variable for local print mode */
 #define DLT_USER_ENV_LOCAL_PRINT_MODE "DLT_LOCAL_PRINT_MODE"
 
+/* Timeout offset for resending user buffer at exit in usec (1000 usec = 1ms)*/
+#define DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT 100000
+
+/* Sleeps between resending user buffer at exit in usec (1000 usec = 1ms)*/
+#define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 1000
+
+
 /************************/
 /* Don't change please! */
 /************************/
