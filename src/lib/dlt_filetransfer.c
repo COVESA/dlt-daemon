@@ -54,30 +54,19 @@ time_t getFileCreationDate(const char* file){
 	stat(file, &st);
     	return st.st_ctime;
 }
+
+//!Returns the creation date of a file
+/** Format of the creation date is Day Mon dd hh:mm:ss yyyy
+ * @param file Absolute file path
+ * @return Returns the creation date of a file
+*/
 char* getFileCreationDate2(const char* file){
 	struct stat st;
 	stat(file, &st);
 	
 	struct tm  *ts= localtime(&st.st_ctime);
-    	//char       buf[80];
-  	/* Format and print the time, "ddd yyyy-mm-dd hh:mm:ss zzz" */
-  	//strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", ts);
 	return asctime(ts);
 }
-
-
-
-
-//void sighandler(int sig)
-//{
-//	
-//	fprintf(stderr, "Signal handler called with %d\n", sig);
-//	signal(sig, &sighandler);
-//	exit(1); 
-//	
-//}
-
-
 
 //!Checks if the file exists
 /**@param file Absolute file path
@@ -126,7 +115,7 @@ int doRemoveFile(const char*filename){
 
 void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode){
 
-	if(-errno != -2)
+	if(errno != ENOENT)
 	{
 		DLT_LOG(*fileContext,DLT_LOG_ERROR,
 			DLT_STRING("FLER"),
@@ -174,7 +163,6 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
 		);
 		return 0;
 	} else {
-	
 		dlt_user_log_file_errorMessage(fileContext,filename,ERROR_INFO_ABOUT);
 		return ERROR_INFO_ABOUT;
 	}
@@ -194,18 +182,11 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
  */
 int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout)
 {	
-	//No signal handling in library - part of the main program!
-	//signal(SIGABRT, &sighandler);
-	//signal(SIGTERM, &sighandler);
-	//signal(SIGINT, &sighandler);
-
 	if(!isFile(filename))
 	{
 		dlt_user_log_file_errorMessage(fileContext,filename, ERROR_FILE_COMPLETE);
 		return ERROR_FILE_COMPLETE;
 	}
-	
-	//dlt_user_log_file_infoAbout(fileContext,filename);
 	
 	if(dlt_user_log_file_header(fileContext,filename) != 0)
 	{
