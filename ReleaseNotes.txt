@@ -26,7 +26,8 @@ Changes in this release
 2.4.3 BETA
 
 Improvements
-   * [GSW-138] API Extension to resend the log messages in the user buffer fixed
+   * [GSW-138] API Extension to resend the log messages in the user buffer Fixed
+   * [GSW-137] Wrong include gives error on compailing against dlt
    * [GSW-135] Fixed compile warnings 
    * Update of doxygen documentation/generation
    
@@ -216,6 +217,7 @@ Improvements
 	* dlt_message_print_* functions added
 	* Semaphore calls added to enable multi-threading
 	* Changed injection interface from direct usage to callback
+
 	* Requested log level and trace status is set immediately 
           in dlt_set_application_ll_ts_limit()
 	* Implemented receiver thread in DLT library

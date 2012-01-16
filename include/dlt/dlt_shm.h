@@ -68,7 +68,7 @@
 #ifndef DLT_SHM_H
 #define DLT_SHM_H
 
-#include <dlt_common.h>
+#include "dlt_common.h"
 
 /* shared memory key */
 /* must be the same for server and cleint */
