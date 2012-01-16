@@ -6,4 +6,5 @@ automotive-dlt.pc
 .project
 config.h
 configure
+include/dlt/dlt_version.h
 
