@@ -28,7 +28,8 @@ Changes in this release
 Improvements
    * [GSW-138] API Extension to resend the log messages in the user buffer fixed
    * [GSW-135] Fixed compile warnings 
-
+   * Update of doxygen documentation/generation
+   
 2.4.2
 
 Improvements

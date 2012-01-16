@@ -35,33 +35,27 @@
  # @licence end@
 ########
 
-function(convert_odt ODT_FILE)
-  set(pdf "${CMAKE_CURRENT_BINARY_DIR}/${ODT_FILE}.pdf")
-  set(odt "${CMAKE_CURRENT_SOURCE_DIR}/${ODT_FILE}.odt")
-  add_custom_command(
-    OUTPUT ${pdf}
-    DEPENDS ${odt}
-    COMMAND unoconv
-    ARGS --format=pdf --stdout ${odt} > ${pdf}
-  )
-endfunction(convert_odt) 
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg @ONLY)
+	
+ADD_CUSTOM_COMMAND(
+	OUTPUT ${CMAKE_SOURCE_DIR}/doxygen-execute
+	DEPENDS  ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg
+	COMMAND doxygen
+	ARGS ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg
+)
 
-convert_odt("GENIVI_UserManual_DLT_Client")
-convert_odt("GENIVI_UserManual_DLT_Daemon")
-convert_odt("GENIVI_Specification_DLT_Daemon")
+ADD_CUSTOM_COMMAND(
+	OUTPUT ${CMAKE_SOURCE_DIR}/doxygen-execute2
+	DEPENDS  ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg
+	COMMAND doxygen
+	ARGS ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg
+)
 
-ADD_CUSTOM_TARGET(Documents ALL echo DEPENDS 
-${CMAKE_CURRENT_BINARY_DIR}/GENIVI_UserManual_DLT_Client.pdf 
-${CMAKE_CURRENT_BINARY_DIR}/GENIVI_UserManual_DLT_Daemon.pdf 
-${CMAKE_CURRENT_BINARY_DIR}/GENIVI_Specification_DLT_Daemon.pdf)
+ADD_CUSTOM_TARGET(doc ALL DEPENDS ${CMAKE_SOURCE_DIR}/doxygen-execute)
+ADD_CUSTOM_TARGET(doc-filetransfer ALL DEPENDS ${CMAKE_SOURCE_DIR}/doxygen-execute2)
 
-INSTALL(FILES 	${CMAKE_CURRENT_SOURCE_DIR}/GENIVI_UserManual_DLT_Client.odt
-		${CMAKE_CURRENT_SOURCE_DIR}/GENIVI_UserManual_DLT_Daemon.odt
-		${CMAKE_CURRENT_SOURCE_DIR}/GENIVI_Specification_DLT_Daemon.odt
-		${CMAKE_CURRENT_BINARY_DIR}/GENIVI_UserManual_DLT_Client.pdf 
-		${CMAKE_CURRENT_BINARY_DIR}/GENIVI_UserManual_DLT_Daemon.pdf 
-		${CMAKE_CURRENT_BINARY_DIR}/GENIVI_Specification_DLT_Daemon.pdf
-		${CMAKE_CURRENT_SOURCE_DIR}/GENIVI_Specification_DLT_Daemon.vsd
-	DESTINATION "doc/${CMAKE_PROJECT_NAME}"
-	COMPONENT doc)
+SET( DOC_COMPONENT doc) 
+
+
 

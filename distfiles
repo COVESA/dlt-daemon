@@ -5,7 +5,6 @@ include/dlt/.*(\.h|\.cpp|\.cmake)
 #testscripts/Ubuntu/.*(\.h|\.cpp|\.cmake)
 #testscripts/Meego/.*(\.h|\.cpp|\.cmake)
 #systemd/.*(\.h|\.cpp|\.cmake)
-doc/.*\.(odt|vsd)
 configure
 distfiles
 automotive-dlt.spec.in
