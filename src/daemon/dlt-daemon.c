@@ -132,7 +132,7 @@ static pthread_attr_t dlt_daemon_timingpacket_thread_attr;
 void usage()
 {
     printf("Usage: dlt-daemon [options]\n");
-    printf("DLT logging daemon\n");
+    printf("DLT logging daemon %s\n", _DLT_PACKAGE_REVISION);
     printf("Options:\n");
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");

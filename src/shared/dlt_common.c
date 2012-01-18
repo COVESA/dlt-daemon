@@ -3044,17 +3044,17 @@ speed_t dlt_convert_serial_speed(int baudrate)
 void dlt_get_version(char *buf)
 {
     sprintf(buf,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n",
-            PACKAGE_VERSION, PACKAGE_VERSION_STATE, PACKAGE_REVISION, __DATE__ , __TIME__ );
+            _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE, _DLT_PACKAGE_REVISION, __DATE__ , __TIME__ );
 }
 
 void dlt_get_major_version(char *buf)
 {
-	sprintf(buf,"%s",PACKAGE_MAJOR_VERSION);
+	sprintf(buf,"%s",_DLT_PACKAGE_MAJOR_VERSION);
 }
 
 void dlt_get_minor_version(char *buf)
 {
-    sprintf(buf,"%s",PACKAGE_MINOR_VERSION);
+    sprintf(buf,"%s",_DLT_PACKAGE_MINOR_VERSION);
 }
 
 
