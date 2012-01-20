@@ -35,6 +35,22 @@
  # @licence end@
 ########
 
+set(dlt_test_multi_process_SRCS dlt-test-multi-process)
+add_executable(dlt-test-multi-process ${dlt_test_multi_process_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
+target_link_libraries(dlt-test-multi-process dlt)
+set_target_properties(dlt-test-multi-process PROPERTIES LINKER_LANGUAGE C)
+
+set(dlt_test_multi_process_client_SRCS dlt-test-multi-process-client)
+add_executable(dlt-test-multi-process-client ${dlt_test_multi_process_client_SRCS})
+IF(GPROF_DLT_TESTS)
+	SET(CMAKE_C_FLAGS "-pg")
+ENDIF(GPROF_DLT_TESTS)
+target_link_libraries(dlt-test-multi-process-client dlt)
+set_target_properties(dlt-test-multi-process-client PROPERTIES LINKER_LANGUAGE C)
+
 set(dlt_test_user_SRCS dlt-test-user)
 add_executable(dlt-test-user ${dlt_test_user_SRCS})
 IF(GPROF_DLT_TESTS)
@@ -91,7 +107,7 @@ ENDIF(GPROF_DLT_TESTS)
 target_link_libraries(dlt-test-filetransfer dlt)
 set_target_properties(dlt-test-filetransfer PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal dlt-test-filetransfer
+install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-internal dlt-test-filetransfer	
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
