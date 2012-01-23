@@ -87,6 +87,7 @@ typedef struct {
 } s_thread_data;
 
 // Forward declarations
+void init_params(s_parameters * params);
 void quit_handler(int signum);
 void cleanup();
 void do_forks(s_parameters params);
@@ -108,16 +109,18 @@ void usage(char *prog_name)
 {
 	char version[255];
 	dlt_get_version(version);
+	s_parameters defaults;
+	init_params(&defaults);
 
 	printf("Usage: %s [options]\n", prog_name);
 	printf("Test application for stress testing the daemon with multiple processes and threads.\n");
 	printf("%s\n", version);
-	printf("Options:\n");
-	printf(" -m number		Number of messages per thread to send.\n");
-	printf(" -p number		Number of processes to start. Max %d.\n", MAX_PROCS);
-	printf(" -t number		Number of threads per process. Max %d.\n", MAX_THREADS);
-	printf(" -d delay		Delay in milliseconds to wait between log messages.\n");
-	printf(" -f delay		Random fudge in milliseconds to add to delay.\n");
+	printf("Options (Default):\n");
+	printf(" -m number		Number of messages per thread to send. (%d)\n", defaults.nmsgs);
+	printf(" -p number		Number of processes to start. (%d), Max %d.\n", defaults.nprocs, MAX_PROCS);
+	printf(" -t number		Number of threads per process. (%d), Max %d.\n", defaults.nthreads, MAX_THREADS);
+	printf(" -d delay		Delay in milliseconds to wait between log messages. (%d)\n", defaults.delay);
+	printf(" -f delay		Random fudge in milliseconds to add to delay. (%d)\n", defaults.delay_fudge);
 }
 
 /**
@@ -299,18 +302,20 @@ time_t mksleep_time(int delay, int fudge)
  */
 void do_logging(s_thread_data *data)
 {
-	//__asm__ ("int $0xCC");
+	DltContext 		mycontext;
+	char 			ctid[5];
+
+	sprintf(ctid,"%.2x", rand() & 0x0000ffff);
+	DLT_REGISTER_CONTEXT(mycontext, ctid, "Child in dlt-test-multi-process");
+	data->ctx = mycontext;
+
 	int msgs_left = data->params.nmsgs;
-	pid_t mypid = getpid();
-
-
-	srand(mypid);
-
 	while(msgs_left-- > 0)
 	{
 		DLT_LOG(data->ctx, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
 		usleep(mksleep_time(data->params.delay, data->params.delay_fudge));
 	}
+	DLT_UNREGISTER_CONTEXT(mycontext);
 }
 
 /**
@@ -318,20 +323,16 @@ void do_logging(s_thread_data *data)
  */
 void run_threads(s_parameters params)
 {
-	DltContext 		mycontext;
 	pthread_t		thread[params.nthreads];
 	s_thread_data	thread_data;
-	char 			ctid[5];
+	char 			apid[5];
 	int 			i;
 
 	srand(getpid());
-
-	DLT_REGISTER_APP(DMPT_NAME,"DLT daemon multi process test.");
-	sprintf(ctid,"%.2x", rand() & 0x0000ffff);
-	DLT_REGISTER_CONTEXT(mycontext, ctid, "Child in dlt-test-multi-process");
+	sprintf(apid,"MT%.1x", rand() & 0x000000ff);
+	DLT_REGISTER_APP(apid,DMPT_NAME);
 
 	thread_data.params 	= params;
-	thread_data.ctx		= mycontext;
 
 	for(i=0;i<params.nthreads;i++)
 	{
@@ -347,7 +348,7 @@ void run_threads(s_parameters params)
 		pthread_join(thread[i], NULL);
 	}
 
-	DLT_UNREGISTER_CONTEXT(mycontext);
+
 	DLT_UNREGISTER_APP();
 	// We can exit now
 	exit(0);
