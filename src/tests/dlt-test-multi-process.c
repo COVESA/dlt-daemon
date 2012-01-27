@@ -304,9 +304,11 @@ void do_logging(s_thread_data *data)
 {
 	DltContext 		mycontext;
 	char 			ctid[5];
+	char 			ctid_name[256];
 
 	sprintf(ctid,"%.2x", rand() & 0x0000ffff);
-	DLT_REGISTER_CONTEXT(mycontext, ctid, "Child in dlt-test-multi-process");
+	sprintf(ctid_name, "Child %s in dlt-test-multi-process", ctid);
+	DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
 	data->ctx = mycontext;
 
 	int msgs_left = data->params.nmsgs;
@@ -326,11 +328,13 @@ void run_threads(s_parameters params)
 	pthread_t		thread[params.nthreads];
 	s_thread_data	thread_data;
 	char 			apid[5];
+	char			apid_name[256];
 	int 			i;
 
 	srand(getpid());
 	sprintf(apid,"MT%.1x", rand() & 0x000000ff);
-	DLT_REGISTER_APP(apid,DMPT_NAME);
+	sprintf(apid_name, "Apps %s.", apid);
+	DLT_REGISTER_APP(apid, apid_name);
 
 	thread_data.params 	= params;
 
