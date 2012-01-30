@@ -40,14 +40,19 @@ Serial device baudrate (Default: 115200).
 Set ECU ID (Default: RECV).
 .SH EXAMPLES
 .TP
-Convert DLT file into ASCII:
-.B dlt-convert
-\-a mylog.dlt
+Print received message headers received from a dlt-daemon running on localhost:
+.B dlt-receive
+\-s localhost
 .PP
 .TP
-Join two log files:
-.B dlt-convert
-\-o newlog.dlt mylog1.dlt mylog2.dlt
+Print received message headers received from a serila interface:
+.B dlt-receive
+\-s -y /dev/ttySO
+.PP
+.TP
+Store received message headers from a dlt-daemon to a log file called log.dlt and filter them for e.g. Application ID ABCD and Context ID EFGH (Write:ABCD EFGH as single line to a file claled filter.txt):
+.B dlt-receive
+\-s -o log.dlt -f filter.txt localhost
 .PP
 .SH EXIT STATUS
 Non zero is returned in case of failure.
