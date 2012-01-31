@@ -50,9 +50,14 @@ Convert DLT file into ASCII:
 \-a mylog.dlt
 .PP
 .TP
-Join two log files:
+Cut a specific range, e.g. from message 1 to message 3 from a file called log.dlt and store the result to a file called newlog.dlt:
 .B dlt-convert
-\-o newlog.dlt mylog1.dlt mylog2.dlt
+\-b 1 -e 3 -o newlog.dlt log.dlt
+.PP
+.TP
+Paste two dlt files log1.dlt and log2.dlt to a new file called newlog.dlt:
+.B dlt-convert
+\-o newlog.dlt log1.dlt log2.dlt
 .PP
 .SH EXIT STATUS
 Non zero is returned in case of failure.
