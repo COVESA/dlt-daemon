@@ -79,7 +79,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-test-stress
 %{_bindir}/dlt-test-stress-client
 %{_bindir}/dlt-test-stress-user
-%{_bindir}/dlt-test-internal
 %{_bindir}/dlt-test-filetransfer
 %{_bindir}/dlt-test-multi-process
 %{_bindir}/dlt-test-multi-process-client
