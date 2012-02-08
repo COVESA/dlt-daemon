@@ -83,26 +83,38 @@ typedef struct {
 	char ApplicationId[256];
 	int  daemonise;
 
-	int  SyslogEnable;
-	char SyslogContextId[256];
-	int  SyslogPort;
+	int  SyslogEnable;					/*# Enable the Syslog Adapter (Default: 0)*/
+	char SyslogContextId[256];			/*# The Context Id of the syslog adapter (Default: SYSL)*/
+	int  SyslogPort;					/*# The UDP port opened by DLT system mamager to receive system logs (Default: 47111)*/
 	
-	int  FiletransferEnable;
-	char FiletransferDirectory1[256];
+	int  FiletransferEnable;			/*# Enable the Filetransfer (Default: 0)*/
+	char FiletransferDirectory1[256];	/*# Directory which contains files to be transfered over DLT (Default: /tmp/filetransfer)# Files are deleted after Filetransfer is finished and after TimeDelay expired*/
 	char FiletransferDirectory2[256];
-	char FiletransferContextId[256];
-	int  FiletransferTimeStartup;
-	int  FiletransferTimeDelay;
+	char FiletransferContextId[256];	/*# The Context Id of the filetransfer (Default: FILE)*/
+	int  FiletransferTimeStartup;		/*# Time after startup of dlt-system when first file is transfered (Default: 30)# Time in seconds*/
+	int  FiletransferTimeDelay;			/*# Time to wait when transfered file is deleted and next file transfer starts (Default: 10)# Time in seconds*/
+	int  FiletransferTimeoutBetweenLogs;/*# Waits a period of time between two file transfer logs of a single file to DLT to ensure that the FIFO of DLT is not flooded.*/
 
-	int  LogFileEnable;
+	/*# Log different files
+	# Mode: 0 = off, 1 = startup only, 2 = regular
+	# TimeDelay: If mode regular is set, time delay is the number of seconds for next sent
+	*/
+	int  LogFileEnable;					/*# Enable the logging of files (Default: 0)*/
 	int  LogFileNumber;
 	char LogFileFilename[DLT_SYSTEM_LOG_FILE_MAX][256];
 	int  LogFileMode[DLT_SYSTEM_LOG_FILE_MAX];
 	int  LogFileTimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
 	char LogFileContextId[DLT_SYSTEM_LOG_FILE_MAX][256];
 
-	int  LogProcessesEnable;
-	char LogProcessesContextId[256];
+	int  LogProcessesEnable;			/*# Enable the logging of processes (Default: 0)*/
+	char LogProcessesContextId[256];	/*# The Context Id of the kernel version (Default: PROC)*/
+
+	/*# Log different processes
+	# Name: * = all process, X=alternative name (must correspind to /proc/X/cmdline
+	# Filename: the filename in the subdirectory /proc/processid/
+	# Mode: 0 = off, 1 = startup only, 2 = regular
+	# TimeDelay: If mode regular is set, time delay is the number of seconds for next sent
+	*/
 	int  LogProcessNumber;
 	char LogProcessName[DLT_SYSTEM_LOG_PROCESSES_MAX][256];
 	char LogProcessFilename[DLT_SYSTEM_LOG_PROCESSES_MAX][256];

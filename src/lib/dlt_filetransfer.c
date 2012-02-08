@@ -6,24 +6,8 @@
 //!Defines the minimum timeout between two dlt logs. This is important because dlt should not be flooded with too many logs in a short period of time.
 #define MIN_TIMEOUT 20
 
-//! Error code for dlt_user_log_file_complete
-#define ERROR_FILE_COMPLETE -300
-//! Error code for dlt_user_log_file_complete
-#define ERROR_FILE_COMPLETE1 -301
-//! Error code for dlt_user_log_file_complete
-#define ERROR_FILE_COMPLETE2 -302
-//! Error code for dlt_user_log_file_complete
-#define ERROR_FILE_COMPLETE3 -303
-//! Error code for dlt_user_log_file_head
-#define ERROR_FILE_HEAD -400
-//! Error code for dlt_user_log_file_data
-#define ERROR_FILE_DATA -500
-//! Error code for dlt_user_log_file_end
-#define ERROR_FILE_END -600
-//! Error code for dlt_user_log_file_infoAbout
-#define ERROR_INFO_ABOUT -700
-//! Error code for dlt_user_log_file_packagesCount
-#define ERROR_PACKAGE_COUNT -800
+
+#define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES LONG_MAX
 
 
 //!Buffer for dlt file transfer. The size is defined by BUFFER_SIZE
@@ -88,28 +72,28 @@ int isFile (const char* file)
 
 //!Waits a period of time
 /**Waits a period of time. The minimal time to wait is MIN_TIMEOUT. This makes sure that the FIFO of dlt is not flooded.
- * @param timeout Timeout to wait in seconds in ms but can not be smaller as MIN_TIMEOUT
+ * @param timeout Timeout to in ms but can not be smaller as MIN_TIMEOUT
  */
 void doTimeout(int timeout)
 {
+	usleep(timeout * 1000);
+}
+
+//!Checks free space of the user buffer
+/**
+ * @param returns -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
+ */
+int checkUserBufferForFreeSpace()
+{
 	int total_size, used_size;
-	
+
 	dlt_user_check_buffer(&total_size, &used_size);
-	
-	/* sleep only if more than 50% of buffer used */
+
 	if((total_size - used_size) < (total_size/2))
 	{
-		printf("Wait %d of %d already used\n",used_size,total_size);
-
-		if(timeout>MIN_TIMEOUT)
-		{	
-			usleep(timeout * 1000);
-		}
-		else
-		{
-			usleep(MIN_TIMEOUT * 1000);
-		}	  			
+		return -1;
 	}
+	return 1;
 }
 
 //!Deletes the given file
@@ -171,8 +155,8 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
 		);
 		return 0;
 	} else {
-		dlt_user_log_file_errorMessage(fileContext,filename,ERROR_INFO_ABOUT);
-		return ERROR_INFO_ABOUT;
+		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_INFO_ABOUT);
+		return DLT_FILETRANSFER_ERROR_INFO_ABOUT;
 	}
 }
 
@@ -192,23 +176,23 @@ int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, in
 {	
 	if(!isFile(filename))
 	{
-		dlt_user_log_file_errorMessage(fileContext,filename, ERROR_FILE_COMPLETE);
-		return ERROR_FILE_COMPLETE;
+		dlt_user_log_file_errorMessage(fileContext,filename, DLT_FILETRANSFER_ERROR_FILE_COMPLETE);
+		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE;
 	}
 	
 	if(dlt_user_log_file_header(fileContext,filename) != 0)
 	{
-		return ERROR_FILE_COMPLETE1;
+		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE1;
 	}
 		
-	if(dlt_user_log_file_data(fileContext, filename,LONG_MAX,timeout) != 0)
+	if(dlt_user_log_file_data(fileContext, filename,DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES,timeout) != 0)
 	{
-		return ERROR_FILE_COMPLETE2;
+		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE2;
 	}
 		
 	if(dlt_user_log_file_end(fileContext,filename, deleteFlag) != 0)
 	{
-		return ERROR_FILE_COMPLETE3;
+		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE3;
 	}		
 			
 	return 0;
@@ -249,7 +233,7 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
 			}
 		}
 	} else {
-		dlt_user_log_file_errorMessage(fileContext,filename,ERROR_PACKAGE_COUNT);
+		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_PACKAGE_COUNT);
 		return -1;
 	}
 }
@@ -282,8 +266,8 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
 	}
 	else
 	{
-		dlt_user_log_file_errorMessage(fileContext,filename, ERROR_FILE_HEAD);
-		return ERROR_FILE_HEAD;
+		dlt_user_log_file_errorMessage(fileContext,filename, DLT_FILETRANSFER_ERROR_FILE_HEAD);
+		return DLT_FILETRANSFER_ERROR_FILE_HEAD;
 	}
 }
 
@@ -306,11 +290,11 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 		file = fopen (filename,"rb");
 		if (file == NULL)
 		{
-			dlt_user_log_file_errorMessage(fileContext,filename,ERROR_FILE_DATA);
-			return ERROR_FILE_DATA;
+			dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_DATA);
+			return DLT_FILETRANSFER_ERROR_FILE_DATA;
 		}
 		
-		if( (packageToTransfer != LONG_MAX && packageToTransfer > dlt_user_log_file_packagesCount(fileContext,filename)) || packageToTransfer <= 0)
+		if( (packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES && packageToTransfer > dlt_user_log_file_packagesCount(fileContext,filename)) || packageToTransfer <= 0)
 		{
 			DLT_LOG(*fileContext,DLT_LOG_ERROR,
 				DLT_STRING("Error at dlt_user_log_file_data: packageToTransfer out of scope"),
@@ -321,42 +305,50 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 				DLT_STRING("for File:"),
 				DLT_STRING(filename)
 			);
-			return ERROR_FILE_DATA;
+			return DLT_FILETRANSFER_ERROR_FILE_DATA;
 		}
 
 		readBytes = 0;
 		
-		if(packageToTransfer != LONG_MAX)
+		if(packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES)
 		{
+//				If a single package should be transferred. The user has to check that the free space in the user buffer > 50%
+//				if(checkUserBufferForFreeSpace()<0)
+//					return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
+
 				fseek ( file , (packageToTransfer-1)*BUFFER_SIZE , SEEK_SET );
 				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-				
+
 				DLT_LOG(*fileContext,DLT_LOG_INFO,
-					DLT_STRING("FLDA"),
-					DLT_UINT(getFileSerialNumber(filename)),
-					DLT_UINT(packageToTransfer),
-					DLT_RAW(buffer,readBytes),
-					DLT_STRING("FLDA")	
+				DLT_STRING("FLDA"),
+				DLT_UINT(getFileSerialNumber(filename)),
+				DLT_UINT(packageToTransfer),
+				DLT_RAW(buffer,readBytes),
+				DLT_STRING("FLDA")
 				);
-				
-				//doTimeout(timeout);
-					
+
+				doTimeout(timeout);
+
 		} else {
 			pkgNumber = 0;
 			while( !feof( file ) )
 			{
-				pkgNumber++;
-				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);	
+//				If the complete file should be transferred, the user buffer will be checked.
+//				If free space < 50% the package won't be transferred.
+				if(checkUserBufferForFreeSpace()>0)
+				{
+					pkgNumber++;
+					readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 				
-				DLT_LOG(*fileContext,DLT_LOG_INFO,
-					DLT_STRING("FLDA"),
-					DLT_UINT(getFileSerialNumber(filename)),
-					DLT_UINT(pkgNumber),
-					DLT_RAW(buffer,readBytes),
-					DLT_STRING("FLDA")		
-				);
-				
-				//doTimeout(timeout); 
+					DLT_LOG(*fileContext,DLT_LOG_INFO,
+							DLT_STRING("FLDA"),
+							DLT_UINT(getFileSerialNumber(filename)),
+							DLT_UINT(pkgNumber),
+							DLT_RAW(buffer,readBytes),
+							DLT_STRING("FLDA")
+					);
+				}
+				doTimeout(timeout);
 			}
 		}
 		
@@ -365,8 +357,8 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 		return 0;
 		
 	} else {
-		dlt_user_log_file_errorMessage(fileContext,filename,ERROR_FILE_DATA);
-		return ERROR_FILE_DATA;
+		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_DATA);
+		return DLT_FILETRANSFER_ERROR_FILE_DATA;
 	}
 	
 }
@@ -392,14 +384,14 @@ int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int delet
 		
 		if(deleteFlag){
 				if( doRemoveFile(filename) != 0 ){
-					dlt_user_log_file_errorMessage(fileContext,filename,ERROR_FILE_END);
+					dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_END);
 					return -1;
 				}
 		}
 	
 		return 0;
 	}else{
-		dlt_user_log_file_errorMessage(fileContext,filename,ERROR_FILE_END);
-		return ERROR_FILE_END;
+		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_END);
+		return DLT_FILETRANSFER_ERROR_FILE_END;
 	}
 }

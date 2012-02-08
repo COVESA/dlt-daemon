@@ -179,6 +179,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 				runtime->filetransferCountPackages = 0;
 				runtime->filetransferRunning = 0;
 				runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
+
 				return;
 			}
 			runtime->filetransferLastSentPackage = 0;		
@@ -189,8 +190,15 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	if (runtime->filetransferRunning == 1) {
 		/* filetransfer is running, send next data */
 		while(runtime->filetransferLastSentPackage<runtime->filetransferCountPackages) {
+			/* wait sending next package if more than 50% of buffer used */
+			dlt_user_check_buffer(&total_size, &used_size);
+			if((total_size - used_size) < (total_size/2))
+			{
+				break;
+			}
+
 			runtime->filetransferLastSentPackage++;
-			transferResult = dlt_user_log_file_data(context,runtime->filetransferFile,runtime->filetransferLastSentPackage,0);
+			transferResult = dlt_user_log_file_data(context,runtime->filetransferFile,runtime->filetransferLastSentPackage,options->FiletransferTimeoutBetweenLogs);
 			if(transferResult < 0)
 			{
 				/* a problem occured; stop filetransfer and continue with next file after timeout */
@@ -200,10 +208,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 				runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
 				return;
 			}			
-			/* wait sending next package if more than 50% of buffer used */
-			dlt_user_check_buffer(&total_size, &used_size);
-			if((total_size - used_size) < (total_size/2))
-				break;
+
 		}
 		if(runtime->filetransferLastSentPackage==runtime->filetransferCountPackages) {
 			transferResult = dlt_user_log_file_end(context,runtime->filetransferFile,0);

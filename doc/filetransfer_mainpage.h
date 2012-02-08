@@ -114,6 +114,8 @@ Here is the content of the information package:
 #define ERROR_FILE_HEAD -400
 //! Error code for dlt_user_log_file_data
 #define ERROR_FILE_DATA -500
+//! Error code for dlt_user_log_file_data
+#define DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED -501
 //! Error code for dlt_user_log_file_end
 #define ERROR_FILE_END -600
 //! Error code for dlt_user_log_file_infoAbout
@@ -180,6 +182,10 @@ The method needs the following arguments:
 The order of the packages is to send at first the header, then one or more data packages (depends on the filesize) and in the end the end package.
 The advantage of this method is, that you must not handle the package ordering by your own.
 
+Within dlt_user_log_file_complete the free space of the user buffer will be checked. If the free space of the user buffer < 50% then the
+actual package won't be transferred and a timeout will be executed.
+
+If the daemon crashes and the user buffer is full -> the automatic method is in an endless loop.
 
 \subsection Manual Manual
 Manual starting filetransfer with the following commands:
@@ -191,6 +197,7 @@ This ordering is very important, so that you can save the transferred files to h
 The advantage of using several steps to transfer files by your own is, that you are very flexible to integrate the filetransfer
 in your code.
 
+An other difference to the automatic method is, that only a timeout will be done. There is no check of the user buffer.
 
 \subsection Important Important for integration
 You should care about blocking the main program when you intergrate filetransfer in your code.

@@ -68,6 +68,7 @@ int testFile1Run1(){
 
 //!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer 
 int testFile1Run2(){
+	int total_size, used_size;
 	
 	//Get the information how many packages have the file
 	countPackages = dlt_user_log_file_packagesCount(&fileContext,file1);
@@ -88,6 +89,14 @@ int testFile1Run2(){
 		//Loop to log all packages
 		for(i=1;i<=countPackages;i++)
 		{
+			dlt_user_check_buffer(&total_size, &used_size);
+			if((total_size - used_size) < (total_size/2))
+			{
+				printf("Error: dlt_user_log_file_data\n");
+				printTestResultPositiveExpected(__FUNCTION__,transferResult);
+				break;
+			}
+
 			//Logs one single package to the file context	
 			transferResult = dlt_user_log_file_data(&fileContext,file1,i,20);
 			if(transferResult < 0)
@@ -141,6 +150,7 @@ int testFile2Run1(){
 
 //!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer
 int testFile2Run2(){
+	int total_size, used_size;
 	
 	//Get the information how many packages have the file
 	countPackages = dlt_user_log_file_packagesCount(&fileContext,file2);
@@ -162,6 +172,14 @@ int testFile2Run2(){
 		//Loop to log all packages	
 		for(i=1;i<=countPackages;i++)
 		{
+			dlt_user_check_buffer(&total_size, &used_size);
+			if((total_size - used_size) < (total_size/2))
+			{
+				printf("Error: dlt_user_log_file_data\n");
+				printTestResultPositiveExpected(__FUNCTION__,transferResult);
+				break;
+			}
+
 			//Logs one single package to the file context
 			transferResult = dlt_user_log_file_data(&fileContext,file2,i,20);
 			if(transferResult < 0)
@@ -303,22 +321,22 @@ int main(void)
 
 	//Register the application at the dlt-daemon
 	dltResult = DLT_REGISTER_APP("FLTR","Test Application filetransfer");
-	if(dltResult < 0){
-		printf("Error: DLT_REIGSTER_APP: FLTR\n");
-		return -1;
-	}
+//	if(dltResult < 0){
+//		printf("Error: DLT_REIGSTER_APP: FLTR\n");
+//		return -1;
+//	}
 	//Register the context of the main program at the dlt-daemon
 	dltResult = DLT_REGISTER_CONTEXT(mainContext,"MAIN","Main context for filetransfer test");
-	if(dltResult < 0){
-		printf("Error: DLT_REGISTER_CONTEXT: MAIN\n");
-		return -1;
-	}
+//	if(dltResult < 0){
+//		printf("Error: DLT_REGISTER_CONTEXT: MAIN\n");
+//		return -1;
+//	}
 	//Register the context in which the file transfer will be logged at the dlt-daemon
 	dltResult = DLT_REGISTER_CONTEXT(fileContext,"FLTR","Test Context for filetransfer");
-	if(dltResult < 0){
-		printf("Error: DLT_REGISTER_CONTEXT:FLTR\n");
-		return -1;
-	}
+//	if(dltResult < 0){
+//		printf("Error: DLT_REGISTER_CONTEXT:FLTR\n");
+//		return -1;
+//	}
 
 	//More details in corresponding methods
 	testFile1Run1();

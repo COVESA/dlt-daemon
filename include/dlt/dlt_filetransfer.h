@@ -4,6 +4,29 @@
 #include <signal.h>     /* Signal handling */
 #include "errno.h"
 
+
+//! Error code for dlt_user_log_file_complete
+#define DLT_FILETRANSFER_ERROR_FILE_COMPLETE -300
+//! Error code for dlt_user_log_file_complete
+#define DLT_FILETRANSFER_ERROR_FILE_COMPLETE1 -301
+//! Error code for dlt_user_log_file_complete
+#define DLT_FILETRANSFER_ERROR_FILE_COMPLETE2 -302
+//! Error code for dlt_user_log_file_complete
+#define DLT_FILETRANSFER_ERROR_FILE_COMPLETE3 -303
+//! Error code for dlt_user_log_file_head
+#define DLT_FILETRANSFER_ERROR_FILE_HEAD -400
+//! Error code for dlt_user_log_file_data
+#define DLT_FILETRANSFER_ERROR_FILE_DATA -500
+//! Error code for dlt_user_log_file_data
+#define DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED -501
+//! Error code for dlt_user_log_file_end
+#define DLT_FILETRANSFER_ERROR_FILE_END -600
+//! Error code for dlt_user_log_file_infoAbout
+#define DLT_FILETRANSFER_ERROR_INFO_ABOUT -700
+//! Error code for dlt_user_log_file_packagesCount
+#define DLT_FILETRANSFER_ERROR_PACKAGE_COUNT -800
+
+
 //!Transfer the complete file as several dlt logs.
 /**This method transfer the complete file as several dlt logs. At first it will be checked that the file exist.
  * In the next step some generic informations about the file will be logged to dlt.

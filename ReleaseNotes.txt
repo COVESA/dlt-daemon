@@ -23,9 +23,10 @@ Alexander.AW.Wenzel@bmw.de
 
 Changes in this release
 -----------------------
-2.4.3 BETA
+2.4.5_BETA
 
 Improvements
+   * [GENDLT-16] Create variable in dlt-system.conf to configure the timeout of the filetransfer
    * [GSW-138] API Extension to resend the log messages in the user buffer Fixed
    * [GSW-137] Wrong include gives error on compailing against dlt
    * [GSW-135] Fixed compile warnings 

@@ -128,7 +128,8 @@ void dlt_system_init_options(DltSystemOptions *options)
 	options->FiletransferDirectory2[0]=0;
 	options->FiletransferTimeStartup = DEFAULT_FILETRANSFER_TIME_STARTUP;
 	options->FiletransferTimeDelay = DEFAULT_FILETRANSFER_TIME_DELAY;
-	
+	options->FiletransferTimeoutBetweenLogs = DEFAULT_FILETRANSFER_TIMEOUT_BETWEEN_LOGS;
+
 	/* Log file */
 	options->LogFileEnable = 0;
 	options->LogFileNumber = 0;
@@ -290,6 +291,11 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 						else if(strcmp(token,"FiletransferTimeDelay")==0)
 						{
 							options->FiletransferTimeDelay = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"FiletransferTimeoutBetweenLogs")==0)
+						{
+							options->FiletransferTimeoutBetweenLogs = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
 						/* Log File */
