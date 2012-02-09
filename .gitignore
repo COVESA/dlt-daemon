@@ -2,8 +2,6 @@ Release/
 build/
 automotive-dlt.spec
 automotive-dlt.pc
-.cproject
-.project
 config.h
 configure
 include/dlt/dlt_version.h
