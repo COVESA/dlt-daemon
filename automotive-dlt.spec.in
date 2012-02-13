@@ -1,11 +1,11 @@
 Name: @PROJECT_NAME@
-Summary: %{name} - Diagnostic Log and Trace
-Version: @GENIVI_PROJECT_VERSION@
+Version: @DLT_VERSION@
 Release: @GENIVI_RPM_RELEASE@
-License: @LICENSE@
+Summary: %{name} - Diagnostic Log and Trace
 Group: System Environment/Base
 Vendor: BMW Group AG
-Source: %{name}-%{version}.tar.gz
+License: @LICENSE@
+Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: %{name} = %{version}-%{release}, pkgconfig
 
@@ -20,12 +20,15 @@ logging facility providing
 - the DLT client console utilities
 - the DLT test applications
 
+
 %package doc
 Summary:        %{name} - Diagnostic Log and Trace: Documentation
 Group:          Documentation
 
 %description doc
 This component provides the documentation for %{name}.
+
+
 
 %package devel
 Summary:        %{name} - Diagnostic Log and Trace: Development files
@@ -37,17 +40,18 @@ This component provides the development libraries and includes for %{name}.
 
 
 %prep
-%setup
-echo "building package automotive-dlt"
+%setup -q
+
 
 
 %build
 rm -rf build
 mkdir -p build
 cd build
-../configure --host=@HOST_TYPE@ --prefix=%{_usr}
+#../configure --host=@HOST_TYPE@ --prefix=%{_prefix}
+#make
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 make
-
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -55,6 +59,18 @@ cd build
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 make install DESTDIR=$RPM_BUILD_ROOT
 #/usr/bin/install -c -m 755 testscripts/Meego/dlt-daemon $RPM_BUILD_ROOT/etc/init.d
+
+
+%pre
+
+
+%post
+/sbin/ldconfig
+
+
+%postun
+/sbin/ldconfig
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -66,8 +82,8 @@ rm -rf $RPM_BUILD_ROOT
 /etc/dlt.conf
 /usr/share/dlt-filetransfer/dlt-test-filetransfer-file
 /usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png
-%{_libdir}/libdlt.so.@PRINT_MAJOR_VERSION@
-%{_libdir}/libdlt.so.@GENIVI_PROJECT_VERSION@
+%{_libdir}/libdlt.so.@DLT_MAJOR_VERSION@
+%{_libdir}/libdlt.so.@DLT_VERSION@
 %{_libdir}/libdlt.so
 %{_bindir}/dlt-system
 %{_bindir}/dlt-convert
@@ -89,16 +105,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-example-user-func
 %{_bindir}/dlt-example-filetransfer
 
-
-
 %files devel
-%{_libdir}/pkgconfig/*.pc
 %{_includedir}/dlt/*.h
-%{_libdir}/pkgconfig/automotive-dlt.pc
-
-%pre
-
-%post
+%{_libdir}/pkgconfig/@PROJECT_NAME@.pc
 
 %changelog
 * Wed Nov 24 2010 dlt_maintainer <dlt_maintainer@genivi.org> 2.2.0

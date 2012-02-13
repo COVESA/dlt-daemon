@@ -1,24 +1,37 @@
-DLT - Automotive Diagnostic Log and Trace
+DLT  - Automotive Diagnostic Log and Trace
 
 Version: 2.5.0_BETA
 
+This component provides a standardised log and trace interface, based on the
+standardised protocol specified in the AUTOSAR standard 4.0 DLT.
+This component can be used by GENIVI components and other applications as
+logging facility providing
+- the DLT shared library
+- the DLT daemon
+- the DLT daemon adaptors
+- the DLT client console utilities
+- the DLT test applications
 
-Introduction
-------------
-
-The DLT daemon is the central component in GENIVI, which gathers all logs and traces from the DLT user applications. The logs and traces are stored optionally directly in a file in the ECU. The DLT daemon forwards all logs and traces to a connected DLT client.
-The DLT client can send control messages to the daemon, e.g. to set individual log levels of applications and contexts or get the list of applications and contexts registered in the DLT daemon.
+The DLT daemon is the central component in GENIVI, which gathers all 
+logs and traces from the DLT user applications. The logs and traces 
+are stored optionally directly in a file in the ECU. The DLT daemon 
+forwards all logs and traces to a connected DLT client.
+The DLT client can send control messages to the daemon, e.g. to set 
+individual log levels of applications and contexts or get the list of 
+applications and contexts registered in the DLT daemon.
 
 
 License
 -------
-see file: License.txt
+Full information on the license for this software
+is available in the "LICENSE.txt" file. 
+The full LGPL license is in "LGPL.txt."
+
 
 Contact
 -------
-Alexander Wenzel
-BMW Group
-Alexander.AW.Wenzel@bmw.de
+Alexander Wenzel (Alexander.AW.Wenzel@bmw.de)
+Christian Muck (christian.muck@bmw.de)
 
 
 Changes in this release

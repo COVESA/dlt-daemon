@@ -35,27 +35,19 @@
  # @licence end@
 ########
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg @ONLY)
+if(WITH_DOC)
+    find_package(Doxygen)
+       
+    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg @ONLY)
+    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg.cmake ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg @ONLY)
 	
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${CMAKE_SOURCE_DIR}/doxygen-execute
-	DEPENDS  ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg
-	COMMAND doxygen
-	ARGS ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg
-)
-
-ADD_CUSTOM_COMMAND(
-	OUTPUT ${CMAKE_SOURCE_DIR}/doxygen-execute2
-	DEPENDS  ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg
-	COMMAND doxygen
-	ARGS ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg
-)
-
-ADD_CUSTOM_TARGET(doc ALL DEPENDS ${CMAKE_SOURCE_DIR}/doxygen-execute)
-ADD_CUSTOM_TARGET(doc-filetransfer ALL DEPENDS ${CMAKE_SOURCE_DIR}/doxygen-execute2)
-
-SET( DOC_COMPONENT doc) 
-
-
-
+	add_custom_target (doc ALL 
+  		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doc/doxygen.cfg 
+  		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc
+	)
+	
+	add_custom_target (doc-filetransfer ALL 
+  		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg 
+  		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc
+	)
+endif(WITH_DOC)

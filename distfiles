@@ -5,13 +5,8 @@ include/dlt/.*(\.h|\.cpp|\.cmake)
 #testscripts/Ubuntu/.*(\.h|\.cpp|\.cmake)
 #testscripts/Meego/.*(\.h|\.cpp|\.cmake)
 #systemd/.*(\.h|\.cpp|\.cmake)
-configure
-distfiles
 automotive-dlt.spec.in
-cmake_uninstall.cmake.in
 [^/]*\.cmake
-.*\.xpm
-README
 src/daemon/dlt.conf
 src/system/dlt-system.conf
 src/tests/dlt-test-filetransfer-file

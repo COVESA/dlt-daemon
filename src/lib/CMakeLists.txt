@@ -38,14 +38,9 @@
 set(dlt_LIB_SRCS dlt_user dlt_client dlt_filetransfer ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
 
 add_library(dlt ${dlt_LIB_SRCS})
-
-IF(GPROF_DLT_LIB)
-	SET(CMAKE_C_FLAGS "-pg")
-ENDIF(GPROF_DLT_LIB)
-
 target_link_libraries(dlt rt ${CMAKE_THREAD_LIBS_INIT})
 
-set_target_properties(dlt PROPERTIES VERSION ${PRINT_MAJOR_VERSION}.${PRINT_MINOR_VERSION}.${PRINT_PATCH_LEVEL} SOVERSION ${PRINT_MAJOR_VERSION})
+set_target_properties(dlt PROPERTIES VERSION ${DLT_VERSION} SOVERSION ${DLT_MAJOR_VERSION})
 
 install(TARGETS dlt
 	LIBRARY DESTINATION lib

@@ -37,9 +37,6 @@
 
 set(dlt_system_SRCS dlt-system dlt-system-log)
 add_executable(dlt-system ${dlt_system_SRCS})
-IF(GPROF_DLT_SYSTEM)
-	SET(CMAKE_C_FLAGS "-pg")
-ENDIF(GPROF_DLT_SYSTEM)
 target_link_libraries(dlt-system dlt)
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
 

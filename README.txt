@@ -1,13 +1,75 @@
+DLT  - Automotive Diagnostic Log and Trace
+
+Version: 2.5.0_BETA
+
+This component provides a standardised log and trace interface, based on the
+standardised protocol specified in the AUTOSAR standard 4.0 DLT.
+This component can be used by GENIVI components and other applications as
+logging facility providing
+- the DLT shared library
+- the DLT daemon
+- the DLT daemon adaptors
+- the DLT client console utilities
+- the DLT test applications
+
+The DLT daemon is the central component in GENIVI, which gathers all 
+logs and traces from the DLT user applications. The logs and traces 
+are stored optionally directly in a file in the ECU. The DLT daemon 
+forwards all logs and traces to a connected DLT client.
+The DLT client can send control messages to the daemon, e.g. to set 
+individual log levels of applications and contexts or get the list of 
+applications and contexts registered in the DLT daemon.
+
+
+Homepage
+--------
+https://collab.genivi.org/wiki/display/geniviproj/Automotive+DLT+%28Diagnostic+Log+and+Trace%29
+
+
 License
 -------
-See file: LICENSE.txt
-The full LGPL license: LGPL.txt
+Full information on the license for this software
+is available in the "LICENSE.txt" file. 
+The full LGPL license is in "LGPL.txt."
+
+
+Contact
+-------
+Alexander Wenzel (Alexander.AW.Wenzel@bmw.de)
+Christian Muck (christian.muck@bmw.de)
+
 
 Compiling in Linux:
 -------------------
-- create directory build
-- change into directory build
+- mkdir build
+- cd build
 - cmake ..
 - make
 - optional: sudo make install
 - optional: sudo ldconfig
+
+
+Compile options with default values
+-----------------------------------
+-- WITH_DLT_SHM_ENABLE =       OFF
+-- WITH_CHECK_CONFIG_FILE =    OFF
+-- WITH_DOC =                  OFF
+-- WITH_TESTSCRIPTS =          OFF
+-- WITH_SYSTEMD =              OFF
+-- WITH_GPROF = 			   OFF
+-- BUILD_SHARED_LIBS =         ON
+-- CMAKE_INSTALL_PREFIX =      /usr/local
+-- CMAKE_BUILD_TYPE =          RelWithDebInfo
+
+In order to change these options, you can modify this values with ccmake, do the appropriate changes in CmakeList.txt or via 
+the commandline for cmake
+-- Change a value with: cmake -D<Variable>=<Value>
+
+
+Create documentation
+--------------------
+- mkdir build
+- cd build
+- cmake -DWITH_DOC=ON ..
+- make doc
+- (optional)make doc-filetransfer

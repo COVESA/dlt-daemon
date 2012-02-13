@@ -35,3 +35,7 @@
  # @licence end@
 ########
 
+if(WITH_TESTSCRIPTS)
+    configure_file(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Meego/dlt-daemon @ONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
+endif(WITH_TESTSCRIPTS)

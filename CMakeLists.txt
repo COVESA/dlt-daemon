@@ -35,205 +35,98 @@
  # @licence end@
 ########
 
-CMAKE_MINIMUM_REQUIRED( VERSION 2.6 )
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
+cmake_minimum_required( VERSION 2.6 )
+project( automotive-dlt )
 
-SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+mark_as_advanced( CMAKE_BACKWARDS_COMPATIBILITY)
+set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
-PROJECT( automotive-dlt )
+# Set version parameters
+set( DLT_MAJOR_VERSION 2)
+set( DLT_MINOR_VERSION 5)
+set( DLT_PATCH_LEVEL 0)
+set( DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
+set( DLT_VERSION_STATE BETA )
+set( DLT_REVISION "")
 
-############## Set version parameters ####################### 
-SET( ${PROJECT_NAME}_MAJOR_VERSION 2 )
-SET( ${PROJECT_NAME}_MINOR_VERSION 5 )
-SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
-SET( ${PROJECT_NAME}_VERSION_STATE BETA )
-SET( GENIVI_PROJECT_VERSION ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_LEVEL})
-
-SET( PRINT_MAJOR_VERSION ${${PROJECT_NAME}_MAJOR_VERSION})
-SET( PRINT_MINOR_VERSION ${${PROJECT_NAME}_MINOR_VERSION})
-SET( PRINT_PATCH_LEVEL ${${PROJECT_NAME}_PATCH_LEVEL})
-SET( PRINT_VERSION ${GENIVI_PROJECT_VERSION})
-SET( PRINT_VERSION_STATE ${${PROJECT_NAME}_VERSION_STATE})
-SET( DLT_REVISION "")
-
-EXECUTE_PROCESS(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+execute_process(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
 	OUTPUT_VARIABLE DLT_REVISION
 	ERROR_VARIABLE GIT_ERROR 
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 	ERROR_STRIP_TRAILING_WHITESPACE)
-IF( DLT_REVISION MATCHES "^$")
-	SET( PRINT_REVISION "Git revision unavailable")
-ELSE( DLT_REVISION MATCHES "")
-	STRING(REPLACE "-" "_" DLT_REVISION ${DLT_REVISION})
-	SET( PRINT_REVISION ${DLT_REVISION})	
-ENDIF( DLT_REVISION MATCHES "^$")
+if( DLT_REVISION MATCHES "^$")
+	set( PRINT_REVISION "Git revision unavailable")
+else( DLT_REVISION MATCHES "")
+	string(REPLACE "-" "_" DLT_REVISION ${DLT_REVISION})
+	set( PRINT_REVISION ${DLT_REVISION})	
+endif( DLT_REVISION MATCHES "^$")
 
-##################### RPM SPEC CONFIG ########################
-SET( GENIVI_RPM_RELEASE "1${DLT_REVISION}")
-SET( LICENSE "LGPL v2.1 with special exception" )
+# set default build type, if not defined by user
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+                         "Choose build type: Debug, Release, RelWithDebInfo, MinSizeRel."
+                         FORCE)
+    message(STATUS "Build type not defined. Using default build type 'RelWithDebInfo'.")
+endif(NOT CMAKE_BUILD_TYPE)
 
-#########################################################
-SET(GENIVI_BUILDSYSTEM_AVAILABLE $ENV{GENIVI_BUILDSYSTEM})
-IF(GENIVI_BUILDSYSTEM_AVAILABLE)
-	INCLUDE($ENV{GENIVI_BUILDSYSTEM}/cmake_extensions/GeniviCMakeExtensions.cmake)
-ENDIF(GENIVI_BUILDSYSTEM_AVAILABLE)
+# Set of indiviual options
+option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"                 ON  )
+option(WITH_DLT_SHM_ENABLE    "Set to OFF to use FIFO as IPC from user to daemon"    OFF )
+option(WITH_DOC               "Set to ON to build documentation target"              OFF )
+option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists " OFF )
+option(WITH_TESTSCRIPTS       "Set to on to run CMakeLists.txt in testscripts"       OFF )
+option(WITH_SYSTEMD           "Set to on to run CMakeLists.txt in systemd"           OFF )
+option(WITH_GPROF             "Set -pg to compile flags"                             OFF )
 
+# RPM settings
+set( GENIVI_RPM_RELEASE "1${DLT_REVISION}")
+set( LICENSE "LGPL v2.1 with special exception" )
 
-###################### GPROF Settings ###################
-# Adds compile flag for gprof to target
-# Run the binary
-# Output: gmon.out in build directory
-# Run: gprof <path/to/binary> > profile.output
-SET( GPROF_DLT_DAEMON OFF )
-SET( GPROF_DLT_LIB OFF )
-SET( GPROF_DLT_EXAMPLES OFF) 
-SET( GPROF_DLT_TESTS OFF) 
-SET( GPROF_DLT_CONSOLE OFF)
-SET( GPROF_DLT_ADAPTOR OFF)
+# Build, project and include settings
+find_package(Threads REQUIRED)
 
-###################### systemd Settings #################
-SET( DLT_SYSLOG_APPID "SYS" )
-SET( DLT_SYSLOG_CTID "LOG" )
-SET( DLT_SYSLOG_PORT 4712 )
+include_directories( 
+    ${CMAKE_SOURCE_DIR}/
+    ${CMAKE_SOURCE_DIR}/include/dlt
+    ${CMAKE_SOURCE_DIR}/src/shared/ 
+    ${CMAKE_SOURCE_DIR}/src/lib/
+    ${CMAKE_SOURCE_DIR}/src/daemon/
+)
 
-SET( prefix ${CMAKE_INSTALL_PREFIX})
-SET( libdir "\${exec_prefix}/lib" )
-SET( includedir "\${exec_prefix}/include" )
+if(WITH_DLT_SHM_ENABLE)
+    add_definitions( -DDLT_SHM_ENABLE)
+endif(WITH_DLT_SHM_ENABLE)
+   
+if(WITH_GPROF)
+  SET(CMAKE_C_FLAGS "-pg")
+endif(WITH_GPROF)   
+   
+add_definitions( "-Wall" )
 
-SET( DLTBINDIR ${CMAKE_INSTALL_PREFIX}/bin )
-SET( DLTLIBDIR ${CMAKE_INSTALL_PREFIX}/lib )
-SET( DLTLIBSTATIC ${CMAKE_INSTALL_PREFIX}/lib )
-SET( DLTINCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include )
-SET( DLTDOCDIR ${CMAKE_INSTALL_PREFIX}/doc ) 
+add_subdirectory( cmake )
 
-IF(NOT CMAKE_BUILD_TYPE)
-	SET(CMAKE_BUILD_TYPE RelWithDebInfo)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+message( STATUS )
+message( STATUS "-------------------------------------------------------------------------------" )
+message( STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version state ${DLT_VERSION_STATE}")
+message( STATUS "WITH_DLT_SHM_ENABLE = ${WITH_DLT_SHM_ENABLE}" )
+message( STATUS "WITH_CHECK_CONFIG_FILE = ${WITH_CHECK_CONFIG_FILE}" )
+message( STATUS "WITH_DOC = ${WITH_DOC}" )
+message( STATUS "WITH_TESTSCRIPTS = ${WITH_TESTSCRIPTS}" )
+message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
+message( STATUS "WITH_GPROF = ${WITH_GPROF}" )
+message( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
+message( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
+message( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
+message( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
+message( STATUS "-------------------------------------------------------------------------------" )
+message( STATUS )
 
-FIND_PACKAGE(Doxygen)
-FIND_PACKAGE(Threads REQUIRED)
+configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.spec)
+configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig COMPONENT devel)
 
-INCLUDE_DIRECTORIES( 
-${CMAKE_SOURCE_DIR}/
-${CMAKE_SOURCE_DIR}/include/dlt
-${CMAKE_SOURCE_DIR}/src/shared/ 
-${CMAKE_SOURCE_DIR}/src/lib/
-${CMAKE_SOURCE_DIR}/src/daemon/ )
-
-ADD_DEFINITIONS( "-Wall" )
-
-###################### IPC settings #################
-# Disable following definition, if old Fifo version
-# should be used
-# ADD_DEFINITIONS( -DDLT_SHM_ENABLE=1 )
-
-INCLUDE(TestBigEndian)
-
-TEST_BIG_ENDIAN( DLT_BIGENDIAN )
-
-IF ( DLT_BIGENDIAN )
-	ADD_DEFINITIONS( -DBYTE_ORDER=BIG_ENDIAN )
-ELSE ( DLT_BIGENDIAN )
-	ADD_DEFINITIONS( -DBYTE_ORDER=LITTLE_ENDIAN )
-ENDIF ( DLT_BIGENDIAN )
-
-INCLUDE(CheckIncludeFiles)  
-
-CHECK_INCLUDE_FILES( arpa/inet.h HAVE_ARPAINET_H)
-CHECK_INCLUDE_FILES( fcntl.h HAVE_FCNTL_H)
-CHECK_INCLUDE_FILES( float.h HAVE_FLOAT_H)
-CHECK_INCLUDE_FILES( limits.h HAVE_LIMITS_H)
-CHECK_INCLUDE_FILES( netdb.h HAVE_NETDB_H)
-CHECK_INCLUDE_FILES( netinet/in.h HAVE_NETINETIN_H)
-CHECK_INCLUDE_FILES( stddef.h HAVE_STDDEF_H)
-CHECK_INCLUDE_FILES( stdint.h HAVE_STDINT_H)
-CHECK_INCLUDE_FILES( stdlib.h HAVE_STDLIB_H)
-CHECK_INCLUDE_FILES( string.h HAVE_STRING_H)
-CHECK_INCLUDE_FILES( strings.h HAVE_STRINGS_H)
-CHECK_INCLUDE_FILES( sys/ioctl.h HAVE_SYSIOCTL_H)
-CHECK_INCLUDE_FILES( sys/socket.h HAVE_SYSSOCKET_H)
-CHECK_INCLUDE_FILES( sys/time.h HAVE_SYSTIME_H)
-CHECK_INCLUDE_FILES( unistd.h HAVE_UNISTD_H)
-CHECK_INCLUDE_FILES( sys/ipc.h HAVE_SYSIPC_H)
-CHECK_INCLUDE_FILES( netdb.h HAVE_NETDB_H)
-CHECK_INCLUDE_FILES( ctype.h HAVE_CTYPE_H)
-CHECK_INCLUDE_FILES( signal.h HAVE_SIGNAL_H)
-CHECK_INCLUDE_FILES( syslog.h HAVE_SYSLOG_H)
-CHECK_INCLUDE_FILES( sys/stat.h HAVE_SYSSTAT_H)
-CHECK_INCLUDE_FILES( linux/stat.h HAVE_LINUXSTAT_H)
-CHECK_INCLUDE_FILES( sys/uio.h HAVE_SYSUIO_H)
-CHECK_INCLUDE_FILES( termios.h HAVE_TERMIOS_H)
-CHECK_INCLUDE_FILES( unistd.h HAVE_UNISTD_H)
-
-INCLUDE(CheckFunctionExists) 
-
-CHECK_FUNCTION_EXISTS( bzero HAVE_FUNC_BZERO)
-CHECK_FUNCTION_EXISTS( clock_gettime HAVE_FUNC_CLOCKGETTIME)
-CHECK_FUNCTION_EXISTS( floor HAVE_FUNC_FLOOR)
-CHECK_FUNCTION_EXISTS( fork HAVE_FUNC_FORK)
-CHECK_FUNCTION_EXISTS( gethostbyname HAVE_FUNC_GETHOSTBYNAME)
-CHECK_FUNCTION_EXISTS( gettimeofday HAVE_FUNC_GETTIMEBYDAY)
-CHECK_FUNCTION_EXISTS( inet_ntoa HAVE_FUNC_INETNTOA)
-CHECK_FUNCTION_EXISTS( malloc HAVE_FUNC_MALLOC)
-CHECK_FUNCTION_EXISTS( memmove HAVE_FUNC_MEMMOVE)
-CHECK_FUNCTION_EXISTS( memset HAVE_FUNC_MEMSET)
-CHECK_FUNCTION_EXISTS( mkfifo HAVE_FUNC_MKFIFO)
-CHECK_FUNCTION_EXISTS( select HAVE_FUNC_SELECT)
-CHECK_FUNCTION_EXISTS( socket HAVE_FUNC_SOCKET)
-CHECK_FUNCTION_EXISTS( strchr HAVE_FUNC_STRCHR)
-CHECK_FUNCTION_EXISTS( strerror HAVE_FUNC_STRERROR)
-CHECK_FUNCTION_EXISTS( strstr HAVE_FUNC_STRSTR)
-CHECK_FUNCTION_EXISTS( strtol HAVE_FUNC_STRTOL)
-
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h.cmake ${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/automotive-dlt.pc.cmake ${CMAKE_SOURCE_DIR}/automotive-dlt.pc @ONLY)
-#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt.service @ONLY)
-#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service @ONLY)
-#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon @ONLY)
-#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
-
-
-OPTION(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON )
-OPTION(ENABLE_BUILD_DOC "Set to ON to build Documentation" OFF)
-
-MESSAGE( STATUS )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS "Build for Version ${PRINT_VERSION} build ${PRINT_REVISION}")
-MESSAGE( STATUS "VERSION_STATE ${PRINT_VERSION_STATE}")
-MESSAGE( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
-MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-MESSAGE( STATUS "ENABLE_BUILD_DOC = ${ENABLE_BUILD_DOC}" )
-MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS )
-
-SET( BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS}" CACHE BOOL "Set to OFF to build static libraries" FORCE )
-SET( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Where to install ${PROJECT_NAME}" FORCE )
-SET( CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
-"Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
-#SET( ENABLE_BUILD_DOC "${ENABLE_BUILD_DOC}" CACHE BOOL "Set to ON to build Documentation" FORCE )
-
-ADD_SUBDIRECTORY( src )
-ADD_SUBDIRECTORY( include )
-ADD_SUBDIRECTORY( testscripts )
-
-IF (ENABLE_BUILD_DOC)
-	ADD_SUBDIRECTORY( doc )
-ENDIF(ENABLE_BUILD_DOC)
-
-INSTALL(FILES automotive-dlt.pc
-        DESTINATION lib/pkgconfig 
-	COMPONENT devel)
-
-CONFIGURE_FILE(
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-  IMMEDIATE @ONLY)
-
-#ADD_CUSTOM_TARGET(uninstall
-#  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
-
-EXPORT_LIBRARY_DEPENDENCIES( "${PROJECT_NAME}LibDeps.cmake" )
+add_subdirectory( doc )
+add_subdirectory( src )
+add_subdirectory( include )
+add_subdirectory( testscripts )
+add_subdirectory( systemd )

@@ -1,3 +1,7 @@
+// DO NOT EDIT! GENERATED AUTOMATICALLY!
+// cmakedefine01 <variable> sets #define <variable> [0|1] if variable is defined in cmake
+// variable is set by CHECK_INCLUDE_FILES and CHECK_FUNCTION_EXISTS
+
 #cmakedefine01 HAVE_ARPAINET_H
 #cmakedefine01 HAVE_FCNTL_H
 #cmakedefine01 HAVE_FLOAT_H
