@@ -41,6 +41,7 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+
 2.6.0
    
    *
