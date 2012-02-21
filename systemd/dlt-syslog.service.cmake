@@ -11,7 +11,7 @@
 Description=DLT Syslog Adapter
 
 [Service]
-ExecStart=/usr/local/bin/dlt-adaptor-udp -a @DLT_SYSLOG_APPID@ -c @DLT_SYSLOG_CTID@ -p @DLT_SYSLOG_PORT@
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-adaptor-udp -a @DLT_SYSLOG_APPID@ -c @DLT_SYSLOG_CTID@ -p @DLT_SYSLOG_PORT@
 # Restart=always
 
 [Install]
