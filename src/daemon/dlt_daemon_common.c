@@ -1488,11 +1488,15 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, int ve
     len = strlen(version);
 
     msg.datasize = sizeof(DltServiceGetSoftwareVersionResponse) + len;
-    if (msg.databuffer)
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
     {
         free(msg.databuffer);
+        msg.databuffer=0;
     }
-    msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
     if (msg.databuffer==0)
     {
         dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_GET_SOFTWARE_VERSION, DLT_SERVICE_RESPONSE_ERROR,  verbose);
@@ -1532,11 +1536,15 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, int v
     }
 
     msg.datasize = sizeof(DltServiceGetDefaultLogLevelResponse);
-    if (msg.databuffer)
+    if (msg.databuffer && (msg.databuffersize<msg.datasize))
     {
         free(msg.databuffer);
+        msg.databuffer=0;
     }
-    msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
     if (msg.databuffer==0)
     {
         dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL, DLT_SERVICE_RESPONSE_ERROR,  verbose);
@@ -1745,6 +1753,8 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltMessage *ms
 
     /* Allocate buffer for response message */
     resp.databuffer = (uint8_t *) malloc(resp.datasize);
+    resp.databuffersize = resp.datasize;
+
     if (resp.databuffer==0)
     {
         dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_GET_LOG_INFO, DLT_SERVICE_RESPONSE_ERROR,  verbose);
@@ -1956,11 +1966,15 @@ void dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, int
 
     /* prepare payload of data */
     msg.datasize = sizeof(DltServiceMessageBufferOverflowResponse);
-    if (msg.databuffer)
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
     {
         free(msg.databuffer);
+        msg.databuffer=0;
     }
-    msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
     if (msg.databuffer==0)
     {
         if (sock!=DLT_DAEMON_STORE_TO_BUFFER)
@@ -2002,11 +2016,15 @@ void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, uint32_t 
 
     /* prepare payload of data */
     msg.datasize = sizeof(DltServiceResponse);
-    if (msg.databuffer)
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
     {
         free(msg.databuffer);
+        msg.databuffer=0;
     }
-    msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
     if (msg.databuffer==0)
     {
         return;

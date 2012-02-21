@@ -327,11 +327,15 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 
 	/* prepare payload of data */
 	msg.datasize = sizeof(uint32_t) + sizeof(uint32_t) + size;
-	if (msg.databuffer)
+	if (msg.databuffer && (msg.databuffersize < msg.datasize))
 	{
 		free(msg.databuffer);
+		msg.databuffer=0;
 	}
-	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+	if (msg.databuffer == 0){
+		msg.databuffer = (uint8_t *) malloc(msg.datasize);
+		msg.databuffersize = msg.datasize;
+	}
 
 	memcpy(msg.databuffer  , &serviceID,sizeof(serviceID));
 	offset+=sizeof(uint32_t);

@@ -1527,11 +1527,15 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         }
 
         msg.datasize = sizeof(DltServiceGetLogInfoRequest);
-        if (msg.databuffer)
+        if (msg.databuffer && (msg.databuffersize < msg.datasize))
         {
             free(msg.databuffer);
+            msg.databuffer=0;
         }
-        msg.databuffer = (uint8_t *) malloc(msg.datasize);
+        if (msg.databuffer == 0){
+        	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+        	msg.databuffersize = msg.datasize;
+        }
         if (msg.databuffer==0)
         {
         	dlt_log(LOG_ERR,"Can't allocate buffer for get log info message\n");

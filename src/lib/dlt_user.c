@@ -469,11 +469,14 @@ int dlt_register_app(const char *appid, const char * description)
 
     if (description!=0)
     {
-        dlt_user.application_description= malloc(strlen(description)+1);
-        strncpy(dlt_user.application_description, description, strlen(description));
+        size_t desc_len = strlen(description);
+        dlt_user.application_description= malloc(desc_len+1);
+        if (dlt_user.application_description){
+            strncpy(dlt_user.application_description, description, desc_len);
 
-        /* Terminate transmitted string with 0 */
-        dlt_user.application_description[strlen(description)]='\0';
+            /* Terminate transmitted string with 0 */
+            dlt_user.application_description[desc_len]='\0';
+        }
     }
 
     DLT_SEM_FREE();
@@ -667,7 +670,7 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
         if (description!=0)
         {
-        	int desc_len = strlen(description);
+        	size_t desc_len = strlen(description);
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
             strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
 
