@@ -325,7 +325,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if (dlt_user_handle <0)
         {
-            snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
+            snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
             dlt_log(LOG_ERR, str);
         } /* if */
 
