@@ -301,7 +301,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     if (application->application_description)
     {
         free(application->application_description);
-        application->application_description=0; // opt mb: moved inside here (very minor opt ;-)
+        application->application_description=0;
     }
 
     if (description)

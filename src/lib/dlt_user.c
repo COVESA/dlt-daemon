@@ -974,11 +974,13 @@ inline int dlt_user_log_write_start(DltContext *handle, DltContextData *log,DltL
 
 int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLevelType loglevel, uint32_t messageid)
 {
-	if (dlt_init()<0)
-    {
-        return -1;
-    }
-
+	if(dlt_user_initialised==0)
+	{
+		if (dlt_init()<0)
+		{
+			return -1;
+		}
+	}
     if (log==0)
     {
         return -1;
