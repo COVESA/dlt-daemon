@@ -10,7 +10,7 @@
 Description=DLT Daemon for logging and tracing
 
 [Service]
-ExecStart=/usr/local/bin/dlt-daemon -r
+ExecStart=/usr/local/bin/dlt-daemon
 #Restart=always
 
 [Install]
