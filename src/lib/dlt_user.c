@@ -669,7 +669,7 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
         {
         	int desc_len = strlen(description);
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
-            strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, strlen(desc_len));
+            strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
 
             /* Terminate transmitted string with 0 */
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
@@ -986,21 +986,6 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
 		return -1;
     }
 
-    /* Removed because of DltLogLevelType
-
-    if ((loglevel<DLT_LOG_DEFAULT) || (loglevel>DLT_LOG_VERBOSE))
-    {
-        return -1;
-    }
-
-    */
-
-    mid = messageid;
-
-    log->args_num = 0;
-    log->log_level = loglevel;
-    log->size = 0;
-
     if (dlt_user.dlt_ll_ts==0)
     {
         return -1;
@@ -1008,9 +993,11 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
 
     DLT_SEM_LOCK();
 
-    if ((log->log_level<=(int)(dlt_user.dlt_ll_ts[handle->log_level_pos].log_level) ) && (log->log_level!=0))
+    if ((loglevel<=(int)(dlt_user.dlt_ll_ts[handle->log_level_pos].log_level) ) && (loglevel!=0))
     {
         DLT_SEM_FREE();
+		log->args_num = 0;
+    	log->log_level = loglevel;
 
         /* In non-verbose mode, insert message id */
         if (dlt_user.verbose_mode==0)
@@ -1020,12 +1007,13 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
                 return -1;
             }
             /* Write message id */
-            memcpy(log->buffer,&(mid),sizeof(uint32_t));
+            memcpy(log->buffer,&(messageid),sizeof(uint32_t));
             log->size = sizeof(uint32_t);
 
             /* as the message id is part of each message in non-verbose mode,
                it doesn't increment the argument counter in extended header (if used) */
         }
+        else log->size=0;
         return 1;
     }
     else
