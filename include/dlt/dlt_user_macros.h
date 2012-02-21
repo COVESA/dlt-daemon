@@ -161,7 +161,7 @@ extern DltContext CONTEXT;
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
 	{ \
 		DltContextData log; \
-		if (dlt_user_log_write_start(&CONTEXT,&log,LOGLEVEL)) \
+		if (dlt_user_log_write_start(&CONTEXT,&log,LOGLEVEL)>0) \
 		{ \
             ARGS; \
             dlt_user_log_write_finish(&log); \
@@ -185,7 +185,7 @@ extern DltContext CONTEXT;
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
 	{ \
 		DltContextData log; \
-		if (dlt_user_log_write_start_id(&CONTEXT,&log,LOGLEVEL,MSGID)) \
+		if (dlt_user_log_write_start_id(&CONTEXT,&log,LOGLEVEL,MSGID)>0) \
 		{ \
             ARGS; \
             dlt_user_log_write_finish(&log); \

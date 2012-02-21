@@ -240,28 +240,28 @@ int main(int argc, char* argv[])
 	if (gflag)
     {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,10))
+		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,10)>0)
 		{
 			dlt_user_log_write_finish(&mycontextdata);
 		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,11))
+		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,11)>0)
 		{
 			dlt_user_log_write_uint16(&mycontextdata,1011);
 			dlt_user_log_write_finish(&mycontextdata);
 		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,12))
+		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,12)>0)
 		{
 			dlt_user_log_write_uint32(&mycontextdata,1012);
 			dlt_user_log_write_uint32(&mycontextdata,1013);
 			dlt_user_log_write_finish(&mycontextdata);
 		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,13))
+		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,13)>0)
 		{
 			dlt_user_log_write_uint8(&mycontextdata,123);
 			dlt_user_log_write_float32(&mycontextdata,1.12);
 			dlt_user_log_write_finish(&mycontextdata);
 		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,14))
+		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,14)>0)
 		{
 			dlt_user_log_write_string(&mycontextdata,"DEAD BEEF");
 			dlt_user_log_write_finish(&mycontextdata);
@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
         if (gflag)
         {
             /* Non-verbose mode */
-            if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_WARN,num))
+            if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_WARN,num)>0)
             {
                 dlt_user_log_write_int(&mycontextdata,num);
                 dlt_user_log_write_string(&mycontextdata,text);
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
         else
         {
             /* Verbose mode */
-            if (dlt_user_log_write_start(&mycontext,&mycontextdata,DLT_LOG_WARN))
+            if (dlt_user_log_write_start(&mycontext,&mycontextdata,DLT_LOG_WARN)>0)
             {
                 dlt_user_log_write_int(&mycontextdata,num);
                 dlt_user_log_write_string(&mycontextdata,text);

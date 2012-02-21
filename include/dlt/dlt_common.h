@@ -200,7 +200,7 @@
     \
     if(_verbose) \
     { \
-		sprintf(_strbuf, "%s()\n",__func__); \
+		snprintf(_strbuf, 255, "%s()\n",__func__); \
 		dlt_log(LOG_INFO, _strbuf); \
     } \
 }
@@ -376,6 +376,7 @@ typedef struct sDltMessage
     uint8_t headerbuffer[sizeof(DltStorageHeader)+
                          sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra)+sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
+	int32_t databuffersize;
 
     /* header values of current loaded message */
     DltStorageHeader       *storageheader;  /**< pointer to storage header of current loaded header */

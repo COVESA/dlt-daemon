@@ -698,6 +698,7 @@ int dlt_message_init(DltMessage *msg,int verbose)
     msg->datasize = 0;
 
     msg->databuffer = 0;
+    msg->databuffersize = 0;
 
     msg->storageheader = 0;
     msg->standardheader = 0;
@@ -720,8 +721,9 @@ int dlt_message_free(DltMessage *msg,int verbose)
     if (msg->databuffer)
     {
         free(msg->databuffer);
+        msg->databuffer = 0;
+        msg->databuffersize = 0;
     }
-    msg->databuffer = 0;
 
     return 0;
 }
@@ -1241,11 +1243,16 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     /* free last used memory for buffer */
     if (msg->databuffer)
     {
-        free(msg->databuffer);
+    	if (msg->datasize>msg->databuffersize){
+    		free(msg->databuffer);
+    		msg->databuffer=(uint8_t *)malloc(msg->datasize);
+    		msg->databuffersize = msg->datasize;
+    	}
+    }else{
+    	/* get new memory for buffer */
+    	msg->databuffer = (uint8_t *)malloc(msg->datasize);
+    	msg->databuffersize = msg->datasize;
     }
-
-    /* get new memory for buffer */
-    msg->databuffer = (uint8_t *)malloc(msg->datasize);
     if (msg->databuffer == 0)
     {
         sprintf(str,"Cannot allocate memory for payload buffer of size %d!\n",msg->datasize);
@@ -1588,13 +1595,17 @@ int dlt_file_read_data(DltFile *file, int verbose)
     }
 
     /* free last used memory for buffer */
-    if (file->msg.databuffer)
+    if (file->msg.databuffer && (file->msg.databuffersize < file->msg.datasize))
     {
         free(file->msg.databuffer);
+        file->msg.databuffer=0;
     }
 
-    /* get new memory for buffer */
-    file->msg.databuffer = (uint8_t *)malloc(file->msg.datasize);
+    if (file->msg.databuffer == 0){
+    	/* get new memory for buffer */
+    	file->msg.databuffer = (uint8_t *)malloc(file->msg.datasize);
+    	file->msg.databuffersize = file->msg.datasize;
+    }
 
     if (file->msg.databuffer == 0)
     {

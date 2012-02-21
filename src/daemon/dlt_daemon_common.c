@@ -280,6 +280,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
 				if (daemon->applications==0)
 				{
 					daemon->applications = old;
+					daemon->num_applications -= 1;
 					return (DltDaemonApplication*) 0;
 				}
                 memcpy(daemon->applications,old,sizeof(DltDaemonApplication)*daemon->num_applications);
@@ -300,9 +301,8 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     if (application->application_description)
     {
         free(application->application_description);
+        application->application_description=0; // opt mb: moved inside here (very minor opt ;-)
     }
-
-    application->application_description=0;
 
     if (description)
     {
@@ -325,7 +325,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if (dlt_user_handle <0)
         {
-            sprintf(str,"open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
+            snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
             dlt_log(LOG_ERR, str);
         } /* if */
 
@@ -558,6 +558,7 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,char *apid,char *ctid
 				if (daemon->contexts==0)
 				{
 					daemon->contexts = old;
+					daemon->num_contexts -= 1;
 					return (DltDaemonContext*) 0;
 				}
                 memcpy(daemon->contexts,old,sizeof(DltDaemonContext)*daemon->num_contexts);
@@ -579,9 +580,8 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,char *apid,char *ctid
     if (context->context_description)
     {
         free(context->context_description);
+        context->context_description=0; // opt mb: moved inside the if clause (very minor opt)
     }
-
-    context->context_description=0;
 
     if (description)
     {

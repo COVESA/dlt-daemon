@@ -667,7 +667,7 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
         if (description!=0)
         {
-        	int desc_lne = strlen(description);
+        	int desc_len = strlen(description);
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
             strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, strlen(desc_len));
 
@@ -964,31 +964,26 @@ int dlt_forward_msg(void *msgdata,size_t size)
 
 /* ********************************************************************************************* */
 
-int dlt_user_log_write_start(DltContext *handle, DltContextData *log,DltLogLevelType loglevel)
+inline int dlt_user_log_write_start(DltContext *handle, DltContextData *log,DltLogLevelType loglevel)
 {
     return dlt_user_log_write_start_id(handle,log,loglevel,DLT_USER_DEFAULT_MSGID);
 }
 
 int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLevelType loglevel, uint32_t messageid)
 {
-    uint32_t mid;
-
-    if (dlt_user_initialised==0)
+	if (dlt_init()<0)
     {
-        if (dlt_init()<0)
-        {
-            return -1;
-        }
-    }
-
-    if (dlt_user_log_init(handle, log)==-1)
-    {
-		return -1;
+        return -1;
     }
 
     if (log==0)
     {
         return -1;
+    }
+
+    if (dlt_user_log_init(handle, log)==-1)
+    {
+		return -1;
     }
 
     /* Removed because of DltLogLevelType
@@ -1788,7 +1783,7 @@ int dlt_log_string(DltContext *handle,DltLogLevelType loglevel, const char *text
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_string(&log,text)==-1)
         {
@@ -1817,7 +1812,7 @@ int dlt_log_string_int(DltContext *handle,DltLogLevelType loglevel, const char *
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_string(&log,text)==-1)
         {
@@ -1850,7 +1845,7 @@ int dlt_log_string_uint(DltContext *handle,DltLogLevelType loglevel, const char 
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_string(&log,text)==-1)
         {
@@ -1883,7 +1878,7 @@ int dlt_log_int(DltContext *handle,DltLogLevelType loglevel, int data)
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_int(&log,data)==-1)
         {
@@ -1912,7 +1907,7 @@ int dlt_log_uint(DltContext *handle,DltLogLevelType loglevel, unsigned int data)
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_uint(&log,data)==-1)
         {
@@ -1941,7 +1936,7 @@ int dlt_log_raw(DltContext *handle,DltLogLevelType loglevel, void *data,uint16_t
         return -1;
     }
 
-    if (dlt_user_log_write_start(handle,&log,loglevel))
+    if (dlt_user_log_write_start(handle,&log,loglevel)>0)
     {
         if (dlt_user_log_write_raw(&log,data,length)==-1)
         {
@@ -2567,6 +2562,7 @@ int dlt_user_print_msg(DltMessage *msg, DltContextData *log)
 {
     uint8_t *databuffer_tmp;
     int32_t datasize_tmp;
+    int32_t databuffersize_tmp;
     static char text[DLT_USER_TEXT_LENGTH];
 
     if ((msg==0) || (log==0))
@@ -2577,6 +2573,7 @@ int dlt_user_print_msg(DltMessage *msg, DltContextData *log)
     /* Save variables before print */
     databuffer_tmp = msg->databuffer;
     datasize_tmp = msg->datasize;
+    databuffersize_tmp = msg->databuffersize;
 
     /* Act like a receiver, convert header back to host format */
     msg->standardheader->len = DLT_BETOH_16(msg->standardheader->len);
@@ -2584,6 +2581,7 @@ int dlt_user_print_msg(DltMessage *msg, DltContextData *log)
 
     msg->databuffer = log->buffer;
     msg->datasize = log->size;
+    msg->databuffersize = log->size;
 
     /* Print message as ASCII */
     if (dlt_message_print_ascii(msg,text,DLT_USER_TEXT_LENGTH,0)==-1)
@@ -2593,6 +2591,7 @@ int dlt_user_print_msg(DltMessage *msg, DltContextData *log)
 
     /* Restore variables and set len to BE*/
     msg->databuffer = databuffer_tmp;
+    msg->databuffersize = databuffersize_tmp;
     msg->datasize =  datasize_tmp;
 
     msg->standardheader->len = DLT_HTOBE_16(msg->standardheader->len);
