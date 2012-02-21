@@ -80,7 +80,7 @@
 #define DLT_RUNTIME_CONFIGURATION     "/dlt-runtime.cfg"
 
 /* Size of text buffer */
-#define DLT_DAEMON_TEXTBUFSIZE          255   
+#define DLT_DAEMON_COMMON_TEXTBUFSIZE          255
 
 /* Initial log level */
 #define DLT_DAEMON_INITIAL_LOG_LEVEL    DLT_LOG_INFO

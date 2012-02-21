@@ -80,7 +80,7 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
-static char str[DLT_DAEMON_TEXTBUFSIZE];
+static char str[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 
 sem_t dlt_daemon_mutex;
 
@@ -245,7 +245,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
 	DltDaemonApplication *old;
     int new_application;
     int dlt_user_handle;
-	char filename[DLT_DAEMON_TEXTBUFSIZE];
+	char filename[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 
     if ((daemon==0) || (apid==0) || (apid[0]=='\0'))
     {
@@ -412,7 +412,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
 {
     FILE *fd;
     ID4 apid;
-    char buf[DLT_DAEMON_TEXTBUFSIZE];
+    char buf[DLT_DAEMON_COMMON_TEXTBUFSIZE];
     char *ret;
     char *pb;
 
@@ -728,7 +728,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
 {
     FILE *fd;
     ID4 apid, ctid;
-    char buf[DLT_DAEMON_TEXTBUFSIZE];
+    char buf[DLT_DAEMON_COMMON_TEXTBUFSIZE];
     char *ret;
     char *pb;
     int ll, ts;
@@ -1248,11 +1248,13 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltMessag
 		memcpy(userbuffer,ptr,data_length_inject);  /* Copy received injection to send buffer */
 
 		/* write to FIFO */
-		if (dlt_user_log_out3(context->user_handle, &(userheader), sizeof(DltUserHeader),
-							  &(usercontext), sizeof(DltUserControlMsgInjection),
-							  userbuffer, data_length_inject)!=DLT_RETURN_OK)
+		DltReturnValue ret =
+				dlt_user_log_out3(context->user_handle, &(userheader), sizeof(DltUserHeader),
+				  &(usercontext), sizeof(DltUserControlMsgInjection),
+				  userbuffer, data_length_inject);
+		if (ret != DLT_RETURN_OK)
 		{
-			if (errno==EPIPE)
+			if (ret == DLT_RETURN_PIPE_ERROR)
 			{
 				/* Close connection */
 				close(context->user_handle);
@@ -1462,7 +1464,7 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltMessa
 
 void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, int verbose)
 {
-	char version[DLT_DAEMON_TEXTBUFSIZE];
+	char version[DLT_DAEMON_COMMON_TEXTBUFSIZE];
     DltMessage msg;
     uint32_t len;
 	DltServiceGetSoftwareVersionResponse *resp;
@@ -2273,14 +2275,6 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
         return;
     }
 
-    /* prepare payload of data */
-    msg.datasize = 0;
-    if (msg.databuffer)
-    {
-        free(msg.databuffer);
-    }
-    msg.databuffer = 0;
-
     /* send message */
 
     /* prepare storage header */
@@ -2340,7 +2334,8 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
 
         /* Send data */
         ret=write(sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
-        ret=write(sock, msg.databuffer,msg.datasize);
+        if(msg.datasize > 0)
+        	ret=write(sock, msg.databuffer,msg.datasize);
 
         DLT_DAEMON_SEM_FREE();
     }
@@ -2356,7 +2351,8 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
 
         /* Send data */
         send(sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),0);
-        send(sock, msg.databuffer,msg.datasize,0);
+        if(msg.datasize > 0)
+        	send(sock, msg.databuffer,msg.datasize,0);
 
         DLT_DAEMON_SEM_FREE();
     }

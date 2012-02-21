@@ -667,11 +667,12 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
         if (description!=0)
         {
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(strlen(description)+1);
-            strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, strlen(description));
+        	int desc_lne = strlen(description);
+            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
+            strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, strlen(desc_len));
 
             /* Terminate transmitted string with 0 */
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[strlen(description)]='\0';
+            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
         }
 
         if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
