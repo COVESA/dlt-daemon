@@ -79,7 +79,7 @@ option(WITH_SYSTEMD           "Set to on to run CMakeLists.txt in systemd"      
 option(WITH_GPROF             "Set -pg to compile flags"                             OFF )
 
 # RPM settings
-set( GENIVI_RPM_RELEASE "1${DLT_REVISION}")
+set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "LGPL v2.1 with special exception" )
 
 # Build, project and include settings
