@@ -36,7 +36,7 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
-2.4.5_BETA
+2.5.0_BETA
 
 Improvements
    * [GENDLT-16] Create variable in dlt-system.conf to configure the timeout of the filetransfer
