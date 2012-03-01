@@ -51,3 +51,54 @@ if(WITH_DOC)
   		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc
 	)
 endif(WITH_DOC)
+
+# Compress the man pages and install to proper place
+FIND_PROGRAM(GZIP_TOOL
+             NAMES gzip
+             PATHS /bin
+                   /usr/bin
+                   /usr/local/bin)
+
+IF(NOT GZIP_TOOL)
+  MESSAGE(FATAL_ERROR "Could not find gzip for man page compression.") 
+ENDIF(NOT GZIP_TOOL)	                   
+
+set(MAN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.5 
+			${CMAKE_CURRENT_SOURCE_DIR}/dlt-system.conf.5 
+			${CMAKE_CURRENT_SOURCE_DIR}/dlt-convert.1 
+			${CMAKE_CURRENT_SOURCE_DIR}/dlt-daemon.1 
+			${CMAKE_CURRENT_SOURCE_DIR}/dlt-receive.1 
+			${CMAKE_CURRENT_SOURCE_DIR}/dlt-system.1)
+set(MAN_SRC_GZ dlt.conf.5.gz dlt-system.conf.5.gz dlt-convert.1.gz dlt-daemon.1.gz dlt-receive.1.gz dlt-system.1.gz)
+
+FOREACH(MAN ${MAN_SRC})
+  ADD_CUSTOM_COMMAND(OUTPUT ${MAN}.gz
+                     COMMAND ${GZIP_TOOL} -c ${MAN} > ${MAN}.gz
+                     DEPENDS ${MAN}
+                     COMMENT "Compressing ${MAN}.gz")
+ENDFOREACH(MAN)
+
+# If user has not set the base dir for man pages, use a default location
+if(MAN_INSTALL_DIR)
+else()
+    if(WIN32)
+        set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/man)
+    else()
+        set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
+    endif()
+endif()
+
+add_library(man_pages STATIC dummy.c ${MAN_SRC_GZ})
+
+INSTALL(FILES 	dlt.conf.5.gz
+				dlt-system.conf.5.gz
+	DESTINATION ${MAN_INSTALL_DIR}/man5
+)
+
+INSTALL(FILES 	dlt-convert.1.gz
+				dlt-daemon.1.gz
+				dlt-receive.1.gz
+				dlt-system.1.gz
+	DESTINATION ${MAN_INSTALL_DIR}/man1
+)
+	
