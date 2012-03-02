@@ -103,8 +103,6 @@ if(WITH_MAN)
 	# If user has not set the base dir for man pages, use a default location
 	set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
 	
-	add_library(man_pages STATIC dummy.c ${MAN_SRC_GZ})
-	
 	install(FILES 	${MAN_BUILD_DIR}/dlt.conf.5.gz
 					${MAN_BUILD_DIR}/dlt-system.conf.5.gz
 			DESTINATION ${MAN_INSTALL_DIR}/man5
