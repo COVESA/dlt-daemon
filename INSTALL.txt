@@ -1,20 +1,18 @@
 Instructions for installing this software
----
+-----------------------------------------
 
 This software uses cmake as its build tool. To build and install the
 DLT daemon, follow these steps;
 
-1. Create a build directory;
+- mkdir build
+- cd build
+- cmake ..
+- make
+- optional: sudo make install
+- optional: sudo ldconfig
 
-$ mkdir build
 
-2. Move into that directory and call cmake;
-
-$ cd build && cmake ../
-
-3. The run make and make install;
-
-$ make
-# make install
-
-Note you'll have to be root to run make install, or do 'sudo make install'.
+Please read the README.txt for
+- Compile options and default values
+- Man pages
+- Doxygen documentation

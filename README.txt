@@ -51,25 +51,47 @@ Compiling in Linux:
 
 Compile options with default values
 -----------------------------------
--- WITH_DLT_SHM_ENABLE =       OFF
--- WITH_CHECK_CONFIG_FILE =    OFF
--- WITH_DOC =                  OFF
--- WITH_TESTSCRIPTS =          OFF
--- WITH_SYSTEMD =              OFF
--- WITH_GPROF = 			   OFF
--- BUILD_SHARED_LIBS =         ON
--- CMAKE_INSTALL_PREFIX =      /usr/local
--- CMAKE_BUILD_TYPE =          RelWithDebInfo
+- WITH_DLT_SHM_ENABLE =        OFF
+- WITH_CHECK_CONFIG_FILE =     OFF
+- WITH_DOC =                   OFF
+- WITH_TESTSCRIPTS =           OFF
+- WITH_SYSTEMD =               OFF
+- WITH_GPROF =  			   OFF
+- WITH_MAN =				   ON
+- BUILD_SHARED_LIBS =          ON
+- CMAKE_INSTALL_PREFIX =       /usr/local
+- CMAKE_BUILD_TYPE =           RelWithDebInfo
 
-In order to change these options, you can modify this values with ccmake, do the appropriate changes in CmakeList.txt or via 
+
+In order to change these options, you can modify this values
+with ccmake, do the appropriate changes in CmakeList.txt or via 
 the commandline for cmake
--- Change a value with: cmake -D<Variable>=<Value>
+- Change a value with: cmake -D<Variable>=<Value>
+- Example: cmake -DCMAKE_INSTALL_PREFIX=/usr
 
 
-Create documentation
---------------------
+Man pages
+---------
+With the compile option "WITH_MAN=ON" (default value) the man 
+pages will generated. After the call "sudo make install" (see 
+"Compilin in Linux") they are installed at <CMAKE_INSTALL_PREFIX>/share/man. 
+
+To get more informations, call e.g.
+- man dlt-daemon
+- man dlt.conf
+- man dlt-convert
+- man dlt-receive
+- man dlt-system
+- man dlt-system.conf
+
+
+Create doxygen documentation
+----------------------------
 - mkdir build
 - cd build
 - cmake -DWITH_DOC=ON ..
-- make doc
-- (optional)make doc-filetransfer
+- make 
+- (only DLT doc - optional )make doc
+- (only DLT-Filetransfer - optional )make doc-filetransfer
+
+You find the documentation know as HTML, RTF or LaTex in <project-root>/build/doc

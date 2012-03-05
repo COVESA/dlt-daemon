@@ -573,7 +573,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT = ./filetransfer_mainpage.h \
+INPUT = ./../../doc/filetransfer_mainpage.h \
 	./../src/lib/dlt_filetransfer.c \
 	./../include/dlt_filetransfer.h \
 	./../src/examples/dlt-example-filetransfer.c \

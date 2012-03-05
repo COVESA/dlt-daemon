@@ -5,9 +5,5 @@ automotive-dlt.spec
 automotive-dlt.pc
 config.h
 include/dlt/dlt_version.h
-doc/DOC_DLT/
-doc/DOC_DLT_Filetransfer/
-doc/doxygen.cfg
-doc/filetransfer_doxygen.cfg
 
 

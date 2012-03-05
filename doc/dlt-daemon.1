@@ -3,7 +3,7 @@
 dlt-daemon \- DLT daemon for logging and tracing purpose
 .SH SYNOPSIS
 .B dlt-daemon
-[\-h] [\-d] [\-v] [\-c filename]
+[\-h] [\-d] [\-c filename]
 .SH DESCRIPTION
 The DLT daemon is the central place where logs and traces are gathered
 from different applications, stored temporarily or permanently and
@@ -20,9 +20,6 @@ Display a short help text.
 \-d
 Daemonize, needed in System V init systems.
 .TP
-\-v
-Display debug information from the running DLT daemon.
-.TP
 \-c
 Load an alternative configuration file. By default the configuration
 file /etc/dlt.conf is loaded.
@@ -33,9 +30,9 @@ Start DLT daemon in background mode:
 \-d
 .PP
 .TP
-Start DLT daemon for debugging purpose with own configuration:
+Start DLT daemon with own configuration:
 .B dlt-daemon
-\-c ~/my-dlt-configuration.cfg \-v
+\-c ~/my-dlt-configuration.cfg
 .PP
 .SH EXIT STATUS
 Non zero is returned in case of failure.
