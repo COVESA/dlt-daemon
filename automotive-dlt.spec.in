@@ -105,6 +105,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-example-user-func
 %{_bindir}/dlt-example-filetransfer
 
+
+%files doc
+%{_mandir}/man1/dlt-convert.1.gz
+%{_mandir}/man1/dlt-daemon.1.gz
+%{_mandir}/man1/dlt-receive.1.gz
+%{_mandir}/man1/dlt-system.1.gz
+%{_mandir}/man5/dlt-system.conf.5.gz
+%{_mandir}/man5/dlt.conf.5.gz
+
 %files devel
 %{_includedir}/dlt/*.h
 %{_libdir}/pkgconfig/@PROJECT_NAME@.pc
