@@ -1,6 +1,6 @@
-DLT  - Automotive Diagnostic Log and Trace
+DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.5.0_BETA
+Version: 2.5.0
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -21,6 +21,11 @@ individual log levels of applications and contexts or get the list of
 applications and contexts registered in the DLT daemon.
 
 
+Homepage
+--------
+https://collab.genivi.org/wiki/display/geniviproj/Automotive+DLT+%28Diagnostic+Log+and+Trace%29
+
+
 License
 -------
 Full information on the license for this software
@@ -36,15 +41,23 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
-2.5.0_BETA
+2.5.0
 
 Improvements
+   * [GDLT-53] Man pages installation included
+   * .cproject and .project file for Eclipse included
+   * Update of doxygen documentation and generation
+   * Rework of root CMake project file, e.g. structure and compile options
    * [GENDLT-16] Create variable in dlt-system.conf to configure the timeout of the filetransfer
-   * [GSW-138] API Extension to resend the log messages in the user buffer Fixed
-   * [GSW-137] Wrong include gives error on compailing against dlt
-   * [GSW-135] Fixed compile warnings 
-   * Update of doxygen documentation/generation
-   
+   * [GDLT-37] Extend automated test tools for parallel process/threads tests 
+   * [GSW-138] API Extension to resend the log messages in the user buffer
+
+Bugfixes
+   * [GDLT-36] Prefixing of dlt_version.h fixed
+   * [GDLT-31] Tracefile content stored different under Ubuntu 64 bit version compared to Ubuntu/Win 32 Bit version fixed 
+   * [GDLT-35] Compile warnings fixed
+   * [GSW-137] Wrong include gives error on compailing against dlt fixed
+
 2.4.2
 
 Improvements
@@ -99,9 +112,6 @@ Improvements
     * [GSW-13] Support for keep-alive messages as configuration parameter
     * [GSW-60] Extended offline DLT Trace memory handling.
     * Removed filter implementation 
-     
-Bugfixes
-    *
 	
 2.3.0
 
