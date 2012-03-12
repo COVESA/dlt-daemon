@@ -78,6 +78,7 @@
 
 #define INOTIFY_SZ (sizeof(struct inotify_event))
 #define INOTIFY_LEN (INOTIFY_SZ + 1024)
+#define MAX_FILE_QUEUE 256
 
 /* Check if the file name ends in .z */
 int dlt_system_is_gz_file(char *file_name)
@@ -182,7 +183,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	int transferResult;
 	int total_size, used_size;
 	static char inotify_buf[INOTIFY_LEN];
-	static char file_stack[256][256];
+	static char file_stack[256][MAX_FILE_QUEUE];
 	static int file_stack_ptr = -1;
 
 	if(runtime->filetransferRunning == 0) {
@@ -203,26 +204,29 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 		}
 
 		/* Check inotify watches */
-		int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
-		if(len < 0)
+		if(file_stack_ptr < MAX_FILE_QUEUE)
 		{
-			if(errno != EWOULDBLOCK) {
-				fprintf(stderr, "dlt_system_filetransfer_run:\n%s\n", strerror(errno));
-				return;
-			}
-		}
-
-		int i = 0;
-		while(i < len)
-		{
-			struct inotify_event *event = (struct inotify_event *) &inotify_buf[i];
-			printf("inotify: %s \n", event->name);
-			if(event->mask | IN_CLOSE_WRITE && event->mask | IN_MOVED_TO)
+			int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
+			if(len < 0)
 			{
-				file_stack_ptr++;
-				strcpy(file_stack[file_stack_ptr], event->name);
+				if(errno != EWOULDBLOCK) {
+					fprintf(stderr, "dlt_system_filetransfer_run:\n%s\n", strerror(errno));
+					return;
+				}
 			}
-			i += INOTIFY_SZ + event->len;
+
+			int i = 0;
+			while(i < len)
+			{
+				struct inotify_event *event = (struct inotify_event *) &inotify_buf[i];
+				printf("inotify: %s \n", event->name);
+				if(event->mask | IN_CLOSE_WRITE && event->mask | IN_MOVED_TO)
+				{
+					file_stack_ptr++;
+					strcpy(file_stack[file_stack_ptr], event->name);
+				}
+				i += INOTIFY_SZ + event->len;
+			}
 		}
 
 		/* filetransfer not running, check directory */
