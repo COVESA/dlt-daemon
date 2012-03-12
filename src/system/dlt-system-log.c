@@ -76,6 +76,9 @@
 /* Size of the compression buffer */
 #define Z_CHUNK_SZ 1024*128
 
+#define INOTIFY_SZ (sizeof(struct inotify_event))
+#define INOTIFY_LEN (INOTIFY_SZ + 1024)
+
 /* Check if the file name ends in .z */
 int dlt_system_is_gz_file(char *file_name)
 {
@@ -151,14 +154,7 @@ int dlt_system_compress_file(char *src_name, int level)
 	return 0;
 }
 
-void dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
-=======
-int dlt_system_inotify_handle;
-#define INOTIFY_SZ (sizeof(struct inotify_event))
-#define INOTIFY_LEN (INOTIFY_SZ + 1024)
-
 int dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
->>>>>>> 228b6d6... First test for filetransfer change
 {
 	runtime->filetransferFile[0] = 0;
 	runtime->filetransferRunning = 0;
@@ -188,6 +184,8 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	int total_size, used_size;
 	DIR *dir;
 	static char inotify_buf[INOTIFY_LEN];
+	static char file_stack[256][256];
+	static int file_stack_ptr = -1;
 
 	if(runtime->filetransferRunning == 0) {
 		/* delete last transmitted file */
@@ -210,8 +208,10 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 		int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
 		if(len < 0)
 		{
-			fprintf(stderr, "dlt_system_filetransfer_run:\n%s", strerror(errno));
-			return;
+			if(errno != EWOULDBLOCK) {
+				fprintf(stderr, "dlt_system_filetransfer_run:\n%s\n", strerror(errno));
+				return;
+			}
 		}
 
 		int i = 0;
@@ -219,10 +219,11 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 		{
 			struct inotify_event *event = (struct inotify_event *) &inotify_buf[i];
 			printf("inotify: %s \n", event->name);
-			if(event->mask | IN_CLOSE_WRITE)
-				printf("IN_CLOSE_WRITE\n");
-			if(event->mask | IN_MOVED_TO)
-				printf("IN_MOVED_TO\n");
+			if(event->mask | IN_CLOSE_WRITE && event->mask | IN_MOVED_TO)
+			{
+				file_stack_ptr++;
+				strcpy(file_stack[file_stack_ptr], event->name);
+			}
 			i += INOTIFY_SZ + event->len;
 		}
 
@@ -278,9 +279,26 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 							}
 						}
 					}
+=======
+		if(file_stack_ptr > -1)
+		{
+			sprintf(filename, "%s/%s", options->FiletransferDirectory1, file_stack[file_stack_ptr]);
+			if(stat(filename,&status)==0)
+			{
+				strcpy(runtime->filetransferFile,filename);
+				runtime->filetransferFilesize = status.st_size;
+			}
+			else
+			{
+				sprintf(filename, "%s/%s", options->FiletransferDirectory2, file_stack[file_stack_ptr]);
+				if(stat(filename,&status)==0)
+				{
+					strcpy(runtime->filetransferFile,filename);
+					runtime->filetransferFilesize = status.st_size;
+>>>>>>> 917575d... First working version of inotify for file transfer.
 				}
-			}	
-			closedir(dir);
+			}
+			memset(file_stack[file_stack_ptr--], 0, 256);
 		}
 
 		/* start filetransfer if file exists */
