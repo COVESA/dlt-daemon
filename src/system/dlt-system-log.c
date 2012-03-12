@@ -172,17 +172,15 @@ int dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *run
 		return -1;
 	if(inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory2, IN_CLOSE_WRITE|IN_MOVED_TO) < 0)
 		return -1;
+	return 0;
 }
 
 void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *runtime,DltContext *context)
 {
-	struct dirent *dp;
 	char filename[256];
 	struct stat status;
-	time_t time_oldest = 0;
 	int transferResult;
 	int total_size, used_size;
-	DIR *dir;
 	static char inotify_buf[INOTIFY_LEN];
 	static char file_stack[256][256];
 	static int file_stack_ptr = -1;
