@@ -637,7 +637,14 @@ int main(int argc, char* argv[])
 
 	/* initialise filetransfer manager */
 	if(options.FiletransferEnable)
-		dlt_system_filetransfer_init(&options,&runtime);
+	{
+		if(dlt_system_filetransfer_init(&options,&runtime) < 0)
+		{
+			dprintf("Error initializing filetransfer:\n%s", strerror(errno));
+			return -1;
+		}
+	}
+
 
     while (1)
     {

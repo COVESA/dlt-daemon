@@ -63,6 +63,7 @@
 #include <time.h>
 #include <dirent.h>
 #include <zlib.h>
+#include <sys/inotify.h>
 
 #include "dlt_common.h"
 #include "dlt_user.h"
@@ -151,10 +152,30 @@ int dlt_system_compress_file(char *src_name, int level)
 }
 
 void dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
+=======
+int dlt_system_inotify_handle;
+#define INOTIFY_SZ (sizeof(struct inotify_event))
+#define INOTIFY_LEN (INOTIFY_SZ + 1024)
+
+int dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
+>>>>>>> 228b6d6... First test for filetransfer change
 {
 	runtime->filetransferFile[0] = 0;
 	runtime->filetransferRunning = 0;
 	runtime->filetransferCountPackages = 0;
+
+	// Initialize watch for filetransfer directories.
+	dlt_system_inotify_handle = inotify_init1(IN_NONBLOCK);
+	if(dlt_system_inotify_handle < 0) {
+		return -1;
+	}
+
+	// We can discard the descriptors.
+	// They will be closed automatically on program exit.
+	if(inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory1, IN_CLOSE_WRITE|IN_MOVED_TO) < 0)
+		return -1;
+	if(inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory2, IN_CLOSE_WRITE|IN_MOVED_TO) < 0)
+		return -1;
 }
 
 void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *runtime,DltContext *context)
@@ -166,6 +187,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	int transferResult;
 	int total_size, used_size;
 	DIR *dir;
+	static char inotify_buf[INOTIFY_LEN];
 
 	if(runtime->filetransferRunning == 0) {
 		/* delete last transmitted file */
@@ -182,6 +204,26 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 				}
 			}
 			runtime->filetransferFile[0]=0; 
+		}
+
+		/* Check inotify watches */
+		int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
+		if(len < 0)
+		{
+			fprintf(stderr, "dlt_system_filetransfer_run:\n%s", strerror(errno));
+			return;
+		}
+
+		int i = 0;
+		while(i < len)
+		{
+			struct inotify_event *event = (struct inotify_event *) &inotify_buf[i];
+			printf("inotify: %s \n", event->name);
+			if(event->mask | IN_CLOSE_WRITE)
+				printf("IN_CLOSE_WRITE\n");
+			if(event->mask | IN_MOVED_TO)
+				printf("IN_MOVED_TO\n");
+			i += INOTIFY_SZ + event->len;
 		}
 
 		/* filetransfer not running, check directory */
