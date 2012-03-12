@@ -77,7 +77,7 @@
 #define Z_CHUNK_SZ 1024*128
 
 #define INOTIFY_SZ (sizeof(struct inotify_event))
-#define INOTIFY_LEN (INOTIFY_SZ + 1024)
+#define INOTIFY_LEN (INOTIFY_SZ + 256)
 #define MAX_FILE_QUEUE 256
 
 /* Check if the file name ends in .z */
@@ -203,8 +203,9 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			runtime->filetransferFile[0]=0; 
 		}
 
-		/* Check inotify watches */
-		if(file_stack_ptr < MAX_FILE_QUEUE)
+		/* Check inotify watches, preserve space in the end of the stack. */
+		/* Kinda kludgy for two directories. Consider using two queues? */
+		if(file_stack_ptr < (MAX_FILE_QUEUE/2) - 4)
 		{
 			int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
 			if(len < 0)
@@ -334,12 +335,20 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 	}
 	
 	if (runtime->filetransferRunning == 1) {
+		int iteration_package_count = 0;
 		/* filetransfer is running, send next data */
 		while(runtime->filetransferLastSentPackage<runtime->filetransferCountPackages) {
 			/* wait sending next package if more than 50% of buffer used */
 			dlt_user_check_buffer(&total_size, &used_size);
 			if((total_size - used_size) < (total_size/2))
 			{
+				break;
+			}
+
+			/* Give a chance for other packets to go through periodically */
+			if(iteration_package_count > 100)
+			{
+				iteration_package_count = 0;
 				break;
 			}
 
@@ -353,8 +362,8 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 				runtime->filetransferRunning = 0;
 				runtime->timeFiletransferDelay = options->FiletransferTimeDelay;
 				return;
-			}			
-
+			}
+			iteration_package_count++;
 		}
 		if(runtime->filetransferLastSentPackage==runtime->filetransferCountPackages) {
 			transferResult = dlt_user_log_file_end(context,runtime->filetransferFile,0);

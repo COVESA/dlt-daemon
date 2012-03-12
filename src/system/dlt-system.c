@@ -640,7 +640,7 @@ int main(int argc, char* argv[])
 	{
 		if(dlt_system_filetransfer_init(&options,&runtime) < 0)
 		{
-			dprintf("Error initializing filetransfer:\n%s", strerror(errno));
+			fprintf(stderr, "Error initializing filetransfer:\n%s\n", strerror(errno));
 			return -1;
 		}
 	}
