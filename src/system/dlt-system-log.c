@@ -144,7 +144,7 @@ int dlt_system_compress_file(char *src, int level)
 			/* Write to the output file */
 			comp_count = Z_CHUNK_SZ - strm.avail_out;
             if (fwrite(buf_out, 1, comp_count, f_out) != comp_count ||
-            	ferror(dest))
+            	ferror(f_out))
             {
             	fprintf(stderr, "dlt_system_compress_file: Error while writing file.");
     			fclose(f_in);

@@ -16,8 +16,9 @@
 
 set(dlt_system_SRCS dlt-system dlt-system-log)
 add_executable(dlt-system ${dlt_system_SRCS})
-target_link_libraries(dlt-system dlt)
+target_link_libraries(dlt-system dlt z)
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
+
 
 install(TARGETS dlt-system
 	RUNTIME DESTINATION bin
