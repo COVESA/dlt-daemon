@@ -74,6 +74,8 @@ typedef struct {
 	int  SyslogPort;					/*# The UDP port opened by DLT system mamager to receive system logs (Default: 47111)*/
 	
 	int  FiletransferEnable;			/*# Enable the Filetransfer (Default: 0)*/
+	int  FiletransferCompression;		/*# Enable the Filetransfer compression (Default: 0)*/
+	int  FiletransferCompressionLevel;	/*# Set the compression level between 0-9 (Default: 5)*/
 	char FiletransferDirectory1[256];	/*# Directory which contains files to be transfered over DLT (Default: /tmp/filetransfer)# Files are deleted after Filetransfer is finished and after TimeDelay expired*/
 	char FiletransferDirectory2[256];
 	char FiletransferContextId[256];	/*# The Context Id of the filetransfer (Default: FILE)*/

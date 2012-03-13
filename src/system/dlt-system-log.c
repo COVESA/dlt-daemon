@@ -62,6 +62,7 @@
 #include <string.h>
 #include <time.h>
 #include <dirent.h>
+#include <zlib.h>
 
 #include "dlt_common.h"
 #include "dlt_user.h"
@@ -70,6 +71,102 @@
 #include "dlt-system.h"
 #include "dlt-system_cfg.h"
 #include "dlt-system-log.h"
+
+/* Size of the zlib deflate buffer */
+#define Z_CHUNK_SZ 1024*128
+
+/* File compression routine.
+ * Side effects:
+ * - modifies src to point to the compressed file.
+ * - removes the original file
+ */
+int dlt_system_compress_file(char *src, int level)
+{
+	/* Local variables */
+    unsigned char buf_in[Z_CHUNK_SZ];
+    unsigned char buf_out[Z_CHUNK_SZ];
+    int start_flush;
+    z_stream strm;
+    int comp_count;
+
+    /* Prepare file names */
+	char *dst = malloc(strlen(src)+3);
+	sprintf(dst, "%s.z", src);
+
+	/* Prepare zlib */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    int err = deflateInit(&strm, level);
+    if(err != Z_OK)
+    {
+    	fprintf(stderr, "dlt_system_compress_file: deflateInit failed with error %d.\n", err);
+    	return err;
+    }
+
+    /* Open input and output */
+    FILE *f_in = fopen(src, "r");
+    FILE *f_out = fopen(dst, "w");
+
+    while(start_flush != Z_FINISH)
+    {
+		/* read data to buffer */
+		strm.avail_in = fread(buf_in, 1, Z_CHUNK_SZ, f_in);
+		strm.next_in = buf_in;
+
+		/* Check if we have read everything */
+		start_flush = feof(f_in) ? Z_FINISH : Z_NO_FLUSH;
+
+		if (ferror(f_in))
+		{
+			fprintf(stderr, "dlt_system_compress_file: Error while reading file.");
+			fclose(f_in);
+			fclose(f_out);
+			deflateEnd(&strm);
+			return Z_ERRNO;
+		}
+
+		while(strm.avail_out == 0)
+		{
+			/* Prepare stream for compression */
+			strm.avail_out = Z_CHUNK_SZ;
+			strm.next_out = buf_out;
+
+			/* Compress a chunk of data */
+			if(deflate(&strm, start_flush) == Z_STREAM_ERROR)
+			{
+				fclose(f_in);
+				fclose(f_out);
+            	deflateEnd(&strm);
+            	return Z_STREAM_ERROR;
+			}
+
+			/* Write to the output file */
+			comp_count = Z_CHUNK_SZ - strm.avail_out;
+            if (fwrite(buf_out, 1, comp_count, f_out) != comp_count ||
+            	ferror(dest))
+            {
+            	fprintf(stderr, "dlt_system_compress_file: Error while writing file.");
+    			fclose(f_in);
+    			fclose(f_out);
+            	deflateEnd(&strm);
+            	return Z_ERRNO;
+            }
+		}
+    }
+
+    /* Close streams and clean the zlib state machine */
+	fclose(f_in);
+	fclose(f_out);
+	deflateEnd(&strm);
+
+	/* Remove the source file */
+	unlink(src);
+
+	/* Modify the parameter file name to point to the new file */
+	strcpy(src, dst);
+	return 0;
+}
 
 void dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
 {
@@ -144,6 +241,15 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 
 		/* start filetransfer if file exists */
 		if(runtime->filetransferFile[0]) {
+			/* Compress the file if required */
+			if(options->FiletransferCompression > 0)
+			{
+				printf("Start compression: %s\n",runtime->filetransferFile);
+				if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
+				{
+					return;
+				}
+			}
 			printf("Start Filetransfer: %s\n",runtime->filetransferFile);
 			runtime->filetransferCountPackages = dlt_user_log_file_packagesCount(context,runtime->filetransferFile);
 			if(runtime->filetransferCountPackages  < 0 )
