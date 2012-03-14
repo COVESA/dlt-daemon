@@ -75,6 +75,21 @@
 /* Size of the zlib deflate buffer */
 #define Z_CHUNK_SZ 1024*128
 
+/* Check if the file name ends in .z */
+int dlt_system_is_z_file(char *file_name)
+{
+	  size_t f_len = strlen(file_name);
+	  size_t z_len = strlen(".z");
+
+	  if(z_len > f_len)
+		  return 0;
+
+	  if(strncmp( file_name + f_len - z_len, ".z", z_len ) == 0)
+	  {
+		  return 1;
+	  }
+	  return 0;
+}
 /* File compression routine.
  * Side effects:
  * - modifies src to point to the compressed file.
@@ -85,7 +100,7 @@ int dlt_system_compress_file(char *src, int level)
 	/* Local variables */
     unsigned char buf_in[Z_CHUNK_SZ];
     unsigned char buf_out[Z_CHUNK_SZ];
-    int start_flush;
+    int start_flush = 0;
     z_stream strm;
     int comp_count;
 
@@ -211,7 +226,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					sprintf(filename,"%s/%s",options->FiletransferDirectory1,dp->d_name);
 					if(stat(filename,&status)==0)
 					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) ) {
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_z_file(filename)) {
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
 							runtime->filetransferFilesize = status.st_size;						
@@ -228,7 +243,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					sprintf(filename,"%s/%s",options->FiletransferDirectory2,dp->d_name);
 					if(stat(filename,&status)==0)
 					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) ) {
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_z_file(filename)) {
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
 							runtime->filetransferFilesize = status.st_size;						
