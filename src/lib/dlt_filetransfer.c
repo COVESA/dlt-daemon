@@ -84,8 +84,12 @@ unsigned long getFilesize(const char* file){
  */
 unsigned long getFileSerialNumber(const char* file){
 	struct stat st;
+	unsigned long ret;
 	stat(file, &st);
-	return (unsigned long)st.st_ino;
+	ret = st.st_ino;
+	ret = ret << (sizeof(ret)*8)/2;
+	ret |= st.st_size;
+	return ret;
 }
 
 //!Returns the creation date of a file

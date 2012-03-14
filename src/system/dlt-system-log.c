@@ -72,19 +72,19 @@
 #include "dlt-system_cfg.h"
 #include "dlt-system-log.h"
 
-/* Size of the zlib deflate buffer */
+/* Size of the compression buffer */
 #define Z_CHUNK_SZ 1024*128
 
 /* Check if the file name ends in .z */
-int dlt_system_is_z_file(char *file_name)
+int dlt_system_is_gz_file(char *file_name)
 {
 	  size_t f_len = strlen(file_name);
-	  size_t z_len = strlen(".z");
+	  size_t z_len = strlen(".gz");
 
 	  if(z_len > f_len)
 		  return 0;
 
-	  if(strncmp( file_name + f_len - z_len, ".z", z_len ) == 0)
+	  if(strncmp( file_name + f_len - z_len, ".gz", z_len ) == 0)
 	  {
 		  return 1;
 	  }
@@ -95,91 +95,58 @@ int dlt_system_is_z_file(char *file_name)
  * - modifies src to point to the compressed file.
  * - removes the original file
  */
-int dlt_system_compress_file(char *src, int level)
+int dlt_system_compress_file(char *src_name, int level)
 {
-	/* Local variables */
-    unsigned char buf_in[Z_CHUNK_SZ];
-    unsigned char buf_out[Z_CHUNK_SZ];
-    int start_flush = 0;
-    z_stream strm;
-    int comp_count;
+	char dst_name[256];
+	char dst_mode[8];
+	char *buf;
 
-    /* Prepare file names */
-	char *dst = malloc(strlen(src)+3);
-	sprintf(dst, "%s.z", src);
+	gzFile dst_file;
+	FILE *src_file;
 
-	/* Prepare zlib */
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    int err = deflateInit(&strm, level);
-    if(err != Z_OK)
-    {
-    	fprintf(stderr, "dlt_system_compress_file: deflateInit failed with error %d.\n", err);
-    	return err;
-    }
+	/* Initialize output */
+	sprintf(dst_name, "%s.gz", src_name);
+	sprintf(dst_mode, "wb%d", level);
+	dst_file = gzopen(dst_name, dst_mode);
 
-    /* Open input and output */
-    FILE *f_in = fopen(src, "r");
-    FILE *f_out = fopen(dst, "w");
+	/* Initialize input */
+	src_file = fopen(src_name, "r");
 
-    while(start_flush != Z_FINISH)
-    {
-		/* read data to buffer */
-		strm.avail_in = fread(buf_in, 1, Z_CHUNK_SZ, f_in);
-		strm.next_in = buf_in;
+	if(!src_file || !dst_file)
+	{
+		gzclose(dst_file);
+		fclose(src_file);
+		return -1;
+	}
 
-		/* Check if we have read everything */
-		start_flush = feof(f_in) ? Z_FINISH : Z_NO_FLUSH;
+	/* Initialize buffer */
+	buf = malloc(Z_CHUNK_SZ);
 
-		if (ferror(f_in))
+	/* Read from the src and write to dst */
+	while(!feof(src_file))
+	{
+		int read = fread(buf, 1, Z_CHUNK_SZ, src_file);
+		if(ferror(src_file))
 		{
-			fprintf(stderr, "dlt_system_compress_file: Error while reading file.");
-			fclose(f_in);
-			fclose(f_out);
-			deflateEnd(&strm);
-			return Z_ERRNO;
+			free(buf);
+			gzclose(dst_file);
+			fclose(src_file);
+			return -1;
 		}
+		gzwrite(dst_file, buf, read);
+	}
 
-		while(strm.avail_out == 0)
-		{
-			/* Prepare stream for compression */
-			strm.avail_out = Z_CHUNK_SZ;
-			strm.next_out = buf_out;
+	/* Clean up */
+	free(buf);
+	gzclose(dst_file);
+	fclose(src_file);
 
-			/* Compress a chunk of data */
-			if(deflate(&strm, start_flush) == Z_STREAM_ERROR)
-			{
-				fclose(f_in);
-				fclose(f_out);
-            	deflateEnd(&strm);
-            	return Z_STREAM_ERROR;
-			}
+	/* Remove source file */
+	remove(src_name);
 
-			/* Write to the output file */
-			comp_count = Z_CHUNK_SZ - strm.avail_out;
-            if (fwrite(buf_out, 1, comp_count, f_out) != comp_count ||
-            	ferror(f_out))
-            {
-            	fprintf(stderr, "dlt_system_compress_file: Error while writing file.");
-    			fclose(f_in);
-    			fclose(f_out);
-            	deflateEnd(&strm);
-            	return Z_ERRNO;
-            }
-		}
-    }
+	/* Rename in name buffer */
+	strcpy(src_name, dst_name);
 
-    /* Close streams and clean the zlib state machine */
-	fclose(f_in);
-	fclose(f_out);
-	deflateEnd(&strm);
-
-	/* Remove the source file */
-	unlink(src);
-
-	/* Modify the parameter file name to point to the new file */
-	strcpy(src, dst);
 	return 0;
 }
 
@@ -226,19 +193,19 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					sprintf(filename,"%s/%s",options->FiletransferDirectory1,dp->d_name);
 					if(stat(filename,&status)==0)
 					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_z_file(filename)) {
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_gz_file(filename)) {
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
-							runtime->filetransferFilesize = status.st_size;						
+							runtime->filetransferFilesize = status.st_size;
 
 							/* Compress the file if required */
 							if(options->FiletransferCompression1 > 0)
 							{
 								printf("Start compression: %s\n",runtime->filetransferFile);
 								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
-								{
 									return;
-								}
+								stat(runtime->filetransferFile,&status);
+								runtime->filetransferFilesize = status.st_size;
 							}
 						}
 					}
@@ -253,7 +220,7 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 					sprintf(filename,"%s/%s",options->FiletransferDirectory2,dp->d_name);
 					if(stat(filename,&status)==0)
 					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_z_file(filename)) {
+						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_gz_file(filename)) {
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
 							runtime->filetransferFilesize = status.st_size;
@@ -263,9 +230,9 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 							{
 								printf("Start compression: %s\n",runtime->filetransferFile);
 								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
-								{
 									return;
-								}
+								stat(runtime->filetransferFile,&status);
+								runtime->filetransferFilesize = status.st_size;
 							}
 						}
 					}
