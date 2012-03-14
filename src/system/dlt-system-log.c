@@ -230,6 +230,16 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
 							runtime->filetransferFilesize = status.st_size;						
+
+							/* Compress the file if required */
+							if(options->FiletransferCompression1 > 0)
+							{
+								printf("Start compression: %s\n",runtime->filetransferFile);
+								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
+								{
+									return;
+								}
+							}
 						}
 					}
 				}
@@ -246,7 +256,17 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_z_file(filename)) {
 							time_oldest = status.st_mtime;
 							strcpy(runtime->filetransferFile,filename);
-							runtime->filetransferFilesize = status.st_size;						
+							runtime->filetransferFilesize = status.st_size;
+
+							/* Compress the file if required */
+							if(options->FiletransferCompression2 > 0)
+							{
+								printf("Start compression: %s\n",runtime->filetransferFile);
+								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
+								{
+									return;
+								}
+							}
 						}
 					}
 				}
@@ -256,15 +276,6 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 
 		/* start filetransfer if file exists */
 		if(runtime->filetransferFile[0]) {
-			/* Compress the file if required */
-			if(options->FiletransferCompression > 0)
-			{
-				printf("Start compression: %s\n",runtime->filetransferFile);
-				if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
-				{
-					return;
-				}
-			}
 			printf("Start Filetransfer: %s\n",runtime->filetransferFile);
 			runtime->filetransferCountPackages = dlt_user_log_file_packagesCount(context,runtime->filetransferFile);
 			if(runtime->filetransferCountPackages  < 0 )

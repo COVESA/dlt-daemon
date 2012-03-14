@@ -108,7 +108,8 @@ void dlt_system_init_options(DltSystemOptions *options)
 
 	/* Filetransfer */
 	options->FiletransferEnable = 0;
-	options->FiletransferCompression = 0;
+	options->FiletransferCompression1 = 1;
+	options->FiletransferCompression2 = 0;
 	options->FiletransferCompressionLevel = 5;
 	strncpy(options->FiletransferContextId,DEFAULT_FILETRANSFER_CONTEXT_ID,sizeof(options->FiletransferContextId));
 	strncpy(options->FiletransferDirectory1,DEFAULT_FILETRANSFER_DIRECTORY,sizeof(options->FiletransferDirectory1));
@@ -255,9 +256,14 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 							options->FiletransferEnable = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
-						else if(strcmp(token,"FiletransferCompression")==0)
+						else if(strcmp(token,"FiletransferCompression1")==0)
 						{
-							options->FiletransferCompression = atoi(value);
+							options->FiletransferCompression1 = atoi(value);
+							printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"FiletransferCompression2")==0)
+						{
+							options->FiletransferCompression2 = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"FiletransferCompressionLevel")==0)
