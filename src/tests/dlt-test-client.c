@@ -1095,7 +1095,16 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test==6)
         {
-            dltdata->test_counter_macro[5]++;
+        	if (strcmp(text,"Message (visible: locally printed)")==0)
+        	{
+        		printf("Message (visible: locally printed)\n");
+        		dltdata->test_counter_macro[5]++;
+        	}
+        	if (strcmp(text,"Message (invisible: not locally printed)")==0)
+        	{
+        		printf("Message (invisible: not locally printed)\n");
+        		dltdata->test_counter_macro[5]++;
+        	}
         }
 
         /* check test 7m */
@@ -1855,7 +1864,16 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test==13)
         {
-            dltdata->test_counter_function[5]++;
+        	if (strcmp(text,"Message (visible: locally printed)")==0)
+        	{
+        		printf("Message (visible: locally printed)\n");
+        		dltdata->test_counter_function[5]++;
+        	}
+        	if (strcmp(text,"Message (invisible: not locally printed)")==0)
+        	{
+        		printf("Message (invisible: not locally printed)\n");
+        		dltdata->test_counter_function[5]++;
+        	}
         }
 
         /* check test 7f */
