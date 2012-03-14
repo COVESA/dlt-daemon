@@ -268,7 +268,7 @@ int dlt_system_parse_configuration(DltSystemOptions *options)
 						}
 						else if(strcmp(token,"FiletransferCompressionLevel")==0)
 						{
-							options->FiletransferCompression = atoi(value);
+							options->FiletransferCompressionLevel = atoi(value);
 							printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"FiletransferDirectory1")==0)
