@@ -159,7 +159,7 @@ typedef struct
 {
 	char contextID[4];                            /**< context id */
 	int32_t log_level_pos;                        /**< offset in user-application context field */
-    uint8_t mcnt;                                 /**< message counter */
+   	uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
 /**
