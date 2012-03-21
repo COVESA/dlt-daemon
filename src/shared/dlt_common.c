@@ -2203,6 +2203,13 @@ int dlt_receiver_remove(DltReceiver *receiver,int size)
         return -1;
     }
 
+    if (size>receiver->bytesRcvd)
+    {
+    	receiver->buf = receiver->buf + receiver->bytesRcvd;
+    	receiver->bytesRcvd=0;
+    	return -1;
+    }
+
     receiver->bytesRcvd = receiver->bytesRcvd - size;
     receiver->buf = receiver->buf + size;
 
@@ -2400,7 +2407,7 @@ int dlt_buffer_free_dynamic(DltBuffer *buf)
 
 void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size)
 {
-	if((*write+size) <= buf->size) {
+	if((int)(*write+size) <= buf->size) {
 		// write one block
 		memcpy(buf->mem+*write,data,size);
 		*write += size;
@@ -2415,7 +2422,7 @@ void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data
 
 void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size)
 {
-	if((*read+size) <= buf->size) {
+	if((int)(*read+size) <= buf->size) {
 		// read one block
 		memcpy(data,buf->mem+*read,size);
 		*read += size;
@@ -2577,7 +2584,7 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 		free_size = buf->size - write + read;
 	
 	// check size
-	if(free_size < (sizeof(DltBufferBlockHead)+size1+size2+size3)) {
+	if(free_size < (int)(sizeof(DltBufferBlockHead)+size1+size2+size3)) {
 		// try to increase size if possible
 		if(dlt_buffer_increase_size(buf)) {
 			/* increase size is not possible */
@@ -2651,7 +2658,7 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 		used_size = buf->size - read + write;
 
 	// first check size
-	if(used_size < (sizeof(DltBufferBlockHead))) {
+	if(used_size < (int)(sizeof(DltBufferBlockHead))) {
 		dlt_log(LOG_ERR,"Buffer: Size check 1 failed\n");
 		dlt_buffer_reset(buf);
 		return -1; // ERROR
@@ -2675,7 +2682,7 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 	}
 
 	// second check size
-	if(used_size < (sizeof(DltBufferBlockHead)+head.size)) {
+	if(used_size < (int)(sizeof(DltBufferBlockHead)+head.size)) {
 		dlt_log(LOG_ERR,"Buffer: Size check 2 failed\n");
 		dlt_buffer_reset(buf);
 		return -1; // ERROR

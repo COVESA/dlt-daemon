@@ -169,7 +169,7 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 int dlt_offline_trace_check_size(DltOfflineTrace *trace) {
 	
 	/* check size of complete offline trace */
-	while(dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
+	while((int)dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
 	{
 		/* remove oldest files as long as new file will not fit in completely into complete offline trace */
 		if(dlt_offline_trace_delete_oldest_file(trace)<0) {
