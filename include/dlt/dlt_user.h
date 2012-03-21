@@ -173,7 +173,8 @@ typedef enum
 typedef struct
 {
 	char contextID[4];                            /**< context id */
-    int32_t log_level_pos;                        /**< offset in user-application context field */
+	int32_t log_level_pos;                        /**< offset in user-application context field */
+    uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
 /**
@@ -187,7 +188,6 @@ typedef struct
 	int32_t log_level;                            /**< log level */
 	int32_t trace_status;                         /**< trace status */
 	int32_t args_num;                             /**< number of arguments for extended header*/
-	uint8_t mcnt;                                 /**< message counter */
 	char* context_description;                    /**< description of context */
 } DltContextData;
 
