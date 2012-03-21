@@ -569,6 +569,9 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
     	return -1;
     }
 
+    /* Reset message counter */
+    handle->mcnt = 0;
+
     /* Store context id in log level/trace status field */
 
     /* Check if already registered, else register context */
@@ -2051,7 +2054,6 @@ int dlt_user_log_init(DltContext *handle, DltContextData *log)
     }
 
     log->handle = handle;
-    log->mcnt = 0;
 
     return 0;
 }
@@ -2131,7 +2133,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
 #endif
 
-    msg.standardheader->mcnt = log->mcnt++;
+    msg.standardheader->mcnt = log->handle->mcnt++;
 
     /* Set header extra parameters */
     dlt_set_id(msg.headerextra.ecu,dlt_user.ecuID);
