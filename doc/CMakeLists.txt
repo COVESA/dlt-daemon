@@ -90,7 +90,7 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt-system.1.gz)
 	
 	foreach(MAN ${MAN_SRC})
-		file(COPY ${MAN} DESTINATION ${MAN_BUILD_DIR})
+		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${MAN} ${MAN_BUILD_DIR}) 
 	endforeach(MAN)
 	
 	add_custom_target(compress_man ALL 
