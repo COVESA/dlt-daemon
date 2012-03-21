@@ -1184,7 +1184,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
     /* look through buffer as long as data is in there */
     do
     {
-        if (daemon_local->receiver.bytesRcvd < sizeof(DltUserHeader))
+        if (daemon_local->receiver.bytesRcvd < (int32_t)sizeof(DltUserHeader))
         {
             break;
         }
@@ -1204,7 +1204,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             offset++;
 
         }
-        while ((sizeof(DltUserHeader)+offset)<=daemon_local->receiver.bytesRcvd);
+        while ((int32_t)(sizeof(DltUserHeader)+offset)<=daemon_local->receiver.bytesRcvd);
 
         /* Check for user header pattern */
         if (dlt_user_check_userheader(userheader)==0)
@@ -1391,7 +1391,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltD
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterApplication)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterApplication)))
     {
     	/* Not enough bytes received */
         return -1;
@@ -1451,7 +1451,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)))
     {
     	/* Not enough bytes received */
         return -1;
@@ -1623,7 +1623,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication)))
     {
     	/* Not enough bytes received */
         return -1;
@@ -1691,7 +1691,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
     {
     	/* Not enough bytes received */
         return -1;
@@ -2098,7 +2098,7 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLo
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgAppLogLevelTraceStatus )))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgAppLogLevelTraceStatus )))
     {
     	/* Not enough bytes receeived */
         return -1;
@@ -2164,7 +2164,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
     {
     	/* Not enough bytes received */
         return -1;

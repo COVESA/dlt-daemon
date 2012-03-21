@@ -225,7 +225,7 @@ int dlt_daemon_free(DltDaemon *daemon,int verbose)
 
 int dlt_daemon_applications_clear(DltDaemon *daemon,int verbose)
 {
-    uint32_t i;
+    int i;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -477,7 +477,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
 int dlt_daemon_applications_save(DltDaemon *daemon,const char *filename, int verbose)
 {
     FILE *fd;
-    uint32_t i;
+    int i;
 
     char apid[DLT_ID_SIZE+1]; /* DLT_ID_SIZE+1, because the 0-termination is required here */
 
@@ -800,7 +800,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
 int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose)
 {
     FILE *fd;
-    uint32_t i;
+    int i;
 
     char apid[DLT_ID_SIZE+1], ctid[DLT_ID_SIZE+1]; /* DLT_ID_SIZE+1, because the 0-termination is required here */
 
@@ -1028,7 +1028,7 @@ int dlt_daemon_control_process_control(int sock, DltDaemon *daemon, DltMessage *
         return -1;
     }
 
-    if (msg->datasize<sizeof(uint32_t))
+    if (msg->datasize < (int32_t)sizeof(uint32_t))
     {
         return -1;
     }
@@ -1402,7 +1402,7 @@ void dlt_daemon_control_set_default_log_level(int sock, DltDaemon *daemon, DltMe
     req = (DltServiceSetDefaultLogLevel*) (msg->databuffer);
 
     /* No endianess conversion necessary */
-    if ((req->log_level>=0) &&
+    if (/*(req->log_level>=0) &&*/
             (req->log_level<=DLT_LOG_VERBOSE))
     {
         daemon->default_log_level = req->log_level; /* No endianess conversion necessary */

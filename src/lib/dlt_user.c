@@ -377,7 +377,7 @@ int dlt_user_atexit_blow_out_user_buffer(void){
 
 int dlt_free(void)
 {
-    int i;
+    uint32_t i;
 	char filename[DLT_USER_MAX_FILENAME_LENGTH];
 
     if (dlt_user_initialised==0)
@@ -525,7 +525,7 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
 int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus)
 {
     DltContextData log;
-    int i;
+    uint32_t i;
     int registered,ret;
     char ctid[DLT_ID_SIZE+1];
 
@@ -811,7 +811,7 @@ int dlt_unregister_context(DltContext *handle)
 
 int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType tracestatus)
 {
-    int i;
+    uint32_t i;
     int ret;
 
     if (dlt_user_initialised==0)
@@ -1619,7 +1619,7 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
                                     int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length))
 {
     DltContextData log;
-    int i,j,k;
+    uint32_t i,j,k;
     int found = 0;
 
 	DltUserInjectionCallback *old;
@@ -2600,7 +2600,7 @@ int dlt_user_log_check_user_message(void)
     int offset=0;
     int leave_while=0;
 
-    int i;
+    uint32_t i;
 
     DltUserHeader *userheader;
     DltReceiver *receiver = &(dlt_user.receiver);
@@ -2624,7 +2624,7 @@ int dlt_user_log_check_user_message(void)
             /* look through buffer as long as data is in there */
             while (1)
             {
-                if (receiver->bytesRcvd < sizeof(DltUserHeader))
+                if (receiver->bytesRcvd < (int32_t)sizeof(DltUserHeader))
                 {
                     break;
                 }
@@ -2643,7 +2643,7 @@ int dlt_user_log_check_user_message(void)
                     offset++;
 
                 }
-                while ((sizeof(DltUserHeader)+offset)<=receiver->bytesRcvd);
+                while ((int32_t)(sizeof(DltUserHeader)+offset)<=receiver->bytesRcvd);
 
                 /* Check for user header pattern */
                 if (dlt_user_check_userheader(userheader)==0)
@@ -2662,7 +2662,7 @@ int dlt_user_log_check_user_message(void)
                 {
                 case DLT_USER_MESSAGE_LOG_LEVEL:
                 {
-                    if (receiver->bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogLevel)))
+                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogLevel)))
                     {
                         leave_while=1;
                         break;
@@ -2675,7 +2675,7 @@ int dlt_user_log_check_user_message(void)
                     {
                         DLT_SEM_LOCK();
 
-                        if ((usercontextll->log_level_pos>=0) && (usercontextll->log_level_pos<dlt_user.dlt_ll_ts_num_entries))
+                        if ((usercontextll->log_level_pos >= 0) && (usercontextll->log_level_pos < (int32_t)dlt_user.dlt_ll_ts_num_entries))
                         {
                             // printf("Store ll, ts\n");
                             if (dlt_user.dlt_ll_ts)
@@ -2698,7 +2698,7 @@ int dlt_user_log_check_user_message(void)
                 case DLT_USER_MESSAGE_INJECTION:
                 {
                     /* At least, user header, user context, and service id and data_length of injected message is available */
-                    if (receiver->bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)))
+                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)))
                     {
                         leave_while = 1;
                         break;
@@ -2711,7 +2711,7 @@ int dlt_user_log_check_user_message(void)
                     if (userbuffer!=0)
                     {
 
-                        if (receiver->bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)+usercontextinj->data_length_inject))
+                        if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)+usercontextinj->data_length_inject))
                         {
                             leave_while = 1;
                             break;
@@ -2767,7 +2767,7 @@ int dlt_user_log_check_user_message(void)
                 case DLT_USER_MESSAGE_LOG_STATE:
                 {
                     /* At least, user header, user context, and service id and data_length of injected message is available */
-                    if (receiver->bytesRcvd < (sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogState)))
+                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogState)))
                     {
                         leave_while = 1;
                         break;
@@ -2875,7 +2875,7 @@ int dlt_user_log_resend_buffer(void)
 
 void dlt_user_log_reattach_to_daemon(void)
 {
-    int num,reregistered=0;
+	uint32_t num,reregistered=0;
 
 	DltContext handle;
 	DltContextData log_new;

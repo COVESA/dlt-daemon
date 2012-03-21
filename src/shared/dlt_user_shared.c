@@ -125,7 +125,7 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
 DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2)
 {
     struct iovec iov[2];
-    int bytes_written;
+    uint32_t bytes_written;
 
     if (handle<=0)
     {
@@ -151,7 +151,7 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2
 DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2, void *ptr3, size_t len3)
 {
     struct iovec iov[3];
-    int bytes_written;
+    uint32_t bytes_written;
 
     if (handle<=0)
     {
