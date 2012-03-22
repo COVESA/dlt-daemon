@@ -246,6 +246,11 @@ typedef struct
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;
 #endif
+#ifdef DLT_TEST_ENABLE
+    int corrupt_user_header;
+    int corrupt_message_size;
+    int16_t corrupt_message_size_size;
+#endif
 } DltUser;
 
 /**************************************************************************************************
@@ -603,6 +608,11 @@ int dlt_user_check_buffer(int *total_size, int *used_size);
  * @return number of messages in the user buffer
  */
 int dlt_user_atexit_blow_out_user_buffer(void);
+
+#ifdef DLT_TEST_ENABLE
+void dlt_user_test_corrupt_user_header(int enable);
+void dlt_user_test_corrupt_message_size(int enable,int16_t size);
+#endif /* DLT_TEST_ENABLE */
 
 #ifdef __cplusplus
 }

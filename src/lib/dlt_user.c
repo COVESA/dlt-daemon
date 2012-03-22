@@ -326,6 +326,12 @@ int dlt_init_common(void)
 
     atexit(dlt_user_atexit_handler);
 
+#ifdef DLT_TEST_ENABLE
+    dlt_user.corrupt_user_header = 0;
+    dlt_user.corrupt_message_size = 0;
+    dlt_user.corrupt_message_size_size = 0;
+#endif
+
     return 0;
 }
 
@@ -2249,6 +2255,17 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
 									0, 0);
 #else
 			/* log to FIFO */
+#ifdef DLT_TEST_ENABLE
+			if(dlt_user.corrupt_user_header) {
+				userheader.pattern[0]=0xff;
+				userheader.pattern[1]=0xff;
+				userheader.pattern[2]=0xff;
+				userheader.pattern[3]=0xff;
+			}
+			if(dlt_user.corrupt_message_size) {
+				msg.standardheader->len = DLT_HTOBE_16(dlt_user.corrupt_message_size_size);
+			}
+#endif
 			ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
 									&(userheader), sizeof(DltUserHeader),
 									msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
@@ -2982,4 +2999,17 @@ int dlt_user_check_buffer(int *total_size, int *used_size)
 	
 	return 0; /* ok */
 }
+
+#ifdef DLT_TEST_ENABLE
+void dlt_user_test_corrupt_user_header(int enable)
+{
+    dlt_user.corrupt_user_header = enable;
+}
+void dlt_user_test_corrupt_message_size(int enable,int16_t size)
+{
+    dlt_user.corrupt_message_size = enable;
+    dlt_user.corrupt_message_size_size = size;
+}
+#endif
+
 

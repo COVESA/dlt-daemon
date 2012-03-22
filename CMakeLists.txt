@@ -75,9 +75,10 @@ option(WITH_DLT_SHM_ENABLE    "Set to OFF to use FIFO as IPC from user to daemon
 option(WITH_DOC               "Set to ON to build documentation target"              OFF )
 option(WITH_MAN               "Set to OFF to skip building of man pages"             ON )
 option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists " OFF )
-option(WITH_TESTSCRIPTS       "Set to on to run CMakeLists.txt in testscripts"       OFF )
-option(WITH_SYSTEMD           "Set to on to run CMakeLists.txt in systemd"           OFF )
+option(WITH_TESTSCRIPTS       "Set to ON to run CMakeLists.txt in testscripts"       OFF )
+option(WITH_SYSTEMD           "Set to ON to run CMakeLists.txt in systemd"           OFF )
 option(WITH_GPROF             "Set -pg to compile flags"                             OFF )
+option(WITH_DLTTEST			  "Set to ON to build with modifications to test Uuser-Daemon communication with corrupt messages" OFF)
 
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
@@ -93,6 +94,10 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
 )
+
+if(WITH_DLTTEST)
+	add_definitions( -DDLT_TEST_ENABLE)
+endif(WITH_DLTTEST)
 
 if(WITH_DLT_SHM_ENABLE)
     add_definitions( -DDLT_SHM_ENABLE)
@@ -116,6 +121,7 @@ message( STATUS "WITH_TESTSCRIPTS = ${WITH_TESTSCRIPTS}" )
 message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
 message( STATUS "WITH_GPROF = ${WITH_GPROF}" )
 message( STATUS "WITH_MAN = ${WITH_MAN}" )
+message( STATUS "WITH_DLTTEST = ${WITH_DLTTEST}" )
 message( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
 message( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 message( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )

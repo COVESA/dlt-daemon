@@ -112,6 +112,11 @@ void usage()
     printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
+#ifdef DLT_TEST_ENABLE
+    printf("  -c       		Corrupt user header\n");
+    printf("  -s size       Corrupt message size\n");
+    printf("  -z size      	Size of message\n");
+#endif /* DLT_TEST_ENABLE */
 }
 
 /**
@@ -122,6 +127,11 @@ int main(int argc, char* argv[])
     int vflag = 0;
     int gflag = 0;
     int aflag = 0;
+#ifdef DLT_TEST_ENABLE
+    int cflag = 0;    
+    char *svalue = 0;
+    char *zvalue = 0;
+#endif /* DLT_TEST_ENABLE */
     char *dvalue = 0;
     char *fvalue = 0;
     char *nvalue = 0;
@@ -138,8 +148,11 @@ int main(int argc, char* argv[])
 	int state=-1,newstate;
 
     opterr = 0;
-
+#ifdef DLT_TEST_ENABLE
+    while ((c = getopt (argc, argv, "vgacd:f:n:m:z:s:")) != -1)
+#else
     while ((c = getopt (argc, argv, "vgad:f:n:m:")) != -1)
+#endif /* DLT_TEST_ENABLE */
     {
         switch (c)
         {
@@ -158,6 +171,23 @@ int main(int argc, char* argv[])
             aflag = 1;
             break;
         }
+#ifdef DLT_TEST_ENABLE
+        case 'c':
+        {
+            cflag = 1;
+            break;
+        }
+        case 's':
+        {
+            svalue = optarg;
+            break;
+        }
+        case 'z':
+        {
+            zvalue = optarg;
+            break;
+        }
+#endif /* DLT_TEST_ENABLE */
         case 'd':
         {
             dvalue = optarg;
@@ -277,6 +307,23 @@ int main(int argc, char* argv[])
         DLT_LOG_ID(mycontext,DLT_LOG_INFO,13,DLT_UINT8(123),DLT_FLOAT32(1.12));
         DLT_LOG_ID(mycontext,DLT_LOG_INFO,14,DLT_STRING("DEAD BEEF"));
     }
+
+#ifdef DLT_TEST_ENABLE
+    if (cflag)
+    {
+		dlt_user_test_corrupt_user_header(1);
+    }
+    if (svalue)
+    {
+		dlt_user_test_corrupt_message_size(1,atoi(svalue));
+    }
+	if (zvalue)
+	{
+		char* buffer = malloc(atoi(zvalue));
+        DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));		
+		free(buffer);
+	}
+#endif /* DLT_TEST_ENABLE */
 
     for (num=0;num<maxnum;num++)
     {
