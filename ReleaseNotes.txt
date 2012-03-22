@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.5.0
+Version: 2.5.1
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -41,6 +41,14 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+2.5.1
+
+   * Fixed bug with comparinson between signed and unsigned integer and protection for a buffer overflow.
+   * Modified library for new test cases to corrupt data - related to the bug fix for testing signed and unsigned integer
+   * [GENDLT-20] Fixed bug to use old cmake version for copy file
+   * Replaced dlt-test-filetransfer-image.png with an own created image
+   * [GENDLT-21] Fixed bug: Message Counter (MCNT) should be increased but is always 0
+
 2.5.0
 
 Improvements

@@ -1,6 +1,6 @@
 DLT  - Automotive Diagnostic Log and Trace
 
-Version: 2.5.0
+Version: 2.5.1
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -56,8 +56,9 @@ Compile options with default values
 - WITH_DOC =                   OFF
 - WITH_TESTSCRIPTS =           OFF
 - WITH_SYSTEMD =               OFF
-- WITH_GPROF =  			   OFF
-- WITH_MAN =				   ON
+- WITH_GPROF =  	       OFF
+- WITH_MAN =		       ON
+- WITH_DLTTEST =               OFF
 - BUILD_SHARED_LIBS =          ON
 - CMAKE_INSTALL_PREFIX =       /usr/local
 - CMAKE_BUILD_TYPE =           RelWithDebInfo
