@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.5.1
+Version: 2.5.2
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -41,6 +41,10 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+2.5.2
+
+   * Change to Mozilla Public License Version 2.0
+   
 2.5.1
 
    * Fixed bug with comparinson between signed and unsigned integer and protection for a buffer overflow.
