@@ -30,7 +30,7 @@ License
 -------
 Full information on the license for this software
 is available in the "LICENSE.txt" file. 
-The full LGPL license is in "LGPL.txt."
+The full MPL license is in "MPL.txt."
 
 
 Contact
