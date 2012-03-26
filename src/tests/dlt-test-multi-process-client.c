@@ -15,7 +15,7 @@
  *
  * \author Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de> BMW 2011-2012
  *
- * \file <FILE>
+ * \file dlt-test-multi-process-client.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
