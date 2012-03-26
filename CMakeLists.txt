@@ -1,17 +1,17 @@
 #######
 # Dlt - Diagnostic Log and Trace
 # @licence make begin@
- #
- # Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.wenzel@bmw.de>
- # 
- # Contributions are licensed to the GENIVI Alliance under one or more
- # Contribution License Agreements.
- # 
- # This Source Code Form is subject to the terms of the
- # Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
- # this file, You can obtain one at http://mozilla.org/MPL/2.0/.
- #
- # @licence end@
+#
+# Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.wenzel@bmw.de>
+# 
+# Contributions are licensed to the GENIVI Alliance under one or more
+# Contribution License Agreements.
+# 
+# This Source Code Form is subject to the terms of the
+# Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
+# this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# @licence end@
 ########
 
 cmake_minimum_required( VERSION 2.6 )
@@ -61,7 +61,7 @@ option(WITH_DLTTEST			  "Set to ON to build with modifications to test Uuser-Dae
 
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
-set( LICENSE "LGPL v2.1 with special exception" )
+set( LICENSE "Mozilla Public License Version 2.0s" )
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
