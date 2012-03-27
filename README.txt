@@ -1,6 +1,6 @@
 DLT  - Automotive Diagnostic Log and Trace
 
-Version: 2.5.1
+Version: 2.5.2
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -30,7 +30,7 @@ License
 -------
 Full information on the license for this software
 is available in the "LICENSE.txt" file. 
-The full LGPL license is in "LGPL.txt."
+The full MPL license is in "MPL.txt."
 
 
 Contact
