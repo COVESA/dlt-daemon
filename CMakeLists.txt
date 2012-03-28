@@ -61,7 +61,7 @@ option(WITH_DLTTEST			  "Set to ON to build with modifications to test Uuser-Dae
 
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
-set( LICENSE "Mozilla Public License Version 2.0s" )
+set( LICENSE "Mozilla Public License Version 2.0" )
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
