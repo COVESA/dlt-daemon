@@ -76,10 +76,6 @@
 /* Size of the compression buffer */
 #define Z_CHUNK_SZ 1024*128
 
-#define INOTIFY_SZ (sizeof(struct inotify_event))
-#define INOTIFY_LEN (INOTIFY_SZ + 256)
-#define MAX_FILE_QUEUE 256
-
 /* Check if the file name ends in .z */
 int dlt_system_is_gz_file(char *file_name)
 {
@@ -114,13 +110,16 @@ int dlt_system_compress_file(char *src_name, int level)
 	sprintf(dst_mode, "wb%d", level);
 	dst_file = gzopen(dst_name, dst_mode);
 
+	if(!dst_file)
+	{
+		return -1;
+	}
 	/* Initialize input */
 	src_file = fopen(src_name, "r");
 
-	if(!src_file || !dst_file)
+	if(!src_file)
 	{
 		gzclose(dst_file);
-		fclose(src_file);
 		return -1;
 	}
 
@@ -155,6 +154,13 @@ int dlt_system_compress_file(char *src_name, int level)
 	return 0;
 }
 
+int dlt_system_inotify_handle;
+int dlt_system_watch_descriptor_dir1;
+int dlt_system_watch_descriptor_dir2;
+#define INOTIFY_SZ (sizeof(struct inotify_event))
+#define INOTIFY_LEN (INOTIFY_SZ + 256)
+#define MAX_FILE_QUEUE 256
+
 int dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *runtime)
 {
 	runtime->filetransferFile[0] = 0;
@@ -163,28 +169,31 @@ int dlt_system_filetransfer_init(DltSystemOptions *options,DltSystemRuntime *run
 
 	// Initialize watch for filetransfer directories.
 	dlt_system_inotify_handle = inotify_init1(IN_NONBLOCK);
-	if(dlt_system_inotify_handle < 0) {
+	if(dlt_system_inotify_handle < 0)
+	{
 		return -1;
 	}
 
-	// We can discard the descriptors.
-	// They will be closed automatically on program exit.
-	if(inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory1, IN_CLOSE_WRITE|IN_MOVED_TO) < 0)
+	dlt_system_watch_descriptor_dir1 =  inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory1, IN_CLOSE_WRITE|IN_MOVED_TO);
+	dlt_system_watch_descriptor_dir2 =  inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory2, IN_CLOSE_WRITE|IN_MOVED_TO);
+	if(dlt_system_watch_descriptor_dir1 < 0 || dlt_system_watch_descriptor_dir2 < 0)
+	{
 		return -1;
-	if(inotify_add_watch(dlt_system_inotify_handle, options->FiletransferDirectory2, IN_CLOSE_WRITE|IN_MOVED_TO) < 0)
-		return -1;
+	}
 	return 0;
 }
 
 void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *runtime,DltContext *context)
 {
-	char filename[256];
 	struct stat status;
 	int transferResult;
 	int total_size, used_size;
 	static char inotify_buf[INOTIFY_LEN];
-	static char file_stack[256][MAX_FILE_QUEUE];
-	static int file_stack_ptr = -1;
+	static char *file_stack1[MAX_FILE_QUEUE];
+	static char *file_stack2[MAX_FILE_QUEUE];
+	static int file_stack_ptr1 = -1;
+	static int file_stack_ptr2 = -1;
+	static int first_run = 1;
 
 	if(runtime->filetransferRunning == 0) {
 		/* delete last transmitted file */
@@ -203,105 +212,132 @@ void dlt_system_filetransfer_run(DltSystemOptions *options,DltSystemRuntime *run
 			runtime->filetransferFile[0]=0; 
 		}
 
-		/* Check inotify watches, preserve space in the end of the stack. */
-		/* Kinda kludgy for two directories. Consider using two queues? */
-		if(file_stack_ptr < (MAX_FILE_QUEUE/2) - 4)
+		/* Check inotify watch, add new files to stack */
+		if(file_stack_ptr1 < (MAX_FILE_QUEUE/2) - 4 && file_stack_ptr2 < (MAX_FILE_QUEUE/2) - 4)
 		{
 			int len = read(dlt_system_inotify_handle, inotify_buf, INOTIFY_LEN);
 			if(len < 0)
 			{
-				if(errno != EWOULDBLOCK) {
-					fprintf(stderr, "dlt_system_filetransfer_run:\n%s\n", strerror(errno));
+				if(errno != EWOULDBLOCK)
+				{
+					fprintf(stderr, "dlt_system_filetransfer_run error reading inotify handle. %d\n", errno);
 					return;
 				}
 			}
-
 			int i = 0;
 			while(i < len)
 			{
-				struct inotify_event *event = (struct inotify_event *) &inotify_buf[i];
-				printf("inotify: %s \n", event->name);
-				if(event->mask | IN_CLOSE_WRITE && event->mask | IN_MOVED_TO)
+				struct inotify_event *ievent = (struct inotify_event *)&inotify_buf[i];
+				if(ievent->len > 0)
 				{
-					file_stack_ptr++;
-					strcpy(file_stack[file_stack_ptr], event->name);
+					if((ievent->mask & IN_CLOSE_WRITE || ievent->mask & IN_MOVED_TO) &&
+							!dlt_system_is_gz_file(ievent->name))
+					{
+						if(ievent->wd == dlt_system_watch_descriptor_dir1)
+						{
+							int plen = strlen(options->FiletransferDirectory1);
+							plen += ievent->len + 1;
+							file_stack_ptr1++;
+							file_stack1[file_stack_ptr1] = malloc(plen);
+							sprintf(file_stack1[file_stack_ptr1], "%s/%s",
+									options->FiletransferDirectory1,
+									ievent->name);
+						}
+						else if(ievent->wd == dlt_system_watch_descriptor_dir2)
+						{
+							int plen = strlen(options->FiletransferDirectory2);
+							plen += ievent->len + 1;
+							file_stack_ptr2++;
+							file_stack2[file_stack_ptr2] = malloc(plen);
+							sprintf(file_stack2[file_stack_ptr2], "%s/%s",
+									options->FiletransferDirectory2,
+									ievent->name);
+						}
+						else
+						{
+							fprintf(stderr, "Unknown inotify descriptor in dlt_system_filetransfer_run.\n");
+							return;
+						}
+					}
 				}
-				i += INOTIFY_SZ + event->len;
+				i += INOTIFY_SZ + ievent->len;
 			}
 		}
 
-		/* filetransfer not running, check directory */
-		filename[0] = 0;
-		dir = opendir(options->FiletransferDirectory1);
-		if(dir > 0) {
-			while ((dp=readdir(dir)) != NULL) {
-				if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
-					sprintf(filename,"%s/%s",options->FiletransferDirectory1,dp->d_name);
-					if(stat(filename,&status)==0)
-					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_gz_file(filename)) {
-							time_oldest = status.st_mtime;
-							strcpy(runtime->filetransferFile,filename);
-							runtime->filetransferFilesize = status.st_size;
-
-							/* Compress the file if required */
-							if(options->FiletransferCompression1 > 0)
-							{
-								printf("Start compression: %s\n",runtime->filetransferFile);
-								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
-									return;
-								stat(runtime->filetransferFile,&status);
-								runtime->filetransferFilesize = status.st_size;
-							}
-						}
-					}
-				}
-			}	
-			closedir(dir);
-		}
-		dir = opendir(options->FiletransferDirectory2);
-		if(dir > 0) {
-			while ((dp=readdir(dir)) != NULL) {
-				if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
-					sprintf(filename,"%s/%s",options->FiletransferDirectory2,dp->d_name);
-					if(stat(filename,&status)==0)
-					{
-						if((time_oldest == 0 || status.st_mtime < time_oldest) && (status.st_size != 0) && !dlt_system_is_gz_file(filename)) {
-							time_oldest = status.st_mtime;
-							strcpy(runtime->filetransferFile,filename);
-							runtime->filetransferFilesize = status.st_size;
-
-							/* Compress the file if required */
-							if(options->FiletransferCompression2 > 0)
-							{
-								printf("Start compression: %s\n",runtime->filetransferFile);
-								if(dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel) < 0)
-									return;
-								stat(runtime->filetransferFile,&status);
-								runtime->filetransferFilesize = status.st_size;
-							}
-						}
-					}
-=======
-		if(file_stack_ptr > -1)
+		// Check if there were files before inotify was registered.
+		// TODO: This is awfully clumsy, review when modularizing
+		if(first_run && (file_stack_ptr1 < (MAX_FILE_QUEUE/2) - 4 && file_stack_ptr2 < (MAX_FILE_QUEUE/2) - 4))
 		{
-			sprintf(filename, "%s/%s", options->FiletransferDirectory1, file_stack[file_stack_ptr]);
-			if(stat(filename,&status)==0)
-			{
-				strcpy(runtime->filetransferFile,filename);
-				runtime->filetransferFilesize = status.st_size;
-			}
-			else
-			{
-				sprintf(filename, "%s/%s", options->FiletransferDirectory2, file_stack[file_stack_ptr]);
-				if(stat(filename,&status)==0)
-				{
-					strcpy(runtime->filetransferFile,filename);
-					runtime->filetransferFilesize = status.st_size;
->>>>>>> 917575d... First working version of inotify for file transfer.
+			char filename[256];
+			struct dirent *dp;
+			DIR *dir;
+			filename[0] = 0;
+			dir = opendir(options->FiletransferDirectory1);
+			if(dir > 0) {
+				while ((dp=readdir(dir)) != NULL) {
+					if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
+						sprintf(filename,"%s/%s",options->FiletransferDirectory1,dp->d_name);
+						if(stat(filename,&status)==0)
+						{
+							int plen = strlen(filename)+1;
+							file_stack_ptr1++;
+							file_stack1[file_stack_ptr1] = malloc(plen);
+							strcpy(file_stack1[file_stack_ptr1], filename);
+						}
+					}
 				}
+				closedir(dir);
 			}
-			memset(file_stack[file_stack_ptr--], 0, 256);
+			dir = opendir(options->FiletransferDirectory2);
+			if(dir > 0) {
+				while ((dp=readdir(dir)) != NULL) {
+					if(strcmp(dp->d_name,".")!=0 && strcmp(dp->d_name,"..")!=0) {
+						sprintf(filename,"%s/%s",options->FiletransferDirectory2,dp->d_name);
+						if(stat(filename,&status)==0)
+						{
+							int plen = strlen(filename)+1;
+							file_stack_ptr2++;
+							file_stack2[file_stack_ptr2] = malloc(plen);
+							strcpy(file_stack2[file_stack_ptr2], filename);
+						}
+					}
+				}
+				closedir(dir);
+			}
+			first_run = 0;
+		}
+
+		/* Select file to transfer */
+		if(file_stack_ptr1 > -1)
+		{
+			memset(runtime->filetransferFile, 0, 256);
+			/*
+			 * FIXME: filetransferfile is constant 256 len buffer
+			 * file_stack items are dynamically allocated. This
+			 * might overflow, (and will, eventually...)
+			 */
+			memcpy(runtime->filetransferFile, file_stack1[file_stack_ptr1], strlen(file_stack1[file_stack_ptr1]));
+			free(file_stack1[file_stack_ptr1--]);
+			if(options->FiletransferCompression1)
+			{
+				dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel);
+			}
+			struct stat st;
+			stat(runtime->filetransferFile, &st);
+			runtime->filetransferFilesize = st.st_size;
+		}
+		else if(file_stack_ptr2 > -1)
+		{
+			memset(runtime->filetransferFile, 0, 256);
+			memcpy(runtime->filetransferFile, file_stack2[file_stack_ptr2], strlen(file_stack2[file_stack_ptr2]));
+			free(file_stack2[file_stack_ptr2--]);
+			if(options->FiletransferCompression2)
+			{
+				dlt_system_compress_file(runtime->filetransferFile, options->FiletransferCompressionLevel);
+			}
+			struct stat st;
+			stat(runtime->filetransferFile, &st);
+			runtime->filetransferFilesize = st.st_size;
 		}
 
 		/* start filetransfer if file exists */
