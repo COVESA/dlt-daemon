@@ -1,10 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-<<<<<<< HEAD
 Version: 2.6.0
-=======
-Version: 2.5.0
->>>>>>> bafb569... Fix merge problems in LM-GENDLT-15
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -48,8 +44,34 @@ Changes in this release
 
 2.6.0
    
-   *
-   
+   * [GDLT-75] Use old style directory check on startup
+   * [GENDLT-21] Move mcnt from DltContextData to DltContext
+   * [GENDLT-15] Fixes to previous integrations from review
+   * [GENDLT-15] Safe re-allocations for databuffer
+   * [GENDLT-15] use the correct TEXTBUFSIZE
+   * [GENDLT-15] Optimize usege of strlen. Improved log level handling
+   * [GENDLT-15] Avoid buffer overrun with snprintf()
+   * [GENDLT-15] Check return value of dlt_user_log_write_start(_id) correctly
+   * [GENDLT-15] Reduce the number of applications if allocation fails
+   * [GENDLT-15] Make dlt_user_log_write_start inline
+   * [GENDLT-15] Improve errore checking in dlt_user_log_write_start_id
+   * [GENDLT-15] Use databussersize to avoid reallocations
+   * [GENDLT-15] Rename buffer size constant to avoid confusion
+   * [GENDLT-15] Better error handling when writing to FIFO
+   * [GENDLT-15] Remove duplicate msg initialization.
+   * [GENDLT-15] Optimize away multiple uses of strlen for one check
+   * [GDLT-4] Improve queue handling, allow for other messages while transferring a large file
+   * [GDLT-4] Limit maximum file queue to 256 files
+   * [GDLT-4] First working version of inotify for file transfer
+   * [GDLT-2] First test for filetransfer change
+   * [GDLT-2] Change to gzip wrapper format. Change file signature creation to account for file size, as inode number maybe duplicate when deleting and creating new files
+   * [GDLT-2] Fix bug while reading the options
+   * [GDLT-2] Allow for enabling/disabling compression for the separate directories
+   * [GDLT-2] Check if the file is already compressed
+   * [GDLT-2] Link with libz, fix a typo
+   * [GDLT-2] zlib based compression for dlt-system
+   * Cleaned some warnings generated from removing stale old code
+
 2.5.2
 
    * Change to Mozilla Public License Version 2.0
