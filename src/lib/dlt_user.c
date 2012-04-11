@@ -626,19 +626,25 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
             if ((dlt_user.dlt_ll_ts_num_entries%DLT_USER_CONTEXT_ALLOC_SIZE)==0)
             {
                 /* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
-                dlt_ll_ts_type *old;
-                old = dlt_user.dlt_ll_ts;
+                dlt_ll_ts_type *old_ll_ts;
+                uint32_t old_max_entries;
+
+                old_ll_ts = dlt_user.dlt_ll_ts;
+                old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
+
                 dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries/DLT_USER_CONTEXT_ALLOC_SIZE)+1)*DLT_USER_CONTEXT_ALLOC_SIZE;
                 dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
                                      dlt_user.dlt_ll_ts_max_num_entries);
                 if (dlt_user.dlt_ll_ts==0)
                 {
+                	dlt_user.dlt_ll_ts = old_ll_ts;
+                	dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
                     DLT_SEM_FREE();
                     return -1;
                 }
 
-                memcpy(dlt_user.dlt_ll_ts,old,sizeof(dlt_ll_ts_type)*dlt_user.dlt_ll_ts_num_entries);
-                free(old);
+                memcpy(dlt_user.dlt_ll_ts,old_ll_ts,sizeof(dlt_ll_ts_type)*dlt_user.dlt_ll_ts_num_entries);
+                free(old_ll_ts);
 
                 /* Initialize new entries */
                 for (i=dlt_user.dlt_ll_ts_num_entries;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
