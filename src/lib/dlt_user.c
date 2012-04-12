@@ -477,6 +477,11 @@ int dlt_register_app(const char *appid, const char * description)
             /* Terminate transmitted string with 0 */
             dlt_user.application_description[desc_len]='\0';
         }
+        else
+        {
+        	DLT_SEM_FREE();
+        	return -1;
+        }
     }
 
     DLT_SEM_FREE();
@@ -678,6 +683,12 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
         {
         	size_t desc_len = strlen(description);
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
+            if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description == 0)
+            {
+            	DLT_SEM_FREE();
+            	return -1;
+            }
+
             strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
 
             /* Terminate transmitted string with 0 */
@@ -1668,11 +1679,22 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
         if (dlt_user.dlt_ll_ts[i].injection_table == 0)
         {
             dlt_user.dlt_ll_ts[i].injection_table = (DltUserInjectionCallback*) malloc(sizeof(DltUserInjectionCallback));
+            if(dlt_user.dlt_ll_ts[i].injection_table == 0)
+            {
+            	DLT_SEM_FREE();
+            	return -1;
+            }
         }
         else
         {
             old = dlt_user.dlt_ll_ts[i].injection_table;
             dlt_user.dlt_ll_ts[i].injection_table = (DltUserInjectionCallback*) malloc(sizeof(DltUserInjectionCallback)*(j+1));
+            if(dlt_user.dlt_ll_ts[i].injection_table == 0)
+            {
+            	dlt_user.dlt_ll_ts[i].injection_table = old;
+            	DLT_SEM_FREE();
+            	return -1;
+            }
             memcpy(dlt_user.dlt_ll_ts[i].injection_table,old,sizeof(DltUserInjectionCallback)*j);
             free(old);
         }
@@ -2750,6 +2772,11 @@ int dlt_user_log_check_user_message(void)
                                             free(inject_buffer);
                                             inject_buffer = 0;
                                         }
+                                    }
+                                    else
+                                    {
+                                    	DLT_SEM_FREE();
+                                    	return -1;
                                     }
 
                                     break;

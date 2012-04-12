@@ -336,6 +336,11 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 		msg.databuffer = (uint8_t *) malloc(msg.datasize);
 		msg.databuffersize = msg.datasize;
 	}
+	if(msg.databuffer == 0)
+	{
+		dlt_message_free(&msg,0);
+		return -1;
+	}
 
 	memcpy(msg.databuffer  , &serviceID,sizeof(serviceID));
 	offset+=sizeof(uint32_t);
