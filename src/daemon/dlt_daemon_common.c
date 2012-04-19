@@ -291,10 +291,18 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         application = &(daemon->applications[daemon->num_applications-1]);
 
         dlt_set_id(application->apid,apid);
+        application->pid = pid;
         application->application_description = 0;
         application->num_contexts = 0;
+        application->user_handle = -1;
 
         new_application = 1;
+
+    } else {
+
+		snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Duplicate registration of AppId: %s\n",apid);
+		dlt_log(LOG_ERR, str);
+
     }
 
     /* Store application description and pid of application */
@@ -314,16 +322,28 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         }
     }
 
-    application->pid = pid;
+    if( application->user_handle != -1 )
+    {
+    	if( application->pid != pid )
+        {
+    		if ( close(application->user_handle) < 0 )
+    		{
+    			snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "close() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
+    		    dlt_log(LOG_ERR, str);
+    		}
 
-    application->user_handle = -1;
+    		application->user_handle = -1;
+    		application->pid = pid;
+        }
+    }
 
-    if (pid)
+    /* open user pipe only if it is not yet opened */
+    if (application->user_handle==-1 && pid!=0)
     {
         sprintf(filename,"%s/dlt%d",DLT_USER_DIR,application->pid);
 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
-        if (dlt_user_handle <0)
+        if ( dlt_user_handle < 0 )
         {
             snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
             dlt_log(LOG_ERR, str);
