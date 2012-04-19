@@ -2634,7 +2634,15 @@ int dlt_user_log_check_user_message(void)
     DltUserControlMsgInjection *usercontextinj;
     DltUserControlMsgLogState *userlogstate;
     unsigned char *userbuffer;
-    unsigned char *inject_buffer;
+
+    /* For delayed calling of injection callback, to avoid deadlock */
+    DltUserInjectionCallback 	delayed_injection_callback;
+    unsigned char				*delayed_inject_buffer = 0;
+    uint32_t					delayed_inject_data_length = 0;
+
+    /* Ensure that callback is null before searching for it */
+    delayed_injection_callback.injection_callback = 0;
+    delayed_injection_callback.service_id = 0;
 
     if (dlt_user.dlt_user_handle!=-1)
     {
@@ -2731,7 +2739,6 @@ int dlt_user_log_check_user_message(void)
 
                     usercontextinj = (DltUserControlMsgInjection*) (receiver->buf+sizeof(DltUserHeader));
                     userbuffer = (unsigned char*) (receiver->buf+sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection));
-                    inject_buffer = 0;
 
                     if (userbuffer!=0)
                     {
@@ -2752,39 +2759,30 @@ int dlt_user_log_check_user_message(void)
                                 if ((dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table) &&
                                         (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].service_id == usercontextinj->service_id))
                                 {
-                                    /* callback available, so prepare data, then call it */
-                                    inject_buffer = malloc(usercontextinj->data_length_inject);
-                                    if (inject_buffer!=0)
-                                    {
-                                        /* copy from receiver to inject_buffer */
-                                        memcpy(inject_buffer, userbuffer, usercontextinj->data_length_inject);
+                                	/* Prepare delayed injection callback call */
+									if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback!=0)
+									{
+										delayed_injection_callback.injection_callback = dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback;
+										delayed_injection_callback.service_id = usercontextinj->service_id;
+										delayed_inject_data_length = usercontextinj->data_length_inject;
+										delayed_inject_buffer = malloc(delayed_inject_data_length);
+										if(delayed_inject_buffer != 0) {
+											memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
+										}
 
-                                        /* call callback */
-                                        if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback!=0)
-                                        {
-                                            // printf("Got injection(%d), length=%d, '%s' \n", usercontext->service_id, usercontext->data_length_inject, inject_buffer);
-                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback(
-                                                usercontextinj->service_id, inject_buffer, usercontextinj->data_length_inject);
-                                        }
-
-                                        if (inject_buffer!=0)
-                                        {
-                                            free(inject_buffer);
-                                            inject_buffer = 0;
-                                        }
-                                    }
-                                    else
-                                    {
-                                    	DLT_SEM_FREE();
-                                    	return -1;
-                                    }
-
+									}
                                     break;
                                 }
                             }
                         }
 
                         DLT_SEM_FREE();
+
+                        /* Delayed injection callback call */
+                        if(delayed_inject_buffer != 0 && delayed_injection_callback.injection_callback != 0) {
+                        	delayed_injection_callback.injection_callback(delayed_injection_callback.service_id, delayed_inject_buffer, delayed_inject_data_length);
+                        	free(delayed_inject_buffer);
+                        }
 
                         /* keep not read data in buffer */
                         if (dlt_receiver_remove(receiver,(sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)+usercontextinj->data_length_inject))==-1)
