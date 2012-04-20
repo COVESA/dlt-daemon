@@ -294,12 +294,11 @@ void do_logging(s_thread_data *data)
 	sprintf(ctid,"%.2x", rand() & 0x0000ffff);
 	sprintf(ctid_name, "Child %s in dlt-test-multi-process", ctid);
 	DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
-	data->ctx = mycontext;
 
 	int msgs_left = data->params.nmsgs;
 	while(msgs_left-- > 0)
 	{
-		DLT_LOG(data->ctx, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
+		DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
 		usleep(mksleep_time(data->params.delay, data->params.delay_fudge));
 	}
 	DLT_UNREGISTER_CONTEXT(mycontext);
