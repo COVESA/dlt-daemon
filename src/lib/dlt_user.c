@@ -163,7 +163,7 @@ int dlt_init(void)
         /* return 0; */ /* removed to prevent error, when FIFO already exists */
     }
 
-    dlt_user.dlt_user_handle = open(filename, O_RDWR);
+    dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);
     if (dlt_user.dlt_user_handle == -1)
     {
         sprintf(str,"Loging disabled, FIFO user %s cannot be opened!\n",filename);
@@ -173,7 +173,7 @@ int dlt_init(void)
     }
 
     /* open DLT output FIFO */
-    dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK);
+    dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
         sprintf(str,"Loging disabled, FIFO %s cannot be opened with open()!\n",DLT_USER_FIFO);
