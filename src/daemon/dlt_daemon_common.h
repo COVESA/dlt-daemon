@@ -204,6 +204,14 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
  */
 int dlt_daemon_applications_save(DltDaemon *daemon,const char *filename, int verbose);
 /**
+ * Invalidate all applications fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,int fd,int verbose);
+/**
  * Clear all applications in internal application management
  * @param daemon pointer to dlt daemon structure
  * @param verbose if set to true verbose information is printed out.
@@ -242,6 +250,14 @@ int dlt_daemon_context_del(DltDaemon *daemon, DltDaemonContext* context, int ver
  * @return Pointer to context, null pointer on error or not found
  */
 DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon,char *apid,char *ctid,int verbose);
+/**
+ * Invalidate all contexts fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,int fd,int verbose);
 /**
  * Clear all contexts in internal context management
  * @param daemon pointer to dlt daemon structure

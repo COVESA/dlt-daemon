@@ -208,6 +208,28 @@ int dlt_daemon_free(DltDaemon *daemon,int verbose)
     return 0;
 }
 
+int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,int fd,int verbose)
+{
+    int i;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return -1;
+    }
+
+    for (i=0; i<daemon->num_applications; i++)
+    {
+        if (daemon->applications[i].user_handle==fd)
+        {
+        	daemon->applications[i].user_handle = 0;
+        }
+    }
+
+    return 0;
+}
+
 int dlt_daemon_applications_clear(DltDaemon *daemon,int verbose)
 {
     int i;
@@ -348,6 +370,11 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
             snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
             dlt_log(LOG_ERR, str);
         } /* if */
+
+        /* check if file file descriptor was already used, and make it invalid if it is reused */
+        /* This prevents sending messages to wrong file descriptor */
+        dlt_daemon_applications_invalidate_fd(daemon,dlt_user_handle,verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon,dlt_user_handle,verbose);
 
         application->user_handle = dlt_user_handle;
     }
@@ -600,7 +627,7 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,char *apid,char *ctid
     if (context->context_description)
     {
         free(context->context_description);
-        context->context_description=0; // opt mb: moved inside the if clause (very minor opt)
+        context->context_description=0;
     }
 
     if (description)
@@ -705,6 +732,28 @@ DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon,char *apid,char *cti
     dlt_set_id(context.ctid,ctid);
 
     return (DltDaemonContext*)bsearch(&context,daemon->contexts,daemon->num_contexts,sizeof(DltDaemonContext),dlt_daemon_cmp_apid_ctid);
+}
+
+int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,int fd,int verbose)
+{
+    int i;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return -1;
+    }
+
+    for (i=0; i<daemon->num_contexts; i++)
+    {
+        if (daemon->contexts[i].user_handle==fd)
+        {
+        	daemon->contexts[i].user_handle = 0;
+        }
+    }
+
+    return 0;
 }
 
 int dlt_daemon_contexts_clear(DltDaemon *daemon,int verbose)
