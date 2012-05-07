@@ -210,7 +210,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceMaxSize = 0;
 	daemon_local->flags.loggingMode = 0;
 	daemon_local->flags.loggingLevel = 6;
-	strncpy(daemon_local->flags.loggingFilename,"/tmp/dlt.log",sizeof(daemon_local->flags.loggingFilename));
+	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename));
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -974,6 +974,12 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
         dlt_log(LOG_ERR, "accept() failed!\n");
         return -1 ;
     }
+
+    /* check if file file descriptor was already used, and make it invalid if it is reused */
+    /* This prevents sending messages to wrong file descriptor */
+    dlt_daemon_applications_invalidate_fd(daemon,in_sock,verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon,in_sock,verbose);
+
     //sprintf("str,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
     //dlt_log(str);
     FD_SET(in_sock, &(daemon_local->master)); /* add to master set */
