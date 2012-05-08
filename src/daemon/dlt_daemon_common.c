@@ -2221,6 +2221,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
     }
     else
     {
+        DLT_DAEMON_SEM_LOCK();
         /* Store message in history buffer */
         if (dlt_buffer_push3(&(daemon->client_ringbuffer),
                             msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
@@ -2228,9 +2229,11 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
                             0, 0
                            )<0)
 		{
+        	DLT_DAEMON_SEM_FREE();
 			dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
 			return;
 		}
+        DLT_DAEMON_SEM_FREE();
     }
 }
 
