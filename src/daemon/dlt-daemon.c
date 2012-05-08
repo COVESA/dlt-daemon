@@ -1855,6 +1855,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             /* Message was not sent to client, so store it in client ringbuffer */
             if (sent==0)
             {
+            	DLT_DAEMON_SEM_LOCK();
                 if (dlt_buffer_push3(&(daemon->client_ringbuffer),
                                     daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
                                     daemon_local->msg.databuffer,daemon_local->msg.datasize,
@@ -1863,6 +1864,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				{
 					dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
 				}
+                DLT_DAEMON_SEM_FREE();
             }
 
         }
