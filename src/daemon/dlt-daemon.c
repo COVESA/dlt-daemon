@@ -2240,7 +2240,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
                     }
                     ret=write(j,data,length);
 
-                    DLT_DAEMON_SEM_LOCK();
+                    DLT_DAEMON_SEM_FREE();
                 }
             } /* if */
         } /* for */

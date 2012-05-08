@@ -361,6 +361,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 				DLT_STRING("for File:"),
 				DLT_STRING(filename)
 			);
+			fclose(file);
 			return DLT_FILETRANSFER_ERROR_FILE_DATA;
 		}
 
