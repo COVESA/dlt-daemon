@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.6.0
+Version: 2.6.1
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -41,6 +41,20 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+2.6.1
+
+   * Commented the dlt_log info of buffer size information out
+   * Corrected the default values of dlt.conf
+   * Added define statement for initial value of file descriptor (-1). Updated the user_handle of the daemon and user
+   * [GDLT-86] Fixed dlt_free uses absolute file path /tmp and not DLT_USER_DIR define
+   * [D4099] Check for duplicate file handles, and clean them up if found
+   * [GDLT-85] Pipes opened multiple times for the same application pid fixed.
+   * [GDLT-82] Child process inherits file descriptors openend by their parent fixed
+   * [GDLT-84] Fixed calling of DLT_LOG injection callback
+   * [GDLT-70] Check for malloc failures and return errors where applicable.
+   * [GDLT-47] Avoid discarding old contexts if no new memory can be allocated when resizing contexts array.
+   * [GDLT-69] Fixed bug in dlt-test-multi-process shares context between threads
+   * [GDLT-3] Fixed missing semaphore around dlt_buffer_push3
 
 2.6.0
    
