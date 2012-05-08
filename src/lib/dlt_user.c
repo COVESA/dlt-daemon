@@ -384,7 +384,7 @@ int dlt_free(void)
 
     if (dlt_user.dlt_user_handle!=-1)
     {
-        sprintf(filename,"/tmp/dlt%d",getpid());
+        sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
 
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle=-1;
