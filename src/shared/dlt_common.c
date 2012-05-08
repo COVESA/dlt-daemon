@@ -2371,8 +2371,8 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 	// clear memory
 	memset(buf->mem,0,buf->size);
     
-	snprintf(str,sizeof(str),"Buffer: Size %d bytes\n",buf->size);
-	dlt_log(LOG_INFO, str);
+	//snprintf(str,sizeof(str),"Buffer: Size %d bytes\n",buf->size);
+	//dlt_log(LOG_INFO, str);
 
 	return 0; /* OK */
 }
