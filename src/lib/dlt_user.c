@@ -164,7 +164,7 @@ int dlt_init(void)
     }
 
     dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);
-    if (dlt_user.dlt_user_handle == -1)
+    if (dlt_user.dlt_user_handle == DLT_FD_INIT)
     {
         sprintf(str,"Loging disabled, FIFO user %s cannot be opened!\n",filename);
         dlt_log(LOG_WARNING, str);
@@ -264,7 +264,7 @@ int dlt_init_common(void)
 	dlt_user.log_state = -1;
 
     dlt_user.dlt_log_handle=-1;
-    dlt_user.dlt_user_handle=-1;
+    dlt_user.dlt_user_handle=DLT_FD_INIT;
 
     dlt_set_id(dlt_user.ecuID,DLT_USER_DEFAULT_ECU_ID);
     dlt_set_id(dlt_user.appID,"");
@@ -382,12 +382,12 @@ int dlt_free(void)
         pthread_cancel(dlt_receiverthread_handle);
     }
 
-    if (dlt_user.dlt_user_handle!=-1)
+    if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
         sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
 
         close(dlt_user.dlt_user_handle);
-        dlt_user.dlt_user_handle=-1;
+        dlt_user.dlt_user_handle=DLT_FD_INIT;
 
         unlink(filename);
     }
@@ -2644,7 +2644,7 @@ int dlt_user_log_check_user_message(void)
     delayed_injection_callback.injection_callback = 0;
     delayed_injection_callback.service_id = 0;
 
-    if (dlt_user.dlt_user_handle!=-1)
+    if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
         while (1)
         {

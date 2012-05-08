@@ -223,7 +223,7 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,int fd,int verbose)
     {
         if (daemon->applications[i].user_handle==fd)
         {
-        	daemon->applications[i].user_handle = 0;
+        	daemon->applications[i].user_handle = DLT_FD_INIT;
         }
     }
 
@@ -316,7 +316,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         application->pid = pid;
         application->application_description = 0;
         application->num_contexts = 0;
-        application->user_handle = -1;
+        application->user_handle = DLT_FD_INIT;
 
         new_application = 1;
 
@@ -344,7 +344,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         }
     }
 
-    if( application->user_handle != -1 )
+    if( application->user_handle != DLT_FD_INIT )
     {
     	if( application->pid != pid )
         {
@@ -354,13 +354,13 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     		    dlt_log(LOG_ERR, str);
     		}
 
-    		application->user_handle = -1;
+    		application->user_handle = DLT_FD_INIT;
     		application->pid = pid;
         }
     }
 
     /* open user pipe only if it is not yet opened */
-    if (application->user_handle==-1 && pid!=0)
+    if (application->user_handle==DLT_FD_INIT && pid!=0)
     {
         sprintf(filename,"%s/dlt%d",DLT_USER_DIR,application->pid);
 
@@ -405,10 +405,10 @@ int dlt_daemon_application_del(DltDaemon *daemon, DltDaemonApplication *applicat
     if (daemon->num_applications>0)
     {
         /* Check if user handle is open; if yes, close it */
-        if (application->user_handle!=-1)
+        if (application->user_handle >= DLT_FD_MINIMUM)
         {
             close(application->user_handle);
-            application->user_handle=-1;
+            application->user_handle=DLT_FD_INIT;
         }
 
         /* Free description of application to be deleted */
@@ -749,7 +749,7 @@ int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,int fd,int verbose)
     {
         if (daemon->contexts[i].user_handle==fd)
         {
-        	daemon->contexts[i].user_handle = 0;
+        	daemon->contexts[i].user_handle = DLT_FD_INIT;
         }
     }
 
@@ -1028,7 +1028,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context,i
         {
             /* Close connection */
             close(context->user_handle);
-            context->user_handle=0;
+            context->user_handle=DLT_FD_INIT;
         }
     }
 
@@ -1064,7 +1064,7 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon,DltDaemonApplication *app,i
         {
             /* Close connection */
             close(app->user_handle);
-            app->user_handle=0;
+            app->user_handle=DLT_FD_INIT;
         }
     }
 
@@ -1327,7 +1327,7 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltMessag
 			{
 				/* Close connection */
 				close(context->user_handle);
-				context->user_handle=0;
+				context->user_handle=DLT_FD_INIT;
 			}
 			dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
 		}
@@ -1376,7 +1376,7 @@ void dlt_daemon_control_set_log_level(int sock, DltDaemon *daemon, DltMessage *m
         old_log_level = context->log_level;
         context->log_level = req->log_level; /* No endianess conversion necessary*/
 
-        if ((context->user_handle!=0) &&
+        if ((context->user_handle >= DLT_FD_MINIMUM) &&
                 (dlt_daemon_user_send_log_level(daemon, context, verbose)==0))
         {
             dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_OK,  verbose);
@@ -1424,7 +1424,7 @@ void dlt_daemon_control_set_trace_status(int sock, DltDaemon *daemon, DltMessage
         old_trace_status = context->trace_status;
         context->trace_status = req->log_level;   /* No endianess conversion necessary */
 
-        if ((context->user_handle!=0) &&
+        if ((context->user_handle >= DLT_FD_MINIMUM ) &&
                 (dlt_daemon_user_send_log_level(daemon, context, verbose)==0))
         {
             dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_OK,  verbose);
@@ -2297,7 +2297,7 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
             if ((context->log_level == DLT_LOG_DEFAULT) ||
                     (context->trace_status == DLT_TRACE_STATUS_DEFAULT))
             {
-                if (context->user_handle!=0)
+                if (context->user_handle >= DLT_FD_MINIMUM)
                 {
                     if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
                     {
@@ -2327,7 +2327,7 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
 
         if (app)
         {
-			if (app->user_handle!=0)
+			if (app->user_handle >= DLT_FD_MINIMUM)
 			{
 				if (dlt_daemon_user_send_log_state(daemon, app, verbose)==-1)
 				{

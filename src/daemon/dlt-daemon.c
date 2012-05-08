@@ -1582,7 +1582,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         dlt_message_free(&msg, verbose);
     }
 
-    if (context->user_handle!=0)
+    if (context->user_handle >= DLT_FD_MINIMUM)
     {
         /* This call also replaces the default values with the values defined for default */
         if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
@@ -2125,8 +2125,7 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLo
                     context->trace_status = usercontext->trace_status;   /* No endianess conversion necessary */
 
                     /* The folowing function sends also the trace status */
-                    if ((context->user_handle==0) ||
-                            (dlt_daemon_user_send_log_level(daemon, context, verbose)!=0))
+                    if (context->user_handle >= DLT_FD_MINIMUM && dlt_daemon_user_send_log_level(daemon, context, verbose)!=0)
                     {
                         context->log_level = old_log_level;
                         context->trace_status = old_trace_status;

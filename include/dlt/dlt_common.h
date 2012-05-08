@@ -175,6 +175,13 @@
  */
 #define DLT_DAEMON_TCP_PORT 3490
 
+
+/* Initi value for file descritpor */
+#define DLT_FD_INIT -1
+
+/* Minimum value for a file descriptor except the POSIX Standards: stdin=0, stdout=1, stderr=2 */
+#define DLT_FD_MINIMUM 3
+
 /**
  * The size of a DLT ID
  */
