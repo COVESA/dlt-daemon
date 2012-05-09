@@ -81,6 +81,8 @@ endif(WITH_DLTTEST)
 if(WITH_DLT_SHM_ENABLE)
     add_definitions( -DDLT_SHM_ENABLE)
 endif(WITH_DLT_SHM_ENABLE)
+
+add_definitions( -D_GNU_SOURCE )
    
 if(WITH_GPROF)
   SET(CMAKE_C_FLAGS "-pg")
