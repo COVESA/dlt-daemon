@@ -14,7 +14,9 @@
 # @licence end@
 ########
 
-set(dlt_system_SRCS dlt-system dlt-system-log)
+set(dlt_system_SRCS dlt-system dlt-system-options dlt-system-process-handling 
+	dlt-system-filetransfer dlt-system-logfile dlt-system-processes dlt-system-shell
+	dlt-system-syslog)
 add_executable(dlt-system ${dlt_system_SRCS})
 target_link_libraries(dlt-system dlt z)
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)

@@ -13,23 +13,23 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de> BMW 2011-2012
+ * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de> BMW 2012
  *
- * \file dlt-system_cfg.h
+ * \file dlt-system-logfile.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
 
-
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system_cfg.h                                              **
+**  SRC-MODULE: dlt-system-shell.c                                                  **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
+**  AUTHOR    : Lassi Marttala <lassi.lm.marttala@partner.bmw.de>             **
+**              Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -47,22 +47,58 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
+**  lm          Lassi Marttala             BMW                                **
 *******************************************************************************/
+#include "dlt.h"
+#include "dlt-system.h"
 
-/*******************************************************************************
-**                      Revision Control History                              **
-*******************************************************************************/
+#include <string.h>
+#include <stdlib.h>
 
-#define DEFAULT_CONFIGURATION_FILE "/etc/dlt-system.conf"
-#define DEFAULT_APPLICATION_ID "SYS"
+DLT_IMPORT_CONTEXT(dltsystem)
+DLT_DECLARE_CONTEXT(shellContext)
 
-#define DEFAULT_SYSLOG_CONTEXT_ID "SYSL"
-#define DEFAULT_SYSLOG_PORT 47111
+int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t length)
+{
+	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
+			DLT_STRING("dlt-system-shell, injection callback"));
+	char text[1024];
+    int syserr = 0;
 
-#define DEFAULT_FILETRANSFER_DIRECTORY "/tmp/filetransfer"
-#define DEFAULT_FILETRANSFER_CONTEXT_ID "FILE"
-#define DEFAULT_FILETRANSFER_TIME_STARTUP 30
-#define DEFAULT_FILETRANSFER_TIME_DELAY	10
-#define DEFAULT_FILETRANSFER_TIMEOUT_BETWEEN_LOGS	10
-#define DEFAULT_LOG_PROCESSES_CONTEXT_ID "PROC"
+	strncpy(text,data,length);
+
+	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
+			DLT_STRING("dlt-system-shell, injection injection id:"),
+			DLT_UINT32(service_id));
+	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
+			DLT_STRING("dlt-system-shell, injection data:"),
+			DLT_STRING(text));
+
+	switch(service_id)
+	{
+		case 0x1001:
+			if((syserr = system(text)) != 0)
+			{
+				DLT_LOG(dltsystem,DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-shell, abnormal exit status."),
+						DLT_STRING(text),
+						DLT_INT(syserr));
+			}
+			break;
+		default:
+			DLT_LOG(dltsystem,DLT_LOG_ERROR,
+					DLT_STRING("dlt-system-shell, unknown command received."),
+					DLT_UINT32(service_id),
+					DLT_STRING(text));
+			break;
+	}
+    return 0;
+}
+
+void init_shell()
+{
+	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
+			DLT_STRING("dlt-system-shell, register callback"));
+	DLT_REGISTER_CONTEXT(shellContext,"CMD","Execute Shell commands");
+	DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001, dlt_shell_injection_callback);
+}

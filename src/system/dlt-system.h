@@ -13,13 +13,12 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de> BMW 2011-2012
+ * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de> BMW 2012
  *
- * \file dlt-system.h
+ * \file dlt-system.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -29,7 +28,7 @@
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
+**  AUTHOR    : Lassi Marttala <lassi.lm.marttala@partner.bmw.de>             **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -47,80 +46,121 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
+**  lm          Lassi Marttala             BMW                                **
 *******************************************************************************/
 
-/*******************************************************************************
-**                      Revision Control History                              **
-*******************************************************************************/
+#ifndef DLT_SYSTEM_H_
+#define DLT_SYSTEM_H_
 
-#ifndef DLT_SYSTEM_H
-#define DLT_SYSTEM_H
+// DLT related includes.
+#include "dlt.h"
+#include "dlt_common.h"
+
+// Constants
+#define DEFAULT_CONF_FILE "/etc/dlt-system.conf"
+#define DLT_SYSTEM_LOG_FILE_MAX 32
+#define DLT_SYSTEM_LOG_DIRS_MAX 32
+#define DLT_SYSTEM_LOG_PROCESSES_MAX 32
 
 #define DLT_SYSTEM_MODE_OFF 0
 #define DLT_SYSTEM_MODE_STARTUP 1
 #define DLT_SYSTEM_MODE_REGULAR 2
 
-#define DLT_SYSTEM_LOG_FILE_MAX 32
-#define DLT_SYSTEM_LOG_PROCESSES_MAX 32
+#define MAX_LINE 1024
+
+#define MAX_THREADS 8
+
+/**
+ * Configuration structures.
+ * Please see dlt-system.conf for explanation of all the options.
+ */
+
+// Command line options
+typedef struct {
+	char 	*ConfigurationFileName;
+	int 	Daemonize;
+} DltSystemCliOptions;
+
+// Configuration file options
+typedef struct {
+	int  	Enable;
+	char 	*ContextId;
+	int  	Port;
+} SyslogOptions;
 
 typedef struct {
-	char ConfigurationFile[256];
-	char ApplicationId[256];
-	int  daemonise;
+	int  Enable;
+	char *ContextId;
+	int  TimeStartup;
+	int  TimeDelay;
+	int  TimeoutBetweenLogs;
+	char *TempDir;
 
-	int  SyslogEnable;					/*# Enable the Syslog Adapter (Default: 0)*/
-	char SyslogContextId[256];			/*# The Context Id of the syslog adapter (Default: SYSL)*/
-	int  SyslogPort;					/*# The UDP port opened by DLT system mamager to receive system logs (Default: 47111)*/
-	
-	int  FiletransferEnable;			/*# Enable the Filetransfer (Default: 0)*/
-	int  FiletransferCompression1;		/*# Enable the Filetransfer compression for dir 1 (Default: 1)*/
-	int  FiletransferCompression2;		/*# Enable the Filetransfer compression for dir 2 (Default: 0)*/
-	int  FiletransferCompressionLevel;	/*# Set the compression level between 0-9 (Default: 5)*/
-	char FiletransferDirectory1[256];	/*# Directory which contains files to be transfered over DLT (Default: /tmp/filetransfer)# Files are deleted after Filetransfer is finished and after TimeDelay expired*/
-	char FiletransferDirectory2[256];
-	char FiletransferContextId[256];	/*# The Context Id of the filetransfer (Default: FILE)*/
-	int  FiletransferTimeStartup;		/*# Time after startup of dlt-system when first file is transfered (Default: 30)# Time in seconds*/
-	int  FiletransferTimeDelay;			/*# Time to wait when transfered file is deleted and next file transfer starts (Default: 10)# Time in seconds*/
-	int  FiletransferTimeoutBetweenLogs;/*# Waits a period of time between two file transfer logs of a single file to DLT to ensure that the FIFO of DLT is not flooded.*/
-
-	/*# Log different files
-	# Mode: 0 = off, 1 = startup only, 2 = regular
-	# TimeDelay: If mode regular is set, time delay is the number of seconds for next sent
-	*/
-	int  LogFileEnable;					/*# Enable the logging of files (Default: 0)*/
-	int  LogFileNumber;
-	char LogFileFilename[DLT_SYSTEM_LOG_FILE_MAX][256];
-	int  LogFileMode[DLT_SYSTEM_LOG_FILE_MAX];
-	int  LogFileTimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
-	char LogFileContextId[DLT_SYSTEM_LOG_FILE_MAX][256];
-
-	int  LogProcessesEnable;			/*# Enable the logging of processes (Default: 0)*/
-	char LogProcessesContextId[256];	/*# The Context Id of the kernel version (Default: PROC)*/
-
-	/*# Log different processes
-	# Name: * = all process, X=alternative name (must correspind to /proc/X/cmdline
-	# Filename: the filename in the subdirectory /proc/processid/
-	# Mode: 0 = off, 1 = startup only, 2 = regular
-	# TimeDelay: If mode regular is set, time delay is the number of seconds for next sent
-	*/
-	int  LogProcessNumber;
-	char LogProcessName[DLT_SYSTEM_LOG_PROCESSES_MAX][256];
-	char LogProcessFilename[DLT_SYSTEM_LOG_PROCESSES_MAX][256];
-	int  LogProcessMode[DLT_SYSTEM_LOG_PROCESSES_MAX];
-	int  LogProcessTimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];
-} DltSystemOptions;
+	// Variable number of file transfer dirs
+	int  Count;
+	int  Compression[DLT_SYSTEM_LOG_DIRS_MAX];
+	int  CompressionLevel[DLT_SYSTEM_LOG_DIRS_MAX];
+	char *Directory[DLT_SYSTEM_LOG_DIRS_MAX];
+} FiletransferOptions;
 
 typedef struct {
-	int  timeStartup;	/* time in seconds since startup of dlt-system */
-	int  timeFiletransferDelay;	/* time in seconds to start next filetransfer */
-	char filetransferFile[256];
-	long int filetransferFilesize;
-	int  timeLogFileDelay[DLT_SYSTEM_LOG_FILE_MAX];	/* time in seconds to start next file log */
-	int  timeLogProcessDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];	/* time in seconds to start next process log */
-	int	 filetransferRunning; 	/* 0 = stooped, 1 = running */
-	int  filetransferCountPackages; /* number of packets to be transfered */
-	int  filetransferLastSentPackage; /* last packet sent starting from 1 */
-} DltSystemRuntime;
+	int  Enable;
 
-#endif /* DLT_SYSTEM_H */
+	// Variable number of files to transfer
+	int  Count;
+	char *ContextId[DLT_SYSTEM_LOG_FILE_MAX];
+	char *Filename[DLT_SYSTEM_LOG_FILE_MAX];
+	int  Mode[DLT_SYSTEM_LOG_FILE_MAX];
+	int  TimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
+} LogFileOptions;
+
+typedef struct {
+	int  Enable;
+	char *ContextId;
+
+	// Variable number of processes
+	int  Count;
+	char *Name[DLT_SYSTEM_LOG_PROCESSES_MAX];
+	char *Filename[DLT_SYSTEM_LOG_PROCESSES_MAX];
+	int  Mode[DLT_SYSTEM_LOG_PROCESSES_MAX];
+	int  TimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];
+} LogProcessOptions;
+
+typedef struct {
+	char *ApplicationId;
+	SyslogOptions 			Syslog;
+	FiletransferOptions 	Filetransfer;
+	LogFileOptions 			LogFile;
+	LogProcessOptions		LogProcesses;
+} DltSystemConfiguration;
+
+typedef struct {
+	pthread_t threads[MAX_THREADS];
+	int count;
+	int shutdown;
+} DltSystemThreads;
+
+/**
+ * Forward declarations for the whole application
+ */
+
+// In dlt-system-options.c
+int read_command_line(DltSystemCliOptions *options, int argc, char *argv[]);
+int read_configuration_file(DltSystemConfiguration *config, char *file_name);
+
+// In dlt-process-handling.c
+int daemonize();
+void start_threads(DltSystemConfiguration *config);
+void join_threads();
+void dlt_system_signal_handler(int sig);
+void register_with_dlt(DltSystemConfiguration *config);
+
+// Thread initiators:
+void init_shell();
+void start_syslog();
+void start_filetransfer(DltSystemConfiguration *conf);
+void start_logfile(DltSystemConfiguration *conf);
+void start_logprocess(DltSystemConfiguration *conf);
+
+
+#endif /* DLT_SYSTEM_H_ */
