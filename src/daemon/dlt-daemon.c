@@ -534,16 +534,6 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP,  dlt_daemon_signal_handler); /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT,  dlt_daemon_signal_handler);
-
-	/* init offline trace */
-	if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0]) 
-	{
-		if (dlt_offline_trace_init(&(daemon_local->offlineTrace),daemon_local->flags.offlineTraceDirectory,daemon_local->flags.offlineTraceFileSize,daemon_local->flags.offlineTraceMaxSize)==-1)
-		{
-			dlt_log(LOG_ERR,"Could not initialize offline trace\n");
-			return -1;
-		}
-	}
 	
     return 0;
 }
@@ -564,6 +554,16 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     	dlt_log(LOG_ERR,"Could not initialize daemon data\n");
 		return -1;
     }
+
+	/* init offline trace */
+	if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0])
+	{
+		if (dlt_offline_trace_init(&(daemon_local->offlineTrace),daemon_local->flags.offlineTraceDirectory,daemon_local->flags.offlineTraceFileSize,daemon_local->flags.offlineTraceMaxSize)==-1)
+		{
+			dlt_log(LOG_ERR,"Could not initialize offline trace\n");
+			return -1;
+		}
+	}
 
     /* Set ECU id of daemon */
     if (daemon_local->flags.evalue[0])
