@@ -74,7 +74,7 @@ int dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
     }
     if (strftime(outstr, sizeof(outstr),"%Y%m%d_%H%M%S", tmp) == 0) {
     }
-	sprintf(trace->filename,"%s/entrynav_%s.dlt",trace->directory,outstr);
+	sprintf(trace->filename,"%s/dlt_offlinetrace_%s.dlt",trace->directory,outstr);
 
     /* open DLT output file */
 	trace->ohandle = open(trace->filename,O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
