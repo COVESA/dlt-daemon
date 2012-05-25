@@ -313,7 +313,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         application = &(daemon->applications[daemon->num_applications-1]);
 
         dlt_set_id(application->apid,apid);
-        application->pid = pid;
+        application->pid = 0;
         application->application_description = 0;
         application->num_contexts = 0;
         application->user_handle = DLT_FD_INIT;
@@ -346,7 +346,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
 
     if( application->user_handle != DLT_FD_INIT )
     {
-    	if( application->pid != pid )
+    	if( application->pid != 0 )
         {
     		if ( close(application->user_handle) < 0 )
     		{
@@ -355,14 +355,14 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     		}
 
     		application->user_handle = DLT_FD_INIT;
-    		application->pid = pid;
+    		application->pid = 0;
         }
     }
 
     /* open user pipe only if it is not yet opened */
     if (application->user_handle==DLT_FD_INIT && pid!=0)
     {
-        sprintf(filename,"%s/dlt%d",DLT_USER_DIR,application->pid);
+        sprintf(filename,"%s/dlt%d",DLT_USER_DIR,pid);
 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if ( dlt_user_handle < 0 )
@@ -376,6 +376,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         dlt_daemon_applications_invalidate_fd(daemon,dlt_user_handle,verbose);
         dlt_daemon_contexts_invalidate_fd(daemon,dlt_user_handle,verbose);
 
+        application->pid = pid;
         application->user_handle = dlt_user_handle;
     }
 
