@@ -42,7 +42,9 @@ Christian Muck (christian.muck@bmw.de)
 Changes in this release
 -----------------------
 2.6.2
-   * 
+
+   * Changed name of offline trace file name
+   * [GDLT-88] Fixed wrong initalization order using offline trace functionality
 
 2.6.1
 
