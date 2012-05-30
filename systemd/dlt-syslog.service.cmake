@@ -1,11 +1,18 @@
-#  This file is for starting dlt-adaptor-udp
+#######
+# Dlt - Diagnostic Log and Trace
+# @licence make begin@
 #
-#  For more informations about starting options of dlt-daemon use the command "dlt-adaptor-udp -h".
+# Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+# 
+# Contributions are licensed to the GENIVI Alliance under one or more
+# Contribution License Agreements.
+# 
+# This Source Code Form is subject to the terms of the
+# Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
+# this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-#  basic.target A special target unit covering early boot-up.
-#  Usually this should pull-in all sockets, mount points, swap devices and 
-#  other basic initialization necessary for the general purpose daemons. 
-#  Most normal daemons should have dependencies of type After and Requires on this unit
+# @licence end@
+########
 
 [Unit]
 Description=DLT Syslog Adapter

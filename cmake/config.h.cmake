@@ -2,6 +2,7 @@
 // cmakedefine01 <variable> sets #define <variable> [0|1] if variable is defined in cmake
 // variable is set by CHECK_INCLUDE_FILES and CHECK_FUNCTION_EXISTS
 
+#cmakedefine01 HAVE_SYSTEMD_H
 #cmakedefine01 HAVE_ARPAINET_H
 #cmakedefine01 HAVE_FCNTL_H
 #cmakedefine01 HAVE_FLOAT_H
@@ -16,6 +17,7 @@
 #cmakedefine01 HAVE_SYSIOCTL_H
 #cmakedefine01 HAVE_SYSSOCKET_H
 #cmakedefine01 HAVE_SYSTIME_H
+#cmakedefine01 HAVE_SYSTEMD_H
 #cmakedefine01 HAVE_UNISTD_H
 #cmakedefine01 HAVE_SYSIPC_H
 #cmakedefine01 HAVE_NETDB_H

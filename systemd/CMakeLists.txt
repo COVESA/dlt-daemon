@@ -15,10 +15,26 @@
 ########
 
 if(WITH_SYSTEMD)
-    SET( DLT_SYSLOG_APPID "SYS" )
-    SET( DLT_SYSLOG_CTID "LOG" )
-    SET( DLT_SYSLOG_PORT 4712 )
-
-    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt.service @ONLY)
-    CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-syslog.service @ONLY)
+    set(SYSTEMD_CONFIGURATIONS_FILES_DIR "/lib/systemd/system" )
+        
+    if(WITH_SYSTEMD_WATCHDOG)
+        set( DLT_WatchdogSec 2 )
+        message( STATUS "The systemd watchdog is enabled for DLT daemon - timeout is set to ${DLT_WatchdogSec} seconds")
+    else(WITH_SYSTEMD_WATCHDOG) 
+        set( DLT_WatchdogSec 0 )
+        message( STATUS "The systemd watchdog is disabled for DLT daemon")
+    endif(WITH_SYSTEMD_WATCHDOG)
+    
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt.service)
+    install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+    message( STATUS "Configured systemd unit file:dlt.service" )
+    
+    set( DLT_SYSLOG_APPID "SYS" )
+    set( DLT_SYSLOG_CTID "LOG" )
+    set( DLT_SYSLOG_PORT 4712 )
+    message(STATUS "DLT-syslog configuration: APPID:${DLT_SYSLOG_APPID} CTID:${DLT_SYSLOG_CTID} PORT:${DLT_SYSLOG_PORT}" )
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-syslog.service)
+    install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-syslog.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+    message( STATUS "Configured systemd unit file:dlt-syslog.service" )
+    
 endif(WITH_SYSTEMD)

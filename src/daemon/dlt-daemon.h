@@ -166,6 +166,9 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 void dlt_daemon_timingpacket_thread(void *ptr);
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+	void dlt_daemon_systemd_watchdog_thread(void *ptr);
+#endif
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose);
 void dlt_daemon_wait_period(DltDaemonPeriodicData *info, int verbose);
 

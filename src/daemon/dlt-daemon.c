@@ -86,15 +86,14 @@
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
 
-/** \page Contents
-  * The package automotive-dlt includes the following items:
-  * - dlt daemon (dlt-daemon)
-  * - adptors to to interface the daemon (dlt-adaptor-stdin, dlt-adaptor-udp)
-  * - dlt client gui (dlt-viewer)
-  * - dlt console tools (dlt-receive, dlt-convert)
-  * - examples (dlt-example-user, dlt-example-user-func, dlt-example-ringbuffer)
-  * - a library including user-application, client and common functions
-  */
+#if defined(DLT_SYSTEMD_ENABLE)
+	#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+		#include <stdio.h>
+		#include <stdlib.h>
+	#endif
+
+#include "sd-daemon.h"
+#endif
 
 /**
   \defgroup daemon DLT Daemon
@@ -109,6 +108,11 @@ static DltDaemonTimingPacketThreadData dlt_daemon_timingpacket_thread_data;
 
 static pthread_t      dlt_daemon_timingpacket_thread_handle;
 static pthread_attr_t dlt_daemon_timingpacket_thread_attr;
+
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+static DltDaemonTimingPacketThreadData dlt_daemon_systemd_watchdog_thread_data;
+static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
+#endif
 
 /**
  * Print usage information of tool.
@@ -505,6 +509,11 @@ int main(int argc, char* argv[])
 
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+	int ret;
+#endif
+
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon==0)  || (daemon_local==0))
@@ -512,6 +521,26 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_local_init_p1()\n");
         return -1;
     }
+
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+    ret = sd_booted();
+
+    if(ret == 0){
+    	dlt_log(LOG_CRIT, "system not booted with systemd!\n");
+    	return -1;
+    }
+    else if(ret < 0)
+    {
+    	dlt_log(LOG_CRIT, "sd_booted failed!\n");
+    	return -1;
+    }
+    else
+    {
+    	dlt_log(LOG_INFO, "system booted with systemd\n");
+    }
+#endif
+
+
 
     /* Check for daemon mode */
     if (daemon_local->flags.dflag)
@@ -654,6 +683,24 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 	}
 
     pthread_attr_destroy(&dlt_daemon_timingpacket_thread_attr);
+
+
+
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+
+    dlt_daemon_systemd_watchdog_thread_data.daemon = daemon;
+    dlt_daemon_systemd_watchdog_thread_data.daemon_local = daemon_local;
+
+	if (pthread_create(&(dlt_daemon_systemd_watchdog_thread_handle),
+					   NULL,
+					   (void *) &dlt_daemon_systemd_watchdog_thread,
+					   (void *) &dlt_daemon_systemd_watchdog_thread_data)!=0)
+	{
+		dlt_log(LOG_ERR,"Could not initialize systemd watchdog thread\n");
+		return -1;
+	}
+#endif
+
 
     return 0;
 }
@@ -2303,6 +2350,76 @@ void dlt_daemon_timingpacket_thread(void *ptr)
         dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
     }
 }
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+void dlt_daemon_systemd_watchdog_thread(void *ptr)
+{
+    char *watchdogUSec;
+    int watchdogTimeoutSeconds;
+    int notifiyPeriodNSec;
+    DltDaemonPeriodicData info;
+    DltDaemonTimingPacketThreadData *data;
+    DltDaemon *daemon;
+    DltDaemonLocal *daemon_local;
+
+    if (ptr==0)
+    {
+    	dlt_log(LOG_ERR, "No data pointer passed to systemd watchdog thread\n");
+        return;
+    }
+
+    data = (DltDaemonTimingPacketThreadData*)ptr;
+    daemon = data->daemon;
+    daemon_local = data->daemon_local;
+
+    if ((daemon==0) || (daemon_local==0))
+    {
+    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_timingpacket_thread()");
+        return;
+    }
+
+    watchdogUSec = getenv("WATCHDOG_USEC");
+
+	if(watchdogUSec)
+	{
+		watchdogTimeoutSeconds = atoi(watchdogUSec);
+
+		if( watchdogTimeoutSeconds > 0 ){
+
+			// Calculate half of WATCHDOG_USEC in ns for timer tick
+			notifiyPeriodNSec = watchdogTimeoutSeconds / 2 ;
+
+			sprintf(str,"systemd watchdog timeout: %i nsec - timer will be initialized: %i nsec\n", watchdogTimeoutSeconds, notifiyPeriodNSec );
+			dlt_log(LOG_INFO, str);
+
+			if (dlt_daemon_make_periodic (notifiyPeriodNSec, &info, daemon_local->flags.vflag)<0)
+			{
+				dlt_log(LOG_CRIT, "Could not initialize systemd watchdog timer");
+				return;
+			}
+
+			while (1)
+			{
+				if(sd_notify(0, "WATCHDOG=1") < 0)
+				{
+					dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+				}
+				//dlt_log(LOG_INFO, "systemd watchdog waited periodic\n");
+				/* Wait for next period */
+				dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
+			}
+		}
+		else
+		{
+			sprintf(str,"systemd watchdog timeout incorrect: %i\n", watchdogTimeoutSeconds);
+			dlt_log(LOG_CRIT, str);
+		}
+	}
+	else
+	{
+		dlt_log(LOG_CRIT, "systemd watchdog timeout (WATCHDOG_USEC) is null!\n");
+	}
+}
+#endif
 
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose)
 {

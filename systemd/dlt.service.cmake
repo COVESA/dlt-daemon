@@ -1,16 +1,31 @@
-#  This file is for starting the dlt-daemon as a service with systemd at the multi-user.target
+#######
+# Dlt - Diagnostic Log and Trace
+# @licence make begin@
 #
-#  For more informations about starting options of dlt-daemon use the command
-#  "dlt-daemon -h".
+# Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+# 
+# Contributions are licensed to the GENIVI Alliance under one or more
+# Contribution License Agreements.
+# 
+# This Source Code Form is subject to the terms of the
+# Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
+# this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-#  Multi-user.target is a special target unit for setting up a multi-user system (non-graphical). 
-#  For more details about the multi-user.target see systemd.special(7).
+# @licence end@
+########
 
 [Unit]
-Description=DLT Daemon for logging and tracing
+Description=GENIVI DLT
+Documentation=dlt-daemon(1) dlt.conf(5)
 
 [Service]
+Type=Simple
+User=genivi
+#ExecStartPre=rm /tmp/dlt
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
+WatchdogSec=@DLT_WatchdogSec@
+NotifyAccess=main
+#RestartSec=2
 #Restart=always
 
 [Install]
