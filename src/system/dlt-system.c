@@ -517,7 +517,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
 	{
 		case 0x1001:
 			/* Execute shell command */
-			//DLT_LOG(shellContext, DLT_LOG_INFO, DLT_STRING("Execute command:"), DLT_STRING(text));
+			DLT_LOG(shellContext, DLT_LOG_INFO, DLT_STRING("Execute command:"), DLT_STRING(text));
 			printf("Execute command: %s\n",text);
 			if((syserr = system(text)) != 0)
 			{
@@ -525,7 +525,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
 			}
 			break;
 		default:
-			//DLT_LOG(shellContext, DLT_LOG_WARN, DLT_STRING("Unknown command received! Service ID:"), DLT_UINT32(service_id),DLT_STRING("Command:"),DLT_STRING(text));
+			DLT_LOG(shellContext, DLT_LOG_WARN, DLT_STRING("Unknown command received! Service ID:"), DLT_UINT32(service_id),DLT_STRING("Command:"),DLT_STRING(text));
 			printf("Unknown command received! Service ID: %u Command: %s\n",service_id,text);
 			break;
 	}

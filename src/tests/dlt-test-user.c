@@ -1016,10 +1016,9 @@ int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t leng
 	char text[1024];
 
 	memset(text,0,1024);
-
 	snprintf(text,1024,"Injection received (macro IF). ID: 0x%.4x, Length: %d",service_id,length);
 	printf("%s \n", text);
-
+	DLT_LOG(context_macro_callback, DLT_LOG_INFO, DLT_STRING("Injection received (macro IF). ID: "), DLT_UINT32(service_id),DLT_STRING("Data:"),DLT_STRING(text));
 	memset(text,0,1024);
 
 	if (length>0)
@@ -1039,7 +1038,7 @@ int test_injection_function_callback(uint32_t service_id, void *data, uint32_t l
 
 	snprintf(text,1024,"Injection received (function IF). ID: 0x%.4x, Length: %d",service_id,length);
 	printf("%s \n", text);
-
+	DLT_LOG(context_function_callback, DLT_LOG_INFO, DLT_STRING("Injection received (function IF). ID: "), DLT_UINT32(service_id),DLT_STRING("Data:"),DLT_STRING(text));
 	memset(text,0,1024);
 
 	if (length>0)

@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
     DLT_REGISTER_APP("LOG","Test Application for Logging");
     DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0xFFF, dlt_user_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, dlt_user_injection_callback);
 
     text = message;
 
@@ -361,11 +361,12 @@ int main(int argc, char* argv[])
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
 {
     char text[1024];
-
+    DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
     printf("Injection %d, Length=%d \n",service_id,length);
     if (length>0)
     {
         dlt_print_mixed_string(text,1024,data,length,0);
+        DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
         printf("%s \n", text);
     }
 
