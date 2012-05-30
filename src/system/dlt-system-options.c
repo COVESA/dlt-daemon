@@ -102,6 +102,7 @@ int read_command_line(DltSystemCliOptions *options, int argc, char *argv[])
 			case 'c':
 			{
 				options->ConfigurationFileName = malloc(strlen(optarg)+1);
+				MALLOC_ASSERT(options->ConfigurationFileName);
 				strcpy(options->ConfigurationFileName, optarg);
 				break;
 			}
@@ -134,14 +135,14 @@ void init_configuration(DltSystemConfiguration *config)
 	// Syslog
 	config->Syslog.Enable 		= 0;
 	config->Syslog.ContextId	= "SYSL";
-	config->Syslog.Port		= 47111;
+	config->Syslog.Port			= 47111;
 
 	// File transfer
-	config->Filetransfer.Enable				= 0;
+	config->Filetransfer.Enable					= 0;
 	config->Filetransfer.ContextId				= "FILE";
 	config->Filetransfer.TimeDelay				= 10;
 	config->Filetransfer.TimeStartup			= 30;
-	config->Filetransfer.TimeoutBetweenLogs	= 10;
+	config->Filetransfer.TimeoutBetweenLogs		= 10;
 	config->Filetransfer.Count					= 0;
 	for(i = 0;i < DLT_SYSTEM_LOG_DIRS_MAX;i++)
 	{
@@ -157,19 +158,19 @@ void init_configuration(DltSystemConfiguration *config)
 	{
 		config->LogFile.ContextId[i]	= NULL;
 		config->LogFile.Filename[i] 	= NULL;
-		config->LogFile.Mode[i]		= 0;
+		config->LogFile.Mode[i]			= 0;
 		config->LogFile.TimeDelay[i]	= 0;
 	}
 
 	// Log process
-	config->LogProcesses.Enable 		= 0;
+	config->LogProcesses.Enable 	= 0;
 	config->LogProcesses.ContextId 	= "PROC";
 	config->LogProcesses.Count 		= 0;
 	for(i = 0;i < DLT_SYSTEM_LOG_PROCESSES_MAX;i++)
 	{
-		config->LogProcesses.Name[i]			= NULL;
-		config->LogProcesses.Filename[i]		= NULL;
-		config->LogProcesses.Mode[i]			= 0;
+		config->LogProcesses.Name[i]		= NULL;
+		config->LogProcesses.Filename[i]	= NULL;
+		config->LogProcesses.Mode[i]		= 0;
 		config->LogProcesses.TimeDelay[i]	= 0;
 	}
 }
@@ -196,6 +197,10 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 	line = malloc(MAX_LINE);
 	token = malloc(MAX_LINE);
 	value = malloc(MAX_LINE);
+
+	MALLOC_ASSERT(line);
+	MALLOC_ASSERT(token);
+	MALLOC_ASSERT(value);
 
 	while(fgets(line, MAX_LINE, file) != NULL)
 	{
@@ -227,6 +232,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			if(strcmp(token, "ApplicationId") == 0)
 			{
 				config->ApplicationId = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->ApplicationId);
 				strcpy(config->ApplicationId, value);
 			}
 
@@ -238,6 +244,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "SyslogContextId") == 0)
 			{
 				config->Syslog.ContextId = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->Syslog.ContextId);
 				strcpy(config->Syslog.ContextId, value);
 			}
 			else if(strcmp(token, "SyslogPort") == 0)
@@ -253,6 +260,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "FiletransferContextId") == 0)
 			{
 				config->Filetransfer.ContextId = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->Filetransfer.ContextId);
 				strcpy(config->Filetransfer.ContextId, value);
 			}
 			else if(strcmp(token, "FiletransferTimeStartup") == 0)
@@ -270,11 +278,13 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "FiletransferTempDir") == 0)
 			{
 				config->Filetransfer.TempDir = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->Filetransfer.TempDir);
 				strcpy(config->Filetransfer.TempDir, value);
 			}
 			else if(strcmp(token, "FiletransferDirectory") == 0)
 			{
 				config->Filetransfer.Directory[config->Filetransfer.Count] = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->Filetransfer.Directory[config->Filetransfer.Count]);
 				strcpy(config->Filetransfer.Directory[config->Filetransfer.Count], value);
 			}
 			else if(strcmp(token, "FiletransferCompression") == 0)
@@ -306,6 +316,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "LogFileFilename") == 0)
 			{
 				config->LogFile.Filename[config->LogFile.Count] = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->LogFile.Filename[config->LogFile.Count]);
 				strcpy(config->LogFile.Filename[config->LogFile.Count], value);
 			}
 			else if(strcmp(token, "LogFileMode") == 0)
@@ -319,6 +330,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "LogFileContextId") == 0)
 			{
 				config->LogFile.ContextId[config->LogFile.Count] = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->LogFile.ContextId[config->LogFile.Count]);
 				strcpy(config->LogFile.ContextId[config->LogFile.Count], value);
 				if(config->LogFile.Count < (DLT_SYSTEM_LOG_FILE_MAX - 1))
 				{
@@ -343,16 +355,19 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "LogProcessesContextId") == 0)
 			{
 				config->LogProcesses.ContextId = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->LogProcesses.ContextId);
 				strcpy(config->LogProcesses.ContextId, value);
 			}
 			else if(strcmp(token, "LogProcessName") == 0)
 			{
 				config->LogProcesses.Name[config->LogProcesses.Count] = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->LogProcesses.Name[config->LogProcesses.Count]);
 				strcpy(config->LogProcesses.Name[config->LogProcesses.Count], value);
 			}
 			else if(strcmp(token, "LogProcessFilename") == 0)
 			{
 				config->LogProcesses.Filename[config->LogProcesses.Count] = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->LogProcesses.Filename[config->LogProcesses.Count]);
 				strcpy(config->LogProcesses.Filename[config->LogProcesses.Count], value);
 			}
 			else if(strcmp(token, "LogProcessMode") == 0)

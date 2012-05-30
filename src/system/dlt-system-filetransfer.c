@@ -82,6 +82,7 @@ char *unique_name(const char *src)
 	unsigned long l = getFileSerialNumber(src) ^ t;
 	// Length of ULONG_MAX + 1
 	char *ret = malloc(11);
+	MALLOC_ASSERT(ret);
 	snprintf(ret, 11, "%lu", l);
 	return ret;
 }
@@ -92,6 +93,7 @@ char *compress_file(char *src, int level)
 			DLT_STRING("dlt-system-filetransfer, compressing file."));
 	char *buf;
 	char *dst = malloc(strlen(src)+4);
+	MALLOC_ASSERT(dst);
 	char dst_mode[8];
 	sprintf(dst, "%s.gz", src);
 	sprintf(dst_mode, "wb%d", level);
@@ -116,6 +118,7 @@ char *compress_file(char *src, int level)
 	}
 
 	buf = malloc(Z_CHUNK_SZ);
+	MALLOC_ASSERT(buf);
 
 	while(!feof(src_file))
 	{
@@ -130,7 +133,8 @@ char *compress_file(char *src, int level)
 		gzwrite(dst_file, buf, read);
 	}
 
-	remove(src);
+	if(remove(src) < 0)
+		DLT_LOG(dltsystem, DLT_LOG_WARN, DLT_STRING("Could not remove file"), DLT_STRING(src));
 	free(buf);
 	fclose(src_file);
 	gzclose(dst_file);
@@ -147,8 +151,21 @@ int send_one(char *src, FiletransferOptions opts, int which)
 	char *fn = basename(src);
 	char *rn = unique_name(src);
 	char *dst = malloc(strlen(opts.TempDir)+strlen(rn)+2);
+	MALLOC_ASSERT(fn);
+	MALLOC_ASSERT(rn);
+	MALLOC_ASSERT(dst);
+
 	sprintf(dst, "%s/%s", opts.TempDir, rn);
-	rename(src, dst);
+	if(rename(src, dst) < 0)
+	{
+		DLT_LOG(dltsystem, DLT_LOG_ERROR,
+				DLT_STRING("Could not move file"),
+				DLT_STRING(src),
+				DLT_STRING(dst));
+		free(rn);
+		free(dst);
+		return -1;
+	}
 
 	// Compress if needed
 	if(opts.Compression[which] > 0)
@@ -156,6 +173,7 @@ int send_one(char *src, FiletransferOptions opts, int which)
 		dst = compress_file(dst, opts.CompressionLevel[which]);
 		char *old_fn = fn;
 		fn = malloc(strlen(old_fn)+4);
+		MALLOC_ASSERT(fn);
 		sprintf(fn, "%s.gz", old_fn);
 	}
 
@@ -208,10 +226,18 @@ int flush_dir(FiletransferOptions opts, int which)
 			DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 					DLT_STRING("dlt-system-filetransfer, old file found in directory."));
 			fn = malloc(strlen(sdir)+dp->d_reclen+2);
+			MALLOC_ASSERT(fn);
 			sprintf(fn, "%s/%s", sdir, dp->d_name);
 			if(send_one(fn, opts, which) < 0)
 				return -1;
 		}
+	}
+	else
+	{
+		DLT_LOG(dltsystem, DLT_LOG_ERROR,
+				DLT_STRING("Could not open directory"),
+				DLT_STRING(sdir));
+		return -1;
 	}
 	closedir(dir);
 	return 0;
@@ -251,7 +277,7 @@ int init_filetransfer_dirs(FiletransferOptions opts)
 int wait_for_files(FiletransferOptions opts)
 {
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, waiting for files."));
-	char buf[INOTIFY_LEN];
+	static char buf[INOTIFY_LEN];
 	int len = read(ino.handle, buf, INOTIFY_LEN);
 	if(len < 0)
 	{
@@ -302,7 +328,10 @@ void filetransfer_thread(void *v_conf)
 	while(!threads.shutdown)
 	{
 		if(wait_for_files(conf->Filetransfer) < 0)
+		{
+			DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while waiting files. File transfer shutdown."));
 			return;
+		}
 		sleep(conf->Filetransfer.TimeDelay);
 	}
 }

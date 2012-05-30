@@ -114,6 +114,11 @@ void send_process(LogProcessOptions popts, int n)
 		}
 		closedir(dir);
 	}
+	else
+	{
+		DLT_LOG(dltsystem, DLT_LOG_ERROR,
+				DLT_STRING("dlt-system-processes, failed to open /proc."));
+	}
 
 	if(!found) {
 			DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING(popts.Name[n]),DLT_STRING("not running!"));

@@ -79,12 +79,19 @@ void send_file(LogFileOptions fileopt, int n)
 
 			if(feof(pFile)) {
 				DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq*-1), DLT_STRING(buffer));
+				break;
 			}
 			else {
 				DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq++), DLT_STRING(buffer));
 			}
 		}
 		fclose(pFile);
+	}
+	else
+	{
+		DLT_LOG(dltsystem, DLT_LOG_ERROR,
+				DLT_STRING("dlt-system-logfile, failed to open file."),
+				DLT_STRING(fileopt.Filename[n]));
 	}
 }
 

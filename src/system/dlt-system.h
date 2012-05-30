@@ -70,6 +70,11 @@
 
 #define MAX_THREADS 8
 
+// Macros
+#define MALLOC_ASSERT(x) if(x == NULL) {\
+	fprintf(stderr, "Out of memory\n");\
+	abort();}
+
 /**
  * Configuration structures.
  * Please see dlt-system.conf for explanation of all the options.
