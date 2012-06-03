@@ -527,7 +527,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     if(ret == 0){
     	dlt_log(LOG_CRIT, "system not booted with systemd!\n");
-    	return -1;
+//    	return -1;
     }
     else if(ret < 0)
     {
