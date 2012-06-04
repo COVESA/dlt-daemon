@@ -2199,7 +2199,7 @@ int dlt_receiver_remove(DltReceiver *receiver,int size)
         return -1;
     }
 
-    if (size>receiver->bytesRcvd)
+    if (size > receiver->bytesRcvd || size <= 0)
     {
     	receiver->buf = receiver->buf + receiver->bytesRcvd;
     	receiver->bytesRcvd=0;
