@@ -1304,6 +1304,12 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltMessag
 
 		usercontext.log_level_pos = context->log_level_pos;
 
+		if(data_length_inject > msg->databuffersize)
+		{
+			dlt_daemon_control_service_response(sock, daemon, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+			return;
+		}
+
 		userbuffer = malloc(data_length_inject);
 
 		if (userbuffer==0)
