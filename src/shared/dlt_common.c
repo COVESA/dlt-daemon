@@ -3046,8 +3046,8 @@ speed_t dlt_convert_serial_speed(int baudrate)
 
 void dlt_get_version(char *buf)
 {
-    sprintf(buf,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n",
-            _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE, _DLT_PACKAGE_REVISION, __DATE__ , __TIME__ );
+    sprintf(buf,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n%s %s %s %s\n",
+            _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE, _DLT_PACKAGE_REVISION, __DATE__ , __TIME__,_DLT_SYSTEMD_ENABLE,_DLT_SYSTEMD_WATCHDOG_ENABLE,_DLT_TEST_ENABLE,_DLT_SHM_ENABLE );
 }
 
 void dlt_get_major_version(char *buf)

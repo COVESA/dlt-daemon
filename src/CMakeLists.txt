@@ -14,11 +14,25 @@
 # @licence end@
 ########
 
-ADD_SUBDIRECTORY( lib )
-ADD_SUBDIRECTORY( console )
-ADD_SUBDIRECTORY( daemon )
-ADD_SUBDIRECTORY( examples )
-ADD_SUBDIRECTORY( adaptor )
-ADD_SUBDIRECTORY( tests )
-ADD_SUBDIRECTORY( system )
+add_subdirectory( lib )
+add_subdirectory( daemon )
 
+if( WITH_DLT_CONSOLE )
+    add_subdirectory( console )
+endif( WITH_DLT_CONSOLE )
+
+if( WITH_DLT_EXAMPLES )
+    add_subdirectory( examples )
+endif( WITH_DLT_EXAMPLES )
+
+if( WTIH_DLT_ADAPTOR )
+    add_subdirectory( adaptor )
+endif( WTIH_DLT_ADAPTOR )
+
+if( WITH_DLT_TESTS )
+    add_subdirectory( tests )
+endif( WITH_DLT_TESTS )
+
+if( WITH_DLT_SYSTEM )
+    add_subdirectory( system )
+endif( WITH_DLT_SYSTEM )

@@ -15,26 +15,46 @@
 ########
 
 if(WITH_SYSTEMD)
+
     set(SYSTEMD_CONFIGURATIONS_FILES_DIR "/lib/systemd/system" )
         
     if(WITH_SYSTEMD_WATCHDOG)
         set( DLT_WatchdogSec 2 )
-        message( STATUS "The systemd watchdog is enabled for DLT daemon - timeout is set to ${DLT_WatchdogSec} seconds")
+        message( STATUS "The systemd watchdog is enabled - timeout is set to ${DLT_WatchdogSec} seconds")
     else(WITH_SYSTEMD_WATCHDOG) 
         set( DLT_WatchdogSec 0 )
-        message( STATUS "The systemd watchdog is disabled for DLT daemon")
+        message( STATUS "The systemd watchdog is disabled")
     endif(WITH_SYSTEMD_WATCHDOG)
     
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt.service)
-    install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     message( STATUS "Configured systemd unit file:dlt.service" )
     
-    set( DLT_SYSLOG_APPID "SYS" )
-    set( DLT_SYSLOG_CTID "LOG" )
-    set( DLT_SYSLOG_PORT 4712 )
-    message(STATUS "DLT-syslog configuration: APPID:${DLT_SYSLOG_APPID} CTID:${DLT_SYSLOG_CTID} PORT:${DLT_SYSLOG_PORT}" )
-    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-syslog.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-syslog.service)
-    install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-syslog.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
-    message( STATUS "Configured systemd unit file:dlt-syslog.service" )
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-system.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-system.service)
+    message( STATUS "Configured systemd unit file:dlt-system.service" )
     
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-receive.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-receive.service)
+    message( STATUS "Configured systemd unit file:dlt-receive.service" )
+    
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-example-user.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service)
+    message( STATUS "Configured systemd unit file:dlt-example-user.service" )
+    
+    set( DLT_ADAPTOR_UDP_APPID "DUDP" )
+    set( DLT_ADAPTOR_UDP_CTID "DCTI" )
+    set( DLT_ADAPTOR_UDP_PORT 4712 )
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-adaptor-udp.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-adaptor-udp.service)
+    message( STATUS "Configured systemd unit file:dlt-adaptor-udp.service" )
+    message(STATUS "DLT adaptor udp configuration: APPID=${DLT_ADAPTOR_UDP_APPID} CTID=${DLT_ADAPTOR_UDP_CTID} PORT=${DLT_ADAPTOR_UDP_PORT}" )
+    
+    
+    if(EXISTS ${SYSTEMD_CONFIGURATIONS_FILES_DIR})
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-system.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-receive.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-adaptor-udp.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+        message(STATUS "Unit files will be installed to ${SYSTEMD_CONFIGURATIONS_FILES_DIR} after make install" )
+    else(EXISTS ${SYSTEMD_CONFIGURATIONS_FILES_DIR})
+        message(STATUS "Unit files will not be installed to ${SYSTEMD_CONFIGURATIONS_FILES_DIR} after make install")
+    endif(EXISTS ${SYSTEMD_CONFIGURATIONS_FILES_DIR})
+     
 endif(WITH_SYSTEMD)

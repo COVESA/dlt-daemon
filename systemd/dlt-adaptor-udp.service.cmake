@@ -15,16 +15,14 @@
 ########
 
 [Unit]
-Description=GENIVI DLT logging daemon
-Documentation=man:dlt-daemon(1) man:dlt.conf(5)
+Description=GENIVI DLT adaptor stdin. Adaptor for forwarding received UDP messages to DLT daemon.
+Wants=dlt.service
 
 [Service]
 Type=Simple
 User=genivi
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
-WatchdogSec=@DLT_WatchdogSec@
-NotifyAccess=main
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-adaptor-udp -a @DLT_ADAPTOR_UDP_APPID@ -c @DLT_ADAPTOR_UDP_CTID@ -p @DLT_ADAPTOR_UDP_PORT@
 LimitCORE=infinity
 
 [Install]
-WantedBy=basic.target
+WantedBy=multi-user.target

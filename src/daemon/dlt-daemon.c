@@ -86,12 +86,7 @@
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
 
-#if defined(DLT_SYSTEMD_ENABLE)
-	#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-		#include <stdio.h>
-		#include <stdlib.h>
-	#endif
-
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #include "sd-daemon.h"
 #endif
 
@@ -119,8 +114,13 @@ static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
  */
 void usage()
 {
+	char version[DLT_DAEMON_TEXTBUFSIZE];
+	dlt_get_version(version);
+
+    //printf("DLT logging daemon %s %s\n", _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE);
+    //printf("Compile options: %s %s %s %s",_DLT_SYSTEMD_ENABLE, _DLT_SYSTEMD_WATCHDOG_ENABLE, _DLT_TEST_ENABLE, _DLT_SHM_ENABLE);
+    printf(version);
     printf("Usage: dlt-daemon [options]\n");
-    printf("DLT logging daemon %s\n", _DLT_PACKAGE_REVISION);
     printf("Options:\n");
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");

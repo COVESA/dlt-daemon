@@ -65,7 +65,7 @@ void usage(char *prog_name)
 	dlt_get_version(version);
 
 	printf("Usage: %s [options]\n", prog_name);
-	printf("Application to transfer system information, logs and files.\n");
+	printf("Application to forward syslog messages to DLT, transfer system information, logs and files.\n");
 	printf("%s\n", version);
 	printf("Options:\n");
 	printf(" -d             Daemonize. Detach from terminal and run in background.\n");

@@ -167,5 +167,8 @@ void start_filetransfer(DltSystemConfiguration *conf);
 void start_logfile(DltSystemConfiguration *conf);
 void start_logprocess(DltSystemConfiguration *conf);
 
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+void start_systemd_watchdog(DltSystemConfiguration *conf);
+#endif
 
 #endif /* DLT_SYSTEM_H_ */

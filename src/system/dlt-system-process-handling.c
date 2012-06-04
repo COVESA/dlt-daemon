@@ -109,6 +109,10 @@ void start_threads(DltSystemConfiguration *config)
 		threads.threads[i] = 0;
 	}
 
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+	start_systemd_watchdog(config);
+#endif
+
 	init_shell();
 
 	if(config->LogFile.Enable)

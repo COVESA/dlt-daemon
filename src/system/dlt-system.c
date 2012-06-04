@@ -48,12 +48,19 @@
 #include <errno.h>
 #include <signal.h>
 
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+#include "sd-daemon.h"
+#endif
+
 DLT_DECLARE_CONTEXT(dltsystem)
 
 int main(int argc, char* argv[])
 {
 	DltSystemCliOptions options;
 	DltSystemConfiguration config;
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+	int ret;
+#endif
 
 	if(read_command_line(&options, argc, argv) < 0)
 	{
@@ -68,7 +75,24 @@ int main(int argc, char* argv[])
 	}
 	DLT_REGISTER_APP(config.ApplicationId, "DLT System Manager");
 	DLT_REGISTER_CONTEXT(dltsystem,"MGR", "Context of main dlt system manager");
-	sleep(1);
+
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+    ret = sd_booted();
+
+    if(ret == 0){
+    	DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system not booted with systemd!\n"));
+    }
+    else if(ret < 0)
+    {
+    	DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("sd_booted failed!\n"));
+    	return -1;
+    }
+    else
+    {
+    	DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system booted with systemd\n"));
+    }
+#endif
+
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Configuration loaded."));
 
 	if(options.Daemonize > 0)

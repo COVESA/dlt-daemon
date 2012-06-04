@@ -15,16 +15,11 @@
 ########
 
 [Unit]
-Description=GENIVI DLT logging daemon
-Documentation=man:dlt-daemon(1) man:dlt.conf(5)
+Description=GENIVI DLT example user. Generate DLT messages and store them to file or send them to daemon.
+Wants=dlt.service
 
 [Service]
 Type=Simple
 User=genivi
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
-WatchdogSec=@DLT_WatchdogSec@
-NotifyAccess=main
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-example-user "Hallo from GENIVI DLT example user application"
 LimitCORE=infinity
-
-[Install]
-WantedBy=basic.target

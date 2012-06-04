@@ -82,11 +82,9 @@ void usage()
 
 	dlt_get_version(version);
 
-    printf("Usage: dlt-example-filetransfer [options] <command>\n");
-    printf("Filetransfer example");
+    printf("Usage: dlt-example-filetransfer [options] absolute-path-to-file\n");
+    printf("Simple filetransfer example");
     printf("%s \n", version);
-	printf("Command:\n");
-	printf("-f file      - File to transfer (absolute path)\n");
     printf("Options:\n");
     printf("-a apid      - Set application id to apid (default: FLTR)\n");
     printf("-c ctid      - Set context id to ctid (default: FLTR)\n");
@@ -108,10 +106,10 @@ int main(int argc, char* argv[])
     char ctid[DLT_ID_SIZE];
     
     //char version[255];
-
+    int index;
 	int dflag = 0;
 	int iflag = 0;
-	char *fvalue = 0;
+	char *file = 0;
 	char *tvalue = 0;
 
     dlt_set_id(apid, FLTR_APP);
@@ -129,11 +127,6 @@ int main(int argc, char* argv[])
         case 'i':
         {
             iflag = 1;
-            break;
-        }
-        case 'f':
-        {
-            fvalue = optarg;
             break;
         }
         case 't':
@@ -158,7 +151,7 @@ int main(int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'a' || optopt == 'c' || optopt == 'f' || optopt == 't')
+            if (optopt == 'a' || optopt == 'c' ||  optopt == 't')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -177,6 +170,20 @@ int main(int argc, char* argv[])
         }
     }
 	
+	for (index = optind; index < argc; index++)
+	{
+		file = argv[index];
+	}
+
+	if (file == 0)
+	{
+		/* no message, show usage and terminate */
+		fprintf(stderr,"ERROR: No absolute path to file specified\n");
+		usage();
+		return -1;
+	}
+
+
 	if (tvalue)
     {
         timeout = atoi(tvalue);
@@ -185,12 +192,6 @@ int main(int argc, char* argv[])
     {
         timeout = TIMEOUT;
     }
-
-	if (!fvalue)
-	{
-		usage();
-		return -1;
-	}
 
 	//Register the application at the dlt-daemon
 	dltResult = DLT_REGISTER_APP(apid,FLTR_APP_DESC);
@@ -202,10 +203,10 @@ int main(int argc, char* argv[])
 	if( dltResult == 0 ){
 		if( iflag )
 		{
-			dlt_user_log_file_infoAbout(&fileContext,fvalue);
+			dlt_user_log_file_infoAbout(&fileContext,file);
 		}
 		
-		if( dlt_user_log_file_complete(&fileContext,fvalue,dflag,timeout) < 0 )
+		if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
 		{
 			printf("File couldn't be transferred. Please check the dlt log messages.\n");
 		}

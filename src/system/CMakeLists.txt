@@ -14,10 +14,14 @@
 # @licence end@
 ########
 
+if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+    message( STATUS "Added ${systemd_SRCS} to dlt-system")
+endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+
 set(dlt_system_SRCS dlt-system dlt-system-options dlt-system-process-handling 
 	dlt-system-filetransfer dlt-system-logfile dlt-system-processes dlt-system-shell
-	dlt-system-syslog)
-add_executable(dlt-system ${dlt_system_SRCS})
+	dlt-system-syslog dlt-system-watchdog)
+add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 target_link_libraries(dlt-system dlt z)
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
 

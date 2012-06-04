@@ -15,16 +15,12 @@
 ########
 
 [Unit]
-Description=GENIVI DLT logging daemon
-Documentation=man:dlt-daemon(1) man:dlt.conf(5)
+Description=GENIVI DLT receive. Receive DLT messages from DLT daemon and print or store the messages.
+Documentation=man:dlt-receive(1)
+Wants=dlt.service
 
 [Service]
 Type=Simple
 User=genivi
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
-WatchdogSec=@DLT_WatchdogSec@
-NotifyAccess=main
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-receive -o /tmp/dlt_receive_log.dlt localhost
 LimitCORE=infinity
-
-[Install]
-WantedBy=basic.target

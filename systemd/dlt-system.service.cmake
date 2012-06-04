@@ -15,11 +15,17 @@
 ########
 
 [Unit]
-Description=DLT Syslog Adapter
+Description=GENIVI DLT system. Application to forward syslog messages to DLT, transfer system information, logs and files.
+Documentation=man:dlt-system(1) man:dlt-system.conf(5)
+Wants=dlt.service
 
 [Service]
-ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-adaptor-udp -a @DLT_SYSLOG_APPID@ -c @DLT_SYSLOG_CTID@ -p @DLT_SYSLOG_PORT@
-# Restart=always
+Type=Simple
+User=genivi
+ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-system
+WatchdogSec=@DLT_WatchdogSec@
+NotifyAccess=main
+LimitCORE=infinity
 
 [Install]
 WantedBy=basic.target
