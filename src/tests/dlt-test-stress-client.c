@@ -402,7 +402,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 	int16_t length,length_tmp; /* the macro can set this variable to -1 */
 	uint8_t *ptr;
 	int32_t datalength;
-	int32_t value,value_tmp=0;
+	int32_t value;
+	uint32_t value_tmp = 0;
 
 	struct iovec iov[2];
 	int bytes_written;

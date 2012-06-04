@@ -69,7 +69,7 @@ int daemonize()
 		exit(0);
 
 	// Create a new process group
-	if(setsid < 0)
+	if(setsid() < 0)
 		return -1;
 
 	/**

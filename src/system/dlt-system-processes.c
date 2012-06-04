@@ -76,7 +76,7 @@ void send_process(LogProcessOptions popts, int n)
 
 	/* go through all process files in directory */
 	DIR *dir = opendir("/proc");
-	if(dir>0)
+	if(dir != NULL)
 	{
 		while ((dp=readdir(dir)) != NULL)
 		{
@@ -85,7 +85,7 @@ void send_process(LogProcessOptions popts, int n)
 				buffer[0] = 0;
 				sprintf(filename, "/proc/%s/cmdline",dp->d_name);
 				pFile = fopen(filename, "r");
-				if(pFile>0)
+				if(pFile != NULL)
 				{
 					bytes = fread(buffer, 1, sizeof(buffer)-1, pFile);
 					fclose(pFile);
@@ -96,7 +96,7 @@ void send_process(LogProcessOptions popts, int n)
 					found = 1;
 					sprintf(filename, "/proc/%s/%s", dp->d_name,popts.Filename[n]);
 					pFile = fopen(filename, "r");
-					if(pFile>0)
+					if(pFile != NULL)
 					{
 						bytes = fread(buffer, 1, sizeof(buffer)-1, pFile);
 						fclose(pFile);

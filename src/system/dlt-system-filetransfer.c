@@ -102,7 +102,7 @@ char *compress_file(char *src, int level)
 	FILE *src_file;
 
 	dst_file = gzopen(dst, dst_mode);
-	if(dst_file < 0)
+	if(dst_file == Z_NULL)
 	{
 		free(dst);
 		return NULL;
@@ -110,7 +110,7 @@ char *compress_file(char *src, int level)
 
 	src_file = fopen(src, "r");
 
-	if(src_file < 0)
+	if(src_file == NULL)
 	{
 		gzclose(dst_file);
 		free(dst);
@@ -217,7 +217,7 @@ int flush_dir(FiletransferOptions opts, int which)
 	DIR *dir;
 
 	dir = opendir(sdir);
-	if(dir > 0)
+	if(dir != NULL)
 	{
 		while((dp = readdir(dir)) != NULL)
 		{

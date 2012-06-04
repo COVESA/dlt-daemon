@@ -68,7 +68,7 @@ void send_file(LogFileOptions fileopt, int n)
 
 	pFile = fopen(fileopt.Filename[n],"r");
 
-	if(pFile>0)
+	if(pFile != NULL)
 	{
 		while (!feof(pFile)) {
 			bytes = fread(buffer,1,sizeof(buffer)-1,pFile);
