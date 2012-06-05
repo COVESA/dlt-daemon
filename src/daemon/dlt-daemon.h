@@ -98,6 +98,8 @@ typedef struct
     int  loggingMode;	/**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
     int  loggingLevel;	/**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
+    int  sendECUSoftwareVersion;
+    char pathToECUSoftwareVersion[256];
 } DltDaemonFlags;
 
 /**
@@ -138,6 +140,8 @@ typedef struct
     DltDaemonLocal *daemon_local;
 } DltDaemonTimingPacketThreadData;
 
+typedef DltDaemonTimingPacketThreadData DltDaemonECUVersionThreadData;
+
 /* Function prototypes */
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
@@ -166,6 +170,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 void dlt_daemon_timingpacket_thread(void *ptr);
+void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 	void dlt_daemon_systemd_watchdog_thread(void *ptr);
 #endif

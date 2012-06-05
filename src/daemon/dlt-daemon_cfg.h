@@ -72,6 +72,9 @@
 /* Stack size of timing packet thread */
 #define DLT_DAEMON_TIMINGPACKET_THREAD_STACKSIZE 100000
 
+/* Stack size of ecu version thread */
+#define DLT_DAEMON_ECU_VERSION_THREAD_STACKSIZE 100000
+
 /* Size of receive buffer for fifo connection  (from user application) */
 #define DLT_DAEMON_RCVBUFSIZE       10024 
 /* Size of receive buffer for socket connection (from dlt client) */

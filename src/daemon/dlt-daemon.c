@@ -104,6 +104,9 @@ static DltDaemonTimingPacketThreadData dlt_daemon_timingpacket_thread_data;
 static pthread_t      dlt_daemon_timingpacket_thread_handle;
 static pthread_attr_t dlt_daemon_timingpacket_thread_attr;
 
+static DltDaemonECUVersionThreadData dlt_daemon_ecu_version_thread_data;
+static pthread_t      dlt_daemon_ecu_version_thread_handle;
+
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 static DltDaemonTimingPacketThreadData dlt_daemon_systemd_watchdog_thread_data;
 static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
@@ -119,7 +122,7 @@ void usage()
 
     //printf("DLT logging daemon %s %s\n", _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE);
     //printf("Compile options: %s %s %s %s",_DLT_SYSTEMD_ENABLE, _DLT_SYSTEMD_WATCHDOG_ENABLE, _DLT_TEST_ENABLE, _DLT_SHM_ENABLE);
-    printf(version);
+    printf("%s", version);
     printf("Usage: dlt-daemon [options]\n");
     printf("Options:\n");
     printf("  -d            Daemonize\n");
@@ -215,6 +218,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.loggingMode = 0;
 	daemon_local->flags.loggingLevel = 6;
 	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename));
+	daemon_local->flags.sendECUSoftwareVersion = 0;
+	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -356,6 +361,17 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 							daemon_local->flags.offlineTraceMaxSize = atoi(value);
 							//printf("Option: %s=%s\n",token,value);
 						}
+						else if(strcmp(token,"SendECUSoftwareVersion")==0)
+						{
+							daemon_local->flags.sendECUSoftwareVersion = atoi(value);
+							//printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token,"PathToECUSoftwareVersion")==0)
+						{
+							strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion));
+							//printf("Option: %s=%s\n",token,value);
+						}
+
 						else
 						{
 							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
@@ -684,7 +700,21 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     pthread_attr_destroy(&dlt_daemon_timingpacket_thread_attr);
 
+    /* start thread for ecu version, if enabled */
+    if(daemon_local->flags.sendECUSoftwareVersion > 0)
+    {
+		dlt_daemon_ecu_version_thread_data.daemon = daemon;
+		dlt_daemon_ecu_version_thread_data.daemon_local = daemon_local;
 
+		if (pthread_create(&(dlt_daemon_ecu_version_thread_handle),
+						   NULL,
+						   (void *) &dlt_daemon_ecu_version_thread,
+						   (void *)&dlt_daemon_ecu_version_thread_data)!=0)
+		{
+			dlt_log(LOG_ERR,"Could not initialize ecu version thread\n");
+			return -1;
+		}
+    }
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 
@@ -2350,6 +2380,75 @@ void dlt_daemon_timingpacket_thread(void *ptr)
         dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
     }
 }
+
+void dlt_daemon_ecu_version_thread(void *ptr)
+{
+	DltDaemonECUVersionThreadData *data = (DltDaemonECUVersionThreadData *)ptr;
+	DltDaemonPeriodicData info;
+	char version[DLT_DAEMON_TEXTBUFSIZE];
+	if(data->daemon_local->flags.pathToECUSoftwareVersion[0] == 0)
+	{
+		dlt_get_version(version);
+	}
+	else
+	{
+		size_t bufpos 	= 0;
+		size_t read		= 0;
+		FILE *f 		= fopen(data->daemon_local->flags.pathToECUSoftwareVersion, "r");
+
+		if(f == NULL)
+		{
+			dlt_log(LOG_ERR, "Failed to open ECU Software version file.\n");
+			return;
+		}
+
+		while(!feof(f))
+		{
+			char buf[DLT_DAEMON_TEXTBUFSIZE];
+			read = fread(buf, 1, DLT_DAEMON_TEXTBUFSIZE, f);
+			if(ferror(f))
+			{
+				dlt_log(LOG_ERR, "Failed to read ECU Software version file.\n");
+				return;
+			}
+			if(bufpos + read > DLT_DAEMON_TEXTBUFSIZE)
+			{
+				dlt_log(LOG_ERR, "Too long file for ecu version info.\n");
+				fclose(f);
+				return;
+			}
+			strncpy(version+bufpos, buf, read);
+			bufpos += read;
+		}
+		fclose(f);
+	}
+
+    if (dlt_daemon_make_periodic (1000000*60, &info, data->daemon_local->flags.vflag)<0)
+    {
+        dlt_log(LOG_CRIT,"Can't initialize thread timer!\n");
+        return;
+    }
+
+	while(1)
+	{
+		int i;
+		for (i = 0; i <= data->daemon_local->fdmax; i++)
+		{
+			/* send to everyone! */
+			if (FD_ISSET(i, &(data->daemon_local->master)))
+			{
+				/* except the listener and ourselves */
+				if ((i != data->daemon_local->fp) && (i != data->daemon_local->sock))
+				{
+					dlt_daemon_control_send_ecu_version(i, data->daemon, version, data->daemon_local->flags.vflag);
+				}
+			}
+		}
+		dlt_daemon_wait_period (&info, data->daemon_local->flags.vflag);
+	}
+
+}
+
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 void dlt_daemon_systemd_watchdog_thread(void *ptr)
 {

@@ -454,6 +454,14 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *f
  */
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose);
 
+/**
+ * Send ECU version information
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param version string containing the version information
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_send_ecu_version(int sock, DltDaemon *daemon, const char *version, int verbose);
 #ifdef __cplusplus
 }
 #endif
