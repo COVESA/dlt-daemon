@@ -51,8 +51,8 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 # Set of indiviual options
 option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"                 ON  )
-option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           ON )
-option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"      ON)
+option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           OFF )
+option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"      OFF)
 option(WITH_DOC               "Set to ON to build documentation target"              OFF )
 option(WITH_MAN               "Set to ON to build man pages"             ON )
 option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists " OFF )

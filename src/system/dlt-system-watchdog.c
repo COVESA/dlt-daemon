@@ -40,13 +40,16 @@
 **  TO BE CHANGED BY USER [yes/no]: no                                        **
 **                                                                            **
 *******************************************************************************/
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/timerfd.h>
 #include "dlt.h"
-#include "sd-daemon.h"
 #include "dlt-system.h"
+
+#include "sd-daemon.h"
+
 
 DLT_DECLARE_CONTEXT(watchdogContext)
 DLT_IMPORT_CONTEXT(dltsystem)
@@ -108,6 +111,7 @@ int make_periodic(unsigned int period, PeriodicData *info)
 
     return timerfd_settime (fd, 0, &itval, NULL);
 }
+
 
 void watchdog_thread(void *v_conf)
 {
@@ -195,3 +199,4 @@ void start_systemd_watchdog(DltSystemConfiguration *conf)
 		DLT_LOG(dltsystem, DLT_LOG_ERROR,DLT_STRING("Could not create thread for systemd watchdog\n"));
 	}
 }
+#endif
