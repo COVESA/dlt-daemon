@@ -1236,7 +1236,8 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltMessag
     uint32_t id=0,id_tmp=0;
     uint8_t *ptr;
     DltDaemonContext *context;
-	uint32_t data_length_inject=0,data_length_inject_tmp=0;
+	int32_t data_length_inject=0;
+	uint32_t data_length_inject_tmp=0;
 
 	int32_t datalength;
 
