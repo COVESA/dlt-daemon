@@ -1,4 +1,4 @@
-.TH dlt-system.conf 5  "March 2, 2012" "version 2.7.0 ALPHA" "USER COMMANDS"
+.TH dlt-system.conf 5  "April 13, 2012" "version 2.7.0" "USER COMMANDS"
 .SH NAME
 dlt-system.conf \- DLT system process configuration file
 .SH DESCRIPTION
@@ -44,24 +44,40 @@ If this option is set to 1, the filetransfer feature is enabled.
 .IP
 Default: 0.
 .TP
-.B FiletransferDirectory1
-This is path to the first directory, which is scanned for new files to
-be transfered. If new files are found, these files are transfered to the
-client and then deleted after a configurable time.
+.B FiletransferContextId
+The Context Id of the filetransfer.
 .IP
-Default: /tmp/filetransfer
+Default: File.
 .TP
-.B FiletransferDirectory2
-This is path to the second directory, which is scanned for new files to
-be transfered. If new files are found, these files are transfered to the
-client and then deleted after a configurable time.
+.B FiletransferTimeStartup
+Time in seconds after startup of dlt-system when first file is transfered.
 .IP
-Default: /tmp/filetransfer2
+Default: 30.
 .TP
-.B SyslogContextId
-This value defines context id of the syslog adapter. 
+.B FiletransferTimeoutBetweenLogs
+Time in ms seconds to wait between two file transfer logs of a single file to DLT.
 .IP
-Default: SYSL
+Default: 10.
+.TP
+.B FiletransferTempDir
+Temporary directory to use. File transfer will move a file to this directory while it is being compressed and sent.
+.IP
+Default: /tmp.
+.TP
+.B FiletransferDirectory
+You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+.IP
+Default: /var/dlt/ft1.
+.TP
+.B FiletransferCompression
+You can define multiple file transfer directories. Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+.IP
+Default: 0.
+.TP
+.B FiletransferCompressionLevel
+You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+.IP
+Default: 5.
 .TP
 .B FiletransferTimeStartup
 This value defines the amount of time in seconds after start of

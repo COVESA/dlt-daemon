@@ -1,4 +1,4 @@
-.TH dlt.conf 5  "March 2, 2012" "version 2.7.0 ALPHA" "USER COMMANDS"
+.TH dlt.conf 5 "April 13, 2012" "version 2.7.0" "USER COMMANDS"
 .SH NAME
 dlt.conf \- DLT daemon configuration file
 .SH DESCRIPTION
@@ -137,8 +137,15 @@ Default: Function is disabled
 Each received DLT message on a TCP connection is checked to contain a
 serial header. If the DLT message contains no serial header, the message
 is ignored.
+.SH ECU Software version info
+.TP
+.B SendECUSoftwareVersion
+Send periodic ECU version info. 0=disabled, 1=enabled.
 .IP
-Default:
+Default: 0
+.TP
+.B PathToECUSoftwareVersion
+Absolute path to file storing version information - if disabled the DLT version will be send.
 .SH AUTHOR
 Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
 .SH SEE ALSO

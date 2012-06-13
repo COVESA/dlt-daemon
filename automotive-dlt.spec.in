@@ -117,7 +117,3 @@ rm -rf $RPM_BUILD_ROOT
 %files devel
 %{_includedir}/dlt/*.h
 %{_libdir}/pkgconfig/@PROJECT_NAME@.pc
-
-%changelog
-* Wed Nov 24 2010 dlt_maintainer <dlt_maintainer@genivi.org> 2.2.0
-- Creation

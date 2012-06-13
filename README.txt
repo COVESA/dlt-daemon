@@ -1,6 +1,6 @@
 DLT  - Automotive Diagnostic Log and Trace
 
-Version: 2.7.0 ALPHA
+Version: 2.7.0
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -51,18 +51,23 @@ Compiling in Linux:
 
 Compile options with default values
 -----------------------------------
-- WITH_DLT_SHM_ENABLE =        OFF
-- WITH_CHECK_CONFIG_FILE =     OFF
-- WITH_DOC =                   OFF
-- WITH_TESTSCRIPTS =           OFF
-- WITH_SYSTEMD =               OFF
-- WITH_GPROF =  	       OFF
-- WITH_MAN =		       ON
-- WITH_DLTTEST =               OFF
-- BUILD_SHARED_LIBS =          ON
-- CMAKE_INSTALL_PREFIX =       /usr/local
+- WITH_SYSTEMD =        		OFF
+- WITH_SYSTEMD_WATCHDOG =		OFF
+- WTIH_DLT_ADAPTOR =        	ON
+- WITH_DLT_CONSOLE =        	ON
+- WITH_DLT_EXAMPLES =        	ON
+- WITH_DLT_SYSTEM =        		ON
+- WITH_DLT_EXAMPLES =        	ON
+- WITH_DLT_TESTS =        		ON
+- WITH_CHECK_CONFIG_FILE =     	OFF
+- WITH_DOC =                   	OFF
+- WITH_TESTSCRIPTS =           	OFF
+- WITH_GPROF =  	       		OFF
+- WITH_MAN =		       		ON
+- WITH_DLTTEST =               	OFF
+- BUILD_SHARED_LIBS =          	ON
+- CMAKE_INSTALL_PREFIX =       /usr
 - CMAKE_BUILD_TYPE =           RelWithDebInfo
-
 
 In order to change these options, you can modify this values
 with ccmake, do the appropriate changes in CmakeList.txt or via 

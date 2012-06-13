@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.6.0
+Version: 2.7.0
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -38,10 +38,32 @@ Contact
 Alexander Wenzel (Alexander.AW.Wenzel@bmw.de)
 Christian Muck (christian.muck@bmw.de)
 
-
 Changes in this release
 -----------------------
 
+2.7.0
+
+   * [GDLT-24] Fixing compiler warnings
+   * [GDLT-94] Optional sending periodic software version messages. See man pages for more informations
+   * [GENDLT-26] Check for description length sanity
+   * [GENDLT-24] Crash on invalid injection message fixed
+   * [GDLT-93] Add -Wextra flags for compilation Fixed all the warnings that
+   * [GDLT-90] Optional: systemd watchdog concept in dlt-system and dlt-daemon
+   * [GDLT-67] Re-implemented dlt-system. Read full commit message for more information
+   * [GDLT-89] Fixed daemon doesn't sent the persistent log level
+   * [GDLT-88] Fixed wrong initalization order using offline trace function
+   * Add _GNU_SOURCE Definition to be able to use O_CLOEXEC
+   * Added important SEM_FREE in the daemon and closing fd in the filetransfer
+   * [GDLT-3] Fixed missing semaphore around dlt_buffer_push3
+   * [GDLT-86] Fixed dlt_free uses absolute file path /tmp and not DLT_USER_DEFINE define
+   * [D4099] Check for duplicate file handles, and clean them up if found
+   * [GDLT-85] Pipes opened multiple times for the same application pid fixed
+   * [GDLT-82] Child process inherits file descriptors openend by their parent fixed
+   * [GDLT-84] Instead of calling the injection callback, store a pointer to it and the required parameter data fixed
+   * [GDLT-70] Check for malloc failures and return errors where applicable
+   * [GDLT-47] Avoid discarding old contexts if no new memory can be allocate
+   * [GDLT-69] Fixed bug in dlt-test-multi-process shares context between threads
+   
 2.6.0
    
    * [GDLT-75] Use old style directory check on startup
