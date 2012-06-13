@@ -100,6 +100,11 @@ void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage 
 
 int dlt_client_init(DltClient *client, int verbose)
 {
+    if (verbose)
+	{
+		printf("Init dlt client struct\n");
+	}
+
     if (client==0)
     {
         return -1;
@@ -204,6 +209,11 @@ int dlt_client_connect(DltClient *client, int verbose)
 
 int dlt_client_cleanup(DltClient *client, int verbose)
 {
+    if (verbose)
+	{
+		printf("Cleanup dlt client\n");
+	}
+
     if (client==0)
     {
         return -1;

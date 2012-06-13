@@ -2034,7 +2034,7 @@ int dlt_disable_local_print(void)
     return 0;
 }
 
-void dlt_user_receiverthread_function(void *ptr)
+void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
 {
     while (1)
     {
