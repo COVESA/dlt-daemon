@@ -50,8 +50,14 @@ Changes in this release
    * [GDLT-93] Add -Wextra flags for compilation Fixed all the warnings that
    * [GDLT-90] Optional: systemd watchdog concept in dlt-system and dlt-daemon
    * [GDLT-67] Re-implemented dlt-system. Read full commit message for more information
+
+2.6.2
+
    * [GDLT-89] Fixed daemon doesn't sent the persistent log level
    * [GDLT-88] Fixed wrong initalization order using offline trace function
+
+2.6.1
+
    * Add _GNU_SOURCE Definition to be able to use O_CLOEXEC
    * Added important SEM_FREE in the daemon and closing fd in the filetransfer
    * [GDLT-3] Fixed missing semaphore around dlt_buffer_push3
