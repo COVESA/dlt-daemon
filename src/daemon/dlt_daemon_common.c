@@ -346,7 +346,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
 
     if( application->user_handle != DLT_FD_INIT )
     {
-    	if( application->pid != 0 )
+    	if( application->pid != pid )
         {
     		if ( close(application->user_handle) < 0 )
     		{
