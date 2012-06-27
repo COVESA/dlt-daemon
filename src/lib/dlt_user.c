@@ -455,6 +455,35 @@ int dlt_register_app(const char *appid, const char * description)
         return -1;
     }
 
+    /* check if application already registered */
+    /* if yes do not register again */
+    if(appid[1]==0)
+    {
+       if(appid[0]==dlt_user.appID[0])
+             return 0;
+    }
+    else if(appid[2]==0)
+    {
+       if(appid[0]==dlt_user.appID[0] &&
+          appid[1]==dlt_user.appID[1])
+             return 0;
+    }
+    else if(appid[3]==0)
+    {
+       if(appid[0]==dlt_user.appID[0] &&
+          appid[1]==dlt_user.appID[1] &&
+          appid[2]==dlt_user.appID[2])
+             return 0;
+    }
+    else
+    {
+       if(appid[0]==dlt_user.appID[0] &&
+          appid[1]==dlt_user.appID[1] &&
+          appid[2]==dlt_user.appID[2] &&
+          appid[3]==dlt_user.appID[3])
+             return 0;
+    }
+
     DLT_SEM_LOCK();
 
     /* Store locally application id and application description */
