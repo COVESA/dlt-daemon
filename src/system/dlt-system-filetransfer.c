@@ -185,11 +185,12 @@ int send_one(char *src, FiletransferOptions opts, int which)
 		{
 			int total = 2;
 			int used = 2;
-			while(total-used < total/2)
+            dlt_user_check_buffer(&total, &used);
+            while((total-used) < (total/2))
 			{
 				struct timespec t;
 				t.tv_sec = 0;
-				t.tv_nsec = 1000*opts.TimeoutBetweenLogs;
+				t.tv_nsec = 1000000ul*opts.TimeoutBetweenLogs;
 				nanosleep(&t, NULL);
 				dlt_user_check_buffer(&total, &used);
 			}
