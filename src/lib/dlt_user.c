@@ -2404,7 +2404,26 @@ int dlt_user_log_send_register_application(void)
 
     /* log to FIFO */
     ret=dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterApplication),dlt_user.application_description,usercontext.description_length);
-	return ((ret==DLT_RETURN_OK)?0:-1);
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret!=DLT_RETURN_OK)
+    {
+        DLT_SEM_LOCK();
+
+        if (dlt_buffer_push3(&(dlt_user.startup_buffer),
+                            (unsigned char *)&(userheader), sizeof(DltUserHeader),
+                            (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterApplication),
+                            (const unsigned char*)dlt_user.application_description, usercontext.description_length)==-1)
+             {
+                    dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+                    DLT_SEM_FREE();
+                    return -1;
+             }
+
+        DLT_SEM_FREE();
+    }
+
+    return 0;
 }
 
 int dlt_user_log_send_unregister_application(void)
@@ -2491,7 +2510,27 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
     /* log to FIFO */
     ret=dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
-    return ((ret==DLT_RETURN_OK)?0:-1);
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret!=DLT_RETURN_OK)
+    {
+        DLT_SEM_LOCK();
+
+        if (dlt_buffer_push3(&(dlt_user.startup_buffer),
+                            (unsigned char *)&(userheader), sizeof(DltUserHeader),
+                            (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterContext),
+                            (const unsigned char*)log->context_description, usercontext.description_length)==-1)
+             {
+                    dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+                    DLT_SEM_FREE();
+                    return -1;
+             }
+
+        DLT_SEM_FREE();
+    }
+
+    return 0;
+
 }
 
 int dlt_user_log_send_unregister_context(DltContextData *log)
