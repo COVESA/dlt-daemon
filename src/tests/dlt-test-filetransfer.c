@@ -373,7 +373,7 @@ int main(void)
 	file3_3 = "dlt-test-filetransfer-doesntExist_3";
 
 	//Register the application at the dlt-daemon
-	dltResult = DLT_REGISTER_APP("FLTR","Test Application filetransfer");
+	DLT_REGISTER_APP("FLTR","Test Application filetransfer");
 //	if(dltResult < 0){
 //		printf("Error: DLT_REIGSTER_APP: FLTR\n");
 //		return -1;

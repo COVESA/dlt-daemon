@@ -99,9 +99,9 @@ extern DltContext CONTEXT;
  * @param APPID application id with maximal four characters
  * @param DESCRIPTION ASCII string containing description
  */
-#define DLT_REGISTER_APP(APPID,DESCRIPTION) \
+#define DLT_REGISTER_APP(APPID,DESCRIPTION) do {\
 		dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION ); \
-		dlt_register_app( APPID, DESCRIPTION);
+		dlt_register_app( APPID, DESCRIPTION);} while(0)
 
 
 /**

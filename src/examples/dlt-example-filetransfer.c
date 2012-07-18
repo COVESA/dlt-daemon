@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
     }
 
 	//Register the application at the dlt-daemon
-	dltResult = DLT_REGISTER_APP(apid,FLTR_APP_DESC);
+	DLT_REGISTER_APP(apid,FLTR_APP_DESC);
 	
 	//Register the context of the main program at the dlt-daemon
 	dltResult = DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
