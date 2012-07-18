@@ -100,7 +100,7 @@ void usage()
 int main(int argc, char* argv[])
 {	
 	//char str[MAXSTRLEN];
-    int opt, timeout, dltResult;;
+    int opt, timeout;
 
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
@@ -194,27 +194,20 @@ int main(int argc, char* argv[])
     }
 
 	//Register the application at the dlt-daemon
-	dltResult = DLT_REGISTER_APP(apid,FLTR_APP_DESC);
+	DLT_REGISTER_APP(apid,FLTR_APP_DESC);
 	
 	//Register the context of the main program at the dlt-daemon
-	dltResult = DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
+	DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
 	
 	//More details in corresponding methods	
-	if( dltResult == 0 ){
-		if( iflag )
-		{
-			dlt_user_log_file_infoAbout(&fileContext,file);
-		}
-		
-		if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
-		{
-			printf("File couldn't be transferred. Please check the dlt log messages.\n");
-		}
-		
-	} 
-	else
+	if( iflag )
 	{
-		printf("Filetransfer didn't start...error with dlt daemon. Please check the daemon.\n");
+		dlt_user_log_file_infoAbout(&fileContext,file);
+	}
+
+	if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
+	{
+		printf("File couldn't be transferred. Please check the dlt log messages.\n");
 	}
 	
 	//Unregister the context in which the file transfer happened from the dlt-daemon

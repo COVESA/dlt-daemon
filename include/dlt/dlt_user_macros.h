@@ -99,16 +99,16 @@ extern DltContext CONTEXT;
  * @param APPID application id with maximal four characters
  * @param DESCRIPTION ASCII string containing description
  */
-#define DLT_REGISTER_APP(APPID,DESCRIPTION) \
+#define DLT_REGISTER_APP(APPID,DESCRIPTION) do {\
 		dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION ); \
-		dlt_register_app( APPID, DESCRIPTION);
+		dlt_register_app( APPID, DESCRIPTION);} while(0)
 
 
 /**
  * Unregister application.
  */
-#define DLT_UNREGISTER_APP() \
-	dlt_unregister_app();
+#define DLT_UNREGISTER_APP() do{\
+	dlt_unregister_app();} while(0)
 
 /**
  * Register context (with default log level and default trace status)
@@ -116,8 +116,8 @@ extern DltContext CONTEXT;
  * @param CONTEXTID context id with maximal four characters
  * @param DESCRIPTION ASCII string containing description
  */
-#define DLT_REGISTER_CONTEXT(CONTEXT,CONTEXTID,DESCRIPTION) \
-	dlt_register_context(&(CONTEXT), CONTEXTID, DESCRIPTION);
+#define DLT_REGISTER_CONTEXT(CONTEXT,CONTEXTID,DESCRIPTION) do{\
+	dlt_register_context(&(CONTEXT), CONTEXTID, DESCRIPTION);} while(0)
 
 /**
  * Register context with pre-defined log level and pre-defined trace status.
@@ -129,15 +129,15 @@ extern DltContext CONTEXT;
  * @param TRACESTATUS trace status to be pre-set for this context
  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  */
-#define DLT_REGISTER_CONTEXT_LL_TS(CONTEXT,CONTEXTID,DESCRIPTION,LOGLEVEL,TRACESTATUS) \
-	dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);
+#define DLT_REGISTER_CONTEXT_LL_TS(CONTEXT,CONTEXTID,DESCRIPTION,LOGLEVEL,TRACESTATUS) do{\
+	dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);} while(0)
 
 /**
  * Unregister context.
  * @param CONTEXT object containing information about one special logging context
  */
-#define DLT_UNREGISTER_CONTEXT(CONTEXT) \
-	dlt_unregister_context(&(CONTEXT));
+#define DLT_UNREGISTER_CONTEXT(CONTEXT) do{\
+	dlt_unregister_context(&(CONTEXT));} while(0)
 
 /**
  * Register callback function called when injection message was received
@@ -145,8 +145,8 @@ extern DltContext CONTEXT;
  * @param SERVICEID service id of the injection message
  * @param CALLBACK function pointer to callback function
  */
-#define DLT_REGISTER_INJECTION_CALLBACK(CONTEXT, SERVICEID, CALLBACK) \
-	dlt_register_injection_callback(&(CONTEXT),SERVICEID, CALLBACK);
+#define DLT_REGISTER_INJECTION_CALLBACK(CONTEXT, SERVICEID, CALLBACK) do{\
+	dlt_register_injection_callback(&(CONTEXT),SERVICEID, CALLBACK);} while(0)
 
 /**
  * Send log message with variable list of messages (intended for verbose mode)
@@ -159,14 +159,14 @@ extern DltContext CONTEXT;
 /* use function interface instead            */
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
-	{ \
+	do { \
 		DltContextData log; \
 		if (dlt_user_log_write_start(&CONTEXT,&log,LOGLEVEL)>0) \
 		{ \
             ARGS; \
             dlt_user_log_write_finish(&log); \
 		} \
-	}
+	} while(0)
 #endif
 
 /**
@@ -183,14 +183,14 @@ extern DltContext CONTEXT;
 /* use function interface instead               */
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
-	{ \
+	do { \
 		DltContextData log; \
 		if (dlt_user_log_write_start_id(&CONTEXT,&log,LOGLEVEL,MSGID)>0) \
 		{ \
             ARGS; \
             dlt_user_log_write_finish(&log); \
 		} \
-	}
+	} while(0)
 #endif
 
 /**
@@ -284,9 +284,9 @@ extern DltContext CONTEXT;
  * @param PAYLOAD pointer to network message payload
  */
 #define DLT_TRACE_NETWORK(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
-    { \
+    do { \
         dlt_user_trace_network(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
-    }
+    }while(0)
 
 /**
  * Send log message with string parameter.
@@ -295,9 +295,9 @@ extern DltContext CONTEXT;
  * @param TEXT ASCII string
  */
 #define DLT_LOG_STRING(CONTEXT,LOGLEVEL,TEXT) \
-    { \
+    do { \
         dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
-    }
+    } while(0)
 
 /**
  * Send log message with string parameter and integer parameter.
@@ -307,9 +307,9 @@ extern DltContext CONTEXT;
  * @param INT_VAR integer value
  */
 #define DLT_LOG_STRING_INT(CONTEXT,LOGLEVEL,TEXT,INT_VAR) \
-	{ \
+	do { \
         dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
-	}
+	} while(0)
 
 /**
  * Send log message with string parameter and unsigned integer parameter.
@@ -319,9 +319,9 @@ extern DltContext CONTEXT;
  * @param UINT_VAR unsigned integer value
  */
 #define DLT_LOG_STRING_UINT(CONTEXT,LOGLEVEL,TEXT,UINT_VAR) \
-	{ \
+	do { \
 		dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
-	}
+	} while(0)
 
 /**
  * Send log message with unsigned integer parameter.
@@ -330,9 +330,9 @@ extern DltContext CONTEXT;
  * @param UINT_VAR unsigned integer value
  */
 #define DLT_LOG_UINT(CONTEXT,LOGLEVEL,UINT_VAR) \
-	{ \
+	do { \
 		dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
-	}
+	} while(0)
 
 /**
  * Send log message with integer parameter.
@@ -341,9 +341,9 @@ extern DltContext CONTEXT;
  * @param INT_VAR integer value
  */
 #define DLT_LOG_INT(CONTEXT,LOGLEVEL,INT_VAR) \
-	{ \
+	do { \
 		dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
-	}
+	} while(0)
 
 /**
  * Send log message with binary memory block.
@@ -353,23 +353,23 @@ extern DltContext CONTEXT;
  * @param LEN length of memory block
  */
 #define DLT_LOG_RAW(CONTEXT,LOGLEVEL,BUF,LEN) \
-	{ \
+	do { \
 		dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
-	}
+	} while(0)
 
 /**
  * Switch to verbose mode
  *
  */
-#define DLT_VERBOSE_MODE() \
-	dlt_verbose_mode();
+#define DLT_VERBOSE_MODE() do { \
+	dlt_verbose_mode();} while(0)
 
 /**
  * Switch to non-verbose mode
  *
  */
-#define DLT_NONVERBOSE_MODE() \
-	dlt_nonverbose_mode();
+#define DLT_NONVERBOSE_MODE() do {\
+	dlt_nonverbose_mode();} while(0)
 
 /**
  * Set maximum logged log level and trace status of application
@@ -377,22 +377,22 @@ extern DltContext CONTEXT;
  * @param LOGLEVEL This is the log level to be set for the whole application
  * @param TRACESTATUS This is the trace status to be set for the whole application
  */
-#define DLT_SET_APPLICATION_LL_TS_LIMIT(LOGLEVEL, TRACESTATUS) \
-    dlt_set_application_ll_ts_limit(LOGLEVEL, TRACESTATUS);
+#define DLT_SET_APPLICATION_LL_TS_LIMIT(LOGLEVEL, TRACESTATUS) do {\
+    dlt_set_application_ll_ts_limit(LOGLEVEL, TRACESTATUS);} while(0)
 
 /**
  * Enable local printing of messages
  *
  */
-#define DLT_ENABLE_LOCAL_PRINT() \
-	dlt_enable_local_print();
+#define DLT_ENABLE_LOCAL_PRINT() do {\
+	dlt_enable_local_print();} while(0)
 
 /**
  * Disable local printing of messages
  *
  */
-#define DLT_DISABLE_LOCAL_PRINT() \
-	dlt_disable_local_print();
+#define DLT_DISABLE_LOCAL_PRINT() do {\
+	dlt_disable_local_print();} while(0)
 
 /**
  \}
