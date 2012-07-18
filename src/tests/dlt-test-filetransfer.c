@@ -71,7 +71,7 @@ char *file3_2;
 //!Not existing file which will be transferred.
 char *file3_3;
 //!Just some variables
-int i,countPackages, transferResult, dltResult;
+int i,countPackages, transferResult;
 
 //!Prints the test result
 void printTestResultPositiveExpected(const char *function, int result){
@@ -374,22 +374,12 @@ int main(void)
 
 	//Register the application at the dlt-daemon
 	DLT_REGISTER_APP("FLTR","Test Application filetransfer");
-//	if(dltResult < 0){
-//		printf("Error: DLT_REIGSTER_APP: FLTR\n");
-//		return -1;
-//	}
+
 	//Register the context of the main program at the dlt-daemon
-	dltResult = DLT_REGISTER_CONTEXT(mainContext,"MAIN","Main context for filetransfer test");
-//	if(dltResult < 0){
-//		printf("Error: DLT_REGISTER_CONTEXT: MAIN\n");
-//		return -1;
-//	}
+	DLT_REGISTER_CONTEXT(mainContext,"MAIN","Main context for filetransfer test");
+
 	//Register the context in which the file transfer will be logged at the dlt-daemon
-	dltResult = DLT_REGISTER_CONTEXT(fileContext,"FLTR","Test Context for filetransfer");
-//	if(dltResult < 0){
-//		printf("Error: DLT_REGISTER_CONTEXT:FLTR\n");
-//		return -1;
-//	}
+	DLT_REGISTER_CONTEXT(fileContext,"FLTR","Test Context for filetransfer");
 
 	//More details in corresponding methods
 	testFile1Run1();

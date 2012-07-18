@@ -129,7 +129,7 @@ void syslog_thread(void *v_conf)
 			DLT_STRING("dlt-system-syslog, in thread."));
 
 	DltSystemConfiguration *conf = (DltSystemConfiguration *) v_conf;
-	DLT_REGISTER_CONTEXT(syslogContext, conf->Syslog.ContextId, "SYSLOG Adapter")
+	DLT_REGISTER_CONTEXT(syslogContext, conf->Syslog.ContextId, "SYSLOG Adapter");
 
 	int sock = init_socket(conf->Syslog);
 	if(sock < 0)
