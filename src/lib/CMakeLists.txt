@@ -17,7 +17,7 @@
 set(dlt_LIB_SRCS dlt_user dlt_client dlt_filetransfer ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
 
 add_library(dlt ${dlt_LIB_SRCS})
-target_link_libraries(dlt rt ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(dlt rt m ${CMAKE_THREAD_LIBS_INIT})
 
 set_target_properties(dlt PROPERTIES VERSION ${DLT_VERSION} SOVERSION ${DLT_MAJOR_VERSION})
 

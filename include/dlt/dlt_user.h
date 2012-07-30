@@ -360,6 +360,31 @@ int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
  */
 int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
 
+/**
+ * Trace network message, truncated if necessary
+ * @param handle pointer to an object containing information about one special logging context
+ * @param nw_trace_type type of network trace (DLT_NW_TRACE_IPC, DLT_NW_TRACE_CAN, DLT_NW_TRACE_FLEXRAY, or DLT_NW_TRACE_MOST)
+ * @param header_len length of network message header
+ * @param header pointer to network message header
+ * @param payload_len length of network message payload
+ * @param payload pointer to network message payload
+ * @param allow_truncate Set to > 0 to allow truncating of the message if it is too large.
+ * @return negative value if there was an error
+ */
+int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate);
+
+/**
+ * Trace network message in segmented asynchronous mode.
+ * The sending of the data is done in a separate thread.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param nw_trace_type type of network trace (DLT_NW_TRACE_IPC, DLT_NW_TRACE_CAN, DLT_NW_TRACE_FLEXRAY, or DLT_NW_TRACE_MOST)
+ * @param header_len length of network message header
+ * @param header pointer to network message header
+ * @param payload_len length of network message payload
+ * @param payload pointer to network message payload
+ */
+void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
+
 /**************************************************************************************************
 * The folowing API functions define a high level function interface for DLT
 **************************************************************************************************/
@@ -593,6 +618,12 @@ int dlt_user_check_buffer(int *total_size, int *used_size);
  * @return number of messages in the user buffer
  */
 int dlt_user_atexit_blow_out_user_buffer(void);
+
+/**
+ * Try to resend log message in the user buffer.
+ * @return 0 on success, negative on failure.
+ */
+int dlt_user_log_resend_buffer(void);
 
 #ifdef DLT_TEST_ENABLE
 void dlt_user_test_corrupt_user_header(int enable);

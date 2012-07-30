@@ -74,6 +74,9 @@
 #include <pthread.h>    /* POSIX Threads */
 #endif
 
+#include <sys/time.h>
+#include <math.h>
+
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -107,7 +110,6 @@ static int dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel,
 static int dlt_user_log_send_log_mode(DltUserLogMode mode);
 static int dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static int dlt_user_log_check_user_message(void);
-static int dlt_user_log_resend_buffer(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static int dlt_user_log_send_overflow(void);
 
@@ -1739,7 +1741,339 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
     return 0;
 }
 
+/**
+ * NW Trace related
+ */
+#define MAX_TRACE_SEGMENT_SIZE 1024
+
+typedef struct {
+	DltContext handle;
+	DltNetworkTraceType nw_trace_type;
+	uint16_t header_len;
+	void *header;
+	uint16_t payload_len;
+	void *payload;
+} s_segmented_data;
+
+int check_buffer()
+{
+	int total_size, used_size;
+	dlt_user_check_buffer(&total_size, &used_size);
+
+	if((total_size - used_size) < (total_size/2))
+	{
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ * Send the start of a segment chain.
+ * Returns -1 on failure
+ */
+int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
+{
+
+    DltContextData log;
+	struct timeval tv;
+
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    if (dlt_user_log_init(handle, &log)==-1)
+    {
+		return -1;
+    }
+
+    if (handle==0)
+    {
+        return -1;
+    }
+
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.dlt_ll_ts==0)
+    {
+        DLT_SEM_FREE();
+        return -1;
+    }
+
+    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    {
+        DLT_SEM_FREE();
+
+        log.args_num = 0;
+        log.trace_status = nw_trace_type;
+        log.size = 0;
+
+    	gettimeofday(&tv, NULL);
+    	*id = tv.tv_usec;
+
+    	/* Write identifier */
+        if(dlt_user_log_write_string(&log, "NWST") < 0)
+        {
+        	return -1;
+        }
+
+        /* Write stream handle */
+        if(dlt_user_log_write_uint(&log, *id) < 0)
+        {
+        	return -1;
+        }
+
+        /* Write header */
+        if(dlt_user_log_write_raw(&log, header, header_len) < 0)
+        {
+        	return -1;
+        }
+
+        /* Write size of payload */
+        if(dlt_user_log_write_uint(&log, payload_len))
+        {
+        	return -1;
+        }
+
+        /* Write expected segment count */
+        uint16_t segment_count = floor(payload_len/MAX_TRACE_SEGMENT_SIZE)+1;
+
+        if(dlt_user_log_write_uint(&log, segment_count))
+        {
+        	return -1;
+        }
+
+        /* Write length of one segment */
+        if(dlt_user_log_write_uint(&log, MAX_TRACE_SEGMENT_SIZE))
+        {
+        	return -1;
+        }
+
+        /* Send log */
+        return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
+    }
+    else
+    {
+        DLT_SEM_FREE();
+    }
+    return 0;
+}
+
+int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
+{
+	int max_wait = 20;
+	usleep(1000); // Yield, to give other threads time
+	while(check_buffer() < 0)
+	{
+		usleep(1000*50); // Wait 50ms
+		if(max_wait-- < 0)
+		{
+			// Waited one second for buffer to flush, return error.
+			return -1;
+		}
+		dlt_user_log_resend_buffer();
+	}
+
+    DltContextData log;
+
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    if (dlt_user_log_init(handle, &log)==-1)
+    {
+		return -1;
+    }
+
+    if (handle==0)
+    {
+        return -1;
+    }
+
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.dlt_ll_ts==0)
+    {
+        DLT_SEM_FREE();
+        return -1;
+    }
+
+    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    {
+        DLT_SEM_FREE();
+
+        log.args_num = 0;
+        log.trace_status = nw_trace_type;
+        log.size = 0;
+
+        /* Write identifier */
+        if(dlt_user_log_write_string(&log, "NWCH") < 0)
+        {
+        	return -1;
+        }
+
+        /* Write stream handle */
+        if(dlt_user_log_write_uint(&log, id) < 0)
+        {
+        	return -1;
+        }
+
+        /* Write segment sequence number */
+        if(dlt_user_log_write_uint(&log, sequence))
+        {
+        	return -1;
+        }
+
+        /* Write data */
+        if(dlt_user_log_write_raw(&log, payload, payload_len) < 0)
+        {
+        	return -1;
+        }
+
+        /* Send log */
+        return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
+    }
+    else
+    {
+        DLT_SEM_FREE();
+    }
+    return 0;
+}
+
+int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkTraceType nw_trace_type)
+{
+    DltContextData log;
+
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    if (dlt_user_log_init(handle, &log)==-1)
+    {
+		return -1;
+    }
+
+    if (handle==0)
+    {
+        return -1;
+    }
+
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.dlt_ll_ts==0)
+    {
+        DLT_SEM_FREE();
+        return -1;
+    }
+
+    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    {
+        DLT_SEM_FREE();
+
+        log.args_num = 0;
+        log.trace_status = nw_trace_type;
+        log.size = 0;
+
+        /* Write identifier */
+        if(dlt_user_log_write_string(&log, "NWEN") < 0)
+        {
+        	return -1;
+        }
+
+        /* Write stream handle */
+        if(dlt_user_log_write_uint(&log, id) < 0)
+        {
+        	return -1;
+        }
+
+        /* Send log */
+        return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
+    }
+    else
+    {
+        DLT_SEM_FREE();
+    }
+    return 0;
+}
+
+void dlt_user_trace_network_segmented_thread(s_segmented_data *data)
+{
+	unsigned int id;
+	/* Send initial message */
+	if(dlt_user_trace_network_segmented_start(&id, &(data->handle), data->nw_trace_type, data->header_len, data->header, data->payload_len) < 0)
+	{
+		// TODO: Report error
+		return;
+	}
+
+	/* Send segments */
+	uint16_t offset = 0;
+	uint16_t sequence = 0;
+	void *ptr;
+
+	do
+	{
+		uint16_t len = data->payload_len - offset;
+		if(len > MAX_TRACE_SEGMENT_SIZE)
+		{
+			len = MAX_TRACE_SEGMENT_SIZE;
+		}
+		ptr = data->payload + offset;
+		if(dlt_user_trace_network_segmented_segment(id, &(data->handle), data->nw_trace_type, sequence++, len, ptr) < 0)
+		{
+			// TODO: Report error
+			return;
+		}
+		offset += MAX_TRACE_SEGMENT_SIZE;
+	}while(offset < data->payload_len);
+
+	dlt_user_trace_network_segmented_end(id, &(data->handle), data->nw_trace_type);
+
+	// Allocated outside of thread, free here.
+	free(data->header);
+	free(data->payload);
+	free(data);
+}
+
+void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
+{
+	s_segmented_data *thread_data = malloc(sizeof(s_segmented_data));
+
+	/* Copy data */
+	memcpy(&(thread_data->handle), handle, sizeof(DltContext));
+	thread_data->nw_trace_type = nw_trace_type;
+	thread_data->header_len = header_len;
+	thread_data->header = malloc(header_len);
+	memcpy(thread_data->header, header, header_len);
+	thread_data->payload_len = payload_len;
+	thread_data->payload = malloc(payload_len);
+	memcpy(thread_data->payload, payload, payload_len);
+
+	/* Begin background thread */
+	pthread_t thread;
+	pthread_create(&thread, NULL, (void *)dlt_user_trace_network_segmented_thread, thread_data);
+}
+
 int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
+{
+	return dlt_user_trace_network_truncated(handle, nw_trace_type, header_len, header, payload_len, payload, 0);
+}
+
+int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate)
 {
     DltContextData log;
 
@@ -1791,21 +2125,53 @@ int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type
             header_len=0;
         }
 
-        /* Write header and its length */
-        if (dlt_user_log_write_raw(&log, header, header_len)==-1)
+        /* If truncation is allowed, check if we must do it */
+        if(allow_truncate > 0 && (header_len+payload_len+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
         {
-        	return -1;
-        }
+        	int truncated_payload_len = DLT_USER_BUF_MAX_SIZE - header_len - 40; // 40 == overhead bytes
 
-        if (payload==0)
-        {
-            payload_len=0;
-        }
+        	/* Identify as truncated */
+        	if(dlt_user_log_write_string(&log, "NWTR") < 0)
+        	{
+        		return -1;
+        	}
 
-        /* Write payload and its length */
-        if (dlt_user_log_write_raw(&log, payload, payload_len)==-1)
+            /* Write header and its length */
+            if (dlt_user_log_write_raw(&log, header, header_len) < 0)
+            {
+            	return -1;
+            }
+
+        	/* Write original size of payload */
+            if(dlt_user_log_write_uint(&log, payload_len) < 0)
+            {
+            	return -1;
+            }
+
+            /* Write truncated payload */
+            if (dlt_user_log_write_raw(&log, payload, truncated_payload_len) < 0)
+            {
+    			return -1;
+            }
+        }
+        else /* Truncation not allowed or data short enough */
         {
-			return -1;
+            /* Write header and its length */
+            if (dlt_user_log_write_raw(&log, header, header_len)==-1)
+            {
+            	return -1;
+            }
+
+            if (payload==0)
+            {
+                payload_len=0;
+            }
+
+            /* Write payload and its length */
+            if (dlt_user_log_write_raw(&log, payload, payload_len)==-1)
+            {
+    			return -1;
+            }
         }
 
         /* Send log */
