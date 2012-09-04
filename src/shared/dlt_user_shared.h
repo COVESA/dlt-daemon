@@ -76,10 +76,11 @@
  */
 typedef enum
 {
-	DLT_RETURN_PIPE_FULL  = -3,
-	DLT_RETURN_PIPE_ERROR = -2,
-	DLT_RETURN_ERROR      = -1,
-	DLT_RETURN_OK         =  0
+	DLT_RETURN_BUFFER_FULL	= -4,
+	DLT_RETURN_PIPE_FULL	= -3,
+	DLT_RETURN_PIPE_ERROR	= -2,
+	DLT_RETURN_ERROR		= -1,
+	DLT_RETURN_OK			=  0
 } DltReturnValue;
 
 /**

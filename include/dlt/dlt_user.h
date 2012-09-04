@@ -72,11 +72,11 @@
   \addtogroup userapi
   \{
 */
-
 #include "dlt_types.h"
 #include "dlt_common.h"
 #include "dlt_user_macros.h"
 #include "dlt_shm.h"
+#include <mqueue.h>
 
 #if !defined (__WIN32__)
 #include <semaphore.h>
@@ -204,6 +204,9 @@ typedef struct
     char appID[DLT_ID_SIZE];             /**< Application ID */
     int dlt_log_handle;                  /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                 /**< Handle to own fifo */
+    mqd_t dlt_segmented_queue_read_handle;    /**< Handle message queue */
+    mqd_t dlt_segmented_queue_write_handle;    /**< Handle message queue */
+    pthread_t dlt_segmented_nwt_handle;  /**< thread handle of segmented sending */
 
     int8_t dlt_is_file;                  /**< Target of logging: 1 to file, 0 to daemon */
 
@@ -382,8 +385,9 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
  * @param header pointer to network message header
  * @param payload_len length of network message payload
  * @param payload pointer to network message payload
+ * @return 0 on success, -1 on failure
  */
-void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
+int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
 
 /**************************************************************************************************
 * The folowing API functions define a high level function interface for DLT

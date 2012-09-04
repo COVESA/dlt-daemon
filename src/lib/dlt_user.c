@@ -63,7 +63,6 @@
  Initials    Date         Comment
  aw          13.01.2010   initial
  */
-
 #include <stdlib.h> /* for getenv(), free(), atexit() */
 #include <string.h> /* for strcmp(), strncmp(), strlen(), memset(), memcpy() */
 #include <signal.h> /* for signal(), SIGPIPE, SIG_IGN */
@@ -83,10 +82,13 @@
 
 #include <sys/uio.h> /* writev() */
 
+#include <limits.h>
+
 #include "dlt_user.h"
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 #include "dlt_user_cfg.h"
+#include "dlt_queue.h"
 
 static DltUser dlt_user;
 static int dlt_user_initialised = 0;
@@ -97,11 +99,28 @@ static sem_t dlt_mutex;
 static pthread_t dlt_receiverthread_handle;
 static pthread_attr_t dlt_receiverthread_attr;
 
+/* Segmented Network Trace */
+#define DLT_MAX_TRACE_SEGMENT_SIZE 1024
+#define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
+#define DLT_DELAYED_RESEND_INDICATOR_PATTERN 0xFFFFFFFF
+
+typedef struct {
+	DltContext 			*handle;
+	uint16_t			id;
+	DltNetworkTraceType	nw_trace_type;
+	uint16_t 			header_len;
+	void 				*header;
+	uint16_t 			payload_len;
+	void 				*payload;
+} s_segmented_data;
+
+dlt_queue *dlt_segmented_nwt_queue;
+
 /* Function prototypes for internally used functions */
 static void dlt_user_receiverthread_function(void *ptr);
 static void dlt_user_atexit_handler(void);
 static int dlt_user_log_init(DltContext *handle, DltContextData *log);
-static int dlt_user_log_send_log(DltContextData *log, int mtype);
+static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype);
 static int dlt_user_log_send_register_application(void);
 static int dlt_user_log_send_unregister_application(void);
 static int dlt_user_log_send_register_context(DltContextData *log);
@@ -112,6 +131,7 @@ static int dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static int dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static int dlt_user_log_send_overflow(void);
+static void dlt_user_trace_network_segmented_thread(void *unused);
 
 int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version){
 
@@ -223,7 +243,43 @@ int dlt_init(void)
 		dlt_log(LOG_WARNING, "Can't destroy thread attributes!\n");
 	}
 
-    return 0;
+    /* Generate per process name for queue */
+    char queue_name[NAME_MAX];
+    sprintf(queue_name, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+
+    /* Maximum queue size is 10, limit to size of pointers */
+    struct mq_attr mqatr;
+    mqatr.mq_flags		= 0;
+    mqatr.mq_maxmsg		= 10;
+    mqatr.mq_msgsize	= sizeof(s_segmented_data *);
+    mqatr.mq_curmsgs	= 0;
+
+    /* Separate handles for reading and writing */
+    dlt_user.dlt_segmented_queue_read_handle = mq_open(queue_name, O_CREAT| O_RDONLY,
+    		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH, &mqatr);
+    if(dlt_user.dlt_segmented_queue_read_handle < 0)
+    {
+    	dlt_log(LOG_CRIT, "Can't create message queue read handle!\n");
+    	dlt_log(LOG_CRIT, strerror(errno));
+    	return -1;
+    }
+
+    dlt_user.dlt_segmented_queue_write_handle = mq_open(queue_name, O_WRONLY);
+    if(dlt_user.dlt_segmented_queue_write_handle < 0)
+    {
+    	dlt_log(LOG_CRIT, "Can't open message queue write handle!\n");
+    	dlt_log(LOG_CRIT, strerror(errno));
+    	return -1;
+    }
+
+	if(pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
+	   (void *)dlt_user_trace_network_segmented_thread, NULL))
+	{
+    	dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
+    	return -1;
+	}
+
+	return 0;
 }
 
 int dlt_init_file(const char *name)
@@ -428,6 +484,27 @@ int dlt_free(void)
         dlt_user.dlt_ll_ts = 0;
         dlt_user.dlt_ll_ts_max_num_entries = 0;
         dlt_user.dlt_ll_ts_num_entries = 0;
+    }
+
+    if (dlt_user.dlt_segmented_nwt_handle)
+    {
+    	pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
+    }
+
+    char queue_name[NAME_MAX];
+    sprintf(queue_name, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+
+    if(mq_close(dlt_user.dlt_segmented_queue_write_handle) < 0)
+    {
+    	dlt_log(LOG_ERR, "Failed to unlink message queue write handle!\n");
+    	dlt_log(LOG_ERR, strerror(errno));
+    }
+
+    if(mq_close(dlt_user.dlt_segmented_queue_read_handle) < 0 ||
+    	mq_unlink(queue_name))
+    {
+    	dlt_log(LOG_ERR, "Failed to unlink message queue read handle!\n");
+    	dlt_log(LOG_ERR, strerror(errno));
     }
 
     dlt_user_initialised = 0;
@@ -1085,7 +1162,7 @@ int dlt_user_log_write_finish(DltContextData *log)
         return -1;
     }
 
-    return dlt_user_log_send_log(log, DLT_TYPE_LOG);
+    return dlt_user_log_send_log(log, DLT_TYPE_LOG) < 0 ? -1 : 0;
 }
 
 int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length)
@@ -1744,16 +1821,7 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
 /**
  * NW Trace related
  */
-#define MAX_TRACE_SEGMENT_SIZE 1024
 
-typedef struct {
-	DltContext handle;
-	DltNetworkTraceType nw_trace_type;
-	uint16_t header_len;
-	void *header;
-	uint16_t payload_len;
-	void *payload;
-} s_segmented_data;
 
 int check_buffer()
 {
@@ -1771,30 +1839,21 @@ int check_buffer()
  * Send the start of a segment chain.
  * Returns -1 on failure
  */
-int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
+int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
 {
 
     DltContextData log;
 	struct timeval tv;
 
-    if (dlt_user_initialised==0)
+    if (handle==NULL)
     {
-        if (dlt_init()<0)
-        {
-            return -1;
-        }
+        return -1;
     }
 
     if (dlt_user_log_init(handle, &log)==-1)
     {
 		return -1;
     }
-
-    if (handle==0)
-    {
-        return -1;
-    }
-
 
     DLT_SEM_LOCK();
 
@@ -1834,21 +1893,27 @@ int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle,
         }
 
         /* Write size of payload */
-        if(dlt_user_log_write_uint(&log, payload_len))
+        if(dlt_user_log_write_uint(&log, payload_len) < 0)
         {
         	return -1;
         }
 
         /* Write expected segment count */
-        uint16_t segment_count = floor(payload_len/MAX_TRACE_SEGMENT_SIZE)+1;
+        uint16_t segment_count = payload_len/DLT_MAX_TRACE_SEGMENT_SIZE+1;
 
-        if(dlt_user_log_write_uint(&log, segment_count))
+        /* If segments align perfectly with segment size, avoid sending empty segment */
+        if((payload_len % DLT_MAX_TRACE_SEGMENT_SIZE) == 0)
+        {
+        	segment_count--;
+        }
+
+        if(dlt_user_log_write_uint(&log, segment_count) < 0)
         {
         	return -1;
         }
 
         /* Write length of one segment */
-        if(dlt_user_log_write_uint(&log, MAX_TRACE_SEGMENT_SIZE))
+        if(dlt_user_log_write_uint(&log, DLT_MAX_TRACE_SEGMENT_SIZE) < 0)
         {
         	return -1;
         }
@@ -1863,41 +1928,25 @@ int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle,
     return 0;
 }
 
-int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
+int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
 {
-	int max_wait = 20;
-	usleep(1000); // Yield, to give other threads time
 	while(check_buffer() < 0)
 	{
 		usleep(1000*50); // Wait 50ms
-		if(max_wait-- < 0)
-		{
-			// Waited one second for buffer to flush, return error.
-			return -1;
-		}
 		dlt_user_log_resend_buffer();
 	}
 
-    DltContextData log;
-
-    if (dlt_user_initialised==0)
+    if (handle==NULL)
     {
-        if (dlt_init()<0)
-        {
-            return -1;
-        }
+        return -1;
     }
+
+    DltContextData log;
 
     if (dlt_user_log_init(handle, &log)==-1)
     {
 		return -1;
     }
-
-    if (handle==0)
-    {
-        return -1;
-    }
-
 
     DLT_SEM_LOCK();
 
@@ -1928,7 +1977,7 @@ int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetw
         }
 
         /* Write segment sequence number */
-        if(dlt_user_log_write_uint(&log, sequence))
+        if(dlt_user_log_write_uint(&log, sequence) < 0)
         {
         	return -1;
         }
@@ -1946,19 +1995,19 @@ int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetw
     {
         DLT_SEM_FREE();
     }
+
+    /* Allow other threads to log between chunks */
+	pthread_yield();
     return 0;
 }
 
-int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkTraceType nw_trace_type)
+int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNetworkTraceType nw_trace_type)
 {
     DltContextData log;
 
-    if (dlt_user_initialised==0)
+    if (handle==0)
     {
-        if (dlt_init()<0)
-        {
-            return -1;
-        }
+        return -1;
     }
 
     if (dlt_user_log_init(handle, &log)==-1)
@@ -1966,10 +2015,6 @@ int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkT
 		return -1;
     }
 
-    if (handle==0)
-    {
-        return -1;
-    }
 
 
     DLT_SEM_LOCK();
@@ -2010,67 +2055,142 @@ int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkT
     return 0;
 }
 
-void dlt_user_trace_network_segmented_thread(s_segmented_data *data)
+void dlt_user_trace_network_segmented_thread(void *unused)
 {
-	unsigned int id;
-	/* Send initial message */
-	if(dlt_user_trace_network_segmented_start(&id, &(data->handle), data->nw_trace_type, data->header_len, data->header, data->payload_len) < 0)
+	/* Unused on purpose. */
+	(void) unused;
+
+	s_segmented_data *data;
+
+	while(1)
 	{
-		// TODO: Report error
-		return;
+		ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
+					sizeof(s_segmented_data * ), NULL);
+		if(read != sizeof(s_segmented_data *))
+		{
+			dlt_log(LOG_ERR, "NWTSegmented: Error while reading queue.\n");
+			dlt_log(LOG_ERR, strerror(errno));
+			continue;
+		}
+
+		/* Indicator just to try to flush the buffer */
+		if(data == (s_segmented_data *)DLT_DELAYED_RESEND_INDICATOR_PATTERN)
+		{
+			dlt_user_log_resend_buffer();
+			continue;
+		}
+
+		/* Segment the data and send the chunks */
+		void *ptr 			= NULL;
+		uint16_t offset		= 0;
+		uint16_t sequence	= 0;
+		do
+		{
+			uint16_t len = 0;
+			if(offset + DLT_MAX_TRACE_SEGMENT_SIZE > data->payload_len)
+			{
+				len = data->payload_len - offset;
+			}
+			else
+			{
+				len = DLT_MAX_TRACE_SEGMENT_SIZE;
+			}
+			/* If payload size aligns perfectly with segment size, avoid sendind empty segment */
+			if(len == 0)
+			{
+				break;
+			}
+
+			ptr = data->payload + offset;
+			DltReturnValue err = dlt_user_trace_network_segmented_segment(data->id, data->handle, data->nw_trace_type, sequence++, len, ptr);
+			if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
+			{
+				dlt_log(LOG_ERR,"NWTSegmented: Could not send segment. Aborting.\n");
+				break; // Inner loop
+			}
+			offset += len;
+		}while(ptr < data->payload + data->payload_len);
+
+		/* Send the end message */
+		DltReturnValue err = dlt_user_trace_network_segmented_end(data->id, data->handle, data->nw_trace_type);
+		if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
+		{
+			dlt_log(LOG_ERR,"NWTSegmented: Could not send end segment.\n");
+		}
+
+		/* Free resources */
+		free(data->header);
+		free(data->payload);
+		free(data);
 	}
-
-	/* Send segments */
-	uint16_t offset = 0;
-	uint16_t sequence = 0;
-	void *ptr;
-
-	do
-	{
-		uint16_t len = data->payload_len - offset;
-		if(len > MAX_TRACE_SEGMENT_SIZE)
-		{
-			len = MAX_TRACE_SEGMENT_SIZE;
-		}
-		ptr = data->payload + offset;
-		if(dlt_user_trace_network_segmented_segment(id, &(data->handle), data->nw_trace_type, sequence++, len, ptr) < 0)
-		{
-			// TODO: Report error
-			return;
-		}
-		offset += MAX_TRACE_SEGMENT_SIZE;
-	}while(offset < data->payload_len);
-
-	dlt_user_trace_network_segmented_end(id, &(data->handle), data->nw_trace_type);
-
-	// Allocated outside of thread, free here.
-	free(data->header);
-	free(data->payload);
-	free(data);
 }
 
-void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
+int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
 {
+	/* Send as normal trace if possible */
+	if(header_len+payload_len+sizeof(uint16_t) < DLT_USER_BUF_MAX_SIZE) {
+		return dlt_user_trace_network(handle, nw_trace_type, header_len, header, payload_len, payload);
+	}
+
+	/* Allocate Memory */
 	s_segmented_data *thread_data = malloc(sizeof(s_segmented_data));
+	if(thread_data == NULL)
+	{
+		return -1;
+	}
+	thread_data->header = malloc(header_len);
+	if(thread_data->header == NULL)
+	{
+		free(thread_data);
+		return -1;
+	}
+	thread_data->payload = malloc(payload_len);
+	if(thread_data->payload == NULL)
+	{
+		free(thread_data->header);
+		free(thread_data);
+		return -1;
+	}
 
 	/* Copy data */
-	memcpy(&(thread_data->handle), handle, sizeof(DltContext));
+	thread_data->handle = handle;
 	thread_data->nw_trace_type = nw_trace_type;
 	thread_data->header_len = header_len;
-	thread_data->header = malloc(header_len);
 	memcpy(thread_data->header, header, header_len);
 	thread_data->payload_len = payload_len;
-	thread_data->payload = malloc(payload_len);
 	memcpy(thread_data->payload, payload, payload_len);
 
-	/* Begin background thread */
-	pthread_t thread;
-	pthread_create(&thread, NULL, (void *)dlt_user_trace_network_segmented_thread, thread_data);
+	/* Send start message */
+	DltReturnValue err = 	dlt_user_trace_network_segmented_start(&(thread_data->id),
+							thread_data->handle, thread_data->nw_trace_type,
+							thread_data->header_len, thread_data->header,
+							thread_data->payload_len);
+	if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
+	{
+		dlt_log(LOG_ERR,"NWTSegmented: Could not send start segment. Aborting.\n");
+		free(thread_data->header);
+		free(thread_data->payload);
+		free(thread_data);
+		return -1;
+	}
+
+	/* Add to queue */
+	if(mq_send(dlt_user.dlt_segmented_queue_write_handle,
+			(char *)&thread_data, sizeof(s_segmented_data *), 1) < 0)
+	{
+		free(thread_data->header);
+		free(thread_data->payload);
+		free(thread_data);
+		dlt_log(LOG_ERR, "NWTSegmented: Could not write into queue.\n");
+		dlt_log(LOG_ERR, strerror(errno));
+		return -1;
+	}
+	return 0;
 }
 
 int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
 {
-	return dlt_user_trace_network_truncated(handle, nw_trace_type, header_len, header, payload_len, payload, 0);
+	return dlt_user_trace_network_truncated(handle, nw_trace_type, header_len, header, payload_len, payload, 1);
 }
 
 int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate)
@@ -2461,37 +2581,37 @@ int dlt_user_log_init(DltContext *handle, DltContextData *log)
     return 0;
 }
 
-int dlt_user_log_send_log(DltContextData *log, int mtype)
+DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 {
     DltMessage msg;
     DltUserHeader userheader;
     int32_t len;
 
-    DltReturnValue ret = 0;
+    DltReturnValue ret = DLT_RETURN_OK;
 
     if (log==0)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (log->handle==0)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (dlt_user.appID[0]=='\0')
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (log->handle->contextID[0]=='\0')
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if ((mtype<DLT_TYPE_LOG) || (mtype>DLT_TYPE_CONTROL))
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* also for Trace messages */
@@ -2501,19 +2621,19 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG)==-1)
 #endif
     {
-		return -1;
+		return DLT_RETURN_ERROR;
     }
 
     if (dlt_message_init(&msg,0)==-1)
     {
-    	return -1;
+    	return DLT_RETURN_ERROR;
     }
 
     msg.storageheader = (DltStorageHeader*)msg.headerbuffer;
 
     if (dlt_set_storageheader(msg.storageheader,dlt_user.ecuID)==-1)
     {
-		return -1;
+		return DLT_RETURN_ERROR;
     }
 
     msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
@@ -2545,7 +2665,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
 
     if (dlt_message_set_extraparameters(&msg,0)==-1)
     {
-    	return -1;
+    	return DLT_RETURN_ERROR;
     }
 
     /* Fill out extended header, if extended header should be provided */
@@ -2569,7 +2689,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
         default:
         {
         	    /* This case should not occur */
-            return -1;
+            return DLT_RETURN_ERROR;
             break;
         }
         }
@@ -2596,7 +2716,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     if (len>UINT16_MAX)
     {
         dlt_log(LOG_CRIT,"Huge message discarded!\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     msg.standardheader->len = DLT_HTOBE_16(len);
@@ -2609,7 +2729,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
         {
             if (dlt_user_print_msg(&msg, log)==-1)
             {
-				return -1;
+				return DLT_RETURN_ERROR;
             }
         }
     }
@@ -2618,7 +2738,7 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
     {
         /* log to file */
         ret=dlt_user_log_out2(dlt_user.dlt_log_handle, msg.headerbuffer, msg.headersize, log->buffer, log->size);
-        return ((ret==DLT_RETURN_OK)?0:-1);
+        return ret;
     }
     else
     {
@@ -2634,10 +2754,10 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
         }
 
 		/* try to resent old data first */
-		ret = 0;
+		ret = DLT_RETURN_OK;
 		if(dlt_user.dlt_log_handle!=-1)
 			ret = dlt_user_log_resend_buffer();
-		if(ret==0) 
+		if(ret==DLT_RETURN_OK)
 		{
 			/* resend ok or nothing to resent */
 #ifdef DLT_SHM_ENABLE
@@ -2681,18 +2801,28 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
                                 log->buffer, log->size)==-1)
 			{
 				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+				ret = DLT_RETURN_BUFFER_FULL;
 			}
 
             DLT_SEM_FREE();
+
+            /* Ask segmented thread to try emptying the buffer soon. */
+            void *indic = (void *)DLT_DELAYED_RESEND_INDICATOR_PATTERN;
+            mq_send(dlt_user.dlt_segmented_queue_read_handle, (char *)&indic, sizeof(void *), 1);
         }
 
         switch (ret)
         {
+        case DLT_RETURN_BUFFER_FULL:
+        {
+        	/* Buffer full */
+        	return DLT_RETURN_BUFFER_FULL;
+        }
         case DLT_RETURN_PIPE_FULL:
         {
             /* data could not be written */
             dlt_user.overflow = 1;
-            return -1;
+            return DLT_RETURN_PIPE_FULL;
         }
         case DLT_RETURN_PIPE_ERROR:
         {
@@ -2710,26 +2840,26 @@ int dlt_user_log_send_log(DltContextData *log, int mtype)
                 dlt_user_print_msg(&msg, log);
             }
 
-            return -1;
+            return DLT_RETURN_PIPE_ERROR;
         }
         case DLT_RETURN_ERROR:
         {
             /* other error condition */
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 		case DLT_RETURN_OK:
         {
-        	return 0;
+        	return DLT_RETURN_OK;
         }
 		default:
 		{
 			/* This case should never occur. */
-			return -1;
+			return DLT_RETURN_ERROR;
 		}
         }
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_user_log_send_register_application(void)
@@ -3307,20 +3437,6 @@ int dlt_user_log_resend_buffer(void)
 			if (ret==DLT_RETURN_OK)
 			{
 				dlt_buffer_remove(&(dlt_user.startup_buffer));
-				/*
-				DLT_SEM_LOCK();
-				if (dlt_buffer_push(&(dlt_user.startup_buffer), buf, size)==-1)
-				{
-					dlt_log(LOG_ERR,"Error pushing back message to history buffer. Message discarded.\n");
-				}
-				DLT_SEM_FREE();
-
-				// In case of: data could not be written, set overflow flag
-				if (ret==DLT_RETURN_PIPE_FULL)
-				{
-					dlt_user.overflow = 1;
-				}
-				*/
 			}
 			else
 			{

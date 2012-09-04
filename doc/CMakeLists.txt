@@ -18,6 +18,7 @@ if(WITH_DOC)
        
     configure_file(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/doxygen.cfg @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/doc/filetransfer_doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/filetransfer_doxygen.cfg @ONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/extended_network_trace_doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/extended_network_trace_doxygen.cfg @ONLY)
 	
 	add_custom_target (doc ALL 
   		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg 
@@ -28,6 +29,12 @@ if(WITH_DOC)
   		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/filetransfer_doxygen.cfg 
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
+
+	add_custom_target (doc-extended-network-trace ALL 
+  		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/extended_network_trace_doxygen.cfg
+  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+	)
+	
 
 endif(WITH_DOC)
 

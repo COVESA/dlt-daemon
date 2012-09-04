@@ -98,6 +98,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-test-filetransfer
 %{_bindir}/dlt-test-multi-process
 %{_bindir}/dlt-test-multi-process-client
+%{_bindir}/dlt-test-queue
 
 %attr(0755,root,root) 
 %{_bindir}/dlt-daemon
