@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.7.1 Alpa
+Version: 2.7.1 Stable
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -40,6 +40,13 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+2.7.1
+
+   * [GDLT-115]: Prevent return value from DLT macro API
+   * Fix register app and register context was not stored in buffer when FIFO is full. Other controll messages still not saved in buffer
+   * Create new fifo only when same application registers with different pid
+   * Do not register appliction again, if already registered
+   * Fixed filetransfer not checking buffer fill level
 
 2.7.0
 

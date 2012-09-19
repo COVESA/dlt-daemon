@@ -1,6 +1,6 @@
 DLT  - Automotive Diagnostic Log and Trace
 
-Version: 2.7.1 Alpha
+Version: 2.7.1 Stable
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
