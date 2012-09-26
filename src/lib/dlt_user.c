@@ -2074,9 +2074,10 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 		}
 
 		/* Indicator just to try to flush the buffer */
-		if(data == (s_segmented_data *)DLT_DELAYED_RESEND_INDICATOR_PATTERN)
+		if(data->payload == (void *)DLT_DELAYED_RESEND_INDICATOR_PATTERN)
 		{
 			dlt_user_log_resend_buffer();
+			free(data);
 			continue;
 		}
 
@@ -2806,9 +2807,18 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
             DLT_SEM_FREE();
 
-            /* Ask segmented thread to try emptying the buffer soon. */
-            void *indic = (void *)DLT_DELAYED_RESEND_INDICATOR_PATTERN;
-            mq_send(dlt_user.dlt_segmented_queue_read_handle, (char *)&indic, sizeof(void *), 1);
+            /**
+             * Ask segmented thread to try emptying the buffer soon.
+             * This will be freed in dlt_user_trace_network_segmented_thread
+             * */
+            s_segmented_data *resend_data = malloc(sizeof(s_segmented_data));
+            resend_data->payload = (void *)DLT_DELAYED_RESEND_INDICATOR_PATTERN;
+            if(mq_send(dlt_user.dlt_segmented_queue_write_handle, (char *)&resend_data, sizeof(s_segmented_data *), 1) < 0)
+            {
+            	dlt_log(LOG_ERR,"Could not request resending.\n");
+            	dlt_log(LOG_ERR, strerror(errno));
+            	free(resend_data);
+            }
         }
 
         switch (ret)
