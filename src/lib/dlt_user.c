@@ -88,7 +88,6 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 #include "dlt_user_cfg.h"
-#include "dlt_queue.h"
 
 static DltUser dlt_user;
 static int dlt_user_initialised = 0;
@@ -113,8 +112,6 @@ typedef struct {
 	uint16_t 			payload_len;
 	void 				*payload;
 } s_segmented_data;
-
-dlt_queue *dlt_segmented_nwt_queue;
 
 /* Function prototypes for internally used functions */
 static void dlt_user_receiverthread_function(void *ptr);

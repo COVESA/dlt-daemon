@@ -364,8 +364,8 @@ int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
 int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
 
 /**
- * Trace network message, truncated if necessary
- * @param handle pointer to an object containing information about one special logging context
+ * Trace network message, truncated if necessary.
+ * @param handle pointer to an object containing information about logging context
  * @param nw_trace_type type of network trace (DLT_NW_TRACE_IPC, DLT_NW_TRACE_CAN, DLT_NW_TRACE_FLEXRAY, or DLT_NW_TRACE_MOST)
  * @param header_len length of network message header
  * @param header pointer to network message header
@@ -379,7 +379,9 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
 /**
  * Trace network message in segmented asynchronous mode.
  * The sending of the data is done in a separate thread.
- * @param handle pointer to an object containing information about one special logging context
+ * Please note that handle must exist for the lifetime of the application, because
+ * data chunks are sent asynchronously in undetermined future time.
+ * @param handle pointer to an object containing information about logging context
  * @param nw_trace_type type of network trace (DLT_NW_TRACE_IPC, DLT_NW_TRACE_CAN, DLT_NW_TRACE_FLEXRAY, or DLT_NW_TRACE_MOST)
  * @param header_len length of network message header
  * @param header pointer to network message header
@@ -596,6 +598,7 @@ int dlt_log_uint(DltContext *handle,DltLogLevelType loglevel, unsigned int data)
  * @return negative value if there was an error
  */
 int dlt_log_raw(DltContext *handle,DltLogLevelType loglevel, void *data,uint16_t length);
+
 
 /**
  * Forward a complete DLT message to the DLT daemon

@@ -289,6 +289,34 @@ extern DltContext CONTEXT;
     }while(0)
 
 /**
+ * Trace network message, allow truncation
+ * @param CONTEXT object containing information about one special logging context
+ * @param TYPE type of network trace message
+ * @param HEADERLEN length of network message header
+ * @param HEADER pointer to network message header
+ * @param PAYLOADLEN length of network message payload
+ * @param PAYLOAD pointer to network message payload
+ */
+#define DLT_TRACE_NETWORK_TRUNCATED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
+    do { \
+        dlt_user_trace_network_truncated(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD, 1); \
+    }while(0)
+
+/**
+ * Trace network message, segment large messages
+ * @param CONTEXT object containing information about one special logging context
+ * @param TYPE type of network trace message
+ * @param HEADERLEN length of network message header
+ * @param HEADER pointer to network message header
+ * @param PAYLOADLEN length of network message payload
+ * @param PAYLOAD pointer to network message payload
+ */
+#define DLT_TRACE_NETWORK_SEGMENTED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
+    do { \
+        dlt_user_trace_network_segmented(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+    }while(0)
+
+/**
  * Send log message with string parameter.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
