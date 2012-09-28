@@ -1878,7 +1878,7 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         }
 
         /* Write stream handle */
-        if(dlt_user_log_write_uint(&log, *id) < 0)
+        if(dlt_user_log_write_uint16(&log, *id) < 0)
         {
         	return -1;
         }
@@ -1890,7 +1890,7 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         }
 
         /* Write size of payload */
-        if(dlt_user_log_write_uint(&log, payload_len) < 0)
+        if(dlt_user_log_write_uint16(&log, payload_len) < 0)
         {
         	return -1;
         }
@@ -1904,13 +1904,13 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         	segment_count--;
         }
 
-        if(dlt_user_log_write_uint(&log, segment_count) < 0)
+        if(dlt_user_log_write_uint16(&log, segment_count) < 0)
         {
         	return -1;
         }
 
         /* Write length of one segment */
-        if(dlt_user_log_write_uint(&log, DLT_MAX_TRACE_SEGMENT_SIZE) < 0)
+        if(dlt_user_log_write_uint16(&log, DLT_MAX_TRACE_SEGMENT_SIZE) < 0)
         {
         	return -1;
         }
@@ -1968,13 +1968,13 @@ int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, Dl
         }
 
         /* Write stream handle */
-        if(dlt_user_log_write_uint(&log, id) < 0)
+        if(dlt_user_log_write_uint16(&log, id) < 0)
         {
         	return -1;
         }
 
         /* Write segment sequence number */
-        if(dlt_user_log_write_uint(&log, sequence) < 0)
+        if(dlt_user_log_write_uint16(&log, sequence) < 0)
         {
         	return -1;
         }
@@ -2246,8 +2246,6 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
         /* If truncation is allowed, check if we must do it */
         if(allow_truncate > 0 && (header_len+payload_len+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
         {
-        	int truncated_payload_len = DLT_USER_BUF_MAX_SIZE - header_len - 40; // 40 == overhead bytes
-
         	/* Identify as truncated */
         	if(dlt_user_log_write_string(&log, "NWTR") < 0)
         	{
@@ -2261,10 +2259,17 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
             }
 
         	/* Write original size of payload */
-            if(dlt_user_log_write_uint(&log, payload_len) < 0)
+            if(dlt_user_log_write_uint16(&log, payload_len) < 0)
             {
             	return -1;
             }
+
+        	/**
+        	 *  Calculate maximum avaialble space in sending buffer after headers.
+        	 */
+
+        	int truncated_payload_len = DLT_USER_BUF_MAX_SIZE -
+        			log.size - sizeof(uint16_t) - sizeof(uint32_t);
 
             /* Write truncated payload */
             if (dlt_user_log_write_raw(&log, payload, truncated_payload_len) < 0)

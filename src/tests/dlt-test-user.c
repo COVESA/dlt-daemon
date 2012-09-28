@@ -72,7 +72,7 @@
 
 #include "dlt.h"
 
-#define DLT_TEST_NUM_CONTEXT 7
+#define DLT_TEST_NUM_CONTEXT 9
 
 /* Test functions... */
 
@@ -84,6 +84,8 @@ int test4m(void);
 int test5m(void);
 int test6m(void);
 int test7m(void);
+int test8m(void);
+int test9m(void);
 
 /* for function interface */
 int test1f(void);
@@ -93,6 +95,8 @@ int test4f(void);
 int test5f(void);
 int test6f(void);
 int test7f(void);
+int test8f(void);
+int test9f(void);
 
 /* Declaration of callback functions */
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length);
@@ -135,6 +139,8 @@ void usage()
 	printf("  5m: (Macro IF)    Test high-level API\n");
 	printf("  6m: (Macro IF)    Test local printing\n");
 	printf("  7m: (Macro IF)    Test network trace\n");
+	printf("  8m: (Macro IF)    Test truncated network trace\n");
+	printf("  9m: (Macro IF)    Test segmented network trace\n");
 	printf("  1f: (Function IF) Test all log levels\n");
 	printf("  2f: (Function IF) Test all variable types (verbose) \n");
 	printf("  3f: (Function IF) Test all variable types (non-verbose) \n");
@@ -142,6 +148,8 @@ void usage()
 	printf("  5f: (Function IF) Test high-level API\n");
 	printf("  6f: (Function IF) Test local printing\n");
 	printf("  7f: (Function IF) Test network trace\n");
+	printf("  8f: (Function IF) Test truncated network trace\n");
+	printf("  9f: (Function IF) Test segmented network trace\n");
 }
 
 /**
@@ -281,6 +289,8 @@ int main(int argc, char* argv[])
 		test5m();
 		test6m();
 		test7m();
+		test8m();
+		test9m();
 
 		/* with function interface */
 		test1f();
@@ -290,6 +300,8 @@ int main(int argc, char* argv[])
 		test5f();
 		test6f();
 		test7f();
+		test8f();
+		test9f();
 
 		/* wait 1 second before next repeat of tests */
         sleep(1);
@@ -539,6 +551,72 @@ int test7m(void)
 	/* wait 2 second before next test */
     sleep(2);
 	DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test7: (Macro IF) finished"));
+
+	DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
+	sleep(2);
+
+	return 0;
+}
+
+int test8m(void)
+{
+	char buffer[1024*5];
+    int num;
+
+    for(num=0;num<1024*5;num++)
+    {
+        buffer[num] = num;
+    }
+
+	/* Show all log messages and traces */
+	DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON);
+
+	/* Test 8: (Macro IF) Test truncated network trace*/
+	printf("Test8m: (Macro IF) Test truncated network trace\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 8: (Macro IF) Test truncated network trace");
+
+	/* Dummy messages: 16 byte header, 5k payload */
+	DLT_TRACE_NETWORK_TRUNCATED(context_macro_test[7], DLT_NW_TRACE_IPC, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_TRUNCATED(context_macro_test[7], DLT_NW_TRACE_CAN, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_TRUNCATED(context_macro_test[7], DLT_NW_TRACE_FLEXRAY, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_TRUNCATED(context_macro_test[7], DLT_NW_TRACE_MOST, 16, buffer, 1024*5, buffer);
+
+	/* wait 2 second before next test */
+    sleep(2);
+	DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test8: (Macro IF) finished"));
+
+	DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
+	sleep(2);
+
+	return 0;
+}
+
+int test9m(void)
+{
+	char buffer[1024*5];
+    int num;
+
+    for(num=0;num<1024*5;num++)
+    {
+        buffer[num] = num;
+    }
+
+	/* Show all log messages and traces */
+	DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON);
+
+	/* Test 9: (Macro IF) Test segmented network trace*/
+	printf("Test9m: (Macro IF) Test segmented  network trace\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 9: (Macro IF) Test segmented network trace");
+
+	/* Dummy messages: 16 byte header, 5k payload */
+	DLT_TRACE_NETWORK_SEGMENTED(context_macro_test[8], DLT_NW_TRACE_IPC, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_SEGMENTED(context_macro_test[8], DLT_NW_TRACE_CAN, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_SEGMENTED(context_macro_test[8], DLT_NW_TRACE_FLEXRAY, 16, buffer, 1024*5, buffer);
+	DLT_TRACE_NETWORK_SEGMENTED(context_macro_test[8], DLT_NW_TRACE_MOST, 16, buffer, 1024*5, buffer);
+
+	/* wait 2 second before next test */
+    sleep(2);
+	DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test9: (Macro IF) finished"));
 
 	DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
 	sleep(2);
@@ -1002,6 +1080,88 @@ int test7f(void)
 	if (dlt_user_log_write_start(&context_info,&context_data,DLT_LOG_INFO)>0)
 	{
 		dlt_user_log_write_string(&context_data,"Test7: (Function IF) finished");
+		dlt_user_log_write_finish(&context_data);
+    }
+
+	dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
+	sleep(2);
+
+	return 0;
+}
+
+int test8f(void)
+{
+	char buffer[1024*5];
+    int num;
+
+    for(num=0;num<1024*5;num++)
+    {
+        buffer[num] = num;
+    }
+
+	/* Show all log messages and traces */
+	dlt_set_application_ll_ts_limit(DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON);
+
+	/* Test 8: (Function IF) Test truncated network trace */
+	printf("Test8f: (Function IF) Test truncated network trace\n");
+	if (dlt_user_log_write_start(&context_info,&context_data,DLT_LOG_INFO)>0)
+	{
+		dlt_user_log_write_string(&context_data,"Test 8: (Function IF) Test truncated network trace");
+		dlt_user_log_write_finish(&context_data);
+    }
+
+	/* Dummy message: 16 byte header, 32 byte payload */
+	dlt_user_trace_network_truncated(&(context_function_test[7]), DLT_NW_TRACE_IPC, 16, buffer, 1024*5, buffer, 1);
+	dlt_user_trace_network_truncated(&(context_function_test[7]), DLT_NW_TRACE_CAN, 16, buffer, 1024*5, buffer, 1);
+	dlt_user_trace_network_truncated(&(context_function_test[7]), DLT_NW_TRACE_FLEXRAY, 16, buffer, 1024*5, buffer, 1);
+	dlt_user_trace_network_truncated(&(context_function_test[7]), DLT_NW_TRACE_MOST, 16, buffer, 1024*5, buffer, 1);
+
+	/* wait 2 second before next test */
+    sleep(2);
+	if (dlt_user_log_write_start(&context_info,&context_data,DLT_LOG_INFO)>0)
+	{
+		dlt_user_log_write_string(&context_data,"Test8: (Function IF) finished");
+		dlt_user_log_write_finish(&context_data);
+    }
+
+	dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
+	sleep(2);
+
+	return 0;
+}
+
+int test9f(void)
+{
+	char buffer[1024*5];
+    int num;
+
+    for(num=0;num<1024*5;num++)
+    {
+        buffer[num] = num;
+    }
+
+	/* Show all log messages and traces */
+	dlt_set_application_ll_ts_limit(DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON);
+
+	/* Test 9: (Function IF) Test segmented network trace */
+	printf("Test9f: (Function IF) Test segmented network trace\n");
+	if (dlt_user_log_write_start(&context_info,&context_data,DLT_LOG_INFO)>0)
+	{
+		dlt_user_log_write_string(&context_data,"Test 9: (Function IF) Test segmented network trace");
+		dlt_user_log_write_finish(&context_data);
+    }
+
+	/* Dummy message: 16 byte header, 5k payload */
+	dlt_user_trace_network_segmented(&(context_function_test[8]), DLT_NW_TRACE_IPC, 16, buffer, 1024*5, buffer);
+	dlt_user_trace_network_segmented(&(context_function_test[8]), DLT_NW_TRACE_CAN, 16, buffer, 1024*5, buffer);
+	dlt_user_trace_network_segmented(&(context_function_test[8]), DLT_NW_TRACE_FLEXRAY, 16, buffer, 1024*5, buffer);
+	dlt_user_trace_network_segmented(&(context_function_test[8]), DLT_NW_TRACE_MOST, 16, buffer, 1024*5, buffer);
+
+	/* wait 2 second before next test */
+    sleep(2);
+	if (dlt_user_log_write_start(&context_info,&context_data,DLT_LOG_INFO)>0)
+	{
+		dlt_user_log_write_string(&context_data,"Test9: (Function IF) finished");
 		dlt_user_log_write_finish(&context_data);
     }
 
