@@ -2398,7 +2398,6 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     /* If the payload is correct, the counter is increased by 1 */
                     if (message->extendedheader->noar==4)
                     {
-                    	//TODO: CHECK ACTUAL CONTENT
                         type_info=0;
                         type_info_tmp=0;
                         length=0,length_tmp=0; /* the macro can set this variable to -1 */
