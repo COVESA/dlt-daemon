@@ -343,7 +343,7 @@ int dlt_init_message_queue(void)
     	}
     }
 
-    dlt_user.dlt_segmented_queue_write_handle = mq_open(queue_name, O_WRONLY);
+    dlt_user.dlt_segmented_queue_write_handle = mq_open(queue_name, O_WRONLY|O_NONBLOCK);
     if(dlt_user.dlt_segmented_queue_write_handle < 0)
     {
     	dlt_log(LOG_CRIT, "Can't open message queue write handle!\n");
@@ -1098,7 +1098,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
 
             DLT_SEM_FREE();
 
-            if(dlt_user_queue_resend() < 0)
+            if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
             	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
             }
@@ -2251,6 +2251,10 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 	if(mq_send(dlt_user.dlt_segmented_queue_write_handle,
 			(char *)&thread_data, sizeof(s_segmented_data *), 1) < 0)
 	{
+		if(errno == EAGAIN)
+		{
+			dlt_log(LOG_ERR, "NWTSegmented: Queue full. Message discarded.\n");
+		}
 		free(thread_data->header);
 		free(thread_data->payload);
 		free(thread_data);
@@ -2661,6 +2665,11 @@ int dlt_user_log_init(DltContext *handle, DltContextData *log)
 
 int dlt_user_queue_resend(void)
 {
+	if(dlt_user.dlt_log_handle < 0)
+	{
+		// Fail silenty. FIFO is not open yet
+		return -1;
+	}
     /**
      * Ask segmented thread to try emptying the buffer soon.
      * This will be freed in dlt_user_trace_network_segmented_thread
@@ -2911,7 +2920,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
             DLT_SEM_FREE();
 
-            if(dlt_user_queue_resend() < 0)
+        	// Fail silenty if FIFO is not open
+            if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
             	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
             }
@@ -3024,7 +3034,7 @@ int dlt_user_log_send_register_application(void)
 
         DLT_SEM_FREE();
 
-        if(dlt_user_queue_resend() < 0)
+        if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
         	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
         }
@@ -3135,7 +3145,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
         DLT_SEM_FREE();
 
-        if(dlt_user_queue_resend() < 0)
+        if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
         	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
         }
