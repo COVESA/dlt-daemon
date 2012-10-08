@@ -1,6 +1,6 @@
 DLT - Automotive Diagnostic Log and Trace
 
-Version: 2.8.0 ALPHA
+Version: 2.9.0 RELEASE
 
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
@@ -40,6 +40,17 @@ Christian Muck (christian.muck@bmw.de)
 
 Changes in this release
 -----------------------
+2.9.0
+   * [GDLT-120]: truncated and Segmented network tracing
+   * [GDLT-137]: Automatically try resending of user buffer after FIFO full
+   * [GSWD-85]:  Added authors file
+   
+2.8.0
+   * [GDLT-115]: Encapsulate user macros
+   * Fix register app and register context was not stored in buffer when FIFO is full. Other controll messages still not saved in buffer.
+   * Create new fifo only when same application registers with different pid.'
+   * Do not register appliction again, if already registered.
+   * Fixed filetransfer not checking buffer fill level.
 
 2.7.0
 
