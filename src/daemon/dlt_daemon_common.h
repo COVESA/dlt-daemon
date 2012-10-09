@@ -81,9 +81,9 @@
 extern "C" {
 #endif
 
-#define DLT_DAEMON_RINGBUFFER_MIN_SIZE  100000 /**< Ring buffer size for storing log messages while no client is connected */
-#define DLT_DAEMON_RINGBUFFER_MAX_SIZE  500000 /**< Ring buffer size for storing log messages while no client is connected */
-#define DLT_DAEMON_RINGBUFFER_STEP_SIZE 100000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_MIN_SIZE    500000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_MAX_SIZE  10000000 /**< Ring buffer size for storing log messages while no client is connected */
+#define DLT_DAEMON_RINGBUFFER_STEP_SIZE   500000 /**< Ring buffer size for storing log messages while no client is connected */
 
 #define DLT_DAEMON_STORE_TO_BUFFER -2   /**< Constant value to identify the command "store to buffer" */
 
