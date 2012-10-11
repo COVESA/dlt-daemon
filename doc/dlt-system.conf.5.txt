@@ -1,0 +1,186 @@
+DLT-SYSTEM.CONF(5)
+==================
+:doctype: manpage
+
+NAME
+----
+dlt-system.conf - DLT system process configuration file
+
+DESCRIPTION
+-----------
+The DLT system logging process is the central application, which logs
+system information from the platform. It provides the features
+filetransfer, syslog adapater, logging of any kind of files and
+procfilesystem logger. The individual features can be enabled and
+disabled in the configuration file. 
+
+The configuration file dlt-system.conf allows to configure the different
+runtime behaviour of dlt-system. The configuration file is loaded
+during startup of dlt-system.
+
+dlt-system loads by default the configuration file /etc/dlt-system.conf.
+An alternative configuration file can be loaded with the option -c.
+
+GENERAL OPTIONS
+---------------
+
+*ApplicationId*::
+    The application Id used for the dlt-system process.
+
+    Default: SYS
+
+SYSLOG ADAPTER OPTIONS
+----------------------
+
+*SyslogEnable*::
+    If this option is set to 1, the syslog adapter feature is enabled.
+
+    Default: 0.
+
+*SyslogContextId*::
+    This value defines context id of the syslog adapter. 
+
+    Default: SYSL
+
+*SyslogPort*::
+    This value defines the UDP port opened for receiving log messages from
+    syslog.
+
+    Default: 47111
+
+FILETRANSFER OPTIONS
+--------------------
+
+*FiletransferEnable*::
+    If this option is set to 1, the filetransfer feature is enabled.
+
+    Default: 0.
+
+*FiletransferContextId*::
+    The Context Id of the filetransfer.
+
+    Default: File.
+
+*FiletransferTimeStartup*::
+    Time in seconds after startup of dlt-system when first file is transfered.
+
+    Default: 30.
+
+*FiletransferTimeoutBetweenLogs*::
+    Time in ms seconds to wait between two file transfer logs of a single file to DLT.
+
+    Default: 10.
+
+*FiletransferTempDir*::
+    Temporary directory to use. File transfer will move a file to this directory while it is being compressed and sent.
+
+    Default: /tmp.
+
+*FiletransferDirectory*::
+    You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib
+    and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+
+    Default: /var/dlt/ft1.
+
+*FiletransferCompression*::
+    You can define multiple file transfer directories. Define the directory to watch, whether to compress the file with zlib
+    and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+
+    Default: 0.
+
+*FiletransferCompressionLevel*::
+    You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib
+    and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
+
+    Default: 5.
+
+*FiletransferTimeStartup*::
+    This value defines the amount of time in seconds after start of
+    dlt-system, when dlt-system starts to send the first file.
+
+    Default: 30
+
+*FiletransferTimeDelay*::
+    This value defines the amount of time after which a sent file is deleted
+    and the next file is strated to be transmitted.
+
+    Default: 10
+
+*FiletransferTimeoutBetweenLogs*::
+    This value defines the amount of time to wait between two file transfer 
+    logs of a single file.
+
+    Default: 10
+
+LOG FILES OPTIONS
+-----------------
+
+*LogFileEnable*::
+    If this option is set to 1, the log files feature is enabled.
+
+    Default: 0.
+
+*LogFileFilename*::
+    This value sets the full filename path to the file, which should be logged. 
+
+*LogFileMode*::
+    This value the defines in which operation mode this file is logged.
+    Possible values are: 0 = off, 1 = startup only, 2 = regular.
+    In mode 1 the file is only logged once when dlt-system is started.
+    In mode 2 the file is logged regularly every time LogFileTimeDelay timer
+    elapses.
+
+*LogFileTimeDelay*::
+    This value is used in mode 3 and defines the number of seconds, after
+    which the defined file is logged.
+
+*LogFileContextId*::
+   This value defines the context id, which is used for logging the file.
+
+LOG PROCESSES OPTIONS
+---------------------
+
+*LogProcessesEnable*::
+    If this option is set to 1, the log processes feature is enabled.
+
+    Default: 0.
+
+*LogProcessesContextId*::
+    This value defines the context id, which is used for logging processes
+    files.
+
+*LogProcessName*::
+    This value defines the name of the process to be logged, as used in the
+    file stat of each process. 
+    If the value is defined as *, all processes are logged.
+
+*LogProcessFilename*::
+    This value sets the relative filename path to the file, which should be
+    logged. The path is relative to the procfilesystem folder of the
+    process. 
+
+*LogProcessMode*::
+    This value the defines in which operation mode this process file is
+    logged. Possible values are: 0 = off, 1 = startup only, 2 = regular.
+    In mode 1 the file is only logged once when dlt-system is started.
+    In mode 2 the file is logged regularly every time LogFileTimeDelay timer
+    elapses.
+
+*LogProcessTimeDelay*::
+    This value is used in mode 3 and defines the number of seconds, after
+    which the defined procfilesystem file is logged.
+
+AUTHOR
+------
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+
+RESOURCES
+---------
+Main web site: <http://projects.genivi.org/diagnostic-log-trace> +
+Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
+
+SEE ALSO
+--------
+dlt-system(1) +
+dlt-daemon(1)
+

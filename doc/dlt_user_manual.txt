@@ -1,0 +1,327 @@
+DLT User Manual
+===============
+Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
+0.0.1, 2012/10/10: Initial version
+
+image::images/genivi_chrome_1_transparent.png[width=128]
+
+== Purpose
+This document specifies the usage of the DLT daemon.
+The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device.
+The DLT daemon component is based on the AUTOSAR 4.0 standard DLT.
+
+== Overview
+The DLT daemon is the central component in GENIVI, which gathers all logs and traces from the DLT user applications. The logs and traces are stored optionally directly in a file in the ECU. The DLT daemon forwards all logs and traces to a connected DLT client.
+The DLT client can send control messages to the daemon, e.g. to set individual log levels of applications and contexts or get the list of applications and contexts registered in the DLT daemon.
+
+The SW components of DLT:
+
+* dlt-daemon
+* dlt-system
+* dlt-adaptor-stdin
+* dlt-adaptor-udp
+* dlt-convert
+* dlt-receive
+
+The SW components of DLT for testing:
+
+* dlt-example-user
+* dlt-example-user-func
+* dlt-example-filetransfer
+* dlt-test-filetransfer
+* dlt-test-stress-user
+* dlt-test-client
+* dlt-test-stress-client
+* dlt-test-multi-process-client
+* dlt-test-stress
+* dlt-test-multi-process
+* dlt-test-user
+
+== DLT daemon
+
+=== Features
+
+* Message injection callback
+** The Viewer can send a message to an application. The application has to register an injection callback.
+* Support for multiple applications and multiple contexts organized in a hierarchy
+* Support for different interfaces between daemon and viewer (
+* Binary transport of messages (TCP/IP, Serial)
+* Verbose and none-verbose mode support
+* System log-level and individual log-levels for contexts
+* Adapters to connect Linux log facilities, e.g. syslog (planned journal)
+* User library and Daemon has a temporary internal buffer
+* Trace message (network message) support
+* The viewer writes messages from several sources into a single trace file
+* File transfer + compression for small files, e.g., screenshots of HMI
+* Many configuration options
+* Viewer supports plug-ins\* \*(SDK + example code) e.g. MOST message formatting
+* Daemon or application mode
+** The DLT daemon can be started in daemon mode, which is the normal use case. For testing purpose it can also be started in a standard application mode. In application mode all output is displayed in the console. In daemon mode output is done to the syslog daemon.The daemon mode is needed specially in System V init start-up system.
+* Offline Trace
+** Optional an offline trace memory can be configured in the DLT daemon configuration. The offline trace is stored locally in the file system. The directory of the offline trace can be configured.
+* Trace Mode
+** A API is provided in the DLT library to change the trace mode. If the trace mode is changed, the trace mode is stored persistently in the runtime configuration.
+The following modes are possible:
+*** trace off
+*** online trace only (Default)
+*** offline trace only
+*** online and offline trace
+* Start-up Trace
+** During star-up the logging data is stored in a temporary buffer, until the first client is connected. This feature is only available, if no serial connection is configured and the trace mode is "online trace only".
+
+=== Command line interface
+See Manpage dlt-daemon(1).
+
+=== Configuration
+See Manpage dlt.conf(5).
+
+== DLT system logger
+
+=== Overview
+The dlt-system application provides the following features:
+
+* DLT file-transfer manager
+* Syslog Adapter over UDP
+* Logging of file content from filesystem
+* Logging of files from proc filesystem of processes
+
+All the configuration is done in the file /etc/dlt-system.conf.
+
+=== DLT Filetransfer
+The DLT file-transfer manager can control up to two directories, if they contain any files. When a new file is detected in theses directories, the file transfer over DLT is started for this file. When the file transfer is finished, a configurable time is waited, until the file is deleted and the transfer of the next file is started. The first file transfer starts after a configurable time after dlt-system is started.
+
+Flow control is used to control the amount of data which is sent at once over DLT. Currently the fill level of the shared memory is checked. When 50% of fill level is reached no new data is sent again, until the level falls under 50% again.
+
+Typical Use cases are file transfer of screenshots or core dump files.
+
+=== Syslog adapter
+The syslog adapter provides a UDP port, to which the syslog daemon can send each syslog message. The syslog configuration must be changed to do this. The used UDP port can be configured.
+
+=== Logging of files
+Every file in the filesystem can be logged over DLT. The files can be logged only once during start-up or periodically after a defined time. Several files can be configured to be logged.
+
+=== Logging of files from proc filesystem
+Every file in the proc filesystem of a process can be logged. Theses files can be logged only once during start-up or periodically after a defined time. A specific process can be selected or all processes at once.
+
+=== Command line interface
+See Manpage dlt-system(1).
+
+=== Configuration
+See Manpage dlt-system.conf(5).
+
+== DLT command line tools
+Three command line tools are provided together with DLT daemon implementation.
+
+These tools are:
+
+* Data logger: dlt-receive
+* Converter: dlt-convert
+* Configuration: dlt-control (planned)
+
+
+=== dlt-receive
+
+==== Overview
+dlt-receive is a command line tool to connect to the dlt-daemon and receive logs and display them in the console or store them in a file.
+
+==== Command line interface
+See Manpage dlt-receive(1).
+
+=== dlt-convert
+
+==== Overview
+The dlt-convert console utility is used to read DLT files, print DLT messages in different formats (ASCII, hex, mixed, headers only) and store the messages again. Filters can be used to filter messages. Ranges and output file can be used to cut DLT files. Two files and output file can be used to join DLT files.
+
+==== Command line interface
+See Manpage dlt-convert(1).
+
+== DLT adaptors
+The DLT adaptors are used to interface legacy linux applications with the DLT daemon. Therefore, there are two adaptors:
+
+* dlt-adaptor-stdin for input received from stdin
+* dlt-adaptor-udp for input received from a specific udp port
+
+As command line parameters, the application id and context id can be specified individually for each instance of these programs. These id's are a character string consisting of up to 4 characters. Empty ids are not allowed and will be replaced with a default id. If not specified, the default id's will also be taken.
+
+=== dlt-adaptor-stdin
+The dlt-adaptor-stdin is a small external program for forwarding input from stdin to DLT daemon, and can be used for e.g. sending DBUS messages to the dlt daemon using the program dbus-monitor:
+
+$ dbus-monitor | dlt-adaptor-stdin
+
+=== dlt-adaptor-udp
+The dlt-adaptor-udp is a small external program for forwarding received UDP messages to DLT daemon, and can be used for e.g. sending syslog messages to the DLT daemon. Therefore a syslog daemon called syslog-ng is necessary. This syslog daemon must be configured to send the syslog messages to a specific UDP port. For configuration of this syslog daemon, see the documentation for syslog-ng.
+
+This tool is already integrated into dlt-system.
+
+== DLT library
+To use DLT from an application, the application has to link again the DLT library. When the DLT daemon is installed on the system , there will a shared library with the name
+libdlt.so which provides the interface for applications to get a connection to the DLT daemon.
+The library path and include path must be set in the build environment prior to building a program using the shared dlt library. By default, the include file "dlt.h" is located in a directory called "dlt/" within the standard include directory.
+
+=== Using DLT with cmake
+To use DLT with cmake, the following lines are the important ones:
+
+----
+pkg_check_modules(DLT REQUIRED automotive-dlt)
+----
+
+to INCLUDE_DIRECTORIES, add
+
+----
+${DLT_INCLUDE_DIRS}
+----
+
+and to TARGET_LINK_LIBRARIES:
+
+----
+${DLT_LIBRARIES}
+----
+
+=== Logging instruction
+
+==== Include the dlt header file:
+
+----
+#include <dlt/dlt.h>
+----
+
+==== Create logging context (place it beneath the define section):
+
+----
+DLT_DECLARE_CONTEXT(myContext);
+----
+
+==== Register the application and the context in main:
+
+----
+int main(int argc, const char\* argv\[\])
+{
+DLT_REGISTER_APP("LOG","Test Application for Logging");
+
+DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
+...
+
+}
+----
+
+Important note: If your application uses fork(), you may not call DLT_REGISTER_APP before fork(). And fork() should never be called after DLT_REGISTER_APP. This is because of state information and inter process communication channel to daemon would be copied to new process, but threads would be not.
+
+==== Use one of the DLT macros or the DLT function interface:
+Here we use the macro interface of DLT
+
+----
+DLT_LOG(mycontext,DLT_LOG_WARN,DLT_INT(5),DLT_STRING("This is a warning"));
+DLT_LOG(mycontext,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
+----
+
+==== Unregister the application and the context which are registered
+
+----
+DLT_UNREGISTER_CONTEXT(mycontext);
+DLT_UNREGISTER_APP();
+----
+
+=== Logging example
+
+* gedit dltdemo.c &
+* Copy the example code below into dltdemo.c
+* gcc -o dltdemo -ldlt dltdemo.c
+* rolf.haimerl|./dltdemo
+
+.DLT - Hello world
+----
+#include <stdio.h>
+#include <dlt/dlt.h>
+DLT_DECLARE_CONTEXT(mycontext);
+int main()
+{
+   int num;
+
+   DLT_REGISTER_APP("MYAP","My Application");
+   DLT_REGISTER_CONTEXT(mycontext,"MYCT", "My Context");
+
+   printf("Hello world");
+
+   for(num=0;num<10;num++) {
+      DLT_LOG(mycontext,DLT_LOG_INFO,DLT_STRING("Hello world"),DLT_INT(num));
+      sleep(1);
+   }
+
+   DLT_UNREGISTER_CONTEXT(mycontext);
+   DLT_UNREGISTER_APP();
+   return 0;
+}
+----
+
+=== API
+Two types of DLT user interfaces are provided to applications. The first interface is a macro based interface, which makes it very easy and very pretty coding to use DLT. The second interface is a functional interface, which provides an object oriented C interface for applications.
+
+The doxygen documentation of the dlt-daemon contains more informations about functional/macro based interfaces.
+
+See INSTALL.txt how to generate doxygen documentation.
+
+=== DLT macro interface
+The DLT macro interface provides a very easy to use interface. It is very easy to log a flexible size of parameters into a single log in a single source code line.
+
+[options="header"]
+|==============================================================================================
+| Command | Description
+| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT
+| DLT_DECLARE_CONTEXT(mycontext); | The next thing is to create instances of each used context of an application. This has to be done outside of the source code before using any context.
+| DLT_IMPORT_CONTEXT(mycontext); | If a context is used a second time in another software module, the following macro has to be called to get access to the context.
+| DLT_REGISTER_APP("LOG","Test Application for Logging"); | In the next step in the initialization of the application the application must be registered in the DLT daemon. The identifier of the application, here "LOG", has a maximum of four characters.
+| DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging"); | Then each context has to be registered in the DLT daemon. The call of this macro is a must, so that the DLT daemon and client are able to set the log level of the context in the application. The identifier of the context, here "TEST", has a maximum of four characters. A default log level and default trace status is used for this context.
+| DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging",DLT_LOG_VERBOSE,DLT_TRACE_STATUS_ON); | As an alternative, a specific log level and trace status can be provided during registration of the context.
+| | Choose now between verbose mode and non-verbose mode:
+| DLT_LOG(mycontext ,DLT_LOG_WARN, DLT_INT(num),DLT_STRING(text)); | For verbose mode (default): After registration a context can be used to send log messages to the DLT daemon. The DLT_LOG macro has to be called with the used log level of the log messages and a variable list of parameters. A complete list of parameters you will find in the Addendum API specification.
+| DLT_LOG_INT(mycontext ,DLT_LOG_WARN, num); DLT_LOG_STRING_INT(mycontext ,DLT_LOG_WARN, text, num); | As an alternative, the high level logging macros can be used which exists for special combination of parameters. A complete list you will find in the Addendum API specification.
+| DLT_LOG_ID(mycontext,DLT_LOG_WARN,msgid,DLT_INT(num),DLT_STRING(text)); | For non-verbose mode: After registration a context can be used to send log messages to the DLT daemon. The DLT_LOG_ID macro has to be called with the used log level of the log messages, the message id and a variable list of parameters. A complete list of parameters you will find in the API specification.
+| int injection_callback(uint32_t service_id, void \*data, uint32_t length) | The high-level logging macros are not available in non-verbose mode. An optional feature to use is the message injection feature. The DLT client can send user defined messages to an application, identified by a service id (e.g., 0xfff). If such a message is received by the application, a callback is called. The callback has the format:
+| DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0xFFF, injection_callback); | To register the callback within the application, the following call must be made:
+| DLT_TRACE_NETWORK(mycontext, DLT_NW_TRACE_CAN, headerlen, header, payloadlen, payload); | Furthermore, it is also possible to trace network messages. The interface, here DLT_NW_TRACE_CAN, the length of the header data and a pointer to the header data, the length of the payload data and a pointer to the payload data, must be specified. If no header or payload is available, the corresponding length must be set to 0, and the corresponding pointer must be set to NULL.
+| DLT_UNREGISTER_CONTEXT(mycontext); DLT_UNREGISTER_APP(); | After using the application and contexts, they must be unregistered from the DLT daemon. First all contexts, then the application must be unregistered.
+|==============================================================================================
+
+=== DLT functional interface and example
+The DLT functional interface provides a very easy to use interface. The C interface has an object oriented style.
+
+[options="header"]
+|==============================================================================================
+| Command | Description
+| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT: 
+| DltContext mycontext; | The next thing is to create an instance of each used context of an application. This has to be done outside of the source code before using any context. The name of the instance can be defined by the user.
+| DltContextData mycontextdata; | Additionally, a data buffer used to construct the DLT log messages must be created:
+| dlt_register_app("LOG","Test Application for Logging"); | In the next step in the initialization of the application the application must be registered in the DLT daemon. The identifier of the application, here "LOG", has a maximum of four characters.
+| dlt_register_context(&mycontext,"TEST","Test Context for Logging"); | Then each context has to be registered in the DLT daemon. The call of this function is a must, so that the DLT daemon and the client are able to set the log level of the context in the application. The identifier of the context, here "TEST", has a maximum of four characters. A default log level and default trace status is used for this context.
+| dlt_register_context(&mycontext,"TEST","Test Context for Logging",DLT_LOG_VERBOSE,DLT_TRACE_STATUS_ON); | As an alternative, a specific log level and trace status can be provided during registration of the context.
+| | Choose now between verbose mode and non-verbose mode:
+| dlt_verbose_mode(); | For verbose mode (default): Optionally switch to verbose mode by calling the function dlt_verbose_mode:
+| if (dlt_user_log_write_start(&mycontext,&mycontextdata,DLT_LOG_WARN))
+{ 
+  dlt_user_log_write_int(&mycontextdata,num); 
+  dlt_user_log_write_string(&mycontextdata,text);
+  dlt_user_log_write_finish(&mycontextdata); 
+} | After registration a context can be used to send log messages to the DLT daemon. The dlt_user_log_write function has to be called first with a pointer to the context, a pointer to the data buffer and the used log level of the log messages. For each parameter added to the DLT log message a call to dlt_user_log_write_xxx has to be done. A complete list of parameters you will find in the Addendum API specification. Sending of the DLT message is done by calling dlt_user_log_write_finish.
+| dlt_log_int(&mycontext, DLT_LOG_WARN, num); dlt_log_string_int(&mycontext, DLT_LOG_WARN, text, num); | As an alternative, the high level logging functions can be used which exists for special combination of parameters. A complete list you will find in the Addendum API specification.
+| dlt_nonverbose_mode(); | For non-verbose mode : Switch to non-verbose mode by calling the function dlt_nonverbose_mode:
+| if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_WARN,msgid))
+{ 
+  dlt_user_log_write_int(&mycontextdata,num); 
+  dlt_user_log_write_string(&mycontextdata,text);
+  dlt_user_log_write_finish(&mycontextdata);
+} | After registration a context can be used to send log messages to the DLT daemon. The dlt_user_log_write_start_id function has to be called first with a pointer to the context, a pointer to the context data, the used log level of the log messages and the message id. For each parameter added to the DLT log message a call to dlt_user_log_write_xxx has to be done. A complete list of parameters you will find in the Addendum API specification. Sending of the DLT message is done by calling dlt_user_log_write_finish.
+| | The high-level logging functions are not available in non-verbose mode.
+| int injection_callback(uint32_t service_id, void \*data, uint32_t length) | An optional feature to use is the message injection feature. The DLT client can send user defined messages to an application, identified by a service id (e.g. 0xfff). If such a message is received by the application, a callback is called. The callback has the format: |
+| dlt_register_injection_callback(&mycontext, 0xFFF, injection_callback); | To register the callback within the application, the following call must be made: |
+| dlt_user_trace_network(&mycontext, DLT_NW_TRACE_CAN, headerlen, header, payloadlen, payload); | Furthermore, it is also possible to trace network messages. The interface, here DLT_NW_TRACE_CAN, the length of the header data and a pointer to the header data, the length of the payload data and a pointer to the payload data, must be specified. If no header or payload is available, the corresponding length must be set to 0, and the corresponding pointer must be set to NULL.
+| dlt_unregister_context(&mycontext);
+dlt_unregister_app();
+dlt_free(); | After using the application and contexts, they must be unregistered from the DLT daemon. First all contexts, then the application must be unregistered.
+|==============================================================================================
+
+== Addendum
+Implementation specifics
+
+* The implementation is multithread safe.
+* Initialize DLT application and contexts, then forking and using the forked process, will lead to unclear behavior (or in worst case to a crash), as the forked process uses another process id as the parent process. Instead, initialize the DLT application and contexts in the forked process.
+

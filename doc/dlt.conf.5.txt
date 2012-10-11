@@ -1,0 +1,183 @@
+DLT.CONF(5)
+=============
+:doctype: manpage
+
+NAME
+----
+dlt.conf - DLT daemon configuration file
+
+DESCRIPTION
+-----------
+The DLT daemon is the central place where logs and traces are gathered
+from different applications, stored temporarily or permanently and
+transferred to a DLT client application, which can run directly on the
+GENIVI system or more likely on a external tester device.
+
+The configuration file dlt.conf allows to configure the different
+runtime behaviour of the dlt-daemon. The configuration file is loaded
+during startup of dlt-daemon.
+
+dlt-daemon loads by default the configuration file /etc/dlt.conf. An
+alternative configuration file can be loaded with the option -c.
+
+GENERAL OPTIONS
+---------------
+
+*Daemonize*::
+    If set to 1 DLT daemon is started in background as daemon. This option
+    is only needed in System V init systems. In systemd based startup
+    systems the daemon is started by spawning own process.
+
+    Default: 0
+
+*SendSerialHeader*::
+    If set to 1 DLT daemon sends each DLT message to the client with
+    prepanding the serial header "DLS0x01".
+
+    Default: 0
+
+*SendContextRegistration*::
+    If set to 1 each context which is registered from an application in the
+    DLT daemon generates a message to inform the DLT client about the new
+    context.
+
+    Default: 0
+
+*SendMessageTime*::
+    If set to 1 DLt daemon sends each second a DLT control message to the
+    client with the current timestamp from the system.
+
+    Default: 0
+
+*ECUId*::
+    This value sets the ECU Id, which is sent with each DLT message.
+
+    Default: ECU1
+
+*SharedMemorySize*::
+    This value sets the size of the shared memory, which is used to exchange
+    DLT messages between applications and daemon. This value is defined in
+    bytes. If this value is changed the system must be rebooted to take
+    effect.
+
+    Default: 100000
+
+*PersistanceStoragePath*::
+    This is the directory path, where the DLT daemon stores its runtime
+    configuration. Runtime configuration includes stored log levels, trace
+    status and changed logging mode. 
+
+    Default: /tmp
+
+OFFLINE TRACE OPTIONS
+---------------------
+
+*OfflineTraceDirectory*::
+    If this option is set, offline trace is enabled. This value sets the
+    directory path to the offline trace memory. The directory must already
+    exist.
+
+    Default: Offline tracing is disabled.
+
+*OfflineTraceFileSize*::
+    This value defines the max size of a offline trace file, if offline trace
+    is enabled. This value is defined in bytes. If the files size of the
+    current used log file is exceeded, a new log file is created. 
+
+    Default: 1000000
+
+*OfflineTraceMaxSize*::
+    This value defines the max offline Trace memory size, if offline trace
+    is enabled. This value is defined in bytes. If the overall offline trace
+    size is excedded, the oldest log files are deleted, until a new trace
+    file fits the overall offline trace max size.
+
+    Default: 4000000
+
+LOCAL CONSOLE OUTPUT OPTIONS
+----------------------------
+
+*PrintASCII*::
+    Prints each received DLT message from the application in ASCII to the
+    local console.
+    This option should only be anabled for debugging purpose.
+
+    Default: Function is disabled
+
+*PrintHex*::
+    Prints each received DLT message from the application in ASCII to the
+    local console. The payload is printed in Hex.
+    This option should only be anabled for debugging purpose.
+
+    Default: Function is disabled
+
+*PrintHeadersOnly*::
+    Prints each received DLT message from the application in ASCII to the
+    local console. Only the header is printed.
+    This option should only be anabled for debugging purpose.
+
+    Default: Function is disabled
+
+SERIAL CLIENT OPTIONS
+---------------------
+
+*RS232DeviceName*::
+    If this value is set to a serial device name, e.g. /dev/ttyS0, a serial
+    port is used for logging to a client. 
+
+    Default: Serial port for logging is disabled
+
+*RS232Baudrate*::
+    The used serial baud rate, if serial loggin is enabled. The
+    RS232DeviceName must be set to enable serial logging.
+
+    Default: 115200
+
+*RS232SyncSerialHeader*::
+    If serial logging is enabled, each received DLT message is checked to
+    contain a serial header. If the DLT message contains no serial header,
+    the message is ignored.
+
+    Default: Function is disabled
+
+TCP CLIENT OPTIONS
+------------------
+
+*TCPSyncSerialHeader*::
+    Each received DLT message on a TCP connection is checked to contain a
+    serial header. If the DLT message contains no serial header, the message
+    is ignored.
+
+ECU Software version info
+-------------------------
+
+*SendECUSoftwareVersion*::
+    Send periodic ECU version info. 0=disabled, 1=enabled.
+
+    Default: 0
+
+*PathToECUSoftwareVersion*::
+    Absolute path to file storing version information - if disabled the DLT version will be send.
+
+EXAMPLES
+--------
+Start DLT daemon in background mode::
+    *dlt-daemon -d*
+
+Start DLT daemon with own configuration::
+    *dlt-daemon -c ~/my-dlt-configuration.cfg*
+
+AUTHOR
+------
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+
+RESOURCES
+---------
+Main web site: <http://projects.genivi.org/diagnostic-log-trace> +
+Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
+
+SEE ALSO
+--------
+dlt-daemon(1) +
+dlt-system(1)
+

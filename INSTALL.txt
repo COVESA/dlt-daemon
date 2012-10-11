@@ -1,6 +1,9 @@
+Diagnostic Log and Trace  - Installation
+========================================
+Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
+
 Instructions for installing this software
 -----------------------------------------
-
 This software uses cmake as its build tool. To build and install the
 DLT daemon, follow these steps:
 
@@ -11,8 +14,119 @@ DLT daemon, follow these steps:
 - optional: sudo make install
 - optional: sudo ldconfig
 
+Compile options with default values
+-----------------------------------
+[options="header"]
+|==============================================================================================
+| Option                 | Value | Comment
+| WITH_SYSTEMD           | OFF   | Set to on to run CMakeLists.txt in systemd
+| WITH_SYSTEMD_WATCHDOG  | OFF   | Set to ON to use the systemd watchdog in dlt-daemon
+| WITH_DLT_ADAPTOR       | ON    | Set ton ON to build src/adaptor binaries
+| WITH_DLT_CONSOLE       | ON    | Set ton ON to build src/console binaries
+| WITH_DLT_SYSTEM        | ON    | Set ton ON to build src/systembinaries
+| WITH_DLT_EXAMPLES      | ON    | Set ton ON to build src/examplesbinaries
+| WITH_DLT_TESTS         | ON    | Set ton ON to build src/testbinaries
+| WITH_DLT_SHM_ENABLE    | OFF   | Set to OFF to use FIFO as IPC from user to daemon
+| WITH_CHECK_CONFIG_FILE | OFF   | Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists
+| WITH_DOC               | OFF   | Set to ON to build documentation target
+| WITH_TESTSCRIPTS       | OFF   | Set to on to run CMakeLists.txt in test scripts
+| WITH_GPROF             | OFF   | Set \-pg to compile flags
+| WITH_MAN               | ON    | Set to OFF to skip building of man pages
+| BUILD_SHARED_LIBS      | ON    | Set to OFF to build static libraries
+| CMAKE_INSTALL_PREFIX   | /usr/local | 
+| CMAKE_BUILD_TYPE       | RelWithDebInfo | 
+|==============================================================================================
 
-Please read the README.txt for
-- Compile options
-- Man pages
+In order to change these options, you can modify this values
+with ccmake, do the appropriate changes in CmakeList.txt or via 
+the commandline for cmake
+
+- Change a value with: cmake -D<Variable>=<Value>
+- Example: cmake -DCMAKE_INSTALL_PREFIX=/usr
+
+Create Man pages
+----------------
+With the compile option "WITH_MAN=ON" (default value) the man 
+pages will generated. After the call "sudo make install" (see 
+"Compiling in Linux") they are installed at <CMAKE_INSTALL_PREFIX>/share/man. 
+
+Create doxygen documentation
+----------------------------
+- mkdir build
+- cd build
+- cmake -DWITH_DOC=ON ..
+- make 
+- (only DLT doc - optional )make doc
+- (only DLT-Filetransfer - optional )make doc-filetransfer
+
+You find the documentation know as HTML, RTF or LaTex in <project-root>/build/doc
+
 - Doxygen documentation
+
+Generation of systemd unit files
+--------------------------------
+
+DLT provides some example unit files for systemd, stored in <DLT-root>/systemd.
+In <DLT-root>/systemd/CMakeLists.txt you have to specify some values, e.g. the port for dlt-adaptor-udp.
+By default the generation of unit files with cmake is off. Please follow these steps to enable the generation:
+
+* Change into the root directory of DLT-daemon
+* mkdir build
+* cd build
+* cmake -DWITH_SYSTEMD=ON ..
+
+You find the parsed unit files in the PROJECT_BINARY_DIR/systemd directory.
+
+Git configuration
+-----------------
+It is important to set the name of the user and the email of the user for all git instances on the system:
+
+----
+git config --global user.name "Firstname Lastname"
+git config --global user.email "your_email@youremail.com"
+----
+
+If you are behind a proxy you have to set up the Git proxy configuration, e.g.
+
+----
+git config --global http.proxy $http_proxy
+----
+
+Checkout the code from the GENIVI Git repository.
+
+----
+git clone http://git.projects.genivi.org/dlt-daemon.git
+----
+
+Working on the code & contribution
+----------------------------------
+Get an overview of all branches:
+
+----
+git branch -a
+----
+
+Switch to the branch you want to work on (see versioning scheme, the master is the feature branch) and verify that it has switched.
+
+----
+git checkout <remote branch>
+git branch -a
+----
+
+Best practice is to create a local branch based on the remote branch:
+
+----
+git checkout -b <local branch> <remote branch>
+----
+
+Start working, best practice is to commit smaller, compilable pieces during the work that makes it easier to handle later on.
+
+If you want to commit your changes, send them to the auto-dlt list, you can create a patch like this:
+
+----
+git format-patch -s <remote branch>
+----
+
+This creates a set of patches that are published via the mailing list. The patches will be discussed, merged & uploaded on the git.
+
+

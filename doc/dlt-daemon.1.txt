@@ -1,0 +1,59 @@
+DLT-DAEMON(1)
+=============
+:doctype: manpage
+
+NAME
+----
+dlt-daemon - DLT daemon for logging and tracing purpose
+
+SYNOPSIS
+--------
+*dlt-daemon* [-h] [-d] [-c filename]
+
+DESCRIPTION
+-----------
+The DLT daemon is the central place where logs and traces are gathered
+from different applications, stored temporarily or permanently and
+transferred to a DLT client application, which can run directly on the
+GENIVI system or more likely on a external tester device.
+
+OPTIONS
+-------
+*-h*::
+    Display a short help text.
+
+*-d*::
+    Daemonize, needed in System V init systems.
+
+*-c*::
+    Load an alternative configuration file. By default the configuration
+    file /etc/dlt.conf is loaded.
+
+EXAMPLES
+--------
+Start DLT daemon in background mode::
+*dlt-daemon -d*
+
+Start DLT daemon with own configuration::
+*dlt-daemon -c ~/my-dlt-configuration.cfg*
+
+EXIT STATUS
+-----------
+Non zero is returned in case of failure.
+
+AUTHOR
+------
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+
+RESOURCES
+---------
+Main web site: <http://projects.genivi.org/diagnostic-log-trace> +
+Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
+
+SEE ALSO
+--------
+dlt.conf(5) +
+dlt-system(1)
+
+
+

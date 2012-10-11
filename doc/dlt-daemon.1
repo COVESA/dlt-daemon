@@ -1,43 +1,78 @@
-.TH dlt-daemon 1   "April 13, 2012" "version 2.9.0"  "USER COMMANDS"
-.SH NAME
+'\" t
+.\"     Title: dlt-daemon
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 10/11/2012
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "DLT\-DAEMON" "1" "10/11/2012" "\ \&" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
 dlt-daemon \- DLT daemon for logging and tracing purpose
-.SH SYNOPSIS
-.B dlt-daemon
-[\-h] [\-d] [\-c filename]
-.SH DESCRIPTION
-The DLT daemon is the central place where logs and traces are gathered
-from different applications, stored temporarily or permanently and
-transferred to a DLT client application, which can run directly on the
-GENIVI system or more likely on a external tester device.
+.SH "SYNOPSIS"
+.sp
+\fBdlt\-daemon\fR [\-h] [\-d] [\-c filename]
+.SH "DESCRIPTION"
+.sp
+The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device\&.
+.SH "OPTIONS"
 .PP
-dlt-daemon loads by default the configuration file /etc/dlt.conf. 
-See dlt.conf(1).
-.SH OPTIONS
-.TP
-\-h
-Display a short help text.
-.TP
-\-d
-Daemonize, needed in System V init systems.
-.TP
-\-c
-Load an alternative configuration file. By default the configuration
-file /etc/dlt.conf is loaded.
-.SH EXAMPLES
-.TP
-Start DLT daemon in background mode:
-.B dlt-daemon
-\-d
+\fB\-h\fR
+.RS 4
+Display a short help text\&.
+.RE
 .PP
-.TP
-Start DLT daemon with own configuration:
-.B dlt-daemon
-\-c ~/my-dlt-configuration.cfg
+\fB\-d\fR
+.RS 4
+Daemonize, needed in System V init systems\&.
+.RE
 .PP
-.SH EXIT STATUS
-Non zero is returned in case of failure.
-.SH AUTHOR
-Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
-.SH SEE ALSO
-dlt.conf(5)
-dlt-system(1)
+\fB\-c\fR
+.RS 4
+Load an alternative configuration file\&. By default the configuration file /etc/dlt\&.conf is loaded\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Start DLT daemon in background mode
+.RS 4
+
+\fBdlt\-daemon \-d\fR
+.RE
+.PP
+Start DLT daemon with own configuration
+.RS 4
+
+\fBdlt\-daemon \-c ~/my\-dlt\-configuration\&.cfg\fR
+.RE
+.SH "EXIT STATUS"
+.sp
+Non zero is returned in case of failure\&.
+.SH "AUTHOR"
+.sp
+Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)
+.SH "RESOURCES"
+.sp
+Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
+.SH "SEE ALSO"
+.sp
+dlt\&.conf(5) dlt\-system(1)

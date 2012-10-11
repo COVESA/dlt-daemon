@@ -1,152 +1,331 @@
-.TH dlt.conf 5 "April 13, 2012" "version 2.8.0 ALPHA" "USER COMMANDS"
-.SH NAME
+'\" t
+.\"     Title: dlt.conf
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 10/11/2012
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "DLT\&.CONF" "5" "10/11/2012" "\ \&" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
 dlt.conf \- DLT daemon configuration file
-.SH DESCRIPTION
-The DLT daemon is the central place where logs and traces are gathered
-from different applications, stored temporarily or permanently and
-transferred to a DLT client application, which can run directly on the
-GENIVI system or more likely on a external tester device.
+.SH "DESCRIPTION"
+.sp
+The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device\&.
+.sp
+The configuration file dlt\&.conf allows to configure the different runtime behaviour of the dlt\-daemon\&. The configuration file is loaded during startup of dlt\-daemon\&.
+.sp
+dlt\-daemon loads by default the configuration file /etc/dlt\&.conf\&. An alternative configuration file can be loaded with the option \-c\&.
+.SH "GENERAL OPTIONS"
 .PP
-The configuration file dlt.conf allows to configure the different
-runtime behaviour of the dlt-daemon. The configuration file is loaded
-during startup of dlt-daemon.
+\fBDaemonize\fR
+.RS 4
+If set to 1 DLT daemon is started in background as daemon\&. This option is only needed in System V init systems\&. In systemd based startup systems the daemon is started by spawning own process\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
 .PP
-dlt-daemon loads by default the configuration file /etc/dlt.conf. An
-alternative configuration file can be loaded with the option \-c.
-.SH GENERAL OPTIONS
-.TP
-.B Verbose
-If set to 1 DLT daemon is started in dubug mode, so that all internal debug
-information is printed out on the console.
-.IP
+\fBSendSerialHeader\fR
+.RS 4
+If set to 1 DLT daemon sends each DLT message to the client with prepanding the serial header "DLS0x01"\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 0
-.TP
-.B Daemonize
-If set to 1 DLT daemon is started in background as daemon. This option
-is only needed in System V init systems. In systemd based startup
-systems the daemon is started by spawning own process.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBSendContextRegistration\fR
+.RS 4
+If set to 1 each context which is registered from an application in the DLT daemon generates a message to inform the DLT client about the new context\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 0
-.TP
-.B SendSerialHeader
-If set to 1 DLT daemon sends each DLT message to the client with
-prepanding the serial header "DLS0x01".
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBSendMessageTime\fR
+.RS 4
+If set to 1 DLt daemon sends each second a DLT control message to the client with the current timestamp from the system\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 0
-.TP
-.B SendContextRegistration
-If set to 1 each context which is registered from an application in the
-DLT daemon generates a message to inform the DLT client about the new
-context.
-.IP
-Default: 0
-.TP
-.B SendMessageTime
-If set to 1 DLt daemon sends each second a DLT control message to the
-client with the current timestamp from the system.
-.IP
-Default: 0
-.TP
-.B ECUId
-This value sets the ECU Id, which is sent with each DLT message.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBECUId\fR
+.RS 4
+This value sets the ECU Id, which is sent with each DLT message\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: ECU1
-.TP
-.B SharedMemorySize
-This value sets the size of the shared memory, which is used to exchange
-DLT messages between applications and daemon. This value is defined in
-bytes. If this value is changed the system must be rebooted to take
-effect.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBSharedMemorySize\fR
+.RS 4
+This value sets the size of the shared memory, which is used to exchange DLT messages between applications and daemon\&. This value is defined in bytes\&. If this value is changed the system must be rebooted to take effect\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 100000
-.TP
-.B PersistanceStoragePath
-This is the directory path, where the DLT daemon stores its runtime
-configuration. Runtime configuration includes stored log levels, trace
-status and changed logging mode. 
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBPersistanceStoragePath\fR
+.RS 4
+This is the directory path, where the DLT daemon stores its runtime configuration\&. Runtime configuration includes stored log levels, trace status and changed logging mode\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: /tmp
-.SH OFFLINE TRACE OPTIONS
-.TP
-.B OfflineTraceDirectory
-If this option is set, offline trace is enabled. This value sets the
-directory path to the offline trace memory. The directory must already
-exist.
-.IP
-Default: Offline tracing is disabled.
-.TP
-.B OfflineTraceFileSize
-This value defines the max size of a offline trace file, if offline trace
-is enabled. This value is defined in bytes. If the files size of the
-current used log file is exceeded, a new log file is created. 
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "OFFLINE TRACE OPTIONS"
+.PP
+\fBOfflineTraceDirectory\fR
+.RS 4
+If this option is set, offline trace is enabled\&. This value sets the directory path to the offline trace memory\&. The directory must already exist\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: Offline tracing is disabled\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineTraceFileSize\fR
+.RS 4
+This value defines the max size of a offline trace file, if offline trace is enabled\&. This value is defined in bytes\&. If the files size of the current used log file is exceeded, a new log file is created\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 1000000
-.TP
-.B OfflineTraceMaxSize
-This value defines the max offline Trace memory size, if offline trace
-is enabled. This value is defined in bytes. If the overall offline trace
-size is excedded, the oldest log files are deleted, until a new trace
-file fits the overall offline trace max size.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineTraceMaxSize\fR
+.RS 4
+This value defines the max offline Trace memory size, if offline trace is enabled\&. This value is defined in bytes\&. If the overall offline trace size is excedded, the oldest log files are deleted, until a new trace file fits the overall offline trace max size\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 4000000
-.SH LOCAL CONSOLE OUTPUT OPTIONS
-.TP
-.B PrintASCII
-Prints each received DLT message from the application in ASCII to the
-local console.
-This option should only be anabled for debugging purpose.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "LOCAL CONSOLE OUTPUT OPTIONS"
+.PP
+\fBPrintASCII\fR
+.RS 4
+Prints each received DLT message from the application in ASCII to the local console\&. This option should only be anabled for debugging purpose\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: Function is disabled
-.TP
-.B PrintHex
-Prints each received DLT message from the application in ASCII to the
-local console. The payload is printed in Hex.
-This option should only be anabled for debugging purpose.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBPrintHex\fR
+.RS 4
+Prints each received DLT message from the application in ASCII to the local console\&. The payload is printed in Hex\&. This option should only be anabled for debugging purpose\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: Function is disabled
-.TP
-.B PrintHeadersOnly
-Prints each received DLT message from the application in ASCII to the
-local console. Only the header is printed.
-This option should only be anabled for debugging purpose.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBPrintHeadersOnly\fR
+.RS 4
+Prints each received DLT message from the application in ASCII to the local console\&. Only the header is printed\&. This option should only be anabled for debugging purpose\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: Function is disabled
-.SH SERIAL CLIENT OPTIONS
-.TP
-.B RS232DeviceName
-If this value is set to a serial device name, e.g. /dev/ttyS0, a serial
-port is used for logging to a client. 
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "SERIAL CLIENT OPTIONS"
+.PP
+\fBRS232DeviceName\fR
+.RS 4
+If this value is set to a serial device name, e\&.g\&. /dev/ttyS0, a serial port is used for logging to a client\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: Serial port for logging is disabled
-.TP
-.B RS232Baudrate
-The used serial baud rate, if serial loggin is enabled. The
-RS232DeviceName must be set to enable serial logging.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBRS232Baudrate\fR
+.RS 4
+The used serial baud rate, if serial loggin is enabled\&. The RS232DeviceName must be set to enable serial logging\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 115200
-.TP
-.B RS232SyncSerialHeader
-If serial logging is enabled, each received DLT message is checked to
-contain a serial header. If the DLT message contains no serial header,
-the message is ignored.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBRS232SyncSerialHeader\fR
+.RS 4
+If serial logging is enabled, each received DLT message is checked to contain a serial header\&. If the DLT message contains no serial header, the message is ignored\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: Function is disabled
-.SH TCP CLIENT OPTIONS
-.TP
-.B TCPSyncSerialHeader
-Each received DLT message on a TCP connection is checked to contain a
-serial header. If the DLT message contains no serial header, the message
-is ignored.
-.SH ECU Software version info
-.TP
-.B SendECUSoftwareVersion
-Send periodic ECU version info. 0=disabled, 1=enabled.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "TCP CLIENT OPTIONS"
+.PP
+\fBTCPSyncSerialHeader\fR
+.RS 4
+Each received DLT message on a TCP connection is checked to contain a serial header\&. If the DLT message contains no serial header, the message is ignored\&.
+.RE
+.SH "ECU SOFTWARE VERSION INFO"
+.PP
+\fBSendECUSoftwareVersion\fR
+.RS 4
+Send periodic ECU version info\&. 0=disabled, 1=enabled\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 0
-.TP
-.B PathToECUSoftwareVersion
-Absolute path to file storing version information - if disabled the DLT version will be send.
-.SH AUTHOR
-Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
-.SH SEE ALSO
-dlt(1)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBPathToECUSoftwareVersion\fR
+.RS 4
+Absolute path to file storing version information \- if disabled the DLT version will be send\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Start DLT daemon in background mode
+.RS 4
+
+\fBdlt\-daemon \-d\fR
+.RE
+.PP
+Start DLT daemon with own configuration
+.RS 4
+
+\fBdlt\-daemon \-c ~/my\-dlt\-configuration\&.cfg\fR
+.RE
+.SH "AUTHOR"
+.sp
+Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)
+.SH "RESOURCES"
+.sp
+Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
+.SH "SEE ALSO"
+.sp
+dlt\-daemon(1) dlt\-system(1)

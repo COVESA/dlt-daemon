@@ -1,0 +1,75 @@
+DLT-RECEIVE(1)
+==============
+:doctype: manpage
+
+NAME
+----
+dlt-receive - Console based client for DLT Logging
+
+SYNOPSIS
+--------
+*dlt-receive* [-h] [-a] [-x] [-m] [-s][-o filename] [-v] [-y] [-b baudrate] [-e ecuid]hostname/serial_device_name
+
+DESCRIPTION
+-----------
+Receive DLT messages from DLT daemon and print or store the messages. 
+
+OPTIONS
+-------
+*-h*::
+    Display a short help text.
+
+*-a*::
+    Print DLT file; payload as ASCII.
+
+*-x*::
+Print DLT file; payload as hex.
+
+*-m*::
+Print DLT file; payload as hex and ASCII.
+
+*-s*::
+Print DLT file; only headers.
+
+*-o*::
+Output messages in new DLT file.
+
+*-v*::
+Verbose mode.
+
+*-y*::
+Serial device mode.
+
+*-b*::
+Serial device baudrate (Default: 115200).
+
+*-e*::
+Set ECU ID (Default: RECV).
+
+EXAMPLES
+--------
+Print received message headers received from a dlt-daemon running on localhost::
+    dlt-receive -s localhost
+
+Print received message headers received from a serila interface::
+    dlt-receive -s -y /dev/ttySO
+ 
+Store received message headers from a dlt-daemon to a log file called log.dlt and filter them for e.g. Application ID ABCD and Context ID EFGH (Write:ABCD EFGH as single line to a file claled filter.txt)::
+    dlt-receive -s -o log.dlt -f filter.txt localhost
+
+EXIT STATUS
+-----------
+Non zero is returned in case of failure.
+
+AUTHOR
+------
+Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
+
+RESOURCES
+---------
+Main web site: <http://projects.genivi.org/diagnostic-log-trace> +
+Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
+
+SEE ALSO
+--------
+dlt-daemon(1)

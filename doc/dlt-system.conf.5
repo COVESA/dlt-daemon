@@ -1,156 +1,352 @@
-.TH dlt-system.conf 5  "April 13, 2012" "version 2.9.0" "USER COMMANDS"
-.SH NAME
+'\" t
+.\"     Title: dlt-system.conf
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 10/11/2012
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "DLT\-SYSTEM\&.CONF" "5" "10/11/2012" "\ \&" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
 dlt-system.conf \- DLT system process configuration file
-.SH DESCRIPTION
-The DLT system logging process is the central application, which logs
-system information from the platform. It provides the features
-filetransfer, syslog adapater, logging of any kind of files and
-procfilesystem logger. The individual features can be enabled and
-disabled in the configuration file. 
+.SH "DESCRIPTION"
+.sp
+The DLT system logging process is the central application, which logs system information from the platform\&. It provides the features filetransfer, syslog adapater, logging of any kind of files and procfilesystem logger\&. The individual features can be enabled and disabled in the configuration file\&.
+.sp
+The configuration file dlt\-system\&.conf allows to configure the different runtime behaviour of dlt\-system\&. The configuration file is loaded during startup of dlt\-system\&.
+.sp
+dlt\-system loads by default the configuration file /etc/dlt\-system\&.conf\&. An alternative configuration file can be loaded with the option \-c\&.
+.SH "GENERAL OPTIONS"
 .PP
-The configuration file dlt-system.conf allows to configure the different
-runtime behaviour of dlt-system. The configuration file is loaded
-during startup of dlt-system.
-.PP
-dlt-system loads by default the configuration file /etc/dlt-system.conf.
-An alternative configuration file can be loaded with the option \-c.
-.SH GENERAL OPTIONS
-.TP
-.B ApplicationId
-The application Id used for the dlt-system process.
-.IP
+\fBApplicationId\fR
+.RS 4
+The application Id used for the dlt\-system process\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: SYS
-.SH SYSLOG ADAPTER OPTIONS
-.TP
-.B SyslogEnable
-If this option is set to 1, the syslog adapter feature is enabled.
-.IP
-Default: 0.
-.TP
-.B SyslogContextId
-This value defines context id of the syslog adapter. 
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "SYSLOG ADAPTER OPTIONS"
+.PP
+\fBSyslogEnable\fR
+.RS 4
+If this option is set to 1, the syslog adapter feature is enabled\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBSyslogContextId\fR
+.RS 4
+This value defines context id of the syslog adapter\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: SYSL
-.TP
-.B SyslogPort
-This value defines the UDP port opened for receiving log messages from
-syslog.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBSyslogPort\fR
+.RS 4
+This value defines the UDP port opened for receiving log messages from syslog\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 47111
-.SH FILETRANSFER OPTIONS
-.TP
-.B FiletransferEnable
-If this option is set to 1, the filetransfer feature is enabled.
-.IP
-Default: 0.
-.TP
-.B FiletransferContextId
-The Context Id of the filetransfer.
-.IP
-Default: File.
-.TP
-.B FiletransferTimeStartup
-Time in seconds after startup of dlt-system when first file is transfered.
-.IP
-Default: 30.
-.TP
-.B FiletransferTimeoutBetweenLogs
-Time in ms seconds to wait between two file transfer logs of a single file to DLT.
-.IP
-Default: 10.
-.TP
-.B FiletransferTempDir
-Temporary directory to use. File transfer will move a file to this directory while it is being compressed and sent.
-.IP
-Default: /tmp.
-.TP
-.B FiletransferDirectory
-You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
-.IP
-Default: /var/dlt/ft1.
-.TP
-.B FiletransferCompression
-You can define multiple file transfer directories. Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
-.IP
-Default: 0.
-.TP
-.B FiletransferCompressionLevel
-You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values..
-.IP
-Default: 5.
-.TP
-.B FiletransferTimeStartup
-This value defines the amount of time in seconds after start of
-dlt-system, when dlt-system starts to send the first file.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "FILETRANSFER OPTIONS"
+.PP
+\fBFiletransferEnable\fR
+.RS 4
+If this option is set to 1, the filetransfer feature is enabled\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferContextId\fR
+.RS 4
+The Context Id of the filetransfer\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: File\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTimeStartup\fR
+.RS 4
+Time in seconds after startup of dlt\-system when first file is transfered\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 30\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTimeoutBetweenLogs\fR
+.RS 4
+Time in ms seconds to wait between two file transfer logs of a single file to DLT\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 10\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTempDir\fR
+.RS 4
+Temporary directory to use\&. File transfer will move a file to this directory while it is being compressed and sent\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: /tmp\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferDirectory\fR
+.RS 4
+You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: /var/dlt/ft1\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferCompression\fR
+.RS 4
+You can define multiple file transfer directories\&. Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferCompressionLevel\fR
+.RS 4
+You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 5\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTimeStartup\fR
+.RS 4
+This value defines the amount of time in seconds after start of dlt\-system, when dlt\-system starts to send the first file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 30
-.TP
-.B FiletransferTimeDelay
-This value defines the amount of time after which a sent file is deleted
-and the next file is strated to be transmitted.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTimeDelay\fR
+.RS 4
+This value defines the amount of time after which a sent file is deleted and the next file is strated to be transmitted\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 10
-.TP
-.B FiletransferTimeoutBetweenLogs
-This value defines the amount of time to wait between two file transfer 
-logs of a single file.
-.IP
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferTimeoutBetweenLogs\fR
+.RS 4
+This value defines the amount of time to wait between two file transfer logs of a single file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
 Default: 10
-.SH LOG FILES OPTIONS
-.TP
-.B LogFileEnable
-If this option is set to 1, the log files feature is enabled.
-.IP
-Default: 0.
-.TP
-.B LogFileFilename
-This value sets the full filename path to the file, which should be logged. 
-.TP
-.B LogFileMode
-This value the defines in which operation mode this file is logged.
-Possible values are: 0 = off, 1 = startup only, 2 = regular.
-In mode 1 the file is only logged once when dlt-system is started.
-In mode 2 the file is logged regularly every time LogFileTimeDelay timer
-elapses.
-.TP
-.B LogFileTimeDelay
-This value is used in mode 3 and defines the number of seconds, after
-which the defined file is logged.
-.TP
-.B LogFileContextId
-This value defines the context id, which is used for logging the file.
-.SH LOG PROCESSES OPTIONS
-.TP
-.B LogProcessesEnable
-If this option is set to 1, the log processes feature is enabled.
-.IP
-Default: 0.
-.TP
-.B LogProcessesContextId
-This value defines the context id, which is used for logging processes
-files.
-.TP
-.B LogProcessName
-This value defines the name of the process to be logged, as used in the
-file stat of each process. 
-If the value is defined as *, all processes are logged.
-.TP
-.B LogProcessFilename
-This value sets the relative filename path to the file, which should be
-logged. The path is relative to the procfilesystem folder of the
-process. 
-.TP
-.B LogProcessMode
-This value the defines in which operation mode this process file is
-logged. Possible values are: 0 = off, 1 = startup only, 2 = regular.
-In mode 1 the file is only logged once when dlt-system is started.
-In mode 2 the file is logged regularly every time LogFileTimeDelay timer
-elapses.
-.TP
-.B LogProcessTimeDelay
-This value is used in mode 3 and defines the number of seconds, after
-which the defined procfilesystem file is logged.
-.SH AUTHOR
-Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
-.SH SEE ALSO
-dlt-system(1)
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "LOG FILES OPTIONS"
+.PP
+\fBLogFileEnable\fR
+.RS 4
+If this option is set to 1, the log files feature is enabled\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBLogFileFilename\fR
+.RS 4
+This value sets the full filename path to the file, which should be logged\&.
+.RE
+.PP
+\fBLogFileMode\fR
+.RS 4
+This value the defines in which operation mode this file is logged\&. Possible values are: 0 = off, 1 = startup only, 2 = regular\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+.RE
+.PP
+\fBLogFileTimeDelay\fR
+.RS 4
+This value is used in mode 3 and defines the number of seconds, after which the defined file is logged\&.
+.RE
+.PP
+\fBLogFileContextId\fR
+.RS 4
+This value defines the context id, which is used for logging the file\&.
+.RE
+.SH "LOG PROCESSES OPTIONS"
+.PP
+\fBLogProcessesEnable\fR
+.RS 4
+If this option is set to 1, the log processes feature is enabled\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBLogProcessesContextId\fR
+.RS 4
+This value defines the context id, which is used for logging processes files\&.
+.RE
+.PP
+\fBLogProcessName\fR
+.RS 4
+This value defines the name of the process to be logged, as used in the file stat of each process\&. If the value is defined as *, all processes are logged\&.
+.RE
+.PP
+\fBLogProcessFilename\fR
+.RS 4
+This value sets the relative filename path to the file, which should be logged\&. The path is relative to the procfilesystem folder of the process\&.
+.RE
+.PP
+\fBLogProcessMode\fR
+.RS 4
+This value the defines in which operation mode this process file is logged\&. Possible values are: 0 = off, 1 = startup only, 2 = regular\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+.RE
+.PP
+\fBLogProcessTimeDelay\fR
+.RS 4
+This value is used in mode 3 and defines the number of seconds, after which the defined procfilesystem file is logged\&.
+.RE
+.SH "AUTHOR"
+.sp
+Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)
+.SH "RESOURCES"
+.sp
+Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
+.SH "SEE ALSO"
+.sp
+dlt\-system(1) dlt\-daemon(1)
