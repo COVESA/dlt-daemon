@@ -17,18 +17,12 @@ if(WITH_DOC)
     find_package(Doxygen)
        
     configure_file(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/doxygen.cfg @ONLY)
-    configure_file(${CMAKE_SOURCE_DIR}/doc/extended_network_trace_doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/extended_network_trace_doxygen.cfg @ONLY)
 	
 	add_custom_target (doc ALL 
   		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg 
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 	
-	add_custom_target (doc-extended-network-trace ALL
-  		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/extended_network_trace_doxygen.cfg
-  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-	)
-
 	add_custom_target (doc-manuals ALL
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals 
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images 
@@ -46,7 +40,8 @@ if(WITH_DOC)
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-convert.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt 
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt 
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt 
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_extended_network_trace.html ${CMAKE_SOURCE_DIR}/doc/dlt_extended_network_trace.txt  
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 
