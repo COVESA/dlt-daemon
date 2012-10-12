@@ -11,6 +11,7 @@ Changes
 
 2.9.0
 
+   * Changed documentation and man pages into asciidoc format.
    * Increased buffer sizes for DLT user library and DLT daemon
    * [GDLT-120]: truncated and Segmented network tracing
    * [GDLT-137]: Automatically try resending of user buffer after FIFO full

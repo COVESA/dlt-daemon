@@ -24,12 +24,42 @@ if(WITH_DOC)
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 	
-	add_custom_target (doc-extended-network-trace ALL 
+	add_custom_target (doc-extended-network-trace ALL
   		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/extended_network_trace_doxygen.cfg
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
-	
 
+	add_custom_target (doc-manuals ALL
+		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals 
+		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images 
+		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/INSTALL.html ${CMAKE_SOURCE_DIR}/INSTALL.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/ReleaseNotes.html ${CMAKE_SOURCE_DIR}/ReleaseNotes.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_filetransfer.html ${CMAKE_SOURCE_DIR}/doc/dlt_filetransfer.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-daemon.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-receive.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-convert.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt 
+  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+	)
+
+	add_custom_target (doc-man
+  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt 
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
+	)
+	
 endif(WITH_DOC)
 
 if(WITH_MAN)
