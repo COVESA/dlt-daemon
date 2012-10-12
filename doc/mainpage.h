@@ -22,11 +22,13 @@
 /*!
 \mainpage
 
-\image html genivilogo.png
-
 \par More information
-can be found at https://collab.genivi.org/wiki/display/genivi/GENIVI+Home \n
+can be found at http://projects.genivi.org/diagnostic-log-trace/ \n
 
 \par About DLT
-The DLT is a Deamon that enables diagnostic log and trace in a GENIVI headunit and is based on AUTOSAR 4.0.
+DLT is a reusable open source software component for standardized logging and tracing in infotainment ECUs based on the AUTOSAR 4.0 standard. 
+The goal of DLT is the consolidation of the existing variety of logging and tracing protocols on one format.
+
+
+\image html genivi_chrome_1_transparent.png
 */

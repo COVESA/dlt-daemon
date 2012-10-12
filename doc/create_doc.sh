@@ -3,6 +3,7 @@
 asciidoc -a toc2 dlt_user_manual.txt
 asciidoc -a toc2 dlt_design_specification.txt
 asciidoc -a toc2 dlt_cheatsheet.txt
+asciidoc -a toc2 dlt_filetransfer.txt
 
 asciidoc -a toc2 dlt-daemon.1.txt
 a2x --doctype manpage --format manpage dlt-daemon.1.txt
