@@ -1,17 +1,15 @@
 Extended Network Trace
-=====================
+======================
 Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de> 
 0.0.1, 2012/10/11: Initial version
 
 image::images/genivi_chrome_1_transparent.png[width=128]
 
 == Introduction
-
 The extended network trace allows the user to send or truncate network trace messages 
 that are larger than the normal maximum size of a DLT message.
 
 == Protocol
-
 When truncation of messages is allowed, the truncated messages will be wrapped into a special message which indicates
 that a network trace message was truncated and what was the original size of the message.
 
@@ -21,9 +19,8 @@ Each segment contains the stream handle, segment sequence number, the data and d
 Finally after sending all the data segments, one more packet is sent to indicate the end of the stream.
 
 == Truncated package
-
 Truncated message can be sent using the following function:
-[source,c]
+
 ----
 int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate)
 ----
@@ -39,24 +36,26 @@ This will send a packet in the following format:
 
 == Segmented messages
 User can send a segmented network trace message asynchronously using:
-[source,c]
+
 ----
 void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
 ----
+
 This will start a background thread and return immediately. 
 
 User can also send all the required packages one by one using:
 
-[source,c]
 ----
 int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
 int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
 int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkTraceType nw_trace_type)
 ----
+
 It is not recommended to use these functions unless you really have to.
 
 == Segmented start packet
 The first packet in the stream is the header:
+
 |==================================================================
 |                      NWST                          | Package identifier. STRING
 |                  streamhandle                      | Unique identifier for all packages in the stream. UINT
@@ -68,6 +67,7 @@ The first packet in the stream is the header:
 
 == Data segment
 After the header, follows a stream of data segments.
+
 |==================================================================
 |                      NWCH                          | Package identifier. STRING
 |                  streamhandle                      | Unique identifier for all packages in the stream. UINT
@@ -77,6 +77,7 @@ After the header, follows a stream of data segments.
 
 == End packet
 After all the segments have been sent, an End identifier is sent.
+
 |==================================================================
 |                      NWEN                          | Package identifier. STRING
 |                  streamhandle                      | Unique identifier for all packages in the stream. UINT
