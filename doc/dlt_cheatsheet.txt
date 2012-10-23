@@ -26,14 +26,15 @@ Termination:
 
 Link your application to DLT library
 ------------------------------------
-If you compile your application with cmake, you have to add the following lines to your CMakeLists.txt.
+If you compile your application with cmake, you have to add the following lines to your CMakeLists.txt
 
 ----
+find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
-${DLT_INCLUDE_DIRS}
-${DLT_LIBRARIES}
 ----
 
+and use the variables $\{DLT_INCLUDE_DIRS\} and $\{DLT_LIBRARIES\} for the DLT include and library paths.
+ 
 Include the DLT Header
 ----------------------
 To use DLT you have to include the DLT header file in each file you want to use DLT. 
@@ -103,8 +104,8 @@ int main(int argc, const char\* argv\[\])
   DLT_REGISTER_APP("MAPP","Test Application for Logging");
 
   DLT_REGISTER_CONTEXT(myContext1,"TES1","Test Context 1 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext2,"TES2","Test Context 2 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext3,"TES3","Test Context 3 for Logging");
+  DLT_REGISTER_CONTEXT(myContext2,"TES2","Test Context 2 for Logging");
+  DLT_REGISTER_CONTEXT(myContext3,"TES3","Test Context 3 for Logging");
 
 }
 ----
@@ -166,9 +167,9 @@ Here are some examples for complete log messages.
 The contexts must be registered before.
 
 ----
-DLT_LOG(mycontext1,DLT_LOG_ERROR,DLT_INT(5),DLT_STRING("This is a error"));
-DLT_LOG(mycontext2,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
-DLT_LOG(mycontext3,DLT_LOG_DEBUG,DLT_INT(5),DLT_STRING("But this only information"));
+DLT_LOG(myContext1,DLT_LOG_ERROR,DLT_INT(5),DLT_STRING("This is a error"));
+DLT_LOG(myContext2,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
+DLT_LOG(myContext3,DLT_LOG_DEBUG,DLT_INT(5),DLT_STRING("But this only information"));
 ----
 
 Unregister contexts and applications
@@ -181,12 +182,12 @@ int main(int argc, const char\* argv\[\])
   DLT_REGISTER_APP("MAPP","Test Application for Logging");
 
   DLT_REGISTER_CONTEXT(myContext1,"TES1","Test Context 1 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext2,"TES2","Test Context 2 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext3,"TES3","Test Context 3 for Logging");
+  DLT_REGISTER_CONTEXT(myContext2,"TES2","Test Context 2 for Logging");
+  DLT_REGISTER_CONTEXT(myContext3,"TES3","Test Context 3 for Logging");
 
   DLT_UNREGISTER_CONTEXT(myContext1);  
-  DLT_UNREGISTER_CONTEXT(mycontext2);
-  DLT_UNREGISTER_CONTEXT(mycontext3);
+  DLT_UNREGISTER_CONTEXT(myContext2);
+  DLT_UNREGISTER_CONTEXT(myContext3);
 
   DLT_UNREGISTER_APP();
 
@@ -214,26 +215,51 @@ int main()
 
   /* register all contexts */
   DLT_REGISTER_CONTEXT(myContext1,"TES1","Test Context 1 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext2,"TES2","Test Context 2 for Logging");
-  DLT_REGISTER_CONTEXT(mycontext3,"TES3","Test Context 3 for Logging");
+  DLT_REGISTER_CONTEXT(myContext2,"TES2","Test Context 2 for Logging");
+  DLT_REGISTER_CONTEXT(myContext3,"TES3","Test Context 3 for Logging");
 
   /* Write your logs */
-  DLT_LOG(mycontext1,DLT_LOG_ERROR,DLT_INT(5),DLT_STRING("This is a error"));
-  DLT_LOG(mycontext2,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
-  DLT_LOG(mycontext3,DLT_LOG_DEBUG,DLT_INT(5),DLT_STRING("But this only information"));
+  DLT_LOG(myContext1,DLT_LOG_ERROR,DLT_INT(5),DLT_STRING("This is a error"));
+  DLT_LOG(myContext2,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
+  DLT_LOG(myContext3,DLT_LOG_DEBUG,DLT_INT(5),DLT_STRING("But this only information"));
 
-  /* Sleep some time */
+  /* Sleep some time to avoid a flaw in dlt-daemon that would eat your messages 
+     if you deregister while it still processes your registration */
   sleep(3);
 
   /* unregister your contexts */
   DLT_UNREGISTER_CONTEXT(myContext1);  
-  DLT_UNREGISTER_CONTEXT(mycontext2);
-  DLT_UNREGISTER_CONTEXT(mycontext3);
+  DLT_UNREGISTER_CONTEXT(myContext2);
+  DLT_UNREGISTER_CONTEXT(myContext3);
 
   /* unregister your application */
   DLT_UNREGISTER_APP();
 
   return 0;
-
+  
 }
 ----
+
+.CMakeLists.txt
+----
+cmake_minimum_required(VERSION 2.6)
+ 
+find_package(PkgConfig)
+pkg_check_modules(DLT REQUIRED automotive-dlt)
+ 
+include_directories("${DLT_INCLUDE_DIRS}")
+ 
+project(DLTexample)
+add_executable(dlt_example dlt_example.c)
+ 
+target_link_libraries(dlt_example ${DLT_LIBRARIES})
+----
+
+.Build steps
+----
+mkdir build
+cd build
+cmake ..
+make
+----
+
