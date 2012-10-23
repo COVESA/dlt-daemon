@@ -5,5 +5,7 @@ automotive-dlt.spec
 automotive-dlt.pc
 config.h
 include/dlt/dlt_version.h
+.project
+.cproject
 
 
