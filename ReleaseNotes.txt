@@ -4,10 +4,12 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.9.0
+2.10.0
 
 Changes
 -------
+2.10.0
+
 
 2.9.0
 
