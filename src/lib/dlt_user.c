@@ -3532,7 +3532,6 @@ int dlt_user_log_check_user_message(void)
 int dlt_user_log_resend_buffer(void)
 {
 	int num,count;
-    uint8_t buf[DLT_USER_RCVBUF_MAX_SIZE];
     int size;
 	DltReturnValue ret;
 	
@@ -3545,18 +3544,18 @@ int dlt_user_log_resend_buffer(void)
 	{
 
 		DLT_SEM_LOCK();
-		size = dlt_buffer_copy(&(dlt_user.startup_buffer),buf,sizeof(buf));
+		size = dlt_buffer_copy(&(dlt_user.startup_buffer),dlt_user.resend_buffer,sizeof(dlt_user.resend_buffer));
 
 		if (size>0)
 		{
 #ifdef DLT_SHM_ENABLE						
-			dlt_shm_push(&dlt_user.dlt_shm,buf+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);                   
+			dlt_shm_push(&dlt_user.dlt_shm,dlt_user.resend_buffer+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);
 
 			/* log to FIFO */
-			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,sizeof(DltUserHeader),0,0,0,0);
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer,sizeof(DltUserHeader),0,0,0,0);
 #else
 			/* log to FIFO */
-			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, buf,size,0,0,0,0);
+			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer,size,0,0,0,0);
 #endif
 
 			/* in case of error, keep message in ringbuffer */                        

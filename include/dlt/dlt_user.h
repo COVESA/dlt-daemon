@@ -148,6 +148,8 @@ typedef enum
 
 #define DLT_USER_BUF_MAX_SIZE 2048               /**< maximum size of each user buffer, also used for injection buffer */
 
+#define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)		/**< Size of resend buffer; Max DLT message size is 2K plus some extra header space  */
+
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 #define DLT_SEM_LOCK() { sem_wait(&dlt_mutex); }
 #define DLT_SEM_FREE() { sem_post(&dlt_mutex); }
@@ -231,6 +233,9 @@ typedef struct
     //DltRingBuffer rbuf;                 
 	DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
     
+	// Buffer used for resending, locked by DLT semaphore
+	uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
+
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;
 #endif
