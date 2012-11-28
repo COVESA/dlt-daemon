@@ -2233,17 +2233,21 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 							thread_data->payload_len);
 	if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
 	{
-		dlt_log(LOG_ERR,"NWTSegmented: Could not send start segment. Aborting.\n");
-		free(thread_data->header);
-		free(thread_data->payload);
-		free(thread_data);
+                dlt_log(LOG_ERR,"NWTSegmented: Could not send start segment. Aborting.\n");
+                free(thread_data->header);
+                free(thread_data->payload);
+                free(thread_data);
 		return -1;
 	}
 
 	/* Open queue if it is not open */
 	if(dlt_init_message_queue() < 0)
 	{
-		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
+                dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
+                free(thread_data->header);
+                free(thread_data->payload);
+                free(thread_data);
+
 		return -1;
 	}
 
@@ -2689,6 +2693,7 @@ int dlt_user_queue_resend(void)
 	if(dlt_init_message_queue() < 0)
 	{
 		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
+        free(resend_data);
 		return -1;
 	}
 
