@@ -2675,7 +2675,15 @@ int dlt_user_queue_resend(void)
      * This will be freed in dlt_user_trace_network_segmented_thread
      * */
     s_segmented_data *resend_data = malloc(sizeof(s_segmented_data));
+
+    if (NULL == resend_data)
+    {
+        return -1;
+    }
+
     resend_data->payload_len = DLT_DELAYED_RESEND_INDICATOR_PATTERN;
+
+
 
     /* Open queue if it is not open */
 	if(dlt_init_message_queue() < 0)
@@ -3620,7 +3628,7 @@ void dlt_user_log_reattach_to_daemon(void)
             for (num=0; num<dlt_user.dlt_ll_ts_num_entries; num++)
             {
                 /* Re-register stored context */
-                if ((dlt_user.appID[0]!='\0') && (dlt_user.dlt_ll_ts[num].contextID[0]!='\0') && (dlt_user.dlt_ll_ts))
+                if ((dlt_user.appID[0]!='\0') && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID[0]!='\0'))
                 {
                     //dlt_set_id(log_new.appID, dlt_user.appID);
                     dlt_set_id(handle.contextID, dlt_user.dlt_ll_ts[num].contextID);

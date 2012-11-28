@@ -70,7 +70,9 @@ int dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
 	/* set filename */
     t = time(NULL);
     tmp = localtime(&t);
-    if (tmp == NULL) {
+    if (NULL == tmp) {
+        printf("dlt_offline_trace_create_new_file: pointer to tmp is NULL!");
+        return -1;
     }
     if (strftime(outstr, sizeof(outstr),"%Y%m%d_%H%M%S", tmp) == 0) {
     }
