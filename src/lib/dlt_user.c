@@ -134,6 +134,7 @@ static int dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static int dlt_user_log_send_overflow(void);
 static void dlt_user_trace_network_segmented_thread(void *unused);
+static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
 static int dlt_user_queue_resend(void);
 
 int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version){
@@ -2105,91 +2106,98 @@ int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNet
     return 0;
 }
 
+
 void dlt_user_trace_network_segmented_thread(void *unused)
 {
-	/* Unused on purpose. */
-	(void) unused;
+        /* Unused on purpose. */
+        (void) unused;
 
-	s_segmented_data *data;
+        s_segmented_data *data;
 
-	while(1)
-	{
-		// Wait untill message queue is initialized
-		pthread_mutex_lock(&mq_mutex);
-		if(dlt_user.dlt_segmented_queue_read_handle < 0)
-		{
-			pthread_cond_wait(&mq_init_condition, &mq_mutex);
-		}
-		pthread_mutex_unlock(&mq_mutex);
+        while(1)
+        {
+                // Wait untill message queue is initialized
+                pthread_mutex_lock(&mq_mutex);
+                if(dlt_user.dlt_segmented_queue_read_handle < 0)
+                {
+                        pthread_cond_wait(&mq_init_condition, &mq_mutex);
+                }
+                pthread_mutex_unlock(&mq_mutex);
 
-		ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
-					sizeof(s_segmented_data * ), NULL);
+                ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
+                                        sizeof(s_segmented_data * ), NULL);
 
-		if(read != sizeof(s_segmented_data *))
-		{
-			dlt_log(LOG_ERR, "NWTSegmented: Error while reading queue.\n");
-			dlt_log(LOG_ERR, strerror(errno));
-			continue;
-		}
+                if(read != sizeof(s_segmented_data *))
+                {
+                        dlt_log(LOG_ERR, "NWTSegmented: Error while reading queue.\n");
+                        dlt_log(LOG_ERR, strerror(errno));
+                        continue;
+                }
 
-		/* Indicator just to try to flush the buffer */
-		if(data->payload_len == DLT_DELAYED_RESEND_INDICATOR_PATTERN)
-		{
-			// Sleep 100ms, to allow other process to read FIFO
-			usleep(100*1000);
-			if(dlt_user_log_resend_buffer() < 0)
-			{
-				// Requeue if still not empty
-				dlt_user_queue_resend();
-			}
-			free(data);
-			continue;
-		}
+                /* Indicator just to try to flush the buffer */
+                if(data->payload_len == DLT_DELAYED_RESEND_INDICATOR_PATTERN)
+                {
+                        // Sleep 100ms, to allow other process to read FIFO
+                        usleep(100*1000);
+                        if(dlt_user_log_resend_buffer() < 0)
+                        {
+                                // Requeue if still not empty
+                                dlt_user_queue_resend();
+                        }
+                        free(data);
+                        continue;
+                }
 
-		/* Segment the data and send the chunks */
-		void *ptr 			= NULL;
-		uint16_t offset		= 0;
-		uint16_t sequence	= 0;
-		do
-		{
-			uint16_t len = 0;
-			if(offset + DLT_MAX_TRACE_SEGMENT_SIZE > data->payload_len)
-			{
-				len = data->payload_len - offset;
-			}
-			else
-			{
-				len = DLT_MAX_TRACE_SEGMENT_SIZE;
-			}
-			/* If payload size aligns perfectly with segment size, avoid sendind empty segment */
-			if(len == 0)
-			{
-				break;
-			}
+                dlt_user_trace_network_segmented_thread_segmenter(data);
 
-			ptr = data->payload + offset;
-			DltReturnValue err = dlt_user_trace_network_segmented_segment(data->id, data->handle, data->nw_trace_type, sequence++, len, ptr);
-			if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
-			{
-				dlt_log(LOG_ERR,"NWTSegmented: Could not send segment. Aborting.\n");
-				break; // Inner loop
-			}
-			offset += len;
-		}while(ptr < data->payload + data->payload_len);
+                /* Send the end message */
+                DltReturnValue err = dlt_user_trace_network_segmented_end(data->id, data->handle, data->nw_trace_type);
+                if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
+                {
+                        dlt_log(LOG_ERR,"NWTSegmented: Could not send end segment.\n");
+                }
 
-		/* Send the end message */
-		DltReturnValue err = dlt_user_trace_network_segmented_end(data->id, data->handle, data->nw_trace_type);
-		if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
-		{
-			dlt_log(LOG_ERR,"NWTSegmented: Could not send end segment.\n");
-		}
-
-		/* Free resources */
-		free(data->header);
-		free(data->payload);
-		free(data);
-	}
+                /* Free resources */
+                free(data->header);
+                free(data->payload);
+                free(data);
+        }
 }
+
+void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data)
+{
+        /* Segment the data and send the chunks */
+        void *ptr 			= NULL;
+        uint16_t offset		= 0;
+        uint16_t sequence	= 0;
+        do
+        {
+                uint16_t len = 0;
+                if(offset + DLT_MAX_TRACE_SEGMENT_SIZE > data->payload_len)
+                {
+                        len = data->payload_len - offset;
+                }
+                else
+                {
+                        len = DLT_MAX_TRACE_SEGMENT_SIZE;
+                }
+                /* If payload size aligns perfectly with segment size, avoid sending empty segment */
+                if(len == 0)
+                {
+                        break;
+                }
+
+                ptr = data->payload + offset;
+                DltReturnValue err = dlt_user_trace_network_segmented_segment(data->id, data->handle, data->nw_trace_type, sequence++, len, ptr);
+                if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
+                {
+                        dlt_log(LOG_ERR,"NWTSegmented: Could not send segment. Aborting.\n");
+                        break; // loop
+                }
+                offset += len;
+        }while(ptr < data->payload + data->payload_len);
+}
+
 
 int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
 {
