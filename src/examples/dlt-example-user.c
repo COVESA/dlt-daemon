@@ -215,6 +215,7 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
+            break;//for parasoft
         }
         }
     }

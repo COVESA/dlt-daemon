@@ -143,6 +143,7 @@ int main(int argc, char* argv[])
         {
             fprintf(stderr, "Unknown option '%c'\n", optopt);
             exit(3);
+            return 3;//for parasoft
         }
         }
     }

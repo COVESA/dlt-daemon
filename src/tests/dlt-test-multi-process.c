@@ -172,6 +172,7 @@ int read_cli(s_parameters *params, int argc, char **argv)
 				break;
 			default:
 				abort();
+                                return -1;//for parasoft
     	}
 	}
 	return 0;
@@ -235,6 +236,7 @@ void do_forks(s_parameters params)
 				fprintf(stderr, "Could not allocate memory for child process' kernel structure.\n");
 				cleanup();
 				abort();
+                                return;//for parasoft
 			}
 		case 0: // Child process, start threads
 			run_threads(params);

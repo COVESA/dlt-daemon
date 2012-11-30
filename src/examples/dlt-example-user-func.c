@@ -175,6 +175,7 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
+            return -1;//for parasoft
         }
         }
     }

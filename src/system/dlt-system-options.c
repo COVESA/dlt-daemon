@@ -110,6 +110,7 @@ int read_command_line(DltSystemCliOptions *options, int argc, char *argv[])
 			{
 				usage(argv[0]);
 				exit(0);
+                                return -1;//for parasoft
 			}
 			default:
 			{
