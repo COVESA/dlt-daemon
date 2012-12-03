@@ -91,7 +91,7 @@ typedef struct
 void stress1(void);
 
 void stress2(void);
-void thread_function(void *ptr);
+void thread_function(void);
 
 void stress3(void);
 
@@ -311,7 +311,7 @@ void stress2(void)
     printf("Finished stress test2 \n\n");
 }
 
-void thread_function(void *ptr)
+void thread_function(void)
 {
     //thread_data_t *data;
     DLT_DECLARE_CONTEXT(context_thread1);

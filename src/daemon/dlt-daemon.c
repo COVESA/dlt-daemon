@@ -995,13 +995,25 @@ void dlt_daemon_daemonize(int verbose)
     /* Open standard descriptors stdin, stdout, stderr */
     i=open("/dev/null",O_RDWR); /* open stdin */
     ret=dup(i); /* stdout */
+    if (0 > ret){
+            dlt_log(LOG_CRIT, "can't open standard descriptor stdout\n");
+            exit(-1); /* can not open */
+    }
     ret=dup(i); /* stderr */
+    if (0 > ret){
+            dlt_log(LOG_CRIT, "can't open standard descriptor stderr");
+            exit(-1); /* can not open */
+    }
 
     /* Set umask */
     umask(DLT_DAEMON_UMASK);
 
     /* Change to known directory */
     ret=chdir(DLT_USER_DIR);
+    if (0 > ret){
+            dlt_log(LOG_CRIT, "Can't change to known directory");
+            exit(-1); /* Can't change to known directory */
+    }
 
     /* Ensure single copy of daemon;
        run only one instance at a time */
@@ -1020,6 +1032,9 @@ void dlt_daemon_daemonize(int verbose)
 
     sprintf(str,"%d\n",getpid());
     bytes_written=write(lfp,str,strlen(str)); /* record pid to lockfile */
+    if (0 > bytes_written){
+            dlt_log(LOG_CRIT, "write pid to lockfile failed:");
+    }
 
     /* Catch signals */
     signal(SIGCHLD,SIG_IGN); /* ignore child */
@@ -1917,10 +1932,22 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
                         if (daemon_local->flags.lflag)
                         {
                             ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
+                            if (0 > ret)
+                            {
+                              dlt_log(LOG_ERR,"write(j,daemon_local->msg.headerbuffer failed\n");
+                            }
                         }
 
                         ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader));
+                        if (0 > ret)
+                        {
+                          dlt_log(LOG_ERR,"write(j,dltSerialHeader failed\n");
+                        }
                         ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
+                        if (0 > ret)
+                        {
+                          dlt_log(LOG_ERR,"write(j,daemon_local->msg.databuffer failed\n");
+                        }
 
                         DLT_DAEMON_SEM_FREE();
 
@@ -2314,10 +2341,22 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
                     if (daemon_local->flags.lflag)
                     {
                         ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
+                        if (0 > ret)
+                        {
+                                dlt_log(LOG_ERR, "dlt_daemon_send_ringbuffer_to_client: write(j,dltSerialHeader,sizeof(dltSerialHeader)) failed!\n");
+                                DLT_DAEMON_SEM_FREE();
+                                return -1;
+                        }
                     }
                     ret=write(j,data,length);
-
+                    if (0 > ret)
+                    {
+                            dlt_log(LOG_ERR, "dlt_daemon_send_ringbuffer_to_client: write(j,data,length) failed!\n");
+                            DLT_DAEMON_SEM_FREE();
+                            return -1;
+                    }
                     DLT_DAEMON_SEM_FREE();
+
                 }
             } /* if */
         } /* for */
@@ -2569,6 +2608,9 @@ void dlt_daemon_wait_period (DltDaemonPeriodicData *info, int verbose)
     PRINT_FUNCTION_VERBOSE(verbose);
 
     ret = read (info->timer_fd, &missed, sizeof (missed));
+    if (0 > ret){
+            dlt_log(LOG_ERR,"dlt_daemon_wait_period: Read failed");
+    }
 
     if (missed > 0)
     {

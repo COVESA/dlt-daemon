@@ -1510,9 +1510,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                 if(type_info & DLT_TYPE_INFO_UINT)
                                 {
-                                	uint16_t seq;
+                                    //uint16_t seq;
                                     DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                    seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    //seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                                    	dltdata->test_counter_macro[8]++;
 
                                     /* Data */
@@ -2664,10 +2664,10 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                 if(type_info & DLT_TYPE_INFO_UINT)
                                 {
-                                	uint16_t seq;
+                                        //uint16_t seq;
                                     DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                    seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                                   	dltdata->test_counter_function[8]++;
+                                    //seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    dltdata->test_counter_function[8]++;
 
                                     /* Data */
                                     DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
@@ -2769,6 +2769,10 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             iov[1].iov_len = message->datasize;
 
             bytes_written = writev(dltdata->ohandle, iov, 2);
+            if (0 > bytes_written){
+                    printf("dlt_testclient_message_callback, error in: writev(dltdata->ohandle, iov, 2)\n");
+                    return -1;
+            }
         }
     }
 

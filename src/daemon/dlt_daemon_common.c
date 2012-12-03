@@ -485,6 +485,12 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
 
         /* Get line */
         ret=fgets(buf,sizeof(buf),fd);
+        if (NULL == ret)
+        {
+                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL");
+                dlt_log(LOG_ERR, str);
+                return -1;//seems to be appropriate, but not sure. !feof is already a precondition, so another problem should the reason!
+        }
 
         if (strcmp(buf,"")!=0)
         {
@@ -824,6 +830,13 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
 
         /* Get line */
         ret=fgets(buf,sizeof(buf),fd);
+        if (NULL == ret)
+        {
+                sprintf(str,"dlt_daemon_contexts_load: fgets(buf,sizeof(buf),fd);");
+                dlt_log(LOG_ERR, str);
+                fclose(fd);
+                return -1;//as we are not eof, there seems to be another problem.
+        }
 
         if (strcmp(buf,"")!=0)
         {
@@ -2122,7 +2135,7 @@ void dlt_daemon_control_send_ecu_version(int sock, DltDaemon *daemon, const char
 {
     DltMessage msg;
     uint32_t len;
-	DltServiceGetSoftwareVersionResponse *resp;
+    DltServiceGetSoftwareVersionResponse *resp;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2254,11 +2267,29 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
             if (daemon->sendserialheader)
             {
                 ret=write(sock,dltSerialHeader,sizeof(dltSerialHeader));
+                if (0 > ret)
+                {
+                        dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write dltSerialHeader failed\n");
+                        DLT_DAEMON_SEM_FREE();
+                        return;
+                }
             }
 
             /* Send data */
             ret=write(sock, msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader));
+            if (0 > ret)
+            {
+                    dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write msg->headerbuffer failed\n");
+                    DLT_DAEMON_SEM_FREE();
+                    return;
+            }
             ret=write(sock, msg->databuffer,msg->datasize);
+            if (0 > ret)
+            {
+                    dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write msg->databuffer failed\n");
+                    DLT_DAEMON_SEM_FREE();
+                    return;
+            }
 
             DLT_DAEMON_SEM_FREE();
         }
@@ -2485,7 +2516,15 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
         /* Send data */
         ret=write(sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
         if(msg.datasize > 0)
-        	ret=write(sock, msg.databuffer,msg.datasize);
+        {
+                ret=write(sock, msg.databuffer,msg.datasize);
+                if (0 > ret){
+                        dlt_log(LOG_CRIT,"dlt_daemon_control_message_time: Failed to write databuffer\n");
+                        dlt_message_free(&msg,0);
+                        DLT_DAEMON_SEM_FREE();
+                        return;
+                }
+        }
 
         DLT_DAEMON_SEM_FREE();
     }

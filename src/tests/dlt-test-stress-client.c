@@ -556,6 +556,10 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             iov[1].iov_len = message->datasize;
 
             bytes_written = writev(dltdata->ohandle, iov, 2);
+            if (0 > bytes_written){
+                    printf("dlt_testclient_message_callback, error when: writev(dltdata->ohandle, iov, 2) \n");
+                    return -1;
+            }
         }
     }
 

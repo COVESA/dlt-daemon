@@ -318,8 +318,8 @@ int dlt_client_main_loop(DltClient *client, void *data, int verbose)
 int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size)
 {
 	DltMessage msg;
-	int ret;
-	int offset=0;
+        int ret;
+        int offset=0;
 
 	int32_t len;
 
@@ -424,7 +424,15 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 	{
 		/* via FileDescriptor */
 		ret=write(client->sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
+                if (0 > ret){
+                        dlt_message_free(&msg,0);
+                        return -1;
+                }
 		ret=write(client->sock, msg.databuffer,msg.datasize);
+                if (0 > ret){
+                        dlt_message_free(&msg,0);
+                        return -1;
+                }
 	}
 	else
 	{

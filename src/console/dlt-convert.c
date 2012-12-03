@@ -351,6 +351,11 @@ int main(int argc, char* argv[])
                     iov[1].iov_len = file.msg.datasize;
 
                     bytes_written = writev(ohandle, iov, 2);
+                    if (0 > bytes_written){
+                            printf("in main: writev(ohandle, iov, 2); returned an error!" );
+                            dlt_file_free(&file,vflag);
+                            return -1;
+                    }
                 }
 
                 /* check for new messages if follow flag set */
