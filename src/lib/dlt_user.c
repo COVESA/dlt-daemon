@@ -3395,7 +3395,8 @@ int dlt_user_log_check_user_message(void)
                 while ((int32_t)(sizeof(DltUserHeader)+offset)<=receiver->bytesRcvd);
 
                 /* Check for user header pattern */
-                if (dlt_user_check_userheader(userheader)==0)
+                if (dlt_user_check_userheader(userheader)<0 ||
+                    dlt_user_check_userheader(userheader)==0)
                 {
                     break;
                 }
