@@ -108,6 +108,7 @@ static DltDaemonECUVersionThreadData dlt_daemon_ecu_version_thread_data;
 static pthread_t      dlt_daemon_ecu_version_thread_handle;
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+#define DLT_SELECT_TIMEOUT_USEC 1000
 static DltDaemonTimingPacketThreadData dlt_daemon_systemd_watchdog_thread_data;
 static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
 #endif
@@ -402,9 +403,21 @@ int main(int argc, char* argv[])
 	char version[DLT_DAEMON_TEXTBUFSIZE];
     DltDaemonLocal daemon_local;
     DltDaemon daemon;
-
     int i,back;
 
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+  	/* Timeout for select */
+   	struct timeval tvTimeout;
+   	tvTimeout.tv_sec = 0;
+   	tvTimeout.tv_usec = DLT_SELECT_TIMEOUT_USEC;
+
+   	/* Set watchdog flag immediately, not to timeout while init */
+   	if(sd_notify(0, "WATCHDOG=1") < 0)
+	{
+		dlt_log(LOG_CRIT, "Could not initialize systemd watchdog\n");
+		return -1;
+	}
+#endif
     /* Command line option handling */
 	if ((back = option_handling(&daemon_local,argc,argv))<0)
 	{
@@ -462,14 +475,38 @@ int main(int argc, char* argv[])
 
     while (1)
     {
-        /* wait for events form all FIFO and sockets */
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+    	/* Set timeout to defined usecs
+    	 * select might modify this value: POSIX.1-2001 */
+       	tvTimeout.tv_sec = 0;
+       	tvTimeout.tv_usec = DLT_SELECT_TIMEOUT_USEC;
+
+    	/* update the watchdog time structure */
+    	gettimeofday(&(daemon_local.lastOperationTime), NULL);
+
+    	/* wait for events from all FIFO and sockets, with timeout */
+        daemon_local.read_fds = daemon_local.master;
+        int selectRet = select(daemon_local.fdmax+1, &(daemon_local.read_fds), NULL, NULL, &tvTimeout);
+        if (selectRet == -1)
+        {
+            dlt_log(LOG_CRIT, "select() failed!\n");
+            return -1 ;
+        } /* if */
+        else if(selectRet == 0)
+        {
+        	/* No pending reads, continue while(1)*/
+        	continue;
+        }
+#else
+
+        /* wait for events from all FIFO and sockets */
         daemon_local.read_fds = daemon_local.master;
         if (select(daemon_local.fdmax+1, &(daemon_local.read_fds), NULL, NULL, NULL) == -1)
         {
             dlt_log(LOG_CRIT, "select() failed!\n");
             return -1 ;
         } /* if */
-
+#endif
         /* run through the existing FIFO and sockets to check for events */
         for (i = 0; i <= daemon_local.fdmax; i++)
         {
@@ -2294,6 +2331,11 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 	/* Attention: If the message can't be send at this time, it will be silently discarded. */
     while ((length = dlt_buffer_pull(&(daemon->client_ringbuffer), data, sizeof(data) )) > 0)
     {
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+    	/* update the watchdog time structure
+    	 * This might take long time if the buffer is large */
+    	gettimeofday(&(daemon_local->lastOperationTime), NULL);
+#endif
         /* look if TCP connection to client is available */
         for (j = 0; j <= daemon_local->fdmax; j++)
         {
@@ -2492,6 +2534,7 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr)
     DltDaemonTimingPacketThreadData *data;
     DltDaemon *daemon;
     DltDaemonLocal *daemon_local;
+    static struct timeval lastDaemonOperation;
 
     if (ptr==0)
     {
@@ -2531,11 +2574,18 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr)
 
 			while (1)
 			{
-				if(sd_notify(0, "WATCHDOG=1") < 0)
+				/* If main thread has changed its last operation time, reset watchdog */
+				if(daemon_local->lastOperationTime.tv_sec > lastDaemonOperation.tv_sec ||
+					daemon_local->lastOperationTime.tv_usec > lastDaemonOperation.tv_usec)
 				{
-					dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+					if(sd_notify(0, "WATCHDOG=1") < 0)
+					{
+						dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+					}
+					lastDaemonOperation.tv_sec = daemon_local->lastOperationTime.tv_sec;
+					lastDaemonOperation.tv_usec = daemon_local->lastOperationTime.tv_usec;
 				}
-				//dlt_log(LOG_INFO, "systemd watchdog waited periodic\n");
+
 				/* Wait for next period */
 				dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
 			}

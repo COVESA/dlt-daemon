@@ -73,6 +73,7 @@
 
 
 #include <dlt_offline_trace.h>
+#include <sys/time.h>
 
 
 /**
@@ -130,6 +131,9 @@ typedef struct
     DltShm dlt_shm;				/**< Shared memory handling */
 #endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+    struct timeval lastOperationTime;
+#endif
 } DltDaemonLocal;
 
 typedef struct
