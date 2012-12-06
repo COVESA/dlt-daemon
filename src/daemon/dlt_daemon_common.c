@@ -125,6 +125,7 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
         return -1;
     }
 
+    int append_length = 0;
     daemon->num_contexts = 0;
     daemon->contexts = 0;
 
@@ -141,18 +142,24 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->mode = DLT_USER_MODE_EXTERNAL;
 
     /* prepare filenames for configuration */
+
+    append_length = PATH_MAX - sizeof(DLT_RUNTIME_APPLICATION_CFG);
     if(runtime_directory[0])
-    	strcpy(daemon->runtime_application_cfg,runtime_directory);
+        strncpy(daemon->runtime_application_cfg,runtime_directory,append_length);
     else
     	strcpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG);
+
+    append_length = PATH_MAX - sizeof(DLT_RUNTIME_CONTEXT_CFG);
     if(runtime_directory[0])
-    	strcpy(daemon->runtime_context_cfg,runtime_directory);
+        strncpy(daemon->runtime_context_cfg,runtime_directory,append_length);
     else
     	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_context_cfg,DLT_RUNTIME_CONTEXT_CFG);
-    if(runtime_directory[0])
-    	strcpy(daemon->runtime_configuration,runtime_directory);
+
+    append_length = PATH_MAX - sizeof(DLT_RUNTIME_CONFIGURATION);
+    if(runtime_directory[0])    
+        strncpy(daemon->runtime_configuration,runtime_directory,append_length);
     else
     	strcpy(daemon->runtime_configuration,DLT_RUNTIME_DEFAULT_DIRECTORY);
     strcat(daemon->runtime_configuration,DLT_RUNTIME_CONFIGURATION);

@@ -84,6 +84,7 @@ int init_socket(SyslogOptions opts)
 	{
 		DLT_LOG(syslogContext, DLT_LOG_FATAL,
 				DLT_STRING("Unable to bind socket for SYSLOG."));
+                close(sock);
 		return -1;
 	}
 
@@ -138,8 +139,12 @@ void syslog_thread(void *v_conf)
 	while(!threads.shutdown)
 	{
 		if(read_socket(sock) < 0)
+                {
+                        close(sock);
 			return;
+                }
 	}
+        close (sock);
 }
 
 void start_syslog(DltSystemConfiguration *conf)

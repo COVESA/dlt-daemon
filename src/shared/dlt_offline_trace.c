@@ -170,7 +170,7 @@ int dlt_offline_trace_check_size(DltOfflineTrace *trace) {
 int dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize) {
 
 	/* init parameters */
-	strcpy(trace->directory,directory);
+        strncpy(trace->directory,directory,NAME_MAX);
 	trace->fileSize = fileSize;
 	trace->maxSize = maxSize;
 
@@ -190,6 +190,7 @@ int dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size
 	{
 		/* close old file */
 		close(trace->ohandle);
+                trace->ohandle = -1;
 		
 		/* check complete offline trace size, remove old logs if needed */
 		dlt_offline_trace_check_size(trace);
@@ -199,19 +200,19 @@ int dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size
 	}
 	
 	/* write data into log file */
-	if(data1) {
+        if(data1 && (trace->ohandle >= 0)) {
 		if(write(trace->ohandle,data1,size1)!=size1) {
 			printf("Offline trace write failed!\n");
 			return -1;			
 		}
 	}
-	if(data2) {
+        if(data2 && (trace->ohandle >= 0)) {
 		if(write(trace->ohandle,data2,size2)!=size2) {
 			printf("Offline trace write failed!\n");
 			return -1;						
 		}
 	}
-	if(data3) {
+        if(data3 && (trace->ohandle >= 0)) {
 		if(write(trace->ohandle,data3,size3)!=size3) {
 			printf("Offline trace write failed!\n");
 			return -1;						

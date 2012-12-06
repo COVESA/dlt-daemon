@@ -2109,14 +2109,14 @@ int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNet
 
 void dlt_user_trace_network_segmented_thread(void *unused)
 {
-        /* Unused on purpose. */
-        (void) unused;
+	/* Unused on purpose. */
+	(void) unused;
 
-        s_segmented_data *data;
+	s_segmented_data *data;
 
         while(1)
         {
-                // Wait untill message queue is initialized
+                // Wait until message queue is initialized
                 pthread_mutex_lock(&mq_mutex);
                 if(dlt_user.dlt_segmented_queue_read_handle < 0)
                 {
@@ -2241,10 +2241,10 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 							thread_data->payload_len);
 	if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
 	{
-                dlt_log(LOG_ERR,"NWTSegmented: Could not send start segment. Aborting.\n");
-                free(thread_data->header);
-                free(thread_data->payload);
-                free(thread_data);
+		dlt_log(LOG_ERR,"NWTSegmented: Could not send start segment. Aborting.\n");
+		free(thread_data->header);
+		free(thread_data->payload);
+		free(thread_data);
 		return -1;
 	}
 
@@ -2274,6 +2274,9 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 		dlt_log(LOG_ERR, strerror(errno));
 		return -1;
 	}
+
+        //thread_data will be freed by the receiver function
+        //coverity[leaked_storage]
 	return 0;
 }
 
@@ -2701,7 +2704,7 @@ int dlt_user_queue_resend(void)
 	if(dlt_init_message_queue() < 0)
 	{
 		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
-        free(resend_data);
+                free(resend_data);
 		return -1;
 	}
 
@@ -2713,6 +2716,8 @@ int dlt_user_queue_resend(void)
     	DLT_SEM_FREE();
     	return -1;
     }
+    //thread_data will be freed by the receiver function
+    //coverity[leaked_storage]
     return 0;
 }
 
@@ -3492,7 +3497,10 @@ int dlt_user_log_check_user_message(void)
                         /* Delayed injection callback call */
                         if(delayed_inject_buffer != 0 && delayed_injection_callback.injection_callback != 0) {
                         	delayed_injection_callback.injection_callback(delayed_injection_callback.service_id, delayed_inject_buffer, delayed_inject_data_length);
-                        	free(delayed_inject_buffer);
+                                delayed_injection_callback.injection_callback = 0;
+                                free(delayed_inject_buffer);
+                                delayed_inject_buffer = NULL;
+
                         }
 
                         /* keep not read data in buffer */

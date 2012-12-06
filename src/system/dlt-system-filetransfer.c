@@ -128,6 +128,7 @@ char *compress_file(char *src, int level)
 			free(buf);
 			free(dst);
 			gzclose(dst_file);
+                        fclose(src_file);
 			return NULL;
 		}
 		gzwrite(dst_file, buf, read);
@@ -151,6 +152,7 @@ int send_one(char *src, FiletransferOptions opts, int which)
 	char *fn = basename(src);
 	char *rn = unique_name(src);
 	char *dst = malloc(strlen(opts.TempDir)+strlen(rn)+2);
+        char *dst_tmp = NULL;
 	MALLOC_ASSERT(fn);
 	MALLOC_ASSERT(rn);
 	MALLOC_ASSERT(dst);
@@ -170,35 +172,37 @@ int send_one(char *src, FiletransferOptions opts, int which)
 	// Compress if needed
 	if(opts.Compression[which] > 0)
 	{
-		dst = compress_file(dst, opts.CompressionLevel[which]);
+                dst_tmp = dst;
+                dst = compress_file(dst_tmp, opts.CompressionLevel[which]);
+                free(dst_tmp);//no more used
 		char *old_fn = fn;
 		fn = malloc(strlen(old_fn)+4);
 		MALLOC_ASSERT(fn);
 		sprintf(fn, "%s.gz", old_fn);
 	}
 
-	if(dlt_user_log_file_header_alias(&filetransferContext, dst, fn) == 0)
+        if(dlt_user_log_file_header_alias(&filetransferContext, dst, fn) == 0)
 	{
-		int pkgcount = dlt_user_log_file_packagesCount(&filetransferContext, dst);
+                int pkgcount = dlt_user_log_file_packagesCount(&filetransferContext, dst);
 		int lastpkg = 0;
 		while(lastpkg < pkgcount)
-		{
-			int total = 2;
-			int used = 2;
-            dlt_user_check_buffer(&total, &used);
-            while((total-used) < (total/2))
-			{
-				struct timespec t;
-				t.tv_sec = 0;
-				t.tv_nsec = 1000000ul*opts.TimeoutBetweenLogs;
-				nanosleep(&t, NULL);
-				dlt_user_check_buffer(&total, &used);
-			}
-			lastpkg++;
-			if(dlt_user_log_file_data(&filetransferContext, dst, lastpkg, opts.TimeoutBetweenLogs) < 0)
-				break;
-		}
-		dlt_user_log_file_end(&filetransferContext, dst, 1);
+                {
+                        int total = 2;
+                        int used = 2;
+                        dlt_user_check_buffer(&total, &used);
+                        while((total-used) < (total/2))
+                        {
+                                struct timespec t;
+                                t.tv_sec = 0;
+                                t.tv_nsec = 1000000ul*opts.TimeoutBetweenLogs;
+                                nanosleep(&t, NULL);
+                                dlt_user_check_buffer(&total, &used);
+                        }
+                        lastpkg++;
+                        if(dlt_user_log_file_data(&filetransferContext, dst, lastpkg, opts.TimeoutBetweenLogs) < 0)
+                                break;
+                }
+                dlt_user_log_file_end(&filetransferContext, dst, 1);
 	}
 
 	if(opts.Compression[which] > 0)
@@ -230,7 +234,10 @@ int flush_dir(FiletransferOptions opts, int which)
 			MALLOC_ASSERT(fn);
 			sprintf(fn, "%s/%s", sdir, dp->d_name);
 			if(send_one(fn, opts, which) < 0)
+                        {
+                                closedir(dir);
 				return -1;
+                        }
 		}
 	}
 	else

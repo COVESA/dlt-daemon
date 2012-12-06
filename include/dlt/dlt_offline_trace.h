@@ -53,10 +53,12 @@
 #ifndef DLT_OFFLINE_TRACE_H
 #define DLT_OFFLINE_TRACE_H
 
+#include <limits.h>
+
 typedef struct
 {
-    char directory[256]; /**< (String) Store DLT messages to local directory */
-    char filename[256]; /**< (String) Filename of currently used log file */
+    char directory[NAME_MAX + 1]; /**< (String) Store DLT messages to local directory */
+    char filename[NAME_MAX + 1]; /**< (String) Filename of currently used log file */
     int  fileSize;	/**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int  maxSize;	/**< (int) Maximum size of all trace files (Default: 4000000) */
     

@@ -159,7 +159,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         }
         case 'c':
         {
-            strncpy(daemon_local->flags.cvalue,optarg,sizeof(daemon_local->flags.cvalue));
+            strncpy(daemon_local->flags.cvalue,optarg,NAME_MAX);
             break;
         }
         case 'h':
@@ -203,9 +203,10 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 int option_file_parser(DltDaemonLocal *daemon_local)
 {
 	FILE * pFile;
-	char line[1024];
-	char token[1024];
-	char value[1024];
+        int value_length = 1024;
+        char line[value_length-1];
+        char token[value_length];
+        char value[value_length];
     char *pch;
     const char *filename;
 
@@ -234,7 +235,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 		while(1)
 		{
 			/* fetch line from configuration file */
-			if ( fgets (line , 1024 , pFile) != NULL )
+                        if ( fgets (line , value_length - 1 , pFile) != NULL )
 			{
 				  pch = strtok (line," =\r\n");
 				  token[0]=0;
@@ -247,11 +248,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
 					if(token[0]==0)
 					{
-						strncpy(token,pch,sizeof(token));
+                                                strncpy(token,pch,sizeof(token) - 1);
 					}
 					else
 					{
-						strncpy(value,pch,sizeof(value));
+                                                strncpy(value,pch,sizeof(value) - 1);
 						break;
 					}
 
@@ -308,22 +309,22 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"RS232DeviceName")==0)
 						{
-							strncpy(daemon_local->flags.yvalue,value,sizeof(daemon_local->flags.yvalue));
+                                                        strncpy(daemon_local->flags.yvalue,value,NAME_MAX);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232Baudrate")==0)
 						{
-							strncpy(daemon_local->flags.bvalue,value,sizeof(daemon_local->flags.bvalue));
+                                                        strncpy(daemon_local->flags.bvalue,value,NAME_MAX);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"ECUId")==0)
 						{
-							strncpy(daemon_local->flags.evalue,value,sizeof(daemon_local->flags.evalue));
+                                                        strncpy(daemon_local->flags.evalue,value,NAME_MAX);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
-							strncpy(daemon_local->flags.ivalue,value,sizeof(daemon_local->flags.ivalue));
+                                                        strncpy(daemon_local->flags.ivalue,value,NAME_MAX);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"LoggingMode")==0)
@@ -338,7 +339,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"LoggingFilename")==0)
 						{
-							strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename));
+                                                        strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename) - 1);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SharedMemorySize")==0)
@@ -348,7 +349,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"OfflineTraceDirectory")==0)
 						{
-							strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory));
+                                                        strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory) - 1);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"OfflineTraceFileSize")==0)
@@ -368,7 +369,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"PathToECUSoftwareVersion")==0)
 						{
-							strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion));
+                                                        strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
 							//printf("Option: %s=%s\n",token,value);
 						}
 
@@ -995,25 +996,13 @@ void dlt_daemon_daemonize(int verbose)
     /* Open standard descriptors stdin, stdout, stderr */
     i=open("/dev/null",O_RDWR); /* open stdin */
     ret=dup(i); /* stdout */
-    if (0 > ret){
-            dlt_log(LOG_CRIT, "can't open standard descriptor stdout\n");
-            exit(-1); /* can not open */
-    }
     ret=dup(i); /* stderr */
-    if (0 > ret){
-            dlt_log(LOG_CRIT, "can't open standard descriptor stderr");
-            exit(-1); /* can not open */
-    }
 
     /* Set umask */
     umask(DLT_DAEMON_UMASK);
 
     /* Change to known directory */
     ret=chdir(DLT_USER_DIR);
-    if (0 > ret){
-            dlt_log(LOG_CRIT, "Can't change to known directory");
-            exit(-1); /* Can't change to known directory */
-    }
 
     /* Ensure single copy of daemon;
        run only one instance at a time */
@@ -1032,9 +1021,6 @@ void dlt_daemon_daemonize(int verbose)
 
     sprintf(str,"%d\n",getpid());
     bytes_written=write(lfp,str,strlen(str)); /* record pid to lockfile */
-    if (0 > bytes_written){
-            dlt_log(LOG_CRIT, "write pid to lockfile failed:");
-    }
 
     /* Catch signals */
     signal(SIGCHLD,SIG_IGN); /* ignore child */
@@ -1932,21 +1918,24 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
                         if (daemon_local->flags.lflag)
                         {
                             ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
-                            if (0 > ret)
+					        if (0 > ret)
                             {
-                              dlt_log(LOG_ERR,"write(j,daemon_local->msg.headerbuffer failed\n");
+                    	          dlt_log(LOG_ERR,"write(j,dltSerialHeader failed\n");
                             }
                         }
-
-                        ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader));
-                        if (0 > ret)
-                        {
-                          dlt_log(LOG_ERR,"write(j,dltSerialHeader failed\n");
-                        }
-                        ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
-                        if (0 > ret)
-                        {
-                          dlt_log(LOG_ERR,"write(j,daemon_local->msg.databuffer failed\n");
+                        int32_t diff = daemon_local->msg.headersize-sizeof(DltStorageHeader);
+                        //extra calculation for coverity
+                        if ( 0 <= diff ){
+                                ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),diff);
+								if (0 > ret)
+		                        {
+        		                	dlt_log(LOG_ERR,"write(j,daemon_local->msg.headerbuffer failed\n");
+        		                }
+                                ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
+								if (0 > ret)
+		                        {
+									dlt_log(LOG_ERR,"write(j,daemon_local->msg.databuffer failed\n");
+        		                }
                         }
 
                         DLT_DAEMON_SEM_FREE();
@@ -2443,14 +2432,18 @@ void dlt_daemon_ecu_version_thread(void *ptr)
 
 		while(!feof(f))
 		{
-			char buf[DLT_DAEMON_TEXTBUFSIZE];
-			read = fread(buf, 1, DLT_DAEMON_TEXTBUFSIZE, f);
+                        char buf[DLT_DAEMON_TEXTBUFSIZE];
+                        read = fread(buf, 1, DLT_DAEMON_TEXTBUFSIZE - 1, f);
+                        buf [read] = '\0';//append null termination at end of version string. Read is definitely max: DLT_DAEMON_TEXTBUFSIZE - 1
+                        read++;//Include the appended null termination position
+
 			if(ferror(f))
 			{
 				dlt_log(LOG_ERR, "Failed to read ECU Software version file.\n");
+                fclose(f);
 				return;
 			}
-			if(bufpos + read > DLT_DAEMON_TEXTBUFSIZE)
+            if(bufpos + read > ( DLT_DAEMON_TEXTBUFSIZE - 1))
 			{
 				dlt_log(LOG_ERR, "Too long file for ecu version info.\n");
 				fclose(f);
@@ -2459,6 +2452,7 @@ void dlt_daemon_ecu_version_thread(void *ptr)
 			strncpy(version+bufpos, buf, read);
 			bufpos += read;
 		}
+		version[bufpos] = '\0';//append null termination at end of version string
 		fclose(f);
 	}
 

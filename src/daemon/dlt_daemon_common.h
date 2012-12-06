@@ -73,6 +73,7 @@
   \{
 */
 
+#include <limits.h>
 #include <semaphore.h>
 #include "dlt_common.h"
 #include "dlt_user.h"
@@ -137,9 +138,9 @@ typedef struct
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
 	DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
-	char runtime_application_cfg[256]; /**< Path and filename of persistent application configuration */
-	char runtime_context_cfg[256]; /**< Path and filename of persistent context configuration */
-	char runtime_configuration[256]; /**< Path and filename of persistent configuration */
+        char runtime_application_cfg[PATH_MAX + 1]; /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
+        char runtime_context_cfg[PATH_MAX + 1]; /**< Path and filename of persistent context configuration */
+        char runtime_configuration[PATH_MAX + 1]; /**< Path and filename of persistent configuration */
     DltUserLogMode mode;	/**< Mode used for tracing: off, external, internal, both */
     char state;				/**< state for tracing: 0 = no client connected, 1 = client connected */
 } DltDaemon;

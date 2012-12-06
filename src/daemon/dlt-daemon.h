@@ -65,11 +65,15 @@
 #ifndef DLT_DAEMON_H
 #define DLT_DAEMON_H
 
+#include <limits.h> /* for NAME_MAX */
+
 #include "dlt_daemon_common.h"
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
+
 #include <dlt_offline_trace.h>
+
 
 /**
  * The flags of a dlt daemon.
@@ -85,11 +89,11 @@ typedef struct
     int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
-    char evalue[256];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
-    char bvalue[256];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
-    char yvalue[256];   /**< (String: Devicename) Additional support for serial device */
-    char ivalue[256];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
-    char cvalue[256];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
+    char evalue[NAME_MAX + 1];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
+    char bvalue[NAME_MAX + 1];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
+    char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
+    char ivalue[NAME_MAX + 1];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
+    char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
     int  sharedMemorySize;	   /**< (int) Size of shared memory (Default: 100000) */
     int  sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */

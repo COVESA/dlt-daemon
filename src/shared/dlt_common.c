@@ -67,6 +67,7 @@
 #include <stdlib.h> /* for malloc(), free() */
 #include <string.h> /* for strlen(), memcmp(), memmove() */
 #include <time.h>   /* for localtime(), strftime() */
+#include <limits.h> /* for NAME_MAX */
 
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
@@ -102,7 +103,7 @@ char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D','L','S',1 };
 /* internal logging parameters */
 static int logging_mode = 0;
 static int logging_level = 6;
-static char logging_filename[256] = "";
+static char logging_filename[NAME_MAX + 1] = "";
 static FILE *logging_handle = 0;
 
 char *message_type[] = {"log","app_trace","nw_trace","control","","","",""};
@@ -583,8 +584,10 @@ int dlt_filter_find(DltFilter *filter,const char *apid,const char *ctid, int ver
             /* apid matches, now check for ctid */
             if (ctid==0)
             {
-                /* check if empty ctid matches */
-                if (memcmp(filter->ctid[num],"",DLT_ID_SIZE)==0)
+                /* check if empty ctid matches */                
+                //if (memcmp(filter->ctid[num],"",DLT_ID_SIZE)==0)//coverity complains here about Out-of-bounds access.
+                char empty_ctid[DLT_ID_SIZE]="";
+                if (memcmp(filter->ctid[num],empty_ctid,DLT_ID_SIZE)==0)
                 {
                     return num;
                 }
@@ -1654,7 +1657,8 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
     file->handle = fopen(filename,"rb");
     if (file->handle == 0)
     {
-        sprintf(str,"File %s cannot be opened!\n",filename);
+        snprintf(str, DLT_COMMON_BUFFER_LENGTH - 1 ,"File %s cannot be opened!\n",filename);
+
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1967,7 +1971,8 @@ void dlt_log_set_level(int level)
 
 void dlt_log_set_filename(const char *filename)
 {
-	strncpy(logging_filename,filename,sizeof(logging_filename));
+        strncpy(logging_filename,filename,NAME_MAX);
+
 }
 
 void dlt_log_init(int mode)
