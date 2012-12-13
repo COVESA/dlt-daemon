@@ -132,7 +132,7 @@ typedef struct
 #endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    struct timeval lastOperationTime;
+    uint32_t lastOperationTime;
 #endif
 } DltDaemonLocal;
 

@@ -108,7 +108,8 @@ static DltDaemonECUVersionThreadData dlt_daemon_ecu_version_thread_data;
 static pthread_t      dlt_daemon_ecu_version_thread_handle;
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-#define DLT_SELECT_TIMEOUT_USEC 1000
+// Allow main loop to execute every 100ms
+#define DLT_SELECT_TIMEOUT_USEC (1000 * 100)
 static DltDaemonTimingPacketThreadData dlt_daemon_systemd_watchdog_thread_data;
 static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
 #endif
@@ -414,7 +415,7 @@ int main(int argc, char* argv[])
    	/* Set watchdog flag immediately, not to timeout while init */
    	if(sd_notify(0, "WATCHDOG=1") < 0)
 	{
-		dlt_log(LOG_CRIT, "Could not initialize systemd watchdog\n");
+   		fprintf (stderr, "Could not initialize systemd watchdog\n");
 		return -1;
 	}
 #endif
@@ -482,7 +483,7 @@ int main(int argc, char* argv[])
        	tvTimeout.tv_usec = DLT_SELECT_TIMEOUT_USEC;
 
     	/* update the watchdog time structure */
-    	gettimeofday(&(daemon_local.lastOperationTime), NULL);
+       	daemon_local.lastOperationTime = dlt_uptime();
 
     	/* wait for events from all FIFO and sockets, with timeout */
         daemon_local.read_fds = daemon_local.master;
@@ -2331,11 +2332,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 	/* Attention: If the message can't be send at this time, it will be silently discarded. */
     while ((length = dlt_buffer_pull(&(daemon->client_ringbuffer), data, sizeof(data) )) > 0)
     {
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    	/* update the watchdog time structure
-    	 * This might take long time if the buffer is large */
-    	gettimeofday(&(daemon_local->lastOperationTime), NULL);
-#endif
         /* look if TCP connection to client is available */
         for (j = 0; j <= daemon_local->fdmax; j++)
         {
@@ -2529,12 +2525,12 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr)
 {
     char *watchdogUSec;
     int watchdogTimeoutSeconds;
-    int notifiyPeriodNSec;
+    int notifyPeriodNSec;
     DltDaemonPeriodicData info;
     DltDaemonTimingPacketThreadData *data;
     DltDaemon *daemon;
     DltDaemonLocal *daemon_local;
-    static struct timeval lastDaemonOperation;
+    static uint32_t lastDaemonOperation;
 
     if (ptr==0)
     {
@@ -2557,16 +2553,15 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr)
 	if(watchdogUSec)
 	{
 		watchdogTimeoutSeconds = atoi(watchdogUSec);
+		// Calculate half of WATCHDOG_USEC in ns for timer tick
+		notifyPeriodNSec = watchdogTimeoutSeconds / 2 ;
 
-		if( watchdogTimeoutSeconds > 0 ){
-
-			// Calculate half of WATCHDOG_USEC in ns for timer tick
-			notifiyPeriodNSec = watchdogTimeoutSeconds / 2 ;
-
-			sprintf(str,"systemd watchdog timeout: %i nsec - timer will be initialized: %i nsec\n", watchdogTimeoutSeconds, notifiyPeriodNSec );
+		if( notifyPeriodNSec > 0 )
+		{
+			sprintf(str,"systemd watchdog timeout: %i nsec - timer will be initialized: %i nsec\n", watchdogTimeoutSeconds, notifyPeriodNSec );
 			dlt_log(LOG_INFO, str);
 
-			if (dlt_daemon_make_periodic (notifiyPeriodNSec, &info, daemon_local->flags.vflag)<0)
+			if (dlt_daemon_make_periodic (notifyPeriodNSec, &info, daemon_local->flags.vflag)<0)
 			{
 				dlt_log(LOG_CRIT, "Could not initialize systemd watchdog timer");
 				return;
@@ -2575,15 +2570,13 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr)
 			while (1)
 			{
 				/* If main thread has changed its last operation time, reset watchdog */
-				if(daemon_local->lastOperationTime.tv_sec > lastDaemonOperation.tv_sec ||
-					daemon_local->lastOperationTime.tv_usec > lastDaemonOperation.tv_usec)
+				if(daemon_local->lastOperationTime != lastDaemonOperation)
 				{
 					if(sd_notify(0, "WATCHDOG=1") < 0)
 					{
 						dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
 					}
-					lastDaemonOperation.tv_sec = daemon_local->lastOperationTime.tv_sec;
-					lastDaemonOperation.tv_usec = daemon_local->lastOperationTime.tv_usec;
+					lastDaemonOperation = daemon_local->lastOperationTime;
 				}
 
 				/* Wait for next period */
