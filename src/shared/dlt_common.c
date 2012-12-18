@@ -3077,8 +3077,8 @@ uint32_t dlt_uptime(void)
     struct timespec ts;
 
     if (clock_gettime(CLOCK_MONOTONIC,&ts)==0)
-    {
-        return (uint32_t)((((ts.tv_sec*1000000)+(ts.tv_nsec/1000)))/100); // in 0.1 ms = 100 us
+    {        
+        return ( (uint32_t)ts.tv_sec*10000 + (uint32_t)ts.tv_nsec/100000 );// in 0.1 ms = 100 us
     }
     else
     {
