@@ -295,7 +295,7 @@ int wait_for_files(FiletransferOptions opts)
 	}
 
 	int i = 0;
-	while(i<len)
+        while(i < (len-INOTIFY_SZ))
 	{
 		struct inotify_event *ie = (struct inotify_event *)&buf[i];
 		if(ie->len > 0)
@@ -307,12 +307,17 @@ int wait_for_files(FiletransferOptions opts)
 				{
 					if(ie->wd == ino.fd[j])
 					{
-						DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, found new file."));
-						char *tosend = malloc(strlen(opts.Directory[j])+ie->len+1);
-						sprintf(tosend, "%s/%s", opts.Directory[j], ie->name);
-						send_one(tosend, opts, j);
-						free(tosend);
-					}
+                                                DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, found new file."));
+                                                if ((i + INOTIFY_SZ + ie->len) < INOTIFY_LEN){
+                                                        char *tosend = malloc(strlen(opts.Directory[j])+ie->len+1);
+                                                        sprintf(tosend, "%s/%s", opts.Directory[j], ie->name);
+                                                        send_one(tosend, opts, j);
+                                                        free(tosend);
+                                                }
+                                                else{
+                                                        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("dlt-system-filetransfer, filename out of bounds!."));
+                                                }
+                                        }
 				}
 			}
 		}

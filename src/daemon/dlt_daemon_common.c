@@ -496,6 +496,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
         {
                 snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL");
                 dlt_log(LOG_ERR, str);
+                fclose(fd);
                 return -1;//seems to be appropriate, but not sure. !feof is already a precondition, so another problem should the reason!
         }
 
