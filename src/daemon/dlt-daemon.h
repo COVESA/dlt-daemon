@@ -103,8 +103,8 @@ typedef struct
     int  loggingMode;	/**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
     int  loggingLevel;	/**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
-    int  sendECUSoftwareVersion;
-    char pathToECUSoftwareVersion[256];
+    int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
+    char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
 } DltDaemonFlags;
 
 /**
@@ -155,6 +155,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 void dlt_daemon_daemonize(int verbose);
 void dlt_daemon_signal_handler(int sig);

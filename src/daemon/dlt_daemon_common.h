@@ -138,11 +138,12 @@ typedef struct
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
 	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
 	DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
-        char runtime_application_cfg[PATH_MAX + 1]; /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
-        char runtime_context_cfg[PATH_MAX + 1]; /**< Path and filename of persistent context configuration */
-        char runtime_configuration[PATH_MAX + 1]; /**< Path and filename of persistent configuration */
+    char runtime_application_cfg[PATH_MAX + 1]; /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
+    char runtime_context_cfg[PATH_MAX + 1]; /**< Path and filename of persistent context configuration */
+    char runtime_configuration[PATH_MAX + 1]; /**< Path and filename of persistent configuration */
     DltUserLogMode mode;	/**< Mode used for tracing: off, external, internal, both */
     char state;				/**< state for tracing: 0 = no client connected, 1 = client connected */
+    char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
 } DltDaemon;
 
 /**
@@ -454,15 +455,6 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *f
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose);
-
-/**
- * Send ECU version information
- * @param sock connection handle used for sending response
- * @param daemon pointer to dlt daemon structure
- * @param version string containing the version information
- * @param verbose if set to true verbose information is printed out.
- */
-void dlt_daemon_control_send_ecu_version(int sock, DltDaemon *daemon, const char *version, int verbose);
 #ifdef __cplusplus
 }
 #endif

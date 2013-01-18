@@ -1562,7 +1562,6 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltMessa
 
 void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, int verbose)
 {
-	char version[DLT_DAEMON_COMMON_TEXTBUFSIZE];
     DltMessage msg;
     uint32_t len;
 	DltServiceGetSoftwareVersionResponse *resp;
@@ -1582,8 +1581,7 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, int ve
     }
 
     /* prepare payload of data */
-    dlt_get_version(version);
-    len = strlen(version);
+    len = strlen(daemon->ECUVersionString);
 
     msg.datasize = sizeof(DltServiceGetSoftwareVersionResponse) + len;
     if (msg.databuffer && (msg.databuffersize < msg.datasize))
@@ -1605,7 +1603,7 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, int ve
     resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
     resp->status = DLT_SERVICE_RESPONSE_OK;
     resp->length = len;
-    memcpy(msg.databuffer+sizeof(DltServiceGetSoftwareVersionResponse),version,len);
+    memcpy(msg.databuffer+sizeof(DltServiceGetSoftwareVersionResponse),daemon->ECUVersionString,len);
 
     /* send message */
     dlt_daemon_control_send_control_message(sock, daemon, &msg,"","",  verbose);
@@ -2134,58 +2132,6 @@ void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, uint32_t 
 
     /* send message */
     dlt_daemon_control_send_control_message(sock,daemon,&msg,"","",  verbose);
-
-    /* free message */
-    dlt_message_free(&msg,0);
-}
-
-void dlt_daemon_control_send_ecu_version(int sock, DltDaemon *daemon, const char *version, int verbose)
-{
-    DltMessage msg;
-    uint32_t len;
-    DltServiceGetSoftwareVersionResponse *resp;
-
-    PRINT_FUNCTION_VERBOSE(verbose);
-
-    if (daemon==0 || version == NULL)
-    {
-        return;
-    }
-
-    /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
-    {
-    	dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_GET_SOFTWARE_VERSION, DLT_SERVICE_RESPONSE_ERROR,  verbose);
-		return;
-    }
-
-    /* prepare payload of data */
-    len = strlen(version);
-
-    msg.datasize = sizeof(DltServiceGetSoftwareVersionResponse) + len;
-    if (msg.databuffer && (msg.databuffersize < msg.datasize))
-    {
-        free(msg.databuffer);
-        msg.databuffer=0;
-    }
-    if (msg.databuffer == 0){
-    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
-    	msg.databuffersize = msg.datasize;
-    }
-    if (msg.databuffer==0)
-    {
-        dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_GET_SOFTWARE_VERSION, DLT_SERVICE_RESPONSE_ERROR,  verbose);
-        return;
-    }
-
-    resp = (DltServiceGetSoftwareVersionResponse*) msg.databuffer;
-    resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
-    resp->status = DLT_SERVICE_RESPONSE_OK;
-    resp->length = len;
-    memcpy(msg.databuffer+sizeof(DltServiceGetSoftwareVersionResponse),version,len);
-
-    /* send message */
-    dlt_daemon_control_send_control_message(sock, daemon, &msg,"","",  verbose);
 
     /* free message */
     dlt_message_free(&msg,0);

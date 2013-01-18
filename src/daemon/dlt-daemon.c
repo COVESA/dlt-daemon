@@ -739,7 +739,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     pthread_attr_destroy(&dlt_daemon_timingpacket_thread_attr);
 
-    /* start thread for ecu version, if enabled */
+    /* Get ECU version info from a file. If it fails, use dlt_version as fallback. */
+    if(dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0)
+    {
+    	daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
+    	dlt_get_version(daemon->ECUVersionString);
+    }
+
+    /* start thread for ECU version, if enabled */
     if(daemon_local->flags.sendECUSoftwareVersion > 0)
     {
 		dlt_daemon_ecu_version_thread_data.daemon = daemon;
@@ -750,7 +757,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 						   (void *) &dlt_daemon_ecu_version_thread,
 						   (void *)&dlt_daemon_ecu_version_thread_data)!=0)
 		{
-			dlt_log(LOG_ERR,"Could not initialize ecu version thread\n");
+			dlt_log(LOG_ERR,"Could not initialize ECU version thread\n");
 			return -1;
 		}
     }
@@ -918,6 +925,69 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     return 0;
 }
 
+int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+	char *version	= NULL;
+	FILE *f 		= NULL;
+
+	PRINT_FUNCTION_VERBOSE(verbose);
+
+	/* By default, version string is null. */
+	daemon->ECUVersionString = NULL;
+
+	/* Open the file. Bail out if error occurs */
+	f = fopen(daemon_local->flags.pathToECUSoftwareVersion, "r");
+	if(f == NULL)
+	{
+		/* Error level notice, because this might be deliberate choice */
+		dlt_log(LOG_NOTICE, "Failed to open ECU Software version file.\n");
+		return -1;
+	}
+
+	/* Get the file size. Bail out if stat fails. */
+	int fd = fileno(f);
+	struct stat s_buf;
+	if(fstat(fd, &s_buf) < 0)
+	{
+		dlt_log(LOG_ERR, "Failed to stat ECU Software version file.\n");
+		return -1;
+	}
+
+	/* Bail out if file is too large. Use DLT_DAEMON_TEXTBUFSIZE max.
+	 * Reserve one byte for trailing '\0' */
+	off_t size = s_buf.st_size;
+	if(size >= DLT_DAEMON_TEXTBUFSIZE)
+	{
+		dlt_log(LOG_ERR, "Too large file for ECU version.\n");
+		return -1;
+	}
+
+	/* Allocate permanent buffer for version info */
+	version = malloc(size + 1);
+	off_t offset = 0;
+	while(!feof(f))
+	{
+		offset += fread(version + offset, 1, size, f);
+		if(ferror(f))
+		{
+			dlt_log(LOG_ERR, "Failed to read ECU Software version file.\n");
+			free(version);
+            fclose(f);
+			return -1;
+		}
+        if(offset > size)
+		{
+			dlt_log(LOG_ERR, "Too long file for ECU Software version info.\n");
+			free(version);
+			fclose(f);
+			return -1;
+		}
+	}
+	version[offset] = '\0';//append null termination at end of version string
+	daemon->ECUVersionString = version;
+	fclose(f);
+	return 0;
+}
 
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
@@ -2451,50 +2521,9 @@ void dlt_daemon_ecu_version_thread(void *ptr)
 {
 	DltDaemonECUVersionThreadData *data = (DltDaemonECUVersionThreadData *)ptr;
 	DltDaemonPeriodicData info;
-	char version[DLT_DAEMON_TEXTBUFSIZE];
-	if(data->daemon_local->flags.pathToECUSoftwareVersion[0] == 0)
-	{
-		dlt_get_version(version);
-	}
-	else
-	{
-		size_t bufpos 	= 0;
-		size_t read		= 0;
-		FILE *f 		= fopen(data->daemon_local->flags.pathToECUSoftwareVersion, "r");
+	const unsigned int DLT_ECU_VERSION_PERIOD_TIME = 1000000*60; // 60 Seconds
 
-		if(f == NULL)
-		{
-			dlt_log(LOG_ERR, "Failed to open ECU Software version file.\n");
-			return;
-		}
-
-		while(!feof(f))
-		{
-                        char buf[DLT_DAEMON_TEXTBUFSIZE];
-                        read = fread(buf, 1, DLT_DAEMON_TEXTBUFSIZE - 1, f);
-                        buf [read] = '\0';//append null termination at end of version string. Read is definitely max: DLT_DAEMON_TEXTBUFSIZE - 1
-                        read++;//Include the appended null termination position
-
-			if(ferror(f))
-			{
-				dlt_log(LOG_ERR, "Failed to read ECU Software version file.\n");
-                fclose(f);
-				return;
-			}
-            if(bufpos + read > ( DLT_DAEMON_TEXTBUFSIZE - 1))
-			{
-				dlt_log(LOG_ERR, "Too long file for ecu version info.\n");
-				fclose(f);
-				return;
-			}
-			strncpy(version+bufpos, buf, read);
-			bufpos += read;
-		}
-		version[bufpos] = '\0';//append null termination at end of version string
-		fclose(f);
-	}
-
-    if (dlt_daemon_make_periodic (1000000*60, &info, data->daemon_local->flags.vflag)<0)
+	if (dlt_daemon_make_periodic (DLT_ECU_VERSION_PERIOD_TIME, &info, data->daemon_local->flags.vflag)<0)
     {
         dlt_log(LOG_CRIT,"Can't initialize thread timer!\n");
         return;
@@ -2511,13 +2540,12 @@ void dlt_daemon_ecu_version_thread(void *ptr)
 				/* except the listener and ourselves */
 				if ((i != data->daemon_local->fp) && (i != data->daemon_local->sock))
 				{
-					dlt_daemon_control_send_ecu_version(i, data->daemon, version, data->daemon_local->flags.vflag);
+					dlt_daemon_control_get_software_version(i, data->daemon, data->daemon_local->flags.vflag);
 				}
 			}
 		}
 		dlt_daemon_wait_period (&info, data->daemon_local->flags.vflag);
 	}
-
 }
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
