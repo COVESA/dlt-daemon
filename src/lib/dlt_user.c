@@ -2713,7 +2713,6 @@ int dlt_user_queue_resend(void)
     	dlt_log(LOG_ERR,"Could not request resending.\n");
     	dlt_log(LOG_ERR, strerror(errno));
     	free(resend_data);
-    	DLT_SEM_FREE();
     	return -1;
     }
     //thread_data will be freed by the receiver function
