@@ -612,7 +612,7 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
         subdirpath= malloc (len);
         MALLOC_ASSERT(subdirpath);
         snprintf(subdirpath,len,"%s/%s",opts->Directory[i],SUBDIR_TOSEND);
-        mkdir(subdirpath,0777);
+        ret = mkdir(subdirpath,0777);
         if (0 != ret && EEXIST != errno){
             DLT_LOG(dltsystem, DLT_LOG_ERROR,
                     DLT_STRING("dlt-system-filetransfer, error creating subdirectory: "),DLT_STRING(subdirpath),DLT_STRING(" Errorcode: "),DLT_INT(errno));
@@ -645,7 +645,7 @@ int wait_for_files(FiletransferOptions const *opts)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, waiting for files."));
     static char buf[INOTIFY_LEN];
-    int len = read(ino.handle, buf, INOTIFY_LEN);
+    ssize_t len = read(ino.handle, buf, INOTIFY_LEN);
     if(len < 0)
     {
         DLT_LOG(filetransferContext, DLT_LOG_ERROR,
@@ -653,8 +653,8 @@ int wait_for_files(FiletransferOptions const *opts)
         return -1;
     }
 
-    int i = 0;
-    while(i<len)
+    unsigned int i = 0;
+    while(i < (len-INOTIFY_SZ))
     {
         struct inotify_event *ie = (struct inotify_event *)&buf[i];
         if(ie->len > 0)
