@@ -950,6 +950,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 	if(fstat(fd, &s_buf) < 0)
 	{
 		dlt_log(LOG_ERR, "Failed to stat ECU Software version file.\n");
+		fclose(f);
 		return -1;
 	}
 
@@ -959,6 +960,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 	if(size >= DLT_DAEMON_TEXTBUFSIZE)
 	{
 		dlt_log(LOG_ERR, "Too large file for ECU version.\n");
+		fclose(f);
 		return -1;
 	}
 
