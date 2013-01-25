@@ -3182,7 +3182,6 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
     float64_t value64f=0,value64f_tmp=0;
     int64_t value64f_tmp_int64i=0,value64f_tmp_int64i_swaped=0;
 
-    //uint32_t quantisation=0,
     uint32_t quantisation_tmp=0;
 
     if (type_info & DLT_TYPE_INFO_STRG)
@@ -3238,7 +3237,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
             return -1;
         sprintf(text+strlen(text),"%d",value8u);
     }
-    else if (type_info & DLT_TYPE_INFO_SINT || type_info & DLT_TYPE_INFO_UINT)
+    else if ((type_info & DLT_TYPE_INFO_SINT) || (type_info & DLT_TYPE_INFO_UINT))
     {
         /* signed or unsigned argument received */
         if (type_info & DLT_TYPE_INFO_VARI)
@@ -3262,15 +3261,11 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
         }
         if (type_info & DLT_TYPE_INFO_FIXP)
         {
-            //quantisation=0;
-            quantisation_tmp=0;
             //compiler warning: variable ‘quantisation_tmp’ set but not used [-Wunused-but-set-variable], but: DLT_MSG_READ_VALUE wants a parameter, "0" does not work
             DLT_MSG_READ_VALUE(quantisation_tmp,*ptr,*datalength,uint32_t);
 
             if((*datalength)<0)
                 return -1;
-            //quantisation=DLT_ENDIAN_GET_32(msg->standardheader->htyp, quantisation_tmp);
-
             switch (	type_info & DLT_TYPE_INFO_TYLE)
             {
 				case DLT_TYLE_8BIT:

@@ -90,7 +90,6 @@ void usage()
     printf("Generate DLT messages and store them to file or send them to daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");
-    printf("  -v            Verbose mode\n");
     printf("  -d delay      Milliseconds to wait between sending messages (Default: 500)\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
     printf("  -n count      Number of messages to be generated (Default: 10)\n");
@@ -103,7 +102,6 @@ void usage()
  */
 int main(int argc, char* argv[])
 {
-    int vflag = 0;
     int gflag = 0;
     int aflag = 0;
     char *dvalue = 0;
@@ -123,11 +121,6 @@ int main(int argc, char* argv[])
     {
         switch (c)
         {
-        case 'v':
-        {
-            vflag = 1;
-            break;
-        }
         case 'g':
         {
             gflag = 1;

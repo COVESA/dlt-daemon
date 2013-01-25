@@ -659,7 +659,7 @@ int wait_for_files(FiletransferOptions const *opts)
         struct inotify_event *ie = (struct inotify_event *)&buf[i];
         if(ie->len > 0)
         {
-            if(ie->mask & IN_CLOSE_WRITE || ie->mask & IN_MOVED_TO)
+            if((ie->mask & IN_CLOSE_WRITE) || (ie->mask & IN_MOVED_TO))
             {
                 int j;
                 for(j = 0;j < opts->Count;j++)

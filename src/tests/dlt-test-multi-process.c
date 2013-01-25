@@ -236,8 +236,8 @@ void do_forks(s_parameters params)
 				fprintf(stderr, "Could not allocate memory for child process' kernel structure.\n");
 				cleanup();
 				abort();
-                                return;//for parasoft
 			}
+			break;
 		case 0: // Child process, start threads
 			run_threads(params);
 			break;

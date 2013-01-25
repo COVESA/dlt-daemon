@@ -1066,7 +1066,8 @@ void dlt_daemon_signal_handler(int sig)
 
 void dlt_daemon_daemonize(int verbose)
 {
-    int i,lfp,bytes_written,ret;
+    int i,lfp;
+    ssize_t pid_len;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1103,14 +1104,17 @@ void dlt_daemon_daemonize(int verbose)
 
     /* Open standard descriptors stdin, stdout, stderr */
     i=open("/dev/null",O_RDWR); /* open stdin */
-    ret=dup(i); /* stdout */
-    ret=dup(i); /* stderr */
+    if(dup(i) < 0)
+        dlt_log(LOG_ERR, "Failed to direct stdout to /dev/null.\n");/* stdout */
+    if(dup(i) < 0)
+        dlt_log(LOG_ERR, "Failed to direct stderr to /dev/null.\n"); /* stderr */
 
     /* Set umask */
     umask(DLT_DAEMON_UMASK);
 
     /* Change to known directory */
-    ret=chdir(DLT_USER_DIR);
+    if(chdir(DLT_USER_DIR) < 0)
+        dlt_log(LOG_ERR, "Failed to chdir to DLT_USER_DIR.\n");;
 
     /* Ensure single copy of daemon;
        run only one instance at a time */
@@ -1128,7 +1132,9 @@ void dlt_daemon_daemonize(int verbose)
     /* only first instance continues */
 
     sprintf(str,"%d\n",getpid());
-    bytes_written=write(lfp,str,strlen(str)); /* record pid to lockfile */
+    pid_len = strlen(str);
+    if(write(lfp,str,pid_len) != pid_len) /* record pid to lockfile */
+        dlt_log(LOG_ERR, "Could not write pid to file in dlt_daemon_daemonize.\n");
 
     /* Catch signals */
     signal(SIGCHLD,SIG_IGN); /* ignore child */

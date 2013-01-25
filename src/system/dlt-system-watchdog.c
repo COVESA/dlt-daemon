@@ -66,7 +66,11 @@ void wait_period (PeriodicData *info)
 {
     unsigned long long missed;
 
-    read (info->timer_fd, &missed, sizeof (missed));
+    if(read (info->timer_fd, &missed, sizeof (missed)) < 0)
+    {
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR,
+                DLT_STRING("Could not read from timer file descriptor in watchdog.\n"));
+    }
 
     if (missed > 0)
     {
