@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
 {
 	DltSystemCliOptions options;
 	DltSystemConfiguration config;
+
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 	int ret;
 #endif
@@ -112,6 +113,7 @@ int main(int argc, char* argv[])
 	signal(SIGINT,  dlt_system_signal_handler);
 
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
+
 
 	start_threads(&config);
 	join_threads();
