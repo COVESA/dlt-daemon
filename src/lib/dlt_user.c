@@ -519,6 +519,7 @@ int dlt_free(void)
 	/* Ignore return value */
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
 
+    DLT_SEM_LOCK();
     if (dlt_user.dlt_ll_ts)
     {
         for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
@@ -536,6 +537,7 @@ int dlt_free(void)
         dlt_user.dlt_ll_ts_max_num_entries = 0;
         dlt_user.dlt_ll_ts_num_entries = 0;
     }
+    DLT_SEM_FREE();
 
     if (dlt_user.dlt_segmented_nwt_handle)
     {
@@ -2142,7 +2144,8 @@ void dlt_user_trace_network_segmented_thread(void *unused)
                         if(dlt_user_log_resend_buffer() < 0)
                         {
                                 // Requeue if still not empty
-                                dlt_user_queue_resend();
+                                if ( dlt_user_queue_resend() < 0 )
+                                    dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n");
                         }
                         free(data);
                         continue;

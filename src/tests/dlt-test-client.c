@@ -673,7 +673,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                     /* Get length */
                                     DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
                                     length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                                    if ((length==datalength) && (length=10))
+                                    if ((length==datalength) && (10 == length))
                                     {
                                         dltdata->test_counter_macro[1]++;
                                     }

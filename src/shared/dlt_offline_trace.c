@@ -101,8 +101,10 @@ unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
 	while ((dp=readdir(dir)) != NULL) {
 		if(strstr(dp->d_name,".dlt")) {
 			sprintf(filename,"%s/%s",trace->directory,dp->d_name);
-			stat(filename,&status);
-			size += status.st_size;
+            if ( 0 == stat(filename,&status) )
+                size += status.st_size;
+            else
+                printf("Offline trace file %s cannot be stat-ed",filename);
 		}
 	}	
 	closedir(dir);
@@ -127,12 +129,17 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 	while ((dp=readdir(dir)) != NULL) {
 		if(strstr(dp->d_name,".dlt")) {
 			sprintf(filename,"%s/%s",trace->directory,dp->d_name);
-			stat(filename,&status);
-			if(time_oldest == 0 || status.st_mtime < time_oldest) {
-				time_oldest = status.st_mtime;
-				size_oldest = status.st_size;
-				strcpy(filename_oldest,filename);
-			}
+            if (0 == stat(filename,&status))
+            {
+                if(time_oldest == 0 || status.st_mtime < time_oldest) {
+                    time_oldest = status.st_mtime;
+                    size_oldest = status.st_size;
+                    strcpy(filename_oldest,filename);
+                }
+            }
+            else
+                printf("Old offline trace file %s cannot be stat-ed",filename);
+
 		}
 	}	
 	closedir(dir);

@@ -56,7 +56,7 @@ DLT_IMPORT_CONTEXT(dltsystem);
 extern DltSystemThreads threads;
 DltContext logfileContext[DLT_SYSTEM_LOG_FILE_MAX];
 
-void send_file(LogFileOptions fileopt, int n)
+void send_file(LogFileOptions const *fileopt, int n)
 {
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-logfile, sending file."));
@@ -66,7 +66,7 @@ void send_file(LogFileOptions fileopt, int n)
 	int bytes;
 	int seq = 1;
 
-	pFile = fopen(fileopt.Filename[n],"r");
+    pFile = fopen((*fileopt).Filename[n],"r");
 
 	if(pFile != NULL)
 	{
@@ -91,19 +91,19 @@ void send_file(LogFileOptions fileopt, int n)
 	{
 		DLT_LOG(dltsystem, DLT_LOG_ERROR,
 				DLT_STRING("dlt-system-logfile, failed to open file."),
-				DLT_STRING(fileopt.Filename[n]));
+                DLT_STRING((*fileopt).Filename[n]));
 	}
 }
 
-void register_contexts(LogFileOptions fileopts)
+void register_contexts(LogFileOptions const *fileopts)
 {
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-logfile, registering file contexts."));
 	int i;
-	for(i = 0;i < fileopts.Count;i++)
+    for(i = 0;i < (*fileopts).Count;i++)
 	{
-		DLT_REGISTER_CONTEXT(logfileContext[i], fileopts.ContextId[i],
-				fileopts.Filename[i]);
+        DLT_REGISTER_CONTEXT(logfileContext[i], (*fileopts).ContextId[i],
+                (*fileopts).Filename[i]);
 	}
 }
 
@@ -113,7 +113,7 @@ void logfile_thread(void *v_conf)
 			DLT_STRING("dlt-system-logfile, in thread."));
 	DltSystemConfiguration *conf = (DltSystemConfiguration *) v_conf;
 
-	register_contexts(conf->LogFile);
+    register_contexts(&(conf->LogFile));
 
 	int logfile_delays[DLT_SYSTEM_LOG_FILE_MAX];
 	int i;
@@ -130,7 +130,7 @@ void logfile_thread(void *v_conf)
 
 			if(logfile_delays[i] <= 0)
 			{
-				send_file(conf->LogFile, i);
+                send_file(&(conf->LogFile), i);
 				logfile_delays[i] = conf->LogFile.TimeDelay[i];
 				if(conf->LogFile.Mode[i] == SEND_MODE_ONCE)
 					conf->LogFile.Mode[i] = SEND_MODE_OFF;

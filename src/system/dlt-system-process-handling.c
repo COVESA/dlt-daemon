@@ -81,9 +81,16 @@ int daemonize()
         close(i);
 
 	int fd = open("/dev/null",O_RDWR);
+    if(fd < 0)
+    {
+        return -1;
+    }
 
-	if(fd < 0 || dup(fd) < 0 || dup(fd) < 0)
+    if(dup(fd) < 0 || dup(fd) < 0)
+    {
+        close(fd);
 		return -1;
+    }
 
 	/**
 	 * Ignore signals related to child processes and
@@ -93,6 +100,7 @@ int daemonize()
     signal(SIGTSTP, SIG_IGN);
     signal(SIGTTOU, SIG_IGN);
     signal(SIGTTIN, SIG_IGN);
+    close(fd);
 	return 0;
 }
 

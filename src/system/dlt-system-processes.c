@@ -63,7 +63,7 @@ extern DltSystemThreads threads;
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(procContext)
 
-void send_process(LogProcessOptions popts, int n)
+void send_process(LogProcessOptions const *popts, int n)
 {
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-processes, send process info."));
@@ -90,11 +90,11 @@ void send_process(LogProcessOptions popts, int n)
 					bytes = fread(buffer, 1, sizeof(buffer)-1, pFile);
 					fclose(pFile);
 				}
-				if((strcmp(popts.Name[n], "*")==0) ||
-				   (strcmp(buffer, popts.Name[n])==0))
+                if((strcmp((*popts).Name[n], "*")==0) ||
+                   (strcmp(buffer, (*popts).Name[n])==0))
 				{
 					found = 1;
-					sprintf(filename, "/proc/%s/%s", dp->d_name,popts.Filename[n]);
+                    sprintf(filename, "/proc/%s/%s", dp->d_name,(*popts).Filename[n]);
 					pFile = fopen(filename, "r");
 					if(pFile != NULL)
 					{
@@ -104,10 +104,10 @@ void send_process(LogProcessOptions popts, int n)
 						if(bytes>0)
 						{
 							buffer[bytes] = 0;
-							DLT_LOG(procContext, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING(popts.Filename[n]), DLT_STRING(buffer));
+                            DLT_LOG(procContext, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING((*popts).Filename[n]), DLT_STRING(buffer));
 						}
 					}
-					if(strcmp(popts.Name[n], "*") !=0)
+                    if(strcmp((*popts).Name[n], "*") !=0)
 						break;
 				}
 			}
@@ -121,7 +121,7 @@ void send_process(LogProcessOptions popts, int n)
 	}
 
 	if(!found) {
-			DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING(popts.Name[n]),DLT_STRING("not running!"));
+            DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING((*popts).Name[n]),DLT_STRING("not running!"));
 	}
 }
 
@@ -148,7 +148,7 @@ void logprocess_thread(void *v_conf)
 
 			if(process_delays[i] <= 0)
 			{
-				send_process(conf->LogProcesses, i);
+                send_process(&(conf->LogProcesses), i);
 				process_delays[i] = conf->LogProcesses.TimeDelay[i];
 				if(conf->LogProcesses.Mode[i] == SEND_MODE_ONCE)
 					conf->LogProcesses.Mode[i] = SEND_MODE_OFF;

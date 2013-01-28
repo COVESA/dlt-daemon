@@ -1484,7 +1484,8 @@ int dlt_file_read_header_raw(DltFile *file,int resync,int verbose)
         else
         {
             /* go back to last file position */
-            fseek(file->handle,file->file_position,SEEK_SET);
+            if (fseek(file->handle,file->file_position,SEEK_SET) < 0)
+                return -1;
         }
     }
 
@@ -1711,7 +1712,12 @@ int dlt_file_read(DltFile *file,int verbose)
     }
 
     /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
-    fseek(file->handle,file->file_position,SEEK_SET);
+    if ( fseek(file->handle,file->file_position,SEEK_SET) < 0 )
+    {
+        sprintf(str,"Seek failed to file_position %ld \n",file->file_position);
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
 
     /* get file position at start of DLT message */
     if (verbose)
@@ -1823,8 +1829,9 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
         file->index = ptr;
     }
 
-    /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
-    fseek(file->handle,file->file_position,SEEK_SET);
+    /* set to end of last successful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
+    if (fseek(file->handle,file->file_position,SEEK_SET) < 0)
+        return -1;
 
     /* get file position at start of DLT message */
     if (verbose)
