@@ -494,10 +494,27 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
         ret=fgets(buf,sizeof(buf),fd);
         if (NULL == ret)
         {
-                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL");
+            /* fgets always null pointer if the last byte of the file is a new line
+             * We need to check here if there was an error or was it feof.*/
+            if(ferror(fd))
+            {
+                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
+                         strerror(errno));
                 dlt_log(LOG_ERR, str);
                 fclose(fd);
-                return -1;//seems to be appropriate, but not sure. !feof is already a precondition, so another problem should the reason!
+                return -1;
+            }
+            else if(feof(fd))
+            {
+                fclose(fd);
+                return 0;
+            }
+            else {
+                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
+                dlt_log(LOG_ERR, str);
+                fclose(fd);
+                return -1;
+            }
         }
 
         if (strcmp(buf,"")!=0)
@@ -840,10 +857,27 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
         ret=fgets(buf,sizeof(buf),fd);
         if (NULL == ret)
         {
-                sprintf(str,"dlt_daemon_contexts_load: fgets(buf,sizeof(buf),fd);");
+            /* fgets always returns null pointer if the last byte of the file is a new line.
+             * We need to check here if there was an error or was it feof.*/
+            if(ferror(fd))
+            {
+                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
+                         strerror(errno));
                 dlt_log(LOG_ERR, str);
                 fclose(fd);
-                return -1;//as we are not eof, there seems to be another problem.
+                return -1;
+            }
+            else if(feof(fd))
+            {
+                fclose(fd);
+                return 0;
+            }
+            else {
+                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
+                dlt_log(LOG_ERR, str);
+                fclose(fd);
+                return -1;
+            }
         }
 
         if (strcmp(buf,"")!=0)
