@@ -50,7 +50,10 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
 #include "dlt_filetransfer.h"
+#include "dlt_common.h"
 
 //!Defines the buffer size of a single file package which will be logged to dlt
 #define BUFFER_SIZE 1024
@@ -69,11 +72,18 @@ unsigned char buffer[BUFFER_SIZE];
 //!Get some information about the file size of a file
 /**See stat(2) for more informations.
  * @param file Absolute file path
- * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
+ * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes. Returns 0 in case of error. Regard: can also be a size value!
  */
-unsigned long getFilesize(const char* file){
+unsigned long getFilesize(const char* file, int *ok){
 	struct stat st;
-	stat(file, &st);
+
+    if ( -1 == stat(file, &st))
+    {
+        //we can only return 0, as the value is unsigned
+        *ok = 0;
+        return 0;
+    }
+    *ok = 1;
 	return (unsigned long)st.st_size;
 }
 
@@ -106,15 +116,23 @@ void stringHash(const char* str, unsigned long *hash )
  * @param file Absolute file path
  * @return Returns a unique number associated with each filename
  */
-unsigned long getFileSerialNumber(const char* file){
+unsigned long getFileSerialNumber(const char* file, int *ok){
 	struct stat st;
 	unsigned long ret;
-	stat(file, &st);
-	ret = st.st_ino;
-	ret = ret << (sizeof(ret)*8)/2;
-	ret |= st.st_size;
-    ret ^= st.st_ctime;
-    stringHash(file, &ret);
+    if ( -1 == stat(file, &st))
+    {
+        *ok = 0;
+        ret = 0;
+    }
+    else
+    {
+        *ok = 1;
+        ret = st.st_ino;
+        ret = ret << (sizeof(ret)*8)/2;
+        ret |= st.st_size;
+        ret ^= st.st_ctime;
+        stringHash(file, &ret);
+    }
 	return ret;
 }
 
@@ -191,13 +209,14 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
 
 	if(errno != ENOENT)
 	{
+        int ok = 0;
 		DLT_LOG(*fileContext,DLT_LOG_ERROR,
 			DLT_STRING("FLER"),
 			DLT_INT(errorCode),
 			DLT_INT(-errno),
-			DLT_UINT(getFileSerialNumber(filename)),
+            DLT_UINT(getFileSerialNumber(filename,&ok)),
 			DLT_STRING(filename),
-			DLT_UINT(getFilesize(filename)),
+            DLT_UINT(getFilesize(filename,&ok)),
 			DLT_STRING(getFileCreationDate2(filename)),
 			DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
 			DLT_UINT(BUFFER_SIZE),
@@ -226,11 +245,12 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
 	
 	if(isFile(filename))
 	{
+		int ok;
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 			DLT_STRING("FLIF"),
-			DLT_STRING("file serialnumber"),DLT_UINT(getFileSerialNumber(filename)),
+			DLT_STRING("file serialnumber"),DLT_UINT(getFileSerialNumber(filename,&ok)),
 			DLT_STRING("filename"),DLT_STRING(filename),
-			DLT_STRING("file size in bytes"),DLT_UINT(getFilesize(filename)),
+			DLT_STRING("file size in bytes"),DLT_UINT(getFilesize(filename,&ok)),
 			DLT_STRING("file creation date"),DLT_STRING(getFileCreationDate2(filename)),
 			DLT_STRING("number of packages"),DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
 			DLT_STRING("FLIF")
@@ -296,7 +316,12 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
 	if(isFile(filename))
 	{
 		packages = 1;
-		filesize = getFilesize(filename);
+		int ok;
+		filesize = getFilesize(filename,&ok);
+		if (!ok){
+			dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_PACKAGE_COUNT);
+			return -1;
+		}
 		if(filesize < BUFFER_SIZE)
 		{	
 			return packages;
@@ -334,15 +359,16 @@ int dlt_user_log_file_header_alias(DltContext *fileContext,const char *filename,
 
 	if(isFile(filename))
 	{
+		int ok;
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
-					DLT_STRING("FLST"),
-					DLT_UINT(getFileSerialNumber(filename)),
-					DLT_STRING(alias),
-					DLT_UINT(getFilesize(filename)),
-					DLT_STRING(getFileCreationDate2(filename));
-					DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
-					DLT_UINT(BUFFER_SIZE),
-					DLT_STRING("FLST")
+				DLT_STRING("FLST"),
+				DLT_UINT(getFileSerialNumber(filename,&ok)),
+				DLT_STRING(alias),
+				DLT_UINT(getFilesize(filename,&ok)),
+				DLT_STRING(getFileCreationDate2(filename));
+				DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
+				DLT_UINT(BUFFER_SIZE),
+				DLT_STRING("FLST")
 				);
 
 		return 0;
@@ -367,11 +393,12 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
 
 	if(isFile(filename))
 	{
+        int ok;
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 					DLT_STRING("FLST"),
-					DLT_UINT(getFileSerialNumber(filename)),
+					DLT_UINT(getFileSerialNumber(filename,&ok)),
 					DLT_STRING(filename),
-					DLT_UINT(getFilesize(filename)),
+					DLT_UINT(getFilesize(filename,&ok)),
 					DLT_STRING(getFileCreationDate2(filename));
 					DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
 					DLT_UINT(BUFFER_SIZE),
@@ -433,12 +460,23 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 //				if(checkUserBufferForFreeSpace()<0)
 //					return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
 
-				fseek ( file , (packageToTransfer-1)*BUFFER_SIZE , SEEK_SET );
+				if ( 0 != fseek ( file , (packageToTransfer-1)*BUFFER_SIZE , SEEK_SET ) )
+				{
+						DLT_LOG(*fileContext,DLT_LOG_ERROR,
+						DLT_STRING("failed to fseek in file: "),
+						DLT_STRING(filename),
+						DLT_STRING("ferror:"),
+						DLT_INT(ferror(file))
+						);
+						fclose (file);
+						return -1;
+				}
 				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+                int ok = 0;
 
 				DLT_LOG(*fileContext,DLT_LOG_INFO,
 				DLT_STRING("FLDA"),
-				DLT_UINT(getFileSerialNumber(filename)),
+                DLT_UINT(getFileSerialNumber(filename,&ok)),
 				DLT_UINT(packageToTransfer),
 				DLT_RAW(buffer,readBytes),
 				DLT_STRING("FLDA")
@@ -456,10 +494,10 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 				{
 					pkgNumber++;
 					readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-				
+					int ok;
 					DLT_LOG(*fileContext,DLT_LOG_INFO,
 							DLT_STRING("FLDA"),
-							DLT_UINT(getFileSerialNumber(filename)),
+							DLT_UINT(getFileSerialNumber(filename,&ok)),
 							DLT_UINT(pkgNumber),
 							DLT_RAW(buffer,readBytes),
 							DLT_STRING("FLDA")
@@ -493,9 +531,10 @@ int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int delet
 	if(isFile(filename))
 	{
 
+		int ok;
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 				DLT_STRING("FLFI"),
-				DLT_UINT(getFileSerialNumber(filename)),
+				DLT_UINT(getFileSerialNumber(filename,&ok)),
 				DLT_STRING("FLFI")
 		);
 		

@@ -67,7 +67,7 @@
 
 extern DltSystemThreads threads;
 // From dlt_filetransfer
-extern unsigned long getFileSerialNumber(const char* file);
+extern unsigned long getFileSerialNumber(const char* file, int *ok);
 
 DLT_IMPORT_CONTEXT(dltsystem);
 DLT_DECLARE_CONTEXT(filetransferContext)
@@ -96,7 +96,11 @@ char *unique_name(char *src)
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-filetransfer, creating unique temporary file name."));
     time_t t = time(NULL);
-    unsigned long l = getFileSerialNumber(src) ^ t;
+    int ok;
+    unsigned long l = getFileSerialNumber(src, &ok) ^ t;
+    if (!ok){
+        return (char*) NULL;
+    }
 
     char *basename_f = basename(src);
     // Length of ULONG_MAX + 1

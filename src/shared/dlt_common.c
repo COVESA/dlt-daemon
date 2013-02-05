@@ -1740,7 +1740,11 @@ int dlt_file_read(DltFile *file,int verbose)
         if (dlt_file_read_header_extended(file, verbose)<0)
         {
             /* go back to last position in file */
-            fseek(file->handle,file->file_position,SEEK_SET);
+            if ( 0 != fseek(file->handle,file->file_position,SEEK_SET))
+            {
+                sprintf(str,"Seek to last file pos failed!\n");
+                dlt_log(LOG_ERR, str);
+            }
             return-1;
         }
 
@@ -1760,9 +1764,15 @@ int dlt_file_read(DltFile *file,int verbose)
         if (fseek(file->handle,file->msg.datasize,SEEK_CUR)!=0)
         {
             /* go back to last position in file */
-            fseek(file->handle,file->file_position,SEEK_SET);
             sprintf(str,"Seek failed to skip payload data of size %d!\n",file->msg.datasize);
             dlt_log(LOG_ERR, str);
+
+            if (0 != fseek(file->handle,file->file_position,SEEK_SET))
+            {
+                sprintf(str,"Seek back also failed!\n");
+                dlt_log(LOG_ERR, str);
+            }
+
             return -1;
         }
     }
@@ -1844,7 +1854,11 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
     if (dlt_file_read_header_raw(file,resync,verbose)<0)
     {
         /* go back to last position in file */
-        fseek(file->handle,file->file_position,SEEK_SET);
+        if (0!= fseek(file->handle,file->file_position,SEEK_SET))
+        {
+            sprintf(str,"dlt_file_read_raw, fseek failed 1\n");
+            dlt_log(LOG_ERR, str);
+        }
         return -1;
     }
 
@@ -1852,14 +1866,22 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
     if (dlt_file_read_header_extended(file, verbose)<0)
     {
         /* go back to last position in file */
-        fseek(file->handle,file->file_position,SEEK_SET);
+        if (0 != fseek(file->handle,file->file_position,SEEK_SET))
+        {
+            sprintf(str,"dlt_file_read_raw, fseek failed 2\n");
+            dlt_log(LOG_ERR, str);
+        }
         return-1;
     }
 
     if (dlt_file_read_data(file,verbose)<0)
     {
         /* go back to last position in file */
-        fseek(file->handle,file->file_position,SEEK_SET);
+        if (0 != fseek(file->handle,file->file_position,SEEK_SET))
+        {
+            sprintf(str,"dlt_file_read_raw, fseek failed 3\n");
+            dlt_log(LOG_ERR, str);
+        }
         return-1;
     }
 

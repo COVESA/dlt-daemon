@@ -2288,12 +2288,18 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
             /* Optional: Send serial header, if requested */
             if (daemon->sendserialheader)
             {
-                send(sock, dltSerialHeader,sizeof(dltSerialHeader),0);
+                if (0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0))
+                    dlt_log(LOG_WARNING,"dlt_daemon_control_send_control_message: send serialheader failed\n");
+
             }
 
             /* Send data */
-            send(sock, msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),0);
-            send(sock, msg->databuffer,msg->datasize,0);
+
+            if ( 0 > send(sock, msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),0))
+                dlt_log(LOG_WARNING,"dlt_daemon_control_send_control_message: send DltStorageHeader failed\n");
+
+            if ( 0 > send(sock, msg->databuffer,msg->datasize,0))
+                dlt_log(LOG_WARNING,"dlt_daemon_control_send_control_message: send databuffer failed\n");
 
             DLT_DAEMON_SEM_FREE();
         }
