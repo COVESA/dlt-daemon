@@ -73,7 +73,7 @@ unsigned char buffer[BUFFER_SIZE];
 //!Get some information about the file size of a file
 /**See stat(2) for more informations.
  * @param file Absolute file path
- * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes. Returns 0 in case of error. Regard: can also be a size value!
+ * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
  */
 unsigned long getFilesize(const char* file, int *ok){
 	struct stat st;
@@ -115,6 +115,7 @@ void stringHash(const char* str, unsigned long *hash )
 //!Get some information about the file serial number of a file
 /** See stat(2) for more informations.
  * @param file Absolute file path
+ * @param value *ok == 0 -> error; *ok == 1 -> ok
  * @return Returns a unique number associated with each filename
  */
 unsigned long getFileSerialNumber(const char* file, int *ok){
@@ -542,9 +543,19 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
                 }
 				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
                 int ok;
+
+                unsigned long fserial = getFileSerialNumber(filename,&ok);
+
+                if (1 != ok)
+                {
+                    DLT_LOG(*fileContext,DLT_LOG_ERROR,
+                    DLT_STRING("failed to get FileSerialNumber for: "),
+                    DLT_STRING(filename));
+                }
+
 				DLT_LOG(*fileContext,DLT_LOG_INFO,
 				DLT_STRING("FLDA"),
-                DLT_UINT(getFileSerialNumber(filename,&ok)),
+                DLT_UINT(fserial),
 				DLT_UINT(packageToTransfer),
 				DLT_RAW(buffer,readBytes),
 				DLT_STRING("FLDA")
@@ -563,9 +574,19 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 					pkgNumber++;
 					readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 					int ok;
+
+                    unsigned long fserial = getFileSerialNumber(filename,&ok);
+
+                    if (1 != ok)
+                    {
+                        DLT_LOG(*fileContext,DLT_LOG_ERROR,
+                        DLT_STRING("failed to get FileSerialNumber for: "),
+                        DLT_STRING(filename));
+                    }
+
 					DLT_LOG(*fileContext,DLT_LOG_INFO,
 							DLT_STRING("FLDA"),
-							DLT_UINT(getFileSerialNumber(filename,&ok)),
+                            DLT_UINT(fserial),
 							DLT_UINT(pkgNumber),
 							DLT_RAW(buffer,readBytes),
 							DLT_STRING("FLDA")
@@ -600,9 +621,18 @@ int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int delet
 	{
 
 		int ok;
+        unsigned long fserial = getFileSerialNumber(filename,&ok);
+
+        if (1 != ok)
+        {
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,
+            DLT_STRING("failed to get FileSerialNumber for: "),
+            DLT_STRING(filename));
+        }
+
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 				DLT_STRING("FLFI"),
-				DLT_UINT(getFileSerialNumber(filename,&ok)),
+                DLT_UINT(fserial),
 				DLT_STRING("FLFI")
 		);
 		
