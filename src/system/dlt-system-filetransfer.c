@@ -663,6 +663,12 @@ int wait_for_files(FiletransferOptions const *opts)
                     {
                         DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, found new file."));
                         int length = strlen(opts->Directory[j])+ie->len+1;
+                        if (length > PATH_MAX)
+                        {
+                            DLT_LOG(filetransferContext, DLT_LOG_ERROR,
+                                    DLT_STRING("dlt-system-filetransfer: Very long path for file transfer. Cancelling transfer! Length is: "),DLT_INT(length));
+                            return -1;
+                        }
                         char *tosend = malloc(length);
                         snprintf(tosend,length, "%s/%s", opts->Directory[j], ie->name);
                         send_one(tosend, opts, j);
