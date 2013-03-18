@@ -2378,6 +2378,7 @@ int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint
 
 int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size)
 {
+    //Do not DLT_SEM_LOCK inside here!
 	char str[256];
 	DltBufferHead *head;
 

@@ -406,6 +406,7 @@ int dlt_init_common(void)
     }
 
     /* Initialize LogLevel/TraceStatus field */
+    DLT_SEM_LOCK();
     dlt_user.dlt_ll_ts = 0;
     dlt_user.dlt_ll_ts_max_num_entries = 0;
     dlt_user.dlt_ll_ts_num_entries = 0;
@@ -413,8 +414,10 @@ int dlt_init_common(void)
     if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer), DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE)==-1)
     {
 		dlt_user_initialised = 0;
+        DLT_SEM_FREE();
         return -1;
     }
+    DLT_SEM_FREE();
 
     signal(SIGPIPE,SIG_IGN);                  /* ignore pipe signals */
 
