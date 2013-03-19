@@ -1782,11 +1782,16 @@ int dlt_file_read(DltFile *file,int verbose)
         /* skip additional header parameters and payload data */
         if (fseek(file->handle,file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize,SEEK_CUR))
         {
-            /* go back to last position in file */
-            fseek(file->handle,file->file_position,SEEK_SET);
+
             sprintf(str,"Seek failed to skip extra header and payload data from file of size %d!\n",
                     file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize);
             dlt_log(LOG_ERR, str);
+            /* go back to last position in file */
+            if (fseek(file->handle,file->file_position,SEEK_SET))
+            {
+                sprintf(str,"Seek back also failed!\n");
+                dlt_log(LOG_ERR, str);
+            }
             return -1;
         }
 

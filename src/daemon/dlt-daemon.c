@@ -826,7 +826,12 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
         return -1;
     } /* if */
 
-    setsockopt(daemon_local->sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+    if ( -1 == setsockopt(daemon_local->sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))
+    {
+        sprintf(str,"Setsockopt error in dlt_daemon_local_connection_init: %s\n",strerror(errno));
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family      = AF_INET;
     servAddr.sin_addr.s_addr = INADDR_ANY;

@@ -50,6 +50,7 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include "dlt_filetransfer.h"
@@ -141,10 +142,15 @@ unsigned long getFileSerialNumber(const char* file, int *ok){
  * @param file Absolute file path
  * @return Returns the creation date of a file
 */
-time_t getFileCreationDate(const char* file){
+time_t getFileCreationDate(const char* file,int *ok){
 	struct stat st;
-	stat(file, &st);
-    	return st.st_ctime;
+    if (-1 == stat(file, &st))
+    {
+        *ok = 0;
+        return 0;
+    }
+    *ok = 1;
+    return st.st_ctime;
 }
 
 //!Returns the creation date of a file
@@ -152,10 +158,14 @@ time_t getFileCreationDate(const char* file){
  * @param file Absolute file path
  * @return Returns the creation date of a file
 */
-char* getFileCreationDate2(const char* file){
+char* getFileCreationDate2(const char* file,int *ok){
 	struct stat st;
-	stat(file, &st);
-	
+    if (-1 == stat(file, &st))
+    {
+        *ok = 0;
+        return 0;
+    }
+    *ok = 1;
 	struct tm  *ts= localtime(&st.st_ctime);
 	return asctime(ts);
 }
@@ -210,15 +220,27 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
 	if(errno != ENOENT)
 	{
         int ok = 0;
+        unsigned long fserial = getFileSerialNumber(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_errorMessage, error in getFileSerialNumber for: "),DLT_STRING(filename));
+        unsigned long fsize = getFilesize(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),DLT_STRING(filename));
+        char *fcreationdate = getFileCreationDate2(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),DLT_STRING(filename));
+
+        int package_count = dlt_user_log_file_packagesCount(fileContext,filename);
+
 		DLT_LOG(*fileContext,DLT_LOG_ERROR,
 			DLT_STRING("FLER"),
 			DLT_INT(errorCode),
 			DLT_INT(-errno),
-            DLT_UINT(getFileSerialNumber(filename,&ok)),
+            DLT_UINT(fserial),
 			DLT_STRING(filename),
-            DLT_UINT(getFilesize(filename,&ok)),
-			DLT_STRING(getFileCreationDate2(filename)),
-			DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
+            DLT_UINT(fsize),
+            DLT_STRING(fcreationdate),
+            DLT_INT(package_count),
 			DLT_UINT(BUFFER_SIZE),
 			DLT_STRING("FLER")
 		);		
@@ -245,13 +267,27 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
 	
 	if(isFile(filename))
 	{
-		int ok;
+        int ok;
+
+        unsigned long fsize = getFilesize(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_infoAbout, Error getting size of file:"),DLT_STRING(filename));
+
+        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_infoAbout, Error getting serial number of file:"),DLT_STRING(filename));
+
+
+        char *creationdate = getFileCreationDate2(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_infoAbout, Error getting creation date of file:"),DLT_STRING(filename));
+
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 			DLT_STRING("FLIF"),
-			DLT_STRING("file serialnumber"),DLT_UINT(getFileSerialNumber(filename,&ok)),
+            DLT_STRING("file serialnumber"),DLT_UINT(fserialnumber),
 			DLT_STRING("filename"),DLT_STRING(filename),
-			DLT_STRING("file size in bytes"),DLT_UINT(getFilesize(filename,&ok)),
-			DLT_STRING("file creation date"),DLT_STRING(getFileCreationDate2(filename)),
+            DLT_STRING("file size in bytes"),DLT_UINT(fsize),
+            DLT_STRING("file creation date"),DLT_STRING(creationdate),
 			DLT_STRING("number of packages"),DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
 			DLT_STRING("FLIF")
 		);
@@ -316,13 +352,13 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
 	if(isFile(filename))
 	{
 		packages = 1;
-		int ok;
-		filesize = getFilesize(filename,&ok);
-		if (!ok){
-			dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_PACKAGE_COUNT);
-			return -1;
-		}
-		if(filesize < BUFFER_SIZE)
+        int ok;
+        filesize = getFilesize(filename,&ok);
+        if (!ok){
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("Error in: dlt_user_log_file_packagesCount, isFile"),DLT_STRING(filename),DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
+            return -1;
+        }
+        if(filesize < BUFFER_SIZE)
 		{	
 			return packages;
 		} 
@@ -340,7 +376,7 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
 			}
 		}
 	} else {
-		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_PACKAGE_COUNT);
+        DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("Error in: dlt_user_log_file_packagesCount, !isFile"),DLT_STRING(filename),DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
 		return -1;
 	}
 }
@@ -358,18 +394,33 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
 int dlt_user_log_file_header_alias(DltContext *fileContext,const char *filename, const char *alias){
 
 	if(isFile(filename))
-	{
-		int ok;
-		DLT_LOG(*fileContext,DLT_LOG_INFO,
-				DLT_STRING("FLST"),
-				DLT_UINT(getFileSerialNumber(filename,&ok)),
-				DLT_STRING(alias),
-				DLT_UINT(getFilesize(filename,&ok)),
-				DLT_STRING(getFileCreationDate2(filename));
-				DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
-				DLT_UINT(BUFFER_SIZE),
-				DLT_STRING("FLST")
-				);
+    {
+        int ok;
+
+        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header_alias, Error getting serial number of file:"),DLT_STRING(filename));
+
+        unsigned long fsize = getFilesize(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header_alias, Error getting size of file:"),DLT_STRING(filename));
+
+        char *fcreationdate = getFileCreationDate2(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header_alias, Error getting creation date of file:"),DLT_STRING(filename));
+
+
+
+        DLT_LOG(*fileContext,DLT_LOG_INFO,
+                DLT_STRING("FLST"),
+                DLT_UINT(fserialnumber),
+                DLT_STRING(alias),
+                DLT_UINT(fsize),
+                DLT_STRING(fcreationdate);
+                DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
+                DLT_UINT(BUFFER_SIZE),
+                DLT_STRING("FLST")
+                );
 
 		return 0;
 	}
@@ -394,12 +445,28 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
 	if(isFile(filename))
 	{
         int ok;
+
+        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header, Error getting serial number of file:"),DLT_STRING(filename));
+
+        unsigned long fsize = getFilesize(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header, Error getting size of file:"),DLT_STRING(filename));
+
+        char *fcreationdate = getFileCreationDate2(filename,&ok);
+        if (!ok)
+            DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header, Error getting creation date of file:"),DLT_STRING(filename));
+
+
+
+
 		DLT_LOG(*fileContext,DLT_LOG_INFO,
 					DLT_STRING("FLST"),
-					DLT_UINT(getFileSerialNumber(filename,&ok)),
+                    DLT_UINT(fserialnumber),
 					DLT_STRING(filename),
-					DLT_UINT(getFilesize(filename,&ok)),
-					DLT_STRING(getFileCreationDate2(filename));
+                    DLT_UINT(fsize),
+                    DLT_STRING(fcreationdate);
 					DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
 					DLT_UINT(BUFFER_SIZE),
 					DLT_STRING("FLST")		
@@ -460,20 +527,21 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 //				if(checkUserBufferForFreeSpace()<0)
 //					return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
 
-				if ( 0 != fseek ( file , (packageToTransfer-1)*BUFFER_SIZE , SEEK_SET ) )
-				{
-						DLT_LOG(*fileContext,DLT_LOG_ERROR,
-						DLT_STRING("failed to fseek in file: "),
-						DLT_STRING(filename),
-						DLT_STRING("ferror:"),
-						DLT_INT(ferror(file))
-						);
-						fclose (file);
-						return -1;
-				}
-				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-                int ok = 0;
+                if ( 0 != fseek ( file , (packageToTransfer-1)*BUFFER_SIZE , SEEK_SET ) )
+                {
+                        DLT_LOG(*fileContext,DLT_LOG_ERROR,
+                        DLT_STRING("failed to fseek in file: "),
+                        DLT_STRING(filename),
+                        DLT_STRING("ferror:"),
+                        DLT_INT(ferror(file))
+                    );
 
+                    fclose (file);
+                    return -1;
+
+                }
+				readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+                int ok;
 				DLT_LOG(*fileContext,DLT_LOG_INFO,
 				DLT_STRING("FLDA"),
                 DLT_UINT(getFileSerialNumber(filename,&ok)),
