@@ -98,6 +98,12 @@ endif(WITH_GPROF)
 add_definitions( "-Wall" )
 add_definitions( "-Wextra" )
 
+IF(${WITH_DOC} STREQUAL "OFF")
+	SET(PACKAGE_DOC "#")
+ELSE (${WITH_DOC} STREQUAL "OFF")
+	SET(PACKAGE_DOC "")
+ENDIF(${WITH_DOC} STREQUAL "OFF")
+
 configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.spec)
 configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig COMPONENT devel)
@@ -129,6 +135,7 @@ message( STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version 
 message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
 message( STATUS "WITH_SYSTEMD_WATCHDOG = ${WITH_SYSTEMD_WATCHDOG}" )
 message( STATUS "WITH_DOC = ${WITH_DOC}" )
+
 message( STATUS "WITH_MAN = ${WITH_MAN}" )
 message( STATUS "WTIH_DLT_ADAPTOR = ${WTIH_DLT_ADAPTOR}")
 message( STATUS "WITH_DLT_CONSOLE = ${WITH_DLT_CONSOLE}")
