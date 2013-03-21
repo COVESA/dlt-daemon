@@ -77,6 +77,30 @@ unsigned long getFilesize(const char* file){
 	return (unsigned long)st.st_size;
 }
 
+/** A simple Hash function for C-strings
+ * @param str input string. E.g. a file path.
+ * @param hash start and result value for hash computation
+ *
+ */
+void stringHash(const char* str, unsigned long *hash )
+{
+    if (!str || !hash)
+        return;
+   unsigned int len = strlen(str);
+
+   unsigned int i = 0;
+   if (len <= 0){
+    return;
+   }
+
+   for(i = 0; i < len;  i++)
+   {
+      *hash = 53 * *hash  + str[i];
+   }
+
+}
+
+
 //!Get some information about the file serial number of a file
 /** See stat(2) for more informations.
  * @param file Absolute file path
@@ -89,6 +113,8 @@ unsigned long getFileSerialNumber(const char* file){
 	ret = st.st_ino;
 	ret = ret << (sizeof(ret)*8)/2;
 	ret |= st.st_size;
+    ret ^= st.st_ctime;
+    stringHash(file, &ret);
 	return ret;
 }
 
