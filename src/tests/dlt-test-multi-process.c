@@ -48,6 +48,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/wait.h>
+#include <syslog.h>
 
 #include "dlt.h"
 #include "dlt_common.h"
@@ -85,7 +86,7 @@ volatile sig_atomic_t in_handler = 0;
 
 // Globals for cleanup from main and signal handler
 pid_t pids[MAX_PROCS];
-int pidcount = 0;
+unsigned int pidcount = 0;
 
 /**
  * Print instructions.
@@ -202,7 +203,7 @@ int main(int argc, char **argv)
 	if(signal(SIGTERM, quit_handler) == SIG_IGN)
 		signal(SIGTERM, SIG_IGN); 	// kill (nice)
 
-	printf("Setup done. Listening. My pid: %d\n", getpid());
+	printf("Setup done. Listening. My pid: %d\n", getpid());    
 	fflush(stdout);
 
 	int err = wait_for_death();
@@ -216,7 +217,7 @@ int main(int argc, char **argv)
 
 void do_forks(s_parameters params)
 {
-	int i;
+    int i;
 
 	// Launch child processes
 	for(i=0;i<params.nprocs;i++)
@@ -293,7 +294,8 @@ void do_logging(s_thread_data *data)
 	char 			ctid[5];
 	char 			ctid_name[256];
 
-	sprintf(ctid,"%.2x", rand() & 0x0000ffff);
+
+    sprintf(ctid,"%.2x", rand() & 0x0000ffff);
 	sprintf(ctid_name, "Child %s in dlt-test-multi-process", ctid);
 	DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
 
@@ -318,8 +320,10 @@ void run_threads(s_parameters params)
 	int 			i;
 
 	srand(getpid());
-	sprintf(apid,"MT%.1x", rand() & 0x000000ff);
-	sprintf(apid_name, "Apps %s.", apid);
+
+    sprintf(apid,"MT%02u", pidcount);
+    sprintf(apid_name, "Apps %s.", apid);
+
 	DLT_REGISTER_APP(apid, apid_name);
 
 	thread_data.params 	= params;

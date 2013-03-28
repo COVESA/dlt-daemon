@@ -326,8 +326,9 @@ int dlt_init_message_queue(void)
     		dlt_log(LOG_WARNING, "Old message queue exists, trying to delete.\n");
     		if(mq_unlink(queue_name) < 0)
     		{
-    			dlt_log(LOG_CRIT, "Could not delete existing message queue!\n");
-    			dlt_log(LOG_CRIT, strerror(errno));
+                char str[256];
+                snprintf(str,255,"Could not delete existing message queue!: %s \n",strerror(errno));
+                dlt_log(LOG_CRIT, str);
     		}
     		else // Retry
     		{
@@ -337,8 +338,9 @@ int dlt_init_message_queue(void)
     	}
     	if(dlt_user.dlt_segmented_queue_read_handle < 0)
     	{
-    		dlt_log(LOG_CRIT, "Can't create message queue read handle!\n");
-    		dlt_log(LOG_CRIT, strerror(errno));
+            char str[256];
+            snprintf(str,255,"Can't create message queue read handle!: %s \n",strerror(errno));
+            dlt_log(LOG_CRIT, str);
     		pthread_mutex_unlock(&mq_mutex);
     		return -1;
     	}
@@ -347,8 +349,10 @@ int dlt_init_message_queue(void)
     dlt_user.dlt_segmented_queue_write_handle = mq_open(queue_name, O_WRONLY|O_NONBLOCK);
     if(dlt_user.dlt_segmented_queue_write_handle < 0)
     {
-    	dlt_log(LOG_CRIT, "Can't open message queue write handle!\n");
-    	dlt_log(LOG_CRIT, strerror(errno));
+
+        char str[256];
+        snprintf(str,255,"Can't open message queue write handle!: %s \n",strerror(errno));
+        dlt_log(LOG_CRIT, str);
     	pthread_mutex_unlock(&mq_mutex);
     	return -1;
     }
@@ -2134,8 +2138,10 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
                 if(read != sizeof(s_segmented_data *))
                 {
-                        dlt_log(LOG_ERR, "NWTSegmented: Error while reading queue.\n");
-                        dlt_log(LOG_ERR, strerror(errno));
+
+                        char str[255];
+                        snprintf(str,254,"NWTSegmented: Error while reading queue: %s \n",strerror(errno));
+                        dlt_log(LOG_CRIT, str);
                         continue;
                 }
 
@@ -2275,9 +2281,10 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 		}
 		free(thread_data->header);
 		free(thread_data->payload);
-		free(thread_data);
-		dlt_log(LOG_ERR, "NWTSegmented: Could not write into queue.\n");
-		dlt_log(LOG_ERR, strerror(errno));
+		free(thread_data);		
+        char str[256];
+        snprintf(str,255,"NWTSegmented: Could not write into queue: %s \n",strerror(errno));
+        dlt_log(LOG_CRIT, str);
 		return -1;
 	}
 
@@ -2716,8 +2723,9 @@ int dlt_user_queue_resend(void)
 
     if(mq_send(dlt_user.dlt_segmented_queue_write_handle, (char *)&resend_data, sizeof(s_segmented_data *), 1) < 0)
     {
-    	dlt_log(LOG_ERR,"Could not request resending.\n");
-    	dlt_log(LOG_ERR, strerror(errno));
+        char str[255];
+        snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
+        dlt_log(LOG_CRIT, str);
     	free(resend_data);
     	return -1;
     }
