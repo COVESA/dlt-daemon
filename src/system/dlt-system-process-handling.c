@@ -100,7 +100,7 @@ int daemonize()
     signal(SIGTSTP, SIG_IGN);
     signal(SIGTTOU, SIG_IGN);
     signal(SIGTTIN, SIG_IGN);
-    close(fd);
+    //no close(fd); - we just intentionally pointed stdx to null! tbd: set ignore for coverity
 	return 0;
 }
 
