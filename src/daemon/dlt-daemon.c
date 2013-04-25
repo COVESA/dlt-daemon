@@ -1232,9 +1232,9 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
 
     if (dlt_receiver_receive_socket(&(daemon_local->receiverSock))<=0)
     {
-        close(daemon_local->receiverSock.fd);
-        daemon_local->receiverSock.fd = 0;
+        close(daemon_local->receiverSock.fd);        
         FD_CLR(daemon_local->receiverSock.fd, &(daemon_local->master));
+        daemon_local->receiverSock.fd = -1;
 
         if (daemon_local->client_connections)
         {
@@ -1261,7 +1261,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
     while (dlt_message_read(&(daemon_local->msg),(uint8_t*)daemon_local->receiverSock.buf,daemon_local->receiverSock.bytesRcvd,daemon_local->flags.nflag,daemon_local->flags.vflag)==0)
     {
         /* Check for control message */
-        if ( 0 != daemon_local->receiverSock.fd && DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)) )
+        if ( 0 < daemon_local->receiverSock.fd && DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)) )
         {
             dlt_daemon_control_process_control(daemon_local->receiverSock.fd, daemon, &(daemon_local->msg), daemon_local->flags.vflag);
         }

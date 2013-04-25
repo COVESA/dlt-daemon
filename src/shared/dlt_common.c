@@ -1484,7 +1484,7 @@ int dlt_file_read_header_raw(DltFile *file,int resync,int verbose)
         else
         {
             /* go back to last file position */
-            if (fseek(file->handle,file->file_position,SEEK_SET) < 0)
+            if (0 != fseek(file->handle,file->file_position,SEEK_SET))
                 return -1;
         }
     }
@@ -1664,9 +1664,20 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
         return -1;
     }
 
-    fseek(file->handle,0,SEEK_END);
+    if (0 != fseek(file->handle,0,SEEK_END))
+    {
+        sprintf(str,"dlt_file_open: Seek failed to 0,SEEK_END");
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
     file->file_length = ftell(file->handle);
-    fseek(file->handle,0,SEEK_SET);
+
+    if (0 != fseek(file->handle,0,SEEK_SET))
+    {
+        sprintf(str,"dlt_file_open: Seek failed to 0,SEEK_SET");
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
 
     if (verbose)
     {
@@ -1712,7 +1723,7 @@ int dlt_file_read(DltFile *file,int verbose)
     }
 
     /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
-    if ( fseek(file->handle,file->file_position,SEEK_SET) < 0 )
+    if (0 !=  fseek(file->handle,file->file_position,SEEK_SET))
     {
         sprintf(str,"Seek failed to file_position %ld \n",file->file_position);
         dlt_log(LOG_ERR, str);
@@ -1740,7 +1751,7 @@ int dlt_file_read(DltFile *file,int verbose)
         if (dlt_file_read_header_extended(file, verbose)<0)
         {
             /* go back to last position in file */
-            if ( 0 != fseek(file->handle,file->file_position,SEEK_SET))
+            if (0 != fseek(file->handle,file->file_position,SEEK_SET))
             {
                 sprintf(str,"Seek to last file pos failed!\n");
                 dlt_log(LOG_ERR, str);
@@ -1845,7 +1856,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
     }
 
     /* set to end of last successful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
-    if (fseek(file->handle,file->file_position,SEEK_SET) < 0)
+    if (0 != fseek(file->handle,file->file_position,SEEK_SET))
         return -1;
 
     /* get file position at start of DLT message */
