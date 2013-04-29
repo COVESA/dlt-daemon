@@ -97,8 +97,6 @@ char *unique_name(char *src)
             DLT_STRING("dlt-system-filetransfer, creating unique temporary file name."));
     time_t t = time(NULL);
     unsigned long l = getFileSerialNumber(src) ^ t;
-    // Length of ULONG_MAX + 1
-    //char *ret = malloc(11);
 
     char *basename_f = basename(src);
     // Length of ULONG_MAX + 1
@@ -112,7 +110,7 @@ char *unique_name(char *src)
     char *ret = malloc(len);
 
     MALLOC_ASSERT(ret);
-    snprintf(ret, len, "%lu%s", l,basename_f);
+    snprintf(ret, len, "%010lu%s", l,basename_f);
     return ret;
 }
 
@@ -120,8 +118,8 @@ char *unique_name(char *src)
   * Function which only calls the relevant part to transfer the payload
   */
 
-void send_dumped_file(FiletransferOptions const *opts,char *dst_tosend){
-
+void send_dumped_file(FiletransferOptions const *opts,char *dst_tosend)
+{
 
     char *fn = origin_name(dst_tosend);
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
@@ -277,8 +275,6 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
         dst_tosend = malloc(len);
         MALLOC_ASSERT(dst_tosend);
         snprintf(dst_tosend,len,"%s/%s/%s%s",fdir,SUBDIR_TOSEND,rn,COMPRESS_EXTENSION);
-
-
 
         if (compress_file_to(dst_tocompress,dst_tosend, opts->CompressionLevel[which]) != 0){
             free(rn);
