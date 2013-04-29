@@ -235,15 +235,13 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     // Prepare all needed file names
     char *fn = basename(src);
-    char *fdir = malloc(strlen(src)+1);
+
+    char *fdir = strndup(src,PATH_MAX);
     MALLOC_ASSERT(fdir);
-    strncpy(fdir,src,strlen(src));
-    *(fdir+strlen(fdir))='\0';
     fdir = dirname(fdir);//dirname overwrites its argument anyway
     char *dst_tosend;//file which is going to be sent
 
     char *rn = unique_name(src);//new unique filename based on inode
-
 
     MALLOC_ASSERT(fn);
     MALLOC_ASSERT(rn);
@@ -262,9 +260,6 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
         MALLOC_ASSERT(dst_tocompress);
 
         snprintf(dst_tocompress,len,"%s/%s/%s",fdir,SUBDIR_COMPRESS,rn);
-
-
-
 
         //moving in subdir, from where it can be compressed
         if(rename(src, dst_tocompress) < 0)
