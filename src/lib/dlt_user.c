@@ -1110,7 +1110,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
 
             if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
-            	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
+                dlt_log(LOG_WARNING, "dlt_forward_msg: Failed to queue resending.\n");
             }
         }
 
@@ -2962,7 +2962,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         	// Fail silenty if FIFO is not open
             if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
-            	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
+                dlt_log(LOG_WARNING, "dlt_user_log_send_log: Failed to queue resending.\n");
             }
         }
 
@@ -3075,7 +3075,7 @@ int dlt_user_log_send_register_application(void)
 
         if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
-        	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
+            dlt_log(LOG_WARNING, "dlt_user_log_send_register_application: Failed to queue resending.\n");
         }
     }
 
@@ -3186,7 +3186,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
         if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
-        	dlt_log(LOG_WARNING, "Failed to queue resending.\n");
+            dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
         }
     }
 
