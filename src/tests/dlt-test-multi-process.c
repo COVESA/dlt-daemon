@@ -282,7 +282,10 @@ void cleanup()
  */
 time_t mksleep_time(int delay, int fudge)
 {
-	return (delay+rand()%fudge)*1000;
+    if (!fudge)
+        return delay*1000;
+    else
+        return (delay+rand()%fudge)*1000;
 }
 
 /**
