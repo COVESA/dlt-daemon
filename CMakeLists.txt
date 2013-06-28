@@ -53,6 +53,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"                                             ON  )
 option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           OFF )
 option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"                              OFF)
+option(WITH_SYSTEMD_JOURNAL   "Set to ON to use the systemd journal in dlt-system"                               OFF)
 option(WITH_DOC               "Set to ON to build documentation target"                                          OFF )
 option(WITH_MAN               "Set to ON to build man pages"                                                     ON )
 option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists " OFF )
@@ -110,7 +111,7 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkgconfig
 
 add_subdirectory( cmake )
 
-if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG)
+if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     if(WITH_SYSTEMD)
         add_definitions( -DDLT_SYSTEMD_ENABLE)
     endif(WITH_SYSTEMD)
@@ -118,11 +119,15 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG)
     if(WITH_SYSTEMD_WATCHDOG)
         add_definitions( -DDLT_SYSTEMD_WATCHDOG_ENABLE)
     endif(WITH_SYSTEMD_WATCHDOG)
+
+    if(WITH_SYSTEMD_JOURNAL)
+        add_definitions( -DDLT_SYSTEMD_JOURNAL_ENABLE)
+    endif(WITH_SYSTEMD_JOURNAL)
     
     set( systemd_SRCS ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
     
     add_subdirectory( systemd )
-endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG)
+endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 
 add_subdirectory( doc )
 add_subdirectory( src )
@@ -134,6 +139,7 @@ message( STATUS "---------------------------------------------------------------
 message( STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version state ${DLT_VERSION_STATE}")
 message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
 message( STATUS "WITH_SYSTEMD_WATCHDOG = ${WITH_SYSTEMD_WATCHDOG}" )
+message( STATUS "WITH_SYSTEMD_JOURNAL = ${WITH_SYSTEMD_JOURNAL}" )
 message( STATUS "WITH_DOC = ${WITH_DOC}" )
 
 message( STATUS "WITH_MAN = ${WITH_MAN}" )

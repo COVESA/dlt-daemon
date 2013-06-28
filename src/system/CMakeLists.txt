@@ -14,15 +14,20 @@
 # @licence end@
 ########
 
-if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
     message( STATUS "Added ${systemd_SRCS} to dlt-system")
-endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
 
 set(dlt_system_SRCS dlt-system dlt-system-options dlt-system-process-handling 
 	dlt-system-filetransfer dlt-system-logfile dlt-system-processes dlt-system-shell
-	dlt-system-syslog dlt-system-watchdog)
+	dlt-system-syslog dlt-system-watchdog dlt-system-journal)
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
-target_link_libraries(dlt-system dlt z)
+if(WITH_SYSTEMD_JOURNAL)
+	target_link_libraries(dlt-system dlt z systemd-journal)
+else(WITH_SYSTEMD_JOURNAL)
+	target_link_libraries(dlt-system dlt z)
+endif(WITH_SYSTEMD_JOURNAL)
+	
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
 
 

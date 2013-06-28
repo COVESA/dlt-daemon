@@ -86,12 +86,18 @@ typedef struct {
 	int 	Daemonize;
 } DltSystemCliOptions;
 
-// Configuration file options
+// Configuration syslog options
 typedef struct {
 	int  	Enable;
 	char 	*ContextId;
 	int  	Port;
 } SyslogOptions;
+
+// Configuration journal options
+typedef struct {
+	int  	Enable;
+	char 	*ContextId;
+} JournalOptions;
 
 typedef struct {
 	int  Enable;
@@ -134,6 +140,7 @@ typedef struct {
 typedef struct {
 	char *ApplicationId;
 	SyslogOptions 			Syslog;
+	JournalOptions			Journal;
 	FiletransferOptions 	Filetransfer;
 	LogFileOptions 			LogFile;
 	LogProcessOptions		LogProcesses;
@@ -169,6 +176,10 @@ void start_logprocess(DltSystemConfiguration *conf);
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 void start_systemd_watchdog(DltSystemConfiguration *conf);
+#endif
+
+#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+void start_systemd_journal(DltSystemConfiguration *conf);
 #endif
 
 #endif /* DLT_SYSTEM_H_ */

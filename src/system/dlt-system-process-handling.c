@@ -134,6 +134,11 @@ void start_threads(DltSystemConfiguration *config)
 
 	if(config->Syslog.Enable)
 		start_syslog(config);
+
+#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+	if(config->Journal.Enable)
+		start_systemd_journal(config);
+#endif
 }
 
 /**

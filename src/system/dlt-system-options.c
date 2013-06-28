@@ -138,6 +138,10 @@ void init_configuration(DltSystemConfiguration *config)
 	config->Syslog.ContextId	= "SYSL";
 	config->Syslog.Port			= 47111;
 
+	// Journal
+	config->Journal.Enable 		= 0;
+	config->Syslog.ContextId	= "JOUR";
+
 	// File transfer
 	config->Filetransfer.Enable					= 0;
 	config->Filetransfer.ContextId				= "FILE";
@@ -251,6 +255,18 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			else if(strcmp(token, "SyslogPort") == 0)
 			{
 				config->Syslog.Port = atoi(value);
+			}
+
+			// Journal
+			else if(strcmp(token, "JournalEnable") == 0)
+			{
+				config->Journal.Enable = atoi(value);
+			}
+			else if(strcmp(token, "JournalContextId") == 0)
+			{
+				config->Journal.ContextId = malloc(strlen(value)+1);
+				MALLOC_ASSERT(config->Journal.ContextId);
+				strcpy(config->Journal.ContextId, value);
 			}
 
 			// File transfer
