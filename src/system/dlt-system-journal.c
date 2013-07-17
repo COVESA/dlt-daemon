@@ -47,10 +47,12 @@
 #include <netinet/in.h>
 #include <strings.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "dlt-system.h"
 
 #include <systemd/sd-journal.h>
+#include <systemd/sd-id128.h>
 
 extern DltSystemThreads threads;
 
@@ -74,43 +76,83 @@ void journal_thread(void *v_conf)
 {
 	int r,r2,r3,r4,r5;
 	sd_journal *j;
-
+	char match[9+32+1] = "_BOOT_ID=";
+	sd_id128_t boot_id;
+	
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-journal, in thread."));
 
 	DltSystemConfiguration *conf = (DltSystemConfiguration *) v_conf;
 	DLT_REGISTER_CONTEXT(journalContext, conf->Journal.ContextId, "Journal Adapter");
 
-	r = sd_journal_open(&j,  SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY);
+	r = sd_journal_open(&j,  SD_JOURNAL_LOCAL_ONLY/*SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY*/);
 	if (r < 0) {
 			DLT_LOG(dltsystem, DLT_LOG_ERROR,
-					DLT_STRING("dlt-system-journal, cannot open journal."));
+					DLT_STRING("dlt-system-journal, cannot open journal:"),DLT_STRING(strerror(-r)));
 			return;
 	}
+			
+	if(conf->Journal.CurrentBoot)
+	{
+		/* show only current boot entries */
+		r = sd_id128_get_boot(&boot_id);
+		if(r<0)
+		{
+				DLT_LOG(dltsystem, DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-journal failed to get boot id:"),DLT_STRING(strerror(-r)));
+				sd_journal_close(j);
+				return;
+			
+		}
+		sd_id128_to_string(boot_id, match + 9);
+		r = sd_journal_add_match(j,match,strlen(match));
+		if(r<0)
+		{
+				DLT_LOG(dltsystem, DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-journal failed to get match:"),DLT_STRING(strerror(-r)));
+				sd_journal_close(j);
+				return;
+			
+		}
+	}	
+
+	if(conf->Journal.Follow)
+	{
+		/* show only last 10 entries and follow */
+        r = sd_journal_seek_tail(j);
+		if(r<0)
+		{
+				DLT_LOG(dltsystem, DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-journal failed to seek to tail:"),DLT_STRING(strerror(-r)));
+				sd_journal_close(j);
+				return;
+			
+		}
+        r = sd_journal_previous_skip(j, 10);
+		if(r<0)
+		{
+				DLT_LOG(dltsystem, DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-journal failed to seek back 10 entries:"),DLT_STRING(strerror(-r)));
+				sd_journal_close(j);
+				return;
+			
+		}
 	
-	// Uncomment if only new jornal entries should be shown
-	//sd_journal_seek_tail(j);
-	
-	/* possible mapping of log levels */
-	/* journal log levels
-	      0       Emergency		DLT_LOG_CRITICAL
-          1       Alert			DLT_LOG_CRITICAL
-          2       Critical		DLT_LOG_CRITICAL
-          3       Error			DLT_LOG_ERROR
-          4       Warning		DLT_LOG_WARNING
-          5       Notice		DLT_LOG_WARNING
-          6       Informational DLT_LOG_INFO
-          7       Debug 		DLT_LOG_DEBUG
-	*/
+	}
 	
 	while(!threads.shutdown)
 	{			
 		const char *d2="",*d3="",*d4="",*d5="";
 		size_t l;
 		uint64_t time_usecs = 0;
+		int ret;
+		struct tm * timeinfo;
+		char buffer[256],buffer2[256];
+		int loglevel,systemd_loglevel;
 
 		// Jun 28 13:34:05 alexvbox systemd[1]: Started GENIVI DLT system.
-		if(sd_journal_next(j)>0)
+		ret = sd_journal_next(j);
+		if(ret>0)
 		{
 			sd_journal_get_realtime_usec(j, &time_usecs);
 			r2 = sd_journal_get_data(j, "_COMM",(const void **) &d2, &l);
@@ -122,18 +164,52 @@ void journal_thread(void *v_conf)
 			if(r4>=0 && strlen(d4)>9) 	d4 +=9;
 			if(r5>=0 && strlen(d5)>8) 	d5 +=8;
 			
-			if(r5>=0)
+			time_usecs /=1000000;
+			timeinfo = localtime ((const time_t*)(&(time_usecs)));
+            strftime (buffer,sizeof(buffer),"%Y/%m/%d %H:%M:%S",timeinfo);
+
+			sprintf(buffer2,"%s[%s]:",d2,d3);
+
+			loglevel = DLT_LOG_INFO;
+			if(conf->Journal.MapLogLevels)
 			{
-				DLT_LOG(journalContext, DLT_LOG_INFO,
-						DLT_UINT64(time_usecs),DLT_STRING(d2),DLT_STRING(d3),DLT_STRING(d4),DLT_STRING(d5));
+				/* Map log levels from journal to DLT */
+				systemd_loglevel = atoi(d4);
+				switch(systemd_loglevel)
+				{
+					case 0: /* Emergency */
+					case 1: /* Alert */
+					case 2: /* Critical */
+						loglevel = DLT_LOG_FATAL;
+						break;
+					case 3: /* Error */
+						loglevel = DLT_LOG_ERROR;
+						break;
+					case 4: /* Warning */
+					case 5: /* Notice */
+						loglevel = DLT_LOG_WARN;
+						break;
+					case 6: /* Informational */
+						loglevel = DLT_LOG_INFO;
+						break;
+					case 7: /* Debug */
+						loglevel = DLT_LOG_DEBUG;
+						break;
+					default:
+						loglevel = DLT_LOG_INFO;
+						break;
+				}
 			}
+			
+			DLT_LOG(journalContext, loglevel,
+						DLT_STRING(buffer),DLT_STRING(buffer2),DLT_STRING(d4),DLT_STRING(d5));
 
 		}
 		else
 		{
 			sd_journal_wait(j,1000000);			
 		}
-
+		
 		if(journal_checkUserBufferForFreeSpace()==-1)
 		{
 			// buffer is nearly full
@@ -143,7 +219,6 @@ void journal_thread(void *v_conf)
 			t.tv_nsec = 1000000ul*500;
 			nanosleep(&t, NULL);
 		}
-
 
 	}
 

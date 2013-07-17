@@ -23,7 +23,7 @@ set(dlt_system_SRCS dlt-system dlt-system-options dlt-system-process-handling
 	dlt-system-syslog dlt-system-watchdog dlt-system-journal)
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 if(WITH_SYSTEMD_JOURNAL)
-	target_link_libraries(dlt-system dlt z systemd-journal)
+	target_link_libraries(dlt-system dlt z systemd-journal systemd-id128)
 else(WITH_SYSTEMD_JOURNAL)
 	target_link_libraries(dlt-system dlt z)
 endif(WITH_SYSTEMD_JOURNAL)

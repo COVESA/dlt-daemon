@@ -97,6 +97,9 @@ typedef struct {
 typedef struct {
 	int  	Enable;
 	char 	*ContextId;
+	int 	CurrentBoot;
+	int		Follow;
+	int		MapLogLevels;
 } JournalOptions;
 
 typedef struct {

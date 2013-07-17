@@ -140,7 +140,10 @@ void init_configuration(DltSystemConfiguration *config)
 
 	// Journal
 	config->Journal.Enable 		= 0;
-	config->Syslog.ContextId	= "JOUR";
+	config->Journal.ContextId	= "JOUR";
+	config->Journal.CurrentBoot = 1;
+	config->Journal.Follow 		= 0;
+	config->Journal.MapLogLevels = 0;
 
 	// File transfer
 	config->Filetransfer.Enable					= 0;
@@ -267,6 +270,18 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 				config->Journal.ContextId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Journal.ContextId);
 				strcpy(config->Journal.ContextId, value);
+			}
+			else if(strcmp(token, "JournalCurrentBoot") == 0)
+			{
+				config->Journal.CurrentBoot = atoi(value);
+			}
+			else if(strcmp(token, "JournalFollow") == 0)
+			{
+				config->Journal.Follow = atoi(value);
+			}
+			else if(strcmp(token, "JournalMapLogLevels") == 0)
+			{
+				config->Journal.MapLogLevels = atoi(value);
 			}
 
 			// File transfer
