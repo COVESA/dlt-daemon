@@ -56,6 +56,9 @@
 
 extern DltSystemThreads threads;
 
+#define DLT_SYSTEM_JOURNAL_BUFFER_SIZE 256
+#define DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG 2048
+
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(journalContext)
 
@@ -72,12 +75,54 @@ int journal_checkUserBufferForFreeSpace()
 	return 1;
 }
 
+/* 
+ * Copy a string and remove characters, which cannot be displayed.
+ * If max_size is reached a null character is added as last character.
+ * 
+ */
+void journal_clean_strcpy(const char* src,char* target,int max_size)
+{
+	if(max_size<1)
+		return;
+	while(*src!=0)
+	{
+		if(max_size>1)
+		{
+			if(*src>31)
+			{
+				*target=*src;
+				target++;
+				max_size--;
+			}
+		}
+		else
+		{
+			*target=0;
+			return;			
+		}
+		src++;
+	}
+}
+
 void journal_thread(void *v_conf)
 {
-	int r,r2,r3,r4,r5;
+	int r,r_comm,r_pid,r_priority,r_message,r_transport;
+	char *d_comm="",*d_pid="",*d_priority="",*d_message="",*d_transport="";
 	sd_journal *j;
 	char match[9+32+1] = "_BOOT_ID=";
 	sd_id128_t boot_id;
+	size_t l;
+	uint64_t time_usecs = 0;
+	int ret;
+	struct tm * timeinfo;
+	char buffer_time[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
+	     buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
+	     buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
+	     buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
+	     buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
+	     buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG];
+	int loglevel,systemd_loglevel;
+	char* systemd_log_levels[] = { "Emergency","Alert","Critical","Error","Warning","Notice","Informational","Debug" };
 	
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-journal, in thread."));
@@ -142,39 +187,50 @@ void journal_thread(void *v_conf)
 	
 	while(!threads.shutdown)
 	{			
-		const char *d2="",*d3="",*d4="",*d5="";
-		size_t l;
-		uint64_t time_usecs = 0;
-		int ret;
-		struct tm * timeinfo;
-		char buffer[256],buffer2[256];
-		int loglevel,systemd_loglevel;
 
-		// Jun 28 13:34:05 alexvbox systemd[1]: Started GENIVI DLT system.
 		ret = sd_journal_next(j);
-		if(ret>0)
+		if(r<0)
 		{
-			sd_journal_get_realtime_usec(j, &time_usecs);
-			r2 = sd_journal_get_data(j, "_COMM",(const void **) &d2, &l);
-			r3 = sd_journal_get_data(j, "_PID",(const void **) &d3, &l);
-			r4 = sd_journal_get_data(j, "PRIORITY",(const void **) &d4, &l);
-			r5 = sd_journal_get_data(j, "MESSAGE",(const void **) &d5, &l);
-			if(r2>=0 && strlen(d2)>6) 	d2 +=6;
-			if(r3>=0 && strlen(d3)>5) 	d3 +=5;
-			if(r4>=0 && strlen(d4)>9) 	d4 +=9;
-			if(r5>=0 && strlen(d5)>8) 	d5 +=8;
+				DLT_LOG(dltsystem, DLT_LOG_ERROR,
+						DLT_STRING("dlt-system-journal failed to get next entry:"),DLT_STRING(strerror(-r)));
+				sd_journal_close(j);
+				return;
 			
+		}
+		else if(ret>0)
+		{
+			/* get all data from current journal entry */
+			sd_journal_get_realtime_usec(j, &time_usecs);
+			r_comm = sd_journal_get_data(j, "_COMM",(const void **) &d_comm, &l);
+			r_pid = sd_journal_get_data(j, "_PID",(const void **) &d_pid, &l);
+			r_priority = sd_journal_get_data(j, "PRIORITY",(const void **) &d_priority, &l);
+			r_message = sd_journal_get_data(j, "MESSAGE",(const void **) &d_message, &l);
+			r_transport = sd_journal_get_data(j, "_TRANSPORT",(const void **) &d_transport, &l);
+			if(r_comm>=0 && strlen(d_comm)>6) 			d_comm +=6;
+			if(r_pid>=0 && strlen(d_pid)>5) 			d_pid +=5;
+			if(r_priority>=0 && strlen(d_priority)>9) 	d_priority +=9;
+			if(r_message>=0 && strlen(d_message)>8) 	d_message +=8;
+			if(r_transport>=0 && strlen(d_transport)>11) d_transport +=11;
+			
+			/* prepare time string */
 			time_usecs /=1000000;
 			timeinfo = localtime ((const time_t*)(&(time_usecs)));
-            strftime (buffer,sizeof(buffer),"%Y/%m/%d %H:%M:%S",timeinfo);
+            strftime (buffer_time,sizeof(buffer_time),"%Y/%m/%d %H:%M:%S",timeinfo);
 
-			sprintf(buffer2,"%s[%s]:",d2,d3);
+			/* prepare process string */
+			journal_clean_strcpy(d_pid,buffer_pid,sizeof(buffer_pid));
+			journal_clean_strcpy(d_comm,buffer_comm,sizeof(buffer_comm));
+			if(strcmp(d_transport,"kernel")==0)
+				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"kernel:");
+			else
+				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s[%s]:",buffer_comm,buffer_pid);
 
+			/* map log level on demand */
 			loglevel = DLT_LOG_INFO;
+			systemd_loglevel = atoi(d_priority);
 			if(conf->Journal.MapLogLevels)
 			{
 				/* Map log levels from journal to DLT */
-				systemd_loglevel = atoi(d4);
 				switch(systemd_loglevel)
 				{
 					case 0: /* Emergency */
@@ -199,10 +255,18 @@ void journal_thread(void *v_conf)
 						loglevel = DLT_LOG_INFO;
 						break;
 				}
-			}
+			}			
+			if(systemd_loglevel>=0 && systemd_loglevel<=7)
+				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s:",systemd_log_levels[systemd_loglevel]);
+			else
+				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"prio_unknown:");
 			
+			/* prepare message */
+			journal_clean_strcpy(d_message,buffer_message,sizeof(buffer_message));
+			
+			/* write log entry */
 			DLT_LOG(journalContext, loglevel,
-						DLT_STRING(buffer),DLT_STRING(buffer2),DLT_STRING(d4),DLT_STRING(d5));
+						DLT_STRING(buffer_time),DLT_STRING(buffer_process),DLT_STRING(buffer_priority),DLT_STRING(buffer_message));
 
 		}
 		else

@@ -143,7 +143,7 @@ void init_configuration(DltSystemConfiguration *config)
 	config->Journal.ContextId	= "JOUR";
 	config->Journal.CurrentBoot = 1;
 	config->Journal.Follow 		= 0;
-	config->Journal.MapLogLevels = 0;
+	config->Journal.MapLogLevels = 1;
 
 	// File transfer
 	config->Filetransfer.Enable					= 0;
