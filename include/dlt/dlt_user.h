@@ -345,6 +345,16 @@ int dlt_user_log_write_int64(DltContextData *log, int64_t data);
  */
 int dlt_user_log_write_string( DltContextData *log, const char *text);
 
+ /**
+ * Write a null terminated UTF8 string into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param text pointer to the parameter written into log message containing null termination.
+ * @return negative value if there was an error
+ */
+int dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
+
 /**
  * Write a binary memory block into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.

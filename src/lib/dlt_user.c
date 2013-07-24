@@ -438,6 +438,10 @@ int dlt_init_common(void)
 
 void dlt_user_atexit_handler(void)
 {
+    if (dlt_user_initialised==0)
+    {
+        return;
+    }
 
 	/* Try to resend potential log messages in the user buffer */
 	int count = dlt_user_atexit_blow_out_user_buffer();
@@ -1764,7 +1768,50 @@ int dlt_user_log_write_string(DltContextData *log, const char *text)
             return -1;
         }
 
-        type_info = DLT_TYPE_INFO_STRG;
+        type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
+
+        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+    }
+
+    arg_size = strlen(text) + 1;
+
+    memcpy((log->buffer)+log->size,&(arg_size),sizeof(uint16_t));
+    log->size += sizeof(uint16_t);
+
+    memcpy((log->buffer)+log->size,text,arg_size);
+    log->size += arg_size;
+
+    log->args_num ++;
+
+    return 0;
+}
+
+int dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
+{
+    uint16_t arg_size;
+    uint32_t type_info;
+
+    if ((log==0) || (text==0))
+    {
+        return -1;
+    }
+
+    arg_size = strlen(text)+1;
+
+    if ((log->size+arg_size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    {
+        return -1;
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        if ((log->size+arg_size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+        {
+            return -1;
+        }
+
+        type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
 
         memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
         log->size += sizeof(uint32_t);

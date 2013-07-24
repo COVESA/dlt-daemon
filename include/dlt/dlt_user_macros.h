@@ -202,6 +202,14 @@ extern DltContext CONTEXT;
 	})
 
 /**
+ * Add utf8-encoded string parameter to the log messsage.
+ * @param TEXT UTF8-encoded string
+ */
+#define DLT_UTF8(TEXT) ({ \
+        dlt_user_log_write_utf8_string(&log,TEXT); \
+  })
+
+/**
  * Add boolean parameter to the log messsage.
  * @param BOOL_VAR Boolean value (mapped to uint8)
  */

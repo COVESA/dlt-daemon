@@ -373,6 +373,8 @@ int test2m(void)
     printf("Test2m: (Macro IF) Test all variable types (verbose)\n");
     DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test2: (Macro IF) Test all variable types (verbose)"));
 
+    DLT_LOG(context_macro_test[1],DLT_LOG_INFO,DLT_STRING("string"),DLT_STRING("Hello world"));
+    DLT_LOG(context_macro_test[1],DLT_LOG_INFO,DLT_STRING("utf8"),DLT_UTF8("Hello world"));
     DLT_LOG(context_macro_test[1],DLT_LOG_INFO,DLT_STRING("bool"),DLT_BOOL(1));
     DLT_LOG(context_macro_test[1],DLT_LOG_INFO,DLT_STRING("int"),DLT_INT(INT32_MIN));         /* (-2147483647-1) */
     DLT_LOG(context_macro_test[1],DLT_LOG_INFO,DLT_STRING("int8"),DLT_INT8(INT8_MIN));        /*          (-128) */
@@ -412,19 +414,21 @@ int test3m(void)
 
 	DLT_NONVERBOSE_MODE();
 
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,1,DLT_STRING("bool"),DLT_BOOL(1));
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,2,DLT_STRING("int"),DLT_INT(INT32_MIN));         /* (-2147483647-1) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,3,DLT_STRING("int8"),DLT_INT8(INT8_MIN));        /*          (-128) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,4,DLT_STRING("int16"),DLT_INT16(INT16_MIN));     /*      (-32767-1) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,5,DLT_STRING("int32"),DLT_INT32(INT32_MIN));     /* (-2147483647-1) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,6,DLT_STRING("int64"),DLT_INT64(INT64_MIN));     /* (-__INT64_C(9223372036854775807)-1) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,7,DLT_STRING("uint"),DLT_UINT(UINT32_MAX));      /*   (4294967295U) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,8,DLT_STRING("uint8"),DLT_UINT8(UINT8_MAX));     /*           (255) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,9,DLT_STRING("uint16"),DLT_UINT16(UINT16_MAX));  /*         (65535) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,10,DLT_STRING("uint32"),DLT_UINT32(UINT32_MAX));  /*   (4294967295U) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,11,DLT_STRING("uint64"),DLT_UINT64(UINT64_MAX));  /* (__UINT64_C(18446744073709551615)) */
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,12,DLT_STRING("float32"),DLT_FLOAT32(FLT_MIN),DLT_FLOAT32(FLT_MAX));
-    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,13,DLT_STRING("float64"),DLT_FLOAT64(DBL_MIN),DLT_FLOAT64(DBL_MAX));
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,1,DLT_STRING("string"),DLT_STRING("Hello world"));
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,2,DLT_STRING("utf8"),DLT_UTF8("Hello world"));
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,3,DLT_STRING("bool"),DLT_BOOL(1));
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,4,DLT_STRING("int"),DLT_INT(INT32_MIN));         /* (-2147483647-1) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,5,DLT_STRING("int8"),DLT_INT8(INT8_MIN));        /*          (-128) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,6,DLT_STRING("int16"),DLT_INT16(INT16_MIN));     /*      (-32767-1) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,7,DLT_STRING("int32"),DLT_INT32(INT32_MIN));     /* (-2147483647-1) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,8,DLT_STRING("int64"),DLT_INT64(INT64_MIN));     /* (-__INT64_C(9223372036854775807)-1) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,9,DLT_STRING("uint"),DLT_UINT(UINT32_MAX));      /*   (4294967295U) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,10,DLT_STRING("uint8"),DLT_UINT8(UINT8_MAX));     /*           (255) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,11,DLT_STRING("uint16"),DLT_UINT16(UINT16_MAX));  /*         (65535) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,12,DLT_STRING("uint32"),DLT_UINT32(UINT32_MAX));  /*   (4294967295U) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,13,DLT_STRING("uint64"),DLT_UINT64(UINT64_MAX));  /* (__UINT64_C(18446744073709551615)) */
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,14,DLT_STRING("float32"),DLT_FLOAT32(FLT_MIN),DLT_FLOAT32(FLT_MAX));
+    DLT_LOG_ID(context_macro_test[2],DLT_LOG_INFO,15,DLT_STRING("float64"),DLT_FLOAT64(DBL_MIN),DLT_FLOAT64(DBL_MAX));
 
 
     for(num2=0;num2<10;num2++)

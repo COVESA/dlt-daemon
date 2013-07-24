@@ -3230,10 +3230,10 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 
     uint32_t quantisation_tmp=0;
 
-    if (type_info & DLT_TYPE_INFO_STRG)
+    if ( (type_info & DLT_TYPE_INFO_STRG) && (((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII) || ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_UTF8)) )
     {
 
-        /* string type */
+        /* string type or utf8-encoded string type */
         if (byteLength<0)
         {
             DLT_MSG_READ_VALUE(length_tmp,*ptr,*datalength,uint16_t);

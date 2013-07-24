@@ -492,7 +492,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (strcmp(text,"Test2: (Macro IF) finished")==0)
         {
-            if (dltdata->test_counter_macro[1]==14)
+            if (dltdata->test_counter_macro[1]==16)
             {
                 printf("Test2m PASSED\n");
                 dltdata->tests_passed++;
@@ -540,7 +540,21 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
                                 type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 
-                                if (type_info & DLT_TYPE_INFO_BOOL)
+                                if ((type_info & DLT_TYPE_INFO_STRG) && ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII))
+                                {
+                                    if (datalength==(sizeof(uint16_t)+strlen("Hello world")+1))
+                                    {
+                                        dltdata->test_counter_macro[1]++;
+                                    }
+                                }
+                                else if ((type_info & DLT_TYPE_INFO_STRG) && ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_UTF8))
+                                {
+                                    if (datalength==(sizeof(uint16_t)+strlen("Hello world")+1))
+                                    {
+                                        dltdata->test_counter_macro[1]++;
+                                    }
+                                }
+                                else if (type_info & DLT_TYPE_INFO_BOOL)
                                 {
                                     if (datalength==sizeof(uint8_t))
                                     {
@@ -694,7 +708,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (strcmp(text,"Test3: (Macro IF) finished")==0)
         {
-            if (dltdata->test_counter_macro[2]==14)
+            if (dltdata->test_counter_macro[2]==16)
             {
                 printf("Test3m PASSED\n");
                 dltdata->tests_passed++;
@@ -731,6 +745,28 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 {
                 case  1:
                 {
+                    slen=strlen("string")+1;
+                    datalength-=slen;
+                    ptr+=slen;
+                    if (datalength==sizeof(uint16_t)+strlen("Hello world")+1)
+                    {
+                        dltdata->test_counter_macro[2]++;
+                    }
+                    break;
+                }
+                case  2:
+                {
+                    slen=strlen("utf8")+1;
+                    datalength-=slen;
+                    ptr+=slen;
+                    if (datalength==sizeof(uint16_t)+strlen("Hello world")+1)
+                    {
+                        dltdata->test_counter_macro[2]++;
+                    }
+                    break;
+                }
+                case  3:
+                {
                     slen=strlen("bool")+1;
                     datalength-=slen;
                     ptr+=slen;
@@ -740,7 +776,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  2:
+                case  4:
                 {
                     slen=strlen("int")+1;
                     datalength-=slen;
@@ -751,7 +787,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  3:
+                case  5:
                 {
                     slen=strlen("int8")+1;
                     datalength-=slen;
@@ -762,7 +798,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  4:
+                case  6:
                 {
                     slen=strlen("int16")+1;
                     datalength-=slen;
@@ -773,7 +809,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  5:
+                case  7:
                 {
                     slen=strlen("int32")+1;
                     datalength-=slen;
@@ -784,7 +820,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  6:
+                case  8:
                 {
                     slen=strlen("int64")+1;
                     datalength-=slen;
@@ -795,7 +831,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  7:
+                case  9:
                 {
                     slen=strlen("uint")+1;
                     datalength-=slen;
@@ -806,7 +842,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  8:
+                case  10:
                 {
                     slen=strlen("uint8")+1;
                     datalength-=slen;
@@ -817,7 +853,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case  9:
+                case  11:
                 {
                     slen=strlen("uint16")+1;
                     datalength-=slen;
@@ -828,7 +864,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case 10:
+                case 12:
                 {
                     slen=strlen("uint32")+1;
                     datalength-=slen;
@@ -839,7 +875,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case 11:
+                case 13:
                 {
                     slen=strlen("uint64")+1;
                     datalength-=slen;
@@ -850,7 +886,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case 12:
+                case 14:
                 {
                     slen=strlen("float32")+1;
                     datalength-=slen;
@@ -862,7 +898,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case 13:
+                case 15:
                 {
                     slen=strlen("float64")+1;
                     datalength-=slen;
@@ -874,7 +910,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     }
                     break;
                 }
-                case 14:
+                case 16:
                 {
                     slen=strlen("raw")+1;
                     datalength-=slen;
