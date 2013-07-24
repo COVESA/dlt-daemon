@@ -104,6 +104,7 @@
 #define DLT_SWAP_32(value) ((((value) >> 24)&0xff) | (((value) << 8)&0xff0000) | (((value) >> 8)&0xff00) | (((value) << 24)&0xff000000))
 
 /* Set Big Endian and Little Endian to a initial value, if not defined */
+#if !defined __USE_BSD
 #ifndef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1234
 #endif
@@ -111,11 +112,14 @@
 #ifndef BIG_ENDIAN
 #define BIG_ENDIAN    4321
 #endif
+#endif /* __USE_BSD */
 
 /* If byte order is not defined, default to little endian */
+#if !defined __USE_BSD
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
+#endif /* __USE_BSD */
 
 /* Check for byte-order */
 #if (BYTE_ORDER==BIG_ENDIAN)
