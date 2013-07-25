@@ -59,6 +59,10 @@ extern DltSystemThreads threads;
 #define DLT_SYSTEM_JOURNAL_BUFFER_SIZE 256
 #define DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG 2048
 
+#define DLT_SYSTEM_JOURNAL_ASCII_FIRST_VISIBLE_CHARACTER 31
+#define DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH 9+32+1
+
+
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(journalContext)
 
@@ -88,7 +92,7 @@ void journal_clean_strcpy(const char* src,char* target,int max_size)
 	{
 		if(max_size>1)
 		{
-			if(*src>31)
+			if(*src>DLT_SYSTEM_JOURNAL_ASCII_FIRST_VISIBLE_CHARACTER)
 			{
 				*target=*src;
 				target++;
@@ -109,11 +113,10 @@ void journal_thread(void *v_conf)
 	int r,r_comm,r_pid,r_priority,r_message,r_transport;
 	char *d_comm="",*d_pid="",*d_priority="",*d_message="",*d_transport="";
 	sd_journal *j;
-	char match[9+32+1] = "_BOOT_ID=";
+	char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
 	sd_id128_t boot_id;
 	size_t l;
 	uint64_t time_usecs = 0;
-	int ret;
 	struct tm * timeinfo;
 	char buffer_time[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
 	     buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
@@ -131,9 +134,11 @@ void journal_thread(void *v_conf)
 	DLT_REGISTER_CONTEXT(journalContext, conf->Journal.ContextId, "Journal Adapter");
 
 	r = sd_journal_open(&j,  SD_JOURNAL_LOCAL_ONLY/*SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY*/);
+			printf("journal open return %d\n", r);	
 	if (r < 0) {
 			DLT_LOG(dltsystem, DLT_LOG_ERROR,
 					DLT_STRING("dlt-system-journal, cannot open journal:"),DLT_STRING(strerror(-r)));
+			printf("journal open failed: %s\n", strerror(-r));
 			return;
 	}
 			
@@ -188,7 +193,7 @@ void journal_thread(void *v_conf)
 	while(!threads.shutdown)
 	{			
 
-		ret = sd_journal_next(j);
+		r = sd_journal_next(j);
 		if(r<0)
 		{
 				DLT_LOG(dltsystem, DLT_LOG_ERROR,
@@ -197,20 +202,33 @@ void journal_thread(void *v_conf)
 				return;
 			
 		}
-		else if(ret>0)
+		else if(r>0)
 		{
 			/* get all data from current journal entry */
-			sd_journal_get_realtime_usec(j, &time_usecs);
+			r = sd_journal_get_realtime_usec(j, &time_usecs);
+			if(r<0)
+			{
+					DLT_LOG(dltsystem, DLT_LOG_ERROR,
+							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
+					sd_journal_close(j);
+					return;
+				
+			}
 			r_comm = sd_journal_get_data(j, "_COMM",(const void **) &d_comm, &l);
 			r_pid = sd_journal_get_data(j, "_PID",(const void **) &d_pid, &l);
 			r_priority = sd_journal_get_data(j, "PRIORITY",(const void **) &d_priority, &l);
 			r_message = sd_journal_get_data(j, "MESSAGE",(const void **) &d_message, &l);
 			r_transport = sd_journal_get_data(j, "_TRANSPORT",(const void **) &d_transport, &l);
-			if(r_comm>=0 && strlen(d_comm)>6) 			d_comm +=6;
-			if(r_pid>=0 && strlen(d_pid)>5) 			d_pid +=5;
-			if(r_priority>=0 && strlen(d_priority)>9) 	d_priority +=9;
-			if(r_message>=0 && strlen(d_message)>8) 	d_message +=8;
-			if(r_transport>=0 && strlen(d_transport)>11) d_transport +=11;
+			if(r_comm>=0 && strlen(d_comm)>sizeof("_COMM")) 				
+				d_comm +=sizeof("_COMM");
+			if(r_pid>=0 && strlen(d_pid)>sizeof("_PID")) 					
+				d_pid +=sizeof("_PID");
+			if(r_priority>=0 && strlen(d_priority)>sizeof("PRIORITY")) 		
+				d_priority +=sizeof("PRIORITY");
+			if(r_message>=0 && strlen(d_message)>sizeof("MESSAGE")) 		
+				d_message +=sizeof("MESSAGE");
+			if(r_transport>=0 && strlen(d_transport)>sizeof("_TRANSPORT")) 	
+				d_transport +=sizeof("_TRANSPORT");
 			
 			/* prepare time string */
 			time_usecs /=1000000;
@@ -242,9 +260,9 @@ void journal_thread(void *v_conf)
 						loglevel = DLT_LOG_ERROR;
 						break;
 					case 4: /* Warning */
-					case 5: /* Notice */
 						loglevel = DLT_LOG_WARN;
 						break;
+					case 5: /* Notice */
 					case 6: /* Informational */
 						loglevel = DLT_LOG_INFO;
 						break;
@@ -271,7 +289,15 @@ void journal_thread(void *v_conf)
 		}
 		else
 		{
-			sd_journal_wait(j,1000000);			
+			r = sd_journal_wait(j,1000000);			
+			if(r<0)
+			{
+					DLT_LOG(dltsystem, DLT_LOG_ERROR,
+							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
+					sd_journal_close(j);
+					return;
+				
+			}
 		}
 		
 		if(journal_checkUserBufferForFreeSpace()==-1)
