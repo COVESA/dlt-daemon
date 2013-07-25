@@ -133,6 +133,9 @@ void init_configuration(DltSystemConfiguration *config)
 	// Common
 	config->ApplicationId 		= "SYS";
 
+	// Shell
+	config->Shell.Enable 		= 0;
+
 	// Syslog
 	config->Syslog.Enable 		= 0;
 	config->Syslog.ContextId	= "SYSL";
@@ -242,6 +245,12 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 				config->ApplicationId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->ApplicationId);
 				strcpy(config->ApplicationId, value);
+			}
+
+			// Shell
+			else if(strcmp(token, "ShellEnable") == 0)
+			{
+				config->Shell.Enable = atoi(value);
 			}
 
 			// Syslog

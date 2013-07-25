@@ -86,6 +86,11 @@ typedef struct {
 	int 	Daemonize;
 } DltSystemCliOptions;
 
+// Configuration shell options
+typedef struct {
+	int  	Enable;
+} ShellOptions;
+
 // Configuration syslog options
 typedef struct {
 	int  	Enable;
@@ -142,6 +147,7 @@ typedef struct {
 
 typedef struct {
 	char *ApplicationId;
+	ShellOptions 			Shell;
 	SyslogOptions 			Syslog;
 	JournalOptions			Journal;
 	FiletransferOptions 	Filetransfer;

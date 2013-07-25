@@ -121,7 +121,8 @@ void start_threads(DltSystemConfiguration *config)
 	start_systemd_watchdog(config);
 #endif
 
-	init_shell();
+	if(config->Shell.Enable)
+		init_shell();
 
 	if(config->LogFile.Enable)
 		start_logfile(config);
