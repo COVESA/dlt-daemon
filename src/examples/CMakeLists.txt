@@ -14,17 +14,17 @@
 # @licence end@
 ########
 
-set(dlt_example_user_SRCS dlt-example-user)
+set(dlt_example_user_SRCS dlt-example-user.c)
 add_executable(dlt-example-user ${dlt_example_user_SRCS})
 target_link_libraries(dlt-example-user dlt)
 set_target_properties(dlt-example-user PROPERTIES LINKER_LANGUAGE C)
 
-set(dlt_example_user_func_SRCS dlt-example-user-func)
+set(dlt_example_user_func_SRCS dlt-example-user-func.c)
 add_executable(dlt-example-user-func ${dlt_example_user_func_SRCS})
 target_link_libraries(dlt-example-user-func dlt)
 set_target_properties(dlt-example-user-func PROPERTIES LINKER_LANGUAGE C)
 
-set(dlt_example_filetransfer_SRCS dlt-example-filetransfer)
+set(dlt_example_filetransfer_SRCS dlt-example-filetransfer.c)
 add_executable(	dlt-example-filetransfer ${dlt_example_filetransfer_SRCS})
 target_link_libraries(dlt-example-filetransfer dlt )
 set_target_properties(dlt-example-filetransfer PROPERTIES LINKER_LANGUAGE C)

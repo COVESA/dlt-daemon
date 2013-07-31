@@ -14,12 +14,12 @@
 # @licence end@
 ########
 
-set(dlt_adaptor_stdin_SRCS dlt-adaptor-stdin)
+set(dlt_adaptor_stdin_SRCS dlt-adaptor-stdin.c)
 add_executable(dlt-adaptor-stdin ${dlt_adaptor_stdin_SRCS})
 target_link_libraries(dlt-adaptor-stdin dlt)
 set_target_properties(dlt-adaptor-stdin PROPERTIES LINKER_LANGUAGE C)
 
-set(dlt_adaptor_udp_SRCS dlt-adaptor-udp)
+set(dlt_adaptor_udp_SRCS dlt-adaptor-udp.c)
 add_executable(dlt-adaptor-udp ${dlt_adaptor_udp_SRCS})
 target_link_libraries(dlt-adaptor-udp dlt)
 set_target_properties(dlt-adaptor-udp PROPERTIES LINKER_LANGUAGE C)

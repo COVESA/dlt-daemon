@@ -14,12 +14,12 @@
 # @licence end@
 ########
 
-set(dlt_convert_SRCS dlt-convert)
+set(dlt_convert_SRCS dlt-convert.c)
 add_executable(dlt-convert ${dlt_convert_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-convert dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-convert PROPERTIES LINKER_LANGUAGE C)
 
-set(dlt_receive_SRCS dlt-receive)
+set(dlt_receive_SRCS dlt-receive.c)
 add_executable(dlt-receive ${dlt_receive_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-receive dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-receive PROPERTIES LINKER_LANGUAGE C)

@@ -18,9 +18,9 @@ if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
     message( STATUS "Added ${systemd_SRCS} to dlt-system")
 endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
 
-set(dlt_system_SRCS dlt-system dlt-system-options dlt-system-process-handling 
-	dlt-system-filetransfer dlt-system-logfile dlt-system-processes dlt-system-shell
-	dlt-system-syslog dlt-system-watchdog dlt-system-journal)
+set(dlt_system_SRCS dlt-system.c dlt-system-options.c dlt-system-process-handling.c 
+	dlt-system-filetransfer.c dlt-system-logfile.c dlt-system-processes.c dlt-system-shell.c
+	dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c)
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 if(WITH_SYSTEMD_JOURNAL)
 	target_link_libraries(dlt-system dlt z systemd-journal systemd-id128)
