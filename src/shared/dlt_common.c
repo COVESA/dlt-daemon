@@ -2635,7 +2635,7 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 		// try to increase size if possible
 		if(dlt_buffer_increase_size(buf)) {
 			/* increase size is not possible */
-			dlt_log(LOG_ERR,"Buffer: Buffer is full\n");
+			//dlt_log(LOG_ERR,"Buffer: Buffer is full\n");
 			return -1; // ERROR
 		}
 		// update pointers

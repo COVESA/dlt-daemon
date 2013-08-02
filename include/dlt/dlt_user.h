@@ -218,6 +218,7 @@ typedef struct
     uint32_t dlt_ll_ts_num_entries;       /**< Number of used contexts */
 
     int8_t overflow;                     /**< Overflow marker, set to 1 on overflow, 0 otherwise */
+    uint32_t overflow_counter;       	 /**< Counts the number of lost messages */
 
     char *application_description;        /**< description of application */
 

@@ -182,6 +182,15 @@ typedef struct
 	int8_t log_state;          /**< the state to be used for logging state: 0 = off, 1 = external client connected */
 } PACKED DltUserControlMsgLogState;
 
+/**
+ * This is the internal message content to get the lnumber of lost messages reported to the daemon.
+ */
+typedef struct
+{
+	uint32_t overflow_counter;          /**< counts the number of lost messages */
+	char apid[4];						/**< application which lost messages */
+} PACKED DltUserControlMsgBufferOverflow;
+
 /**************************************************************************************************
 * The folowing functions are used shared between the user lib and the daemon implementation
 **************************************************************************************************/

@@ -136,6 +136,7 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->default_trace_status = DLT_DAEMON_INITIAL_TRACE_STATUS ;
 
     daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
+    daemon->overflow_counter = 0;
 
     daemon->runtime_context_cfg_loaded = 0;
     
@@ -1266,7 +1267,7 @@ int dlt_daemon_control_process_control(int sock, DltDaemon *daemon, DltMessage *
         }
         case DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW:
         {
-            dlt_daemon_control_message_buffer_overflow(sock, daemon,  verbose);
+            dlt_daemon_control_message_buffer_overflow(sock, daemon, daemon->overflow_counter,"",verbose);
             break;
         }
         default:
@@ -2075,7 +2076,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltMessage *ms
     dlt_message_free(&resp,0);
 }
 
-void dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, int verbose)
+int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, unsigned int overflow_counter,char* apid, int verbose)
 {
     DltMessage msg;
 	DltServiceMessageBufferOverflowResponse *resp;
@@ -2084,14 +2085,14 @@ void dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, int
 
     if (daemon==0)
     {
-        return;
+        return -1;
     }
 
     /* initialise new message */
     if (dlt_message_init(&msg,0)==-1)
     {
     	dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
-    	return;
+    	return -1;
     }
 
     /* prepare payload of data */
@@ -2111,19 +2112,26 @@ void dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, int
         {
             dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
         }
-        return;
+        return -1;
     }
 
     resp = (DltServiceMessageBufferOverflowResponse*) msg.databuffer;
     resp->service_id = DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW;
     resp->status = DLT_SERVICE_RESPONSE_OK;
     resp->overflow = daemon->message_buffer_overflow;
+   	resp->overflow_counter = overflow_counter;
 
     /* send message */
-    dlt_daemon_control_send_control_message(sock,daemon,&msg,"","",  verbose);
+    if(dlt_daemon_control_send_control_message(sock,daemon,&msg,apid,"",  verbose))
+    {
+        dlt_message_free(&msg,0);
+    	return -1;
+    }
 
     /* free message */
     dlt_message_free(&msg,0);
+
+    return 0;
 }
 
 void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, uint32_t service_id, int8_t status , int verbose)
@@ -2171,7 +2179,7 @@ void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, uint32_t 
     dlt_message_free(&msg,0);
 }
 
-void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMessage *msg, char* appid, char* ctid, int verbose)
+int dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMessage *msg, char* appid, char* ctid, int verbose)
 {
     ssize_t ret;
     int32_t len;
@@ -2180,7 +2188,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
 
     if ((daemon==0) || (msg==0) || (appid==0) || (ctid==0))
     {
-        return;
+        return -1;
     }
 
     /* prepare storage header */
@@ -2188,7 +2196,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
 
     if (dlt_set_storageheader(msg->storageheader,daemon->ecuid)==-1)
     {
-		return;
+		return -1;
     }
 
     /* prepare standard header */
@@ -2239,7 +2247,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
     if (len>UINT16_MAX)
     {
         dlt_log(LOG_CRIT,"Huge control message discarded!\n");
-        return;
+        return -1;
     }
 
     msg->standardheader->len = DLT_HTOBE_16(((uint16_t)len));
@@ -2259,7 +2267,7 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
                 {
                         dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write dltSerialHeader failed\n");
                         DLT_DAEMON_SEM_FREE();
-                        return;
+                        return -1;
                 }
             }
 
@@ -2269,14 +2277,14 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
             {
                     dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write msg->headerbuffer failed\n");
                     DLT_DAEMON_SEM_FREE();
-                    return;
+                    return -1;
             }
             ret=write(sock, msg->databuffer,msg->datasize);
             if (0 > ret)
             {
                     dlt_log(LOG_CRIT,"dlt_daemon_control_send_control_message: write msg->databuffer failed\n");
                     DLT_DAEMON_SEM_FREE();
-                    return;
+                    return -1;
             }
 
             DLT_DAEMON_SEM_FREE();
@@ -2316,10 +2324,11 @@ void dlt_daemon_control_send_control_message( int sock, DltDaemon *daemon, DltMe
 		{
         	DLT_DAEMON_SEM_FREE();
 			dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
-			return;
+			return -1;
 		}
         DLT_DAEMON_SEM_FREE();
     }
+    return 0;
 }
 
 void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *filename, const char *filename1, int verbose)

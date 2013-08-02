@@ -133,6 +133,7 @@ typedef struct
 	int8_t default_log_level;          /**< Default log level (of daemon) */
 	int8_t default_trace_status;       /**< Default trace status (of daemon) */
 	int message_buffer_overflow;   /**< Set to one, if buffer overflow has occured, zero otherwise */
+	unsigned int overflow_counter;   /**< counts the number of lost messages. */
 	int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
 	char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
 	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
@@ -360,8 +361,9 @@ void dlt_daemon_control_service_response(int sock, DltDaemon *daemon, uint32_t s
  * @param appid pointer to application id to be used in response message
  * @param contid pointer to context id to be used in response message
  * @param verbose if set to true verbose information is printed out.
+ * @return -1 if there is an error or buffer is full
  */
-void dlt_daemon_control_send_control_message(int sock, DltDaemon *daemon, DltMessage *msg, char* appid, char* contid, int verbose);
+int dlt_daemon_control_send_control_message(int sock, DltDaemon *daemon, DltMessage *msg, char* appid, char* contid, int verbose);
 
 /**
  * Process and generate response to received sw injection control message
@@ -438,8 +440,9 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltMessage *ms
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
  * @param verbose if set to true verbose information is printed out.
+ * @return -1 if there is an error or buffer overflow, else 0
  */
-void dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, int verbose);
+int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, unsigned int overflow_counter,char* apid, int verbose);
 /**
  * Process reset to factory default control message
  * @param daemon pointer to dlt daemon structure

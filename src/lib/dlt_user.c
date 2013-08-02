@@ -171,6 +171,7 @@ int dlt_init(void)
 
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
+    dlt_user.overflow_counter = 0;
 #ifdef DLT_SHM_ENABLE
 	memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
 #endif
@@ -1085,12 +1086,13 @@ int dlt_forward_msg(void *msgdata,size_t size)
         /* Reattach to daemon if neccesary */
         dlt_user_log_reattach_to_daemon();
 
-        if (dlt_user.overflow)
+        if (dlt_user.overflow_counter)
         {
             if (dlt_user_log_send_overflow()==0)
             {
-                dlt_user.overflow=0;
-            }
+				sprintf(str,"Buffer full! %u messages discarded!\n",dlt_user.overflow_counter);
+				dlt_log(LOG_ERR, str);
+                dlt_user.overflow_counter=0;            }
         }
 
         /* log to FIFO */
@@ -1107,14 +1109,17 @@ int dlt_forward_msg(void *msgdata,size_t size)
                                 (unsigned char *)&(userheader), sizeof(DltUserHeader),
                                  msgdata, size, 0, 0)==-1)
 			{
-				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+                if(dlt_user.overflow_counter==0)
+                {
+                	dlt_log(LOG_ERR,"Buffer full! First message discarded!\n");
+                }
 			}
 
             DLT_SEM_FREE();
 
             if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
-                dlt_log(LOG_WARNING, "dlt_forward_msg: Failed to queue resending.\n");
+                ;//dlt_log(LOG_WARNING, "dlt_forward_msg: Failed to queue resending.\n");
             }
         }
 
@@ -1123,7 +1128,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
         case DLT_RETURN_PIPE_FULL:
         {
             /* data could not be written */
-            dlt_user.overflow = 1;
+            dlt_user.overflow_counter += 1;
             return -1;
         }
         case DLT_RETURN_PIPE_ERROR:
@@ -2201,7 +2206,9 @@ void dlt_user_trace_network_segmented_thread(void *unused)
                         {
                                 // Requeue if still not empty
                                 if ( dlt_user_queue_resend() < 0 )
-                                    dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n");
+                                {
+                                    ;//dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n");
+                                }
                         }
                         free(data);
                         continue;
@@ -2740,6 +2747,8 @@ int dlt_user_log_init(DltContext *handle, DltContextData *log)
 
 int dlt_user_queue_resend(void)
 {
+	static unsigned int dlt_user_queue_resend_error_counter = 0;
+
 	if(dlt_user.dlt_log_handle < 0)
 	{
 		// Fail silenty. FIFO is not open yet
@@ -2763,19 +2772,32 @@ int dlt_user_queue_resend(void)
     /* Open queue if it is not open */
 	if(dlt_init_message_queue() < 0)
 	{
-		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
-                free(resend_data);
+    	if(!dlt_user_queue_resend_error_counter)
+    	{
+    		// log error only when problem occurred first time
+    		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
+    	}
+    	dlt_user_queue_resend_error_counter++;
+    	free(resend_data);
 		return -1;
 	}
 
     if(mq_send(dlt_user.dlt_segmented_queue_write_handle, (char *)&resend_data, sizeof(s_segmented_data *), 1) < 0)
     {
-        char str[255];
-        snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
-        dlt_log(LOG_CRIT, str);
+    	if(!dlt_user_queue_resend_error_counter)
+    	{
+    		// log error only when problem occurred first time
+			char str[255];
+			snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
+			dlt_log(LOG_CRIT, str);
+    	}
+    	dlt_user_queue_resend_error_counter++;
     	free(resend_data);
     	return -1;
     }
+
+    dlt_user_queue_resend_error_counter = 0;
+
     //thread_data will be freed by the receiver function
     //coverity[leaked_storage]
     return 0;
@@ -2945,11 +2967,13 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         /* Reattach to daemon if neccesary */
         dlt_user_log_reattach_to_daemon();
 
-        if (dlt_user.overflow)
+        if (dlt_user.overflow_counter)
         {
             if (dlt_user_log_send_overflow()==0)
             {
-                dlt_user.overflow=0;
+				sprintf(str,"%u messages discarded!\n",dlt_user.overflow_counter);
+				dlt_log(LOG_ERR, str);
+                dlt_user.overflow_counter=0;
             }
         }
 
@@ -3000,8 +3024,12 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
                                 msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
                                 log->buffer, log->size)==-1)
 			{
-				dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
-				ret = DLT_RETURN_BUFFER_FULL;
+                if(dlt_user.overflow_counter==0)
+                {
+
+                	dlt_log(LOG_ERR,"Buffer full! Messages will be discarded.\n");
+                }
+                ret = DLT_RETURN_BUFFER_FULL;
 			}
 
             DLT_SEM_FREE();
@@ -3009,7 +3037,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         	// Fail silenty if FIFO is not open
             if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
             {
-                dlt_log(LOG_WARNING, "dlt_user_log_send_log: Failed to queue resending.\n");
+                ;//dlt_log(LOG_WARNING, "dlt_user_log_send_log: Failed to queue resending.\n");
             }
         }
 
@@ -3018,12 +3046,12 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         case DLT_RETURN_BUFFER_FULL:
         {
         	/* Buffer full */
+            dlt_user.overflow_counter += 1;
         	return DLT_RETURN_BUFFER_FULL;
         }
         case DLT_RETURN_PIPE_FULL:
         {
             /* data could not be written */
-            dlt_user.overflow = 1;
             return DLT_RETURN_PIPE_FULL;
         }
         case DLT_RETURN_PIPE_ERROR:
@@ -3122,7 +3150,7 @@ int dlt_user_log_send_register_application(void)
 
         if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
-            dlt_log(LOG_WARNING, "dlt_user_log_send_register_application: Failed to queue resending.\n");
+            ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_application: Failed to queue resending.\n");
         }
     }
 
@@ -3233,7 +3261,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
         if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
         {
-            dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
+            ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
         }
     }
 
@@ -3743,6 +3771,7 @@ void dlt_user_log_reattach_to_daemon(void)
 int dlt_user_log_send_overflow(void)
 {
     DltUserHeader userheader;
+    DltUserControlMsgBufferOverflow userpayload;
     DltReturnValue ret;
 
     /* set userheader */
@@ -3756,8 +3785,13 @@ int dlt_user_log_send_overflow(void)
         return 0;
     }
 
+    /* set user message parameters */
+    userpayload.overflow_counter = dlt_user.overflow_counter;
+    dlt_set_id(userpayload.apid,dlt_user.appID);
+
     /* log to FIFO */
-    ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), 0, 0);
+    ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader),
+    		              &(userpayload), sizeof(DltUserControlMsgBufferOverflow));
     return ((ret==DLT_RETURN_OK)?0:-1);
 }
 

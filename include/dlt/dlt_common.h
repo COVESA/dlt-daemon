@@ -478,6 +478,7 @@ typedef struct
     uint32_t service_id;            /**< service ID */
     uint8_t status;                 /**< reponse status */
     uint8_t overflow;               /**< overflow status */
+    uint32_t overflow_counter;      /**< overflow counter */
 } PACKED DltServiceMessageBufferOverflowResponse;
 
 typedef struct

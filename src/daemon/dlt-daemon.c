@@ -1522,6 +1522,72 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     int j, sent;
+    DltUserControlMsgBufferOverflow *userpayload;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0)  || (daemon_local==0))
+    {
+    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_overflow()\n");
+        return -1;
+    }
+
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgBufferOverflow)))
+    {
+    	/* Not enough bytes received */
+        return -1;
+    }
+
+    /* get the payload of the user message */
+    userpayload = (DltUserControlMsgBufferOverflow*) (daemon_local->receiver.buf+sizeof(DltUserHeader));
+
+    /* Store in daemon, that a message buffer overflow has occured */
+    daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_OVERFLOW;
+
+    /* look if TCP connection to client is available */
+    sent = 0;
+
+    for (j = 0; j <= daemon_local->fdmax; j++)
+    {
+        /* send to everyone! */
+        if (FD_ISSET(j, &(daemon_local->master)))
+        {
+            /* except the listener and ourselves */
+            if ((j != daemon_local->fp) && (j != daemon_local->sock))
+            {
+                dlt_daemon_control_message_buffer_overflow(j, daemon, userpayload->overflow_counter,userpayload->apid,verbose);
+                sent=1;
+                /* Reset overflow state */
+                daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
+            } /* if */
+        } /* if */
+    } /* for */
+
+    /* message was not sent, so store it in ringbuffer */
+    if (sent==0)
+    {
+        if(dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_STORE_TO_BUFFER, daemon, userpayload->overflow_counter,
+        		                                      userpayload->apid,verbose))
+        {
+        	/* there was an error when storing message */
+        	/* add the counter of lost messages to the daemon counter */
+        	daemon->overflow_counter+=userpayload->overflow_counter;
+        }
+    }
+
+    /* keep not read data in buffer */
+    if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgBufferOverflow))==-1)
+    {
+		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message overflow\n");
+		return -1;
+    }
+
+    return 0;
+}
+
+int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    int j, sent;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1545,7 +1611,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
             /* except the listener and ourselves */
             if ((j != daemon_local->fp) && (j != daemon_local->sock))
             {
-                dlt_daemon_control_message_buffer_overflow(j, daemon, verbose);
+                dlt_daemon_control_message_buffer_overflow(j, daemon,daemon->overflow_counter,"", verbose);
                 sent=1;
                 /* Reset overflow state */
                 daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
@@ -1556,14 +1622,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
     /* message was not sent, so store it in ringbuffer */
     if (sent==0)
     {
-        dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_STORE_TO_BUFFER, daemon, verbose);
-    }
-
-    /* keep not read data in buffer */
-    if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader))==-1)
-    {
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message overflow\n");
-		return -1;
+        return -1;
     }
 
     return 0;
@@ -2004,6 +2063,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 				sent = 1;
 			}
 
+			/* check if overflow occurred */
+			if(daemon->overflow_counter)
+			{
+				if(dlt_daemon_send_message_overflow(daemon,daemon_local,verbose)==0)
+				{
+					sprintf(str,"%u messages discarded!\n",daemon->overflow_counter);
+					dlt_log(LOG_ERR, str);
+					daemon->overflow_counter=0;
+				}
+			}
+
             /* look if TCP connection to client is available */
             for (j = 0;((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&  (j <= daemon_local->fdmax); j++)
             {
@@ -2080,7 +2150,9 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
                                     0, 0
                                    )<0)
 				{
-					dlt_log(LOG_ERR,"Storage of message in history buffer failed! Message discarded.\n");
+                	if(daemon->overflow_counter==0)
+    					dlt_log(LOG_ERR,"Buffer full! Messages will be discarded.\n");
+                	daemon->overflow_counter+=1;
 				}
                 DLT_DAEMON_SEM_FREE();
             }
