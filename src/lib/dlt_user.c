@@ -1113,6 +1113,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
                 {
                 	dlt_log(LOG_ERR,"Buffer full! First message discarded!\n");
                 }
+                ret = DLT_RETURN_BUFFER_FULL;
 			}
 
             DLT_SEM_FREE();
@@ -1125,10 +1126,15 @@ int dlt_forward_msg(void *msgdata,size_t size)
 
         switch (ret)
         {
+        case DLT_RETURN_BUFFER_FULL:
+        {
+        	/* Buffer full */
+            dlt_user.overflow_counter += 1;
+        	return -1;
+        }
         case DLT_RETURN_PIPE_FULL:
         {
             /* data could not be written */
-            dlt_user.overflow_counter += 1;
             return -1;
         }
         case DLT_RETURN_PIPE_ERROR:
@@ -2207,7 +2213,7 @@ void dlt_user_trace_network_segmented_thread(void *unused)
                                 // Requeue if still not empty
                                 if ( dlt_user_queue_resend() < 0 )
                                 {
-                                    ;//dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n");
+                                    //dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n");
                                 }
                         }
                         free(data);
@@ -2747,7 +2753,7 @@ int dlt_user_log_init(DltContext *handle, DltContextData *log)
 
 int dlt_user_queue_resend(void)
 {
-	static unsigned int dlt_user_queue_resend_error_counter = 0;
+	static unsigned char dlt_user_queue_resend_error_counter = 0;
 
 	if(dlt_user.dlt_log_handle < 0)
 	{
@@ -2777,7 +2783,7 @@ int dlt_user_queue_resend(void)
     		// log error only when problem occurred first time
     		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
     	}
-    	dlt_user_queue_resend_error_counter++;
+    	dlt_user_queue_resend_error_counter = 1;
     	free(resend_data);
 		return -1;
 	}
@@ -2791,7 +2797,7 @@ int dlt_user_queue_resend(void)
 			snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
 			dlt_log(LOG_CRIT, str);
     	}
-    	dlt_user_queue_resend_error_counter++;
+    	dlt_user_queue_resend_error_counter = 1;
     	free(resend_data);
     	return -1;
     }

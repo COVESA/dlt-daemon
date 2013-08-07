@@ -183,7 +183,7 @@ typedef struct
 } PACKED DltUserControlMsgLogState;
 
 /**
- * This is the internal message content to get the lnumber of lost messages reported to the daemon.
+ * This is the internal message content to get the number of lost messages reported to the daemon.
  */
 typedef struct
 {

@@ -1619,7 +1619,7 @@ int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_l
         } /* if */
     } /* for */
 
-    /* message was not sent, so store it in ringbuffer */
+    /* message was not sent, so report to caller that sending failed */
     if (sent==0)
     {
         return -1;
