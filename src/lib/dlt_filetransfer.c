@@ -63,7 +63,7 @@
 #define MIN_TIMEOUT 20
 
 
-#define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES LONG_MAX
+#define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES INT_MAX
 
 
 //!Buffer for dlt file transfer. The size is defined by BUFFER_SIZE
