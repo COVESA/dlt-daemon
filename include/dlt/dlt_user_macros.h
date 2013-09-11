@@ -197,90 +197,82 @@ extern DltContext CONTEXT;
  * Add string parameter to the log messsage.
  * @param TEXT ASCII string
  */
-#define DLT_STRING(TEXT) ({ \
-        dlt_user_log_write_string(&log,TEXT); \
-	})
+#define DLT_STRING(TEXT) \
+        dlt_user_log_write_string(&log,TEXT)
 
 /**
  * Add utf8-encoded string parameter to the log messsage.
  * @param TEXT UTF8-encoded string
  */
-#define DLT_UTF8(TEXT) ({ \
-        dlt_user_log_write_utf8_string(&log,TEXT); \
-  })
+#define DLT_UTF8(TEXT) \
+        dlt_user_log_write_utf8_string(&log,TEXT)
 
 /**
  * Add boolean parameter to the log messsage.
  * @param BOOL_VAR Boolean value (mapped to uint8)
  */
-#define DLT_BOOL(BOOL_VAR) ({ \
-        dlt_user_log_write_bool(&log,BOOL_VAR); \
-	})
+#define DLT_BOOL(BOOL_VAR) \
+        dlt_user_log_write_bool(&log,BOOL_VAR)
 
 /**
  * Add float32 parameter to the log messsage.
  * @param FLOAT32_VAR Float32 value (mapped to float)
  */
-#define DLT_FLOAT32(FLOAT32_VAR) ({ \
-        dlt_user_log_write_float32(&log,FLOAT32_VAR); \
-	})
+#define DLT_FLOAT32(FLOAT32_VAR) \
+        dlt_user_log_write_float32(&log,FLOAT32_VAR)
 
 /**
  * Add float64 parameter to the log messsage.
  * @param FLOAT64_VAR Float64 value (mapped to double)
  */
-#define DLT_FLOAT64(FLOAT64_VAR) ({ \
-        dlt_user_log_write_float64(&log,FLOAT64_VAR); \
-	})
+#define DLT_FLOAT64(FLOAT64_VAR) \
+        dlt_user_log_write_float64(&log,FLOAT64_VAR)
 
 /**
  * Add integer parameter to the log messsage.
  * @param INT_VAR integer value
  */
-#define DLT_INT(INT_VAR) ({ \
-        dlt_user_log_write_int(&log,INT_VAR); \
-	})
-#define DLT_INT8(INT_VAR) ({ \
-        dlt_user_log_write_int8(&log,INT_VAR); \
-	})
-#define DLT_INT16(INT_VAR) ({ \
-        dlt_user_log_write_int16(&log,INT_VAR); \
-	})
-#define DLT_INT32(INT_VAR) ({ \
-        dlt_user_log_write_int32(&log,INT_VAR); \
-	})
-#define DLT_INT64(INT_VAR) ({ \
-        dlt_user_log_write_int64(&log,INT_VAR); \
-	})
+#define DLT_INT(INT_VAR) \
+        dlt_user_log_write_int(&log,INT_VAR)
+
+#define DLT_INT8(INT_VAR) \
+        dlt_user_log_write_int8(&log,INT_VAR)
+
+#define DLT_INT16(INT_VAR) \
+        dlt_user_log_write_int16(&log,INT_VAR)
+
+#define DLT_INT32(INT_VAR) \
+        dlt_user_log_write_int32(&log,INT_VAR)
+
+#define DLT_INT64(INT_VAR) \
+        dlt_user_log_write_int64(&log,INT_VAR)
 
 /**
  * Add unsigned integer parameter to the log messsage.
  * @param UINT_VAR unsigned integer value
  */
-#define DLT_UINT(UINT_VAR) ({ \
-        dlt_user_log_write_uint(&log,UINT_VAR); \
-	})
-#define DLT_UINT8(UINT_VAR) ({ \
-        dlt_user_log_write_uint8(&log,UINT_VAR); \
-	})
-#define DLT_UINT16(UINT_VAR) ({ \
-        dlt_user_log_write_uint16(&log,UINT_VAR); \
-	})
-#define DLT_UINT32(UINT_VAR) ({ \
-        dlt_user_log_write_uint32(&log,UINT_VAR); \
-	})
-#define DLT_UINT64(UINT_VAR) ({ \
-        dlt_user_log_write_uint64(&log,UINT_VAR); \
-	})
+#define DLT_UINT(UINT_VAR) \
+        dlt_user_log_write_uint(&log,UINT_VAR)
+
+#define DLT_UINT8(UINT_VAR) \
+        dlt_user_log_write_uint8(&log,UINT_VAR)
+
+#define DLT_UINT16(UINT_VAR) \
+        dlt_user_log_write_uint16(&log,UINT_VAR)
+
+#define DLT_UINT32(UINT_VAR) \
+        dlt_user_log_write_uint32(&log,UINT_VAR)
+
+#define DLT_UINT64(UINT_VAR) \
+        dlt_user_log_write_uint64(&log,UINT_VAR)
 
 /**
  * Add binary memory block to the log messages.
  * @param BUF pointer to memory block
  * @param LEN length of memory block
  */
-#define DLT_RAW(BUF,LEN) ({ \
-        dlt_user_log_write_raw(&log,BUF,LEN); \
-	})
+#define DLT_RAW(BUF,LEN) \
+        dlt_user_log_write_raw(&log,BUF,LEN)
 
 /**
  * Trace network message
