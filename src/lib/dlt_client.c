@@ -315,16 +315,15 @@ int dlt_client_main_loop(DltClient *client, void *data, int verbose)
     return 0;
 }
 
-int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size)
+int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size)
 {
 	DltMessage msg;
-        int ret;
-        int offset=0;
+    int ret;
+    int offset=0;
 
 	int32_t len;
 
-	if ((client==0) || (client->sock<0) || (apid==0) || (ctid==0) || (buffer==0) || (size==0) ||
-		(serviceID<DLT_SERVICE_ID_CALLSW_CINJECTION))
+	if ((client==0) || (client->sock<0) || (apid==0) || (ctid==0))
 	{
 		return -1;
 	}
@@ -336,7 +335,7 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 	}
 
 	/* prepare payload of data */
-	msg.datasize = sizeof(uint32_t) + sizeof(uint32_t) + size;
+	msg.datasize = size;
 	if (msg.databuffer && (msg.databuffersize < msg.datasize))
 	{
 		free(msg.databuffer);
@@ -352,11 +351,8 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 		return -1;
 	}
 
-	memcpy(msg.databuffer  , &serviceID,sizeof(serviceID));
-	offset+=sizeof(uint32_t);
-	memcpy(msg.databuffer+offset, &size, sizeof(size));
-	offset+=sizeof(uint32_t);
-	memcpy(msg.databuffer+offset, buffer, size);
+	/* copy data */
+	memcpy(msg.databuffer,payload,size);
 
 	/* prepare storage header */
     msg.storageheader = (DltStorageHeader*)msg.headerbuffer;
@@ -446,6 +442,37 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 	{
 		return -1;
 	}
+
+	return 0;
+}
+
+int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size)
+{
+	uint8_t *payload;
+	int offset;
+
+	payload = (uint8_t *) malloc(sizeof(uint32_t) + sizeof(uint32_t) + size);
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	offset = 0;
+	memcpy(payload  , &serviceID,sizeof(serviceID));
+	offset+=sizeof(uint32_t);
+	memcpy(payload+offset, &size, sizeof(size));
+	offset+=sizeof(uint32_t);
+	memcpy(payload+offset, buffer, size);
+
+	/* free message */
+	if (dlt_client_send_ctrl_msg(client,apid,ctid,payload,sizeof(uint32_t) + sizeof(uint32_t) + size)==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
 
 	return 0;
 }

@@ -120,6 +120,16 @@ int dlt_client_cleanup(DltClient *client, int verbose);
  */
 int dlt_client_main_loop(DltClient *client, void *data, int verbose);
 /**
+ * Send ancontrol message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param payload Buffer filled with control message data
+ * @param size Size of control message data
+ * @return negative value if there was an error
+ */
+int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size);
+/**
  * Send an injection message to the dlt daemon
  * @param client pointer to dlt client structure
  * @param apid application id

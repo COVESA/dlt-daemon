@@ -24,7 +24,12 @@ add_executable(dlt-receive ${dlt_receive_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-receive dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-receive PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-convert dlt-receive
+set(dlt_control_SRCS dlt-control.c)
+add_executable(dlt-control ${dlt_control_SRCS} ${dlt_most_SRCS})
+target_link_libraries(dlt-control dlt ${EXPAT_LIBRARIES})
+set_target_properties(dlt-control PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS dlt-convert dlt-receive dlt-control
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
