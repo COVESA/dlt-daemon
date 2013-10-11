@@ -540,6 +540,125 @@ int dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint
 	return 0;
 }
 
+int dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel)
+{
+	DltServiceSetDefaultLogLevel *req;
+	uint8_t *payload;
+
+	payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	req = (DltServiceSetDefaultLogLevel *) payload;
+
+	req->service_id = DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
+	req->log_level=defaultLogLevel;
+	dlt_set_id(req->com,"remo");
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel))==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
+
+	return 0;
+}
+
+int dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus)
+{
+	DltServiceSetDefaultLogLevel *req;
+	uint8_t *payload;
+
+	payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	req = (DltServiceSetDefaultLogLevel *) payload;
+
+	req->service_id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
+	req->log_level=defaultTraceStatus;
+	dlt_set_id(req->com,"remo");
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel))==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
+
+	return 0;
+}
+
+int dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets)
+{
+	DltServiceSetVerboseMode *req;
+	uint8_t *payload;
+
+	payload = (uint8_t *) malloc(sizeof(DltServiceSetVerboseMode));
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	req = (DltServiceSetVerboseMode *) payload;
+
+	req->service_id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
+	req->new_status=timingPakets;
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetVerboseMode))==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
+
+	return 0;
+}
+
+int dlt_client_send_store_config(DltClient *client)
+{
+	uint32_t service_id;
+
+	service_id = DLT_SERVICE_ID_STORE_CONFIG;
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t))==-1)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
+int dlt_client_send_reset_to_factory_default(DltClient *client)
+{
+	uint32_t service_id;
+
+	service_id = DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT;
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t))==-1)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
 int dlt_client_setbaudrate(DltClient *client, int baudrate)
 {
 	if (client==0)

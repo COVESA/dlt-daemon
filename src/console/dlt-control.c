@@ -79,6 +79,11 @@ typedef struct {
     int tvalue;
     int lvalue;
     int rvalue;
+    int dvalue;
+    int fvalue;
+    int ivalue;
+    int oflag;
+    int gflag;
 
     int bvalue;
     char ecuid[4];
@@ -166,8 +171,13 @@ void usage()
     printf("  -m message    Control message injection in ASCII\n");
     printf("  -x message    Control message injection in Hex e.g. 'ad 01 24 ef'\n");
     printf("  -t milliseconds Timeout to terminate application (Default:1000)'\n");
-    printf("  -l loglevel	 Set the log level (0=off - 5=verbose,255=default)\n");
-    printf("  -r tracestatus Set the trace status (0=off - 1=on,255=default\n");
+    printf("  -l loglevel	  Set the log level (0=off - 5=verbose,255=default)\n");
+    printf("  -r tracestatus  Set the trace status (0=off - 1=on,255=default)\n");
+    printf("  -d loglevel	  Set the default log level (0=off - 5=verbose)\n");
+    printf("  -f tracestatus  Set the default trace status (0=off - 1=on)\n");
+    printf("  -i enable  	  Enable timing packets (0=off - 1=on)\n");
+    printf("  -o 		  	  Store configuration\n");
+    printf("  -g 		  	  Reset to factory default\n");
 }
 
 /**
@@ -194,11 +204,16 @@ int main(int argc, char* argv[])
     dltdata.tvalue = 1000;
     dltdata.lvalue = -1;
     dltdata.rvalue = -1;
+    dltdata.dvalue = -1;
+    dltdata.fvalue = -1;
+    dltdata.ivalue = -1;
+    dltdata.oflag = -1;
+    dltdata.gflag = -1;
 
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:")) != -1)
+    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:og")) != -1)
         switch (c)
         {
         case 'v':
@@ -265,6 +280,31 @@ int main(int argc, char* argv[])
         case 'r':
 			{
             	dltdata.rvalue = atoi(optarg);;
+            	break;
+			}
+        case 'd':
+			{
+            	dltdata.dvalue = atoi(optarg);;
+            	break;
+			}
+        case 'f':
+			{
+            	dltdata.fvalue = atoi(optarg);;
+            	break;
+			}
+        case 'i':
+			{
+            	dltdata.ivalue = atoi(optarg);;
+            	break;
+			}
+        case 'o':
+			{
+            	dltdata.oflag = 1;
+            	break;
+			}
+        case 'g':
+			{
+            	dltdata.gflag = 1;
             	break;
 			}
 
@@ -397,9 +437,47 @@ int main(int argc, char* argv[])
     		printf("Set trace status:\n");
     		printf("AppId: %s\n",dltdata.avalue);
     		printf("ConId: %s\n",dltdata.cvalue);
-    		printf("TraceStatus:: %d\n",dltdata.rvalue);
+    		printf("TraceStatus: %d\n",dltdata.rvalue);
     		/* send control message in*/
     		dlt_client_send_trace_status(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.rvalue);
+    	}
+    	else if(dltdata.dvalue!=-1)
+    	{
+    		/* default log level */
+    		printf("Set default log level:\n");
+    		printf("Loglevel: %d\n",dltdata.dvalue);
+    		/* send control message in*/
+    		dlt_client_send_default_log_level(&dltclient,dltdata.dvalue);
+    	}
+    	else if(dltdata.rvalue!=-1)
+    	{
+    		/* default trace status */
+    		printf("Set default trace status:\n");
+    		printf("TraceStatus: %d\n",dltdata.rvalue);
+    		/* send control message in*/
+    		dlt_client_send_default_trace_status(&dltclient,dltdata.rvalue);
+    	}
+    	else if(dltdata.ivalue!=-1)
+    	{
+    		/* timing pakets */
+    		printf("Set timing pakets:\n");
+    		printf("Timing packets: %d\n",dltdata.ivalue);
+    		/* send control message in*/
+    		dlt_client_send_timing_pakets(&dltclient,dltdata.ivalue);
+    	}
+    	else if(dltdata.oflag!=-1)
+    	{
+    		/* default trace status */
+    		printf("Store config\n");
+    		/* send control message in*/
+    		dlt_client_send_store_config(&dltclient);
+    	}
+    	else if(dltdata.gflag!=-1)
+    	{
+    		/* reset to factory default */
+    		printf("Reset to factory default\n");
+    		/* send control message in*/
+    		dlt_client_send_reset_to_factory_default(&dltclient);
     	}
 
         /* Dlt Client Main Loop */

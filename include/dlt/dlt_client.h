@@ -140,8 +140,58 @@ int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t 
  * @return negative value if there was an error
  */
 int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size);
+/**
+ * Send an set  log level message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param SendLogLevel Log Level
+ * @return negative value if there was an error
+ */
 int dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
+/**
+ * Send a set trace status message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param defaultTraceStatus Default Trace Status
+ * @return negative value if there was an error
+ */
 int dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus);
+/**
+ * Send the default log level to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param defaultLogLevel Default Log Level
+ * @return negative value if there was an error
+ */
+int dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel);
+/**
+ * Send the default trace status to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param defaultTraceStatus Default Trace Status
+ * @return negative value if there was an error
+ */
+int dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus);
+/**
+ * Send the timing pakets status to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param timingPakets Timing pakets enabled
+ * @return negative value if there was an error
+ */
+int dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets);
+/**
+ * Send the store config command to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_send_store_config(DltClient *client);
+/**
+ * Send the reset to factory default command to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_send_reset_to_factory_default(DltClient *client);
+
 /**
  * Set baudrate within dlt client structure
  * @param client pointer to dlt client structure
