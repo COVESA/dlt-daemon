@@ -140,6 +140,8 @@ int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t 
  * @return negative value if there was an error
  */
 int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size);
+int dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
+int dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus);
 /**
  * Set baudrate within dlt client structure
  * @param client pointer to dlt client structure

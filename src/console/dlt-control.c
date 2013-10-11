@@ -77,6 +77,8 @@ typedef struct {
     char *mvalue;
     char *xvalue;
     int tvalue;
+    int lvalue;
+    int rvalue;
 
     int bvalue;
     char ecuid[4];
@@ -164,6 +166,8 @@ void usage()
     printf("  -m message    Control message injection in ASCII\n");
     printf("  -x message    Control message injection in Hex e.g. 'ad 01 24 ef'\n");
     printf("  -t milliseconds Timeout to terminate application (Default:1000)'\n");
+    printf("  -l loglevel	 Set the log level (0=off - 5=verbose,255=default)\n");
+    printf("  -r tracestatus Set the trace status (0=off - 1=on,255=default\n");
 }
 
 /**
@@ -188,11 +192,13 @@ int main(int argc, char* argv[])
     dltdata.mvalue = 0;
     dltdata.xvalue = 0;
     dltdata.tvalue = 1000;
+    dltdata.lvalue = -1;
+    dltdata.rvalue = -1;
 
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:")) != -1)
+    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:")) != -1)
         switch (c)
         {
         case 'v':
@@ -249,6 +255,16 @@ int main(int argc, char* argv[])
         case 't':
 			{
             	dltdata.tvalue = atoi(optarg);;
+            	break;
+			}
+        case 'l':
+			{
+            	dltdata.lvalue = atoi(optarg);;
+            	break;
+			}
+        case 'r':
+			{
+            	dltdata.rvalue = atoi(optarg);;
             	break;
 			}
 
@@ -365,6 +381,26 @@ int main(int argc, char* argv[])
     		/* send control message in hex */
     		dlt_client_send_inject_msg(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.svalue,buffer,size);
     	}
+    	else if(dltdata.lvalue!=-1 && dltdata.avalue && dltdata.cvalue)
+    	{
+    		/* log level */
+    		printf("Set log level:\n");
+    		printf("AppId: %s\n",dltdata.avalue);
+    		printf("ConId: %s\n",dltdata.cvalue);
+    		printf("Loglevel: %d\n",dltdata.lvalue);
+    		/* send control message*/
+    		dlt_client_send_log_level(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.lvalue);
+    	}
+    	else if(dltdata.rvalue!=-1 && dltdata.avalue && dltdata.cvalue)
+    	{
+    		/* trace status */
+    		printf("Set trace status:\n");
+    		printf("AppId: %s\n",dltdata.avalue);
+    		printf("ConId: %s\n",dltdata.cvalue);
+    		printf("TraceStatus:: %d\n",dltdata.rvalue);
+    		/* send control message in*/
+    		dlt_client_send_trace_status(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.rvalue);
+    	}
 
         /* Dlt Client Main Loop */
         //dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
@@ -385,14 +421,12 @@ int main(int argc, char* argv[])
 
 int dlt_receive_message_callback(DltMessage *message, void *data)
 {
-	DltReceiveData *dltdata;
 
     if ((message==0) || (data==0))
 	{
         return -1;
 	}
 
-    dltdata = (DltReceiveData*)data;
 
     return 0;
 }

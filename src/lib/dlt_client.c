@@ -319,7 +319,6 @@ int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t 
 {
 	DltMessage msg;
     int ret;
-    int offset=0;
 
 	int32_t len;
 
@@ -467,6 +466,70 @@ int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32
 
 	/* free message */
 	if (dlt_client_send_ctrl_msg(client,apid,ctid,payload,sizeof(uint32_t) + sizeof(uint32_t) + size)==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
+
+	return 0;
+}
+
+int dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel)
+{
+	DltServiceSetLogLevel *req;
+	uint8_t *payload;
+
+	payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	req = (DltServiceSetLogLevel *) payload;
+
+	req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+	dlt_set_id(req->apid,apid);
+	dlt_set_id(req->ctid,ctid);
+	req->log_level=logLevel;
+	dlt_set_id(req->com,"remo");
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel))==-1)
+	{
+		free(payload);
+		return -1;
+	}
+
+	free(payload);
+
+	return 0;
+}
+
+int dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
+{
+	DltServiceSetLogLevel *req;
+	uint8_t *payload;
+
+	payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
+
+	if(payload==0)
+	{
+		return -1;
+	}
+
+	req = (DltServiceSetLogLevel *) payload;
+
+	req->service_id = DLT_SERVICE_ID_SET_TRACE_STATUS;
+	dlt_set_id(req->apid,apid);
+	dlt_set_id(req->ctid,ctid);
+	req->log_level=traceStatus;
+	dlt_set_id(req->com,"remo");
+
+		/* free message */
+	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel))==-1)
 	{
 		free(payload);
 		return -1;
