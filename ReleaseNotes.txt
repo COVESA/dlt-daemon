@@ -4,12 +4,35 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.10.0
+2.9.1 RELEASE
 
 Changes
 -------
-2.10.0
+2.9.1
 
+   * Implementation of command line tool dlt-control.
+   * Fix file transfer bug.
+   * Bug 44 - Don't print "Buffer full" message from DLT daemon for each trace.
+   * Yocto fix in build builds.
+   * Fixed: security issue in dlt-system-shell regarding strncpy.
+   * Fixed: Security Issue by Command Injection in DLT System.
+   * systemd/CMakeLists: Remove SYSTEMD_CONFIGURATIONS_FILES_DIR existance check.
+   * Bug 85 - Include of dlt.h leads to compiler warning.
+   * Bug 84 - Adding utf8 support to dlt-daemon, dlt-viewer. Modified patch, originally provided by Stefan Vacek.
+   * systemd journal support added.
+   * spec file does not package man files when cmake is run with -DWITH_DOC=OFF
+   * added length check for paths of files to be transferred
+   * Semaphores and Pointer passing insteasd by value and otehr coverity issue fixes   
+   * Fixed several issues in DLT filetransfer.
+   * added creation date and a simple hash on the file name for to improve the uniqueness of getFileSerialNumber
+   * modified filetransfer to be more robust in restarting transfers
+   * Remove dangling DLT_SEM_FREE from dlt_user_queue_resend
+   * Unifed ECU version sending functions
+   * Refinements due to problems reported by static code analysis
+   * Spec file does no more package man files when cmake is run with -DWITH_DOC=OFF
+   * Made the APID strings in dlt-test-multi-process counting from 00-99
+   * Added creation date and a simple hash on the file name for to improve the uniqueness of getFileSerialNumber
+   * File Transfer: improved robustness in case of restarted ECU/dlt-system with interrupted transfers
 
 2.9.0
 
