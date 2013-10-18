@@ -16,7 +16,7 @@
 
 if(WITH_SYSTEMD)
 
-    set(SYSTEMD_CONFIGURATIONS_FILES_DIR "/lib/systemd/system" )
+    set(SYSTEMD_CONFIGURATIONS_FILES_DIR ${CMAKE_INSTALL_PREFIX}/lib/systemd/system )
         
     if(WITH_SYSTEMD_WATCHDOG)
         set( DLT_WatchdogSec 2 )
