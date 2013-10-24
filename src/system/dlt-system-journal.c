@@ -106,6 +106,7 @@ void journal_clean_strcpy(const char* src,char* target,int max_size)
 		}
 		src++;
 	}
+	*target=0;
 }
 
 void journal_thread(void *v_conf)
