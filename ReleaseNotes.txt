@@ -4,10 +4,16 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.9.1 RELEASE
+2.9.2 ALPHA
 
 Changes
 -------
+
+2.9.2
+
+   * Fix: Systemd Journal Adapter provides corrupted output.
+   * Fix: Install Example service file only when example enabled
+
 2.9.1
 
    * Implementation of command line tool dlt-control.
