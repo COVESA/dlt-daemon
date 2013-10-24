@@ -49,7 +49,11 @@ if(WITH_SYSTEMD)
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-system.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-receive.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
-    install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+
+    if(WITH_DLT_EXAMPLES)
+    	install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+    endif(WITH_DLT_EXAMPLES)
+
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-adaptor-udp.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     message(STATUS "Unit files will be installed to ${SYSTEMD_CONFIGURATIONS_FILES_DIR} after make install" )
      
