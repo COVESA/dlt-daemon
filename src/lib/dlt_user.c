@@ -182,12 +182,21 @@ int dlt_init(void)
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
     
-    ret=mkfifo(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH );
+    ret=mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
         sprintf(str,"Loging disabled, FIFO user %s cannot be created!\n",filename);
         dlt_log(LOG_WARNING, str);
         /* return 0; */ /* removed to prevent error, when FIFO already exists */
+    }
+
+    // S_IWGRP cannot be set by mkfifo (???), let's reassign right bits
+    ret=chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
+    if (ret==-1)
+    {
+        sprintf(str,"FIFO user %s cannot be chmoded!\n", DLT_USER_DIR);
+        dlt_log(LOG_ERR, str);
+        return -1;
     }
 
     dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);

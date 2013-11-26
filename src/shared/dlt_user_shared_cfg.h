@@ -70,8 +70,8 @@
 /* Changable */
 /*************/
 
-/* Directory, whre the named pipes to the DLT daemon resides */
-#define DLT_USER_DIR  "/tmp"
+/* Directory, where the named pipes to the DLT daemon resides */
+#define DLT_USER_DIR  "/tmp/dltpipes"
 
 /* Name of named pipe to DLT daemon */
 #define DLT_USER_FIFO "/tmp/dlt"
