@@ -83,6 +83,7 @@
 #include <sys/uio.h> /* writev() */
 
 #include <limits.h>
+#include <sys/prctl.h>
 
 #include "dlt_user.h"
 #include "dlt_user_shared.h"
@@ -2207,6 +2208,8 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 	/* Unused on purpose. */
 	(void) unused;
 
+    prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
+
 	s_segmented_data *data;
 
         while(1)
@@ -2741,6 +2744,7 @@ int dlt_disable_local_print(void)
 
 void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
 {
+    prctl(PR_SET_NAME, "dlt_receiver", 0, 0, 0);
     while (1)
     {
         /* Check for new messages from DLT daemon */
