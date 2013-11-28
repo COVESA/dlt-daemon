@@ -160,11 +160,14 @@ extern DltContext CONTEXT;
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
 	do { \
-		DltContextData log; \
-		if (dlt_user_log_write_start(&CONTEXT,&log,LOGLEVEL)>0) \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
 		{ \
-            ARGS; \
-            dlt_user_log_write_finish(&log); \
+			DltContextData log; \
+			if (dlt_user_log_write_start(&CONTEXT,&log,LOGLEVEL)>0) \
+			{ \
+				ARGS; \
+				dlt_user_log_write_finish(&log); \
+			} \
 		} \
 	} while(0)
 #endif
@@ -184,11 +187,14 @@ extern DltContext CONTEXT;
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
 	do { \
-		DltContextData log; \
-		if (dlt_user_log_write_start_id(&CONTEXT,&log,LOGLEVEL,MSGID)>0) \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
 		{ \
-            ARGS; \
-            dlt_user_log_write_finish(&log); \
+			DltContextData log; \
+			if (dlt_user_log_write_start_id(&CONTEXT,&log,LOGLEVEL,MSGID)>0) \
+			{ \
+				ARGS; \
+				dlt_user_log_write_finish(&log); \
+			} \
 		} \
 	} while(0)
 #endif
@@ -285,7 +291,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-        dlt_user_trace_network(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+    	{ \
+    		dlt_user_trace_network(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+		} \
     }while(0)
 
 /**
@@ -299,7 +308,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK_TRUNCATED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-        dlt_user_trace_network_truncated(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD, 1); \
+    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+    	{ \
+    		dlt_user_trace_network_truncated(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD, 1); \
+		} \
     }while(0)
 
 /**
@@ -313,7 +325,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK_SEGMENTED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-        dlt_user_trace_network_segmented(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+    	{ \
+    		dlt_user_trace_network_segmented(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+    	} \
     }while(0)
 
 /**
@@ -324,7 +339,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_STRING(CONTEXT,LOGLEVEL,TEXT) \
     do { \
-        dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
+		} \
     } while(0)
 
 /**
@@ -336,7 +354,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_STRING_INT(CONTEXT,LOGLEVEL,TEXT,INT_VAR) \
 	do { \
-        dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+		} \
 	} while(0)
 
 /**
@@ -348,7 +369,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_STRING_UINT(CONTEXT,LOGLEVEL,TEXT,UINT_VAR) \
 	do { \
-		dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
+		} \
 	} while(0)
 
 /**
@@ -359,7 +383,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_UINT(CONTEXT,LOGLEVEL,UINT_VAR) \
 	do { \
-		dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
+		} \
 	} while(0)
 
 /**
@@ -370,7 +397,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_INT(CONTEXT,LOGLEVEL,INT_VAR) \
 	do { \
-		dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
+		} \
 	} while(0)
 
 /**
@@ -382,7 +412,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_RAW(CONTEXT,LOGLEVEL,BUF,LEN) \
 	do { \
-		dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
+		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+		{ \
+			dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
+		} \
 	} while(0)
 
 /**

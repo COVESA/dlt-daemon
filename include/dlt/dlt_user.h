@@ -161,6 +161,8 @@ typedef struct
 {
 	char contextID[4];                            /**< context id */
 	int32_t log_level_pos;                        /**< offset in user-application context field */
+	int8_t *log_level_ptr;                        /**< pointer to the log level */
+	int8_t *trace_status_ptr;                     /**< pointer to the trace status */
    	uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
@@ -191,7 +193,9 @@ typedef struct
 {
     char contextID[DLT_ID_SIZE];      /**< Context ID */
     int8_t log_level;                 /**< Log level */
+    int8_t *log_level_ptr;             /**< Ptr to the log level */
     int8_t trace_status;              /**< Trace status */
+    int8_t *trace_status_ptr;             /**< Ptr to the trace status */
     char *context_description;        /**< description of context */
     DltUserInjectionCallback *injection_table; /**< Table with pointer to injection functions and service ids */
     uint32_t nrcallbacks;

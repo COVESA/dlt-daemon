@@ -788,6 +788,9 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
                 dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
                 dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
+                dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+                dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+
                 dlt_user.dlt_ll_ts[i].context_description = 0;
 
                 dlt_user.dlt_ll_ts[i].injection_table = 0;
@@ -829,6 +832,9 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
                     dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
                     dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
+                    dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+                    dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+
                     dlt_user.dlt_ll_ts[i].context_description = 0;
 
                     dlt_user.dlt_ll_ts[i].injection_table = 0;
@@ -863,6 +869,25 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
         }
 
+        if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+        {
+        	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr = malloc(sizeof(int8_t));
+        	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+        	{
+            	DLT_SEM_FREE();
+            	return -1;
+        	}
+        }
+        if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+        {
+        	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr = malloc(sizeof(int8_t));
+        	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+        	{
+            	DLT_SEM_FREE();
+            	return -1;
+        	}
+        }
+
         if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
         {
             dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
@@ -878,7 +903,13 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
         dlt_set_id(handle->contextID, contextid);
         handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
 
+        handle->log_level_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr;
+        handle->trace_status_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr;
+
         log.context_description = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description;
+
+        *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
+        *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
 
         if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
         {
@@ -960,6 +991,9 @@ int dlt_unregister_context(DltContext *handle)
 
     DLT_SEM_LOCK();
 
+    handle->log_level_ptr = 0;
+    handle->trace_status_ptr = 0;
+
     if (dlt_user.dlt_ll_ts)
     {
         /* Clear and free local stored context information */
@@ -971,6 +1005,18 @@ int dlt_unregister_context(DltContext *handle)
         if (dlt_user.dlt_ll_ts[handle->log_level_pos].context_description!=0)
         {
             free(dlt_user.dlt_ll_ts[handle->log_level_pos].context_description);
+        }
+
+        if (dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_ptr!=0)
+        {
+            free(dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_ptr);
+            dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_ptr = 0;
+        }
+
+        if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status_ptr!=0)
+        {
+            free(dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status_ptr);
+            dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status_ptr = 0;
         }
 
         dlt_user.dlt_ll_ts[handle->log_level_pos].context_description = 0;
@@ -1031,6 +1077,10 @@ int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType
     {
         dlt_user.dlt_ll_ts[i].log_level = loglevel;
         dlt_user.dlt_ll_ts[i].trace_status = tracestatus;
+        if(dlt_user.dlt_ll_ts[i].log_level_ptr)
+        	*(dlt_user.dlt_ll_ts[i].log_level_ptr) = loglevel;
+        if(dlt_user.dlt_ll_ts[i].trace_status_ptr)
+        	*(dlt_user.dlt_ll_ts[i].trace_status_ptr) = tracestatus;
     }
 
     DLT_SEM_FREE();
@@ -1196,11 +1246,8 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
         return -1;
     }
 
-    DLT_SEM_LOCK();
-
-    if ((loglevel<=(int)(dlt_user.dlt_ll_ts[handle->log_level_pos].log_level) ) && (loglevel!=0))
+    if (handle->log_level_ptr && (loglevel<=(int)*(handle->log_level_ptr) ) && (loglevel!=0))
     {
-        DLT_SEM_FREE();
 		log->args_num = 0;
     	log->log_level = loglevel;
 
@@ -1220,11 +1267,6 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
         }
         else log->size=0;
         return 1;
-    }
-    else
-    {
-        DLT_SEM_FREE();
-        return 0;
     }
 
     return -1;
@@ -1973,17 +2015,14 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
 		return -1;
     }
 
-    DLT_SEM_LOCK();
 
     if (dlt_user.dlt_ll_ts==0)
     {
-        DLT_SEM_FREE();
         return -1;
     }
 
-    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    if (handle->trace_status_ptr && *(handle->trace_status_ptr)==DLT_TRACE_STATUS_ON)
     {
-        DLT_SEM_FREE();
 
         log.args_num = 0;
         log.trace_status = nw_trace_type;
@@ -2039,10 +2078,6 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         /* Send log */
         return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
     }
-    else
-    {
-        DLT_SEM_FREE();
-    }
     return 0;
 }
 
@@ -2066,17 +2101,13 @@ int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, Dl
 		return -1;
     }
 
-    DLT_SEM_LOCK();
-
     if (dlt_user.dlt_ll_ts==0)
     {
-        DLT_SEM_FREE();
         return -1;
     }
 
-    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    if (handle->trace_status_ptr && *(handle->trace_status_ptr)==DLT_TRACE_STATUS_ON)
     {
-        DLT_SEM_FREE();
 
         log.args_num = 0;
         log.trace_status = nw_trace_type;
@@ -2109,10 +2140,6 @@ int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, Dl
         /* Send log */
         return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
     }
-    else
-    {
-        DLT_SEM_FREE();
-    }
 
     /* Allow other threads to log between chunks */
 	pthread_yield();
@@ -2135,17 +2162,13 @@ int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNet
 
 
 
-    DLT_SEM_LOCK();
-
     if (dlt_user.dlt_ll_ts==0)
     {
-        DLT_SEM_FREE();
         return -1;
     }
 
-    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    if (handle->trace_status_ptr && *(handle->trace_status_ptr)==DLT_TRACE_STATUS_ON)
     {
-        DLT_SEM_FREE();
 
         log.args_num = 0;
         log.trace_status = nw_trace_type;
@@ -2165,10 +2188,6 @@ int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNet
 
         /* Send log */
         return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
-    }
-    else
-    {
-        DLT_SEM_FREE();
     }
     return 0;
 }
@@ -2389,17 +2408,13 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
 
     */
 
-    DLT_SEM_LOCK();
-
     if (dlt_user.dlt_ll_ts==0)
     {
-        DLT_SEM_FREE();
         return -1;
     }
 
-    if (dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status==DLT_TRACE_STATUS_ON)
+    if (handle->trace_status_ptr && *(handle->trace_status_ptr)==DLT_TRACE_STATUS_ON)
     {
-        DLT_SEM_FREE();
 
         log.args_num = 0;
         log.trace_status = nw_trace_type;
@@ -2466,10 +2481,6 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
 
         /* Send log */
         return dlt_user_log_send_log(&log, DLT_TYPE_NW_TRACE);
-    }
-    else
-    {
-        DLT_SEM_FREE();
     }
 
     return 0;
@@ -3526,6 +3537,10 @@ int dlt_user_log_check_user_message(void)
                             {
                                 dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level = usercontextll->log_level;
                                 dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status = usercontextll->trace_status;
+                                if(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr)
+                                	*(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr) = usercontextll->log_level;
+                                if(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr)
+                                	*(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr) = usercontextll->trace_status;
                             }
                         }
 
