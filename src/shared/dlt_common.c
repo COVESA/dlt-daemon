@@ -2441,13 +2441,15 @@ int dlt_buffer_free_static(DltBuffer *buf)
 
 int dlt_buffer_free_dynamic(DltBuffer *buf)
 {
-	if(!buf->mem) {
+	if(!buf->shm) {
 		// buffer not initialised
 		dlt_log(LOG_ERR,"Buffer: Buffer not initialised\n");
 		return -1; /* ERROR */
 	}
 
 	free(buf->shm);
+	buf->shm = 0;
+	buf->mem = 0;
 	
 	return 0;
 }
@@ -2603,7 +2605,7 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	int write, read, count;
 	DltBufferBlockHead head;
 	
-	if(!buf->mem) {
+	if(!buf->shm) {
 		// buffer not initialised
 		dlt_log(LOG_ERR,"Buffer: Buffer not initialised\n");
 		return -1; /* ERROR */
@@ -2669,7 +2671,7 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 	char head_compare[] = DLT_BUFFER_HEAD;
 	DltBufferBlockHead head;
 	
-	if(!buf->mem) {
+	if(!buf->shm) {
 		// shm not initialised
 		dlt_log(LOG_ERR,"Buffer: SHM not initialised\n");
 		return -1; /* ERROR */
@@ -2807,6 +2809,10 @@ void dlt_buffer_status(DltBuffer *buf)
 	int write, read, count;
 	char str[256];
 
+    /* check if buffer available */
+    if(!buf->shm)
+        return;
+
 	write = ((int*)(buf->shm))[0];
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
@@ -2828,6 +2834,10 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
 {
 	int write, read, count;
 
+    /* check if buffer available */
+    if(!buf->shm)
+        return 0;
+
 	write = ((int*)(buf->shm))[0];
 	read = ((int*)(buf->shm))[1];
 	count = ((int*)(buf->shm))[2];
@@ -2843,7 +2853,11 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
 
 int dlt_buffer_get_message_count(DltBuffer *buf)
 {
-	return ((int*)(buf->shm))[2];
+    /* check if buffer available */
+    if(!buf->shm)
+        return 0;
+
+    return ((int*)(buf->shm))[2];
 }
 
 #if !defined (__WIN32__)
