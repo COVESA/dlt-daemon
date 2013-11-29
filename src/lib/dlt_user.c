@@ -92,6 +92,7 @@
 
 static DltUser dlt_user;
 static int dlt_user_initialised = 0;
+static int dlt_user_freeing = 0;
 
 static char str[DLT_USER_BUFFER_LENGTH];
 
@@ -161,6 +162,15 @@ int dlt_init(void)
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
     int ret;
 
+    // process is exiting. Do not allocate new resources.
+    if (dlt_user_freeing != 0)
+    {
+        // return negative value, to stop the current log
+        return -1;
+    }
+
+    // WARNING: multithread unsafe !
+    // Another thread will check that dlt_user_initialised != 0, but the lib is not initialised !
     dlt_user_initialised = 1;
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
@@ -451,6 +461,9 @@ void dlt_user_atexit_handler(void)
 {
     if (dlt_user_initialised==0)
     {
+        dlt_log(LOG_WARNING, "dlt_user_atexit_handler dlt_user_initialised==0\n");
+        // close file
+        dlt_log_free();
         return;
     }
 
@@ -502,15 +515,29 @@ int dlt_free(void)
     uint32_t i;
 	char filename[DLT_USER_MAX_FILENAME_LENGTH];
 
+    if( dlt_user_freeing != 0 )
+        // resources are already being freed. Do nothing and return.
+        return -1;
+
+    // library is freeing its resources. Avoid to allocate it in dlt_init()
+    dlt_user_freeing = 1;
+
     if (dlt_user_initialised==0)
     {
+        dlt_user_freeing = 0;
         return -1;
     }
+    dlt_user_initialised = 0;
 
     if (dlt_receiverthread_handle)
     {
     	/* Ignore return value */
         pthread_cancel(dlt_receiverthread_handle);
+    }
+
+    if (dlt_user.dlt_segmented_nwt_handle)
+    {
+    	pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
     }
 
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
@@ -536,10 +563,14 @@ int dlt_free(void)
     }
 
 	/* Ignore return value */
+    DLT_SEM_LOCK();
     dlt_receiver_free(&(dlt_user.receiver));
+    DLT_SEM_FREE();
 
 	/* Ignore return value */
+    DLT_SEM_LOCK();
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
+    DLT_SEM_FREE();
 
     DLT_SEM_LOCK();
     if (dlt_user.dlt_ll_ts)
@@ -561,11 +592,6 @@ int dlt_free(void)
     }
     DLT_SEM_FREE();
 
-    if (dlt_user.dlt_segmented_nwt_handle)
-    {
-    	pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
-    }
-
     char queue_name[NAME_MAX];
     sprintf(queue_name, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
 
@@ -577,7 +603,10 @@ int dlt_free(void)
     mq_close(dlt_user.dlt_segmented_queue_read_handle);
     mq_unlink(queue_name);
 
-    dlt_user_initialised = 0;
+    // allow the user app to do dlt_init() again.
+    // The flag is unset only to keep almost the same behaviour as before, on EntryNav
+    // This should be removed for other projects (see documentation of dlt_free()
+    dlt_user_freeing = 0;
 
     return 0;
 }
@@ -1081,6 +1110,11 @@ int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType
     */
 
     DLT_SEM_LOCK();
+    if (dlt_user.dlt_ll_ts==0)
+    {
+        DLT_SEM_FREE();
+        return -1;
+    }
 
     /* Update local structures */
     for (i=0; i<dlt_user.dlt_ll_ts_num_entries;i++)
@@ -1251,8 +1285,11 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
 		return -1;
     }
 
+    DLT_SEM_LOCK();
+
     if (dlt_user.dlt_ll_ts==0)
     {
+        DLT_SEM_FREE();
         return -1;
     }
 
