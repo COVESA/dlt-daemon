@@ -221,6 +221,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.loggingMode = 0;
 	daemon_local->flags.loggingLevel = 6;
 	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename));
+	daemon_local->timeoutOnSend = 4;
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 
@@ -342,6 +343,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						else if(strcmp(token,"LoggingFilename")==0)
 						{
                                                         strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename) - 1);
+							//printf("Option: %s=%s\n",token,value);
+						}
+                       	else if(strcmp(token,"TimeOutOnSend")==0)
+						{
+							daemon_local->timeoutOnSend = atoi(value);
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SharedMemorySize")==0)
@@ -1198,6 +1204,13 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     /* This prevents sending messages to wrong file descriptor */
     dlt_daemon_applications_invalidate_fd(daemon,in_sock,verbose);
     dlt_daemon_contexts_invalidate_fd(daemon,in_sock,verbose);
+
+    /* Set socket timeout in reception */
+    struct timeval timeout_send;
+    timeout_send.tv_sec = daemon_local->timeoutOnSend;
+    timeout_send.tv_usec = 0;
+    if (setsockopt (in_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout_send, sizeof(timeout_send)) < 0)
+        dlt_log(LOG_ERR, "setsockopt failed\n");
 
     //sprintf("str,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
     //dlt_log(str);

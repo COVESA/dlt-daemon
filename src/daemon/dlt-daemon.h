@@ -134,6 +134,7 @@ typedef struct
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
     uint32_t lastOperationTime;
 #endif
+    int timeoutOnSend;
 } DltDaemonLocal;
 
 typedef struct
