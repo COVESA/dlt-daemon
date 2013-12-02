@@ -195,5 +195,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
 void dlt_daemon_send_timingpacket(DltDaemon *daemon, DltDaemonLocal *daemon_local);
 void dlt_daemon_send_ecuversion(DltDaemon *daemon, DltDaemonLocal *daemon_local);
 
+int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 #endif /* DLT_DAEMON_H */
 

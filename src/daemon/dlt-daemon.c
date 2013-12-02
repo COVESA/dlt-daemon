@@ -1233,29 +1233,8 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
 
     if (dlt_receiver_receive_socket(&(daemon_local->receiverSock))<=0)
     {
-        close(daemon_local->receiverSock.fd);        
-        FD_CLR(daemon_local->receiverSock.fd, &(daemon_local->master));
-        daemon_local->receiverSock.fd = -1;
-
-        if (daemon_local->client_connections)
-        {
-            daemon_local->client_connections--;
-        }
-
-		if(daemon_local->client_connections==0)
-		{
-			/* send new log state to all applications */
-			daemon->state = 0;		
-			dlt_daemon_user_send_all_log_state(daemon,verbose);
-		}
-				
-        if (daemon_local->flags.vflag)
-        {
-            sprintf(str, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
-            dlt_log(LOG_INFO, str);
-        }
-
-        dlt_daemon_control_message_connection_info(DLT_DAEMON_STORE_TO_BUFFER,daemon,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
+    	dlt_daemon_close_socket(daemon_local->receiverSock.fd, daemon, daemon_local, verbose);
+    	daemon_local->receiverSock.fd = -1;
         /* check: return 0; */
     }
 
@@ -2142,15 +2121,30 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		#endif
 					&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                     {
+						int failed = 0;
+
                         DLT_DAEMON_SEM_LOCK();
 
                         if (daemon_local->flags.lflag)
                         {
-                            send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
+                            if(0 > send(j,dltSerialHeader,sizeof(dltSerialHeader),0))
+                            {
+                            	dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+                            	failed = 1;
+                            }
                         }
 
-                        send(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),0);
-                        send(j,daemon_local->msg.databuffer,daemon_local->msg.datasize,0);
+                        if(!failed && 0 > send(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),0))
+                        {
+                        	dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+                        	failed = 1;
+                        }
+
+                        if(!failed && 0 > send(j,daemon_local->msg.databuffer,daemon_local->msg.datasize,0))
+                        {
+                        	dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+                        	failed = 1;
+                        }
 
                         DLT_DAEMON_SEM_FREE();
 
@@ -2563,13 +2557,22 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 	#endif
 				&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                 {
+					int failed = 0;
                     DLT_DAEMON_SEM_LOCK();
 
                     if (daemon_local->flags.lflag)
                     {
-                        send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
+                    	if(!failed && 0 > send(j,dltSerialHeader,sizeof(dltSerialHeader),0))
+                        {
+                        	dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+                        	failed = 1;
+                        }
                     }
-                    send(j,data,length,0);
+                    if(!failed && 0 > send(j,data,length,0))
+                    {
+                    	dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+                    	failed = 1;
+                    }
 
                     DLT_DAEMON_SEM_FREE();
 
@@ -2777,6 +2780,32 @@ void dlt_daemon_send_ecuversion(DltDaemon *daemon, DltDaemonLocal *daemon_local)
     }
 }
 
+/* Close connection function */
+int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+	close(sock);
+	FD_CLR(sock, &(daemon_local->master));
+
+	if (daemon_local->client_connections)
+	{
+		daemon_local->client_connections--;
+	}
+
+	if(daemon_local->client_connections==0)
+	{
+		/* send new log state to all applications */
+		daemon->state = 0;
+		dlt_daemon_user_send_all_log_state(daemon,verbose);
+	}
+
+	if (daemon_local->flags.vflag)
+	{
+		sprintf(str, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
+		dlt_log(LOG_INFO, str);
+	}
+
+	dlt_daemon_control_message_connection_info(DLT_DAEMON_STORE_TO_BUFFER,daemon,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
+}
 /**
   \}
 */

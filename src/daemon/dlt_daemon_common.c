@@ -2538,18 +2538,18 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
         /* Optional: Send serial header, if requested */
         if (daemon->sendserialheader)
         {
-            if ( -1 == send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
+            if ( 0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
                 dlt_log(LOG_ERR,"dlt_daemon_control_message_time: Failed to send dltSerialHeader");
 
         }
 
         /* Send data */
-        if (-1 == send(sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),0))
+        if (0 > send(sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),0))
             dlt_log(LOG_ERR,"dlt_daemon_control_message_time: Failed to send DltStorageHeader");
 
         if(msg.datasize > 0)
         {
-            if (-1 == send(sock, msg.databuffer,msg.datasize,0) )
+            if (0 > send(sock, msg.databuffer,msg.datasize,0) )
                 dlt_log(LOG_ERR,"dlt_daemon_control_message_time: Failed to send databuffer");
         }
 
