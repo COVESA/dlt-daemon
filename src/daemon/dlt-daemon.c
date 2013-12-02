@@ -99,21 +99,6 @@
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
-static DltDaemonTimingPacketThreadData dlt_daemon_timingpacket_thread_data;
-
-static pthread_t      dlt_daemon_timingpacket_thread_handle;
-static pthread_attr_t dlt_daemon_timingpacket_thread_attr;
-
-static DltDaemonECUVersionThreadData dlt_daemon_ecu_version_thread_data;
-static pthread_t      dlt_daemon_ecu_version_thread_handle;
-
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-// Allow main loop to execute every 100ms
-#define DLT_SELECT_TIMEOUT_USEC (1000 * 100)
-static DltDaemonTimingPacketThreadData dlt_daemon_systemd_watchdog_thread_data;
-static pthread_t      dlt_daemon_systemd_watchdog_thread_handle;
-#endif
-
 /**
  * Print usage information of tool.
  */
@@ -412,19 +397,6 @@ int main(int argc, char* argv[])
     DltDaemon daemon;
     int i,back;
 
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-  	/* Timeout for select */
-   	struct timeval tvTimeout;
-   	tvTimeout.tv_sec = 0;
-   	tvTimeout.tv_usec = DLT_SELECT_TIMEOUT_USEC;
-
-   	/* Set watchdog flag immediately, not to timeout while init */
-   	if(sd_notify(0, "WATCHDOG=1") < 0)
-	{
-   		fprintf (stderr, "Could not initialize systemd watchdog\n");
-		return -1;
-	}
-#endif
     /* Command line option handling */
 	if ((back = option_handling(&daemon_local,argc,argv))<0)
 	{
@@ -480,31 +452,33 @@ int main(int argc, char* argv[])
     }
     /* --- Daemon init phase 2 end --- */
 
+    // create fd for watchdog
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    {
+        char* watchdogUSec = getenv("WATCHDOG_USEC");
+        int watchdogTimeoutSeconds = 0;
+
+        dlt_log(LOG_DEBUG, "Systemd watchdog initialization\n");
+        if( watchdogUSec )
+        {
+            watchdogTimeoutSeconds = atoi(watchdogUSec)/2000000;
+        }
+        create_timer_fd(&daemon_local, watchdogTimeoutSeconds, watchdogTimeoutSeconds, &daemon_local.timer_wd, "Systemd watchdog");
+    }
+#endif
+
+    // create fd for timer timing packets
+    create_timer_fd(&daemon_local, 1, 1, &daemon_local.timer_timingpacket, "Timing packet");
+
+    // create fd for timer ecu version
+    if(daemon_local.flags.sendECUSoftwareVersion > 0)
+    {
+        //dlt_daemon_init_ecuversion(&daemon_local);
+        create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_ecuversion, "ECU version");
+    }
+
     while (1)
     {
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    	/* Set timeout to defined usecs
-    	 * select might modify this value: POSIX.1-2001 */
-       	tvTimeout.tv_sec = 0;
-       	tvTimeout.tv_usec = DLT_SELECT_TIMEOUT_USEC;
-
-    	/* update the watchdog time structure */
-       	daemon_local.lastOperationTime = dlt_uptime();
-
-    	/* wait for events from all FIFO and sockets, with timeout */
-        daemon_local.read_fds = daemon_local.master;
-        int selectRet = select(daemon_local.fdmax+1, &(daemon_local.read_fds), NULL, NULL, &tvTimeout);
-        if (selectRet == -1)
-        {
-            dlt_log(LOG_CRIT, "select() failed!\n");
-            return -1 ;
-        } /* if */
-        else if(selectRet == 0)
-        {
-        	/* No pending reads, continue while(1)*/
-        	continue;
-        }
-#else
 
         /* wait for events from all FIFO and sockets */
         daemon_local.read_fds = daemon_local.master;
@@ -513,7 +487,7 @@ int main(int argc, char* argv[])
             dlt_log(LOG_CRIT, "select() failed!\n");
             return -1 ;
         } /* if */
-#endif
+
         /* run through the existing FIFO and sockets to check for events */
         for (i = 0; i <= daemon_local.fdmax; i++)
         {
@@ -545,6 +519,55 @@ int main(int argc, char* argv[])
                     	dlt_log(LOG_CRIT,"Processing of messages from serial connection failed!\n");
                         return -1;
                     }
+                }
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                else if (i == daemon_local.timer_wd)
+                {
+                    uint64_t expir=0;
+                    ssize_t res = read(daemon_local.timer_wd, &expir, sizeof(expir));
+                    if(res < 0) {
+                        sprintf(str,"Failed to read timer_wd; %s\n", strerror(errno) );
+                        dlt_log(LOG_WARNING, str);
+                        // Activity received on timer_wd, but unable to read the fd:
+                        // let's go on sending notification
+                    }
+
+                    dlt_log(LOG_DEBUG, "Timer watchdog\n");
+
+                    if(sd_notify(0, "WATCHDOG=1") < 0)
+                    {
+                        dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+                    }
+                }
+#endif
+                else if (i == daemon_local.timer_timingpacket)
+                {
+                    uint64_t expir=0;
+                    ssize_t res = read(daemon_local.timer_timingpacket, &expir, sizeof(expir));
+                    if(res < 0) {
+                        sprintf(str,"Failed to read timer_timingpacket; %s\n", strerror(errno) );
+                        dlt_log(LOG_WARNING, str);
+                        // Activity received on timer_wd, but unable to read the fd:
+                        // let's go on sending notification
+                    }
+                    dlt_daemon_send_timingpacket(&daemon, &daemon_local);
+                    dlt_log(LOG_DEBUG, "Timer timingpacket\n");
+
+                 }
+
+                else if (i == daemon_local.timer_ecuversion)
+                {
+                    uint64_t expir=0;
+                    ssize_t res = read(daemon_local.timer_ecuversion, &expir, sizeof(expir));
+                    if(res < 0) {
+                        sprintf(str,"Failed to read timer_ecuversion; %s\n", strerror(errno) );
+                        dlt_log(LOG_WARNING, str);
+                        // Activity received on timer_wd, but unable to read the fd:
+                        // let's go on sending notification
+                    }
+                    dlt_daemon_send_ecuversion(&daemon, &daemon_local);
+                    dlt_log(LOG_DEBUG, "Timer ecuversion\n");
+
                 }
                 else
                 {
@@ -702,19 +725,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 			return -1;
         }
     }
-
-    /* setup period thread for timing packets */
-    if (pthread_attr_init(&dlt_daemon_timingpacket_thread_attr)<0)
-    {
-        dlt_log(LOG_WARNING, "Initialization of default thread stack size failed!\n");
-    }
-    else
-    {
-        if (pthread_attr_setstacksize(&dlt_daemon_timingpacket_thread_attr,DLT_DAEMON_TIMINGPACKET_THREAD_STACKSIZE)<0)
-        {
-            dlt_log(LOG_WARNING, "Setting of default thread stack size failed!\n");
-        }
-    }
     
     /* configure sending timing packets */
     if (daemon_local->flags.sendMessageTime)    
@@ -729,60 +739,12 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
         return -1;
     }
 
-    /* start thread */
-    dlt_daemon_timingpacket_thread_data.daemon = daemon;
-    dlt_daemon_timingpacket_thread_data.daemon_local = daemon_local;
-
-    if (pthread_create(&(dlt_daemon_timingpacket_thread_handle),
-                       &dlt_daemon_timingpacket_thread_attr,
-                       (void *) &dlt_daemon_timingpacket_thread,
-                       (void *)&dlt_daemon_timingpacket_thread_data)!=0)
-	{
-		dlt_log(LOG_ERR,"Could not initialize timing packet thread\n");
-		pthread_attr_destroy(&dlt_daemon_timingpacket_thread_attr);
-        return -1;
-	}
-
-    pthread_attr_destroy(&dlt_daemon_timingpacket_thread_attr);
-
     /* Get ECU version info from a file. If it fails, use dlt_version as fallback. */
     if(dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0)
     {
     	daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
     	dlt_get_version(daemon->ECUVersionString);
     }
-
-    /* start thread for ECU version, if enabled */
-    if(daemon_local->flags.sendECUSoftwareVersion > 0)
-    {
-		dlt_daemon_ecu_version_thread_data.daemon = daemon;
-		dlt_daemon_ecu_version_thread_data.daemon_local = daemon_local;
-
-		if (pthread_create(&(dlt_daemon_ecu_version_thread_handle),
-						   NULL,
-						   (void *) &dlt_daemon_ecu_version_thread,
-						   (void *)&dlt_daemon_ecu_version_thread_data)!=0)
-		{
-			dlt_log(LOG_ERR,"Could not initialize ECU version thread\n");
-			return -1;
-		}
-    }
-
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-
-    dlt_daemon_systemd_watchdog_thread_data.daemon = daemon;
-    dlt_daemon_systemd_watchdog_thread_data.daemon_local = daemon_local;
-
-	if (pthread_create(&(dlt_daemon_systemd_watchdog_thread_handle),
-					   NULL,
-					   (void *) &dlt_daemon_systemd_watchdog_thread,
-					   (void *) &dlt_daemon_systemd_watchdog_thread_data)!=0)
-	{
-		dlt_log(LOG_ERR,"Could not initialize systemd watchdog thread\n");
-		return -1;
-	}
-#endif
-
 
     return 0;
 }
@@ -1228,7 +1190,14 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
         dlt_log(LOG_INFO, str);
     }
 
+    // send connection info about connected
     dlt_daemon_control_message_connection_info(in_sock,daemon,DLT_CONNECTION_STATUS_CONNECTED,"",verbose);
+
+    // send ecu version string
+    if(daemon_local->flags.sendECUSoftwareVersion > 0)
+    {
+    	dlt_daemon_send_ecuversion(daemon,daemon_local);
+    }
 
     if (daemon_local->client_connections==1)
     {
@@ -1586,7 +1555,11 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
         if (FD_ISSET(j, &(daemon_local->master)))
         {
             /* except the listener and ourselves */
-            if ((j != daemon_local->fp) && (j != daemon_local->sock))
+            if ((j != daemon_local->fp) && (j != daemon_local->sock)
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                        && (j!=daemon_local->timer_wd)
+#endif
+			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
             {
                 dlt_daemon_control_message_buffer_overflow(j, daemon, userpayload->overflow_counter,userpayload->apid,verbose);
                 sent=1;
@@ -1642,7 +1615,11 @@ int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_l
         if (FD_ISSET(j, &(daemon_local->master)))
         {
             /* except the listener and ourselves */
-            if ((j != daemon_local->fp) && (j != daemon_local->sock))
+            if ((j != daemon_local->fp) && (j != daemon_local->sock)
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                        && (j!=daemon_local->timer_wd)
+#endif
+			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
             {
                 dlt_daemon_control_message_buffer_overflow(j, daemon,daemon->overflow_counter,"", verbose);
                 sent=1;
@@ -1860,7 +1837,11 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
             if (FD_ISSET(j, &(daemon_local->master)))
             {
                 /* except the listener and ourselves */
-                if ((j != daemon_local->fp) && (j != daemon_local->sock))
+                if ((j != daemon_local->fp) && (j != daemon_local->sock)
+    #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                            && (j!=daemon_local->timer_wd)
+    #endif
+    			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                 {
                     dlt_daemon_control_get_log_info(j , daemon, &msg, verbose);
                     sent=1;
@@ -2012,7 +1993,11 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
             if (FD_ISSET(j, &(daemon_local->master)))
             {
                 /* except the listener and ourselves */
-                if ((j != daemon_local->fp) && (j != daemon_local->sock))
+                if ((j != daemon_local->fp) && (j != daemon_local->sock)
+    #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                            && (j!=daemon_local->timer_wd)
+    #endif
+    			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                 {
                 	dlt_daemon_control_message_unregister_context(j,daemon,usercontext->apid, usercontext->ctid, "remo",verbose);
                     sent=1;
@@ -2151,7 +2136,11 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
                         third_value = daemon_local->sock;
                     }
 
-                    if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
+					if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value)
+		#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+								&& (j!=daemon_local->timer_wd)
+		#endif
+					&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                     {
                         DLT_DAEMON_SEM_LOCK();
 
@@ -2568,7 +2557,11 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
                     third_value = daemon_local->sock;
                 }
 
-                if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
+				if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value)
+	#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+							&& (j!=daemon_local->timer_wd)
+	#endif
+				&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
                 {
                     DLT_DAEMON_SEM_LOCK();
 
@@ -2612,167 +2605,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
     return 0;
 }
-
-void dlt_daemon_timingpacket_thread(void *ptr)
-{
-    DltDaemonPeriodicData info;
-    int j;
-
-    DltDaemonTimingPacketThreadData *data;
-    DltDaemon *daemon;
-    DltDaemonLocal *daemon_local;
-
-    if (ptr==0)
-    {
-    	dlt_log(LOG_ERR, "No data pointer passed to timingpacket thread\n");
-        return;
-    }
-
-    data = (DltDaemonTimingPacketThreadData*)ptr;
-    daemon = data->daemon;
-    daemon_local = data->daemon_local;
-
-    if ((daemon==0) || (daemon_local==0))
-    {
-    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_timingpacket_thread()");
-        return;
-    }
-
-    if (dlt_daemon_make_periodic (1000000, &info, daemon_local->flags.vflag)<0)
-    {
-        dlt_log(LOG_CRIT,"Can't initialize thread timer!\n");
-        return;
-    }
-
-    while (1)
-    {
-        /* If enabled, send timing packets to all clients */
-        if (daemon->timingpackets)
-        {
-            for (j = 0; j <= daemon_local->fdmax; j++)
-            {
-                /* send to everyone! */
-                if (FD_ISSET(j, &(daemon_local->master)))
-                {
-                    /* except the listener and ourselves */
-                    if ((j != daemon_local->fp) && (j != daemon_local->sock))
-                    {
-                        dlt_daemon_control_message_time(j, daemon, daemon_local->flags.vflag);
-                    }
-                }
-            }
-        }
-        /* Wait for next period */
-        dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
-    }
-}
-
-void dlt_daemon_ecu_version_thread(void *ptr)
-{
-	DltDaemonECUVersionThreadData *data = (DltDaemonECUVersionThreadData *)ptr;
-	DltDaemonPeriodicData info;
-	const unsigned int DLT_ECU_VERSION_PERIOD_TIME = 1000000*60; // 60 Seconds
-
-	if (dlt_daemon_make_periodic (DLT_ECU_VERSION_PERIOD_TIME, &info, data->daemon_local->flags.vflag)<0)
-    {
-        dlt_log(LOG_CRIT,"Can't initialize thread timer!\n");
-        return;
-    }
-
-	while(1)
-	{
-		int i;
-		for (i = 0; i <= data->daemon_local->fdmax; i++)
-		{
-			/* send to everyone! */
-			if (FD_ISSET(i, &(data->daemon_local->master)))
-			{
-				/* except the listener and ourselves */
-				if ((i != data->daemon_local->fp) && (i != data->daemon_local->sock))
-				{
-					dlt_daemon_control_get_software_version(i, data->daemon, data->daemon_local->flags.vflag);
-				}
-			}
-		}
-		dlt_daemon_wait_period (&info, data->daemon_local->flags.vflag);
-	}
-}
-
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-void dlt_daemon_systemd_watchdog_thread(void *ptr)
-{
-    char *watchdogUSec;
-    int watchdogTimeoutSeconds;
-    int notifyPeriodNSec;
-    DltDaemonPeriodicData info;
-    DltDaemonTimingPacketThreadData *data;
-    DltDaemon *daemon;
-    DltDaemonLocal *daemon_local;
-    static uint32_t lastDaemonOperation;
-
-    if (ptr==0)
-    {
-    	dlt_log(LOG_ERR, "No data pointer passed to systemd watchdog thread\n");
-        return;
-    }
-
-    data = (DltDaemonTimingPacketThreadData*)ptr;
-    daemon = data->daemon;
-    daemon_local = data->daemon_local;
-
-    if ((daemon==0) || (daemon_local==0))
-    {
-    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_timingpacket_thread()");
-        return;
-    }
-
-    watchdogUSec = getenv("WATCHDOG_USEC");
-
-	if(watchdogUSec)
-	{
-		watchdogTimeoutSeconds = atoi(watchdogUSec);
-		// Calculate half of WATCHDOG_USEC in ns for timer tick
-		notifyPeriodNSec = watchdogTimeoutSeconds / 2 ;
-
-		if( notifyPeriodNSec > 0 )
-		{
-			sprintf(str,"systemd watchdog timeout: %i nsec - timer will be initialized: %i nsec\n", watchdogTimeoutSeconds, notifyPeriodNSec );
-			dlt_log(LOG_INFO, str);
-
-			if (dlt_daemon_make_periodic (notifyPeriodNSec, &info, daemon_local->flags.vflag)<0)
-			{
-				dlt_log(LOG_CRIT, "Could not initialize systemd watchdog timer");
-				return;
-			}
-
-			while (1)
-			{
-				/* If main thread has changed its last operation time, reset watchdog */
-				if(daemon_local->lastOperationTime != lastDaemonOperation)
-				{
-					if(sd_notify(0, "WATCHDOG=1") < 0)
-					{
-						dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
-					}
-					lastDaemonOperation = daemon_local->lastOperationTime;
-				}
-
-				/* Wait for next period */
-				dlt_daemon_wait_period (&info, daemon_local->flags.vflag);
-			}
-		}
-		else
-		{
-			sprintf(str,"systemd watchdog timeout incorrect: %i\n", watchdogTimeoutSeconds);
-			dlt_log(LOG_CRIT, str);
-		}
-	}
-	else
-	{
-		dlt_log(LOG_CRIT, "systemd watchdog timeout (WATCHDOG_USEC) is null!\n");
-	}
-}
-#endif
 
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose)
 {
@@ -2830,6 +2662,118 @@ void dlt_daemon_wait_period (DltDaemonPeriodicData *info, int verbose)
     if (missed > 0)
     {
         info->wakeups_missed += (missed - 1);
+    }
+}
+
+int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name)
+{
+    int local_fd;
+    struct itimerspec l_timer_spec;
+
+    if(timer_name == NULL)
+    {
+        timer_name = "timer_not_named";
+    }
+
+    if( fd == NULL )
+    {
+        snprintf(str, sizeof(str), "<%s> fd is NULL pointer\n", timer_name );
+        dlt_log(DLT_LOG_ERROR, str);
+        return -1;
+    }
+
+    if( period_sec > 0 ) {
+        local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
+        if( local_fd < 0)
+        {
+            snprintf(str, sizeof(str), "<%s> timerfd_create failed: %s\n", timer_name, strerror(errno));
+            dlt_log(DLT_LOG_ERROR, str);
+        }
+
+        l_timer_spec.it_interval.tv_sec = period_sec;
+        l_timer_spec.it_interval.tv_nsec = 0;
+        l_timer_spec.it_value.tv_sec = starts_in;
+        l_timer_spec.it_value.tv_nsec = 0;
+
+        if( timerfd_settime( local_fd, 0, &l_timer_spec, NULL) < 0)
+        {
+            snprintf(str, sizeof(str), "<%s> timerfd_settime failed: %s\n", timer_name, strerror(errno));
+            dlt_log(DLT_LOG_ERROR, str);
+            local_fd = -1;
+        }
+    }
+    else {
+        // timer not activated via the service file
+        snprintf(str, sizeof(str), "<%s> not set: period=0\n", timer_name);
+        dlt_log(DLT_LOG_INFO, str);
+        local_fd = -1;
+    }
+
+    // If fd is fully initialized, let's add it to the fd sets
+    if(local_fd>0)
+    {
+        snprintf(str, sizeof(str), "<%s> initialized with %ds timer\n", timer_name, period_sec);
+        dlt_log(DLT_LOG_INFO, str);
+
+        FD_SET(local_fd, &(daemon_local->master));
+        //FD_SET(local_fd, &(daemon_local->timer_fds));
+        if (local_fd > daemon_local->fdmax)
+        {
+            daemon_local->fdmax = local_fd;
+        }
+    }
+
+    *fd = local_fd;
+
+    return local_fd;
+}
+
+void dlt_daemon_send_timingpacket(DltDaemon *daemon, DltDaemonLocal *daemon_local)
+{
+    int j;
+
+    if (daemon->timingpackets)
+    {
+        for (j = 0; j <= daemon_local->fdmax; j++)
+        {
+            /* send to everyone! */
+            if (FD_ISSET(j, &(daemon_local->master)))
+            {
+                /* except the listener and ourselves */
+                if ((j != daemon_local->fp) && (j != daemon_local->sock)
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                        && (j!=daemon_local->timer_wd)
+#endif
+			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion) )
+                {
+                    dlt_log(LOG_DEBUG, "timingpacket\n");
+                    dlt_daemon_control_message_time(j, daemon, daemon_local->flags.vflag);
+                }
+            }
+        }
+    }
+}
+
+void dlt_daemon_send_ecuversion(DltDaemon *daemon, DltDaemonLocal *daemon_local)
+{
+    int j;
+
+    for (j = 0; j <= daemon_local->fdmax; j++)
+    {
+        /* send to everyone! */
+        if (FD_ISSET(j, &(daemon_local->master)))
+        {
+            /* except the listener and ourselves */
+            if ((j != daemon_local->fp) && (j != daemon_local->sock)
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+                        && (j!=daemon_local->timer_wd)
+#endif
+			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
+            {
+                dlt_log(LOG_DEBUG, "ecu_version\n");
+				dlt_daemon_control_get_software_version(j, daemon, daemon_local->flags.vflag);
+            }
+        }
     }
 }
 

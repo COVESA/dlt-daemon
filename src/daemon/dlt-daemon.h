@@ -132,9 +132,11 @@ typedef struct
 #endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    uint32_t lastOperationTime;
+    int timer_wd;                        /** file descriptor for watchdog timer */
 #endif
     int timeoutOnSend;
+    int timer_timingpacket;
+    int timer_ecuversion;
 } DltDaemonLocal;
 
 typedef struct
@@ -187,6 +189,11 @@ void dlt_daemon_ecu_version_thread(void *ptr);
 #endif
 int dlt_daemon_make_periodic (unsigned int period, DltDaemonPeriodicData *info, int verbose);
 void dlt_daemon_wait_period(DltDaemonPeriodicData *info, int verbose);
+
+int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name);
+
+void dlt_daemon_send_timingpacket(DltDaemon *daemon, DltDaemonLocal *daemon_local);
+void dlt_daemon_send_ecuversion(DltDaemon *daemon, DltDaemonLocal *daemon_local);
 
 #endif /* DLT_DAEMON_H */
 
