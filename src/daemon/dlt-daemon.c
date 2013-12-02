@@ -1228,6 +1228,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
         dlt_log(LOG_INFO, str);
     }
 
+    dlt_daemon_control_message_connection_info(in_sock,daemon,DLT_CONNECTION_STATUS_CONNECTED,"",verbose);
+
     if (daemon_local->client_connections==1)
     {
         if (daemon_local->flags.vflag)
@@ -1284,6 +1286,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
             dlt_log(LOG_INFO, str);
         }
 
+        dlt_daemon_control_message_connection_info(DLT_DAEMON_STORE_TO_BUFFER,daemon,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
         /* check: return 0; */
     }
 
@@ -1994,6 +1997,34 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
 			dlt_log(LOG_ERR,"Can't delete context for user message unregister context\n");
 			return -1;
 		}
+    }
+
+    /* Create automatic unregister context response for unregistered context */
+    if (daemon_local->flags.rflag)
+    {
+        int sent=0;
+        int j;
+
+        /* Send response to get log info request to DLT clients */
+        for (j = 0; j <= daemon_local->fdmax; j++)
+        {
+            /* send to everyone! */
+            if (FD_ISSET(j, &(daemon_local->master)))
+            {
+                /* except the listener and ourselves */
+                if ((j != daemon_local->fp) && (j != daemon_local->sock))
+                {
+                	dlt_daemon_control_message_unregister_context(j,daemon,usercontext->apid, usercontext->ctid, "remo",verbose);
+                    sent=1;
+                }
+            }
+        }
+
+        if (sent==0)
+        {
+            /* Store to buffer */
+        	dlt_daemon_control_message_unregister_context(DLT_DAEMON_STORE_TO_BUFFER,daemon,usercontext->apid, usercontext->ctid, "remo",verbose);
+        }
     }
 
     /* keep not read data in buffer */

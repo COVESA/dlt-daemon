@@ -458,6 +458,26 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *f
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose);
+/**
+ * Send control message unregister context (add on to AUTOSAR standard)
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param apid application id to be unregisteres
+ * @param ctid context id to be unregistered
+ * @param comid Communication id where apid is unregistered
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_unregister_context(int sock, DltDaemon *daemon, char* apid, char* ctid, char* comid, int verbose);
+/**
+ * Send control message connection info (add on to AUTOSAR standard)
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param state state of connection
+ * @param comid Communication id where connection state changed
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_connection_info(int sock, DltDaemon *daemon, uint8_t state, char* comid, int verbose);
+
 #ifdef __cplusplus
 }
 #endif

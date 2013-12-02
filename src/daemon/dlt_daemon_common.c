@@ -2559,3 +2559,120 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, int verbose)
     /* free message */
     dlt_message_free(&msg,0);
 }
+
+int dlt_daemon_control_message_unregister_context(int sock, DltDaemon *daemon, char* apid, char* ctid, char* comid, int verbose)
+{
+    DltMessage msg;
+    DltServiceUnregisterContext *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return -1;
+    }
+
+    /* initialise new message */
+    if (dlt_message_init(&msg,0)==-1)
+    {
+    	dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+    	return -1;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceUnregisterContext);
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+    {
+        free(msg.databuffer);
+        msg.databuffer=0;
+    }
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
+    if (msg.databuffer==0)
+    {
+        if (sock!=DLT_DAEMON_STORE_TO_BUFFER)
+        {
+            dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+        }
+        return -1;
+    }
+
+    resp = (DltServiceUnregisterContext*) msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+   	dlt_set_id(resp->apid, apid);
+   	dlt_set_id(resp->apid, ctid);
+   	dlt_set_id(resp->comid, comid);
+
+    /* send message */
+    if(dlt_daemon_control_send_control_message(sock,daemon,&msg,"","",  verbose))
+    {
+        dlt_message_free(&msg,0);
+    	return -1;
+    }
+
+    /* free message */
+    dlt_message_free(&msg,0);
+
+    return 0;
+}
+
+int dlt_daemon_control_message_connection_info(int sock, DltDaemon *daemon, uint8_t state, char* comid, int verbose)
+{
+    DltMessage msg;
+    DltServiceConnectionInfo *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return -1;
+    }
+
+    /* initialise new message */
+    if (dlt_message_init(&msg,0)==-1)
+    {
+    	dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+    	return -1;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceConnectionInfo);
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+    {
+        free(msg.databuffer);
+        msg.databuffer=0;
+    }
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
+    if (msg.databuffer==0)
+    {
+        if (sock!=DLT_DAEMON_STORE_TO_BUFFER)
+        {
+            dlt_daemon_control_service_response(sock, daemon, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+        }
+        return -1;
+    }
+
+    resp = (DltServiceConnectionInfo*) msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_CONNECTION_INFO;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->state = state;
+    dlt_set_id(resp->comid, comid);
+
+    /* send message */
+    if(dlt_daemon_control_send_control_message(sock,daemon,&msg,"","",  verbose))
+    {
+        dlt_message_free(&msg,0);
+    	return -1;
+    }
+
+    /* free message */
+    dlt_message_free(&msg,0);
+
+    return 0;
+}
