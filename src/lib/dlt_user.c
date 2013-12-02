@@ -180,6 +180,9 @@ int dlt_init(void)
         return -1;
     }
 
+    /* check environment variables */
+    dlt_check_envvar();
+
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
     dlt_user.overflow_counter = 0;

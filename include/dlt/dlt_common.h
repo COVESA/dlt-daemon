@@ -174,6 +174,13 @@
 #define	LOG_DAEMON	(3<<3)
 #endif
 
+enum {
+    DLT_LOG_TO_CONSOLE=0,
+    DLT_LOG_TO_SYSLOG=1,
+    DLT_LOG_TO_FILE=2,
+    DLT_LOG_DROPPED=3
+};
+
 /**
  * The standard TCP Port used for DLT daemon
  */
@@ -1231,6 +1238,11 @@ extern "C"
      * @return negative value if there was an error
      */
     int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,int32_t *datalength,char *text,int textlength,int byteLength,int verbose);
+
+    /**
+     * Check environment variables.
+     */
+	void dlt_check_envvar();
 
 #ifdef __cplusplus
 }

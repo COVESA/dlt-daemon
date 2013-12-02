@@ -101,7 +101,7 @@ const char dltSerialHeader[DLT_ID_SIZE] = { 'D','L','S',1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D','L','S',1 };
 
 /* internal logging parameters */
-static int logging_mode = 0;
+static int logging_mode = DLT_LOG_TO_CONSOLE;
 static int logging_level = 6;
 static char logging_filename[NAME_MAX + 1] = "";
 static FILE *logging_handle = 0;
@@ -2024,7 +2024,7 @@ void dlt_log_init(int mode)
 {
     logging_mode = mode;
     
-	if(logging_mode == 2)
+	if(logging_mode == DLT_LOG_TO_FILE)
 	{
 		/* internal logging to file */
 		logging_handle = fopen(logging_filename,"w");
@@ -2038,7 +2038,7 @@ void dlt_log_init(int mode)
 
 void dlt_log_free(void)
 {
-	if(logging_mode == 2) {
+	if(logging_mode == DLT_LOG_TO_FILE) {
 		fclose(logging_handle);
 	}
 }
@@ -2107,11 +2107,11 @@ int dlt_log(int prio, char *s)
 
 	switch(logging_mode)
 	{
-		case 0:
+		case DLT_LOG_TO_CONSOLE:
 			/* log to stdout */
 			printf(logfmtstring, s);
 			break;
-		case 1:
+		case DLT_LOG_TO_SYSLOG:
 			/* log to syslog */
 #if !defined (__WIN32__) && !defined(_MSC_VER)
 			openlog("DLT",LOG_PID,LOG_DAEMON);
@@ -2119,12 +2119,15 @@ int dlt_log(int prio, char *s)
 			closelog();
 #endif
 			break;
-		case 2:
+		case DLT_LOG_TO_FILE:
 			/* log to file */
 			if(logging_handle) {
 				fprintf(logging_handle,logfmtstring, s);
 				fflush(logging_handle);
 			}
+			break;
+		case DLT_LOG_DROPPED:
+		default:
 			break;
 	}
 
@@ -3636,4 +3639,38 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
     }
 
     return 0;
+}
+
+void dlt_check_envvar()
+{
+    char* env_log_filename = getenv("DLT_LOG_FILENAME");
+
+    if( env_log_filename != NULL )
+    {
+        dlt_log_set_filename(env_log_filename);
+    }
+
+    char* env_log_level_str = getenv("DLT_LOG_LEVEL");
+
+	if( env_log_level_str != NULL )
+	{
+		int level = 0;
+		if( sscanf(env_log_level_str, "%d", &level) )
+		{
+			dlt_log_set_level(level);
+		}
+	}
+
+    char* env_log_mode = getenv("DLT_LOG_MODE");
+
+	if( env_log_mode != NULL )
+	{
+		int mode = 0;
+		if( sscanf(env_log_mode, "%d", &mode) )
+		{
+			dlt_log_init(mode);
+		}
+	}
+
+
 }
