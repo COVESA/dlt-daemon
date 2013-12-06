@@ -483,6 +483,9 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
 
     if (fd==0)
     {
+        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
+        dlt_log(LOG_WARNING, str);
+
         return -1;
     }
 
@@ -522,15 +525,21 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
         {
             /* Split line */
             pb=strtok(buf,":");
-            dlt_set_id(apid,pb);
-            pb=strtok(NULL,":");
-            /* pb contains now the description */
-
-            /* pid is unknown at loading time */
-            if (dlt_daemon_application_add(daemon,apid,0,pb,verbose)==0)
+            if( pb != 0 )
             {
-            	fclose(fd);
-            	return -1;
+				dlt_set_id(apid,pb);
+				pb=strtok(NULL,":");
+				if( pb != 0 )
+				{
+					/* pb contains now the description */
+					/* pid is unknown at loading time */
+					if (dlt_daemon_application_add(daemon,apid,0,pb,verbose)==0)
+					{
+						dlt_log(LOG_ERR, "dlt_daemon_applications_load dlt_daemon_application_add failed\n");
+						fclose(fd);
+						return -1;
+					}
+				}
             }
         }
     }
@@ -846,6 +855,9 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
 
     if (fd==0)
     {
+        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
+        dlt_log(LOG_WARNING, str);
+
         return -1;
     }
 
@@ -885,21 +897,37 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
         {
             /* Split line */
             pb=strtok(buf,":");
-            dlt_set_id(apid,pb);
-            pb=strtok(NULL,":");
-            dlt_set_id(ctid,pb);
-            pb=strtok(NULL,":");
-            sscanf(pb,"%d",&ll);
-            pb=strtok(NULL,":");
-            sscanf(pb,"%d",&ts);
-            pb=strtok(NULL,":");
-            /* pb contains now the description */
-
-            /* log_level_pos, and user_handle are unknown at loading time */
-            if (dlt_daemon_context_add(daemon,apid,ctid,(int8_t)ll,(int8_t)ts,0,0,pb,verbose)==0)
+            if(pb!=0)
             {
-				fclose(fd);
-				return -1;
+				dlt_set_id(apid,pb);
+				pb=strtok(NULL,":");
+	            if(pb!=0)
+	            {
+					dlt_set_id(ctid,pb);
+					pb=strtok(NULL,":");
+		            if(pb!=0)
+		            {
+						sscanf(pb,"%d",&ll);
+						pb=strtok(NULL,":");
+			            if(pb!=0)
+			            {
+							sscanf(pb,"%d",&ts);
+							pb=strtok(NULL,":");
+				            if(pb!=0)
+				            {
+								/* pb contains now the description */
+
+								/* log_level_pos, and user_handle are unknown at loading time */
+								if (dlt_daemon_context_add(daemon,apid,ctid,(int8_t)ll,(int8_t)ts,0,0,pb,verbose)==0)
+								{
+									dlt_log(LOG_ERR, "dlt_daemon_contexts_load dlt_daemon_context_add failed\n");
+									fclose(fd);
+									return -1;
+								}
+				            }
+			            }
+		            }
+	            }
             }
         }
     }
