@@ -99,14 +99,28 @@ unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
 	/* go through all dlt files in directory */
 	DIR *dir = opendir(trace->directory);
 	while ((dp=readdir(dir)) != NULL) {
-		if(strstr(dp->d_name,".dlt")) {
-			sprintf(filename,"%s/%s",trace->directory,dp->d_name);
-            if ( 0 == stat(filename,&status) )
-                size += status.st_size;
-            else
-                printf("Offline trace file %s cannot be stat-ed",filename);
-		}
-	}	
+        if(strstr(dp->d_name,".dlt"))
+        {
+            int res = snprintf(filename, sizeof(filename), "%s/%s",trace->directory,dp->d_name);
+            // if the total length of the string is greater than the buffer, silently forget it.
+            // snprintf: a return value of size  or more means that the output was truncated
+            //           if an output error is encountered, a negative value is returned.
+            if( (unsigned int)res<sizeof(filename) && res>0 )
+            {
+            	if(0 == stat(filename,&status))
+            	{
+            		size += status.st_size;
+            	}
+            	else
+            		printf("Offline trace file %s cannot be stat-ed",filename);
+            }
+            //else
+            //{
+            //    dlt_log(3, "dlt_offline_trace_get_total_size: long filename ignored");
+            //}
+        }
+    }
+
 	closedir(dir);
 	
 	/* return size */
@@ -128,18 +142,23 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 	DIR *dir = opendir(trace->directory);
 	while ((dp=readdir(dir)) != NULL) {
 		if(strstr(dp->d_name,".dlt")) {
-			sprintf(filename,"%s/%s",trace->directory,dp->d_name);
-            if (0 == stat(filename,&status))
-            {
-                if(time_oldest == 0 || status.st_mtime < time_oldest) {
-                    time_oldest = status.st_mtime;
-                    size_oldest = status.st_size;
-                    strcpy(filename_oldest,filename);
-                }
-            }
-            else
-                printf("Old offline trace file %s cannot be stat-ed",filename);
-
+			int res = snprintf(filename, sizeof(filename), "%s/%s",trace->directory,dp->d_name);
+				// if the total length of the string is greater than the buffer, silently forget it.
+				// snprintf: a return value of size  or more means that the output was truncated
+				//           if an output error is encountered, a negative value is returned.
+				if( (unsigned int)res<sizeof(filename) && res>0 )
+				{
+					if(0 == stat(filename,&status))
+					{
+						if(time_oldest == 0 || status.st_mtime < time_oldest) {
+								time_oldest = status.st_mtime;
+								size_oldest = status.st_size;
+								strcpy(filename_oldest,filename);
+						}
+					}
+					else
+						printf("Old offline trace file %s cannot be stat-ed",filename);
+				}
 		}
 	}	
 	closedir(dir);
