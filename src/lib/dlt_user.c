@@ -3819,16 +3819,24 @@ void dlt_user_log_reattach_to_daemon(void)
                     handle.log_level_pos = num;
                     log_new.context_description = dlt_user.dlt_ll_ts[num].context_description;
 
+                    // Release the mutex for sending context registration:
+                    // function  dlt_user_log_send_register_context() can take the mutex to write to the DLT buffer. => dead lock
+                    DLT_SEM_FREE();
+
                     log_new.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
                     log_new.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
 
                     if (dlt_user_log_send_register_context(&log_new)==-1)
                     {
-                    	DLT_SEM_FREE();
                     	return;
                     }
 
                     reregistered=1;
+
+                    // Lock again the mutex
+                    // it is necessary in the for(;;) test, in order to have coherent dlt_user data all over the critical section.
+                    DLT_SEM_LOCK();
+
                 }
             }
 
