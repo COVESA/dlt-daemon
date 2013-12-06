@@ -1288,11 +1288,8 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
 		return -1;
     }
 
-    DLT_SEM_LOCK();
-
     if (dlt_user.dlt_ll_ts==0)
     {
-        DLT_SEM_FREE();
         return -1;
     }
 
