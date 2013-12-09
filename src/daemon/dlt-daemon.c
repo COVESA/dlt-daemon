@@ -209,6 +209,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->timeoutOnSend = 4;
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
+	daemon_local->flags.sendTimezone = 0;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -365,7 +366,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                                         strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
 							//printf("Option: %s=%s\n",token,value);
 						}
-
+						else if(strcmp(token,"SendTimezone")==0)
+						{
+							daemon_local->flags.sendTimezone = atoi(value);
+							//printf("Option: %s=%s\n",token,value);
+						}
 						else
 						{
 							fprintf(stderr, "Unknown option: %s=%s\n",token,value);
@@ -471,7 +476,7 @@ int main(int argc, char* argv[])
     create_timer_fd(&daemon_local, 1, 1, &daemon_local.timer_timingpacket, "Timing packet");
 
     // create fd for timer ecu version
-    if(daemon_local.flags.sendECUSoftwareVersion > 0)
+    if(daemon_local.flags.sendECUSoftwareVersion > 0 || daemon_local.flags.sendTimezone > 0)
     {
         //dlt_daemon_init_ecuversion(&daemon_local);
         create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_ecuversion, "ECU version");
@@ -2751,6 +2756,7 @@ void dlt_daemon_send_timingpacket(DltDaemon *daemon, DltDaemonLocal *daemon_loca
                 {
                     dlt_log(LOG_DEBUG, "timingpacket\n");
                     dlt_daemon_control_message_time(j, daemon, daemon_local->flags.vflag);
+
                 }
             }
         }
@@ -2774,7 +2780,17 @@ void dlt_daemon_send_ecuversion(DltDaemon *daemon, DltDaemonLocal *daemon_local)
 			&& (j!=daemon_local->timer_timingpacket) && (j!=daemon_local->timer_ecuversion))
             {
                 dlt_log(LOG_DEBUG, "ecu_version\n");
-				dlt_daemon_control_get_software_version(j, daemon, daemon_local->flags.vflag);
+                if(daemon_local->flags.sendECUSoftwareVersion > 0)
+                	dlt_daemon_control_get_software_version(j, daemon, daemon_local->flags.vflag);
+
+                if(daemon_local->flags.sendTimezone > 0)
+                {
+					// send timezone information
+					time_t t = time(NULL);
+					struct tm lt = {0};
+					localtime_r(&t, &lt);
+					dlt_daemon_control_message_timezone(j,daemon,(int32_t) lt.tm_gmtoff,(uint8_t) lt.tm_isdst,daemon_local->flags.vflag);
+                }
             }
         }
     }
@@ -2806,6 +2822,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 
 	dlt_daemon_control_message_connection_info(DLT_DAEMON_STORE_TO_BUFFER,daemon,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
 }
+
 /**
   \}
 */

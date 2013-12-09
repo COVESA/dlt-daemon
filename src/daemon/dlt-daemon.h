@@ -105,6 +105,7 @@ typedef struct
     char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
     int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
+    int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
 } DltDaemonFlags;
 
 /**

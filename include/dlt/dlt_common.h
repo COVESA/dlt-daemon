@@ -520,6 +520,17 @@ typedef struct
 } PACKED DltServiceConnectionInfo;
 
 /**
+ * The structure of the DLT Service Timezone
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t status;                 /**< reponse status */
+    int32_t timezone;               /**< Timezone in seconds */
+    uint8_t isdst;                  /**< Is daylight saving time */
+} PACKED DltServiceTimezone;
+
+/**
  * Structure to store filter parameters.
  * ID are maximal four characters. Unused values are filled with zeros.
  * If every value as filter is valid, the id should be empty by having only zero values.
