@@ -23,9 +23,9 @@ set(dlt_system_SRCS dlt-system.c dlt-system-options.c dlt-system-process-handlin
 	dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c)
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 if(WITH_SYSTEMD_JOURNAL)
-	target_link_libraries(dlt-system dlt z systemd-journal systemd-id128)
+	target_link_libraries(dlt-system dlt ${ZLIB_LIBRARIES} systemd-journal systemd-id128)
 else(WITH_SYSTEMD_JOURNAL)
-	target_link_libraries(dlt-system dlt z)
+	target_link_libraries(dlt-system dlt ${ZLIB_LIBRARIES})
 endif(WITH_SYSTEMD_JOURNAL)
 	
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)

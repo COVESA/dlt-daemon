@@ -72,6 +72,7 @@ set( LICENSE "Mozilla Public License Version 2.0" )
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
+find_package(ZLIB REQUIRED)
 
 include_directories( 
     ${CMAKE_SOURCE_DIR}/
