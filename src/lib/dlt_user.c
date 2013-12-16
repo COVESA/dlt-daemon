@@ -735,7 +735,6 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 {
     DltContextData log;
     uint32_t i;
-    int registered,ret;
     char ctid[DLT_ID_SIZE+1];
 
     if (dlt_user_initialised==0)
@@ -786,205 +785,177 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
     /* Check if already registered, else register context */
     DLT_SEM_LOCK();
 
-    registered=0;
-    for (i=0;i<dlt_user.dlt_ll_ts_num_entries;i++)
-    {
-        if (dlt_user.dlt_ll_ts)
-        {
-            if (memcmp(dlt_user.dlt_ll_ts[i].contextID, contextid,DLT_ID_SIZE)==0)
-            {
-                registered=1;
+    /* Check of double context registration removed */
+    /* Double registration is already checked by daemon */
 
-                memset(ctid,0,(DLT_ID_SIZE+1));
-                dlt_print_id(ctid, contextid);
+	/* Allocate or expand context array */
+	if (dlt_user.dlt_ll_ts == 0)
+	{
+		dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*DLT_USER_CONTEXT_ALLOC_SIZE);
+		if (dlt_user.dlt_ll_ts==0)
+		{
+			DLT_SEM_FREE();
+			return -1;
+		}
 
-                sprintf(str,"context '%s' already registered!\n",ctid);
-                dlt_log(LOG_WARNING, str);
+		dlt_user.dlt_ll_ts_max_num_entries = DLT_USER_CONTEXT_ALLOC_SIZE;
 
-                break;
-            }
-        }
-    }
+		/* Initialize new entries */
+		for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
+		{
+			dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
 
-    if (registered==0)
-    {
-        /* Allocate or expand context array */
-        if (dlt_user.dlt_ll_ts == 0)
-        {
-            dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*DLT_USER_CONTEXT_ALLOC_SIZE);
-            if (dlt_user.dlt_ll_ts==0)
-            {
-                DLT_SEM_FREE();
-                return -1;
-            }
+			/* At startup, logging and tracing is locally enabled */
+			/* the correct log level/status is set after received from daemon */
+			dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
+			dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
-            dlt_user.dlt_ll_ts_max_num_entries = DLT_USER_CONTEXT_ALLOC_SIZE;
+			dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+			dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
 
-            /* Initialize new entries */
-            for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
-            {
-                dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
+			dlt_user.dlt_ll_ts[i].context_description = 0;
 
-                /* At startup, logging and tracing is locally enabled */
-                /* the correct log level/status is set after received from daemon */
-                dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
-                dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+			dlt_user.dlt_ll_ts[i].injection_table = 0;
+			dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+		}
+	}
+	else
+	{
+		if ((dlt_user.dlt_ll_ts_num_entries%DLT_USER_CONTEXT_ALLOC_SIZE)==0)
+		{
+			/* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
+			dlt_ll_ts_type *old_ll_ts;
+			uint32_t old_max_entries;
 
-                dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
-                dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+			old_ll_ts = dlt_user.dlt_ll_ts;
+			old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
 
-                dlt_user.dlt_ll_ts[i].context_description = 0;
+			dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries/DLT_USER_CONTEXT_ALLOC_SIZE)+1)*DLT_USER_CONTEXT_ALLOC_SIZE;
+			dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
+								 dlt_user.dlt_ll_ts_max_num_entries);
+			if (dlt_user.dlt_ll_ts==0)
+			{
+				dlt_user.dlt_ll_ts = old_ll_ts;
+				dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
+				DLT_SEM_FREE();
+				return -1;
+			}
 
-                dlt_user.dlt_ll_ts[i].injection_table = 0;
-                dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
-            }
-        }
-        else
-        {
-            if ((dlt_user.dlt_ll_ts_num_entries%DLT_USER_CONTEXT_ALLOC_SIZE)==0)
-            {
-                /* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
-                dlt_ll_ts_type *old_ll_ts;
-                uint32_t old_max_entries;
+			memcpy(dlt_user.dlt_ll_ts,old_ll_ts,sizeof(dlt_ll_ts_type)*dlt_user.dlt_ll_ts_num_entries);
+			free(old_ll_ts);
 
-                old_ll_ts = dlt_user.dlt_ll_ts;
-                old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
+			/* Initialize new entries */
+			for (i=dlt_user.dlt_ll_ts_num_entries;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
+			{
+				dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
 
-                dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries/DLT_USER_CONTEXT_ALLOC_SIZE)+1)*DLT_USER_CONTEXT_ALLOC_SIZE;
-                dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
-                                     dlt_user.dlt_ll_ts_max_num_entries);
-                if (dlt_user.dlt_ll_ts==0)
-                {
-                	dlt_user.dlt_ll_ts = old_ll_ts;
-                	dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
-                    DLT_SEM_FREE();
-                    return -1;
-                }
+				/* At startup, logging and tracing is locally enabled */
+				/* the correct log level/status is set after received from daemon */
+				dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
+				dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
-                memcpy(dlt_user.dlt_ll_ts,old_ll_ts,sizeof(dlt_ll_ts_type)*dlt_user.dlt_ll_ts_num_entries);
-                free(old_ll_ts);
+				dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+				dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
 
-                /* Initialize new entries */
-                for (i=dlt_user.dlt_ll_ts_num_entries;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
-                {
-                    dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
+				dlt_user.dlt_ll_ts[i].context_description = 0;
 
-                    /* At startup, logging and tracing is locally enabled */
-                    /* the correct log level/status is set after received from daemon */
-                    dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
-                    dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+				dlt_user.dlt_ll_ts[i].injection_table = 0;
+				dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+			}
+		}
+	}
 
-                    dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
-                    dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+	/* Store locally context id and context description */
+	dlt_set_id(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].contextID, contextid);
 
-                    dlt_user.dlt_ll_ts[i].context_description = 0;
+	if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description!=0)
+	{
+		free(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description);
+	}
 
-                    dlt_user.dlt_ll_ts[i].injection_table = 0;
-                    dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
-                }
-            }
-        }
+	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = 0;
 
-        /* Store locally context id and context description */
-        dlt_set_id(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].contextID, contextid);
+	if (description!=0)
+	{
+		size_t desc_len = strlen(description);
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
+		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description == 0)
+		{
+			DLT_SEM_FREE();
+			return -1;
+		}
 
-        if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description!=0)
-        {
-            free(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description);
-        }
+		strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
 
-        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = 0;
+		/* Terminate transmitted string with 0 */
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
+	}
 
-        if (description!=0)
-        {
-        	size_t desc_len = strlen(description);
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
-            if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description == 0)
-            {
-            	DLT_SEM_FREE();
-            	return -1;
-            }
+	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+	{
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr = malloc(sizeof(int8_t));
+		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+		{
+			DLT_SEM_FREE();
+			return -1;
+		}
+	}
+	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+	{
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr = malloc(sizeof(int8_t));
+		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+		{
+			DLT_SEM_FREE();
+			return -1;
+		}
+	}
 
-            strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
+	if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
+	{
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
+	}
 
-            /* Terminate transmitted string with 0 */
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
-        }
+	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
+	{
+		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
+	}
 
-        if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
-        {
-        	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr = malloc(sizeof(int8_t));
-        	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
-        	{
-            	DLT_SEM_FREE();
-            	return -1;
-        	}
-        }
-        if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
-        {
-        	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr = malloc(sizeof(int8_t));
-        	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
-        	{
-            	DLT_SEM_FREE();
-            	return -1;
-        	}
-        }
+	/* Prepare transfer struct */
+	//dlt_set_id(log->appID, dlt_user.appID);
+	dlt_set_id(handle->contextID, contextid);
+	handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
 
-        if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
-        {
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
-        }
+	handle->log_level_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr;
+	handle->trace_status_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr;
 
-        if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
-        {
-            dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
-        }
+	log.context_description = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description;
 
-        /* Prepare transfer struct */
-        //dlt_set_id(log->appID, dlt_user.appID);
-        dlt_set_id(handle->contextID, contextid);
-        handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
+	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
+	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
 
-        handle->log_level_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr;
-        handle->trace_status_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr;
+	if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
+	{
+		log.log_level = loglevel;
+	}
+	else
+	{
+		log.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
+	}
 
-        log.context_description = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description;
+	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
+	{
+		log.trace_status = tracestatus;
+	}
+	else
+	{
+		log.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
+	}
 
-        *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
-        *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
+	dlt_user.dlt_ll_ts_num_entries++;
 
-        if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
-        {
-            log.log_level = loglevel;
-        }
-        else
-        {
-            log.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
-        }
+	DLT_SEM_FREE();
 
-        if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
-        {
-            log.trace_status = tracestatus;
-        }
-        else
-        {
-            log.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
-        }
-
-        dlt_user.dlt_ll_ts_num_entries++;
-
-        DLT_SEM_FREE();
-
-        ret=dlt_user_log_send_register_context(&log);
-    }
-    else
-    {
-        DLT_SEM_FREE();
-
-        ret=-1;
-    }
-
-    return ret;
+	return dlt_user_log_send_register_context(&log);
 }
 
 int dlt_unregister_app(void)
