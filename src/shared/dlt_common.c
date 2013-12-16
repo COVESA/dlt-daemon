@@ -758,7 +758,8 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME)
     {
         /* print received time */
-        timeinfo = localtime ((const time_t*)(&(msg->storageheader->seconds)));
+    	time_t tt = msg->storageheader->seconds;
+        timeinfo = localtime (&tt);
 
         if (timeinfo!=0)
         {
