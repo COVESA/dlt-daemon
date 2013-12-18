@@ -58,6 +58,9 @@
 #include "dlt_common.h"
 #include "dlt_user.h"
 
+int dlt_daemon_socket_open(int *sock);
+int dlt_daemon_socket_close(int sock);
+
 int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader);
 
 #endif /* DLT_DAEMON_SOCKET_H */
