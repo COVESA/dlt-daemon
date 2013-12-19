@@ -61,6 +61,8 @@
 int dlt_daemon_socket_open(int *sock);
 int dlt_daemon_socket_close(int sock);
 
+int dlt_daemon_socket_get_send_qeue_max_size(int sock);
+
 int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader);
 
 #endif /* DLT_DAEMON_SOCKET_H */

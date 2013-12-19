@@ -81,22 +81,23 @@
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
-int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,char ringbuffer,int verbose)
+int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,int verbose)
 {
+	int ret;
 	int j,third_value;
 
-    if (sock!=DLT_DAEMON_SEND_TO_ALL)
+    if (sock!=DLT_DAEMON_SEND_TO_ALL && sock!=DLT_DAEMON_SEND_FORCE)
     {
         /* Send message to specific socket */
         if (isatty(sock))
         {
             DLT_DAEMON_SEM_LOCK();
 
-            if(dlt_daemon_serial_send(sock,data1,size1,data2,size2,daemon->sendserialheader))
+            if((ret=dlt_daemon_serial_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
             {
-                dlt_log(LOG_WARNING,"dlt_daemon_control_send_control_message: serial send dlt message failed\n");
                 DLT_DAEMON_SEM_FREE();
-                return -1;
+                dlt_log(LOG_WARNING,"dlt_daemon_client_send: serial send dlt message failed\n");
+                return ret;
            }
 
             DLT_DAEMON_SEM_FREE();
@@ -105,32 +106,36 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
         {
             DLT_DAEMON_SEM_LOCK();
 
-            if(dlt_daemon_socket_send(sock,data1,size1,data2,size2,daemon->sendserialheader))
+            if((ret=dlt_daemon_socket_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
             {
-                dlt_log(LOG_WARNING,"dlt_daemon_control_send_control_message: socket send dlt message failed\n");
                 DLT_DAEMON_SEM_FREE();
-                return -1;
+                dlt_log(LOG_WARNING,"dlt_daemon_client_send: socket send dlt message failed\n");
+                return ret;
             }
 
             DLT_DAEMON_SEM_FREE();
         }
-        return 0;
+        return DLT_DAEMON_ERROR_OK;
     }
 
 	/* write message to offline trace */
-    if (!ringbuffer && (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
+    if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
     {
 		if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 							&& daemon_local->flags.offlineTraceDirectory[0])
 		{
-			dlt_offline_trace_write(&(daemon_local->offlineTrace),daemon_local->msg.headerbuffer,daemon_local->msg.headersize,
-									daemon_local->msg.databuffer,daemon_local->msg.datasize,0,0);
+			if(dlt_offline_trace_write(&(daemon_local->offlineTrace),daemon_local->msg.headerbuffer,daemon_local->msg.headersize,
+									daemon_local->msg.databuffer,daemon_local->msg.datasize,0,0))
+			{
+				return DLT_DAEMON_ERROR_WRITE_FAILED;
+			}
 		}
     }
 
     /* send messages to daemon socket */
-    if (ringbuffer || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
+    if ((sock==DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
     {
+    	int sent = 0;
 		/* look if TCP connection to client is available */
 		for (j = 0; j <= daemon_local->fdmax; j++)
 		{
@@ -157,9 +162,11 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 					{
 						DLT_DAEMON_SEM_LOCK();
 
-						if(dlt_daemon_serial_send(j,data1,size1,data2,size2,daemon->sendserialheader))
+						if((ret=dlt_daemon_serial_send(j,data1,size1,data2,size2,daemon->sendserialheader)))
 						{
-							dlt_log(LOG_WARNING,"dlt_daemon_send_all: serial send dlt message failed\n");
+							DLT_DAEMON_SEM_FREE();
+							dlt_log(LOG_WARNING,"dlt_daemon_client_send: serial send dlt message failed\n");
+							return ret;
 						}
 
 						DLT_DAEMON_SEM_FREE();
@@ -168,46 +175,59 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 					{
 						DLT_DAEMON_SEM_LOCK();
 
-						if(dlt_daemon_socket_send(j,data1,size1,data2,size2,daemon->sendserialheader))
+						if((ret=dlt_daemon_socket_send(j,data1,size1,data2,size2,daemon->sendserialheader)))
 						{
-							dlt_log(LOG_WARNING,"dlt_daemon_send_all: socket send dlt message failed\n");
+							DLT_DAEMON_SEM_FREE();
+							dlt_log(LOG_WARNING,"dlt_daemon_client_send: socket send dlt message failed\n");
 							dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
+							return ret;
 						}
 
 						DLT_DAEMON_SEM_FREE();
 					}
+					sent=1;
 
 				}
 			}
 		}
+		if((sock==DLT_DAEMON_SEND_FORCE) && !sent)
+		{
+			return DLT_DAEMON_ERROR_SEND_FAILED;
+		}
     }
 
     /* Message was not sent to client, so store it in client ringbuffer */
-    if (!ringbuffer && (daemon->state == DLT_DAEMON_STATE_BUFFER || daemon->state == DLT_DAEMON_STATE_SEND_BUFFER))
+    if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state == DLT_DAEMON_STATE_BUFFER || daemon->state == DLT_DAEMON_STATE_SEND_BUFFER || daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))
     {
+    	if(daemon->state == DLT_DAEMON_STATE_BUFFER_FULL)
+    		return DLT_DAEMON_ERROR_BUFFER_FULL;
+
         DLT_DAEMON_SEM_LOCK();
         /* Store message in history buffer */
         if (dlt_buffer_push3(&(daemon->client_ringbuffer),data1,size1,data2,size2,0, 0)<0)
 		{
         	DLT_DAEMON_SEM_FREE();
-			dlt_log(LOG_ERR,"dlt_daemon_send_all: Buffer is full! Message discarded.\n");
+			dlt_log(LOG_DEBUG,"dlt_daemon_client_send: Buffer is full! Message discarded.\n");
+			dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER_FULL);
+			return DLT_DAEMON_ERROR_BUFFER_FULL;
 		}
         DLT_DAEMON_SEM_FREE();
     }
 
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 
 }
 
 int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, char* appid, char* ctid, int verbose)
 {
+	int ret;
     int32_t len;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon==0) || (msg==0) || (appid==0) || (ctid==0))
     {
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* prepare storage header */
@@ -215,7 +235,7 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
 
     if (dlt_set_storageheader(msg->storageheader,daemon->ecuid)==-1)
     {
-		return -1;
+		return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* prepare standard header */
@@ -266,20 +286,20 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
     if (len>UINT16_MAX)
     {
         dlt_log(LOG_CRIT,"Huge control message discarded!\n");
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     msg->standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
-	if(dlt_daemon_client_send(sock,daemon,daemon_local,msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
-						msg->databuffer,msg->datasize,0/* no ringbuffer operation */,verbose))
+	if((ret=dlt_daemon_client_send(sock,daemon,daemon_local,msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
+						msg->databuffer,msg->datasize,verbose)))
 	{
 		DLT_DAEMON_SEM_FREE();
-		dlt_log(LOG_ERR,"dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
-		return -1;
+		dlt_log(LOG_DEBUG,"dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
+		return ret;
 	}
 
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose)
@@ -923,6 +943,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
 
 int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, unsigned int overflow_counter,char* apid, int verbose)
 {
+	int ret;
     DltMessage msg;
 	DltServiceMessageBufferOverflowResponse *resp;
 
@@ -930,14 +951,14 @@ int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, DltD
 
     if (daemon==0)
     {
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* initialise new message */
     if (dlt_message_init(&msg,0)==-1)
     {
     	dlt_daemon_control_service_response(sock, daemon,daemon_local, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
-    	return -1;
+    	return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* prepare payload of data */
@@ -953,26 +974,26 @@ int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, DltD
     }
     if (msg.databuffer==0)
     {
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     resp = (DltServiceMessageBufferOverflowResponse*) msg.databuffer;
     resp->service_id = DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW;
     resp->status = DLT_SERVICE_RESPONSE_OK;
-    resp->overflow = daemon->message_buffer_overflow;
+    resp->overflow = DLT_MESSAGE_BUFFER_OVERFLOW;
    	resp->overflow_counter = overflow_counter;
 
     /* send message */
-    if(dlt_daemon_client_send_control_message(sock,daemon,daemon_local,&msg,apid,"",  verbose))
+    if((ret=dlt_daemon_client_send_control_message(sock,daemon,daemon_local,&msg,apid,"",  verbose)))
     {
         dlt_message_free(&msg,0);
-    	return -1;
+    	return ret;
     }
 
     /* free message */
     dlt_message_free(&msg,0);
 
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, uint32_t service_id, int8_t status , int verbose)
@@ -1499,6 +1520,7 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltDaemo
 
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+	int ret;
     DltMessage msg;
     int32_t len;
 
@@ -1562,8 +1584,11 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     msg.standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
     /* Send message */
-    dlt_daemon_client_send(sock,daemon,daemon_local,msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),
-			   msg.databuffer,msg.datasize,0 /* no ringbuffer only */,verbose);
+    if((ret = dlt_daemon_client_send(sock,daemon,daemon_local,msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),
+			   msg.databuffer,msg.datasize,verbose)))
+    {
+
+    }
 
     /* free message */
     dlt_message_free(&msg,0);

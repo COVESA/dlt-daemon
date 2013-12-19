@@ -61,6 +61,8 @@
 #include <syslog.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 #include <sys/timerfd.h>
 #include <sys/stat.h>
@@ -113,6 +115,10 @@ int dlt_daemon_socket_open(int *sock)
         return -1;
     } /* if */
 
+    /* get socket buffer size */
+    sprintf(str,"dlt_daemon_socket_open: Socket send queue size: %d\n",dlt_daemon_socket_get_send_qeue_max_size(*sock));
+    dlt_log(LOG_INFO, str);
+
     return 0; /* OK */
 }
 
@@ -129,7 +135,7 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
 	if (serialheader)
 	{
 		if ( 0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
-			return -1;
+			return DLT_DAEMON_ERROR_SEND_FAILED;
 
 	}
 
@@ -137,14 +143,24 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
 	if(data1 && size1>0)
 	{
 		if (0 > send(sock, data1,size1,0))
-			return -1;
+			return DLT_DAEMON_ERROR_SEND_FAILED;
 	}
 
 	if(data2 && size2>0)
 	{
 		if (0 > send(sock, data2,size2,0))
-		return -1;
+		return DLT_DAEMON_ERROR_SEND_FAILED;
 	}
 
-	return 0;
+	return DLT_DAEMON_ERROR_OK;
 }
+
+int dlt_daemon_socket_get_send_qeue_max_size(int sock)
+{
+    int n = 0;
+    unsigned int m = sizeof(n);
+    getsockopt(sock,SOL_SOCKET,SO_SNDBUF,(void *)&n, &m);
+
+    return n;
+}
+

@@ -87,6 +87,7 @@ extern "C" {
 #define DLT_DAEMON_RINGBUFFER_STEP_SIZE   500000 /**< Ring buffer size for storing log messages while no client is connected */
 
 #define DLT_DAEMON_SEND_TO_ALL     -3   /**< Constant value to identify the command "send to all" */
+#define DLT_DAEMON_SEND_FORCE      -4   /**< Constant value to identify the command "send force to all" */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 
@@ -101,8 +102,9 @@ typedef enum
 {
 	DLT_DAEMON_STATE_INIT =    		  	 0,  /**< Initial state */
 	DLT_DAEMON_STATE_BUFFER =            1,  /**< logging is buffered until external logger is connected or internal logging is activated */
-	DLT_DAEMON_STATE_SEND_BUFFER =       2,  /**< external logger is connected, but buffer is still not empty or external logger queue is full */
-	DLT_DAEMON_STATE_SEND_DIRECT =       3   /**< External logger is connected or internal logging is active, and buffer is empty */
+	DLT_DAEMON_STATE_BUFFER_FULL =       2,  /**< then internal buffer is full, wait for connect from client */
+	DLT_DAEMON_STATE_SEND_BUFFER =       3,  /**< external logger is connected, but buffer is still not empty or external logger queue is full */
+	DLT_DAEMON_STATE_SEND_DIRECT =       4   /**< External logger is connected or internal logging is active, and buffer is empty */
 } DltDaemonState;
 
 /**
@@ -142,7 +144,6 @@ typedef struct
 	DltDaemonApplication *applications; /**< Pointer to applications */
 	int8_t default_log_level;          /**< Default log level (of daemon) */
 	int8_t default_trace_status;       /**< Default trace status (of daemon) */
-	int message_buffer_overflow;   /**< Set to one, if buffer overflow has occured, zero otherwise */
 	unsigned int overflow_counter;   /**< counts the number of lost messages. */
 	int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
 	char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */

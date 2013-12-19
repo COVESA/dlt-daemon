@@ -154,6 +154,12 @@ typedef struct
 
 typedef DltDaemonTimingPacketThreadData DltDaemonECUVersionThreadData;
 
+#define DLT_DAEMON_ERROR_OK 			0
+#define DLT_DAEMON_ERROR_UNKNOWN 		-1
+#define DLT_DAEMON_ERROR_BUFFER_FULL 	-2
+#define DLT_DAEMON_ERROR_SEND_FAILED 	-3
+#define DLT_DAEMON_ERROR_WRITE_FAILED 	-4
+
 /* Function prototypes */
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);

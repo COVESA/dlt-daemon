@@ -216,7 +216,7 @@ int dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size
 	{
 		/* close old file */
 		close(trace->ohandle);
-                trace->ohandle = -1;
+        trace->ohandle = -1;
 		
 		/* check complete offline trace size, remove old logs if needed */
 		dlt_offline_trace_check_size(trace);

@@ -489,7 +489,7 @@ int main(int argc, char* argv[])
     }
 
     if(daemon_local.flags.yvalue[0])
-    		dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_SEND_DIRECT);
+    	dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_SEND_DIRECT);
     else
 		dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_BUFFER);
 
@@ -566,7 +566,14 @@ int main(int argc, char* argv[])
                         // Activity received on timer_wd, but unable to read the fd:
                         // let's go on sending notification
                     }
-                    if (daemon.timingpackets)
+                    if(daemon.state == DLT_DAEMON_STATE_SEND_BUFFER || daemon.state == DLT_DAEMON_STATE_BUFFER_FULL)
+                    {
+						if (dlt_daemon_send_ringbuffer_to_client(&daemon, &daemon_local, daemon_local.flags.vflag))
+						{
+							dlt_log(LOG_DEBUG,"Can't send contents of ringbuffer to clients\n");
+						}
+                    }
+                    if (daemon.timingpackets && daemon.state == DLT_DAEMON_STATE_SEND_DIRECT)
                     {
                     	dlt_daemon_control_message_time(DLT_DAEMON_SEND_TO_ALL, &daemon, &daemon_local, daemon_local.flags.vflag);
                     }
@@ -1159,6 +1166,10 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     if (setsockopt (in_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout_send, sizeof(timeout_send)) < 0)
         dlt_log(LOG_ERR, "setsockopt failed\n");
 
+    /* Set to non blocking mode */
+    //flags = fcntl(in_sock, F_GETFL, 0);
+    //fcntl(in_sock, F_SETFL, flags | O_NONBLOCK);
+
     //sprintf("str,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
     //dlt_log(str);
     FD_SET(in_sock, &(daemon_local->master)); /* add to master set */
@@ -1192,12 +1203,11 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
 
     if (daemon_local->client_connections==1)
     {
-    	dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_SEND_BUFFER);
-
         if (daemon_local->flags.vflag)
         {
             dlt_log(LOG_INFO, "Send ring-buffer to client\n");
         }
+    	dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
         if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose)==-1)
         {
         	dlt_log(LOG_ERR,"Can't send contents of ringbuffer to clients\n");
@@ -1495,7 +1505,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
 
 int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-     DltUserControlMsgBufferOverflow *userpayload;
+	int ret;
+    DltUserControlMsgBufferOverflow *userpayload;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1515,20 +1526,13 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
     userpayload = (DltUserControlMsgBufferOverflow*) (daemon_local->receiver.buf+sizeof(DltUserHeader));
 
     /* Store in daemon, that a message buffer overflow has occured */
-    daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_OVERFLOW;
-
-    /* look if TCP connection to client is available */
-	dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local, userpayload->overflow_counter,userpayload->apid,verbose);
-
-	/* Reset overflow state */
-	daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
-
-	if(0)
+    /* look if TCP connection to client is available or it least message can be put into buffer */
+	if((ret=dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local, userpayload->overflow_counter,userpayload->apid,verbose)))
 	{
-        	/* there was an error when storing message */
-        	/* add the counter of lost messages to the daemon counter */
-        	daemon->overflow_counter+=userpayload->overflow_counter;
-    }
+    	/* there was an error when storing message */
+    	/* add the counter of lost messages to the daemon counter */
+    	daemon->overflow_counter+=userpayload->overflow_counter;
+	}
 
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgBufferOverflow))==-1)
@@ -1542,29 +1546,22 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
 
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+	int ret;
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon==0)  || (daemon_local==0))
     {
     	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_overflow()\n");
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* Store in daemon, that a message buffer overflow has occured */
-    daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_OVERFLOW;
+	if((ret=dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,daemon->overflow_counter,"", verbose)))
+	{
+		return ret;
+	}
 
-	dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,daemon->overflow_counter,"", verbose);
-
-	/* Reset overflow state */
-	daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
-
-    /* message was not sent, so report to caller that sending failed */
-    if (0)
-    {
-        return -1;
-    }
-
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
@@ -1900,6 +1897,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
 
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+	int ret;
     int bytes_to_be_removed;
 
     static char text[DLT_DAEMON_TEXTSIZE];
@@ -1909,7 +1907,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
     if ((daemon==0)  || (daemon_local==0))
     {
     	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_log()\n");
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     if (dlt_message_read(&(daemon_local->msg),(unsigned char*)daemon_local->receiver.buf+sizeof(DltUserHeader),daemon_local->receiver.bytesRcvd-sizeof(DltUserHeader),0,verbose)==0)
@@ -1923,7 +1921,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             if (dlt_message_set_extraparameters(&(daemon_local->msg),0)==-1)
             {
             	dlt_log(LOG_ERR,"Can't set message extra parameters in process user message log\n");
-				return -1;
+				return DLT_DAEMON_ERROR_UNKNOWN;
             }
 
             /* Correct value of timestamp, this was changed by dlt_message_set_extraparameters() */
@@ -1936,7 +1934,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon_local->msg.headerextra.ecu)==-1)
             {
 				dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
-				return -1;
+				return DLT_DAEMON_ERROR_UNKNOWN;
             }
         }
         else
@@ -1944,7 +1942,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon->ecuid)==-1)
             {
 				dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
-				return -1;
+				return DLT_DAEMON_ERROR_UNKNOWN;
             }
         }
 
@@ -1989,9 +1987,14 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
             if((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
             {
 
-            	dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-            		                daemon_local->msg.databuffer,daemon_local->msg.datasize,
-            		                0/* no ringbuffer operation */,verbose);
+            	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
+            		                daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
+            	{
+            		if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
+            		{
+            			daemon->overflow_counter++;
+            		}
+            	}
             }
 
         }
@@ -2005,16 +2008,16 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
         if (dlt_receiver_remove(&(daemon_local->receiver),bytes_to_be_removed)==-1)
         {
         	dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
-        	return -1;
+        	return DLT_DAEMON_ERROR_UNKNOWN;
         }
     }
     else
     {
     	dlt_log(LOG_ERR,"Can't read messages from receiver\n");
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 #ifdef DLT_SHM_ENABLE
@@ -2312,6 +2315,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+	int ret;
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
     int length;
 
@@ -2320,28 +2324,33 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     if ((daemon==0)  || (daemon_local==0))
     {
     	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_send_ringbuffer_to_client()\n");
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     if(dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0)
     {
     	dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
-    	return 0;
+    	return DLT_DAEMON_ERROR_OK;
     }
 
-	/* Attention: If the message can't be send at this time, it will be silently discarded. */
-    while ( (length = dlt_buffer_pull(&(daemon->client_ringbuffer), data, sizeof(data)) ) > 0)
+    while ( (length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data)) ) > 0)
     {
-    	dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,data,length,0,0,1/* ringbuffer operation */,verbose);
+    	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE,daemon,daemon_local,data,length,0,0,verbose)))
+    	{
+    		return ret;
+    	}
+    	dlt_buffer_remove(&(daemon->client_ringbuffer));
+    	if(daemon->state != DLT_DAEMON_STATE_SEND_BUFFER)
+    		dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_SEND_BUFFER);
 
         if(dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0)
         {
         	dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_SEND_DIRECT);
-        	return 0;
+        	return DLT_DAEMON_ERROR_OK;
         }
     }
 
-    return 0;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name)

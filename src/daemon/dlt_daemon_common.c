@@ -139,7 +139,6 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     daemon->default_log_level = DLT_DAEMON_INITIAL_LOG_LEVEL ;
     daemon->default_trace_status = DLT_DAEMON_INITIAL_TRACE_STATUS ;
 
-    daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
     daemon->overflow_counter = 0;
 
     daemon->runtime_context_cfg_loaded = 0;
@@ -1197,8 +1196,6 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *f
     daemon->default_log_level = DLT_DAEMON_INITIAL_LOG_LEVEL ;
     daemon->default_trace_status = DLT_DAEMON_INITIAL_TRACE_STATUS ;
 
-    daemon->message_buffer_overflow = DLT_MESSAGE_BUFFER_NO_OVERFLOW;
-
     /* Reset all other things (log level, trace status, etc.
     						   to default values             */
 
@@ -1279,6 +1276,10 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
 		case DLT_DAEMON_STATE_BUFFER:
 	        dlt_log(LOG_INFO,"Switched to buffer state.\n");
 			daemon->state = DLT_DAEMON_STATE_BUFFER;
+			break;
+		case DLT_DAEMON_STATE_BUFFER_FULL:
+	        dlt_log(LOG_INFO,"Switched to buffer full state.\n");
+			daemon->state = DLT_DAEMON_STATE_BUFFER_FULL;
 			break;
 		case DLT_DAEMON_STATE_SEND_BUFFER:
 	        dlt_log(LOG_INFO,"Switched to send buffer state.\n");

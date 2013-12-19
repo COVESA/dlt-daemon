@@ -62,7 +62,7 @@
 #include <dlt_offline_trace.h>
 #include <sys/time.h>
 
-int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,char ringbuffer,int verbose);
+int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,int verbose);
 
 /**
  * Send out response message to dlt client
