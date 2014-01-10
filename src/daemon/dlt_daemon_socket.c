@@ -82,15 +82,20 @@ static char str[DLT_DAEMON_TEXTBUFSIZE];
 int dlt_daemon_socket_open(int *sock)
 {
     int yes = 1;
-
+    int socket_family = PF_INET;
+    int socket_type = SOCK_STREAM;
+    int protocol =  IPPROTO_TCP;
     struct sockaddr_in servAddr;
     unsigned int servPort = DLT_DAEMON_TCP_PORT;
 
-    if ((*sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+    if ((*sock = socket(socket_family, socket_type, protocol)) < 0)
     {
         dlt_log(LOG_ERR, "dlt_daemon_socket_open: socket() failed!\n");
         return -1;
     } /* if */
+
+    sprintf(str,"%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n", __FUNCTION__, socket_family, socket_type, protocol);
+    dlt_log(LOG_INFO, str);
 
     if ( -1 == setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))
     {
@@ -114,6 +119,9 @@ int dlt_daemon_socket_open(int *sock)
         dlt_log(LOG_ERR, "dlt_daemon_socket_open: listen() failed!\n");
         return -1;
     } /* if */
+
+    sprintf(str,"%s: Listening on port: %u\n",__FUNCTION__,servPort);
+    dlt_log(LOG_INFO, str);
 
     /* get socket buffer size */
     sprintf(str,"dlt_daemon_socket_open: Socket send queue size: %d\n",dlt_daemon_socket_get_send_qeue_max_size(*sock));
