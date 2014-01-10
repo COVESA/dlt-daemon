@@ -1118,7 +1118,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
 
     if ((msg==0) || (buffer==0) || (length<=0))
     {
-        return -1;
+        return DLT_MESSAGE_ERROR_UNKNOWN;
     }
 
     /* initialize resync_offset */
@@ -1128,7 +1128,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     if (length<sizeof(dltSerialHeader))
     {
         /* dlt_log(LOG_ERR, "Length smaller than serial header!\n"); */
-        return -1;
+        return DLT_MESSAGE_ERROR_SIZE;
     }
 
     if (memcmp(buffer,dltSerialHeader,sizeof(dltSerialHeader)) == 0)
@@ -1176,7 +1176,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     if (length<sizeof(DltStandardHeader))
     {
         /* dlt_log(LOG_ERR, "Length smaller than standard header!\n"); */
-        return -1;
+        return DLT_MESSAGE_ERROR_SIZE;
     }
     memcpy(msg->headerbuffer+sizeof(DltStorageHeader),buffer,sizeof(DltStandardHeader));
 
@@ -1210,7 +1210,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     {
         sprintf(str,"Plausibility check failed. Complete message size too short (%d)!\n",msg->datasize);
         dlt_log(LOG_ERR, str);
-        return -1;
+        return DLT_MESSAGE_ERROR_CONTENT;
     }
 
     /* load standard header extra parameters and Extended header if used */
@@ -1218,7 +1218,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     {
         if (length  < (msg->headersize - sizeof(DltStorageHeader)))
         {
-            return -1;
+            return DLT_MESSAGE_ERROR_SIZE;
         }
 
         memcpy(msg->headerbuffer+sizeof(DltStorageHeader)+sizeof(DltStandardHeader),buffer+sizeof(DltStandardHeader),extra_size);
@@ -1241,7 +1241,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     if (length  < (msg->headersize - sizeof(DltStorageHeader) + msg->datasize))
     {
         /* dlt_log(LOG_ERR,"length does not fit!\n"); */
-        return -1;
+        return DLT_MESSAGE_ERROR_SIZE;
     }
 
     /* free last used memory for buffer */
@@ -1261,13 +1261,13 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     {
         sprintf(str,"Cannot allocate memory for payload buffer of size %d!\n",msg->datasize);
         dlt_log(LOG_ERR, str);
-        return -1;
+        return DLT_MESSAGE_ERROR_UNKNOWN;
     }
 
     /* load payload data from buffer */
     memcpy(msg->databuffer,buffer+(msg->headersize-sizeof(DltStorageHeader)),msg->datasize);
 
-    return 0;
+    return DLT_MESSAGE_ERROR_OK;
 }
 
 int dlt_message_get_extraparameters(DltMessage *msg,int verbose)

@@ -271,7 +271,7 @@ int dlt_client_main_loop(DltClient *client, void *data, int verbose)
             return 1;
         }
 
-        while (dlt_message_read(&msg,(unsigned char*)(client->receiver.buf),client->receiver.bytesRcvd,0,verbose)==0)
+        while (dlt_message_read(&msg,(unsigned char*)(client->receiver.buf),client->receiver.bytesRcvd,0,verbose)==DLT_MESSAGE_ERROR_OK)
         {
             /* Call callback function */
             if (message_callback_function)

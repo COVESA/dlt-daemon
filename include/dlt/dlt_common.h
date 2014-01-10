@@ -614,6 +614,11 @@ typedef struct
 	int size;	
 } DltBufferBlockHead;
 
+#define DLT_MESSAGE_ERROR_OK 			0
+#define DLT_MESSAGE_ERROR_UNKNOWN 		-1
+#define DLT_MESSAGE_ERROR_SIZE          -2
+#define DLT_MESSAGE_ERROR_CONTENT    	-3
+
 #ifdef __cplusplus
 extern "C"
 {
