@@ -142,16 +142,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 			/* send to everyone! */
 			if (FD_ISSET(j, &(daemon_local->master)))
 			{
-				/* except the listener and ourselves */
-				if (daemon_local->flags.yvalue[0])
-				{
-					third_value = daemon_local->fdserial;
-				}
-				else
-				{
-					third_value = daemon_local->sock;
-				}
-				if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value)
+				if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != daemon_local->sock)
 	#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 							&& (j!=daemon_local->timer_wd)
 	#endif
