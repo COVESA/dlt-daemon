@@ -346,8 +346,6 @@ int main(int argc, char* argv[])
 
     DLT_UNREGISTER_APP();
 
-    dlt_free();
-
     return 0;
 
 }
