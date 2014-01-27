@@ -1658,12 +1658,12 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
 
     if (application==0)
     {
-        dlt_log(LOG_ERR, "Application not found in dlt_daemon_process_user_message_register_context()\n");
         if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
 		{
 			dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
 			return -1;
 		}
+        dlt_log(LOG_ERR, "Application not found in dlt_daemon_process_user_message_register_context()\n");
         return 0;
     }
 
@@ -1724,6 +1724,11 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         /* Prepare request for get log info with one application and one context */
         if (dlt_message_init(&msg, verbose)==-1)
         {
+            if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
+        	{
+        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		return -1;
+        	}
         	dlt_log(LOG_ERR,"Can't initialize message");
         	return -1;
         }
@@ -1740,6 +1745,11 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         }
         if (msg.databuffer==0)
         {
+            if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
+        	{
+        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		return -1;
+        	}
         	dlt_log(LOG_ERR,"Can't allocate buffer for get log info message\n");
 			return -1;
         }
@@ -1762,7 +1772,12 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         /* This call also replaces the default values with the values defined for default */
         if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
         {
-			dlt_log(LOG_ERR,"Can't send current log level as response to user message register context\n");
+            if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
+        	{
+        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		return -1;
+        	}
+            dlt_log(LOG_ERR,"Can't send current log level as response to user message register context\n");
 			return -1;
         }
     }
@@ -1822,7 +1837,12 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
                     /* Delete context */
                     if (dlt_daemon_context_del(daemon, context, verbose)==-1)
                     {
-                    	dlt_log(LOG_ERR,"Can't delete context for user message unregister application\n");
+                        if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication))==-1)
+                        {
+                        	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister application\n");
+                    		return -1;
+                        }
+                        dlt_log(LOG_ERR,"Can't delete context for user message unregister application\n");
                     	return -1;
                     }
                 }
@@ -1831,7 +1851,12 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
             /* Delete this application entry from internal table*/
             if (dlt_daemon_application_del(daemon, application, verbose)==-1)
             {
-            	dlt_log(LOG_ERR,"Can't delete application for user message unregister application\n");
+                if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication))==-1)
+                {
+                	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister application\n");
+            		return -1;
+                }
+                dlt_log(LOG_ERR,"Can't delete application for user message unregister application\n");
 				return -1;
             }
         }
@@ -1874,7 +1899,12 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
         /* Delete this connection entry from internal table*/
         if (dlt_daemon_context_del(daemon, context, verbose)==-1)
         {
-			dlt_log(LOG_ERR,"Can't delete context for user message unregister context\n");
+            if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext))==-1)
+            {
+            	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister context\n");
+        		return -1;
+            }
+            dlt_log(LOG_ERR,"Can't delete context for user message unregister context\n");
 			return -1;
 		}
     }
