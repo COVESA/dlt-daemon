@@ -19,6 +19,11 @@ add_executable(dlt-example-user ${dlt_example_user_SRCS})
 target_link_libraries(dlt-example-user dlt)
 set_target_properties(dlt-example-user PROPERTIES LINKER_LANGUAGE C)
 
+set(dlt_example_user_common_api_SRCS dlt-example-user-common-api.c)
+add_executable(dlt-example-user-common-api ${dlt_example_user_common_api_SRCS})
+target_link_libraries(dlt-example-user-common-api dlt)
+set_target_properties(dlt-example-user-common-api PROPERTIES LINKER_LANGUAGE C)
+
 set(dlt_example_user_func_SRCS dlt-example-user-func.c)
 add_executable(dlt-example-user-func ${dlt_example_user_func_SRCS})
 target_link_libraries(dlt-example-user-func dlt)
@@ -29,7 +34,7 @@ add_executable(	dlt-example-filetransfer ${dlt_example_filetransfer_SRCS})
 target_link_libraries(dlt-example-filetransfer dlt )
 set_target_properties(dlt-example-filetransfer PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-example-user dlt-example-user-func dlt-example-filetransfer
+install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api dlt-example-filetransfer
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 

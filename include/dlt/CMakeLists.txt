@@ -14,6 +14,6 @@
 # @licence end@
 ########
 
-install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h dlt_common.h dlt_types.h dlt_version.h dlt_shm.h dlt_offline_trace.h dlt_filetransfer.h
+install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h dlt_common.h dlt_types.h dlt_version.h dlt_shm.h dlt_offline_trace.h dlt_filetransfer.h dlt_common_api.h
         DESTINATION include/dlt
 	COMPONENT devel)
