@@ -270,7 +270,7 @@ void quit_handler(int signum)
  */
 void cleanup()
 {
-	int i;
+	unsigned int i;
 	for(i=0;i<pidcount;i++)
 	{
 		kill(pids[i], SIGINT);
@@ -367,7 +367,7 @@ int wait_for_death()
 		}
 		else
 		{
-			int i;
+			unsigned int i;
 			for(i=0;i<pidcount;i++)
 			{
 				if(pids[i] == w)

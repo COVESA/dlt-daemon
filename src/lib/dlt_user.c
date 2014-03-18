@@ -735,7 +735,6 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 {
     DltContextData log;
     uint32_t i;
-    char ctid[DLT_ID_SIZE+1];
 
     if (dlt_user_initialised==0)
     {
