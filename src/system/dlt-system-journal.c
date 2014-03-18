@@ -79,44 +79,62 @@ int journal_checkUserBufferForFreeSpace()
 	return 1;
 }
 
-/* 
- * Copy a string and remove characters, which cannot be displayed.
- * If max_size is reached a null character is added as last character.
- * 
- */
-void journal_clean_strcpy(const char* src,char* target,int max_size)
+int dlt_system_journal_get(sd_journal* j,char *target,const char *field,size_t max_size)
 {
-	if(max_size<1)
-		return;
-	while(*src!=0)
+	char *data;
+	size_t length;
+	int error_code;
+	size_t field_size;
+
+	// pre check parameters
+	if(max_size<1 || target == 0 || field == 0 || j == 0)
+		return -1;
+
+	// intialise empty target
+	target[0]=0;
+
+	// get data from journal
+	error_code = sd_journal_get_data(j, field,(const void **) &data, &length);
+
+	// check if an error
+	if(error_code)
+		return error_code;
+
+	// calculate field size
+	field_size = strlen(field)+1;
+
+	//check length
+	if(length<field_size)
+	   return -1;
+
+    // copy string
+	if(max_size<=(length-field_size))
 	{
-		if(max_size>1)
-		{
-			if(*src>DLT_SYSTEM_JOURNAL_ASCII_FIRST_VISIBLE_CHARACTER)
-			{
-				*target=*src;
-				target++;
-				max_size--;
-			}
-		}
-		else
-		{
-			*target=0;
-			return;			
-		}
-		src++;
+		// truncate
+		strncpy(target,data+field_size,max_size-1);
+		target[max_size]=0;
 	}
-	*target=0;
+	else
+	{
+		// full copy
+		strncpy(target,data+field_size,length-field_size);
+		target[length-field_size]=0;
+
+	}
+
+	// debug messages
+	//printf("%s = %s\n",field,target);
+
+	// Success
+	return 0;
 }
 
 void journal_thread(void *v_conf)
 {
-	int r,r_comm,r_pid,r_priority,r_message,r_transport;
-	char *d_comm="",*d_pid="",*d_priority="",*d_message="",*d_transport="";
+	int r;
 	sd_journal *j;
 	char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
 	sd_id128_t boot_id;
-	size_t l;
 	uint64_t time_usecs = 0;
 	struct tm * timeinfo;
 	char buffer_time[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
@@ -124,7 +142,8 @@ void journal_thread(void *v_conf)
 	     buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
 	     buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
 	     buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG];
+	     buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG],
+    	 buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
 	int loglevel,systemd_loglevel;
 	char* systemd_log_levels[] = { "Emergency","Alert","Critical","Error","Warning","Notice","Informational","Debug" };
 	
@@ -215,38 +234,28 @@ void journal_thread(void *v_conf)
 					return;
 				
 			}
-			r_comm = sd_journal_get_data(j, "_COMM",(const void **) &d_comm, &l);
-			r_pid = sd_journal_get_data(j, "_PID",(const void **) &d_pid, &l);
-			r_priority = sd_journal_get_data(j, "PRIORITY",(const void **) &d_priority, &l);
-			r_message = sd_journal_get_data(j, "MESSAGE",(const void **) &d_message, &l);
-			r_transport = sd_journal_get_data(j, "_TRANSPORT",(const void **) &d_transport, &l);
-			if(r_comm>=0 && strlen(d_comm)>sizeof("_COMM")) 				
-				d_comm +=sizeof("_COMM");
-			if(r_pid>=0 && strlen(d_pid)>sizeof("_PID")) 					
-				d_pid +=sizeof("_PID");
-			if(r_priority>=0 && strlen(d_priority)>sizeof("PRIORITY")) 		
-				d_priority +=sizeof("PRIORITY");
-			if(r_message>=0 && strlen(d_message)>sizeof("MESSAGE")) 		
-				d_message +=sizeof("MESSAGE");
-			if(r_transport>=0 && strlen(d_transport)>sizeof("_TRANSPORT")) 	
-				d_transport +=sizeof("_TRANSPORT");
-			
+
+			/* get data from journal entry, empty string if invalid fields */
+			dlt_system_journal_get(j,buffer_comm,"_COMM",sizeof(buffer_comm));
+			dlt_system_journal_get(j,buffer_pid,"_PID",sizeof(buffer_pid));
+			dlt_system_journal_get(j,buffer_priority,"PRIORITY",sizeof(buffer_priority));
+			dlt_system_journal_get(j,buffer_message,"MESSAGE",sizeof(buffer_message));
+			dlt_system_journal_get(j,buffer_transport,"_TRANSPORT",sizeof(buffer_transport));
+
 			/* prepare time string */
 			time_usecs /=1000000;
 			timeinfo = localtime ((const time_t*)(&(time_usecs)));
             strftime (buffer_time,sizeof(buffer_time),"%Y/%m/%d %H:%M:%S",timeinfo);
 
 			/* prepare process string */
-			journal_clean_strcpy(d_pid,buffer_pid,sizeof(buffer_pid));
-			journal_clean_strcpy(d_comm,buffer_comm,sizeof(buffer_comm));
-			if(strcmp(d_transport,"kernel")==0)
+			if(strcmp(buffer_transport,"kernel")==0)
 				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"kernel:");
 			else
 				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s[%s]:",buffer_comm,buffer_pid);
 
 			/* map log level on demand */
 			loglevel = DLT_LOG_INFO;
-			systemd_loglevel = atoi(d_priority);
+			systemd_loglevel = atoi(buffer_priority);
 			if(conf->Journal.MapLogLevels)
 			{
 				/* Map log levels from journal to DLT */
@@ -279,9 +288,6 @@ void journal_thread(void *v_conf)
 				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s:",systemd_log_levels[systemd_loglevel]);
 			else
 				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"prio_unknown:");
-			
-			/* prepare message */
-			journal_clean_strcpy(d_message,buffer_message,sizeof(buffer_message));
 			
 			/* write log entry */
 			DLT_LOG(journalContext, loglevel,
