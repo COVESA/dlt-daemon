@@ -488,7 +488,7 @@ int main(int argc, char* argv[])
         create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_sixty_s, "ECU version");
     }
 
-    if(daemon_local.flags.yvalue[0])
+    if(daemon_local.flags.yvalue[0] || (daemon_local.flags.offlineTraceDirectory[0]))
     	dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_SEND_DIRECT);
     else
 		dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_BUFFER);
@@ -2021,17 +2021,13 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 			}
 		}
 
-		/* look if TCP connection to client is available */
-		if((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+		/* send message to client or write to log file */
+		if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
+							daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
 		{
-
-			if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-								daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
+			if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
 			{
-				if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
-				{
-					daemon->overflow_counter++;
-				}
+				daemon->overflow_counter++;
 			}
 		}
 
@@ -2321,7 +2317,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
         return -1;
     }
 
-    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext)))
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogMode)))
     {
     	/* Not enough bytes received */
         return -1;
