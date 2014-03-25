@@ -2943,7 +2943,7 @@ int dlt_setup_serial(int fd, speed_t speed)
 
 speed_t dlt_convert_serial_speed(int baudrate)
 {
-#if !defined (__WIN32__) && !defined(_MSC_VER)
+#if !defined (__WIN32__) && !defined(_MSC_VER) && !defined(__CYGWIN__)
     speed_t ret;
 
     switch (baudrate)

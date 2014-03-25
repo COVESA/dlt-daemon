@@ -64,10 +64,14 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+#ifdef linux
 #include <sys/timerfd.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifdef linux
 #include <linux/stat.h>
+#endif
 
 #include "dlt_types.h"
 #include "dlt-daemon.h"
@@ -166,7 +170,7 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
 int dlt_daemon_socket_get_send_qeue_max_size(int sock)
 {
     int n = 0;
-    unsigned int m = sizeof(n);
+    socklen_t m = sizeof(n);
     getsockopt(sock,SOL_SOCKET,SO_SNDBUF,(void *)&n, &m);
 
     return n;

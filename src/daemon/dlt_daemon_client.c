@@ -63,10 +63,14 @@
 #include <errno.h>
 #include <pthread.h>
 
+#ifdef linux
 #include <sys/timerfd.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifdef linux
 #include <linux/stat.h>
+#endif
 
 #include "dlt_types.h"
 #include "dlt-daemon.h"
@@ -1188,8 +1192,9 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
 	time_t t = time(NULL);
 	struct tm lt = {0};
 	localtime_r(&t, &lt);
-
+#if !defined(__CYGWIN__)
     resp->timezone = (int32_t) lt.tm_gmtoff;
+#endif
     resp->isdst = (uint8_t) lt.tm_isdst;
 
     /* send message */

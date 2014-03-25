@@ -77,10 +77,14 @@
 #include <errno.h>
 #include <pthread.h>
 
+#ifdef linux
 #include <sys/timerfd.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
+#ifdef linux
 #include <linux/stat.h>
+#endif
 
 #include "dlt_types.h"
 #include "dlt-daemon.h"
@@ -500,8 +504,13 @@ int main(int argc, char* argv[])
         daemon_local.read_fds = daemon_local.master;
         if (select(daemon_local.fdmax+1, &(daemon_local.read_fds), NULL, NULL, NULL) == -1)
         {
-            dlt_log(LOG_CRIT, "select() failed!\n");
-            return -1 ;
+            int error = errno;
+            /* retry if SIGINT was received, else error out */
+            if ( error != EINTR ) {
+                sprintf(str,"select() failed: %s\n", strerror(error) );
+                dlt_log(LOG_CRIT, str);
+                return -1;
+            }
         } /* if */
 
         /* run through the existing FIFO and sockets to check for events */
@@ -1027,8 +1036,8 @@ void dlt_daemon_signal_handler(int sig)
     case SIGQUIT:
     {
         /* finalize the server */
-        //dlt_log("terminate signal catched");
-        dlt_log(LOG_NOTICE, "Exiting DLT daemon\n");
+        sprintf(str,"Exiting DLT daemon due to signal: %s\n", strsignal(sig) );
+        dlt_log(LOG_NOTICE, str);
 
         /* Try to delete existing pipe, ignore result of unlink() */
         unlink(DLT_USER_FIFO);
@@ -1042,7 +1051,7 @@ void dlt_daemon_signal_handler(int sig)
     }
     default:
     {
-	/* This case should never occur */
+        dlt_log(LOG_CRIT, "This case should never happen!");
 	break;
     }
     } /* switch */
@@ -2383,7 +2392,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
 int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name)
 {
-    int local_fd;
+    int local_fd = -1;
     struct itimerspec l_timer_spec;
 
     if(timer_name == NULL)
@@ -2399,6 +2408,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
     }
 
     if( period_sec > 0 ) {
+#ifdef linux
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
         if( local_fd < 0)
         {
@@ -2417,6 +2427,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
             dlt_log(DLT_LOG_ERROR, str);
             local_fd = -1;
         }
+#endif
     }
     else {
         // timer not activated via the service file

@@ -44,7 +44,9 @@
 
 #include <pthread.h>
 #include <unistd.h>
+#ifdef linux
 #include <sys/inotify.h>
+#endif
 #include <libgen.h>
 #include <dirent.h>
 #include <zlib.h>
@@ -56,8 +58,10 @@
 #include "dlt.h"
 #include "dlt_filetransfer.h"
 
+#ifdef linux
 #define INOTIFY_SZ (sizeof(struct inotify_event))
 #define INOTIFY_LEN (INOTIFY_SZ + NAME_MAX + 1)
+#endif
 #define Z_CHUNK_SZ 1024*128
 #define COMPRESS_EXTENSION ".gz"
 #define SUBDIR_COMPRESS ".tocompress"
@@ -72,12 +76,14 @@ extern unsigned long getFileSerialNumber(const char* file, int *ok);
 DLT_IMPORT_CONTEXT(dltsystem);
 DLT_DECLARE_CONTEXT(filetransferContext)
 
+#ifdef linux
 typedef struct {
     int handle;
     int fd[DLT_SYSTEM_LOG_DIRS_MAX];
 } s_ft_inotify;
 
 s_ft_inotify ino;
+#endif
 
 
 char *origin_name(char *src){
@@ -574,8 +580,9 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-filetransfer, initializing inotify on directories."));
-    ino.handle = inotify_init();
     int i;
+#ifdef linux
+    ino.handle = inotify_init();
 
     if(ino.handle < 0)
     {
@@ -583,6 +590,7 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
                 DLT_STRING("Failed to initialize inotify in dlt-system file transfer."));
         return -1;
     }
+#endif
 
     for(i = 0;i < opts->Count;i++)
     {
@@ -616,7 +624,7 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
         }
         free(subdirpath);
 
-
+#ifdef linux
         ino.fd[i] = inotify_add_watch(ino.handle, opts->Directory[i],
                                       IN_CLOSE_WRITE|IN_MOVED_TO);
         if(ino.fd[i] < 0)
@@ -628,7 +636,7 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
                     DLT_STRING(buf));
             return -1;
         }
-
+#endif
 
         flush_dir(opts, i);
 
@@ -638,6 +646,7 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
 
 int wait_for_files(FiletransferOptions const *opts)
 {
+#ifdef linux
     DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, waiting for files."));
     static char buf[INOTIFY_LEN];
     ssize_t len = read(ino.handle, buf, INOTIFY_LEN);
@@ -679,6 +688,7 @@ int wait_for_files(FiletransferOptions const *opts)
         }
         i += INOTIFY_SZ + ie->len;
     }
+#endif
     return 0;
 }
 
