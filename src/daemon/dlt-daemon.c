@@ -625,7 +625,23 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 #endif
 
+    /* create dlt pipes directory */
+    ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
+    if (ret==-1 && errno != EEXIST)
+    {
+        sprintf(str,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
 
+    // S_ISGID cannot be set by mkdir, let's reassign right bits
+    ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
+    if (ret==-1)
+    {
+        sprintf(str,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
 
     /* Check for daemon mode */
     if (daemon_local->flags.dflag)
@@ -764,23 +780,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
-
-    ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
-    if (ret==-1 && errno != EEXIST)
-    {
-        sprintf(str,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
-        dlt_log(LOG_ERR, str);
-        return -1;
-    }
-
-    // S_ISGID cannot be set by mkdir, let's reassign right bits
-    ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
-    if (ret==-1)
-    {
-        sprintf(str,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
-        dlt_log(LOG_ERR, str);
-        return -1;
-    }
 
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(DLT_USER_FIFO);
