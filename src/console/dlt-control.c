@@ -153,7 +153,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-control [options] hostname/serial_device_name\n");
     printf("Send control message to DLT daemon.\n");

@@ -1159,20 +1159,23 @@ extern "C"
     /**
      * Print dlt version and dlt svn version to buffer
      * @param buf Pointer to buffer
+     * @param size size of buffer
      */
-    void dlt_get_version(char *buf);
+    void dlt_get_version(char *buf, size_t size);
 
     /**
     * Print dlt major version to buffer
     * @param buf Pointer to buffer
+    * @param size size of buffer
     */
-    void dlt_get_major_version(char *buf);
+    void dlt_get_major_version(char *buf, size_t size);
 
     /**
     * Print dlt minor version to buffer
     * @param buf Pointer to buffer
+    * @param size size of buffer
     */
-    void dlt_get_minor_version(char *buf);
+    void dlt_get_minor_version(char *buf, size_t size);
 
 #endif
 

@@ -102,7 +102,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-test-stress [options]\n");
     printf("Test application executing several stress tests.\n");
@@ -248,7 +248,7 @@ void stress1(void)
     {
         /* Generate id */
         memset(ctid,0,5);
-        sprintf(ctid,"%d",i);
+        snprintf(ctid,5,"%d",i);
 
         //printf("%i: '%s' \n",i,ctid);
 
@@ -322,7 +322,7 @@ void thread_function(void)
     memset(ctid,0,5);
 
     /* Create random context id */
-    sprintf(ctid,"%.2x", rand() & 0x0000ffff);
+    snprintf(ctid,5,"%.2x", rand() & 0x0000ffff);
 
     usleep(rand()/1000);
 

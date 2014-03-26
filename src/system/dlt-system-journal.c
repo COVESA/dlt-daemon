@@ -112,7 +112,7 @@ int dlt_system_journal_get(sd_journal* j,char *target,const char *field,size_t m
 	{
 		// truncate
 		strncpy(target,data+field_size,max_size-1);
-		target[max_size]=0;
+		target[max_size-1]=0;
 	}
 	else
 	{

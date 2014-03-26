@@ -103,7 +103,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-receive [options] hostname/serial_device_name\n");
     printf("Receive DLT messages from DLT daemon and print or store the messages.\n");

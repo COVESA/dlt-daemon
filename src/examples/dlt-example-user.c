@@ -84,7 +84,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-example-user [options] message\n");
     printf("Generate DLT messages and store them to file or send them to daemon.\n");
@@ -299,7 +299,13 @@ int main(int argc, char* argv[])
 	if (zvalue)
 	{
 		char* buffer = malloc(atoi(zvalue));
-        DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));		
+		if(buffer==0)
+		{
+	        /* no message, show usage and terminate */
+	        fprintf(stderr,"Cannot allocate buffer memory!\n");
+	        return -1;
+		}
+		DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
 		free(buffer);
 	}
 #endif /* DLT_TEST_ENABLE */

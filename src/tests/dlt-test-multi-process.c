@@ -94,7 +94,7 @@ unsigned int pidcount = 0;
 void usage(char *prog_name)
 {
 	char version[255];
-	dlt_get_version(version);
+	dlt_get_version(version,255);
 	s_parameters defaults;
 	init_params(&defaults);
 
@@ -298,8 +298,8 @@ void do_logging(s_thread_data *data)
 	char 			ctid_name[256];
 
 
-    sprintf(ctid,"%.2x", rand() & 0x0000ffff);
-	sprintf(ctid_name, "Child %s in dlt-test-multi-process", ctid);
+    snprintf(ctid,5,"%.2x", rand() & 0x0000ffff);
+	snprintf(ctid_name,256, "Child %s in dlt-test-multi-process", ctid);
 	DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
 
 	int msgs_left = data->params.nmsgs;
@@ -324,8 +324,8 @@ void run_threads(s_parameters params)
 
 	srand(getpid());
 
-    sprintf(apid,"MT%02u", pidcount);
-    sprintf(apid_name, "Apps %s.", apid);
+    snprintf(apid,5,"MT%02u", pidcount);
+    snprintf(apid_name,256, "Apps %s.", apid);
 
 	DLT_REGISTER_APP(apid, apid_name);
 

@@ -71,12 +71,12 @@ int dlt_daemon_socket_open(int *sock)
         return -1;
     } /* if */
 
-    sprintf(str,"%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n", __FUNCTION__, socket_family, socket_type, protocol);
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n", __FUNCTION__, socket_family, socket_type, protocol);
     dlt_log(LOG_INFO, str);
 
     if ( -1 == setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))
     {
-        sprintf(str,"dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n",strerror(errno));
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n",strerror(errno));
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -97,11 +97,11 @@ int dlt_daemon_socket_open(int *sock)
         return -1;
     } /* if */
 
-    sprintf(str,"%s: Listening on port: %u\n",__FUNCTION__,servPort);
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%s: Listening on port: %u\n",__FUNCTION__,servPort);
     dlt_log(LOG_INFO, str);
 
     /* get socket buffer size */
-    sprintf(str,"dlt_daemon_socket_open: Socket send queue size: %d\n",dlt_daemon_socket_get_send_qeue_max_size(*sock));
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_open: Socket send queue size: %d\n",dlt_daemon_socket_get_send_qeue_max_size(*sock));
     dlt_log(LOG_INFO, str);
 
     return 0; /* OK */

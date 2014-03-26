@@ -84,7 +84,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-example-user-func [options] message\n");
     printf("Generate DLT messages and store them to file or send them to daemon.\n");

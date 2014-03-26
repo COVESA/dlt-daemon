@@ -76,7 +76,7 @@ int dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
     }
     if (strftime(outstr, sizeof(outstr),"%Y%m%d_%H%M%S", tmp) == 0) {
     }
-	sprintf(trace->filename,"%s/dlt_offlinetrace_%s.dlt",trace->directory,outstr);
+	snprintf(trace->filename,NAME_MAX + 1,"%s/dlt_offlinetrace_%s.dlt",trace->directory,outstr);
 
     /* open DLT output file */
 	trace->ohandle = open(trace->filename,O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
@@ -129,8 +129,8 @@ unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
 
 int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 	struct dirent *dp;
-	char filename[256];
-	char filename_oldest[256];
+	char filename[PATH_MAX+1];
+	char filename_oldest[PATH_MAX+1];
 	unsigned long size_oldest = 0;
 	struct stat status;
 	time_t time_oldest = 0;
@@ -153,7 +153,8 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 						if(time_oldest == 0 || status.st_mtime < time_oldest) {
 								time_oldest = status.st_mtime;
 								size_oldest = status.st_size;
-								strcpy(filename_oldest,filename);
+								strncpy(filename_oldest,filename,PATH_MAX);
+								filename_oldest[PATH_MAX]=0;
 						}
 					}
 					else
@@ -196,7 +197,8 @@ int dlt_offline_trace_check_size(DltOfflineTrace *trace) {
 int dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize) {
 
 	/* init parameters */
-        strncpy(trace->directory,directory,NAME_MAX);
+    strncpy(trace->directory,directory,NAME_MAX);
+    trace->directory[NAME_MAX]=0;
 	trace->fileSize = fileSize;
 	trace->maxSize = maxSize;
 

@@ -135,7 +135,7 @@ void watchdog_thread(void *v_conf)
 			// Calculate half of WATCHDOG_USEC in ns for timer tick
 			notifiyPeriodNSec = watchdogTimeoutSeconds / 2 ;
 
-			sprintf(str,"systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n", watchdogTimeoutSeconds, notifiyPeriodNSec );
+			snprintf(str,512,"systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n", watchdogTimeoutSeconds, notifiyPeriodNSec );
 			DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING(str));
 
 			if (make_periodic (notifiyPeriodNSec, &info) < 0 )
@@ -159,7 +159,7 @@ void watchdog_thread(void *v_conf)
 		}
 		else
 		{
-			sprintf(str,"systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
+			snprintf(str,512,"systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
 			DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING(str));
 		}
 	}

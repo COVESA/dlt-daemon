@@ -719,7 +719,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
 
     if (verbose)
     {
-        sprintf(str,"Allocate %d bytes for response msg databuffer\n", resp.datasize);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Allocate %d bytes for response msg databuffer\n", resp.datasize);
         dlt_log(LOG_INFO, str);
     }
 
@@ -753,7 +753,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
         offset+=sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO==1)
-        sprintf(str,"#apid: %d \n", count_app_ids);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"#apid: %d \n", count_app_ids);
         dlt_log(LOG_DEBUG, str);
 #endif
 
@@ -792,7 +792,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
 
 #if (DLT_DEBUG_GETLOGINFO==1)
                 dlt_print_id(buf, apid);
-                sprintf(str,"apid: %s\n",buf);
+                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"apid: %s\n",buf);
                 dlt_log(LOG_DEBUG, str);
 #endif
 
@@ -809,14 +809,14 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
                 offset+=sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO==1)
-                sprintf(str,"#ctid: %d \n", count_con_ids);
+                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"#ctid: %d \n", count_con_ids);
                 dlt_log(LOG_DEBUG, str);
 #endif
 
                 for (j=0;j<count_con_ids;j++)
                 {
 #if (DLT_DEBUG_GETLOGINFO==1)
-                    sprintf(str,"j: %d \n",j);
+                    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"j: %d \n",j);
                     dlt_log(LOG_DEBUG, str);
 #endif
                     if (!((count_con_ids==1) && (req->apid[0]!='\0') && (req->ctid[0]!='\0')))
@@ -836,7 +836,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
 
 #if (DLT_DEBUG_GETLOGINFO==1)
                         dlt_print_id(buf, context->ctid);
-                        sprintf(str,"ctid: %s \n",buf);
+                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"ctid: %s \n",buf);
                         dlt_log(LOG_DEBUG, str);
 #endif
 
@@ -876,7 +876,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
                         }
 
 #if (DLT_DEBUG_GETLOGINFO==1)
-                        sprintf(str,"ll=%d ts=%d \n",(int32_t)ll,(int32_t)ts);
+                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"ll=%d ts=%d \n",(int32_t)ll,(int32_t)ts);
                         dlt_log(LOG_DEBUG, str);
 #endif
                     }

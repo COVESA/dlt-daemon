@@ -85,7 +85,7 @@ int receive(DltMessage *msg, void *data);
  */
 void usage(char *name) {
 	char version[255];
-	dlt_get_version(version);
+	dlt_get_version(version,255);
 
 	printf("Usage: %s [options] <remote address|serial device>\n", name);
 	printf("Receive messages from dlt-test-multi-process.\n");
@@ -281,6 +281,11 @@ int receive(DltMessage *msg, void *data) {
 
 	int buflen = msg->datasize + 1;
 	char *buf = malloc(buflen);
+	if(buf==0)
+	{
+		printf("Out of memory\n");
+		return -1;
+	}
 	memset(buf, 0, buflen);
 
 	dlt_message_payload(msg,buf,buflen-1,DLT_OUTPUT_ASCII,0);

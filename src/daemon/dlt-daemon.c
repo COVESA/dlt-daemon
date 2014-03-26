@@ -75,7 +75,7 @@ static char str[DLT_DAEMON_TEXTBUFSIZE];
 void usage()
 {
 	char version[DLT_DAEMON_TEXTBUFSIZE];
-	dlt_get_version(version);
+	dlt_get_version(version,DLT_DAEMON_TEXTBUFSIZE);
 
     //printf("DLT logging daemon %s %s\n", _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE);
     //printf("Compile options: %s %s %s %s",_DLT_SYSTEMD_ENABLE, _DLT_SYSTEMD_WATCHDOG_ENABLE, _DLT_TEST_ENABLE, _DLT_SHM_ENABLE);
@@ -175,7 +175,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceMaxSize = 0;
 	daemon_local->flags.loggingMode = 0;
 	daemon_local->flags.loggingLevel = 6;
-	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename));
+	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename)-1);
+	daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename)-1]=0;
 	daemon_local->timeoutOnSend = 4;
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
@@ -207,11 +208,13 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
 					if(token[0]==0)
 					{
-                                                strncpy(token,pch,sizeof(token) - 1);
+                        strncpy(token,pch,sizeof(token) - 1);
+                        token[sizeof(token) - 1]=0;
 					}
 					else
 					{
-                                                strncpy(value,pch,sizeof(value) - 1);
+                        strncpy(value,pch,sizeof(value) - 1);
+                        value[sizeof(value) - 1]=0;
 						break;
 					}
 
@@ -268,22 +271,26 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"RS232DeviceName")==0)
 						{
-                                                        strncpy(daemon_local->flags.yvalue,value,NAME_MAX);
+                            strncpy(daemon_local->flags.yvalue,value,NAME_MAX);
+                            daemon_local->flags.yvalue[NAME_MAX]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"RS232Baudrate")==0)
 						{
-                                                        strncpy(daemon_local->flags.bvalue,value,NAME_MAX);
+                            strncpy(daemon_local->flags.bvalue,value,NAME_MAX);
+                            daemon_local->flags.bvalue[NAME_MAX]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"ECUId")==0)
 						{
-                                                        strncpy(daemon_local->flags.evalue,value,NAME_MAX);
+                            strncpy(daemon_local->flags.evalue,value,NAME_MAX);
+                            daemon_local->flags.evalue[NAME_MAX]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"PersistanceStoragePath")==0)
 						{
-                                                        strncpy(daemon_local->flags.ivalue,value,NAME_MAX);
+                            strncpy(daemon_local->flags.ivalue,value,NAME_MAX);
+                            daemon_local->flags.ivalue[NAME_MAX]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"LoggingMode")==0)
@@ -298,7 +305,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"LoggingFilename")==0)
 						{
-                                                        strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename) - 1);
+                            strncpy(daemon_local->flags.loggingFilename,value,sizeof(daemon_local->flags.loggingFilename) - 1);
+                            daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename) - 1]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
                        	else if(strcmp(token,"TimeOutOnSend")==0)
@@ -313,7 +321,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"OfflineTraceDirectory")==0)
 						{
-                                                        strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory) - 1);
+                            strncpy(daemon_local->flags.offlineTraceDirectory,value,sizeof(daemon_local->flags.offlineTraceDirectory) - 1);
+                            daemon_local->flags.offlineTraceDirectory[sizeof(daemon_local->flags.offlineTraceDirectory) - 1]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"OfflineTraceFileSize")==0)
@@ -333,7 +342,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						}
 						else if(strcmp(token,"PathToECUSoftwareVersion")==0)
 						{
-                                                        strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
+                            strncpy(daemon_local->flags.pathToECUSoftwareVersion,value,sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
+                            daemon_local->flags.pathToECUSoftwareVersion[sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1]=0;
 							//printf("Option: %s=%s\n",token,value);
 						}
 						else if(strcmp(token,"SendTimezone")==0)
@@ -396,9 +406,9 @@ int main(int argc, char* argv[])
     dlt_log_init(daemon_local.flags.loggingMode);
 
     /* Print version information */
-    dlt_get_version(version);
+    dlt_get_version(version,DLT_DAEMON_TEXTBUFSIZE);
 
-    sprintf(str,"Starting DLT Daemon; %s\n", version );
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Starting DLT Daemon; %s\n", version );
     dlt_log(LOG_NOTICE, str);
 
 	PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
@@ -467,7 +477,7 @@ int main(int argc, char* argv[])
             int error = errno;
             /* retry if SIGINT was received, else error out */
             if ( error != EINTR ) {
-                sprintf(str,"select() failed: %s\n", strerror(error) );
+                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"select() failed: %s\n", strerror(error) );
                 dlt_log(LOG_CRIT, str);
                 return -1;
             }
@@ -511,7 +521,7 @@ int main(int argc, char* argv[])
                     uint64_t expir=0;
                     ssize_t res = read(daemon_local.timer_wd, &expir, sizeof(expir));
                     if(res < 0) {
-                        sprintf(str,"Failed to read timer_wd; %s\n", strerror(errno) );
+                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_wd; %s\n", strerror(errno) );
                         dlt_log(LOG_WARNING, str);
                         // Activity received on timer_wd, but unable to read the fd:
                         // let's go on sending notification
@@ -530,7 +540,7 @@ int main(int argc, char* argv[])
                     uint64_t expir=0;
                     ssize_t res = read(daemon_local.timer_one_s, &expir, sizeof(expir));
                     if(res < 0) {
-                        sprintf(str,"Failed to read timer_timingpacket; %s\n", strerror(errno) );
+                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_timingpacket; %s\n", strerror(errno) );
                         dlt_log(LOG_WARNING, str);
                         // Activity received on timer_wd, but unable to read the fd:
                         // let's go on sending notification
@@ -555,7 +565,7 @@ int main(int argc, char* argv[])
                     uint64_t expir=0;
                     ssize_t res = read(daemon_local.timer_sixty_s, &expir, sizeof(expir));
                     if(res < 0) {
-                        sprintf(str,"Failed to read timer_ecuversion; %s\n", strerror(errno) );
+                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_ecuversion; %s\n", strerror(errno) );
                         dlt_log(LOG_WARNING, str);
                         // Activity received on timer_wd, but unable to read the fd:
                         // let's go on sending notification
@@ -629,7 +639,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
     if (ret==-1 && errno != EEXIST)
     {
-        sprintf(str,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -638,7 +648,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
     if (ret==-1)
     {
-        sprintf(str,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -760,7 +770,12 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if(dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0)
     {
     	daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
-    	dlt_get_version(daemon->ECUVersionString);
+    	if(daemon->ECUVersionString==0)
+        {
+        	dlt_log(LOG_ERR,"Could not allocate memory for version string\n");
+            return -1;
+        }
+        dlt_get_version(daemon->ECUVersionString,DLT_DAEMON_TEXTBUFSIZE);
     }
 
     return 0;
@@ -787,7 +802,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     ret=mkfifo(DLT_USER_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
     if (ret==-1)
     {
-        sprintf(str,"FIFO user %s cannot be created!\n",DLT_USER_FIFO);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created!\n",DLT_USER_FIFO);
         dlt_log(LOG_ERR, str);
         return -1;
     } /* if */
@@ -795,7 +810,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     daemon_local->fp = open(DLT_USER_FIFO, O_RDWR);
     if (daemon_local->fp==-1)
     {
-        sprintf(str,"FIFO user %s cannot be opened!\n",DLT_USER_FIFO);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened!\n",DLT_USER_FIFO);
         dlt_log(LOG_ERR, str);
         return -1;
     } /* if */
@@ -825,7 +840,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
         daemon_local->fdserial=open(daemon_local->flags.yvalue,O_RDWR);
         if (daemon_local->fdserial<0)
         {
-            sprintf(str,"Failed to open serial device %s\n", daemon_local->flags.yvalue);
+            snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to open serial device %s\n", daemon_local->flags.yvalue);
             daemon_local->flags.yvalue[0] = 0;
             dlt_log(LOG_ERR, str);
             return -1;
@@ -845,7 +860,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
             if (dlt_setup_serial(daemon_local->fdserial,daemon_local->baudrate)<0)
             {
                 close(daemon_local->fdserial);
-                sprintf(str,"Failed to configure serial device %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
+                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to configure serial device %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
                 daemon_local->flags.yvalue[0] = 0;
                 dlt_log(LOG_ERR, str);
                 return -1;
@@ -916,6 +931,12 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 
 	/* Allocate permanent buffer for version info */
 	version = malloc(size + 1);
+	if(version==0)
+	{
+		dlt_log(LOG_ERR, "Cannot allocate memory for ECU version.\n");
+		fclose(f);
+		return -1;
+	}
 	off_t offset = 0;
 	while(!feof(f))
 	{
@@ -995,7 +1016,7 @@ void dlt_daemon_signal_handler(int sig)
     case SIGQUIT:
     {
         /* finalize the server */
-        sprintf(str,"Exiting DLT daemon due to signal: %s\n", strsignal(sig) );
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Exiting DLT daemon due to signal: %s\n", strsignal(sig) );
         dlt_log(LOG_NOTICE, str);
 
         /* Try to delete existing pipe, ignore result of unlink() */
@@ -1086,7 +1107,7 @@ void dlt_daemon_daemonize(int verbose)
     }
     /* only first instance continues */
 
-    sprintf(str,"%d\n",getpid());
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%d\n",getpid());
     pid_len = strlen(str);
     if(write(lfp,str,pid_len) != pid_len) /* record pid to lockfile */
         dlt_log(LOG_ERR, "Could not write pid to file in dlt_daemon_daemonize.\n");
@@ -1138,7 +1159,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     //flags = fcntl(in_sock, F_GETFL, 0);
     //fcntl(in_sock, F_SETFL, flags | O_NONBLOCK);
 
-    //sprintf("str,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
+    //snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
     //dlt_log(str);
     FD_SET(in_sock, &(daemon_local->master)); /* add to master set */
     if (in_sock > daemon_local->fdmax)
@@ -1150,7 +1171,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     daemon_local->client_connections++;
     if (daemon_local->flags.vflag)
     {
-        sprintf(str, "New connection to client established, #connections: %d\n",daemon_local->client_connections);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "New connection to client established, #connections: %d\n",daemon_local->client_connections);
         dlt_log(LOG_INFO, str);
     }
 
@@ -1536,7 +1557,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltD
 {
     uint32_t len=0;
     DltDaemonApplication *application;
-    char description[DLT_DAEMON_DESCSIZE];
+    char description[DLT_DAEMON_DESCSIZE+1];
     DltUserControlMsgRegisterApplication *usercontext;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -1562,6 +1583,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltD
     {
         /* Read and store application description */
         strncpy(description, (daemon_local->receiver.buf+sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterApplication)), len);
+        description[sizeof(description)-1]=0;
+
     }
 
     application=dlt_daemon_application_add(daemon,usercontext->apid,usercontext->pid,description,verbose);
@@ -1590,7 +1613,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
     uint32_t len=0;
     int8_t loglevel, tracestatus;
     DltUserControlMsgRegisterContext *usercontext;
-    char description[DLT_DAEMON_DESCSIZE];
+    char description[DLT_DAEMON_DESCSIZE+1];
 	DltDaemonApplication *application;
 	DltDaemonContext *context;
 	DltServiceGetLogInfoRequest *req;
@@ -1620,6 +1643,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
     {
         /* Read and store context description */
         strncpy(description, (daemon_local->receiver.buf+sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)), len);
+        description[sizeof(description)-1]=0;
     }
 
     application = dlt_daemon_application_find(daemon,usercontext->apid,verbose);
@@ -1983,7 +2007,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		{
 			if(dlt_daemon_send_message_overflow(daemon,daemon_local,verbose)==0)
 			{
-				sprintf(str,"%u messages discarded!\n",daemon->overflow_counter);
+				snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%u messages discarded!\n",daemon->overflow_counter);
 				dlt_log(LOG_ERR, str);
 				daemon->overflow_counter=0;
 			}
@@ -2436,7 +2460,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 
 	if (daemon_local->flags.vflag)
 	{
-		sprintf(str, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
+		snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
 		dlt_log(LOG_INFO, str);
 	}
 

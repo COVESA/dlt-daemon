@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
         }
         case 'h':
         {
-            dlt_get_version(version);
+            dlt_get_version(version,255);
 
             printf("Usage: dlt-adaptor-stdin [options]\n");
             printf("Adaptor for forwarding input from stdin to DLT daemon.\n");

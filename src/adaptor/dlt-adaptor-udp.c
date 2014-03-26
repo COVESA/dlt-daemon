@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
         }
         case 'h':
         {
-            dlt_get_version(version);
+            dlt_get_version(version,255);
 
             printf("Usage: dlt-adaptor-udp [options]\n");
             printf("Adaptor for forwarding received UDP messages to DLT daemon.\n");

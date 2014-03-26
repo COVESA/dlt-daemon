@@ -69,7 +69,7 @@ void send_process(LogProcessOptions const *popts, int n)
 			DLT_STRING("dlt-system-processes, send process info."));
 	FILE * pFile;
 	struct dirent *dp;
-	char filename[256];
+	char filename[PATH_MAX];
 	char buffer[1024];
 	int bytes;
 	int found = 0;
@@ -83,7 +83,7 @@ void send_process(LogProcessOptions const *popts, int n)
 			if(isdigit(dp->d_name[0]))
 			{
 				buffer[0] = 0;
-				sprintf(filename, "/proc/%s/cmdline",dp->d_name);
+				snprintf(filename,PATH_MAX, "/proc/%s/cmdline",dp->d_name);
 				pFile = fopen(filename, "r");
 				if(pFile != NULL)
 				{
@@ -94,7 +94,7 @@ void send_process(LogProcessOptions const *popts, int n)
                    (strcmp(buffer, (*popts).Name[n])==0))
 				{
 					found = 1;
-                    sprintf(filename, "/proc/%s/%s", dp->d_name,(*popts).Filename[n]);
+                    snprintf(filename,PATH_MAX, "/proc/%s/%s", dp->d_name,(*popts).Filename[n]);
 					pFile = fopen(filename, "r");
 					if(pFile != NULL)
 					{

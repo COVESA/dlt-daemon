@@ -80,7 +80,7 @@ void usage()
 {
 	char version[255];
 
-	dlt_get_version(version);
+	dlt_get_version(version,255);
 
     printf("Usage: dlt-example-filetransfer [options] absolute-path-to-file\n");
     printf("Simple filetransfer example");

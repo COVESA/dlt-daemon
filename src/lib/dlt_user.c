@@ -103,16 +103,16 @@ static int dlt_user_queue_resend(void);
 
 int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version){
 
-	char str[200];
+	char str[DLT_USER_BUFFER_LENGTH];
 	char lib_major_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
 	char lib_minor_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
 
-	dlt_get_major_version( lib_major_version);
-	dlt_get_minor_version( lib_minor_version);
+	dlt_get_major_version( lib_major_version,DLT_USER_MAX_LIB_VERSION_LENGTH);
+	dlt_get_minor_version( lib_minor_version,DLT_USER_MAX_LIB_VERSION_LENGTH);
 
 	if( (strcmp(lib_major_version,user_major_version)!=0) || (strcmp(lib_minor_version,user_minor_version)!=0))
 	{
-		sprintf(str,"DLT Library version check failed! Installed DLT library version is %s.%s - Application using DLT library version %s.%s\n",lib_major_version,lib_minor_version,user_major_version,user_minor_version);
+		snprintf(str,DLT_USER_BUFFER_LENGTH,"DLT Library version check failed! Installed DLT library version is %s.%s - Application using DLT library version %s.%s\n",lib_major_version,lib_minor_version,user_major_version,user_minor_version);
 		dlt_log(LOG_WARNING, str);
 		return -1;
 	}
@@ -153,7 +153,7 @@ int dlt_init(void)
 #endif
 
     /* create and open DLT user FIFO */
-    sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
+    snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
      
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
@@ -161,7 +161,7 @@ int dlt_init(void)
     ret=mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
-        sprintf(str,"Loging disabled, FIFO user %s cannot be created!\n",filename);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO user %s cannot be created!\n",filename);
         dlt_log(LOG_WARNING, str);
         /* return 0; */ /* removed to prevent error, when FIFO already exists */
     }
@@ -170,7 +170,7 @@ int dlt_init(void)
     ret=chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
-        sprintf(str,"FIFO user %s cannot be chmoded!\n", DLT_USER_DIR);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user %s cannot be chmoded!\n", DLT_USER_DIR);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -178,7 +178,7 @@ int dlt_init(void)
     dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);
     if (dlt_user.dlt_user_handle == DLT_FD_INIT)
     {
-        sprintf(str,"Loging disabled, FIFO user %s cannot be opened!\n",filename);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO user %s cannot be opened!\n",filename);
         dlt_log(LOG_WARNING, str);
         unlink(filename);
         return 0;
@@ -188,7 +188,7 @@ int dlt_init(void)
     dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
-        sprintf(str,"Loging disabled, FIFO %s cannot be opened with open()!\n",DLT_USER_FIFO);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO %s cannot be opened with open()!\n",DLT_USER_FIFO);
         dlt_log(LOG_WARNING, str);
         //return 0;
     }
@@ -198,7 +198,7 @@ int dlt_init(void)
 		/* init shared memory */
 		if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
 		{
-			sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+			snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
 			dlt_log(LOG_WARNING, str);
 			//return 0; 
 		}   
@@ -269,7 +269,7 @@ int dlt_init_file(const char *name)
     dlt_user.dlt_log_handle = open(name,O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
     if (dlt_user.dlt_log_handle == -1)
     {
-        sprintf(str,"Log file %s cannot be opened!\n",name);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Log file %s cannot be opened!\n",name);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -290,7 +290,7 @@ int dlt_init_message_queue(void)
 
     /* Generate per process name for queue */
     char queue_name[NAME_MAX];
-    sprintf(queue_name, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+    snprintf(queue_name,NAME_MAX, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
 
     /* Maximum queue size is 10, limit to size of pointers */
     struct mq_attr mqatr;
@@ -437,7 +437,7 @@ void dlt_user_atexit_handler(void)
 
 	if(count != 0){
 		char tmp[256];
-		sprintf(tmp,"Lost log messages in user buffer when exiting: %i\n",count);
+		snprintf(tmp,256,"Lost log messages in user buffer when exiting: %i\n",count);
 		dlt_log(LOG_ERR, tmp);
 	}
 
@@ -507,7 +507,7 @@ int dlt_free(void)
 
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
-        sprintf(filename,"%s/dlt%d",DLT_USER_DIR,getpid());
+        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
 
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle=DLT_FD_INIT;
@@ -558,7 +558,7 @@ int dlt_free(void)
     DLT_SEM_FREE();
 
     char queue_name[NAME_MAX];
-    sprintf(queue_name, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+    snprintf(queue_name,NAME_MAX, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
 
     /**
      * Ignore errors from these, to not to spam user if dlt_free
@@ -645,8 +645,6 @@ int dlt_register_app(const char *appid, const char * description)
         dlt_user.application_description= malloc(desc_len+1);
         if (dlt_user.application_description){
             strncpy(dlt_user.application_description, description, desc_len);
-
-            /* Terminate transmitted string with 0 */
             dlt_user.application_description[desc_len]='\0';
         }
         else
@@ -847,8 +845,6 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 		}
 
 		strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
-
-		/* Terminate transmitted string with 0 */
 		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
 	}
 
@@ -1119,7 +1115,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
         {
             if (dlt_user_log_send_overflow()==0)
             {
-				sprintf(str,"Buffer full! %u messages discarded!\n",dlt_user.overflow_counter);
+				snprintf(str,DLT_USER_BUFFER_LENGTH,"Buffer full! %u messages discarded!\n",dlt_user.overflow_counter);
 				dlt_log(LOG_ERR, str);
                 dlt_user.overflow_counter=0;            }
         }
@@ -2973,7 +2969,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         {
             if (dlt_user_log_send_overflow()==0)
             {
-				sprintf(str,"%u messages discarded!\n",dlt_user.overflow_counter);
+				snprintf(str,DLT_USER_BUFFER_LENGTH,"%u messages discarded!\n",dlt_user.overflow_counter);
 				dlt_log(LOG_ERR, str);
                 dlt_user.overflow_counter=0;
             }
@@ -3724,7 +3720,7 @@ void dlt_user_log_reattach_to_daemon(void)
 			/* init shared memory */
 			if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
 			{
-				sprintf(str,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+				snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
 				dlt_log(LOG_WARNING, str);
 				//return 0; 
 			}   

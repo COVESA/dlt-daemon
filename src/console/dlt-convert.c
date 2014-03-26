@@ -94,7 +94,7 @@ void usage()
 {
     char version[DLT_CONVERT_TEXTBUFSIZE];
 
-    dlt_get_version(version);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-convert [options] [commands] file1 [file2]\n");
     printf("Read DLT files, print DLT messages as ASCII and store the messages again.\n");

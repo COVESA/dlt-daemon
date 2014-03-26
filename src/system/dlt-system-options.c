@@ -62,7 +62,7 @@
 void usage(char *prog_name)
 {
 	char version[255];
-	dlt_get_version(version);
+	dlt_get_version(version,255);
 
 	printf("Usage: %s [options]\n", prog_name);
 	printf("Application to forward syslog messages to DLT, transfer system information, logs and files.\n");
@@ -103,7 +103,7 @@ int read_command_line(DltSystemCliOptions *options, int argc, char *argv[])
 			{
 				options->ConfigurationFileName = malloc(strlen(optarg)+1);
 				MALLOC_ASSERT(options->ConfigurationFileName);
-				strcpy(options->ConfigurationFileName, optarg);
+				strcpy(options->ConfigurationFileName, optarg); /* strcpy unritical here, because size matches exactly the size to be copied */
 				break;
 			}
 			case 'h':
@@ -226,11 +226,13 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 
 			if(token[0] == 0)
 			{
-				strncpy(token, pch, MAX_LINE);
+				strncpy(token, pch, MAX_LINE-1);
+				token[MAX_LINE-1]=0;
 			}
 			else
 			{
 				strncpy(value, pch, MAX_LINE);
+				value[MAX_LINE-1]=0;
 				break;
 			}
 
@@ -244,7 +246,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->ApplicationId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->ApplicationId);
-				strcpy(config->ApplicationId, value);
+				strcpy(config->ApplicationId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 
 			// Shell
@@ -262,7 +264,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->Syslog.ContextId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Syslog.ContextId);
-				strcpy(config->Syslog.ContextId, value);
+				strcpy(config->Syslog.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "SyslogPort") == 0)
 			{
@@ -278,7 +280,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->Journal.ContextId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Journal.ContextId);
-				strcpy(config->Journal.ContextId, value);
+				strcpy(config->Journal.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "JournalCurrentBoot") == 0)
 			{
@@ -302,7 +304,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->Filetransfer.ContextId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Filetransfer.ContextId);
-				strcpy(config->Filetransfer.ContextId, value);
+				strcpy(config->Filetransfer.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "FiletransferTimeStartup") == 0)
 			{
@@ -320,13 +322,13 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->Filetransfer.TempDir = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Filetransfer.TempDir);
-				strcpy(config->Filetransfer.TempDir, value);
+				strcpy(config->Filetransfer.TempDir, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "FiletransferDirectory") == 0)
 			{
 				config->Filetransfer.Directory[config->Filetransfer.Count] = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->Filetransfer.Directory[config->Filetransfer.Count]);
-				strcpy(config->Filetransfer.Directory[config->Filetransfer.Count], value);
+				strcpy(config->Filetransfer.Directory[config->Filetransfer.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "FiletransferCompression") == 0)
 			{
@@ -358,7 +360,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->LogFile.Filename[config->LogFile.Count] = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->LogFile.Filename[config->LogFile.Count]);
-				strcpy(config->LogFile.Filename[config->LogFile.Count], value);
+				strcpy(config->LogFile.Filename[config->LogFile.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "LogFileMode") == 0)
 			{
@@ -372,7 +374,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->LogFile.ContextId[config->LogFile.Count] = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->LogFile.ContextId[config->LogFile.Count]);
-				strcpy(config->LogFile.ContextId[config->LogFile.Count], value);
+				strcpy(config->LogFile.ContextId[config->LogFile.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
 				if(config->LogFile.Count < (DLT_SYSTEM_LOG_FILE_MAX - 1))
 				{
 					config->LogFile.Count++;
@@ -397,19 +399,19 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 			{
 				config->LogProcesses.ContextId = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->LogProcesses.ContextId);
-				strcpy(config->LogProcesses.ContextId, value);
+				strcpy(config->LogProcesses.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "LogProcessName") == 0)
 			{
 				config->LogProcesses.Name[config->LogProcesses.Count] = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->LogProcesses.Name[config->LogProcesses.Count]);
-				strcpy(config->LogProcesses.Name[config->LogProcesses.Count], value);
+				strcpy(config->LogProcesses.Name[config->LogProcesses.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "LogProcessFilename") == 0)
 			{
 				config->LogProcesses.Filename[config->LogProcesses.Count] = malloc(strlen(value)+1);
 				MALLOC_ASSERT(config->LogProcesses.Filename[config->LogProcesses.Count]);
-				strcpy(config->LogProcesses.Filename[config->LogProcesses.Count], value);
+				strcpy(config->LogProcesses.Filename[config->LogProcesses.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
 			}
 			else if(strcmp(token, "LogProcessMode") == 0)
 			{

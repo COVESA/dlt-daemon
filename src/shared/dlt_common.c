@@ -125,11 +125,11 @@ int dlt_print_hex_string(char *text,int textlength,uint8_t *ptr,int size)
     {
         if (num>0)
         {
-            sprintf(text," ");
+            snprintf(text,2," ");
             text++;
         }
 
-        sprintf(text,"%.2x",((uint8_t*)ptr)[num]);
+        snprintf(text,3,"%.2x",((uint8_t*)ptr)[num]);
         text+=2; /* 2 chars */
     }
 
@@ -164,7 +164,7 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
 
     if (textlength<required_size)
     {
-        sprintf(str, "String does not fit mixed data (available=%d, required=%d) !\n", textlength, required_size);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH, "String does not fit mixed data (available=%d, required=%d) !\n", textlength, required_size);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -173,7 +173,7 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
     for (lines=0; lines< (size / DLT_COMMON_HEX_CHARS); lines++)
     {
         /* Line number */
-        sprintf(text,"%.6x: ",lines * DLT_COMMON_HEX_CHARS);
+        snprintf(text,DLT_COMMON_HEX_LINELEN+1,"%.6x: ",lines * DLT_COMMON_HEX_CHARS);
         text+=DLT_COMMON_HEX_LINELEN; /* 'XXXXXX: ' */
 
         /* Hex-Output */
@@ -182,7 +182,7 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
         dlt_print_hex_string(text,textlength,(uint8_t*)(ptr+(lines*DLT_COMMON_HEX_CHARS)),DLT_COMMON_HEX_CHARS);
         text+=((2*DLT_COMMON_HEX_CHARS)+(DLT_COMMON_HEX_CHARS-1)); /* 32 characters + 15 spaces */
 
-        sprintf(text," ");
+        snprintf(text,2," ");
         text+=DLT_COMMON_CHARLEN;
 
         /* Char-Output */
@@ -192,12 +192,12 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
 
         if (html==0)
         {
-            sprintf(text,"\n");
+            snprintf(text,2,"\n");
             text+=DLT_COMMON_CHARLEN;
         }
         else
         {
-            sprintf(text,"<BR>");
+            snprintf(text,5,"<BR>");
             text+=(4*DLT_COMMON_CHARLEN);
         }
     }
@@ -208,7 +208,7 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
     if (rest>0)
     {
         /* Line number */
-        sprintf(text,"%.6x: ", (size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS);
+        snprintf(text,9,"%.6x: ", (size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS);
         text+=DLT_COMMON_HEX_LINELEN; /* 'XXXXXX: ' */
 
         /* Hex-Output */
@@ -219,11 +219,11 @@ int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int h
 
         for (i=0;i<(DLT_COMMON_HEX_CHARS-rest);i++)
         {
-            sprintf(text," xx");
+            snprintf(text,4," xx");
             text+=(3*DLT_COMMON_CHARLEN);
         }
 
-        sprintf(text," ");
+        snprintf(text,2," ");
         text+=DLT_COMMON_CHARLEN;
 
         /* Char-Output */
@@ -259,18 +259,18 @@ int dlt_print_char_string(char **text,int textlength,uint8_t *ptr,int size)
     {
         if ( (((char*)ptr)[num]<DLT_COMMON_ASCII_CHAR_SPACE) || (((char*)ptr)[num]>DLT_COMMON_ASCII_CHAR_TILDE) )
         {
-            sprintf(*text,".");
+            snprintf(*text,2,".");
         }
         else
         {
             /* replace < with . */
             if (((char*)ptr)[num]!=DLT_COMMON_ASCII_CHAR_LT)
             {
-                sprintf(*text,"%c",((char *)ptr)[num]);
+                snprintf(*text,2,"%c",((char *)ptr)[num]);
             }
             else
             {
-                sprintf(*text,".");
+                snprintf(*text,2,".");
             }
         }
         (*text)++;
@@ -412,7 +412,7 @@ int dlt_filter_load(DltFilter *filter,const char *filename,int verbose)
     handle = fopen(filename,"r");
     if (handle == 0)
     {
-        sprintf(str,"Filter file %s cannot be opened!\n",filename);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Filter file %s cannot be opened!\n",filename);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -466,7 +466,7 @@ int dlt_filter_load(DltFilter *filter,const char *filename,int verbose)
         }
         else
         {
-            sprintf(str, "Maximum number (%d) of allowed filters reached!\n", DLT_FILTER_MAX);
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH, "Maximum number (%d) of allowed filters reached!\n", DLT_FILTER_MAX);
             dlt_log(LOG_ERR, str);
             return 0;
         }
@@ -493,7 +493,7 @@ int dlt_filter_save(DltFilter *filter,const char *filename,int verbose)
     handle = fopen(filename,"w");
     if (handle == 0)
     {
-        sprintf(str,"Filter file %s cannot be opened!\n",filename);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Filter file %s cannot be opened!\n",filename);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -723,7 +723,7 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
         if (timeinfo!=0)
         {
             strftime (buffer,sizeof(buffer),"%Y/%m/%d %H:%M:%S",timeinfo);
-            sprintf(text,"%s.%.6d ",buffer,msg->storageheader->microseconds);
+            snprintf(text,textlength,"%s.%.6d ",buffer,msg->storageheader->microseconds);
         }
     }
 
@@ -732,18 +732,18 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
         /* print timestamp if available */
         if ( DLT_IS_HTYP_WTMS(msg->standardheader->htyp) )
         {
-            sprintf(text+strlen(text),"%10u ",msg->headerextra.tmsp);
+            snprintf(text+strlen(text),textlength-strlen(text),"%10u ",msg->headerextra.tmsp);
         }
         else
         {
-            sprintf(text+strlen(text),"---------- ");
+            snprintf(text+strlen(text),textlength-strlen(text),"---------- ");
         }
     }
 
     if ((flags & DLT_HEADER_SHOW_MSGCNT) == DLT_HEADER_SHOW_MSGCNT)
     {
         /* print message counter */
-        sprintf(text+strlen(text),"%.3d ",msg->standardheader->mcnt);
+        snprintf(text+strlen(text),textlength-strlen(text),"%.3d ",msg->standardheader->mcnt);
     }
 
     if ((flags & DLT_HEADER_SHOW_ECUID) == DLT_HEADER_SHOW_ECUID)
@@ -762,17 +762,17 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
     /* print app id and context id if extended header available, else '----' */#
     if ((flags & DLT_HEADER_SHOW_APID) == DLT_HEADER_SHOW_APID)
     {
-        sprintf(text+strlen(text)," ");
+        snprintf(text+strlen(text),textlength-strlen(text)," ");
         if ((DLT_IS_HTYP_UEH(msg->standardheader->htyp)) && (msg->extendedheader->apid[0]!=0))
         {
             dlt_print_id(text+strlen(text),msg->extendedheader->apid);
         }
         else
         {
-            sprintf(text+strlen(text),"----");
+            snprintf(text+strlen(text),textlength-strlen(text),"----");
         }
 
-        sprintf(text+strlen(text)," ");
+        snprintf(text+strlen(text),textlength-strlen(text)," ");
     }
 
     if ((flags & DLT_HEADER_SHOW_CTID) == DLT_HEADER_SHOW_CTID)
@@ -783,10 +783,10 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
         }
         else
         {
-            sprintf(text+strlen(text),"----");
+            snprintf(text+strlen(text),textlength-strlen(text),"----");
         }
 
-        sprintf(text+strlen(text)," ");
+        snprintf(text+strlen(text),textlength-strlen(text)," ");
     }
 
     /* print info about message type and length */
@@ -794,33 +794,33 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
     {
         if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE)
         {
-            sprintf(text+strlen(text),"%s",message_type[DLT_GET_MSIN_MSTP(msg->extendedheader->msin)]);
-            sprintf(text+strlen(text)," ");
+            snprintf(text+strlen(text),textlength-strlen(text),"%s",message_type[DLT_GET_MSIN_MSTP(msg->extendedheader->msin)]);
+            snprintf(text+strlen(text),textlength-strlen(text)," ");
         }
 
         if ((flags & DLT_HEADER_SHOW_MSGSUBTYPE) == DLT_HEADER_SHOW_MSGSUBTYPE)
         {
             if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin))==DLT_TYPE_LOG)
             {
-                sprintf(text+strlen(text),"%s",log_info[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+                snprintf(text+strlen(text),textlength-strlen(text),"%s",log_info[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
             }
 
             if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin))==DLT_TYPE_APP_TRACE)
             {
-                sprintf(text+strlen(text),"%s",trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+                snprintf(text+strlen(text),textlength-strlen(text),"%s",trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
             }
 
             if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin))==DLT_TYPE_NW_TRACE)
             {
-                sprintf(text+strlen(text),"%s",nw_trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+                snprintf(text+strlen(text),textlength-strlen(text),"%s",nw_trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
             }
 
             if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin))==DLT_TYPE_CONTROL)
             {
-                sprintf(text+strlen(text),"%s",control_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+                snprintf(text+strlen(text),textlength-strlen(text),"%s",control_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
             }
 
-            sprintf(text+strlen(text)," ");
+            snprintf(text+strlen(text),textlength-strlen(text)," ");
         }
 
         if ((flags & DLT_HEADER_SHOW_VNVSTATUS) == DLT_HEADER_SHOW_VNVSTATUS)
@@ -828,20 +828,20 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
             /* print verbose status pf message */
             if (DLT_IS_MSIN_VERB(msg->extendedheader->msin))
             {
-                sprintf(text+strlen(text),"V");
+                snprintf(text+strlen(text),textlength-strlen(text),"V");
             }
             else
             {
-                sprintf(text+strlen(text),"N");
+                snprintf(text+strlen(text),textlength-strlen(text),"N");
             }
 
-            sprintf(text+strlen(text)," ");
+            snprintf(text+strlen(text),textlength-strlen(text)," ");
         }
 
         if ((flags & DLT_HEADER_SHOW_NOARG) == DLT_HEADER_SHOW_NOARG)
         {
             /* print number of arguments */
-            sprintf(text+strlen(text),"%d", msg->extendedheader->noar);
+            snprintf(text+strlen(text),textlength-strlen(text),"%d", msg->extendedheader->noar);
         }
 
     }
@@ -849,22 +849,22 @@ int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags
     {
         if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE)
         {
-            sprintf(text+strlen(text),"--- ");
+            snprintf(text+strlen(text),textlength-strlen(text),"--- ");
         }
 
         if ((flags & DLT_HEADER_SHOW_MSGSUBTYPE) == DLT_HEADER_SHOW_MSGSUBTYPE)
         {
-            sprintf(text+strlen(text),"--- ");
+            snprintf(text+strlen(text),textlength-strlen(text),"--- ");
         }
 
         if ((flags & DLT_HEADER_SHOW_VNVSTATUS) == DLT_HEADER_SHOW_VNVSTATUS)
         {
-            sprintf(text+strlen(text),"N ");
+            snprintf(text+strlen(text),textlength-strlen(text),"N ");
         }
 
         if ((flags & DLT_HEADER_SHOW_NOARG) == DLT_HEADER_SHOW_NOARG)
         {
-            sprintf(text+strlen(text),"-");
+            snprintf(text+strlen(text),textlength-strlen(text),"-");
         }
     }
 
@@ -948,24 +948,24 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
         {
             if (id > 0 && id <= DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW)
             {
-                sprintf(text+strlen(text),"%s",service_id[id]); /* service id */
+                snprintf(text+strlen(text),textlength-strlen(text),"%s",service_id[id]); /* service id */
             }
             else
             {
                 if (!(DLT_MSG_IS_CONTROL_TIME(msg)))
                 {
-                    sprintf(text+strlen(text),"service(%u)",id); /* service id */
+                    snprintf(text+strlen(text),textlength-strlen(text),"service(%u)",id); /* service id */
                 }
             }
 
             if (datalength>0)
             {
-                sprintf(text+strlen(text),", ");
+                snprintf(text+strlen(text),textlength-strlen(text),", ");
             }
         }
         else
         {
-            sprintf(text+strlen(text),"%u, ",id); /* message id */
+            snprintf(text+strlen(text),textlength-strlen(text),"%u, ",id); /* message id */
         }
 
         /* process return value */
@@ -976,16 +976,16 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
                 DLT_MSG_READ_VALUE(retval,ptr,datalength,uint8_t); /* No endian conversion necessary */
                 if ( (retval<3) || (retval==8))
                 {
-                    sprintf(text+strlen(text),"%s",return_type[retval]);
+                    snprintf(text+strlen(text),textlength-strlen(text),"%s",return_type[retval]);
                 }
                 else
                 {
-                    sprintf(text+strlen(text),"%.2x",retval);
+                    snprintf(text+strlen(text),textlength-strlen(text),"%.2x",retval);
                 }
 
                 if (datalength>=1)
                 {
-                    sprintf(text+strlen(text),", ");
+                    snprintf(text+strlen(text),textlength-strlen(text),", ");
                 }
             }
         }
@@ -997,7 +997,7 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
             if ((datalength>DLT_COMMON_ASCII_LIMIT_MAX_CHARS) &&
                     ((textlength-strlen(text))>4))
             {
-                sprintf(text+strlen(text)," ...");
+                snprintf(text+strlen(text),textlength-strlen(text)," ...");
             }
         }
         else
@@ -1018,7 +1018,7 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
     {
         if (num!=0)
         {
-            sprintf(text+strlen(text)," ");
+            snprintf(text+strlen(text),textlength-strlen(text)," ");
         }
 
         /* first read the type info of the argument */
@@ -1150,24 +1150,24 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
 
     if (verbose)
     {
-        sprintf(str,"Buffer length: %d\n",length);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Buffer length: %d\n",length);
         dlt_log(LOG_INFO, str);
     }
     if (verbose)
     {
-        sprintf(str,"Header Size: %d\n",msg->headersize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Header Size: %d\n",msg->headersize);
         dlt_log(LOG_INFO, str);
     }
     if (verbose)
     {
-        sprintf(str,"Data Size: %d\n",msg->datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Data Size: %d\n",msg->datasize);
         dlt_log(LOG_INFO, str);
     }
 
     /* check data size */
     if (msg->datasize < 0)
     {
-        sprintf(str,"Plausibility check failed. Complete message size too short (%d)!\n",msg->datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Plausibility check failed. Complete message size too short (%d)!\n",msg->datasize);
         dlt_log(LOG_ERR, str);
         return DLT_MESSAGE_ERROR_CONTENT;
     }
@@ -1218,7 +1218,7 @@ int dlt_message_read(DltMessage *msg,uint8_t *buffer,unsigned int length,int res
     }
     if (msg->databuffer == 0)
     {
-        sprintf(str,"Cannot allocate memory for payload buffer of size %d!\n",msg->datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Cannot allocate memory for payload buffer of size %d!\n",msg->datasize);
         dlt_log(LOG_ERR, str);
         return DLT_MESSAGE_ERROR_UNKNOWN;
     }
@@ -1370,19 +1370,19 @@ int dlt_file_read_header(DltFile *file,int verbose)
     file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
     if (verbose)
     {
-        sprintf(str,"Header Size: %d\n",file->msg.headersize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Header Size: %d\n",file->msg.headersize);
         dlt_log(LOG_INFO, str);
     }
     if (verbose)
     {
-        sprintf(str,"Data Size: %d\n",file->msg.datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Data Size: %d\n",file->msg.datasize);
         dlt_log(LOG_INFO, str);
     }
 
     /* check data size */
     if (file->msg.datasize < 0)
     {
-        sprintf(str,"Plausibility check failed. Complete message size too short! (%d)\n", file->msg.datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Plausibility check failed. Complete message size too short! (%d)\n", file->msg.datasize);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1477,19 +1477,19 @@ int dlt_file_read_header_raw(DltFile *file,int resync,int verbose)
     file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
     if (verbose)
     {
-        sprintf(str,"Header Size: %d\n",file->msg.headersize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Header Size: %d\n",file->msg.headersize);
         dlt_log(LOG_INFO, str);
     }
     if (verbose)
     {
-        sprintf(str,"Data Size: %d\n",file->msg.datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Data Size: %d\n",file->msg.datasize);
         dlt_log(LOG_INFO, str);
     }
 
     /* check data size */
     if (file->msg.datasize < 0)
     {
-        sprintf(str,"Plausibility check failed. Complete message size too short! (%d)\n", file->msg.datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Plausibility check failed. Complete message size too short! (%d)\n", file->msg.datasize);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1573,7 +1573,7 @@ int dlt_file_read_data(DltFile *file, int verbose)
 
     if (file->msg.databuffer == 0)
     {
-        sprintf(str,"Cannot allocate memory for payload buffer of size %d!\n",file->msg.datasize);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Cannot allocate memory for payload buffer of size %d!\n",file->msg.datasize);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1583,7 +1583,7 @@ int dlt_file_read_data(DltFile *file, int verbose)
     {
         if (file->msg.datasize!=0)
         {
-            sprintf(str,"Cannot read payload data from file of size %d!\n",file->msg.datasize);
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Cannot read payload data from file of size %d!\n",file->msg.datasize);
             dlt_log(LOG_ERR, str);
             return -1;
         }
@@ -1626,7 +1626,7 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
 
     if (0 != fseek(file->handle,0,SEEK_END))
     {
-        sprintf(str,"dlt_file_open: Seek failed to 0,SEEK_END");
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"dlt_file_open: Seek failed to 0,SEEK_END");
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1634,7 +1634,7 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
 
     if (0 != fseek(file->handle,0,SEEK_SET))
     {
-        sprintf(str,"dlt_file_open: Seek failed to 0,SEEK_SET");
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"dlt_file_open: Seek failed to 0,SEEK_SET");
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1642,7 +1642,7 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
     if (verbose)
     {
         /* print file length */
-        sprintf(str,"File is %lu bytes long\n",file->file_length);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"File is %lu bytes long\n",file->file_length);
         dlt_log(LOG_INFO, str);
     }
     return 0;
@@ -1655,7 +1655,7 @@ int dlt_file_read(DltFile *file,int verbose)
 
     if (verbose)
     {
-        sprintf(str,"%s: Message %d:\n",__func__, file->counter_total);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"%s: Message %d:\n",__func__, file->counter_total);
         dlt_log(LOG_INFO, str);
     }
 
@@ -1685,7 +1685,7 @@ int dlt_file_read(DltFile *file,int verbose)
     /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
     if (0 !=  fseek(file->handle,file->file_position,SEEK_SET))
     {
-        sprintf(str,"Seek failed to file_position %ld \n",file->file_position);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek failed to file_position %ld \n",file->file_position);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1693,7 +1693,7 @@ int dlt_file_read(DltFile *file,int verbose)
     /* get file position at start of DLT message */
     if (verbose)
     {
-        sprintf(str,"Position in file: %ld\n",file->file_position);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Position in file: %ld\n",file->file_position);
         dlt_log(LOG_INFO, str);
     }
 
@@ -1713,7 +1713,7 @@ int dlt_file_read(DltFile *file,int verbose)
             /* go back to last position in file */
             if (0 != fseek(file->handle,file->file_position,SEEK_SET))
             {
-                sprintf(str,"Seek to last file pos failed!\n");
+                snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek to last file pos failed!\n");
                 dlt_log(LOG_ERR, str);
             }
             return-1;
@@ -1735,12 +1735,12 @@ int dlt_file_read(DltFile *file,int verbose)
         if (fseek(file->handle,file->msg.datasize,SEEK_CUR)!=0)
         {
             /* go back to last position in file */
-            sprintf(str,"Seek failed to skip payload data of size %d!\n",file->msg.datasize);
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek failed to skip payload data of size %d!\n",file->msg.datasize);
             dlt_log(LOG_ERR, str);
 
             if (0 != fseek(file->handle,file->file_position,SEEK_SET))
             {
-                sprintf(str,"Seek back also failed!\n");
+                snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek back also failed!\n");
                 dlt_log(LOG_ERR, str);
             }
 
@@ -1754,13 +1754,13 @@ int dlt_file_read(DltFile *file,int verbose)
         if (fseek(file->handle,file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize,SEEK_CUR))
         {
 
-            sprintf(str,"Seek failed to skip extra header and payload data from file of size %d!\n",
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek failed to skip extra header and payload data from file of size %d!\n",
                     file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize);
             dlt_log(LOG_ERR, str);
             /* go back to last position in file */
             if (fseek(file->handle,file->file_position,SEEK_SET))
             {
-                sprintf(str,"Seek back also failed!\n");
+                snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek back also failed!\n");
                 dlt_log(LOG_ERR, str);
             }
             return -1;
@@ -1790,7 +1790,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
 
     if (verbose)
     {
-        sprintf(str,"%s: Message %d:\n",__func__, file->counter_total);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"%s: Message %d:\n",__func__, file->counter_total);
         dlt_log(LOG_INFO, str);
     }
 
@@ -1822,7 +1822,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
     /* get file position at start of DLT message */
     if (verbose)
     {
-        sprintf(str,"Position in file: %ld\n",file->file_position);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Position in file: %ld\n",file->file_position);
         dlt_log(LOG_INFO, str);
     }
 
@@ -1832,7 +1832,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
         /* go back to last position in file */
         if (0!= fseek(file->handle,file->file_position,SEEK_SET))
         {
-            sprintf(str,"dlt_file_read_raw, fseek failed 1\n");
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"dlt_file_read_raw, fseek failed 1\n");
             dlt_log(LOG_ERR, str);
         }
         return -1;
@@ -1844,7 +1844,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
         /* go back to last position in file */
         if (0 != fseek(file->handle,file->file_position,SEEK_SET))
         {
-            sprintf(str,"dlt_file_read_raw, fseek failed 2\n");
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"dlt_file_read_raw, fseek failed 2\n");
             dlt_log(LOG_ERR, str);
         }
         return-1;
@@ -1855,7 +1855,7 @@ int dlt_file_read_raw(DltFile *file,int resync, int verbose)
         /* go back to last position in file */
         if (0 != fseek(file->handle,file->file_position,SEEK_SET))
         {
-            sprintf(str,"dlt_file_read_raw, fseek failed 3\n");
+            snprintf(str,DLT_COMMON_BUFFER_LENGTH,"dlt_file_read_raw, fseek failed 3\n");
             dlt_log(LOG_ERR, str);
         }
         return-1;
@@ -1908,7 +1908,7 @@ int dlt_file_message(DltFile *file,int index,int verbose)
     /* check if message is in range */
     if (index >= file->counter)
     {
-        sprintf(str,"Message %d out of range!\r\n",index);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Message %d out of range!\r\n",index);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1916,7 +1916,7 @@ int dlt_file_message(DltFile *file,int index,int verbose)
     /* seek to position in file */
     if (fseek(file->handle,file->index[index],SEEK_SET)!=0)
     {
-        sprintf(str,"Seek to message %d to position %ld failed!\r\n",index,file->index[index]);
+        snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek to message %d to position %ld failed!\r\n",index,file->index[index]);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -1977,6 +1977,7 @@ void dlt_log_set_level(int level)
 void dlt_log_set_filename(const char *filename)
 {
         strncpy(logging_filename,filename,NAME_MAX);
+        logging_filename[NAME_MAX]=0;
 
 }
 
@@ -2020,47 +2021,56 @@ int dlt_log(int prio, char *s)
     {
         case	LOG_EMERG:
         {
-            strncpy(logfmtstring,"DLT| EMERGENCY: %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| EMERGENCY: %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_ALERT:
         {
-            strncpy(logfmtstring,"DLT| ALERT:     %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| ALERT:     %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_CRIT:
         {
-            strncpy(logfmtstring,"DLT| CRITICAL:  %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| CRITICAL:  %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_ERR:
         {
-            strncpy(logfmtstring,"DLT| ERROR:     %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| ERROR:     %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_WARNING:
         {
-            strncpy(logfmtstring,"DLT| WARNING:   %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| WARNING:   %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_NOTICE:
         {
-            strncpy(logfmtstring,"DLT| NOTICE:    %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| NOTICE:    %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_INFO:
         {
-            strncpy(logfmtstring,"DLT| INFO:      %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| INFO:      %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         case	LOG_DEBUG:
         {
-            strncpy(logfmtstring,"DLT| DEBUG:     %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT| DEBUG:     %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
         default:
         {
-            strncpy(logfmtstring,"DLT|            %s",sizeof(logfmtstring));
+            strncpy(logfmtstring,"DLT|            %s",sizeof(logfmtstring)-1);
+            logfmtstring[sizeof(logfmtstring)-1]=0;
             break;
         }
     }
@@ -2609,7 +2619,8 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	}
 
 	// set header
-	strcpy(head.head,DLT_BUFFER_HEAD);
+	strncpy(head.head,DLT_BUFFER_HEAD,3);
+	head.head[3]=0;
 	head.status = 2;
 	head.size = size1+size2+size3;
 
@@ -3072,20 +3083,20 @@ speed_t dlt_convert_serial_speed(int baudrate)
 
 #endif
 
-void dlt_get_version(char *buf)
+void dlt_get_version(char *buf, size_t size)
 {
-    sprintf(buf,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n%s %s %s %s\n",
+    snprintf(buf,size,"DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n%s %s %s %s\n",
             _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE, _DLT_PACKAGE_REVISION, __DATE__ , __TIME__,_DLT_SYSTEMD_ENABLE,_DLT_SYSTEMD_WATCHDOG_ENABLE,_DLT_TEST_ENABLE,_DLT_SHM_ENABLE );
 }
 
-void dlt_get_major_version(char *buf)
+void dlt_get_major_version(char *buf, size_t size)
 {
-	sprintf(buf,"%s",_DLT_PACKAGE_MAJOR_VERSION);
+	snprintf(buf,size,"%s",_DLT_PACKAGE_MAJOR_VERSION);
 }
 
-void dlt_get_minor_version(char *buf)
+void dlt_get_minor_version(char *buf, size_t size)
 {
-    sprintf(buf,"%s",_DLT_PACKAGE_MINOR_VERSION);
+    snprintf(buf,size,"%s",_DLT_PACKAGE_MINOR_VERSION);
 }
 
 
@@ -3258,7 +3269,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
         DLT_MSG_READ_VALUE(value8u,*ptr,*datalength,uint8_t); /* No endian conversion necessary */
         if((*datalength)<0)
             return -1;
-        sprintf(text+strlen(text),"%d",value8u);
+        snprintf(text+strlen(text),textlength-strlen(text),"%d",value8u);
     }
     else if ((type_info & DLT_TYPE_INFO_SINT) || (type_info & DLT_TYPE_INFO_UINT))
     {
@@ -3333,7 +3344,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 					DLT_MSG_READ_VALUE(value8i,*ptr,*datalength,int8_t); /* No endian conversion necessary */
                     if((*datalength)<0)
                         return -1;
-                    sprintf(text+strlen(text),"%d",value8i);
+                    snprintf(text+strlen(text),textlength-strlen(text),"%d",value8i);
 				}
 				else
 				{
@@ -3341,7 +3352,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 					DLT_MSG_READ_VALUE(value8u,*ptr,*datalength,uint8_t); /* No endian conversion necessary */
                     if((*datalength)<0)
                         return -1;
-                    sprintf(text+strlen(text),"%d",value8u);
+                    snprintf(text+strlen(text),textlength-strlen(text),"%d",value8u);
 				}
 				break;
 			}
@@ -3355,7 +3366,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     if((*datalength)<0)
                         return -1;
                     value16i=DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
-					sprintf(text+strlen(text),"%hd",value16i);
+					snprintf(text+strlen(text),textlength-strlen(text),"%hd",value16i);
 				}
 				else
 				{
@@ -3365,7 +3376,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     if((*datalength)<0)
                         return -1;
                     value16u=DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
-					sprintf(text+strlen(text),"%hu",value16u);
+					snprintf(text+strlen(text),textlength-strlen(text),"%hu",value16u);
 				}
 				break;
 			}
@@ -3379,7 +3390,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     if((*datalength)<0)
                         return -1;
                     value32i=DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
-					sprintf(text+strlen(text),"%d",value32i);
+					snprintf(text+strlen(text),textlength-strlen(text),"%d",value32i);
 				}
 				else
 				{
@@ -3389,7 +3400,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     if((*datalength)<0)
                         return -1;
                     value32u=DLT_ENDIAN_GET_32(msg->standardheader->htyp, value32u_tmp);
-					sprintf(text+strlen(text),"%u",value32u);
+					snprintf(text+strlen(text),textlength-strlen(text),"%u",value32u);
 				}
 				break;
 			}
@@ -3404,9 +3415,9 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                         return -1;
                     value64i=DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64i_tmp);
 	#if defined (__WIN32__) && !defined(_MSC_VER)
-					sprintf(text+strlen(text),"%I64d",value64i);
+					snprintf(text+strlen(text),textlength-strlen(text),"%I64d",value64i);
 	#else
-					sprintf(text+strlen(text),"%lld",value64i);
+					snprintf(text+strlen(text),textlength-strlen(text),"%lld",value64i);
 	#endif
 				}
 				else
@@ -3418,9 +3429,9 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                         return -1;
                     value64u=DLT_ENDIAN_GET_64(msg->standardheader->htyp, value64u_tmp);
 	#if defined (__WIN32__) && !defined(_MSC_VER)
-					sprintf(text+strlen(text),"%I64u",value64u);
+					snprintf(text+strlen(text),textlength-strlen(text),"%I64u",value64u);
 	#else
-					sprintf(text+strlen(text),"%llu",value64u);
+					snprintf(text+strlen(text),textlength-strlen(text),"%llu",value64u);
 	#endif
 				}
 				break;
@@ -3499,7 +3510,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
                     memcpy(&value32f_tmp_int32i,&value32f_tmp,sizeof(float32_t));
 					value32f_tmp_int32i_swaped=DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32f_tmp_int32i);
 					memcpy(&value32f,&value32f_tmp_int32i_swaped,sizeof(float32_t));
-					sprintf(text+strlen(text),"%g",value32f);
+					snprintf(text+strlen(text),textlength-strlen(text),"%g",value32f);
 				}
 				else
 				{
@@ -3523,9 +3534,9 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 					value64f_tmp_int64i_swaped=DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
 					memcpy(&value64f,&value64f_tmp_int64i_swaped,sizeof(float64_t));
 #ifdef __arm__
-					sprintf(text+strlen(text),"ILLEGAL");
+					snprintf(text+strlen(text),textlength-strlen(text),"ILLEGAL");
 #else
-					sprintf(text+strlen(text),"%g",value64f);
+					snprintf(text+strlen(text),textlength-strlen(text),"%g",value64f);
 #endif
 				}
 				else

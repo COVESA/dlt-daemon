@@ -368,7 +368,7 @@ int flush_dir_send(FiletransferOptions const *opts, const char *compress_dir,  c
                 //old file name (not: path) would have been:
                 char tmp[strlen(dp->d_name)-strlen(COMPRESS_EXTENSION)+1];
                 strncpy(tmp,dp->d_name,strlen(dp->d_name)-strlen(COMPRESS_EXTENSION));
-                tmp[strlen(dp->d_name)-3]='\0';
+                tmp[strlen(dp->d_name)-strlen(COMPRESS_EXTENSION)]='\0';
 
                 int len = strlen(tmp)+strlen(compress_dir)+1+1;//2 sizes + 1*"/" + \0
                 char *path_uncompressed = malloc(len);

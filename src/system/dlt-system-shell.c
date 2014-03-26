@@ -69,14 +69,14 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
 	char text[DLT_SHELL_COMMAND_MAX_LENGTH];
     int syserr = 0;
 
-	if(length<DLT_SHELL_COMMAND_MAX_LENGTH-2)
+	if(length<=DLT_SHELL_COMMAND_MAX_LENGTH-1)
 	{
 		strncpy(text,data,length);
 		text[length] = 0;			
 	}
 	else
 	{
-		strncpy(text,data,DLT_SHELL_COMMAND_MAX_LENGTH-2);
+		strncpy(text,data,DLT_SHELL_COMMAND_MAX_LENGTH-1);
 		text[DLT_SHELL_COMMAND_MAX_LENGTH-1] = 0;	
 	}
 	

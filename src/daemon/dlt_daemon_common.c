@@ -153,24 +153,42 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
 
     append_length = PATH_MAX - sizeof(DLT_RUNTIME_APPLICATION_CFG);
     if(runtime_directory[0])
+    {
         strncpy(daemon->runtime_application_cfg,runtime_directory,append_length);
+        daemon->runtime_application_cfg[append_length]=0;
+    }
     else
-    	strcpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
-    strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG);
+    {
+    	strncpy(daemon->runtime_application_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY,append_length);
+        daemon->runtime_application_cfg[append_length]=0;
+    }
+    strcat(daemon->runtime_application_cfg,DLT_RUNTIME_APPLICATION_CFG); /* strcat uncritical here, because max length already checked */
 
     append_length = PATH_MAX - sizeof(DLT_RUNTIME_CONTEXT_CFG);
     if(runtime_directory[0])
+    {
         strncpy(daemon->runtime_context_cfg,runtime_directory,append_length);
+        daemon->runtime_context_cfg[append_length]=0;
+    }
     else
-    	strcpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY);
-    strcat(daemon->runtime_context_cfg,DLT_RUNTIME_CONTEXT_CFG);
+    {
+    	strncpy(daemon->runtime_context_cfg,DLT_RUNTIME_DEFAULT_DIRECTORY,append_length);
+        daemon->runtime_context_cfg[append_length]=0;
+    }
+    strcat(daemon->runtime_context_cfg,DLT_RUNTIME_CONTEXT_CFG); /* strcat uncritical here, because max length already checked */
 
     append_length = PATH_MAX - sizeof(DLT_RUNTIME_CONFIGURATION);
-    if(runtime_directory[0])    
+    if(runtime_directory[0])
+    {
         strncpy(daemon->runtime_configuration,runtime_directory,append_length);
+        daemon->runtime_configuration[append_length]=0;
+    }
     else
-    	strcpy(daemon->runtime_configuration,DLT_RUNTIME_DEFAULT_DIRECTORY);
-    strcat(daemon->runtime_configuration,DLT_RUNTIME_CONFIGURATION);
+    {
+    	strncpy(daemon->runtime_configuration,DLT_RUNTIME_DEFAULT_DIRECTORY,append_length);
+        daemon->runtime_configuration[append_length]=0;
+    }
+    strcat(daemon->runtime_configuration,DLT_RUNTIME_CONFIGURATION); /* strcat uncritical here, because max length already checked */
 
     /* Check for runtime cfg, if it is loadable, load it! */
     if ((dlt_daemon_applications_load(daemon,daemon->runtime_application_cfg, verbose)==0) &&
@@ -354,7 +372,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         application->application_description = malloc(strlen(description)+1);
         if (application->application_description)
         {
-            strncpy(application->application_description,description,strlen(description)+1);
+            strncpy(application->application_description,description,strlen(description));
             application->application_description[strlen(description)]='\0';
         }
     }
@@ -377,7 +395,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     /* open user pipe only if it is not yet opened */
     if (application->user_handle==DLT_FD_INIT && pid!=0)
     {
-        sprintf(filename,"%s/dlt%d",DLT_USER_DIR,pid);
+        snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dlt%d",DLT_USER_DIR,pid);
 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if ( dlt_user_handle < 0 )
@@ -685,7 +703,7 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,char *apid,char *ctid
 
         if (context->context_description)
         {
-            strncpy(context->context_description,description,strlen(description)+1);
+            strncpy(context->context_description,description,strlen(description));
             context->context_description[strlen(description)]='\0';
         }
     }
@@ -1045,11 +1063,13 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 
 					if(token[0]==0)
 					{
-						strncpy(token,pch,sizeof(token));
+						strncpy(token,pch,sizeof(token)-1);
+						token[sizeof(token)-1]=0;
 					}
 					else
 					{
-						strncpy(value,pch,sizeof(value));
+						strncpy(value,pch,sizeof(value)-1);
+						value[sizeof(value)-1]=0;
 						break;
 					}
 
@@ -1062,12 +1082,12 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 						if(strcmp(token,"LoggingMode")==0)
 						{
 							daemon->mode = atoi(value);
-							sprintf(str,"Runtime Option: %s=%d\n",token,daemon->mode);
+							snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Runtime Option: %s=%d\n",token,daemon->mode);
 							dlt_log(LOG_INFO, str);
 						}
 						else
 						{
-							sprintf(str,"Unknown option: %s=%s\n",token,value);
+							snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Unknown option: %s=%s\n",token,value);
 							dlt_log(LOG_ERR, str);
 						}
 					}
@@ -1081,7 +1101,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 	}
 	else
 	{
-        sprintf(str,"Cannot open configuration file: %s\n",filename);
+        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Cannot open configuration file: %s\n",filename);
         dlt_log(LOG_WARNING, str);
 	}	
 	
