@@ -2,7 +2,7 @@
 # Dlt - Diagnostic Log and Trace
 # @licence make begin@
 #
-# Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+# Copyright (C) 2011-2014, BMW AG - Alexander Wenzel <alexander.aw.wenzel@bmw.de>
 # 
 # Contributions are licensed to the GENIVI Alliance under one or more
 # Contribution License Agreements.
@@ -23,10 +23,10 @@ set( CMAKE_INSTALL_PREFIX "/usr" )
 
 # Set version parameters
 set( DLT_MAJOR_VERSION 2)
-set( DLT_MINOR_VERSION 9)
-set( DLT_PATCH_LEVEL 2)
+set( DLT_MINOR_VERSION 10)
+set( DLT_PATCH_LEVEL 0)
 set( DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
-set( DLT_VERSION_STATE ALPHA )
+set( DLT_VERSION_STATE STABLE )
 set( DLT_REVISION "")
 
 execute_process(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 

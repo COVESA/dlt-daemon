@@ -4,13 +4,48 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.9.2 ALPHA
+2.10.0 STABLE
 
 Changes
 -------
 
-2.9.2
+2.10.0
 
+   * Fixed: all possible malloc, sprintf and strcpy problems
+   * Fixed: Creation of dltpipes directory is too late.
+   * Cygwin port: cygwin patch, signal handling patch and cppcheck and install lib dll to correct location on Windows.
+   * Fixed compiler warnings with 32Bit gcc compiler.
+   * Fixed: Fixed offline trace and new send functions issues
+   * Fixed: Bug 172 - DLT system crashes because of wrong journald adaptor implementation
+   * DLT Common API Wrapper.
+   * Removed dlt_free from example and test applications, already called from exit handler.
+   * Fixed missing dlt_receiver_remove in dlt_daemon_process_user_xxx functions.
+   * Use LIB_SUFFIX as lib installation path.
+   * Fixed serial port not working anymore.
+   * Added log output of created socket/port In init phase 2 - socket creation
+   * Defined return value for dlt_message_read().
+   * Cleanup of send return values.Further cleanup of send restructure.
+   * Moved daemon client functions to new source file.
+   * Centralised send function to client.Introduced connection state to dlt daemon.
+   * Removed check of double registration of contexts in user library, already checked by daemon.
+   * When using DLT in console mode on a 64-bit machine, timestamps are corrupted due to an address of a 32-bit value being cast to a 64-bit pointer.
+   * Bug 3 - Cmake does not check for zlib for dlt-daemon compilation.
+   * Added new control message timezone.
+   * Fixed deadlock after wrong merge..
+   * Fix potential buffer overflow in offline trace.
+   * Fix deadlock in dlt_user_log_reattach_to_daemon(void).
+   * Fixed possible crash when runtime configurations files are corrupted.
+   * Environement variables added to configure internal logging in library.
+   * Reduce Timeout between filetransfer packets.
+   * Close socket when send fails.
+   * Replace threads by timing fds for ecu version, timing packets and watchdog.
+   * Added conntection info and unregister context control messages.
+   * Configurable Timeout on send.
+   * Added further checks to dlt_buffer.
+   * atexit handler fix.
+   * Add threadnames to libdlt threads.
+   * Security fix on DLT pipes.
+   * Reduce usage of SEM_LOCK in application library and reset pointers.   
    * Fix: Systemd Journal Adapter provides corrupted output.
    * Fix: Install Example service file only when example enabled
 
