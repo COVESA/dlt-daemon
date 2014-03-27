@@ -604,10 +604,7 @@ int main(int argc, char* argv[])
 
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 	int ret;
-#endif
-
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
