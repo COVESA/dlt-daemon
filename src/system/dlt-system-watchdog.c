@@ -1,6 +1,6 @@
 /**
  * @licence app begin@
- * Copyright (C) 2012  BMW AG
+ * Copyright (C) 2012-2014  BMW AG
  *
  * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
  *
@@ -12,34 +12,17 @@
  * Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- *
- * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de> BMW 2012
+ * \author
+ * Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
+ * Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+ * Markus Klein <Markus.Klein@esk.fraunhofer.de>
+ * Mikko Rapeli <mikko.rapeli@bmw.de>
  *
  * \file dlt-system-logfile.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
 
-/*******************************************************************************
-**                                                                            **
-**  SRC-MODULE: dlt-system-watchdog.c                                         **
-**                                                                            **
-**  TARGET    : linux                                                         **
-**                                                                            **
-**  PROJECT   : DLT                                                           **
-**                                                                            **
-**  AUTHOR    : Christian Muck <christian.muck@bmw.de>				          **
-**              Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**                                                                            **
-**  PURPOSE   :                                                               **
-**                                                                            **
-**  REMARKS   :                                                               **
-**                                                                            **
-**  PLATFORM DEPENDANT [yes/no]: yes                                          **
-**                                                                            **
-**  TO BE CHANGED BY USER [yes/no]: no                                        **
-**                                                                            **
-*******************************************************************************/
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 #include <stdio.h>
 #include <stdlib.h>
