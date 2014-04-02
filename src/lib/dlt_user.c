@@ -152,6 +152,28 @@ int dlt_init(void)
 	memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
 #endif
 
+    /* create dlt pipes directory */
+    ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
+    if (ret==-1 && errno != EEXIST)
+    {
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
+
+    /* if dlt pipes directory is created by the application also chmod the directory */
+    if(ret == 0)
+    {
+		// S_ISGID cannot be set by mkdir, let's reassign right bits
+		ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
+		if (ret==-1)
+		{
+			snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
+			dlt_log(LOG_ERR, str);
+			return -1;
+		}
+    }
+
     /* create and open DLT user FIFO */
     snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
      
