@@ -88,7 +88,7 @@ void dlt_shm_pv(int id,int operation)
 	semaphor.sem_flg = SEM_UNDO;
 	
 	if(semop(id, &semaphor,1) == -1) {
-		dlt_log(LOG_ERR,"SHM: semop");
+		dlt_log(LOG_WARNING,"SHM: semop() failed");
 	}
 }
 
@@ -102,32 +102,32 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 
     // Create the segment.
     if ((buf->shmid = shmget(key, size, IPC_CREAT | 0666)) < 0) {
-        dlt_log(LOG_ERR,"SHM: shmget");
+        dlt_log(LOG_WARNING,"SHM: shmget() failed");
         return -1; /* ERROR */
     }
 
 	// get the size of shm
 	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
 	{
-		dlt_log(LOG_ERR,"SHM: shmctl");
+		dlt_log(LOG_WARNING,"SHM: shmctl() failed");
         return -1; /* ERROR */
 	}	
 
     // Now we attach the segment to our data space.
     if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
-        dlt_log(LOG_ERR,"SHM: shmat");
+        dlt_log(LOG_WARNING,"SHM: shmat() failed");
         return -1; /* ERROR */
     }
 	
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
 		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
-			dlt_log(LOG_ERR,"SHM: semget");
+			dlt_log(LOG_WARNING,"SHM: semget() failed");
 			return -1; /* ERROR */
 		}
 	}
 	if( semctl(buf->semid,0,SETVAL,(int)1) == -1 ) {
-        dlt_log(LOG_ERR,"SHM: semctl");
+        dlt_log(LOG_WARNING,"SHM: semctl() failed");
         return -1; /* ERROR */
 	}
 	
@@ -147,26 +147,26 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 
     // Create the segment.
     if ((buf->shmid = shmget(key, 0, 0666)) < 0) {
-        dlt_log(LOG_ERR,"SHM: shmget");
+        dlt_log(LOG_WARNING,"SHM: shmget() failed");
         return -1; /* ERROR */
     }
 
 	// get the size of shm
 	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
 	{
-	    dlt_log(LOG_ERR,"SHM: shmctl");
+	    dlt_log(LOG_WARNING,"SHM: shmctl() failed");
             return -1; /* ERROR */
 	}	
 
 	// Now we attach the segment to our data space.
 	if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
-		dlt_log(LOG_ERR,"shmat");
+		dlt_log(LOG_WARNING,"shmat() failed");
 		return -1; /* ERROR */
 	}
         	
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
-            dlt_log(LOG_ERR,"SHM: semget");
+            dlt_log(LOG_WARNING,"SHM: semget() failed");
             return -1; /* ERROR */
 	}
 
@@ -274,17 +274,17 @@ int dlt_shm_remove(DltShm *buf)
 int dlt_shm_free_server(DltShm *buf) {
 		
 	if(shmdt(buf->buffer.shm)) {
-        dlt_log(LOG_ERR,"SHM: shmdt");
+        dlt_log(LOG_WARNING,"SHM: shmdt() failed");
         return -1; /* ERROR */
     }
 
 	if(shmctl(buf->shmid,IPC_RMID,NULL) == -1) {
-        dlt_log(LOG_ERR,"SHM: shmdt");
+        dlt_log(LOG_WARNING,"SHM: shmdt() failed");
         return -1; /* ERROR */
 	}
 
 	if(semctl(buf->semid,0,IPC_RMID,(int)0) == -1) {
-        dlt_log(LOG_ERR,"SHM: shmdt");
+        dlt_log(LOG_WARNING,"SHM: shmdt() failed");
         return -1; /* ERROR */
 	}
 
@@ -299,7 +299,7 @@ int dlt_shm_free_server(DltShm *buf) {
 int dlt_shm_free_client(DltShm *buf) {
 
 	if(shmdt(buf->buffer.shm)) {
-        dlt_log(LOG_ERR,"SHM: shmdt");
+        dlt_log(LOG_WARNING,"SHM: shmdt() failed");
         return -1; /* ERROR */
     }
 

@@ -71,13 +71,13 @@ int dlt_daemon_socket_open(int *sock)
     sprintf(portnumbuffer, "%d", DLT_DAEMON_TCP_PORT);
     if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
         snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "getaddrinfo: %s\n", gai_strerror(rv));
-        dlt_log(LOG_ERR, str);
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            dlt_log(LOG_ERR, "socket() error\n");
+            dlt_log(LOG_WARNING, "socket() error\n");
             continue;
         }
 
@@ -88,13 +88,13 @@ int dlt_daemon_socket_open(int *sock)
         if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
             snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n", strerror(errno));
-            dlt_log(LOG_ERR, str);
+            dlt_log(LOG_WARNING, str);
             continue;
         }
 
         if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
             close(*sock);
-            dlt_log(LOG_ERR, "bind() error\n");
+            dlt_log(LOG_WARNING, "bind() error\n");
             continue;
         }
 
@@ -102,7 +102,7 @@ int dlt_daemon_socket_open(int *sock)
     }
 
     if (p == NULL) {
-        dlt_log(LOG_ERR, "failed to bind socket\n");
+        dlt_log(LOG_WARNING, "failed to bind socket\n");
         return -1;
     }
 
@@ -117,7 +117,7 @@ int dlt_daemon_socket_open(int *sock)
 
     if (listen(*sock, 3) < 0)
     {
-        dlt_log(LOG_ERR, "dlt_daemon_socket_open: listen() failed!\n");
+        dlt_log(LOG_WARNING, "dlt_daemon_socket_open: listen() failed!\n");
         return -1;
     }
 

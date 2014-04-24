@@ -262,7 +262,7 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
     len=msg->headersize - sizeof(DltStorageHeader) + msg->datasize;
     if (len>UINT16_MAX)
     {
-        dlt_log(LOG_CRIT,"Huge control message discarded!\n");
+        dlt_log(LOG_WARNING,"Huge control message discarded!\n");
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
@@ -720,7 +720,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
     if (verbose)
     {
         snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Allocate %d bytes for response msg databuffer\n", resp.datasize);
-        dlt_log(LOG_INFO, str);
+        dlt_log(LOG_DEBUG, str);
     }
 
     /* Allocate buffer for response message */
@@ -1598,7 +1598,7 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     len=msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
     if (len>UINT16_MAX)
     {
-        dlt_log(LOG_CRIT,"Huge control message discarded!\n");
+        dlt_log(LOG_WARNING,"Huge control message discarded!\n");
 
         /* free message */
         dlt_message_free(&msg,0);

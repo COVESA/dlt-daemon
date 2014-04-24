@@ -69,6 +69,9 @@
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
+static int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose);
+
+
 /**
  * Print usage information of tool.
  */
@@ -482,6 +485,8 @@ int main(int argc, char* argv[])
     else
 		dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_BUFFER);
 
+    dlt_daemon_log_internal(&daemon, &daemon_local, "Daemon launched. Starting to output traces...", daemon_local.flags.vflag);
+
     while (1)
     {
 
@@ -493,7 +498,7 @@ int main(int argc, char* argv[])
             /* retry if SIGINT was received, else error out */
             if ( error != EINTR ) {
                 snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"select() failed: %s\n", strerror(error) );
-                dlt_log(LOG_CRIT, str);
+                dlt_log(LOG_ERR, str);
                 return -1;
             }
         } /* if */
@@ -508,7 +513,7 @@ int main(int argc, char* argv[])
                     /* event from TCP server socket, new connection */
                     if (dlt_daemon_process_client_connect(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
                     {
-                    	dlt_log(LOG_CRIT,"Connect to dlt client failed!\n");
+                    	dlt_log(LOG_ERR,"Connect to dlt client failed!\n");
                         return -1;
                     }
                 }
@@ -517,7 +522,7 @@ int main(int argc, char* argv[])
                     /* event from the FIFO happened */
                     if (dlt_daemon_process_user_messages(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
                     {
-                    	dlt_log(LOG_CRIT,"Processing of messages from user connection failed!\n");
+                    	dlt_log(LOG_WARNING,"Processing of messages from user connection failed!\n");
                         return -1;
                     }
                 }
@@ -526,7 +531,7 @@ int main(int argc, char* argv[])
                     /* event from serial connection to client received */
                     if (dlt_daemon_process_client_messages_serial(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
                     {
-                    	dlt_log(LOG_CRIT,"Processing of messages from serial connection failed!\n");
+                    	dlt_log(LOG_WARNING,"Processing of messages from serial connection failed!\n");
                         return -1;
                     }
                 }
@@ -546,7 +551,7 @@ int main(int argc, char* argv[])
 
                     if(sd_notify(0, "WATCHDOG=1") < 0)
                     {
-                        dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+                        dlt_log(LOG_WARNING, "Could not reset systemd watchdog\n");
                     }
                 }
 #endif
@@ -601,13 +606,15 @@ int main(int argc, char* argv[])
                     daemon_local.receiverSock.fd = i;
                     if (dlt_daemon_process_client_messages(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
                     {
-                    	dlt_log(LOG_CRIT,"Processing of messages from client connection failed!\n");
+                    	dlt_log(LOG_WARNING,"Processing of messages from client connection failed!\n");
 						return -1;
                     }
                 } /* else */
             } /* if */
         } /* for */
     } /* while */
+
+    dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
@@ -633,7 +640,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     ret = sd_booted();
 
     if(ret == 0){
-    	dlt_log(LOG_CRIT, "system not booted with systemd!\n");
+    	dlt_log(LOG_CRIT, "System not booted with systemd!\n");
 //    	return -1;
     }
     else if(ret < 0)
@@ -643,7 +650,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
     else
     {
-    	dlt_log(LOG_INFO, "system booted with systemd\n");
+    	dlt_log(LOG_INFO, "System booted with systemd\n");
     }
 #endif
 
@@ -651,8 +658,8 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
     if (ret==-1 && errno != EEXIST)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
-        dlt_log(LOG_ERR, str);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created (%s)!\n", DLT_USER_DIR, strerror(errno));
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
@@ -660,8 +667,8 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
     if (ret==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
-        dlt_log(LOG_ERR, str);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded (%s)!\n", DLT_USER_DIR, strerror(errno));
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
@@ -784,7 +791,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     	daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
     	if(daemon->ECUVersionString==0)
         {
-        	dlt_log(LOG_ERR,"Could not allocate memory for version string\n");
+        	dlt_log(LOG_WARNING,"Could not allocate memory for version string\n");
             return -1;
         }
         dlt_get_version(daemon->ECUVersionString,DLT_DAEMON_TEXTBUFSIZE);
@@ -814,16 +821,16 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     ret=mkfifo(DLT_USER_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
     if (ret==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created!\n",DLT_USER_FIFO);
-        dlt_log(LOG_ERR, str);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created (%s)!\n",DLT_USER_FIFO, strerror(errno));
+        dlt_log(LOG_WARNING, str);
         return -1;
     } /* if */
 
     daemon_local->fp = open(DLT_USER_FIFO, O_RDWR);
     if (daemon_local->fp==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened!\n",DLT_USER_FIFO);
-        dlt_log(LOG_ERR, str);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened (%s)!\n",DLT_USER_FIFO, strerror(errno));
+        dlt_log(LOG_WARNING, str);
         return -1;
     } /* if */
 
@@ -887,7 +894,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
 
             if (daemon_local->flags.vflag)
             {
-                dlt_log(LOG_INFO, "Serial init done\n");
+                dlt_log(LOG_DEBUG, "Serial init done\n");
             }
         }
         else
@@ -926,7 +933,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 	struct stat s_buf;
 	if(fstat(fd, &s_buf) < 0)
 	{
-		dlt_log(LOG_ERR, "Failed to stat ECU Software version file.\n");
+		dlt_log(LOG_WARNING, "Failed to stat ECU Software version file.\n");
 		fclose(f);
 		return -1;
 	}
@@ -936,7 +943,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 	off_t size = s_buf.st_size;
 	if(size >= DLT_DAEMON_TEXTBUFSIZE)
 	{
-		dlt_log(LOG_ERR, "Too large file for ECU version.\n");
+		dlt_log(LOG_WARNING, "Too large file for ECU version.\n");
 		fclose(f);
 		return -1;
 	}
@@ -945,7 +952,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 	version = malloc(size + 1);
 	if(version==0)
 	{
-		dlt_log(LOG_ERR, "Cannot allocate memory for ECU version.\n");
+		dlt_log(LOG_WARNING, "Cannot allocate memory for ECU version.\n");
 		fclose(f);
 		return -1;
 	}
@@ -955,14 +962,14 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 		offset += fread(version + offset, 1, size, f);
 		if(ferror(f))
 		{
-			dlt_log(LOG_ERR, "Failed to read ECU Software version file.\n");
+			dlt_log(LOG_WARNING, "Failed to read ECU Software version file.\n");
 			free(version);
             fclose(f);
 			return -1;
 		}
         if(offset > size)
 		{
-			dlt_log(LOG_ERR, "Too long file for ECU Software version info.\n");
+			dlt_log(LOG_WARNING, "Too long file for ECU Software version info.\n");
 			free(version);
 			fclose(f);
 			return -1;
@@ -1092,9 +1099,9 @@ void dlt_daemon_daemonize(int verbose)
     if (-1 < i)
 	{
     	if(dup(i) < 0)
-    	    dlt_log(LOG_ERR, "Failed to direct stdout to /dev/null.\n");/* stdout */
+    	    dlt_log(LOG_WARNING, "Failed to direct stdout to /dev/null.\n");/* stdout */
     	if(dup(i) < 0)
-    	    dlt_log(LOG_ERR, "Failed to direct stderr to /dev/null.\n"); /* stderr */
+    	    dlt_log(LOG_WARNING, "Failed to direct stderr to /dev/null.\n"); /* stderr */
 	}
 
     /* Set umask */
@@ -1102,19 +1109,19 @@ void dlt_daemon_daemonize(int verbose)
 
     /* Change to known directory */
     if(chdir(DLT_USER_DIR) < 0)
-        dlt_log(LOG_ERR, "Failed to chdir to DLT_USER_DIR.\n");;
+        dlt_log(LOG_WARNING, "Failed to chdir to DLT_USER_DIR.\n");;
 
     /* Ensure single copy of daemon;
        run only one instance at a time */
     lfp=open(DLT_DAEMON_LOCK_FILE,O_RDWR|O_CREAT,DLT_DAEMON_LOCK_FILE_PERM);
     if (lfp<0)
     {
-    	dlt_log(LOG_CRIT, "can't open lock file, exiting DLT daemon\n");
+    	dlt_log(LOG_CRIT, "Can't open lock file, exiting DLT daemon\n");
         exit(-1); /* can not open */
     }
     if (lockf(lfp,F_TLOCK,0)<0)
     {
-    	dlt_log(LOG_CRIT, "can't lock lock file, exiting DLT daemon\n");
+    	dlt_log(LOG_CRIT, "Can't lock lock file, exiting DLT daemon\n");
         exit(-1); /* can not lock */
     }
     /* only first instance continues */
@@ -1122,7 +1129,7 @@ void dlt_daemon_daemonize(int verbose)
     snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%d\n",getpid());
     pid_len = strlen(str);
     if(write(lfp,str,pid_len) != pid_len) /* record pid to lockfile */
-        dlt_log(LOG_ERR, "Could not write pid to file in dlt_daemon_daemonize.\n");
+        dlt_log(LOG_WARNING, "Could not write pid to file in dlt_daemon_daemonize.\n");
 
     /* Catch signals */
     signal(SIGCHLD,SIG_IGN); /* ignore child */
@@ -1131,6 +1138,115 @@ void dlt_daemon_daemonize(int verbose)
     signal(SIGTTIN,SIG_IGN);
 
 } /* dlt_daemon_daemonize() */
+
+/* This function logs str to the configured output sink (socket, serial, offline trace).
+   To avoid recursion this function must be called only from DLT highlevel functions.   
+   E. g. calling it to output a failure when the open of the offline trace file fails
+   would cause an endless loop because dlt_daemon_log_internal() would itself again try
+   to open the offline trace file. 
+   This is a dlt-daemon only function. The libdlt has no equivalent function available. */
+int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose)
+{
+    static uint8_t uiMsgCount = 0;
+    DltStandardHeaderExtra *pStandardExtra;
+    uint32_t uiType;
+    uint16_t uiSize;
+    uint32_t uiExtraSize;
+    int sent;
+    int j;
+    int third_value;
+    int ret;
+    
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    // Set storageheader
+    daemon_local->msg.storageheader = (DltStorageHeader *)(daemon_local->msg.headerbuffer);
+    dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid);
+
+    // Set standardheader    
+    daemon_local->msg.standardheader = (DltStandardHeader *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader));
+    daemon_local->msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
+    daemon_local->msg.standardheader->mcnt = uiMsgCount++;
+    
+    uiExtraSize = DLT_STANDARD_HEADER_EXTRA_SIZE(daemon_local->msg.standardheader->htyp)+(DLT_IS_HTYP_UEH(daemon_local->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
+    daemon_local->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + uiExtraSize;
+
+    // Set extraheader
+    pStandardExtra = (DltStandardHeaderExtra *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
+    dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
+    pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
+    pStandardExtra->seid = DLT_HTOBE_32(getpid());
+
+    // Set extendedheader
+    daemon_local->msg.extendedheader = (DltExtendedHeader *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + DLT_STANDARD_HEADER_EXTRA_SIZE(daemon_local->msg.standardheader->htyp));
+    daemon_local->msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((DLT_LOG_INFO << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+    daemon_local->msg.extendedheader->noar = 1;
+    dlt_set_id(daemon_local->msg.extendedheader->apid, "DLTD");
+    dlt_set_id(daemon_local->msg.extendedheader->ctid, "INTM");
+
+    // Set payload data...
+    uiType = DLT_TYPE_INFO_STRG;
+    uiSize = strlen(str) + 1;
+    daemon_local->msg.datasize = sizeof(uint32_t) + sizeof(uint16_t) + uiSize;
+
+    // Ensure that the buffer size is large enough...
+    if (daemon_local->msg.databuffer && (daemon_local->msg.databuffersize < daemon_local->msg.datasize))
+    {
+        free(daemon_local->msg.databuffer);
+        daemon_local->msg.databuffer=0;
+    }
+    if (daemon_local->msg.databuffer == 0)
+    {
+    	daemon_local->msg.databuffer = (uint8_t *) malloc(daemon_local->msg.datasize);
+    	daemon_local->msg.databuffersize = daemon_local->msg.datasize;
+    }
+    if (daemon_local->msg.databuffer==0)
+    {
+    	dlt_log(LOG_WARNING,"Can't allocate buffer for get log info message\n");
+		return -1;
+    }
+
+    daemon_local->msg.datasize = 0;
+    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
+    daemon_local->msg.datasize += sizeof(uint32_t);
+    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
+    daemon_local->msg.datasize += sizeof(uint16_t);
+    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), str, uiSize);
+    daemon_local->msg.datasize += uiSize;
+
+    // Calc lengths
+    daemon_local->msg.standardheader->len = DLT_HTOBE_16(daemon_local->msg.headersize - sizeof(DltStorageHeader) + daemon_local->msg.datasize);
+
+    // Sending data...
+    {
+		/* check if overflow occurred */
+		if(daemon->overflow_counter)
+		{
+			if(dlt_daemon_send_message_overflow(daemon,daemon_local,verbose)==0)
+			{
+				sprintf(str,"%u messages discarded!\n",daemon->overflow_counter);
+					dlt_log(LOG_WARNING, str);
+				daemon->overflow_counter=0;
+			}
+		}
+
+		/* look if TCP connection to client is available */
+		if((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+		{
+
+			if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
+								daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
+			{
+				if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
+				{
+					daemon->overflow_counter++;
+				}
+			}
+		}
+    }
+
+    return 0;
+}
 
 int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
@@ -1165,7 +1281,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     timeout_send.tv_sec = daemon_local->timeoutOnSend;
     timeout_send.tv_usec = 0;
     if (setsockopt (in_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout_send, sizeof(timeout_send)) < 0)
-        dlt_log(LOG_ERR, "setsockopt failed\n");
+        dlt_log(LOG_WARNING, "setsockopt failed\n");
 
     /* Set to non blocking mode */
     //flags = fcntl(in_sock, F_GETFL, 0);
@@ -1206,12 +1322,12 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     {
         if (daemon_local->flags.vflag)
         {
-            dlt_log(LOG_INFO, "Send ring-buffer to client\n");
+            dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
         }
     	dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
         if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose)==-1)
         {
-        	dlt_log(LOG_ERR,"Can't send contents of ringbuffer to clients\n");
+        	dlt_log(LOG_WARNING,"Can't send contents of ringbuffer to clients\n");
 			return -1;
         }
 		
@@ -1263,7 +1379,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
 
         if (dlt_receiver_remove(&(daemon_local->receiverSock),bytes_to_be_removed)==-1)
         {
-        	dlt_log(LOG_ERR,"Can't remove bytes from receiver for sockets\n");
+        	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for sockets\n");
 			return -1;
         }
 
@@ -1272,7 +1388,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
 
     if (dlt_receiver_move_to_begin(&(daemon_local->receiverSock))==-1)
     {
-    	dlt_log(LOG_ERR,"Can't move bytes to beginning of receiver buffer for sockets\n");
+    	dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for sockets\n");
 		return -1;
     }
 
@@ -1293,7 +1409,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
 
     if (dlt_receiver_receive_fd(&(daemon_local->receiverSerial))<=0)
     {
-		dlt_log(LOG_ERR, "dlt_receiver_receive_fd() for messages from serial interface failed!\n");
+		dlt_log(LOG_WARNING, "dlt_receiver_receive_fd() for messages from serial interface failed!\n");
         return -1;
     }
 
@@ -1305,7 +1421,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
         {
             if (dlt_daemon_client_process_control(daemon_local->receiverSerial.fd, daemon,daemon_local, &(daemon_local->msg), daemon_local->flags.vflag)==-1)
             {
-				dlt_log(LOG_ERR,"Can't process control messages\n");
+				dlt_log(LOG_WARNING,"Can't process control messages\n");
 				return -1;
             }
         }
@@ -1322,7 +1438,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
 
         if (dlt_receiver_remove(&(daemon_local->receiverSerial),bytes_to_be_removed)==-1)
 		{
-        	dlt_log(LOG_ERR,"Can't remove bytes from receiver for serial connection\n");
+        	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for serial connection\n");
 			return -1;
         }
 
@@ -1331,7 +1447,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
 
     if (dlt_receiver_move_to_begin(&(daemon_local->receiverSerial))==-1)
 	{
-    	dlt_log(LOG_ERR,"Can't move bytes to beginning of receiver buffer for serial connection\n");
+    	dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for serial connection\n");
 		return -1;
     }
 
@@ -1355,7 +1471,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
     /* read data from FIFO */
     if (dlt_receiver_receive_fd(&(daemon_local->receiver))<0)
     {
-        dlt_log(LOG_ERR, "dlt_receiver_receive_fd() for user messages failed!\n");
+        dlt_log(LOG_WARNING, "dlt_receiver_receive_fd() for user messages failed!\n");
         return -1;
     }
 
@@ -1483,12 +1599,13 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
         }
         default:
         {
-            dlt_log(LOG_ERR,"(Internal) Invalid user message type received!\n");
+            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Invalid user message type received: %d!\n", userheader->message);
+            dlt_log(LOG_ERR,str);
 
             /* remove user header */
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader))==-1)
             {
-				dlt_log(LOG_ERR,"Can't remove bytes from receiver for user messages\n");
+				dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user messages\n");
 				return -1;
 			}
 
@@ -1505,7 +1622,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
     /* keep not read data in buffer */
     if (dlt_receiver_move_to_begin(&(daemon_local->receiver))==-1)
 	{
-    	dlt_log(LOG_ERR,"Can't move bytes to beginning of receiver buffer for user messages\n");
+    	dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for user messages\n");
 		return -1;
     }
 
@@ -1521,7 +1638,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
 
     if ((daemon==0)  || (daemon_local==0))
     {
-    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_overflow()\n");
+    	dlt_log(LOG_WARNING, "Invalid function parameters used for function dlt_daemon_process_user_message_overflow()\n");
         return -1;
     }
 
@@ -1546,7 +1663,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgBufferOverflow))==-1)
     {
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message overflow\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message overflow\n");
 		return -1;
     }
 
@@ -1615,14 +1732,20 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltD
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterApplication)+len)==-1)
 	{
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register application\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register application\n");
 		return -1;
     }
 
     if (application==0)
     {
-    	dlt_log(LOG_CRIT,"Can't add application");
+    	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't add ApplicationID '%.4s' for PID %d\n", usercontext->apid, usercontext->pid);
+    	dlt_log(LOG_WARNING,str);
         return -1;
+    } else
+    {
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ApplicationID '%.4s' registered for PID %d, Description=%s\n", application->apid, application->pid, application->application_description);
+        dlt_daemon_log_internal(daemon, daemon_local, str, daemon_local->flags.vflag);
+    	dlt_log(LOG_DEBUG,str);
     }
 
     return 0;
@@ -1670,12 +1793,13 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
 
     if (application==0)
     {
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ApplicationID '%.4s' not found while registering ContextID '%.4s' in dlt_daemon_process_user_message_register_context()\n", usercontext->apid, usercontext->ctid);
+        dlt_log(LOG_WARNING, str);
         if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
 		{
-			dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+			dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
 			return -1;
 		}
-        dlt_log(LOG_ERR, "Application not found in dlt_daemon_process_user_message_register_context()\n");
         return 0;
     }
 
@@ -1692,7 +1816,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
             {
-				dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+				dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
 			}
             return -1;
         }
@@ -1712,7 +1836,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
 			{
-				dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+				dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
 			}
             return -1;
         }
@@ -1724,11 +1848,17 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
     {
         if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
 		{
-			dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+			dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
 		}
 
-		dlt_log(LOG_CRIT,"Can't add context");
+		snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't add ContextID '%.4s' for ApplicationID '%.4s'\n", usercontext->ctid, usercontext->apid);
+		dlt_log(LOG_WARNING,str);
         return -1;
+    } else
+    {
+		snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ContextID '%.4s' registered for ApplicationID '%.4s', Description=%s\n", context->ctid, context->apid, context->context_description);
+        dlt_daemon_log_internal(daemon, daemon_local, str, daemon_local->flags.vflag);
+		dlt_log(LOG_DEBUG,str);
     }
     /* Create automatic get log info response for registered context */
     if (daemon_local->flags.rflag)
@@ -1738,10 +1868,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
         	{
-        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
         		return -1;
         	}
-        	dlt_log(LOG_ERR,"Can't initialize message");
+        	dlt_log(LOG_WARNING,"Can't initialize message");
         	return -1;
         }
 
@@ -1759,10 +1889,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
         	{
-        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
         		return -1;
         	}
-        	dlt_log(LOG_ERR,"Can't allocate buffer for get log info message\n");
+        	dlt_log(LOG_WARNING,"Can't allocate buffer for get log info message\n");
 			return -1;
         }
 
@@ -1786,10 +1916,11 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
         	{
-        		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+        		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
         		return -1;
         	}
-            dlt_log(LOG_ERR,"Can't send current log level as response to user message register context\n");
+			snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't send current log level as response to user message register context for (%.4s;%.4s)\n", context->apid, context->ctid);
+			dlt_log(LOG_WARNING,str);
 			return -1;
         }
     }
@@ -1797,7 +1928,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgRegisterContext)+len)==-1)
 	{
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message register context\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message register context\n");
 		return -1;
 	}
 
@@ -1851,10 +1982,11 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
                     {
                         if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication))==-1)
                         {
-                        	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister application\n");
+                        	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message unregister application\n");
                     		return -1;
                         }
-                        dlt_log(LOG_ERR,"Can't delete context for user message unregister application\n");
+                    	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't delete ContextID '%.4s' in ApplicationID '%.4s' for user message unregister application\n", context->ctid, context->apid);
+                    	dlt_log(LOG_WARNING,str);
                     	return -1;
                     }
                 }
@@ -1865,11 +1997,17 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
             {
                 if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication))==-1)
                 {
-                	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister application\n");
+                	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message unregister application\n");
             		return -1;
                 }
-                dlt_log(LOG_ERR,"Can't delete application for user message unregister application\n");
+            	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't delete ApplicationID '%.4s' for user message unregister application\n", application->apid);
+            	dlt_log(LOG_WARNING,str);
 				return -1;
+            } else
+            {
+            	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered ApplicationID '%.4s'\n", usercontext->apid);
+                dlt_daemon_log_internal(daemon, daemon_local, str, daemon_local->flags.vflag);
+            	dlt_log(LOG_DEBUG,str);
             }
         }
     }
@@ -1877,7 +2015,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, Dl
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterApplication))==-1)
     {
-    	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister application\n");
+    	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message unregister application\n");
 		return -1;
     }
 
@@ -1913,11 +2051,17 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
         {
             if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext))==-1)
             {
-            	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister context\n");
+            	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message unregister context\n");
         		return -1;
             }
-            dlt_log(LOG_ERR,"Can't delete context for user message unregister context\n");
+        	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Can't delete ContextID '%.4s' for ApplicationID '%.4s' for user message unregister context\n", usercontext->ctid, usercontext->apid);
+			dlt_log(LOG_WARNING,str);
 			return -1;
+		} else
+		{
+        	snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered ContextID '%.4s' for ApplicationID '%.4s'\n", usercontext->ctid, usercontext->apid);
+            dlt_daemon_log_internal(daemon, daemon_local, str, daemon_local->flags.vflag);
+        	dlt_log(LOG_DEBUG,str);
 		}
     }
 
@@ -1930,7 +2074,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDae
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgUnregisterContext))==-1)
     {
-    	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message unregister context\n");
+    	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message unregister context\n");
 		return -1;
     }
 
@@ -1957,7 +2101,14 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
     {
     	if(ret!=DLT_MESSAGE_ERROR_SIZE)
     	{
-    		dlt_log(LOG_ERR,"Can't read messages from receiver\n");
+            /* This is a normal usecase: The daemon reads the data in 10kb chunks. 
+               Thus the last trace in this chunk is probably not complete and will be completed
+               with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
+               the daemon is able to read from the FIFO. 
+               Thus the loglevel of this message is set to DEBUG. 
+               A cleaner solution would be to check more in detail whether the message is not complete (normal usecase) 
+               or the headers are corrupted (error case). */
+    		dlt_log(LOG_DEBUG,"Can't read messages from receiver\n");
     	}
 		return DLT_DAEMON_ERROR_UNKNOWN;
 	}
@@ -1970,7 +2121,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		//msg.headerextra.seid = 0;
 		if (dlt_message_set_extraparameters(&(daemon_local->msg),0)==-1)
 		{
-			dlt_log(LOG_ERR,"Can't set message extra parameters in process user message log\n");
+            dlt_log(LOG_WARNING,"Can't set message extra parameters in process user message log\n");
 			return DLT_DAEMON_ERROR_UNKNOWN;
 		}
 
@@ -1983,7 +2134,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 	{
 		if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon_local->msg.headerextra.ecu)==-1)
 		{
-			dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+			dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
 			return DLT_DAEMON_ERROR_UNKNOWN;
 		}
 	}
@@ -1991,7 +2142,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 	{
 		if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon->ecuid)==-1)
 		{
-			dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+			dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
 			return DLT_DAEMON_ERROR_UNKNOWN;
 		}
 	}
@@ -2002,21 +2153,21 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		{
 			if (dlt_message_print_hex(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_hex() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_hex() failed!\n");
 			}
 		} /*  if */
 		else if (daemon_local->flags.aflag)
 		{
 			if (dlt_message_print_ascii(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_ascii() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_ascii() failed!\n");
 			}
 		} /* if */
 		else if (daemon_local->flags.sflag)
 		{
 			if (dlt_message_print_header(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_header() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_header() failed!\n");
 			}
 			/* print message header only */
 		} /* if */
@@ -2028,7 +2179,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 			if(dlt_daemon_send_message_overflow(daemon,daemon_local,verbose)==0)
 			{
 				snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%u messages discarded!\n",daemon->overflow_counter);
-				dlt_log(LOG_ERR, str);
+				dlt_log(LOG_WARNING, str);
 				daemon->overflow_counter=0;
 			}
 		}
@@ -2053,7 +2204,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 
 	if (dlt_receiver_remove(&(daemon_local->receiver),bytes_to_be_removed)==-1)
 	{
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
 		return DLT_DAEMON_ERROR_UNKNOWN;
 	}
 
@@ -2090,7 +2241,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 			break;
 		if (dlt_message_read(&(daemon_local->msg),rcv_buffer,size,0,verbose)!=0) {
 			break;
-			dlt_log(LOG_ERR,"Can't read messages from shm\n");
+			dlt_log(LOG_WARNING,"Can't read messages from shm\n");
 			return -1;
 		}				
 		bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader)+sizeof(DltUserHeader);
@@ -2107,7 +2258,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 			//msg.headerextra.seid = 0;
 			if (dlt_message_set_extraparameters(&(daemon_local->msg),0)==-1)
 			{
-				dlt_log(LOG_ERR,"Can't set message extra parameters in process user message log\n");
+				dlt_log(LOG_WARNING,"Can't set message extra parameters in process user message log\n");
 				dlt_shm_remove(&(daemon_local->dlt_shm));
 				return -1;
 			}
@@ -2121,7 +2272,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 		{
 			if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon_local->msg.headerextra.ecu)==-1)
 			{
-				dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+				dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
 				dlt_shm_remove(&(daemon_local->dlt_shm));
 				return -1;
 			}
@@ -2130,7 +2281,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 		{
 			if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon->ecuid)==-1)
 			{
-				dlt_log(LOG_ERR,"Can't set storage header in process user message log\n");
+				dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
 				dlt_shm_remove(&(daemon_local->dlt_shm));
 				return -1;
 			}
@@ -2141,21 +2292,21 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 		{
 			if (dlt_message_print_hex(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_hex() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_hex() failed!\n");
 			}
 		} /*  if */
 		else if (daemon_local->flags.aflag)
 		{
 			if (dlt_message_print_ascii(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_ascii() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_ascii() failed!\n");
 			}
 		} /* if */
 		else if (daemon_local->flags.sflag)
 		{
 			if (dlt_message_print_header(&(daemon_local->msg),text,DLT_DAEMON_TEXTSIZE,verbose)==-1)
 			{
-				dlt_log(LOG_ERR,"dlt_message_print_header() failed!\n");
+				dlt_log(LOG_WARNING,"dlt_message_print_header() failed!\n");
 			}
 			/* print message header only */
 		} /* if */
@@ -2240,7 +2391,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader))==-1)
     {
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message overflow\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message overflow\n");
 		return -1;
     }
     
@@ -2310,7 +2461,7 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLo
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgAppLogLevelTraceStatus))==-1)
 	{
-		dlt_log(LOG_ERR,"Can't remove bytes from receiver\n");
+		dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
 		return -1;
 	}
 
@@ -2346,7 +2497,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogMode))==-1)
     {
-    	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message log mode\n");
+    	dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message log mode\n");
 		return -1;
     }
 
@@ -2435,7 +2586,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
     if( fd == NULL )
     {
         snprintf(str, sizeof(str), "<%s> fd is NULL pointer\n", timer_name );
-        dlt_log(DLT_LOG_ERROR, str);
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
@@ -2445,7 +2596,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
         if( local_fd < 0)
         {
             snprintf(str, sizeof(str), "<%s> timerfd_create failed: %s\n", timer_name, strerror(errno));
-            dlt_log(DLT_LOG_ERROR, str);
+            dlt_log(LOG_WARNING, str);
         }
 
         l_timer_spec.it_interval.tv_sec = period_sec;
@@ -2456,7 +2607,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
         if( timerfd_settime( local_fd, 0, &l_timer_spec, NULL) < 0)
         {
             snprintf(str, sizeof(str), "<%s> timerfd_settime failed: %s\n", timer_name, strerror(errno));
-            dlt_log(DLT_LOG_ERROR, str);
+            dlt_log(LOG_WARNING, str);
             local_fd = -1;
         }
 #endif
@@ -2464,7 +2615,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
     else {
         // timer not activated via the service file
         snprintf(str, sizeof(str), "<%s> not set: period=0\n", timer_name);
-        dlt_log(DLT_LOG_INFO, str);
+        dlt_log(LOG_INFO, str);
         local_fd = -1;
     }
 
@@ -2472,7 +2623,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
     if(local_fd>0)
     {
         snprintf(str, sizeof(str), "<%s> initialized with %ds timer\n", timer_name, period_sec);
-        dlt_log(DLT_LOG_INFO, str);
+        dlt_log(LOG_INFO, str);
 
         FD_SET(local_fd, &(daemon_local->master));
         //FD_SET(local_fd, &(daemon_local->timer_fds));

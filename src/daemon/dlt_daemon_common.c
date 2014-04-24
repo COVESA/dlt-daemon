@@ -355,10 +355,10 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
 
         new_application = 1;
 
-    } else {
+    } else if (pid != application->pid) {
 
-		snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Duplicate registration of AppId: %s\n",apid);
-		dlt_log(LOG_ERR, str);
+		snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Duplicate registration of ApplicationID: '%.4s'; registering from PID %d, existing from PID %d\n",apid, pid, application->pid);
+		dlt_log(LOG_WARNING, str);
 
     }
 
@@ -386,7 +386,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     		if ( close(application->user_handle) < 0 )
     		{
     			snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "close() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
-    		    dlt_log(LOG_ERR, str);
+    		    dlt_log(LOG_WARNING, str);
     		}
 
     		application->user_handle = DLT_FD_INIT;
@@ -403,7 +403,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         if ( dlt_user_handle < 0 )
         {
             snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
-            dlt_log(LOG_ERR, str);
+            dlt_log(LOG_WARNING, str);
         } /* if */
 
         /* check if file file descriptor was already used, and make it invalid if it is reused */
@@ -531,7 +531,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
             {
                 snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
                          strerror(errno));
-                dlt_log(LOG_ERR, str);
+                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -542,7 +542,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
             }
             else {
                 snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
-                dlt_log(LOG_ERR, str);
+                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -562,7 +562,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
 					/* pid is unknown at loading time */
 					if (dlt_daemon_application_add(daemon,apid,0,pb,verbose)==0)
 					{
-						dlt_log(LOG_ERR, "dlt_daemon_applications_load dlt_daemon_application_add failed\n");
+						dlt_log(LOG_WARNING, "dlt_daemon_applications_load dlt_daemon_application_add failed\n");
 						fclose(fd);
 						return -1;
 					}
@@ -903,7 +903,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
             {
                 snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
                          strerror(errno));
-                dlt_log(LOG_ERR, str);
+                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -914,7 +914,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
             }
             else {
                 snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
-                dlt_log(LOG_ERR, str);
+                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -947,7 +947,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
 								/* log_level_pos, and user_handle are unknown at loading time */
 								if (dlt_daemon_context_add(daemon,apid,ctid,(int8_t)ll,(int8_t)ts,0,0,pb,verbose)==0)
 								{
-									dlt_log(LOG_ERR, "dlt_daemon_contexts_load dlt_daemon_context_add failed\n");
+									dlt_log(LOG_WARNING, "dlt_daemon_contexts_load dlt_daemon_context_add failed\n");
 									fclose(fd);
 									return -1;
 								}
@@ -1090,7 +1090,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 						else
 						{
 							snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Unknown option: %s=%s\n",token,value);
-							dlt_log(LOG_ERR, str);
+							dlt_log(LOG_WARNING, str);
 						}
 					}
 			}

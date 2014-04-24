@@ -198,7 +198,7 @@ int dlt_init(void)
     if (ret==-1)
     {
         snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user %s cannot be chmoded!\n", DLT_USER_DIR);
-        dlt_log(LOG_ERR, str);
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
@@ -215,8 +215,11 @@ int dlt_init(void)
     dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO %s cannot be opened with open()!\n",DLT_USER_FIFO);
-        dlt_log(LOG_WARNING, str);
+        /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt) 
+           starts later and some DLT users have already been started before. 
+           Thus it is OK if the FIFO can't be opened. */
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO %s cannot be opened. Retrying later...\n",DLT_USER_FIFO);
+        dlt_log(LOG_INFO, str);
         //return 0;
     }
 	else
@@ -225,8 +228,11 @@ int dlt_init(void)
 		/* init shared memory */
 		if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
 		{
-			snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
-			dlt_log(LOG_WARNING, str);
+            /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt) 
+               starts later and some DLT users have already been started before. 
+               Thus it is OK if the FIFO can't be opened. */
+			snprintf(str,DLT_USER_BUFFER_LENGTH,"Shared memory %d cannot be created. Retrying later...\n",DLT_SHM_KEY);
+			dlt_log(LOG_INFO, str);
 			//return 0; 
 		}   
 #endif
@@ -477,7 +483,7 @@ void dlt_user_atexit_handler(void)
 	if(count != 0){
 		char tmp[256];
 		snprintf(tmp,256,"Lost log messages in user buffer when exiting: %i\n",count);
-		dlt_log(LOG_ERR, tmp);
+		dlt_log(LOG_WARNING, tmp);
 	}
 
     /* Unregister app (this also unregisters all contexts in daemon) */
@@ -714,7 +720,8 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
 
     if (dlt_user.appID[0]=='\0')
     {
-        dlt_log(LOG_ERR, "no application registered!\n");
+        snprintf(str, DLT_USER_BUFFER_LENGTH, "No application registered while trying to register ContextID %4s!\n", contextid);
+        dlt_log(LOG_WARNING, str);
 
         DLT_SEM_FREE();
         return -1;
@@ -748,7 +755,8 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
     if (dlt_user.appID[0]=='\0')
     {
-        dlt_log(LOG_ERR, "no application registered!\n");
+        snprintf(str, DLT_USER_BUFFER_LENGTH, "No application registered while trying to register ContextID %4s!\n", contextid);
+        dlt_log(LOG_WARNING, str);
 
         DLT_SEM_FREE();
         return -1;
@@ -1160,8 +1168,9 @@ int dlt_forward_msg(void *msgdata,size_t size)
             if (dlt_user_log_send_overflow()==0)
             {
 				snprintf(str,DLT_USER_BUFFER_LENGTH,"Buffer full! %u messages discarded!\n",dlt_user.overflow_counter);
-				dlt_log(LOG_ERR, str);
-                dlt_user.overflow_counter=0;            }
+				dlt_log(LOG_WARNING, str);
+                dlt_user.overflow_counter=0;            
+            }
         }
 
         /* log to FIFO */
@@ -1180,7 +1189,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
 			{
                 if(dlt_user.overflow_counter==0)
                 {
-                	dlt_log(LOG_ERR,"Buffer full! First message discarded!\n");
+                	dlt_log(LOG_WARNING,"Buffer full! First message discarded!\n");
                 }
                 ret = DLT_RETURN_BUFFER_FULL;
 			}
@@ -2496,7 +2505,7 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
                         char str[255];
                         snprintf(str,254,"NWTSegmented: Error while reading queue: %s \n",strerror(errno));
-                        dlt_log(LOG_CRIT, str);
+					    dlt_log(LOG_WARNING, str);
                         continue;
                 }
 
@@ -2523,7 +2532,7 @@ void dlt_user_trace_network_segmented_thread(void *unused)
                 DltReturnValue err = dlt_user_trace_network_segmented_end(data->id, data->handle, data->nw_trace_type);
                 if(err == DLT_RETURN_BUFFER_FULL || err == DLT_RETURN_ERROR)
                 {
-                        dlt_log(LOG_ERR,"NWTSegmented: Could not send end segment.\n");
+                        dlt_log(LOG_WARNING,"NWTSegmented: Could not send end segment.\n");
                 }
 
                 /* Free resources */
@@ -2634,14 +2643,14 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 	{
 		if(errno == EAGAIN)
 		{
-			dlt_log(LOG_ERR, "NWTSegmented: Queue full. Message discarded.\n");
+			dlt_log(LOG_WARNING, "NWTSegmented: Queue full. Message discarded.\n");
 		}
 		free(thread_data->header);
 		free(thread_data->payload);
 		free(thread_data);		
         char str[256];
         snprintf(str,255,"NWTSegmented: Could not write into queue: %s \n",strerror(errno));
-        dlt_log(LOG_CRIT, str);
+        dlt_log(LOG_WARNING, str);
 		return -1;
 	}
 
@@ -3150,7 +3159,7 @@ int dlt_user_queue_resend(void)
     	if(!dlt_user_queue_resend_error_counter)
     	{
     		// log error only when problem occurred first time
-    		dlt_log(LOG_ERR, "NWTSegmented: Could not open queue.\n");
+    		dlt_log(LOG_WARNING, "NWTSegmented: Could not open queue.\n");
     	}
     	dlt_user_queue_resend_error_counter = 1;
     	free(resend_data);
@@ -3164,7 +3173,7 @@ int dlt_user_queue_resend(void)
     		// log error only when problem occurred first time
 			char str[255];
 			snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
-			dlt_log(LOG_CRIT, str);
+			dlt_log(LOG_NOTICE, str);
     	}
     	dlt_user_queue_resend_error_counter = 1;
     	free(resend_data);
@@ -3330,7 +3339,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
     len=msg.headersize - sizeof(DltStorageHeader) +log->size;
     if (len>UINT16_MAX)
     {
-        dlt_log(LOG_CRIT,"Huge message discarded!\n");
+        dlt_log(LOG_WARNING,"Huge message discarded!\n");
         return DLT_RETURN_ERROR;
     }
 
@@ -3365,7 +3374,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             if (dlt_user_log_send_overflow()==0)
             {
 				snprintf(str,DLT_USER_BUFFER_LENGTH,"%u messages discarded!\n",dlt_user.overflow_counter);
-				dlt_log(LOG_ERR, str);
+				dlt_log(LOG_WARNING, str);
                 dlt_user.overflow_counter=0;
             }
         }
@@ -3420,7 +3429,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
                 if(dlt_user.overflow_counter==0)
                 {
 
-                	dlt_log(LOG_ERR,"Buffer full! Messages will be discarded.\n");
+                	dlt_log(LOG_WARNING,"Buffer full! Messages will be discarded.\n");
                 }
                 ret = DLT_RETURN_BUFFER_FULL;
 			}
@@ -3534,7 +3543,7 @@ int dlt_user_log_send_register_application(void)
                             (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterApplication),
                             (const unsigned char*)dlt_user.application_description, usercontext.description_length)==-1)
              {
-                    dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+                    dlt_log(LOG_WARNING,"Storing message to history buffer failed! Message discarded.\n");
                     DLT_SEM_FREE();
                     return -1;
              }
@@ -3645,7 +3654,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
                             (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterContext),
                             (const unsigned char*)log->context_description, usercontext.description_length)==-1)
              {
-                    dlt_log(LOG_ERR,"Storing message to history buffer failed! Message discarded.\n");
+                    dlt_log(LOG_WARNING,"Storing message to history buffer failed! Message discarded.\n");
                     DLT_SEM_FREE();
                     return -1;
              }
@@ -4055,7 +4064,7 @@ int dlt_user_log_check_user_message(void)
                 break;
                 default:
                 {
-                    dlt_log(LOG_ERR,"Invalid user message type received!\n");
+                    dlt_log(LOG_WARNING,"Invalid user message type received!\n");
                     /* Ignore result */
                     dlt_receiver_remove(receiver,sizeof(DltUserHeader));
 					/* In next invocation of while loop, a resync will be triggered if additional data was received */
@@ -4158,7 +4167,7 @@ void dlt_user_log_reattach_to_daemon(void)
 			}   
 #endif
 
-            dlt_log(LOG_NOTICE, "Logging re-enabled!\n");
+            dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
 
             /* Re-register application */
             if (dlt_user_log_send_register_application()==-1)
