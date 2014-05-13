@@ -228,7 +228,8 @@ typedef struct
 
     DltReceiver receiver;                 /**< Receiver for internal user-defined messages from daemon */
 
-    int8_t verbose_mode;				  /**< Verbose mode enabled: 1 enabled, 0 disabled */
+    int8_t verbose_mode;				  		/**< Verbose mode enabled: 1 enabled, 0 disabled */
+    int8_t use_extende_header_for_non_verbose;	/**< Use extended header for non verbose: 1 enabled, 0 disabled */
 
     int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
@@ -540,6 +541,14 @@ int dlt_user_check_library_version(const char *user_major_version,const char *us
  *
  */
 int dlt_nonverbose_mode(void);
+
+/**
+ * Use extended header in non verbose mode.
+ * Enabled by default.
+ * @param use_extende_header_for_non_verbose Use extended header for non verbose mode if true
+ * @return negative value if no success
+ */
+int dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_verbose);
 
 /**
  * Set maximum logged log level and trace status of application

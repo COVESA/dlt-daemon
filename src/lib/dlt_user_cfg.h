@@ -106,7 +106,7 @@
 #define DLT_USER_INITIAL_TRACE_STATUS DLT_TRACE_STATUS_OFF
 
 /* use extended header for non-verbose mode: 0 - don't use, 1 - use */
-#define DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE 0
+#define DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE 1
 
 /* default message id for non-verbose mode, if no message id was provided */
 #define DLT_USER_DEFAULT_MSGID 0xffff

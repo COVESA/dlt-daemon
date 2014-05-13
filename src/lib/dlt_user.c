@@ -395,6 +395,9 @@ int dlt_init_common(void)
     /* Verbose mode is enabled by default */
     dlt_user.verbose_mode = 1;
 
+    /* Use extended header for non verbose is enabled by default */
+    dlt_user.use_extende_header_for_non_verbose = DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
+
     /* Local print is disabled by default */
     dlt_user.enable_local_print = 0;
 
@@ -2700,6 +2703,22 @@ int dlt_nonverbose_mode(void)
     return 0;
 }
 
+int dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_verbose)
+{
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    /* Set use_extende_header_for_non_verbose */
+    dlt_user.use_extende_header_for_non_verbose = use_extende_header_for_non_verbose;
+
+    return 0;
+}
+
 int dlt_enable_local_print(void)
 {
     if (dlt_user_initialised==0)
@@ -2889,9 +2908,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
     else
     {
         /* In non-verbose, send extended header if desired */
-#if (DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE==1)
-        msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH );
-#endif
+    	if(dlt_user.use_extende_header_for_non_verbose)
+    		msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH );
     }
 
 #if (BYTE_ORDER==BIG_ENDIAN)
