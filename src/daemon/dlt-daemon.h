@@ -136,6 +136,9 @@ typedef struct
     int timer_wd;                        /** file descriptor for watchdog timer */
 #endif
     int timeoutOnSend;
+    unsigned long RingbufferMinSize;
+    unsigned long RingbufferMaxSize;
+    unsigned long RingbufferStepSize;
     int timer_one_s;
     int timer_sixty_s;
 } DltDaemonLocal;

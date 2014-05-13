@@ -178,6 +178,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename)-1);
 	daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename)-1]=0;
 	daemon_local->timeoutOnSend = 4;
+	daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
+	daemon_local->RingbufferMaxSize = DLT_DAEMON_RINGBUFFER_MAX_SIZE;
+	daemon_local->RingbufferStepSize = DLT_DAEMON_RINGBUFFER_STEP_SIZE;
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 	daemon_local->flags.sendTimezone = 0;
@@ -313,6 +316,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						{
 							daemon_local->timeoutOnSend = atoi(value);
 							//printf("Option: %s=%s\n",token,value);
+						}
+                       	else if(strcmp(token,"RingbufferMinSize")==0)
+						{
+							sscanf(value,"%lu",&(daemon_local->RingbufferMinSize));
+						}
+                       	else if(strcmp(token,"RingbufferMaxSize")==0)
+						{
+							sscanf(value,"%lu",&(daemon_local->RingbufferMaxSize));
+						}
+                       	else if(strcmp(token,"RingbufferStepSize")==0)
+						{
+							sscanf(value,"%lu",&(daemon_local->RingbufferStepSize));
 						}
 						else if(strcmp(token,"SharedMemorySize")==0)
 						{
@@ -686,7 +701,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Daemon data */
-    if (dlt_daemon_init(daemon,daemon_local->flags.ivalue,daemon_local->flags.vflag)==-1)
+    if (dlt_daemon_init(daemon,daemon_local->RingbufferMinSize,daemon_local->RingbufferMaxSize,daemon_local->RingbufferStepSize,daemon_local->flags.ivalue,daemon_local->flags.vflag)==-1)
     {
     	dlt_log(LOG_ERR,"Could not initialize daemon data\n");
 		return -1;

@@ -163,11 +163,14 @@ typedef struct
  * Initialise the dlt daemon structure
  * This function must be called before using further dlt daemon structure
  * @param daemon pointer to dlt daemon structure
+ * @param RingbufferMinSize ringbuffer size
+ * @param RingbufferMaxSize ringbuffer size
+ * @param RingbufferStepSize ringbuffer size
  * @param runtime_directory Directory of persistent configuration
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory,int verbose);
+int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int verbose);
 /**
  * De-Initialise the dlt daemon structure
  * @param daemon pointer to dlt daemon structure

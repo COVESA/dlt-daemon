@@ -120,7 +120,7 @@ static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
     return ret;
 }
 
-int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose)
+int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -206,7 +206,9 @@ int dlt_daemon_init(DltDaemon *daemon,const char *runtime_directory, int verbose
     dlt_set_id(daemon->ecuid,"");
 
     /* initialize ring buffer for client connection */
-    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), DLT_DAEMON_RINGBUFFER_MIN_SIZE,DLT_DAEMON_RINGBUFFER_MAX_SIZE,DLT_DAEMON_RINGBUFFER_STEP_SIZE)==-1)
+    snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Ringbuffer configuration: %lu/%lu/%lu\n", RingbufferMinSize,RingbufferMaxSize,RingbufferStepSize );
+    dlt_log(LOG_INFO, str);
+    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), RingbufferMinSize,RingbufferMaxSize,RingbufferStepSize)==-1)
     {
     	return -1;
     }
