@@ -114,6 +114,9 @@
 /* send always timestamp: 0 - don't use, 1 - use */
 #define DLT_USER_WITH_TIMESTAMP 1
 
+/* send always ecu id: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_ECU_ID 1
+
 /* default message id for non-verbose mode, if no message id was provided */
 #define DLT_USER_DEFAULT_MSGID 0xffff
 

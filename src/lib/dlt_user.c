@@ -408,6 +408,9 @@ int dlt_init_common(void)
     /* With timestamp is enabled by default */
     dlt_user.with_timestamp= DLT_USER_WITH_TIMESTAMP;
 
+    /* With timestamp is enabled by default */
+    dlt_user.with_ecu_id= DLT_USER_WITH_ECU_ID;
+
     /* Local print is disabled by default */
     dlt_user.enable_local_print = 0;
 
@@ -2761,6 +2764,22 @@ int dlt_with_timestamp(int8_t with_timestamp)
     return 0;
 }
 
+int dlt_with_ecu_id(int8_t with_ecu_id)
+{
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    /* Set with_timestamp */
+    dlt_user.with_ecu_id = with_ecu_id;
+
+    return 0;
+}
+
 int dlt_enable_local_print(void)
 {
     if (dlt_user_initialised==0)
@@ -2940,7 +2959,13 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
     }
 
     msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
-    msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_PROTOCOL_VERSION1 ;
+    msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1 ;
+
+    /* send ecu id */
+    if(dlt_user.with_ecu_id)
+    {
+		msg.standardheader->htyp |= DLT_HTYP_WEID;
+    }
 
     /* send timestamp */
     if(dlt_user.with_timestamp)

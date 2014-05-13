@@ -232,6 +232,7 @@ typedef struct
     int8_t use_extende_header_for_non_verbose;	/**< Use extended header for non verbose: 1 enabled, 0 disabled */
     int8_t with_session_id;					    /**< Send always session id: 1 enabled, 0 disabled */
     int8_t with_timestamp;					    /**< Send always timestamp: 1 enabled, 0 disabled */
+    int8_t with_ecu_id;					        /**< Send always ecu id: 1 enabled, 0 disabled */
 
     int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
@@ -567,6 +568,14 @@ int dlt_with_session_id(int8_t with_session_id);
  * @return negative value if no success
  */
 int dlt_with_timestamp(int8_t with_timestamp);
+
+/**
+ * Send ecu id configuration.
+ * Enabled by default.
+ * @param with_ecu_id Send ecu id in each message if enabled
+ * @return negative value if no success
+ */
+int dlt_with_ecu_id(int8_t with_ecu_id);
 
 /**
  * Set maximum logged log level and trace status of application

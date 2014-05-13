@@ -235,6 +235,11 @@ int main(int argc, char* argv[])
         }
     }
 
+    dlt_with_session_id(1);
+    dlt_with_timestamp(1);
+    dlt_with_ecu_id(1);
+    dlt_verbose_mode();
+
     DLT_REGISTER_APP("LOG","Test Application for Logging");
     DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 
