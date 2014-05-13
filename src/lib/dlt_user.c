@@ -47,6 +47,10 @@
 #include <sys/prctl.h>
 #endif
 
+#include <sys/types.h> /* needed for getpid() */
+#include <unistd.h>
+
+
 #include "dlt_user.h"
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
@@ -397,6 +401,9 @@ int dlt_init_common(void)
 
     /* Use extended header for non verbose is enabled by default */
     dlt_user.use_extende_header_for_non_verbose = DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
+
+    /* WIth session id is enabled by default */
+    dlt_user.with_session_id = DLT_USER_WITH_SESSION_ID;
 
     /* Local print is disabled by default */
     dlt_user.enable_local_print = 0;
@@ -2719,6 +2726,22 @@ int dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_ve
     return 0;
 }
 
+int dlt_with_session_id(int8_t with_session_id)
+{
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    /* Set use_extende_header_for_non_verbose */
+    dlt_user.with_session_id = with_session_id;
+
+    return 0;
+}
+
 int dlt_enable_local_print(void)
 {
     if (dlt_user_initialised==0)
@@ -2899,6 +2922,13 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
     msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1 ;
+
+    /* send session id */
+    if(dlt_user.with_session_id)
+    {
+		msg.standardheader->htyp |= DLT_HTYP_WSID;
+		msg.headerextra.seid = getpid();
+    }
 
     if (dlt_user.verbose_mode)
     {

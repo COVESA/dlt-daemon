@@ -230,6 +230,7 @@ typedef struct
 
     int8_t verbose_mode;				  		/**< Verbose mode enabled: 1 enabled, 0 disabled */
     int8_t use_extende_header_for_non_verbose;	/**< Use extended header for non verbose: 1 enabled, 0 disabled */
+    int8_t with_session_id;					    /**< Send always session id: 1 enabled, 0 disabled */
 
     int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
@@ -549,6 +550,14 @@ int dlt_nonverbose_mode(void);
  * @return negative value if no success
  */
 int dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_verbose);
+
+/**
+ * Send session id configuration.
+ * Enabled by default.
+ * @param with_session_id Send session id in each message if enabled
+ * @return negative value if no success
+ */
+int dlt_with_session_id(int8_t with_session_id);
 
 /**
  * Set maximum logged log level and trace status of application
