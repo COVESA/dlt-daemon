@@ -234,8 +234,8 @@
  * In the future in none verbose mode the string will not be sent via DLT message.
  * @param TEXT ASCII string
  */
-#define DLT_CSTRING(TEXT) \
-        DLT_STRING(TEXT)
+/* #define DLT_CSTRING(TEXT) */
+/* UNCHANGED */
 
 #endif /* DLT_COMMON_API_H */
 

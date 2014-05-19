@@ -1853,6 +1853,17 @@ int dlt_user_log_write_string(DltContextData *log, const char *text)
     return 0;
 }
 
+int dlt_user_log_write_constant_string(DltContextData *log, const char *text)
+{
+    /* Send parameter only in verbose mode */
+    if (dlt_user.verbose_mode)
+    {
+    	return dlt_user_log_write_string(log,text);
+    }
+
+    return 0;
+}
+
 int dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
     uint16_t arg_size;

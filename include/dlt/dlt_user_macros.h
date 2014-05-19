@@ -207,6 +207,13 @@ extern DltContext CONTEXT;
         dlt_user_log_write_string(&log,TEXT)
 
 /**
+ * Add constant string parameter to the log messsage.
+ * @param TEXT Constant ASCII string
+ */
+#define DLT_CSTRING(TEXT) \
+        dlt_user_log_write_constant_string(&log,TEXT)
+
+/**
  * Add utf8-encoded string parameter to the log messsage.
  * @param TEXT UTF8-encoded string
  */

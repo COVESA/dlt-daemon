@@ -38,14 +38,9 @@
             </fx:PDU>
             <fx:PDU ID="PDU_1000_1">
                 <ho:SHORT-NAME>PDU_1000_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 1!</ho:DESC>
                 <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
                 <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
-                <fx:SIGNAL-INSTANCES>
-                    <fx:SIGNAL-INSTANCE ID="S_1000_0">
-                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
-                        <fx:SIGNAL-REF ID-REF="S_STRG_ASCII"/>
-                    </fx:SIGNAL-INSTANCE>
-                </fx:SIGNAL-INSTANCES>
             </fx:PDU>
             <fx:PDU ID="PDU_1001_0">
                 <ho:SHORT-NAME>PDU_1001_0</ho:SHORT-NAME>
@@ -60,14 +55,9 @@
             </fx:PDU>
             <fx:PDU ID="PDU_1001_1">
                 <ho:SHORT-NAME>PDU_1001_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 2!</ho:DESC>
                 <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
                 <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
-                <fx:SIGNAL-INSTANCES>
-                    <fx:SIGNAL-INSTANCE ID="S_1001_0">
-                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
-                        <fx:SIGNAL-REF ID-REF="S_STRG_ASCII"/>
-                    </fx:SIGNAL-INSTANCE>
-                </fx:SIGNAL-INSTANCES>
             </fx:PDU>
             <fx:PDU ID="PDU_1002_0">
                 <ho:SHORT-NAME>PDU_1002_0</ho:SHORT-NAME>
@@ -82,14 +72,9 @@
             </fx:PDU>
             <fx:PDU ID="PDU_1002_1">
                 <ho:SHORT-NAME>PDU_1002_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 3!</ho:DESC>
                 <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
                 <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
-                <fx:SIGNAL-INSTANCES>
-                    <fx:SIGNAL-INSTANCE ID="S_1002_0">
-                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
-                        <fx:SIGNAL-REF ID-REF="S_STRG_ASCII"/>
-                    </fx:SIGNAL-INSTANCE>
-                </fx:SIGNAL-INSTANCES>
             </fx:PDU>
         </fx:PDUS>
         <fx:FRAMES>
