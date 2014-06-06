@@ -36,3 +36,7 @@ endif( WITH_DLT_TESTS )
 if( WITH_DLT_SYSTEM )
     add_subdirectory( system )
 endif( WITH_DLT_SYSTEM )
+
+if( WITH_DLT_DBUS )
+    add_subdirectory( dbus )
+endif( WITH_DLT_DBUS )

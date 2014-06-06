@@ -32,6 +32,11 @@ if(WITH_SYSTEMD)
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-system.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-system.service)
     message( STATUS "Configured systemd unit file:dlt-system.service" )
     
+    if(WITH_DLT_DBUS)
+        configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-dbus.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-dbus.service)
+        message( STATUS "Configured systemd unit file:dlt-dbus.service" )
+    endif(WITH_DLT_DBUS)
+    
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-receive.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-receive.service)
     message( STATUS "Configured systemd unit file:dlt-receive.service" )
     
@@ -49,6 +54,10 @@ if(WITH_SYSTEMD)
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-system.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-receive.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+
+    if(WITH_DLT_DBUS)
+    	install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-dbus.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+    endif(WITH_DLT_DBUS)
 
     if(WITH_DLT_EXAMPLES)
     	install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )

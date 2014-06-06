@@ -61,11 +61,12 @@ option(WITH_TESTSCRIPTS       "Set to ON to run CMakeLists.txt in testscripts"  
 option(WITH_GPROF             "Set -pg to compile flags"                                                         OFF )
 option(WITH_DLTTEST			  "Set to ON to build with modifications to test User-Daemon communication with corrupt messages" OFF)
 option(WITH_DLT_SHM_ENABLE    "EXPERIMENTAL! Set to ON to use shared memory as IPC. EXPERIMENTAL!"               OFF )
-option(WTIH_DLT_ADAPTOR       "Set ton ON to build src/adaptor binaries"                                         ON)
-option(WITH_DLT_CONSOLE       "Set ton ON to build src/console binaries"                                         ON)
-option(WITH_DLT_EXAMPLES      "Set ton ON to build src/examples binaries"                                        ON)
-option(WITH_DLT_SYSTEM        "Set ton ON to build src/system binaries"                                          ON)
-option(WITH_DLT_TESTS         "Set ton ON to build src/test binaries"                                            ON)
+option(WTIH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                         ON)
+option(WITH_DLT_CONSOLE       "Set to ON to build src/console binaries"                                         ON)
+option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"                                        ON)
+option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                          ON)
+option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
+option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -73,6 +74,11 @@ set( LICENSE "Mozilla Public License Version 2.0" )
 # Build, project and include settings
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
+
+find_package(PkgConfig)
+if(WITH_DLT_DBUS)
+  pkg_check_modules(DBUS REQUIRED dbus-1)
+endif(WITH_DLT_DBUS)
 
 include_directories( 
     ${CMAKE_SOURCE_DIR}/
@@ -150,6 +156,7 @@ message( STATUS "WTIH_DLT_ADAPTOR = ${WTIH_DLT_ADAPTOR}")
 message( STATUS "WITH_DLT_CONSOLE = ${WITH_DLT_CONSOLE}")
 message( STATUS "WITH_DLT_EXAMPLES = ${WITH_DLT_EXAMPLES}")
 message( STATUS "WITH_DLT_SYSTEM = ${WITH_DLT_SYSTEM}")
+message( STATUS "WITH_DLT_DBUS = ${WITH_DLT_DBUS}")
 message( STATUS "WITH_DLT_TESTS = ${WITH_DLT_TESTS}")
 message( STATUS "WITH_DLT_SHM_ENABLE = ${WITH_DLT_SHM_ENABLE}" )
 message( STATUS "WITH_DLTTEST = ${WITH_DLTTEST}" )
