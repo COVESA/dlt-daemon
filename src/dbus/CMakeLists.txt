@@ -20,7 +20,7 @@ include_directories(
     ${DBUS_INCLUDE_DIRS}
 )
 
-set(dlt_dbus_SRCS dlt-dbus.c)
+set(dlt_dbus_SRCS dlt-dbus.c dlt-dbus-options.c)
 add_executable(dlt-dbus ${dlt_dbus_SRCS})
 target_link_libraries(dlt-dbus dlt ${DBUS_LIBRARIES})
 	
