@@ -78,11 +78,11 @@ pthread_cond_t  mq_init_condition;
 /* Structure to pass data to segmented thread */
 typedef struct {
 	DltContext 			*handle;
-	uint16_t			id;
+	uint32_t			id;
 	DltNetworkTraceType	nw_trace_type;
-	uint16_t 			header_len;
+	uint32_t 			header_len;
 	void 				*header;
-	uint16_t 			payload_len;
+	uint32_t 			payload_len;
 	void 				*payload;
 } s_segmented_data;
 
@@ -2023,7 +2023,7 @@ int check_buffer()
  * Send the start of a segment chain.
  * Returns -1 on failure
  */
-int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
+int dlt_user_trace_network_segmented_start(uint32_t *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
 {
 
     DltContextData log;
@@ -2062,7 +2062,7 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         }
 
         /* Write stream handle */
-        if(dlt_user_log_write_uint16(&log, *id) < 0)
+        if(dlt_user_log_write_uint32(&log, *id) < 0)
         {
         	return -1;
         }
@@ -2074,7 +2074,7 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
         }
 
         /* Write size of payload */
-        if(dlt_user_log_write_uint16(&log, payload_len) < 0)
+        if(dlt_user_log_write_uint32(&log, payload_len) < 0)
         {
         	return -1;
         }
@@ -2105,7 +2105,7 @@ int dlt_user_trace_network_segmented_start(uint16_t *id, DltContext *handle, Dlt
     return 0;
 }
 
-int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
+int dlt_user_trace_network_segmented_segment(uint32_t id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
 {
 	while(check_buffer() < 0)
 	{
@@ -2144,7 +2144,7 @@ int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, Dl
         }
 
         /* Write stream handle */
-        if(dlt_user_log_write_uint16(&log, id) < 0)
+        if(dlt_user_log_write_uint32(&log, id) < 0)
         {
         	return -1;
         }
@@ -2170,7 +2170,7 @@ int dlt_user_trace_network_segmented_segment(uint16_t id, DltContext *handle, Dl
     return 0;
 }
 
-int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNetworkTraceType nw_trace_type)
+int dlt_user_trace_network_segmented_end(uint32_t id, DltContext *handle, DltNetworkTraceType nw_trace_type)
 {
     DltContextData log;
 
@@ -2205,7 +2205,7 @@ int dlt_user_trace_network_segmented_end(uint16_t id, DltContext *handle, DltNet
         }
 
         /* Write stream handle */
-        if(dlt_user_log_write_uint(&log, id) < 0)
+        if(dlt_user_log_write_uint32(&log, id) < 0)
         {
         	return -1;
         }
@@ -2286,7 +2286,7 @@ void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data)
 {
         /* Segment the data and send the chunks */
         void *ptr 			= NULL;
-        uint16_t offset		= 0;
+        uint32_t offset		= 0;
         uint16_t sequence	= 0;
         do
         {
@@ -2468,7 +2468,7 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
             }
 
         	/* Write original size of payload */
-            if(dlt_user_log_write_uint16(&log, payload_len) < 0)
+            if(dlt_user_log_write_uint32(&log, payload_len) < 0)
             {
             	return -1;
             }
