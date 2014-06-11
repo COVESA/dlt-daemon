@@ -9,8 +9,25 @@ Version
 Changes
 -------
 
+2.11.0
+
+   * Enable dbus trace when adaptor starts up.
+   * Added configuration of dbus filter.
+   * Fixed segmented messages arguments to standard.
+   * First implementation of DLT DBus adapter.
+   * DLT_CSTRING implementation non verbose mode.
+   * Added new examples which can be manually build against DLt library.
+   * Send ECU Id if enabled and added library API to change.
+   * Send timestamp can be disabled by new API.
+   * Send session/process id by default and add configuration API.
+   * Send extended header in non verbose mode by default and add new API to change setting.
+   * Make daemon buffer size configurable
+
 2.10.0
 
+   * Bug 184 - /tmp/dltpipes directory does not exist before dlt-daemon is started, logging disabled
+   * Updated authors information.
+   * Fixed missing variable declaration when systemd not enabled.
    * Fixed: all possible malloc, sprintf and strcpy problems
    * Fixed: Creation of dltpipes directory is too late.
    * Cygwin port: cygwin patch, signal handling patch and cppcheck and install lib dll to correct location on Windows.
