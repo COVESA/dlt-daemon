@@ -30,12 +30,6 @@
 
 #include <time.h>
 
-#ifdef USE_EAVESDROP
-    #define EAVESDROPPING_RULE "eavesdrop=true,"
-#else
-    #define EAVESDROPPING_RULE ""
-#endif
-
 DLT_DECLARE_CONTEXT(dbusLog);
 DLT_DECLARE_CONTEXT(dbusContext);
 
@@ -109,7 +103,7 @@ int main (int argc, char *argv[])
 		DLT_REGISTER_APP (config.ApplicationId, "DBus Logging");
 
 	// register context
-	DLT_REGISTER_CONTEXT(dbusContext, config.DBus.ContextId, "DBus Context for Logging");
+	DLT_REGISTER_CONTEXT_LL_TS(dbusContext, config.DBus.ContextId, "DBus Context for Logging",DLT_LOG_INFO,DLT_TRACE_STATUS_ON);
 	DLT_REGISTER_CONTEXT(dbusLog, "Log", "DBus Context for Logging Generic information");
 
 	// initialise error handler
