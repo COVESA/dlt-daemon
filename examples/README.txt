@@ -3,3 +3,4 @@ This folder contains several examples of applications using the DLT library. The
 Example1: Minimal DLT Example
 Example2: Non Verbose Mode Examples with different AppIdds and normal Strings
 Example3: Non Verbose Mode Examples with different AppIdds and constant strings
+Example4: Different RAW data

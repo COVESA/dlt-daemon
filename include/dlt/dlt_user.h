@@ -102,6 +102,20 @@ typedef enum
 } DltLogLevelType;
 
 /**
+ * Definitions of DLT Format
+ */
+typedef enum
+{
+	DLT_FORMAT_DEFAULT   =          0x00,   /**< no sepecial format */
+	DLT_FORMAT_HEX8  =   		0x01, 	/**< Hex 8 */
+	DLT_FORMAT_HEX16 =   		0x02, 	/**< Hex 16 */
+	DLT_FORMAT_HEX32 =   		0x03, 	/**< Hex 32 */
+	DLT_FORMAT_HEX64 =   		0x04, 	/**< Hex 64 */
+	DLT_FORMAT_BIN8  =   		0x05, 	/**< Binary 8 */
+	DLT_FORMAT_BIN16 =   		0x06 	/**< Binary 16  */
+} DltFormatType;
+
+/**
  * Definitions of DLT trace status
  */
 typedef enum
@@ -397,6 +411,18 @@ int dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
  * @return negative value if there was an error
  */
 int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
+
+/**
+ * Write a binary memory block into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param data pointer to the parameter written into log message.
+ * @param length length in bytes of the parameter written into log message.
+ * @param type the format information.
+ * @return negative value if there was an error
+ */
+int dlt_user_log_write_raw_formated(DltContextData *log,void *data,uint16_t length,DltFormatType type);
 
 /**
  * Trace network message

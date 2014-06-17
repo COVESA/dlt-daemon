@@ -1302,6 +1302,11 @@ int dlt_user_log_write_finish(DltContextData *log)
 
 int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length)
 {
+	return dlt_user_log_write_raw_formated(log,data,length,DLT_FORMAT_DEFAULT);
+}
+
+int dlt_user_log_write_raw_formated(DltContextData *log,void *data,uint16_t length,DltFormatType type)
+{
     uint16_t arg_size;
     uint32_t type_info;
 
@@ -1324,6 +1329,17 @@ int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length)
 
         /* Transmit type information */
         type_info = DLT_TYPE_INFO_RAWD;
+
+        if(type>=DLT_FORMAT_HEX8 && type<=DLT_FORMAT_HEX64)
+        {
+        	type_info |= DLT_SCOD_HEX;
+        	type_info += type;
+        }
+        else if(type>=DLT_FORMAT_BIN8 && type<=DLT_FORMAT_BIN16)
+        {
+        	type_info |= DLT_SCOD_BIN;
+        	type_info += type - DLT_FORMAT_BIN8 + 1;
+        }
 
         memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
         log->size += sizeof(uint32_t);
