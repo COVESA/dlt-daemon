@@ -4,13 +4,13 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.10.0 STABLE
+2.11.0 STABLE
 
 Changes
 -------
 
 2.11.0
-
+   * New macros for Format of Hex and Binary.
    * Enable dbus trace when adaptor starts up.
    * Added configuration of dbus filter.
    * Fixed segmented messages arguments to standard.
