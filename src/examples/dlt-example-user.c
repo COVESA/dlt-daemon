@@ -74,6 +74,7 @@
 #include "dlt_common.h" /* for dlt_get_version() */
 
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
+void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
 DLT_DECLARE_CONTEXT(mycontext);
 
@@ -244,6 +245,7 @@ int main(int argc, char* argv[])
     DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 
     DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, dlt_user_injection_callback);
+    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext, dlt_user_log_level_changed_callback);
 
     text = message;
 
@@ -374,5 +376,15 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
     }
 
     return 0;
+}
+
+void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status)
+{
+	char text[5];
+	text[4]=0;
+
+	memcpy(text,context_id,DLT_ID_SIZE);
+
+    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n",text,log_level,trace_status);
 }
 

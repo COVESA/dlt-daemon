@@ -586,6 +586,7 @@ int dlt_free(void)
                 dlt_user.dlt_ll_ts[i].injection_table = 0;
             }
             dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+            dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
         }
 
         free(dlt_user.dlt_ll_ts);
@@ -814,6 +815,8 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
 			dlt_user.dlt_ll_ts[i].injection_table = 0;
 			dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+			dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
+
 		}
 	}
 	else
@@ -858,6 +861,7 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 
 				dlt_user.dlt_ll_ts[i].injection_table = 0;
 				dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+				dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
 			}
 		}
 	}
@@ -1036,6 +1040,7 @@ int dlt_unregister_context(DltContext *handle)
         }
 
         dlt_user.dlt_ll_ts[handle->log_level_pos].nrcallbacks     = 0;
+		dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_changed_callback = 0;
     }
 
     DLT_SEM_FREE();
@@ -1999,6 +2004,48 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
     dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = dlt_injection_callback;
 
     DLT_SEM_FREE();
+    return 0;
+}
+
+int dlt_register_log_level_changed_callback(DltContext *handle,
+			void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status))
+{
+    DltContextData log;
+    uint32_t i;
+
+    if (handle==0)
+    {
+        return -1;
+    }
+
+    if (dlt_user_log_init(handle, &log)==-1)
+    {
+		return -1;
+    }
+
+    /* This function doesn't make sense storing to local file is choosen;
+       so terminate this function */
+    if (dlt_user.dlt_is_file)
+    {
+        return 0;
+    }
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.dlt_ll_ts==0)
+    {
+        DLT_SEM_FREE();
+        return 0;
+    }
+
+    /* Insert callback in corresponding table */
+    i=handle->log_level_pos;
+
+    /* Store new callback function */
+    dlt_user.dlt_ll_ts[i].log_level_changed_callback = dlt_log_level_changed_callback;
+
+    DLT_SEM_FREE();
+
     return 0;
 }
 
@@ -3570,12 +3617,14 @@ int dlt_user_log_check_user_message(void)
 
     /* For delayed calling of injection callback, to avoid deadlock */
     DltUserInjectionCallback 	delayed_injection_callback;
+    DltUserLogLevelChangedCallback delayed_log_level_changed_callback;
     unsigned char				*delayed_inject_buffer = 0;
     uint32_t					delayed_inject_data_length = 0;
 
     /* Ensure that callback is null before searching for it */
     delayed_injection_callback.injection_callback = 0;
     delayed_injection_callback.service_id = 0;
+    delayed_log_level_changed_callback.log_level_changed_callback = 0;
 
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
@@ -3653,10 +3702,23 @@ int dlt_user_log_check_user_message(void)
                                 	*(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr) = usercontextll->log_level;
                                 if(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr)
                                 	*(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr) = usercontextll->trace_status;
+
+                                delayed_log_level_changed_callback.log_level_changed_callback = dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback;
+                                memcpy(delayed_log_level_changed_callback.contextID,dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID,DLT_ID_SIZE);
+                                delayed_log_level_changed_callback.log_level = usercontextll->log_level;
+                                delayed_log_level_changed_callback.trace_status = usercontextll->trace_status;
                             }
                         }
 
                         DLT_SEM_FREE();
+                    }
+
+                    /* call callback outside of semaphore */
+                    if(delayed_log_level_changed_callback.log_level_changed_callback!=0)
+                    {
+                    	delayed_log_level_changed_callback.log_level_changed_callback(delayed_log_level_changed_callback.contextID,
+                    			                                                      delayed_log_level_changed_callback.log_level,
+                    			                                                      delayed_log_level_changed_callback.trace_status);
                     }
 
                     /* keep not read data in buffer */

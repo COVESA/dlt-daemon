@@ -186,6 +186,14 @@ typedef struct
 	int (*injection_callback)(uint32_t service_id, void *data, uint32_t length);
 } DltUserInjectionCallback;
 
+typedef struct
+{
+	char contextID[DLT_ID_SIZE];      /**< Context ID */
+    int8_t log_level;                 /**< Log level */
+    int8_t trace_status;              /**< Trace status */
+	void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
+} DltUserLogLevelChangedCallback;
+
 /**
  * This structure is used in a table managing all contexts and the corresponding log levels in an application.
  */
@@ -199,6 +207,10 @@ typedef struct
     char *context_description;        /**< description of context */
     DltUserInjectionCallback *injection_table; /**< Table with pointer to injection functions and service ids */
     uint32_t nrcallbacks;
+
+    // Log Level changed callback
+	void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
+
 } dlt_ll_ts_type;
 
 /**
@@ -535,6 +547,15 @@ int dlt_get_log_state();
  */
 int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
       int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length));
+
+/**
+ * Register callback function called when log level of context was changed
+ * @param handle pointer to an object containing information about one special logging context
+ * @param (*dlt_log_level_changed_callback) function pointer to callback function
+ * @return negative value if there was an error
+ */
+int dlt_register_log_level_changed_callback(DltContext *handle,
+      void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status));
 
 /**
  * Switch to verbose mode
