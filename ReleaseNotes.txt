@@ -4,10 +4,14 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.10.0 STABLE
+2.11.1 STABLE
 
 Changes
 -------
+
+2.11.1
+
+   * Fixed dbus trace only showing signals
 
 2.11.0
 
