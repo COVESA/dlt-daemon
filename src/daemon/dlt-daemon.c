@@ -1473,6 +1473,14 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             }
             break;
         }
+        case DLT_USER_MESSAGE_MARKER:
+        {
+            if (dlt_daemon_process_user_message_marker(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            {
+                run_loop=0;
+            }
+            break;
+        }
         default:
         {
             dlt_log(LOG_ERR,"(Internal) Invalid user message type received!\n");
@@ -2334,6 +2342,35 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon, DltDaemonLocal *
 
 	/* write configuration persistantly */
 	dlt_daemon_configuration_save(daemon, daemon->runtime_configuration, verbose);
+
+    /* keep not read data in buffer */
+    if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogMode))==-1)
+    {
+    	dlt_log(LOG_ERR,"Can't remove bytes from receiver for user message log mode\n");
+		return -1;
+    }
+
+    return 0;
+}
+
+int dlt_daemon_process_user_message_marker(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0)  || (daemon_local==0))
+    {
+    	dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_marker()\n");
+        return -1;
+    }
+
+    if (daemon_local->receiver.bytesRcvd < (int32_t)(sizeof(DltUserHeader)))
+    {
+    	/* Not enough bytes received */
+        return -1;
+    }
+
+    /* Create automatic unregister context response for unregistered context */
+    dlt_daemon_control_message_marker(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,verbose);
 
     /* keep not read data in buffer */
     if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)+sizeof(DltUserControlMsgLogMode))==-1)

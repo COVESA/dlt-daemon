@@ -97,6 +97,7 @@ static int dlt_user_log_send_register_context(DltContextData *log);
 static int dlt_user_log_send_unregister_context(DltContextData *log);
 static int dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTraceStatusType tracestatus);
 static int dlt_user_log_send_log_mode(DltUserLogMode mode);
+static int dlt_user_log_send_marker();
 static int dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static int dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
@@ -2758,6 +2759,19 @@ int dlt_log_raw(DltContext *handle,DltLogLevelType loglevel, void *data,uint16_t
     return 0;
 }
 
+int dlt_log_marker()
+{
+    if (dlt_user_initialised==0)
+    {
+        if (dlt_init()<0)
+        {
+            return -1;
+        }
+    }
+
+    return dlt_user_log_send_marker();
+}
+
 int dlt_verbose_mode(void)
 {
     if (dlt_user_initialised==0)
@@ -3572,6 +3586,28 @@ int dlt_user_log_send_log_mode(DltUserLogMode mode)
 
     /* log to FIFO */
     ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(logmode), sizeof(DltUserControlMsgLogMode));
+    return ((ret==DLT_RETURN_OK)?0:-1);
+}
+
+int dlt_user_log_send_marker()
+{
+    DltUserHeader userheader;
+
+    DltReturnValue ret;
+
+    /* set userheader */
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER)==-1)
+    {
+    	return -1;
+    }
+
+    if (dlt_user.dlt_is_file)
+    {
+        return 0;
+    }
+
+    /* log to FIFO */
+    ret=dlt_user_log_out2(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), 0, 0);
     return ((ret==DLT_RETURN_OK)?0:-1);
 }
 

@@ -154,14 +154,21 @@ int dlt_daemon_control_message_unregister_context(int sock, DltDaemon *daemon, D
  */
 int dlt_daemon_control_message_connection_info(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, uint8_t state, char* comid, int verbose);
 /**
- * Send control message connection info (add on to AUTOSAR standard)
+ * Send control message timezone (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
  * @param daemon_local pointer to dlt daemon local structure
- * @param timezone timezone on target
  * @param verbose if set to true verbose information is printed out.
  */
 int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+/**
+ * Send control message marker (add on to AUTOSAR standard)
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_marker(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 /**
  * Process received control message from dlt client
  * @param sock connection handle used for sending response

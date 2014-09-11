@@ -446,6 +446,14 @@ extern DltContext CONTEXT;
 	} while(0)
 
 /**
+ * Send log message with marker.
+ */
+#define DLT_LOG_MARKER() \
+	do { \
+			dlt_log_marker(); \
+	} while(0)
+
+/**
  * Switch to verbose mode
  *
  */

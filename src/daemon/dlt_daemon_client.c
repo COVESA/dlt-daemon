@@ -1183,6 +1183,57 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
     return 0;
 }
 
+int dlt_daemon_control_message_marker(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessage msg;
+    DltServiceMarker *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon==0)
+    {
+        return -1;
+    }
+
+    /* initialise new message */
+    if (dlt_message_init(&msg,0)==-1)
+    {
+    	return -1;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceMarker);
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+    {
+        free(msg.databuffer);
+        msg.databuffer=0;
+    }
+    if (msg.databuffer == 0){
+    	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+    	msg.databuffersize = msg.datasize;
+    }
+    if (msg.databuffer==0)
+    {
+        return -1;
+    }
+
+    resp = (DltServiceMarker*) msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_MARKER;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+
+    /* send message */
+    if(dlt_daemon_client_send_control_message(sock,daemon,daemon_local,&msg,"","",  verbose))
+    {
+        dlt_message_free(&msg,0);
+    	return -1;
+    }
+
+    /* free message */
+    dlt_message_free(&msg,0);
+
+    return 0;
+}
+
 void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose)
 {
     char apid[DLT_ID_SIZE],ctid[DLT_ID_SIZE];

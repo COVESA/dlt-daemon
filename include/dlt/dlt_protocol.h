@@ -192,6 +192,7 @@
 #define DLT_SERVICE_ID_UNREGISTER_CONTEXT             0xf01 /**< Service ID: Message unregister context */
 #define DLT_SERVICE_ID_CONNECTION_INFO                0xf02 /**< Service ID: Message connection info */
 #define DLT_SERVICE_ID_TIMEZONE						  0xf03 /**< Service ID: Timezone */
+#define DLT_SERVICE_ID_MARKER						  0xf04 /**< Service ID: Marker */
 #define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
 
 /*

@@ -96,6 +96,7 @@ void usage()
     printf("  -n count      Number of messages to be generated (Default: 10)\n");
     printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
+    printf("  -k            Send marker message\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
 #ifdef DLT_TEST_ENABLE
     printf("  -c       		Corrupt user header\n");
@@ -111,6 +112,7 @@ int main(int argc, char* argv[])
 {
     int gflag = 0;
     int aflag = 0;
+    int kflag = 0;
 #ifdef DLT_TEST_ENABLE
     int cflag = 0;    
     char *svalue = 0;
@@ -133,9 +135,9 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
-    while ((c = getopt (argc, argv, "vgacd:f:n:m:z:s:")) != -1)
+    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:")) != -1)
 #else
-    while ((c = getopt (argc, argv, "vgad:f:n:m:")) != -1)
+    while ((c = getopt (argc, argv, "vgakd:f:n:m:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c)
@@ -148,6 +150,11 @@ int main(int argc, char* argv[])
         case 'a':
         {
             aflag = 1;
+            break;
+        }
+        case 'k':
+        {
+            kflag = 1;
             break;
         }
 #ifdef DLT_TEST_ENABLE
@@ -264,6 +271,11 @@ int main(int argc, char* argv[])
     if (aflag)
     {
         DLT_ENABLE_LOCAL_PRINT();
+    }
+
+    if (kflag)
+    {
+    	DLT_LOG_MARKER();
     }
 
     if (nvalue)

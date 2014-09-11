@@ -713,6 +713,11 @@ int dlt_log_uint(DltContext *handle,DltLogLevelType loglevel, unsigned int data)
  */
 int dlt_log_raw(DltContext *handle,DltLogLevelType loglevel, void *data,uint16_t length);
 
+/**
+ * Write marker message to DLT.
+ * @return negative value if there was an error
+ */
+int dlt_log_marker();
 
 /**
  * Forward a complete DLT message to the DLT daemon
