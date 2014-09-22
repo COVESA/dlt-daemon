@@ -485,7 +485,8 @@ int main(int argc, char* argv[])
         create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_sixty_s, "ECU version");
     }
 
-    if(daemon_local.flags.yvalue[0] || (daemon_local.flags.offlineTraceDirectory[0]))
+    if(daemon_local.flags.yvalue[0] || 
+        ((daemon_local.flags.offlineTraceDirectory[0]) && ((daemon.mode == DLT_USER_MODE_INTERNAL) || (daemon.mode == DLT_USER_MODE_BOTH))))
     	dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_SEND_DIRECT);
     else
 		dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_BUFFER);
@@ -2681,7 +2682,10 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 		/* send new log state to all applications */
 		daemon->connectionState = 0;
 		dlt_daemon_user_send_all_log_state(daemon,verbose);
-    	dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER);
+
+        if((daemon_local->flags.yvalue[0] == 0) && 
+            ((daemon_local->flags.offlineTraceDirectory[0] == 0) || (daemon->mode == DLT_USER_MODE_EXTERNAL)))
+    	    dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER);
 	}
 
 	if (daemon_local->flags.vflag)
