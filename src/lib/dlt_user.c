@@ -3173,7 +3173,7 @@ int dlt_user_queue_resend(void)
     		// log error only when problem occurred first time
 			char str[255];
 			snprintf(str,254,"Could not request resending.: %s \n",strerror(errno));
-			dlt_log(LOG_NOTICE, str);
+			dlt_log(LOG_DEBUG, str);
     	}
     	dlt_user_queue_resend_error_counter = 1;
     	free(resend_data);
