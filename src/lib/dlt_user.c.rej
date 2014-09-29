@@ -1,0 +1,62 @@
+--- src/lib/dlt_user.c
++++ src/lib/dlt_user.c
+@@ -501,48 +501,21 @@ int dlt_user_atexit_blow_out_user_buffer(void){
+ 
+ 	uint32_t exitTime = dlt_uptime() + DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT;
+ 
+-	/* Send content of ringbuffer */
+-	DLT_SEM_LOCK();
+-	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+-	DLT_SEM_FREE();
+-    
+-    if (count > 0)
+-    {
+-        while(dlt_uptime() < exitTime )
+-        {
+-            if (dlt_user.dlt_log_handle == -1)
+-            {
+-                /* Reattach to daemon if neccesary */
+-                dlt_user_log_reattach_to_daemon();
++	while(dlt_uptime() < exitTime ){
+ 
+-                if ((dlt_user.dlt_log_handle != -1) && (dlt_user.overflow_counter))
+-                {
+-                    if (dlt_user_log_send_overflow()==0)
+-                    {
+-				        snprintf(str,DLT_USER_BUFFER_LENGTH,"%u messages discarded!\n",dlt_user.overflow_counter);
+-				        dlt_log(LOG_WARNING, str);
+-                        dlt_user.overflow_counter=0;
+-                    }
+-                }
+-            } 
+-            
+-            if (dlt_user.dlt_log_handle != -1)
+-            {
+-		        ret = dlt_user_log_resend_buffer();
++		ret = dlt_user_log_resend_buffer();
+ 
+-		        if(ret == 0)
+-		        {
+-				        return 0;
+-		        }
+-	        }
++		if(ret == 0)
++		{
++				return 0;
++		}
+ 
+-		    usleep(DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP);
+-	    }
++		usleep(DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP);
++	}
+ 
+-	    DLT_SEM_LOCK();
+-	    count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+-	    DLT_SEM_FREE();
+-    }
++	DLT_SEM_LOCK();
++	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
++	DLT_SEM_FREE();
+ 
+ 	return count;
+ }
