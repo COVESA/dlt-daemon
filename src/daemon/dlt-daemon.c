@@ -1153,6 +1153,7 @@ void dlt_daemon_daemonize(int verbose)
    This is a dlt-daemon only function. The libdlt has no equivalent function available. */
 int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose)
 {
+    DltMessage msg;
     static uint8_t uiMsgCount = 0;
     DltStandardHeaderExtra *pStandardExtra;
     uint32_t uiType;
@@ -1166,62 +1167,53 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     PRINT_FUNCTION_VERBOSE(verbose);
 
     // Set storageheader
-    daemon_local->msg.storageheader = (DltStorageHeader *)(daemon_local->msg.headerbuffer);
-    dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid);
+    msg.storageheader = (DltStorageHeader *)(msg.headerbuffer);
+    dlt_set_storageheader(msg.storageheader, daemon->ecuid);
 
     // Set standardheader    
-    daemon_local->msg.standardheader = (DltStandardHeader *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader));
-    daemon_local->msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
-    daemon_local->msg.standardheader->mcnt = uiMsgCount++;
+    msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
+    msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
+    msg.standardheader->mcnt = uiMsgCount++;
     
-    uiExtraSize = DLT_STANDARD_HEADER_EXTRA_SIZE(daemon_local->msg.standardheader->htyp)+(DLT_IS_HTYP_UEH(daemon_local->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
-    daemon_local->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + uiExtraSize;
+    uiExtraSize = DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp)+(DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
+    msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + uiExtraSize;
 
     // Set extraheader
-    pStandardExtra = (DltStandardHeaderExtra *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
+    pStandardExtra = (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
     pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
     pStandardExtra->seid = DLT_HTOBE_32(getpid());
 
     // Set extendedheader
-    daemon_local->msg.extendedheader = (DltExtendedHeader *)(daemon_local->msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + DLT_STANDARD_HEADER_EXTRA_SIZE(daemon_local->msg.standardheader->htyp));
-    daemon_local->msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((DLT_LOG_INFO << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-    daemon_local->msg.extendedheader->noar = 1;
-    dlt_set_id(daemon_local->msg.extendedheader->apid, "DLTD");
-    dlt_set_id(daemon_local->msg.extendedheader->ctid, "INTM");
+    msg.extendedheader = (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+    msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((DLT_LOG_INFO << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+    msg.extendedheader->noar = 1;
+    dlt_set_id(msg.extendedheader->apid, "DLTD");
+    dlt_set_id(msg.extendedheader->ctid, "INTM");
 
     // Set payload data...
     uiType = DLT_TYPE_INFO_STRG;
     uiSize = strlen(str) + 1;
-    daemon_local->msg.datasize = sizeof(uint32_t) + sizeof(uint16_t) + uiSize;
+    msg.datasize = sizeof(uint32_t) + sizeof(uint16_t) + uiSize;
 
-    // Ensure that the buffer size is large enough...
-    if (daemon_local->msg.databuffer && (daemon_local->msg.databuffersize < daemon_local->msg.datasize))
-    {
-        free(daemon_local->msg.databuffer);
-        daemon_local->msg.databuffer=0;
-    }
-    if (daemon_local->msg.databuffer == 0)
-    {
-    	daemon_local->msg.databuffer = (uint8_t *) malloc(daemon_local->msg.datasize);
-    	daemon_local->msg.databuffersize = daemon_local->msg.datasize;
-    }
-    if (daemon_local->msg.databuffer==0)
+	msg.databuffer = (uint8_t *) malloc(msg.datasize);
+	msg.databuffersize = msg.datasize;
+    if (msg.databuffer==0)
     {
     	dlt_log(LOG_WARNING,"Can't allocate buffer for get log info message\n");
 		return -1;
     }
 
-    daemon_local->msg.datasize = 0;
-    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
-    daemon_local->msg.datasize += sizeof(uint32_t);
-    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
-    daemon_local->msg.datasize += sizeof(uint16_t);
-    memcpy((uint8_t *)(daemon_local->msg.databuffer + daemon_local->msg.datasize), str, uiSize);
-    daemon_local->msg.datasize += uiSize;
+    msg.datasize = 0;
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
+    msg.datasize += sizeof(uint32_t);
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
+    msg.datasize += sizeof(uint16_t);
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
+    msg.datasize += uiSize;
 
     // Calc lengths
-    daemon_local->msg.standardheader->len = DLT_HTOBE_16(daemon_local->msg.headersize - sizeof(DltStorageHeader) + daemon_local->msg.datasize);
+    msg.standardheader->len = DLT_HTOBE_16(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
 
     // Sending data...
     {
@@ -1240,8 +1232,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 		if((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 		{
 
-			if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-								daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
+			if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,msg.headerbuffer,sizeof(DltStorageHeader),msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),
+								msg.databuffer,msg.datasize,verbose)))
 			{
 				if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
 				{
@@ -1251,6 +1243,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 		}
     }
 
+    free(msg.databuffer);
+    
     return 0;
 }
 
@@ -2191,8 +2185,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 		}
 
 		/* send message to client or write to log file */
-		if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-							daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose,0)))
+		if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer,sizeof(DltStorageHeader),daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
+							daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
 		{
 			if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
 			{
@@ -2582,7 +2576,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         }
 #endif
 
-	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE,daemon,daemon_local,data,length,0,0,verbose,0)))
+    	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE,daemon,daemon_local,0,0,data,length,0,0,verbose)))
     	{
     		return ret;
     	}

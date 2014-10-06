@@ -58,7 +58,7 @@
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
-int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,int verbose, int control)
+int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* storage_header,int storage_header_size,void* data1,int size1,void* data2,int size2,int verbose)
 {
 	int ret;
 	int j;
@@ -101,8 +101,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 		if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 							&& daemon_local->flags.offlineTraceDirectory[0])
 		{
-			if(dlt_offline_trace_write(&(daemon_local->offlineTrace),daemon_local->msg.headerbuffer,daemon_local->msg.headersize,
-									daemon_local->msg.databuffer,daemon_local->msg.datasize,0,0))
+			if(dlt_offline_trace_write(&(daemon_local->offlineTrace),storage_header,storage_header_size,data1,size1,data2,size2))
 			{
 				static int error_dlt_offline_trace_write_failed = 0;
                 if(!error_dlt_offline_trace_write_failed)
@@ -268,8 +267,8 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
 
     msg->standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
-	if((ret=dlt_daemon_client_send(sock,daemon,daemon_local,msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
-						msg->databuffer,msg->datasize,verbose,1)))
+	if((ret=dlt_daemon_client_send(sock,daemon,daemon_local,msg->headerbuffer,sizeof(DltStorageHeader),msg->headerbuffer+sizeof(DltStorageHeader),msg->headersize-sizeof(DltStorageHeader),
+						msg->databuffer,msg->datasize,verbose)))
 	{
 		dlt_log(LOG_DEBUG,"dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
 		return ret;
@@ -1609,8 +1608,8 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     msg.standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
     /* Send message */
-    if((ret = dlt_daemon_client_send(sock,daemon,daemon_local,msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),
-			   msg.databuffer,msg.datasize,verbose,1)))
+    if((ret = dlt_daemon_client_send(sock,daemon,daemon_local,msg.headerbuffer,sizeof(DltStorageHeader),msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader),
+			   msg.databuffer,msg.datasize,verbose)))
     {
 
     }
