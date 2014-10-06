@@ -1296,7 +1296,7 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
 			daemon->state = DLT_DAEMON_STATE_INIT;
 			break;
 		case DLT_DAEMON_STATE_BUFFER:
-	        dlt_log(LOG_INFO,"Switched to buffer state.\n");
+	        dlt_log(LOG_INFO,"Switched to buffer state for socket connections.\n");
 			daemon->state = DLT_DAEMON_STATE_BUFFER;
 			break;
 		case DLT_DAEMON_STATE_BUFFER_FULL:
@@ -1304,7 +1304,7 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
 			daemon->state = DLT_DAEMON_STATE_BUFFER_FULL;
 			break;
 		case DLT_DAEMON_STATE_SEND_BUFFER:
-	        dlt_log(LOG_INFO,"Switched to send buffer state.\n");
+	        dlt_log(LOG_INFO,"Switched to send buffer state for socket connections.\n");
 			daemon->state = DLT_DAEMON_STATE_SEND_BUFFER;
 			break;
 		case DLT_DAEMON_STATE_SEND_DIRECT:
