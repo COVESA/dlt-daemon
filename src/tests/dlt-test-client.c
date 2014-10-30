@@ -379,6 +379,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
 	uint32_t type_info, type_info_tmp;
 	int16_t length,length_tmp; /* the macro can set this variable to -1 */
+	uint32_t length_tmp32 = 0;
 	uint8_t *ptr;
 	int32_t datalength;
 
@@ -1320,9 +1321,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                 if(type_info & DLT_TYPE_INFO_UINT)
                                 {
-                                	uint16_t orig_size;
-                                    DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                    orig_size=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                	uint32_t orig_size;
+                                    DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                    orig_size=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                     if(orig_size == 1024*5)
                                     {
                                     	dltdata->test_counter_macro[7]++;
@@ -1335,7 +1336,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                         DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
                                         length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                                         // Size of the truncated message after headers
-                                        if(length == 2003)
+                                        if(length == 2001)
                                         {
                                         	dltdata->test_counter_macro[7]++;
                                         }
@@ -1428,9 +1429,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                             if(type_info & DLT_TYPE_INFO_UINT)
                             {
-                            	uint16_t handle;
-                                DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            	uint32_t handle;
+                                DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                 if(handle > 0)
                                 {
                                 	dltdata->test_counter_macro[8]++;
@@ -1458,9 +1459,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                     type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                     if(type_info & DLT_TYPE_INFO_UINT)
                                     {
-                                    	uint16_t pl_sz;
-                                        DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                        pl_sz=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    	uint32_t pl_sz;
+                                        DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                        pl_sz=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
 
                                         // Test packet payload size.
                                         if(pl_sz == 5120)
@@ -1533,9 +1534,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                             if(type_info & DLT_TYPE_INFO_UINT)
                             {
-                            	uint16_t handle;
-                                DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            	uint32_t handle;
+                                DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                 if(handle > 0)
                                 {
                                 	dltdata->test_counter_macro[8]++;
@@ -1599,9 +1600,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 							type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 							if(type_info & DLT_TYPE_INFO_UINT)
 							{
-								uint16_t handle;
-								DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-								handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+								uint32_t handle;
+								DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+								handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
 								if(handle > 0)
 								{
 									dltdata->test_counter_macro[8]++;
@@ -2475,9 +2476,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                 if(type_info & DLT_TYPE_INFO_UINT)
                                 {
-                                	uint16_t orig_size;
-                                    DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                    orig_size=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                	uint32_t orig_size;
+                                    DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                    orig_size=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                     if(orig_size == 1024*5)
                                     {
                                     	dltdata->test_counter_function[7]++;
@@ -2490,7 +2491,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                         DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
                                         length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                                         // Size of the truncated message after headers
-                                        if(length == 2003)
+                                        if(length == 2001)
                                         {
                                         	dltdata->test_counter_function[7]++;
                                         }
@@ -2582,9 +2583,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                             if(type_info & DLT_TYPE_INFO_UINT)
                             {
-                            	uint16_t handle;
-                                DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            	uint32_t handle;
+                                DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                 if(handle > 0)
                                 {
                                 	dltdata->test_counter_function[8]++;
@@ -2612,9 +2613,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                     type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                                     if(type_info & DLT_TYPE_INFO_UINT)
                                     {
-                                    	uint16_t pl_sz;
-                                        DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                        pl_sz=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    	uint32_t pl_sz;
+                                        DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                        pl_sz=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
 
                                         // Test packet payload size.
                                         if(pl_sz == 5120)
@@ -2687,9 +2688,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
                             if(type_info & DLT_TYPE_INFO_UINT)
                             {
-                            	uint16_t handle;
-                                DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-                                handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            	uint32_t handle;
+                                DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+                                handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
                                 if(handle > 0)
                                 {
                                 	dltdata->test_counter_function[8]++;
@@ -2753,9 +2754,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 							type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 							if(type_info & DLT_TYPE_INFO_UINT)
 							{
-								uint16_t handle;
-								DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-								handle=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+								uint32_t handle;
+								DLT_MSG_READ_VALUE(length_tmp32,ptr,datalength,uint32_t);
+								handle=DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
 								if(handle > 0)
 								{
 									dltdata->test_counter_function[8]++;
