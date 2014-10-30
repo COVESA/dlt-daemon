@@ -288,21 +288,25 @@ typedef struct
 /**
  * Initialise the generation of a DLT log message (intended for usage in non-verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
+ * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
+ * when return value is bigger than zero.
  * @param handle pointer to an object containing information about one special logging context
  * @param log pointer to an object containing information about logging context data
  * @param loglevel this is the current log level of the log message to be sent
- * @return negative value if there was an error
+ * @return negative value if there was an error, zero if log level is below current log level, one if log level is matching
  */
 int dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
 
 /**
  * Initialise the generation of a DLT log message (intended for usage in verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
+ * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
+ * when return value is bigger than zero.
  * @param handle pointer to an object containing information about one special logging context
  * @param log pointer to an object containing information about logging context data
  * @param loglevel this is the current log level of the log message to be sent
  * @param messageid message id of message
- * @return negative value if there was an error
+ * @return negative value if there was an error, zero if log level is below current log level, one if log level is matching
  */
 int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, uint32_t messageid);
 

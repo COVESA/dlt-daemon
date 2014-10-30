@@ -1265,10 +1265,14 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
         return -1;
     }
 
+    /* initialize values */
+	log->args_num = 0;
+	log->log_level = loglevel;
+    log->size = 0;
+
+    /* check log levels */
     if (handle->log_level_ptr && (loglevel<=(int)*(handle->log_level_ptr) ) && (loglevel!=0))
     {
-		log->args_num = 0;
-    	log->log_level = loglevel;
 
         /* In non-verbose mode, insert message id */
         if (dlt_user.verbose_mode==0)
@@ -1284,8 +1288,11 @@ int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLe
             /* as the message id is part of each message in non-verbose mode,
                it doesn't increment the argument counter in extended header (if used) */
         }
-        else log->size=0;
         return 1;
+    }
+    else
+    {
+    	return 0;
     }
 
     return -1;
@@ -2538,10 +2545,10 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
             }
 
         	/**
-        	 *  Calculate maximum avaialble space in sending buffer after headers.
+        	 *  Calculate maximum available space in sending buffer after headers.
         	 */
 
-        	int truncated_payload_len = DLT_USER_BUF_MAX_SIZE -
+            int truncated_payload_len = DLT_USER_BUF_MAX_SIZE -
         			log.size - sizeof(uint16_t) - sizeof(uint32_t);
 
             /* Write truncated payload */
