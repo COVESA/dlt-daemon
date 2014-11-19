@@ -57,7 +57,7 @@
 #include "dlt_common.h"
 
 // Constants
-#define DEFAULT_CONF_FILE "/etc/dlt-system.conf"
+#define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-system.conf")
 #define DLT_SYSTEM_LOG_FILE_MAX 32
 #define DLT_SYSTEM_LOG_DIRS_MAX 32
 #define DLT_SYSTEM_LOG_PROCESSES_MAX 32

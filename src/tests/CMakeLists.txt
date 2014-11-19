@@ -57,4 +57,6 @@ install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-us
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
-INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/dlt-filetransfer)
+INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
+	DESTINATION share/dlt-filetransfer
+)

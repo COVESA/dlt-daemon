@@ -91,7 +91,7 @@ void usage()
     printf("Options:\n");
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
-    printf("  -c filename   DLT daemon configuration file (Default: /etc/dlt.conf)\n");
+    printf("  -c filename   DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
 } /* usage() */
 
 /**
@@ -196,7 +196,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	if(daemon_local->flags.cvalue[0])
 		filename = daemon_local->flags.cvalue;
 	else
-		filename = "/etc/dlt.conf";
+		filename = CONFIGURATION_FILES_DIR "/dlt.conf";
     //printf("Load configuration from file: %s\n",filename);
 	pFile = fopen (filename,"r");
 
