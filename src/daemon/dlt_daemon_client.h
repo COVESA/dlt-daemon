@@ -72,9 +72,10 @@
  * @param data2 pointer to data
  * @param size2 size of data
  * @param verbose if set to true verbose information is printed out.
+ * @param control if set to true message is not stored in offline trace
  * @return unequal 0 if there is an error or buffer is full
  */
-int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,int verbose);
+int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* data1,int size1,void* data2,int size2,int verbose, int control);
 
 /**
  * Send out response message to dlt client

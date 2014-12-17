@@ -2035,7 +2035,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
 
 		/* send message to client or write to log file */
 		if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),
-							daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose)))
+							daemon_local->msg.databuffer,daemon_local->msg.datasize,verbose,0)))
 		{
 			if(ret == DLT_DAEMON_ERROR_BUFFER_FULL)
 			{
@@ -2404,7 +2404,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
     while ( (length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data)) ) > 0)
     {
-    	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE,daemon,daemon_local,data,length,0,0,verbose)))
+	if((ret = dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE,daemon,daemon_local,data,length,0,0,verbose,0)))
     	{
     		return ret;
     	}
