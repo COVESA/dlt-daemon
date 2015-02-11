@@ -64,7 +64,7 @@
  */
 
 #ifndef DLT_USER_MACROS_H
-#define DLT_USER_MACORS_H
+#define DLT_USER_MACROS_H
 
 #include "dlt_version.h"
 
