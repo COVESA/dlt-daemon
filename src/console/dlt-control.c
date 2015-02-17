@@ -404,7 +404,9 @@ int main(int argc, char* argv[])
     		printf("ServiceId: %d\n",dltdata.svalue);
     		printf("Message: %s\n",dltdata.mvalue);
     		/* send control message in ascii */
-    		dlt_client_send_inject_msg(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.svalue,(uint8_t*)dltdata.mvalue,strlen(dltdata.mvalue));
+    		if (0 != dlt_client_send_inject_msg(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.svalue,(uint8_t*)dltdata.mvalue,strlen(dltdata.mvalue))) {
+			fprintf (stderr, "ERROR: Could not send inject message\n");
+		}
     	}
     	else if(dltdata.xvalue && dltdata.avalue && dltdata.cvalue)
     	{
@@ -419,7 +421,9 @@ int main(int argc, char* argv[])
     		hexAsciiToBinary(dltdata.xvalue,buffer,&size);
     		printf("Size: %d\n",size);
     		/* send control message in hex */
-    		dlt_client_send_inject_msg(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.svalue,buffer,size);
+    		if (0 != dlt_client_send_inject_msg(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.svalue,buffer,size)) {
+			fprintf (stderr, "ERROR: Could not send inject message\n");
+		}
     	}
     	else if(dltdata.lvalue!=-1 && dltdata.avalue && dltdata.cvalue)
     	{
@@ -429,7 +433,9 @@ int main(int argc, char* argv[])
     		printf("ConId: %s\n",dltdata.cvalue);
     		printf("Loglevel: %d\n",dltdata.lvalue);
     		/* send control message*/
-    		dlt_client_send_log_level(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.lvalue);
+    		if (0 != dlt_client_send_log_level(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.lvalue)) {
+			fprintf (stderr, "ERROR: Could not send log level\n");
+		}
     	}
     	else if(dltdata.rvalue!=-1 && dltdata.avalue && dltdata.cvalue)
     	{
@@ -439,7 +445,9 @@ int main(int argc, char* argv[])
     		printf("ConId: %s\n",dltdata.cvalue);
     		printf("TraceStatus: %d\n",dltdata.rvalue);
     		/* send control message in*/
-    		dlt_client_send_trace_status(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.rvalue);
+    		if (0 != dlt_client_send_trace_status(&dltclient,dltdata.avalue,dltdata.cvalue,dltdata.rvalue)) {
+			fprintf (stderr, "ERROR: Could not send trace status\n");
+		}
     	}
     	else if(dltdata.dvalue!=-1)
     	{
@@ -447,7 +455,9 @@ int main(int argc, char* argv[])
     		printf("Set default log level:\n");
     		printf("Loglevel: %d\n",dltdata.dvalue);
     		/* send control message in*/
-    		dlt_client_send_default_log_level(&dltclient,dltdata.dvalue);
+    		if (0 != dlt_client_send_default_log_level(&dltclient,dltdata.dvalue)) {
+			fprintf (stderr, "ERROR: Could not send default log level\n");
+		}
     	}
     	else if(dltdata.rvalue!=-1)
     	{
@@ -455,7 +465,9 @@ int main(int argc, char* argv[])
     		printf("Set default trace status:\n");
     		printf("TraceStatus: %d\n",dltdata.rvalue);
     		/* send control message in*/
-    		dlt_client_send_default_trace_status(&dltclient,dltdata.rvalue);
+    		if (0 != dlt_client_send_default_trace_status(&dltclient,dltdata.rvalue)) {
+			fprintf (stderr, "ERROR: Could not send default trace status\n");
+		}
     	}
     	else if(dltdata.ivalue!=-1)
     	{
@@ -463,21 +475,27 @@ int main(int argc, char* argv[])
     		printf("Set timing pakets:\n");
     		printf("Timing packets: %d\n",dltdata.ivalue);
     		/* send control message in*/
-    		dlt_client_send_timing_pakets(&dltclient,dltdata.ivalue);
+    		if (0 != dlt_client_send_timing_pakets(&dltclient,dltdata.ivalue)) {
+			fprintf (stderr, "ERROR: Could not send timing packets\n");
+		}
     	}
     	else if(dltdata.oflag!=-1)
     	{
     		/* default trace status */
     		printf("Store config\n");
     		/* send control message in*/
-    		dlt_client_send_store_config(&dltclient);
+    		if (0 != dlt_client_send_store_config(&dltclient)) {
+			fprintf (stderr, "ERROR: Could not send store config\n");
+		}
     	}
     	else if(dltdata.gflag!=-1)
     	{
     		/* reset to factory default */
     		printf("Reset to factory default\n");
     		/* send control message in*/
-    		dlt_client_send_reset_to_factory_default(&dltclient);
+    		if (0 != dlt_client_send_reset_to_factory_default(&dltclient)) {
+			fprintf (stderr, "ERROR: Could send reset to factory default\n");
+		}
     	}
 
         /* Dlt Client Main Loop */
