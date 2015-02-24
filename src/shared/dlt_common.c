@@ -61,7 +61,7 @@ char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D','L','S',1 };
 
 /* internal logging parameters */
 static int logging_mode = DLT_LOG_TO_CONSOLE;
-static int logging_level = 6;
+static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 static FILE *logging_handle = 0;
 
