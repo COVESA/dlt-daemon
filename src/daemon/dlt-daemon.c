@@ -180,7 +180,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceDirectory[0] = 0;
 	daemon_local->flags.offlineTraceFileSize = 1000000;
 	daemon_local->flags.offlineTraceMaxSize = 0;
-	daemon_local->flags.loggingMode = 0;
+	daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
 	daemon_local->flags.loggingLevel = 6;
 	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename)-1);
 	daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename)-1]=0;
