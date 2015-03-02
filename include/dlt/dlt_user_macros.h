@@ -294,18 +294,18 @@ extern DltContext CONTEXT;
  */
 #define DLT_RAW(BUF,LEN) \
         dlt_user_log_write_raw(&log,BUF,LEN)
-#define DLT_HEX8(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_HEX8)
-#define DLT_HEX16(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_HEX16)
-#define DLT_HEX32(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_HEX32)
-#define DLT_HEX64(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_HEX64)
-#define DLT_BIN8(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_BIN8)
-#define DLT_BIN16(BUF,LEN) \
-        dlt_user_log_write_raw_formated(&log,BUF,LEN,DLT_FORMAT_BIN16)
+#define DLT_HEX8(UINT_VAR) \
+        dlt_user_log_write_uint8_formatted(&log,UINT_VAR,DLT_FORMAT_HEX8)
+#define DLT_HEX16(UINT_VAR) \
+        dlt_user_log_write_uint16_formatted(&log,UINT_VAR,DLT_FORMAT_HEX16)
+#define DLT_HEX32(UINT_VAR) \
+        dlt_user_log_write_uint32_formatted(&log,UINT_VAR,DLT_FORMAT_HEX32)
+#define DLT_HEX64(UINT_VAR) \
+        dlt_user_log_write_uint64_formatted(&log,UINT_VAR,DLT_FORMAT_HEX64)
+#define DLT_BIN8(UINT_VAR) \
+        dlt_user_log_write_uint8_formatted(&log,UINT_VAR,DLT_FORMAT_BIN8)
+#define DLT_BIN16(UINT_VAR) \
+        dlt_user_log_write_uint16_formatted(&log,UINT_VAR,DLT_FORMAT_BIN16)
 
 /**
  * Trace network message

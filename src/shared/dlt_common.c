@@ -3217,7 +3217,6 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
     int64_t value64f_tmp_int64i=0,value64f_tmp_int64i_swaped=0;
 
     uint32_t quantisation_tmp = 0;
-
     if ( (type_info & DLT_TYPE_INFO_STRG) && (((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII) || ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_UTF8)) )
     {
 
@@ -3270,6 +3269,79 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
         if((*datalength)<0)
             return -1;
         snprintf(text+strlen(text),textlength-strlen(text),"%d",value8u);
+    }
+    else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_BIN == (type_info & DLT_TYPE_INFO_SCOD)))
+    {
+        if (DLT_TYLE_8BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            DLT_MSG_READ_VALUE(value8u,*ptr,*datalength,uint8_t); /* No endian conversion necessary */
+            if((*datalength)<0)
+                return -1;
+            char binary[10] = {'\0'}; // e.g.: "0b1100 0010"
+            int i;
+            for (i = (1 << 7); i > 0; i >>= 1)
+            {
+                if ((1<<3) == i)
+                    strcat(binary, " ");
+                strcat(binary, (i == (value8u & i)) ? "1" : "0");
+            }
+
+            snprintf(text+strlen(text),textlength-strlen(text),"0b%s",binary);
+        }
+        if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            DLT_MSG_READ_VALUE(value16u,*ptr,*datalength,uint16_t);
+            if((*datalength)<0)
+                return -1;
+            char binary[20] = {'\0'}; // e.g.: "0b1100 0010 0011 0110"
+            int i;
+            for (i = (1 << 15); i > 0; i >>= 1)
+            {
+                if (((1<<3) == i) || ((1<<7) == i) || ((1<<11) == i))
+                    strcat(binary, " ");
+                strcat(binary, (i == (value16u & i)) ? "1" : "0");
+            }
+
+            snprintf(text+strlen(text),textlength-strlen(text),"0b%s",binary);
+        }
+    }
+    else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_HEX == (type_info & DLT_TYPE_INFO_SCOD)))
+    {
+        if (DLT_TYLE_8BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            DLT_MSG_READ_VALUE(value8u,*ptr,*datalength,uint8_t); /* No endian conversion necessary */
+            if((*datalength)<0)
+                return -1;
+            snprintf(text+strlen(text),textlength-strlen(text),"0x%02x",value8u);
+        }
+        if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            DLT_MSG_READ_VALUE(value16u,*ptr,*datalength,uint16_t);
+            if((*datalength)<0)
+                return -1;
+            snprintf(text+strlen(text),textlength-strlen(text),"0x%04x",value16u);
+        }
+        if (DLT_TYLE_32BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            DLT_MSG_READ_VALUE(value32u,*ptr,*datalength,uint32_t);
+            if((*datalength)<0)
+                return -1;
+            snprintf(text+strlen(text),textlength-strlen(text),"0x%08x",value32u);
+        }
+        if (DLT_TYLE_64BIT == (type_info & DLT_TYPE_INFO_TYLE))
+        {
+            *ptr += 4;
+            DLT_MSG_READ_VALUE(value32u,*ptr,*datalength,uint32_t);
+            if((*datalength)<0)
+                return -1;
+            snprintf(text+strlen(text),textlength-strlen(text),"0x%08x",value32u);
+            *ptr -= 8;
+            DLT_MSG_READ_VALUE(value32u,*ptr,*datalength,uint32_t);
+            if((*datalength)<0)
+                return -1;
+            snprintf(text+strlen(text),textlength-strlen(text),"%08x",value32u);
+            *ptr += 4;
+        }
     }
     else if ((type_info & DLT_TYPE_INFO_SINT) || (type_info & DLT_TYPE_INFO_UINT))
     {

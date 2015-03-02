@@ -1310,10 +1310,10 @@ int dlt_user_log_write_finish(DltContextData *log)
 
 int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length)
 {
-	return dlt_user_log_write_raw_formated(log,data,length,DLT_FORMAT_DEFAULT);
+	return dlt_user_log_write_raw_formatted(log,data,length,DLT_FORMAT_DEFAULT);
 }
 
-int dlt_user_log_write_raw_formated(DltContextData *log,void *data,uint16_t length,DltFormatType type)
+int dlt_user_log_write_raw_formatted(DltContextData *log,void *data,uint16_t length,DltFormatType type)
 {
     uint16_t arg_size;
     uint32_t type_info;
@@ -1617,6 +1617,186 @@ int dlt_user_log_write_uint64(DltContextData *log, uint64_t data)
 
         memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
         log->size +=sizeof(uint32_t);
+    }
+
+    memcpy((log->buffer)+log->size,&data,sizeof(uint64_t));
+    log->size += sizeof(uint64_t);
+
+    log->args_num ++;
+
+    return 0;
+}
+
+int dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type)
+{
+    uint32_t type_info;
+
+    if (log==0)
+    {
+        return -1;
+    }
+
+    if ((log->size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    {
+        return -1;
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        if ((log->size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+        {
+            return -1;
+        }
+
+        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+
+        if(type>=DLT_FORMAT_HEX8 && type<=DLT_FORMAT_HEX64)
+        {
+            type_info |= DLT_SCOD_HEX;
+        }
+
+        else if(type>=DLT_FORMAT_BIN8 && type<=DLT_FORMAT_BIN16)
+        {
+            type_info |= DLT_SCOD_BIN;
+        }
+
+        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+    }
+
+    memcpy((log->buffer)+log->size,&data,sizeof(uint8_t));
+    log->size += sizeof(uint8_t);
+
+    log->args_num ++;
+
+    return 0;
+}
+
+int dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type)
+{
+    uint32_t type_info;
+
+    if (log==0)
+    {
+        return -1;
+    }
+
+    if ((log->size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    {
+        return -1;
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        if ((log->size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+        {
+            return -1;
+        }
+
+        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+
+        if(type>=DLT_FORMAT_HEX8 && type<=DLT_FORMAT_HEX64)
+        {
+            type_info |= DLT_SCOD_HEX;
+        }
+
+        else if(type>=DLT_FORMAT_BIN8 && type<=DLT_FORMAT_BIN16)
+        {
+            type_info |= DLT_SCOD_BIN;
+        }
+
+        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+    }
+
+    memcpy((log->buffer)+log->size,&data,sizeof(uint16_t));
+    log->size += sizeof(uint16_t);
+
+    log->args_num ++;
+
+    return 0;
+}
+
+int dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type)
+{
+    uint32_t type_info;
+
+    if (log==0)
+    {
+        return -1;
+    }
+
+    if ((log->size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    {
+        return -1;
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        if ((log->size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+        {
+            return -1;
+        }
+
+        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+
+        if(type>=DLT_FORMAT_HEX8 && type<=DLT_FORMAT_HEX64)
+        {
+            type_info |= DLT_SCOD_HEX;
+        }
+
+        else if(type>=DLT_FORMAT_BIN8 && type<=DLT_FORMAT_BIN16)
+        {
+            type_info |= DLT_SCOD_BIN;
+        }
+
+        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+    }
+
+    memcpy((log->buffer)+log->size,&data,sizeof(uint32_t));
+    log->size += sizeof(uint32_t);
+
+    log->args_num ++;
+
+    return 0;
+}
+
+int dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type)
+{
+    uint32_t type_info;
+
+    if (log==0)
+    {
+        return -1;
+    }
+
+    if ((log->size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    {
+        return -1;
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        if ((log->size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+        {
+            return -1;
+        }
+
+        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+
+        if(type>=DLT_FORMAT_HEX8 && type<=DLT_FORMAT_HEX64)
+        {
+            type_info |= DLT_SCOD_HEX;
+        }
+
+        else if(type>=DLT_FORMAT_BIN8 && type<=DLT_FORMAT_BIN16)
+        {
+            type_info |= DLT_SCOD_BIN;
+        }
+
+        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
     }
 
     memcpy((log->buffer)+log->size,&data,sizeof(uint64_t));

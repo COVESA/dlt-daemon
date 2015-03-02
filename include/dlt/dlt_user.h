@@ -361,6 +361,21 @@ int dlt_user_log_write_uint8(DltContextData *log, uint8_t data);
 int dlt_user_log_write_uint16(DltContextData *log, uint16_t data);
 int dlt_user_log_write_uint32(DltContextData *log, uint32_t data);
 int dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
+
+/**
+ * Write a uint parameter into a DLT log message. The output will be formatted as given by the parameter type.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param data unsigned int parameter written into log message.
+ * @param type The formatting type of the string output.
+ * @return negative value if there was an error
+ */
+int dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type);
+int dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type);
+int dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type);
+int dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type);
+
 /**
  * Write a int parameter into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
@@ -426,7 +441,7 @@ int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
  * @param type the format information.
  * @return negative value if there was an error
  */
-int dlt_user_log_write_raw_formated(DltContextData *log,void *data,uint16_t length,DltFormatType type);
+int dlt_user_log_write_raw_formatted(DltContextData *log,void *data,uint16_t length,DltFormatType type);
 
 /**
  * Trace network message
