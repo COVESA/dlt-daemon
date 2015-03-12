@@ -19,9 +19,6 @@ project( automotive-dlt )
 
 mark_as_advanced( CMAKE_BACKWARDS_COMPATIBILITY)
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
-if(NOT CMAKE_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX "/usr")
-endif(NOT CMAKE_INSTALL_PREFIX)           
 
 # Set version parameters
 set( DLT_MAJOR_VERSION 2)
