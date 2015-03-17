@@ -148,13 +148,13 @@ int main(int argc, char* argv[])
         }
     }
 
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
     {
         perror("Socket");
         exit(1);
     }
 
-    server_addr.sin_family = AF_INET;
+    server_addr.sin_family = AF_INET6;
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(server_addr.sin_zero), 8);

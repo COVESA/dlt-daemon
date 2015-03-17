@@ -66,7 +66,7 @@ int init_socket(SyslogOptions opts)
 	int sock = -1;
 	struct sockaddr_in syslog_addr;
 
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	sock = socket(AF_INET6, SOCK_DGRAM, 0);
 	if(sock < 0)
 	{
 		DLT_LOG(syslogContext, DLT_LOG_FATAL,
@@ -74,7 +74,7 @@ int init_socket(SyslogOptions opts)
 		return -1;
 	}
 
-	syslog_addr.sin_family		= AF_INET;
+	syslog_addr.sin_family		= AF_INET6;
 	syslog_addr.sin_port 		= htons(opts.Port);
 	syslog_addr.sin_addr.s_addr = INADDR_ANY;
 	bzero(&(syslog_addr.sin_zero), 8);

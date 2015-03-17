@@ -59,52 +59,69 @@ static char str[DLT_DAEMON_TEXTBUFSIZE];
 int dlt_daemon_socket_open(int *sock)
 {
     int yes = 1;
-    int socket_family = PF_INET;
-    int socket_type = SOCK_STREAM;
-    int protocol =  IPPROTO_TCP;
-    struct sockaddr_in servAddr;
-    unsigned int servPort = DLT_DAEMON_TCP_PORT;
+    char portnumbuffer[33];
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
 
-    if ((*sock = socket(socket_family, socket_type, protocol)) < 0)
-    {
-        dlt_log(LOG_ERR, "dlt_daemon_socket_open: socket() failed!\n");
-        return -1;
-    } /* if */
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET6; // force IPv6 - will still work with IPv4
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE; // use my IP address
 
-    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n", __FUNCTION__, socket_family, socket_type, protocol);
-    dlt_log(LOG_INFO, str);
-
-    if ( -1 == setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))
-    {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n",strerror(errno));
+    sprintf(portnumbuffer, "%d", DLT_DAEMON_TCP_PORT);
+    if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "getaddrinfo: %s\n", gai_strerror(rv));
         dlt_log(LOG_ERR, str);
         return -1;
     }
-    memset(&servAddr, 0, sizeof(servAddr));
-    servAddr.sin_family      = AF_INET;
-    servAddr.sin_addr.s_addr = INADDR_ANY;
-    servAddr.sin_port        = htons(servPort);
 
-    if (bind(*sock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
-    {
-        dlt_log(LOG_ERR, "dlt_daemon_socket_open: bind() failed!\n");
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+            dlt_log(LOG_ERR, "socket() error\n");
+            continue;
+        }
+
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n",
+                 __FUNCTION__, p->ai_family, p->ai_socktype, p->ai_protocol);
+        dlt_log(LOG_INFO, str);
+
+        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        {
+            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n", strerror(errno));
+            dlt_log(LOG_ERR, str);
+            continue;
+        }
+
+        if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
+            close(*sock);
+            dlt_log(LOG_ERR, "bind() error\n");
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL) {
+        dlt_log(LOG_ERR, "failed to bind socket\n");
         return -1;
-    } /* if */
+    }
+
+    freeaddrinfo(servinfo);
+
+    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on port: %u\n", __FUNCTION__, DLT_DAEMON_TCP_PORT);
+    dlt_log(LOG_INFO, str);
+
+    // get socket buffer size
+    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: Socket send queue size: %d\n", dlt_daemon_socket_get_send_qeue_max_size(*sock));
+    dlt_log(LOG_INFO, str);
 
     if (listen(*sock, 3) < 0)
     {
         dlt_log(LOG_ERR, "dlt_daemon_socket_open: listen() failed!\n");
         return -1;
-    } /* if */
+    }
 
-    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%s: Listening on port: %u\n",__FUNCTION__,servPort);
-    dlt_log(LOG_INFO, str);
-
-    /* get socket buffer size */
-    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_open: Socket send queue size: %d\n",dlt_daemon_socket_get_send_qeue_max_size(*sock));
-    dlt_log(LOG_INFO, str);
-
-    return 0; /* OK */
+    return 0; // OK
 }
 
 int dlt_daemon_socket_close(int sock)

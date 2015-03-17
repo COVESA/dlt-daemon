@@ -94,6 +94,8 @@
 
 static int (*message_callback_function) (DltMessage *message, void *data) = NULL;
 
+static char str[DLT_CLIENT_TEXTBUFSIZE];
+
 void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage *message, void *data)){
     message_callback_function = registerd_callback;
 }
@@ -122,9 +124,12 @@ int dlt_client_init(DltClient *client, int verbose)
 
 int dlt_client_connect(DltClient *client, int verbose)
 {
-	struct sockaddr_in servAddr;
-	unsigned short servPort = DLT_DAEMON_TCP_PORT;
-	struct hostent *host;            /* Structure containing host information */
+    char portnumbuffer[33];
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
 
     if (client==0)
     {
@@ -133,27 +138,30 @@ int dlt_client_connect(DltClient *client, int verbose)
 
     if (client->serial_mode==0)
     {
-        /* open socket */
-        if ((client->sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-        {
-            fprintf(stderr,"ERROR: socket() failed!\n");
+        sprintf(portnumbuffer, "%d", DLT_DAEMON_TCP_PORT);
+        if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
+            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
             return -1;
         }
 
-        if ((host = (struct hostent*) gethostbyname(client->servIP)) == 0)
-        {
-            fprintf(stderr, "ERROR: gethostbyname() failed\n");
-            return -1;
+        for(p = servinfo; p != NULL; p = p->ai_next) {
+            if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
+                snprintf(str, DLT_CLIENT_TEXTBUFSIZE, "socket() failed!\n");
+                continue;
+            }
+            if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+                close(client->sock);
+                snprintf(str, DLT_CLIENT_TEXTBUFSIZE, "connect() failed!\n");
+                continue;
+            }
+
+            break;
         }
 
-        memset(&servAddr, 0, sizeof(servAddr));
-        servAddr.sin_family      = AF_INET;
-        servAddr.sin_addr.s_addr = inet_addr(inet_ntoa(*( struct in_addr*)( host -> h_addr_list[0])));
-        servAddr.sin_port        = htons(servPort);
+        freeaddrinfo(servinfo);
 
-        if (connect(client->sock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
-        {
-            fprintf(stderr,"ERROR: connect() failed!\n");
+        if (p == NULL) {
+            fprintf(stderr, "ERROR: failed to connect - %s\n", str);
             return -1;
         }
 
@@ -201,6 +209,7 @@ int dlt_client_connect(DltClient *client, int verbose)
 
     if (dlt_receiver_init(&(client->receiver),client->sock,DLT_CLIENT_RCVBUFSIZE)!=0)
     {
+        fprintf(stderr, "ERROR initializing receiver\n");
         return -1;
     }
 
