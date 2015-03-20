@@ -189,6 +189,7 @@
 #define DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS        0x12 /**< Service ID: Set default trace status */
 #define DLT_SERVICE_ID_GET_SOFTWARE_VERSION            0x13 /**< Service ID: Get software version */
 #define DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW         0x14 /**< Service ID: Message buffer overflow */
+#define DLT_SERVICE_ID_LAST_ENTRY                      0x15 /**< Service ID: Last entry to avoid any further modifications in dependent code */
 #define DLT_SERVICE_ID_UNREGISTER_CONTEXT             0xf01 /**< Service ID: Message unregister context */
 #define DLT_SERVICE_ID_CONNECTION_INFO                0xf02 /**< Service ID: Message connection info */
 #define DLT_SERVICE_ID_TIMEZONE						  0xf03 /**< Service ID: Timezone */

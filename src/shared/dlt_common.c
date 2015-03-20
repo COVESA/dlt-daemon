@@ -953,7 +953,7 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
         /* process message id / service id */
         if (DLT_MSG_IS_CONTROL(msg))
         {
-            if (id > 0 && id <= DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW)
+            if (id > 0 && id < DLT_SERVICE_ID_LAST_ENTRY)
             {
                 snprintf(text+strlen(text),textlength-strlen(text),"%s",service_id[id]); /* service id */
             }
