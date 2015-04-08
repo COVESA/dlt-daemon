@@ -1,0 +1,6 @@
+samples/sample1.lo: samples/sample1.cc /usr/include/stdc-predef.h \
+ samples/sample1.h
+
+/usr/include/stdc-predef.h:
+
+samples/sample1.h:
