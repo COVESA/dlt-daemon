@@ -1960,11 +1960,21 @@ void dlt_log_set_level(int level)
 	logging_level = level;
 }
 
+int get_test_dlt_log_set_level()
+{
+    return logging_level;
+}
+
 void dlt_log_set_filename(const char *filename)
 {
         strncpy(logging_filename,filename,NAME_MAX);
         logging_filename[NAME_MAX]=0;
 
+}
+
+char * get_test_dlt_log_set_filename()
+{
+    return logging_filename;
 }
 
 void dlt_log_init(int mode)
@@ -1983,11 +1993,24 @@ void dlt_log_init(int mode)
 	}
 }
 
+int get_test_dlt_log_init()
+{
+    return logging_mode;
+}
+
 void dlt_log_free(void)
 {
 	if(logging_mode == DLT_LOG_TO_FILE) {
 		fclose(logging_handle);
 	}
+}
+
+int get_test_dlt_log_free()
+{
+    if(logging_mode == DLT_LOG_TO_FILE)
+        return logging_handle;
+    else
+        return logging_mode;
 }
 
 int dlt_log(int prio, char *s)
@@ -2377,6 +2400,13 @@ void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data
 	}	
 }
 
+int get_test_dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size)
+{
+    // Get-Method for gtest. Test dlt_buffer_write_block
+    dlt_buffer_write_block(buf, write, data, size);
+    return *write;
+}
+
 void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size)
 {
 	if((int)(*read+size) <= buf->size) {
@@ -2390,7 +2420,14 @@ void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned
 		memcpy(data+buf->size-*read, buf->mem, size-buf->size+*read);
 		*read += size-buf->size;
 	}	
-}	
+}
+
+int get_test_dlt_buffer_read_block(DltBuffer *buf, int *read,unsigned char *data,unsigned int size)
+{
+    // Get-Method for gtest. Test dlt_buffer_read_block
+    dlt_buffer_read_block(buf, read, data, size);
+    return *read;
+}
 
 int dlt_buffer_increase_size(DltBuffer *buf)
 {
@@ -2713,6 +2750,13 @@ void dlt_buffer_info(DltBuffer *buf)
 	
 }
 
+int get_test_dlt_buffer_info(DltBuffer *buf)
+{
+    // Get-Method for gtest. Test dlt_buffer_info
+    dlt_buffer_info(buf);
+    return 0;
+}
+
 void dlt_buffer_status(DltBuffer *buf)
 {
 	int write, read, count;
@@ -2732,6 +2776,13 @@ void dlt_buffer_status(DltBuffer *buf)
 	dlt_log(LOG_DEBUG, str);
 	snprintf(str,sizeof(str),"Buffer: Count: %d\n",count);
 	dlt_log(LOG_DEBUG, str);	
+}
+
+int get_test_dlt_buffer_status(DltBuffer *buf)
+{
+    // Get-Method for gtest. Test dlt_buffer_status
+    dlt_buffer_status(buf);
+    return 0;
 }
 
 int dlt_buffer_get_total_size(DltBuffer *buf)
