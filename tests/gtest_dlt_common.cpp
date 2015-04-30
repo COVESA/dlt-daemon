@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <limits.h>
 
 extern "C" {
@@ -11,6 +11,7 @@ extern "C" {
 #include "dlt_user_cfg.h"
 #include "dlt_client.h"
 #include <syslog.h>
+#include "dlt_version.h"
 int dlt_buffer_increase_size(DltBuffer *);
 int dlt_buffer_minimize_size(DltBuffer *);
 int dlt_buffer_reset(DltBuffer *);
@@ -3266,32 +3267,42 @@ TEST(t_dlt_log, normal)
     // #define	LOG_INFO	6
     // #define	LOG_DEBUG	7
 
+    const char * EMERG = "SYSLOG EMERG\n";
+    const char * ALERT = "SYSLOG ALERT\n";
+    const char * CRIT = "SYSLOG CRIT\n";
+    const char * ERR = "SYSLOG ERR\n";
+    const char * WARNING = "SYSLOG WARNING\n";
+    const char * NOTICE = "SYSLOG NOTICE\n";
+    const char * INFO = "SYSLOG INFO\n";
+    const char * DEBUG = "SYSLOG DEBUG\n";
+
     // Normal Use-Case, expected 0
     dlt_log_init(DLT_LOG_TO_CONSOLE);
-    EXPECT_EQ(0, dlt_log(LOG_EMERG, "SYSLOG EMERG\n"));
-    EXPECT_EQ(0, dlt_log(LOG_ALERT, "SYSLOG ALERT\n"));
-    EXPECT_EQ(0, dlt_log(LOG_CRIT, "SYSLOG CRIT\n"));
-    EXPECT_EQ(0, dlt_log(LOG_ERR, "SYSLOG ERR\n"));
-    EXPECT_EQ(0, dlt_log(LOG_WARNING, "SYSLOG WARNING\n"));
-    EXPECT_EQ(0, dlt_log(LOG_NOTICE, "SYSLOG NOTICE\n"));
-    EXPECT_EQ(0, dlt_log(LOG_INFO, "SYSLOG INFO\n"));
-    EXPECT_EQ(0, dlt_log(LOG_DEBUG, "SYSLOG DEBUG\n"));
+    EXPECT_EQ(0, dlt_log(LOG_EMERG, (char *) EMERG));
+    EXPECT_EQ(0, dlt_log(LOG_ALERT, (char *) ALERT));
+    EXPECT_EQ(0, dlt_log(LOG_CRIT, (char *) CRIT));
+    EXPECT_EQ(0, dlt_log(LOG_ERR, (char *) ERR));
+    EXPECT_EQ(0, dlt_log(LOG_WARNING, (char *) WARNING));
+    EXPECT_EQ(0, dlt_log(LOG_NOTICE, (char *) NOTICE));
+    EXPECT_EQ(0, dlt_log(LOG_INFO, (char *) INFO));
+    EXPECT_EQ(0, dlt_log(LOG_DEBUG, (char *) DEBUG));
 
     dlt_log_init(DLT_LOG_DROPPED);
-    EXPECT_EQ(0, dlt_log(LOG_EMERG, "SYSLOG EMERG\n"));
-    EXPECT_EQ(0, dlt_log(LOG_ALERT, "SYSLOG ALERT\n"));
-    EXPECT_EQ(0, dlt_log(LOG_CRIT, "SYSLOG CRIT\n"));
-    EXPECT_EQ(0, dlt_log(LOG_ERR, "SYSLOG ERR\n"));
-    EXPECT_EQ(0, dlt_log(LOG_WARNING, "SYSLOG WARNING\n"));
-    EXPECT_EQ(0, dlt_log(LOG_NOTICE, "SYSLOG NOTICE\n"));
-    EXPECT_EQ(0, dlt_log(LOG_INFO, "SYSLOG INFO\n"));
-    EXPECT_EQ(0, dlt_log(LOG_DEBUG, "SYSLOG DEBUG\n"));
+    EXPECT_EQ(0, dlt_log(LOG_EMERG, (char *) EMERG));
+    EXPECT_EQ(0, dlt_log(LOG_ALERT, (char *) ALERT));
+    EXPECT_EQ(0, dlt_log(LOG_CRIT, (char *) CRIT));
+    EXPECT_EQ(0, dlt_log(LOG_ERR, (char *) ERR));
+    EXPECT_EQ(0, dlt_log(LOG_WARNING, (char *) WARNING));
+    EXPECT_EQ(0, dlt_log(LOG_NOTICE, (char *) NOTICE));
+    EXPECT_EQ(0, dlt_log(LOG_INFO, (char *) INFO));
+    EXPECT_EQ(0, dlt_log(LOG_DEBUG, (char *) DEBUG));
 }
 TEST(t_dlt_log, abnormal)
 {
     // LOG MODE don't exists, expected -1
     int DLT_LOG_DONT_EXISTS = 123456789;
-    EXPECT_GE(-1, dlt_log(DLT_LOG_DONT_EXISTS, "SYSLOG DONT EXISTS\n"));
+    const char * EXIST = "SYSLOG DONT EXISTS\n";
+    EXPECT_GE(-1, dlt_log(DLT_LOG_DONT_EXISTS, (char *) EXIST));
 }
 TEST(t_dlt_log, nullpointer)
 {
@@ -3303,11 +3314,407 @@ TEST(t_dlt_log, nullpointer)
 
 
 
+/*##############################################################################################################################*/
+/*##############################################################################################################################*/
+/*##############################################################################################################################*/
+
+
+
+/* Begin Method:dlt_common::dlt_uptime */
+TEST(t_dlt_uptime, normal)
+{
+    EXPECT_LE(1, dlt_uptime());
+}
+TEST(t_dlt_uptime, abnormal)
+{
+
+}
+TEST(t_dlt_uptime, nullpointer)
+{
+
+}
+/* End Method:dlt_common::dlt_uptime */
+
+
+
+
+/* Begin Method:dlt_common::dlt_set_id */
+TEST(t_dlt_set_id, normal)
+{
+    char id[4];
+    const char * text = "DLTD";
+    dlt_set_id(id, text);
+    EXPECT_STREQ(text, id);
+}
+TEST(t_dlt_set_id, abnormal)
+{
+    char id[10];
+    const char * text = "1234567890";
+    dlt_set_id(id, text);
+    EXPECT_STRNE(text, id);
+}
+TEST(t_dlt_set_id, nullpointer)
+{
+    char id[4];
+    const char * text = "TEST";
+
+    dlt_set_id(NULL, NULL);
+    dlt_set_id(NULL, text);
+    dlt_set_id(id, NULL);
+}
+/* End Method:dlt_common::dlt_set_id */
+
+
+
+
+/* Begin Method:dlt_common::dlt_print_hex_string */
+TEST(t_dlt_print_hex_string, normal)
+{
+    // Normal Use-Case, exptect 0
+    const char * test1 = "HELLO_HEX";
+    char text1[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_hex_string(text1, DLT_DAEMON_TEXTSIZE, (unsigned char *)test1, strlen(test1)));
+    //printf("text:%s\n", text1);
+    // convert text1 to an ascii string to compare with the original
+    char * converted = (char*) malloc(strlen(test1) +1);
+    int t = 0;
+    for(unsigned int i=0;i<strlen(text1);i+=3)
+    {
+        char tmp[2];
+        tmp[0] = text1[i];
+        tmp[1] = text1[i+1];
+        char k =  (int) strtol(tmp, NULL, 16);
+        converted[i-t] = k;
+        t +=2;
+    }
+    converted[strlen(test1)] = '\0';
+    //printf("%s\n", converted);
+    EXPECT_STREQ(test1, converted);
+
+    const char * test2 = "qwertzuiopasdfghjklyxcvbnm1234567890";
+    char text2[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_hex_string(text2,DLT_DAEMON_TEXTSIZE,(unsigned char *)test2, strlen(test2)));
+    //printf("text:%s\n", text2);
+    // convert text2 to an ascii string to compare with the original
+    converted = (char*) malloc(strlen(test2) +1);
+    t = 0;
+    for(unsigned int i=0;i<strlen(text2);i+=3)
+    {
+        char tmp[2];
+        tmp[0] = text2[i];
+        tmp[1] = text2[i+1];
+        char k =  (int) strtol(tmp, NULL, 16);
+        converted[i-t] = k;
+        t +=2;
+    }
+    converted[strlen(test2)] = '\0';
+    //printf("%s\n", converted);
+    EXPECT_STREQ(test2, converted);
+}
+TEST(t_dlt_print_hex_string, abnormal)
+{
+    // print special characters, expected 0
+    const char * test3 = "^°!\"§$%&/()=?`´¹²³¼½¬{[]}\\¸@€üöä+#*'~`,.-;:_·…–<>|";
+    char text3[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_hex_string(text3,DLT_DAEMON_TEXTSIZE,(unsigned char *)test3, strlen(test3)));
+    //printf("text:%s\n", text3);
+    // convert text3 to an ascii string to compare with the original
+    char * converted = (char*) malloc(strlen(test3) +1);
+    int t = 0;
+    for(unsigned int i=0;i<strlen(text3);i+=3)
+    {
+        char tmp[2];
+        tmp[0] = text3[i];
+        tmp[1] = text3[i+1];
+        char k =  (int) strtol(tmp, NULL, 16);
+        converted[i-t] = k;
+        t +=2;
+    }
+    converted[strlen(test3)] = '\0';
+    //printf("%s\n", converted);
+    EXPECT_STREQ(test3, converted);
+
+    // Empty char *, expect 0
+    const char * test4 = "";
+    char text4[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_hex_string(text4,DLT_DAEMON_TEXTSIZE,(unsigned char *)test4, strlen(test4)));
+    //printf("text:%s\n", text4);
+    // convert text4 to an ascii string to compare with the original
+    converted = (char*) malloc(strlen(test4) +1);
+    t = 0;
+    for(unsigned int i=0;i<strlen(text4);i+=3)
+    {
+        char tmp[2];
+        tmp[0] = text4[i];
+        tmp[1] = text4[i+1];
+        char k =  (int) strtol(tmp, NULL, 16);
+        converted[i-t] = k;
+        t +=2;
+    }
+    converted[strlen(test4)] = '\0';
+    //printf("%s\n", converted);
+    EXPECT_STREQ(test4, converted);
+}
+TEST(t_dlt_print_hex_string, nullpointer)
+{
+    const char * test5 = "HELLO";
+    char text5[DLT_DAEMON_TEXTSIZE];
+
+    EXPECT_EQ(-1, dlt_print_hex_string(NULL,0,NULL, 0));
+    EXPECT_EQ(-1, dlt_print_hex_string(NULL,0,(unsigned char *)test5, 0));
+    EXPECT_EQ(-1, dlt_print_hex_string(text5,0,NULL, 0));
+}
+/* End Method:dlt_common::dlt_print_hex_string */
+
+
+
+
+/* Begin Method:dlt_common::dlt_print_mixed_string */
+TEST(t_dlt_print_mixed_string, normal)
+{
+    const char * test1 = "HELLO_MIXED";
+    char text1[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text1,DLT_DAEMON_TEXTSIZE,(unsigned char *)test1,strlen(test1),0));
+    printf("%s\n", text1);
+
+    const char * test2 = "HELLO_MIXED";
+    char text2[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text2,DLT_DAEMON_TEXTSIZE,(unsigned char *)test2,strlen(test2),1));
+    printf("%s\n", text2);
+
+    const char * test3 = "qwertzuiopasdfghjklyxcvbnm1234567890";
+    char text3[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text3,DLT_DAEMON_TEXTSIZE,(unsigned char *)test3,strlen(test3),0));
+    printf("%s\n", text3);
+
+    const char * test4 = "qwertzuiopasdfghjklyxcvbnm1234567890";
+    char text4[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text4,DLT_DAEMON_TEXTSIZE,(unsigned char *)test4,strlen(test4),1));
+    printf("%s\n", text4);
+}
+TEST(t_dlt_print_mixed_string, abnormal)
+{
+    const char * test5 = "^°!\"§$%&/()=?`´¹²³¼½¬{[]}\\¸@€üöä+#*'~`,.-;:_·…–<>|";
+    char text5[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text5,DLT_DAEMON_TEXTSIZE,(unsigned char *)test5,strlen(test5),0));
+    printf("%s\n", text5);
+
+    const char * test6 = "^°!\"§$%&/()=?`´¹²³¼½¬{[]}\\¸@€üöä+#*'~`,.-;:_·…–<>|";
+    char text6[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text6,DLT_DAEMON_TEXTSIZE,(unsigned char *)test6,strlen(test6),1));
+    printf("%s\n", text6);
+
+    const char * test7 = "";
+    char text7[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text7,DLT_DAEMON_TEXTSIZE,(unsigned char *)test7,strlen(test7),0));
+    printf("%s\n", text7);
+
+    const char * test8 = "";
+    char text8[DLT_DAEMON_TEXTSIZE];
+    EXPECT_EQ(0, dlt_print_mixed_string(text8,DLT_DAEMON_TEXTSIZE,(unsigned char *)test8,strlen(test8),1));
+    printf("%s\n", text8);
+}
+TEST(t_dlt_print_mixed_string, nullpointer)
+{
+    const char * test9 = "";
+    char text9[DLT_DAEMON_TEXTSIZE];
+
+    EXPECT_GE(-1, dlt_print_mixed_string(NULL,0,0,0,0));
+    EXPECT_GE(-1, dlt_print_mixed_string(NULL,0,0,0,1));
+    EXPECT_GE(-1, dlt_print_mixed_string(NULL,0,(unsigned char *)test9,0,0));
+    EXPECT_GE(-1, dlt_print_mixed_string(NULL,0,(unsigned char *)test9,0,1));
+    EXPECT_GE(-1, dlt_print_mixed_string(text9,0,NULL,0,0));
+    EXPECT_GE(-1, dlt_print_mixed_string(text9,0,NULL,0,1));
+}
+/* End Method:dlt_common::dlt_print_mixed_string */
+
+
+
+
+/* Begin Method:dlt_common::dlt_print_char_string */
+TEST(t_dlt_print_char_string, normal)
+{
+    // Normal Use-Case, expect 0
+    const char * test1 = "HELLO";
+    char text1[DLT_DAEMON_TEXTSIZE];
+    char * ptr1 = text1;
+    EXPECT_EQ(0, dlt_print_char_string(&ptr1,DLT_DAEMON_TEXTSIZE,(unsigned char *)test1, strlen(test1)));
+    printf("text:%s\n", text1);
+    EXPECT_STREQ(text1, test1);
+
+    const char * test2 = "qwertzuiopasdfghjklyxcvbnm1234567890";
+    char text2[DLT_DAEMON_TEXTSIZE];
+    char * ptr2 = text2;
+    EXPECT_EQ(0, dlt_print_char_string(&ptr2,DLT_DAEMON_TEXTSIZE,(unsigned char *)test2, strlen(test2)));
+    printf("text:%s\n", text2);
+    EXPECT_STREQ(text2, test2);
+}
+TEST(t_dlt_print_char_string, abnormal)
+{
+    // print special characters, expected 0
+    const char * test3 = "^°!\"§$%&/()=?`´¹²³¼½¬{[]}\\¸@€üöä+#*'~`,.-;:_·…–<>|";
+    char text3[DLT_DAEMON_TEXTSIZE];
+    char * ptr3 = text3;
+    EXPECT_EQ(0, dlt_print_char_string(&ptr3,DLT_DAEMON_TEXTSIZE,(unsigned char *)test3, strlen(test3)));
+    printf("text:%s\n", text3);
+    EXPECT_STREQ(text3, test3);
+
+    // Empty char *, expect 0
+    const char * test4 = "";
+    char text4[DLT_DAEMON_TEXTSIZE];
+    char * ptr4 = text4;
+    EXPECT_EQ(0, dlt_print_char_string(&ptr4,DLT_DAEMON_TEXTSIZE,(unsigned char *)test4, strlen(test4)));
+    printf("text:%s\n", text4);
+    EXPECT_STREQ(text4, test4);
+}
+TEST(t_dlt_print_char_string, nullpointer)
+{
+    const char * test5 = "HELLO";
+    char text5[DLT_DAEMON_TEXTSIZE];
+    char * ptr5 = text5;
+
+    EXPECT_EQ(-1, dlt_print_char_string(NULL,0,NULL, 0));
+    EXPECT_EQ(-1, dlt_print_char_string(NULL,0,(unsigned char *)test5, 0));
+    EXPECT_EQ(-1, dlt_print_char_string(&ptr5,0,NULL, 0));
+}
+/* End Method:dlt_common::dlt_print_char_string */
+
+
+
+
+/* Begin Method:dlt_common::dlt_print_id */
+TEST(t_dlt_print_id, normal)
+{
+    // Normal Use-Case, expect text==id
+    const char* id = "DLTD";
+    char text[DLT_DAEMON_TEXTSIZE];
+    dlt_print_id(text,id);
+    EXPECT_STREQ(text,id);
+}
+TEST(t_dlt_print_id, abnormal)
+{
+    // id to long, expect only first 4 chars
+    const char* id = "DLTD123456789";
+    char text[DLT_DAEMON_TEXTSIZE];
+    dlt_print_id(text,id);
+    EXPECT_STREQ(text,"DLTD");
+
+    // id to short, expect expend with "-" to 4 chars
+    id = "DL";
+    dlt_print_id(text,id);
+    EXPECT_STREQ(text,"DL--");
+}
+TEST(t_dlt_print_id, nullpointer)
+{
+    const char* id = "DLTD";
+    char text[DLT_DAEMON_TEXTSIZE];
+
+    // NULL-Pointer, expected nothing in return
+    dlt_print_id(NULL,NULL);
+    dlt_print_id(NULL, id);
+    dlt_print_id(text, NULL);
+}
+/* End Method:dlt_common::dlt_print_id */
+
+
+
+
+/* Begin Method:dlt_common::dlt_get_version */
+TEST(t_dlt_get_version, normal)
+{
+    // Normal Use-Case
+    char ver[255];
+    dlt_get_version(ver, 255);
+    printf("%s\n", ver);
+}
+TEST(t_dlt_get_version, abnormal)
+{
+    // Change default length of ver to 1
+    char ver[1];
+    dlt_get_version(ver, DLT_USER_MAX_LIB_VERSION_LENGTH);
+    printf("%s\n", ver);
+
+    // Change default length of ver to 1 and reduce second para to 1, too
+    dlt_get_version(ver, 1);
+    printf("%s\n", ver);
+}
+TEST(t_dlt_get_version, nullpointer)
+{
+    dlt_get_version(NULL, 0);
+}
+/* End Method:dlt_common::dlt_get_version */
+
+
+
+
+/* Begin Method:dlt_common::dlt_get_major_version */
+TEST(dlt_get_major_version, normal)
+{
+    char ver[DLT_USER_MAX_LIB_VERSION_LENGTH];
+    dlt_get_major_version(ver, DLT_USER_MAX_LIB_VERSION_LENGTH);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MAJOR_VERSION);
+}
+TEST(dlt_get_major_version, abnormal)
+{
+    // Change default length of ver to 1
+    char ver[1];
+    dlt_get_major_version(ver, DLT_USER_MAX_LIB_VERSION_LENGTH);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MAJOR_VERSION);
+
+    // Change default length of ver to 1 and reduce second para to 1, too
+    dlt_get_major_version(ver, 1);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MAJOR_VERSION);
+}
+TEST(dlt_get_major_version, nullpointer)
+{
+    // NULL-Pointer, expect exeption
+    dlt_get_major_version(NULL, 0); // work, but shouldn't
+}
+/* End Method:dlt_common::dlt_get_major_version */
+
+
+
+
+/* Begin Method:dlt_common::dlt_get_minor_version */
+TEST(dlt_get_minor_version, normal)
+{
+    char ver[DLT_USER_MAX_LIB_VERSION_LENGTH];
+    dlt_get_minor_version(ver, DLT_USER_MAX_LIB_VERSION_LENGTH);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MINOR_VERSION);
+}
+TEST(dlt_get_minor_version, abnormal)
+{
+    // Change default length of ver to 1
+    char ver[1];
+    dlt_get_minor_version(ver, DLT_USER_MAX_LIB_VERSION_LENGTH);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MINOR_VERSION);
+
+    // Change default length of ver to 1 and reduce second para to 1, too
+    dlt_get_minor_version(ver, 1);
+    EXPECT_STREQ(ver, _DLT_PACKAGE_MINOR_VERSION);
+}
+TEST(dlt_get_minor_version, nullpointer)
+{
+    // NULL-Pointer, expect exeption
+    dlt_get_minor_version(NULL, 0); // work, but shouldn't
+}
+/* End Method:dlt_common::dlt_get_minor_version */
+
+
+
+
+/*##############################################################################################################################*/
+/*##############################################################################################################################*/
+/*##############################################################################################################################*/
+
+
+
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    //::testing::FLAGS_gtest_break_on_failure = true;
-    //::testing::FLAGS_gtest_repeat = 10000;
-    //::testing::FLAGS_gtest_filter = "t_dlt_log.nullpointer";
+    ::testing::FLAGS_gtest_break_on_failure = true;
+    ::testing::FLAGS_gtest_repeat = 10000;
+    ::testing::FLAGS_gtest_filter = "*.normal";
     return RUN_ALL_TESTS();
 }
