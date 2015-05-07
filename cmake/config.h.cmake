@@ -1,3 +1,20 @@
+/*
+ * @licence app begin@
+ * SPDX license identifier: MPL-2.0
+ *
+ * Copyright (C) 2011-2015, BMW AG"
+ *
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ *
+ * This Source Code Form is subject to the terms of the
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * For further information see http://www.genivi.org/.
+ * @licence end@
+ */
+
 // DO NOT EDIT! GENERATED AUTOMATICALLY!
 // cmakedefine01 <variable> sets #define <variable> [0|1] if variable is defined in cmake
 // variable is set by CHECK_INCLUDE_FILES and CHECK_FUNCTION_EXISTS

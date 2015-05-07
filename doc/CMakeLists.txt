@@ -1,17 +1,19 @@
 #######
-# Dlt - Diagnostic Log and Trace
 # @licence make begin@
+# SPDX license identifier: MPL-2.0
 #
-# Copyright (C) 2011-2012, BMW AG - Alexander Wenzel <alexander.aw.wenzel@bmw.de>
-# 
-# Contributions are licensed to the GENIVI Alliance under one or more
-# Contribution License Agreements.
-# 
+# Copyright (C) 2011-2015, BMW AG"
+#
+# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+#
 # This Source Code Form is subject to the terms of the
-# Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
-# this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# Mozilla Public License (MPL), v. 2.0.
+# If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# For further information see http://www.genivi.org/.
 # @licence end@
-########
+#######
 
 if(WITH_DOC)
     find_package(Doxygen)
@@ -27,8 +29,8 @@ if(WITH_DOC)
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals 
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images 
 		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images 
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/INSTALL.html ${CMAKE_SOURCE_DIR}/INSTALL.txt 
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.txt 
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/INSTALL.html ${CMAKE_SOURCE_DIR}/INSTALL
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/ReleaseNotes.html ${CMAKE_SOURCE_DIR}/ReleaseNotes.txt 
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt 
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt 

@@ -10,6 +10,7 @@ Changes
 -------
 
 2.11.0
+
    * New macros for Format of Hex and Binary.
    * Enable dbus trace when adaptor starts up.
    * Added configuration of dbus filter.

@@ -1,24 +1,28 @@
-/**
+/*
  * @licence app begin@
- * Copyright (C) 2012  BMW AG
+ * SPDX license identifier: MPL-2.0
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * Copyright (C) 2011-2015, BMW AG"
  *
- * Contributions are licensed to the GENIVI Alliance under one or more
- * Contribution License Agreements.
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
- * \copyright
  * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
- * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- *
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de> BMW 2011-2012
- *
- * \file dlt.h
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
+
+/*!
+ * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+ *
+ * \copyright Copyright © 2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt.h
+*/
 
 /*******************************************************************************
 **                                                                            **
