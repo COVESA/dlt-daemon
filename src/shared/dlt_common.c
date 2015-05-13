@@ -28,10 +28,11 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h> /* for malloc(), free() */
-#include <string.h> /* for strlen(), memcmp(), memmove() */
-#include <time.h>   /* for localtime(), strftime() */
-#include <limits.h> /* for NAME_MAX */
+#include <stdlib.h>   /* for malloc(), free() */
+#include <string.h>   /* for strlen(), memcmp(), memmove() */
+#include <time.h>     /* for localtime(), strftime() */
+#include <limits.h>   /* for NAME_MAX */
+#include <inttypes.h> /* for PRI formatting macro */
 
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
@@ -259,7 +260,7 @@ int dlt_print_char_string(char **text,int textlength,uint8_t *ptr,int size)
     if (textlength< size)
     {
         char str[255];
-        sprintf(str, 254, "String does not fit character data (available=%d, required=%d) !\n", textlength, size);
+        snprintf(str, 254, "String does not fit character data (available=%d, required=%d) !\n", textlength, size);
         dlt_log(LOG_WARNING, str);
         return -1;
     }
@@ -958,7 +959,7 @@ int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int v
         if (textlength<((datalength*3)+20))
         {
             char str[255];
-            sprintf(str, 254, "String does not fit binary data (available=%d, required=%d) !\n", textlength, (datalength*3)+20);
+            snprintf(str, 254, "String does not fit binary data (available=%d, required=%d) !\n", textlength, (datalength*3)+20);
             dlt_log(LOG_WARNING, str);
             return -1;
         }
@@ -1752,7 +1753,7 @@ int dlt_file_read(DltFile *file,int verbose)
         {
 
             snprintf(str,DLT_COMMON_BUFFER_LENGTH,"Seek failed to skip extra header and payload data from file of size %d!\n",
-                    file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize);
+                    file->msg.headersize - (int32_t)sizeof(DltStorageHeader) - (int32_t)sizeof(DltStandardHeader) + file->msg.datasize);
             dlt_log(LOG_WARNING, str);
             /* go back to last position in file */
             if (fseek(file->handle,file->file_position,SEEK_SET))
@@ -2058,14 +2059,14 @@ int dlt_log(int prio, char *s)
 			/* log to syslog */
 #if !defined (__WIN32__) && !defined(_MSC_VER)
 			openlog("DLT",LOG_PID,LOG_DAEMON);
-			syslog(prio, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec/1000), getpid(), getpid(), asSeverity[prio], s);
+			syslog(prio, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec/1000), getpid(), asSeverity[prio], s);
 			closelog();
 #endif
 			break;
 		case DLT_LOG_TO_FILE:
 			/* log to file */
 			if(logging_handle) {
-				fprintf(logging_handle,sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec/1000), getpid(), getpid(), asSeverity[prio], s);
+				fprintf(logging_handle,sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec/1000), getpid(), asSeverity[prio], s);
 				fflush(logging_handle);
 			}
 			break;
@@ -2521,7 +2522,7 @@ int dlt_buffer_increase_size(DltBuffer *buf)
 	buf->mem = new_ptr+sizeof(DltBufferHead);
 	buf->size += buf->step_size;
 	
-	snprintf(str,sizeof(str),"Buffer: Size increased to %d bytes\n",buf->size+sizeof(DltBufferHead));
+	snprintf(str,sizeof(str),"Buffer: Size increased to %d bytes\n",buf->size+(int32_t)sizeof(DltBufferHead));
 	dlt_log(LOG_DEBUG, str);
 
 	return 0; // OK		
@@ -3542,7 +3543,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 	#if defined (__WIN32__) && !defined(_MSC_VER)
 					snprintf(text+strlen(text),textlength-strlen(text),"%I64d",value64i);
 	#else
-					snprintf(text+strlen(text),textlength-strlen(text),"%lld",value64i);
+					snprintf(text+strlen(text),textlength-strlen(text),"%"PRId64, value64i);
 	#endif
 				}
 				else
@@ -3556,7 +3557,7 @@ int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,
 	#if defined (__WIN32__) && !defined(_MSC_VER)
 					snprintf(text+strlen(text),textlength-strlen(text),"%I64u",value64u);
 	#else
-					snprintf(text+strlen(text),textlength-strlen(text),"%llu",value64u);
+					snprintf(text+strlen(text),textlength-strlen(text),"%"PRId64,value64u);
 	#endif
 				}
 				break;

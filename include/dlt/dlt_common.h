@@ -602,9 +602,9 @@ typedef struct
 
 typedef struct
 {
-	unsigned char* shm;	/* pointer to beginning of shared memory */
-	int size; 	/* size of data area in shared memory */
-	unsigned char* mem;	/* pointer to data area in shared memory */	
+	unsigned char* shm; /* pointer to beginning of shared memory */
+	int        size;    /* size of data area in shared memory */
+	unsigned char* mem; /* pointer to data area in shared memory */
 	
     uint32_t    min_size;  /**< Minimum size of buffer */
     uint32_t    max_size;  /**< Maximum size of buffer */

@@ -1165,9 +1165,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     uint32_t uiType;
     uint16_t uiSize;
     uint32_t uiExtraSize;
-    int sent;
-    int j;
-    int third_value;
     int ret;
     
     PRINT_FUNCTION_VERBOSE(verbose);
