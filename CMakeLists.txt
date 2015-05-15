@@ -15,12 +15,13 @@
 # @licence end@
 #######
 
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 2.8.5 )
 project( automotive-dlt )
 
 mark_as_advanced( CMAKE_BACKWARDS_COMPATIBILITY)
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
+include ( GNUInstallDirs )
 # Set version parameters
 set( DLT_MAJOR_VERSION 2)
 set( DLT_MINOR_VERSION 12)
@@ -114,11 +115,9 @@ ELSE (${WITH_DOC} STREQUAL "OFF")
 	SET(PACKAGE_DOC "")
 ENDIF(${WITH_DOC} STREQUAL "OFF")
 
-set(LIB_INSTALL_DIR lib${LIB_SUFFIX})
-
 configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.spec)
 configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.pc.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
-install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig COMPONENT devel)
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT devel)
 
 IF(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
 	set(CONFIGURATION_FILES_DIR "/etc")
