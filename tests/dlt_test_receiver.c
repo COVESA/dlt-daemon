@@ -82,14 +82,9 @@
 int dlt_receive_filetransfer_callback(DltMessage *message, void *data);
 
 typedef struct {
-    int aflag;
-    int sflag;
-    int xflag;
-    int mflag;
     int vflag;
     int yflag;
     char *ovalue;
-    char *fvalue;
     char *evalue;
     int bvalue;
     char ecuid[4];
@@ -114,17 +109,12 @@ void usage()
     printf("Use filters to filter received messages.\n");
     printf("%s \n", version);
     printf("Options:\n");
-    printf("  -a            Print DLT messages; payload as ASCII\n");
-    printf("  -x            Print DLT messages; payload as hex\n");
-    printf("  -m            Print DLT messages; payload as hex and ASCII\n");
-    printf("  -s            Print DLT messages; only headers\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
     printf("  -y            Serial device mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
-    printf("  -f filename   Enable filtering of messages\n");
 }
 
 /**
@@ -138,14 +128,9 @@ int main(int argc, char* argv[])
     int index;
 
     /* Initialize dltdata */
-    dltdata.aflag = 0;
-    dltdata.sflag = 0;
-    dltdata.xflag = 0;
-    dltdata.mflag = 0;
     dltdata.vflag = 0;
     dltdata.yflag = 0;
     dltdata.ovalue = 0;
-    dltdata.fvalue = 0;
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
     dltdata.ohandle=-1;
@@ -153,32 +138,12 @@ int main(int argc, char* argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vhy:o:e:b:")) != -1)
         switch (c)
         {
         case 'v':
             {
                 dltdata.vflag = 1;
-                break;
-            }
-        case 'a':
-            {
-                dltdata.aflag = 1;
-                break;
-            }
-        case 's':
-            {
-                dltdata.sflag = 1;
-                break;
-            }
-        case 'x':
-            {
-                dltdata.xflag = 1;
-                break;
-            }
-        case 'm':
-            {
-                dltdata.mflag = 1;
                 break;
             }
         case 'h':
@@ -189,11 +154,6 @@ int main(int argc, char* argv[])
         case 'y':
             {
                 dltdata.yflag = 1;
-                break;
-            }
-        case 'f':
-            {
-                dltdata.fvalue = optarg;
                 break;
             }
         case 'o':
@@ -213,7 +173,7 @@ int main(int argc, char* argv[])
             }
         case '?':
             {
-                if (optopt == 'o' || optopt == 'f')
+                if (optopt == 'o')
                 {
                     fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                 }
@@ -240,7 +200,6 @@ int main(int argc, char* argv[])
     dlt_client_init(&dltclient, dltdata.vflag);
 
     /* Register callback to be called when message was received */
-    // fp = open ....
     dlt_client_register_message_callback(dlt_receive_filetransfer_callback);
 
     /* Setup DLT Client structure */
@@ -285,17 +244,6 @@ int main(int argc, char* argv[])
 
     /* first parse filter file if filter parameter is used */
     dlt_filter_init(&(dltdata.filter),dltdata.vflag);
-
-    if (dltdata.fvalue)
-    {
-        if (dlt_filter_load(&(dltdata.filter),dltdata.fvalue,dltdata.vflag)<0)
-        {
-            dlt_file_free(&(dltdata.file),dltdata.vflag);
-            return -1;
-        }
-
-        dlt_file_set_filter(&(dltdata.file),&(dltdata.filter),dltdata.vflag);
-    }
 
     /* open DLT output file */
     if (dltdata.ovalue)
@@ -347,12 +295,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 {
     DltReceiveData *dltdata;
     static char text[DLT_RECEIVE_TEXTBUFSIZE];
-
-    static char crc[11];
     char filename[255];
-    unsigned long FLENGTH = 1024*1024;          // --> 1MB
-
-
     struct iovec iov[2];
     int bytes_written;
 
@@ -363,35 +306,32 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
     dltdata = (DltReceiveData*)data;
 
-    dlt_message_payload(message,text,DLT_RECEIVE_TEXTBUFSIZE,DLT_OUTPUT_ASCII,dltdata->vflag);
-    printf("[%s]\n",text);
-
-    // 1st get the crc to check the received data
-    if( strncmp(text, "CRC", 3) == 0)
+    dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+    
+    // 1st find starting point of tranfering data packages
+    if( strncmp(text, "FLST", 4) == 0)
     {
         char *tmpFilename;
-        strncpy(crc, text + 4, 10);
-        crc[10] = '\0';
         tmpFilename = strrchr(text, '/') + 1;
+        unsigned int i;
+        for(i=0; i<strlen(tmpFilename);i++)
+        {
+            if(isspace(tmpFilename[i]))
+            {
+                tmpFilename[i] ='\0';
+                break;
+            }
+        }
         // create file for each received file, as named as crc value
         snprintf(filename, 255, "/tmp/%s", tmpFilename);
         fp = fopen(filename, "w+");
     }
 
-    // 3rd create crc and verify on finish
+    // 3rd close fp
     if( strncmp(text, "FLFI", 4) == 0)
     {
-        unsigned long crcnew = crc32(0L, Z_NULL, 0);
-        unsigned char buffer[FLENGTH];
-        fseek(fp, SEEK_SET, 0);
-        size_t readBytes = fread(buffer, sizeof(char), FLENGTH, fp);
-        crcnew = crc32(crcnew, buffer, readBytes);
-
-        if( (unsigned) atol(crc) == crcnew)
-            printf("FILETRANSFER SUCCESSFULL");
-        else
-            printf("ERROR ON FILETRANSFER");
-         fclose(fp);
+        printf("TEST FILETRANSFER PASSED\n");
+        fclose(fp);
     }
 
     // 2nd check if incomming data are filetransfer data
@@ -408,7 +348,6 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         // truncate ending of data stream ( FLDA )
         int len = strlen(text);
         text[len - 4] = '\0';
-        printf("## [%s]\n", text);
         // hex to ascii and store at /tmp
         char tmp[3];
         int i;
