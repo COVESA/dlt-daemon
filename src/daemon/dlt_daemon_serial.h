@@ -2,7 +2,7 @@
  * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG"
+ * Copyright (C) 2011-2015, BMW AG
  *
  * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
@@ -18,7 +18,7 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_serial.h

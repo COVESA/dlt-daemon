@@ -4,7 +4,7 @@
 # @licence app begin@
 # SPDX license identifier: MPL-2.0
 #
-# Copyright (C) 2011-2015, BMW AG"
+# Copyright (C) 2011-2015, BMW AG
 #
 # This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
 #
