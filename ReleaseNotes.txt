@@ -4,10 +4,48 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.11.0 STABLE
+2.12.0 STABLE
 
 Changes
 -------
+
+2.12.0
+
+   * Added unit and functional tests
+   * Fixed copyright doxygen comments
+   * Updated license headers to latest GENIVI license policy
+   * Renamed and cleanup further files to comply with licensing requirements
+   * dlt-control: Check for return values
+   * dlt-daemon: Explicitly set the default loggingLevel to LOG_INFO
+   * dlt-daemon: Explicitly set the default loggingMode to DLT_LOG_TO_CONSOLE
+   * Fixing MIN and MAX defines for base integer types
+   * Unified all line endings to UNIX style
+   * Adding gtest framework v1.7.0
+   * Remove absolute installation paths so that DLT can be installed at any location (not only "/usr").
+   * Add Service ID Last entry to avoid further modifications in dependent code
+   * Change daemon state handling to have all traces in online trace even when offline trace is active
+   * Fix content of offline trace
+   * Open daemon connection in atexit function
+   * Change loglevel of Request-Resend message
+   * Fix daemon state handling with offline trace
+   * Fix watchdog timeout
+   * Reworked internal output
+   * DLT MISRA conform changes
+   * Made zlib dependent on DLT_SYSTEM
+   * Doxygen paths are now determined by CMake.
+   * Add the IPv6 support
+   * Workaround for duplicated log messages in offline trace file issue
+   * Fix PREFIX. Works now with the default PREFIX (/usr/local/) and with the user PREFIX (e.g. /temp/test_with_pref). PREFIX Fix for filetransfer directory (PREFIX/share/)
+   * Fixed typo in include guard
+   * Resolves BUG-206: Install prefix should be configurable
+   * Adding support for new macros to the daemon. New macros: DLT_HEX8(VAR) 8bits variable displayed in hexadecimal with "0x" prefix DLT_HEX16(VAR) 16bits displayed 
+     in hexadecimal with "0x" prefix DLT_HEX32(VAR) 32bits displayed in hexadecimal with "0x" prefix DLT_HEX64(VAR) 64bits displayed in hexadecimal with "0x" prefix DLT_BIN8(VAR) 
+     8bits variable displayed in binary with "0b" prefix DLT_BIN16(VAR) 16bits variable displayed in binary with "0b" prefix
+   * Fixed network trace test
+   * Fix dlt_user_log_write_start_id return value
+   * Added new API to send marker message from application.
+   * New Callback function in DLT library, called when log level of context is changed
+   
 
 2.11.0
 
