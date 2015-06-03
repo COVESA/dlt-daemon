@@ -307,6 +307,24 @@ Default: 0
 .RS 4
 Absolute path to file storing version information \- if disabled the DLT version will be send\&.
 .RE
+
+.SH "Offline Logstorage OPTIONS"
+.PP
+\fBOfflineLogstorageMaxDevices\fR
+.RS 4
+Maximum devices to be used as offline logstorage devices [1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES]\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: Off, zero logstorage devices are supported.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+
 .SH "EXAMPLES"
 .PP
 Start DLT daemon in background mode

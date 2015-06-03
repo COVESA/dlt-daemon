@@ -1,0 +1,186 @@
+DLT Offline Logstorage
+======================
+Christoph Lipka <clipka@jp.adit-jv.com>
+0.0.1, 2015/05/26
+
+Overview
+--------
+DLT is a reusable open source software component for standardized logging and tracing in infotainment ECUs based on the AUTOSAR 4.0 standard.
+The goal of DLT is the consolidation of the existing variety of logging and tracing protocols on one format.
+
+
+Introduction to DLT Offline Logstorage
+--------------------------------------
+With DLT Offline Logstorage it is possible to store logs on the target system or an external device connected to the target. It can be seen as an improvement of the already available Offline Trace functionality. +
+
+DLT Offline Logstorage offers the following functionality: +
+
+- store logs in sets of log files defined by configuration files
+- configuration filter options are:
+    * application IDs (single apid, list of apids, .* as wildcard)
+    * context IDs (single ctid, list of ctids, .* as wildcard)
+    * log level
+- configuration file storing options are:
+    * file name
+    * file size
+    * number of files
+- trigger start and stop logging by using the dlt-logstorage-ctrl application
+
+
+Filter configuration
+--------------------
+The default name for the configuration file is dlt_logstorage.conf. This file has to be stored directly in the folder that will contain the log files later. Or in other words, in the folder that is mounted at the mountpoint /tmp/dltlogs/dltlogsdevX
+
+As seen in example configuration file, a filter configuration consists of +
+
+- A *unique name* of the filter (for a certain storage device). The name must be *[FILTERX]* where X is a unique number for that storage device.
+- *LogAppName* Name of application to store logs from. Multiple applications can be separated by "," and ".*" denotes all applications
+- *ContextName* Name or names of contexts to store logs from. Multiple contexts can be separated by "," and ".*" denotes all contexts of the application
+- *LogLevel* Define log level, e.g. DLT_LOG_INFO
+- *File* Base name of the created files that containing the logs, e.g. "example". The first file will have the name example_001_<timestamp>.dlt, the second example_002_<timestamp>.dlt and so on. Timestamp will be printed in form "YYMMDD-hhmmss".
+- *FileSize* File size in bytes
+- *NOFiles* Number of created files before oldest is deleted and a new one is created. The numbering will continue. E.g. If 10 files have to be created and the first is deleted, the next one is <File name>_011_<timestamp>.dlt
+
+*Note*: Not allowed is the combination of wildcards for LogAppName *and* ContextName. +
+
+An configuration file should look like: +
+
+----
+[FILTER1]
+LogAppName=APP1
+ContextName=CON1,CON2
+LogLevel=DLT_LOG_INFO
+File=App
+FileSize=10000
+NOFiles=10
+
+[FILTER2]
+LogAppName=TEST
+ContextName=.*
+LogLevel=DLT_LOG_ERROR
+File=Test
+FileSize=250000
+NOFiles=5
+----
+
+Filter algorithm
+----------------
+To filter a log message based on information given in the filter configuration a hash table is used. Keys of hash table consist of a combination of application ID and context ID. Since DLT Offline Logstorage supports wildcards and lists of IDs, the following cases have to be considered: +
+Filter configuration contains +
+
+. One application ID (App1) and one context ID (Ctx1): Key = "App1:Ctx1"
+. One application ID (App1), wildcard for context ID: Key = "App1"
+. Wildcard of application ID, One context ID (Ctx1): Key = "Ctx1"
+. Wildcard of application ID, list of context IDs (Ctx1,Ctx2): Keys="Ctx1","Ctx2" and the other way around
+. List of application (App1, App2) and context IDs (Ctx1, Ctx2): all combinations of application ID and context ID are possible. Keys = "App1:Ctx1", "App1:Ctx2", "App2:Ctx1", "App2,Ctx2"
+. Both wildcards for application ID and context ID is not allowed.
+
+Data of a key value pair contains of all information given in OfflineLogstorageConsumerInfoTable apart from application ID and context ID.
+When a message arrives at the filter, three checks have to be done. It has to be checked if:
+
+. The combination of application and context ID is a valid key
+. The application ID is a valid key
+. The context ID is a valid key
+
+If one or more keys are valid the message is stored in the file of the corresponding filter if the log level is lesser than specified (FATAL < ... < INFO < ...).
+If not, the incoming message will be ignored.
+
+Default search path and folder names for Logstorage devices
+-----------------------------------------------------------
+Path
+~~~~
+The default search path for logstorage devices is: */tmp/dltlogs/*. This default
+path can be changed in the dlt_offline_logstorage.h header file.
+
+Folder
+~~~~~~
+The default name for Logstorage device folders is *dltlogsdevX*.
+X is a number between 1 and the maximal configured number of Logstorage devices DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES.
+
+A complete Logstorage path looks like: /tmp/dltlogs/dltdevlogs1
+
+This folder can be used directly to store logs or it can be used as mount point for external devices.
+
+
+Using DLT Offline Logstorage
+----------------------------
+Enable OfflineLogstorage by setting OfflineLogstorageMaxDevices = 1 in dlt.conf.
+Be aware that the performance of DLT may drop if multiple Logstorage devices are used; the performance depends on the write speed of the used device, too.
+
+Create the device folder: +
+
+----
+mkdir -p /tmp/dltlogs/dltlogsdev1
+----
+
+Create the configuration file and store it on into that folder or mount an external device containing a configuration file.
+
+Start the DLT Daemon. This is not necessary if the DLT Daemon was started already with Offline Logstorage enabled.
+
+Trigger DLT Daemon to use the new logstorage device: +
+
+----
+dlt-logstorage-ctrl -c 1 -d 1
+----
+
+Afterwards, logs that match the filter configuration are stored onto the Logstorage device.
+
+----
+dlt-logstorage-ctrl -c 0 -d 1
+----
+
+Afterwards the configured logstorage device 1 is disconnected from the DLT Daemon.
+
+Using dlt-logstorage-ctrl application
+-------------------------------------
+
+----
+Usage: dlt-logstorage-ctrl [options]
+Send a trigger to DLT daemon to connect/disconnect a certain logstorage device. Logging starts after a succesfful connection automatically.
+
+Options:
+  -c         Connection type: connect = 1, disconnect = 0
+  -d         Device: [1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES]
+  -e         Set ECU ID (Default: ECU1)
+  -h         Usage
+  -t         Specify connection timeout (Default: 10s)
+----
+
+Testing DLT Offline Logstorage
+------------------------------
+The following procedure can be used to test Offline Logstorage:
+
+. Enable OfflineLogstorage by setting OfflineLogstorageMaxDevices = 1 in dlt.conf
+
+. Start dlt-daemon
+
+. The default search path of logstorage is: /tmp/dltlogs/dltlogsdevX
+  where X is a number in the range [1..OfflineLogstorageMaxDevices]
+
+. Create the device folder
+
+  $ mkdir -p /tmp/dltlogs/dltlogsdev1
+
+. Create the configuration file "dlt_logstorage.conf" in this folder
+  and define filter configuration(s):
+
+  $printf "[FILTER1]
+  LogAppName=LOG
+  ContextName=TEST
+  LogLevel=DLT_LOG_WARN
+  File=example
+  FileSize=50000
+  NOFiles=5" > /tmp/dltlogs/dltlogsdev1/dlt_logstorage.conf
+
+. Trigger dlt-daemon to use a new device
+
+  $ dlt-logstorage-ctrl -c 1 -d 1
+
+. Start dlt-example-user
+
+  $ dlt-example-user Hello123
+
+. After execution, a log file is created in /tmp/dltlogs/dltlogsdev1
+  e.g. example_001_20150512_133344.dlt
+
+. To check the content of the file open it with dlt-convert or DLT Viewer.

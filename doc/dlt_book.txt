@@ -54,6 +54,8 @@ include::dlt-convert.1.txt[]
 
 include::dlt-receive.1.txt[]
 
+include::dlt-logstorage-ctrl.1.txt[]
+
 :leveloffset: 0
 
 Manuals
@@ -71,3 +73,4 @@ include::dlt_filetransfer.txt[]
 
 include::dlt_extended_network_trace.txt[]
 
+include::dlt_offline_logstorage.txt[]
