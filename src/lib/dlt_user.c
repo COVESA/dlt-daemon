@@ -279,12 +279,12 @@ int dlt_init(void)
     pthread_cond_init(&mq_init_condition, NULL);
 
     /* Start the segmented thread */
-	if(pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
-	   (void *)dlt_user_trace_network_segmented_thread, NULL))
-	{
-    	dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
-    	return -1;
-	}
+    if(pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
+                      (void *)dlt_user_trace_network_segmented_thread, NULL))
+    {
+        dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
+        return -1;
+    }
 
 	return 0;
 }
@@ -739,6 +739,10 @@ int dlt_register_app(const char *appid, const char * description)
 }
 int dlt_register_context(DltContext *handle, const char *contextid, const char * description)
 {
+    // check nullpointer
+    if(!handle)
+        return -1;
+
     if (dlt_user_initialised==0)
     {
         if (dlt_init()<0)
@@ -773,6 +777,10 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 {
     DltContextData log;
     uint32_t i;
+
+    //check nullpointer
+    if(!handle)
+        return -1;
 
     if (dlt_user_initialised==0)
     {
@@ -1031,6 +1039,10 @@ int dlt_unregister_context(DltContext *handle)
     DltContextData log;
     int ret;
 
+    // check nullpointer
+    if(!handle)
+        return -1;
+
     if (dlt_user_initialised==0)
     {
         return -1;
@@ -1283,6 +1295,10 @@ inline int dlt_user_log_write_start(DltContext *handle, DltContextData *log,DltL
 
 int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log,DltLogLevelType loglevel, uint32_t messageid)
 {
+    // check nullpointer
+    if(!handle)
+        return -1;
+
 	if(dlt_user_initialised==0)
 	{
 		if (dlt_init()<0)
@@ -1357,6 +1373,10 @@ int dlt_user_log_write_raw_formatted(DltContextData *log,void *data,uint16_t len
 {
     uint16_t arg_size;
     uint32_t type_info;
+
+    // check nullpointer
+    if(!log || !data)
+        return -1;
 
     if (log==0)
     {

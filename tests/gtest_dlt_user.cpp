@@ -164,7 +164,6 @@ int dlt_nonverbose_mode(void);
 #define INT_MAX INT32_MAX
 #endif
 
-
 /////////////////////////////////////////
 // t_dlt_user_log_write_start
 TEST(t_dlt_user_log_write_start, normal)
@@ -173,6 +172,8 @@ TEST(t_dlt_user_log_write_start, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start normal"));
     
@@ -205,6 +206,8 @@ TEST(t_dlt_user_log_write_start, abnormal)
     // TODO: DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start abnormal"));
     
@@ -226,9 +229,10 @@ TEST(t_dlt_user_log_write_start, startstartfinish)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start startstartfinish"));
-    
     EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // shouldn't it return -1, because it is already started?
     // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -242,17 +246,18 @@ TEST(t_dlt_user_log_write_start, startstartfinish)
 TEST(t_dlt_user_log_write_start, nullpointer)
 {
     DltContext context;
-    
+    DltContextData contextData;
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start nullpointer"));
-
     // NULL's
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(NULL, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(-1,dlt_user_log_write_start(NULL, &contextData, DLT_LOG_DEFAULT));
     //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(NULL, NULL, DLT_LOG_DEFAULT));
+    EXPECT_GE(-1,dlt_user_log_write_start(NULL, NULL, DLT_LOG_DEFAULT));
     EXPECT_GE(-1,dlt_user_log_write_start(&context, NULL, DLT_LOG_DEFAULT));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
     
     EXPECT_LE(0,dlt_unregister_context(&context));
     EXPECT_LE(0,dlt_unregister_app());
@@ -268,6 +273,8 @@ TEST(t_dlt_user_log_write_start_id, normal)
     uint32_t messageid;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id normal"));
     
@@ -320,6 +327,8 @@ TEST(t_dlt_user_log_write_start_id, abnormal)
     // TODO: uint32_t messageid;
 
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id abnormal"));
     
@@ -343,6 +352,8 @@ TEST(t_dlt_user_log_write_start_id, startstartfinish)
     uint32_t messageid;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
     
@@ -361,16 +372,19 @@ TEST(t_dlt_user_log_write_start_id, nullpointer)
 {
     DltContext context;
     uint32_t messageid;
+    DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
 
     // NULL's
     messageid = UINT32_MIN;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, &contextData, DLT_LOG_DEFAULT, messageid));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, NULL, DLT_LOG_DEFAULT, messageid));
+    EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, &contextData, DLT_LOG_DEFAULT, messageid));
+    //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, NULL, DLT_LOG_DEFAULT, messageid));
     EXPECT_GE(-1,dlt_user_log_write_start_id(&context, NULL, DLT_LOG_DEFAULT, messageid));
     
     EXPECT_LE(0,dlt_unregister_context(&context));
@@ -386,6 +400,8 @@ TEST(t_dlt_user_log_write_finish, finish)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start finish"));
     
@@ -395,6 +411,8 @@ TEST(t_dlt_user_log_write_finish, finish)
     
     // finish without start, but initialized context
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_finish finish"));
     // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
@@ -420,6 +438,8 @@ TEST(t_dlt_user_log_write_bool, normal)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool normal"));
 
@@ -443,6 +463,8 @@ TEST(t_dlt_user_log_write_bool, abnormal)
     // TODO: uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool abnormal"));
 
@@ -467,6 +489,8 @@ TEST(t_dlt_user_log_write_bool, nullpointer)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool nullpointer"));
 
@@ -488,6 +512,8 @@ TEST(t_dlt_user_log_write_float32, normal)
     float32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 normal"));
 
@@ -518,6 +544,8 @@ TEST(t_dlt_user_log_write_float32, nullpointer)
     float32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 nullpointer"));
 
@@ -539,6 +567,8 @@ TEST(t_dlt_user_log_write_float64, normal)
     double data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 normal"));
 
@@ -569,6 +599,8 @@ TEST(t_dlt_user_log_write_float64, nullpointer)
     double data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 nullpointer"));
 
@@ -590,6 +622,8 @@ TEST(t_dlt_user_log_write_uint, normal)
     unsigned int data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint normal"));
 
@@ -615,6 +649,8 @@ TEST(t_dlt_user_log_write_uint, abnormal)
     // TODO: unsigned int data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint abnormal"));
 
@@ -635,6 +671,8 @@ TEST(t_dlt_user_log_write_uint, nullpointer)
     unsigned int data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint nullpointer"));
 
@@ -656,6 +694,8 @@ TEST(t_dlt_user_log_write_uint8, normal)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 normal"));
 
@@ -680,6 +720,8 @@ TEST(t_dlt_user_log_write_uint8, nullpointer)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 nullpointer"));
 
@@ -701,6 +743,8 @@ TEST(t_dlt_user_log_write_uint16, normal)
     uint16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 normal"));
 
@@ -725,6 +769,8 @@ TEST(t_dlt_user_log_write_uint16, nullpointer)
     uint16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 nullpointer"));
 
@@ -746,6 +792,8 @@ TEST(t_dlt_user_log_write_uint32, normal)
     uint32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 normal"));
 
@@ -770,6 +818,8 @@ TEST(t_dlt_user_log_write_uint32, nullpointer)
     uint32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 nullpointer"));
 
@@ -791,6 +841,8 @@ TEST(t_dlt_user_log_write_uint64, normal)
     uint64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 normal"));
 
@@ -815,6 +867,8 @@ TEST(t_dlt_user_log_write_uint64, nullpointer)
     uint64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 nullpointer"));
 
@@ -836,6 +890,8 @@ TEST(t_dlt_user_log_write_uint8_formatted, normal)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted normal"));
 
@@ -879,6 +935,8 @@ TEST(t_dlt_user_log_write_uint8_formatted, abnormal)
     // TODO: uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted abnormal"));
 
@@ -902,6 +960,8 @@ TEST(t_dlt_user_log_write_uint8_formatted, nullpointer)
     uint8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted nullpointer"));
 
@@ -929,6 +989,8 @@ TEST(t_dlt_user_log_write_uint16_formatted, normal)
     uint16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted normal"));
 
@@ -972,6 +1034,8 @@ TEST(t_dlt_user_log_write_uint16_formatted, abnormal)
     // TODO: uint16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted abnormal"));
 
@@ -995,6 +1059,8 @@ TEST(t_dlt_user_log_write_uint16_formatted, nullpointer)
     uint16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted nullpointer"));
 
@@ -1022,6 +1088,8 @@ TEST(t_dlt_user_log_write_uint32_formatted, normal)
     uint32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted normal"));
 
@@ -1065,6 +1133,8 @@ TEST(t_dlt_user_log_write_uint32_formatted, abnormal)
     // TODO: uint32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted abnormal"));
 
@@ -1088,6 +1158,8 @@ TEST(t_dlt_user_log_write_uint32_formatted, nullpointer)
     uint32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted nullpointer"));
 
@@ -1115,6 +1187,8 @@ TEST(t_dlt_user_log_write_uint64_formatted, normal)
     uint64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted normal"));
 
@@ -1158,6 +1232,8 @@ TEST(t_dlt_user_log_write_uint64_formatted, abnormal)
     // TODO: uint64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted abnormal"));
 
@@ -1181,6 +1257,8 @@ TEST(t_dlt_user_log_write_uint64_formatted, nullpointer)
     uint64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted nullpointer"));
 
@@ -1208,6 +1286,8 @@ TEST(t_dlt_user_log_write_int, normal)
     int data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int normal"));
 
@@ -1236,6 +1316,8 @@ TEST(t_dlt_user_log_write_int, nullpointer)
     int data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int nullpointer"));
 
@@ -1257,6 +1339,8 @@ TEST(t_dlt_user_log_write_int8, normal)
     int8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 normal"));
 
@@ -1285,6 +1369,8 @@ TEST(t_dlt_user_log_write_int8, nullpointer)
     int8_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 nullpointer"));
 
@@ -1306,6 +1392,8 @@ TEST(t_dlt_user_log_write_int16, normal)
     int16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 normal"));
 
@@ -1334,6 +1422,8 @@ TEST(t_dlt_user_log_write_int16, nullpointer)
     int16_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 nullpointer"));
 
@@ -1355,6 +1445,8 @@ TEST(t_dlt_user_log_write_int32, normal)
     int32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 normal"));
 
@@ -1383,6 +1475,8 @@ TEST(t_dlt_user_log_write_int32, nullpointer)
     int32_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 nullpointer"));
 
@@ -1404,6 +1498,8 @@ TEST(t_dlt_user_log_write_int64, normal)
     int64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 normal"));
 
@@ -1432,6 +1528,8 @@ TEST(t_dlt_user_log_write_int64, nullpointer)
     int64_t data;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 nullpointer"));
 
@@ -1452,6 +1550,8 @@ TEST(t_dlt_user_log_write_string, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal"));
 
@@ -1474,6 +1574,8 @@ TEST(t_dlt_user_log_write_string, nullpointer)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string nullpointer"));
 
@@ -1498,6 +1600,8 @@ TEST(t_dlt_user_log_write_constant_string, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal"));
 
@@ -1520,6 +1624,8 @@ TEST(t_dlt_user_log_write_constant_string, nullpointer)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string nullpointer"));
 
@@ -1544,6 +1650,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal"));
 
@@ -1566,6 +1674,8 @@ TEST(t_dlt_user_log_write_utf8_string, nullpointer)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string nullpointer"));
 
@@ -1590,6 +1700,8 @@ TEST(t_dlt_user_log_write_raw, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw normal"));
 
@@ -1612,6 +1724,8 @@ TEST(t_dlt_user_log_write_raw, nullpointer)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw nullpointer"));
 
@@ -1620,8 +1734,8 @@ TEST(t_dlt_user_log_write_raw, nullpointer)
     EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(-1,dlt_user_log_write_raw(NULL, text1, 6));
     EXPECT_GE(-1,dlt_user_log_write_raw(NULL, NULL, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 1));
+    EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 0));
+    EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 1));
     EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
     
     EXPECT_LE(0,dlt_unregister_context(&context));
@@ -1637,6 +1751,8 @@ TEST(t_dlt_user_log_write_raw_formatted, normal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted normal"));
 
@@ -1671,6 +1787,8 @@ TEST(t_dlt_user_log_write_raw_formatted, abnormal)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
     
@@ -1693,6 +1811,8 @@ TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
     DltContextData contextData;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted nullpointer"));
 
@@ -1701,8 +1821,8 @@ TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
     EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(-1,dlt_user_log_write_raw_formatted(NULL, text1, 6, DLT_FORMAT_DEFAULT));
     EXPECT_GE(-1,dlt_user_log_write_raw_formatted(NULL, NULL, 0, DLT_FORMAT_DEFAULT));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 1, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 1, DLT_FORMAT_DEFAULT));
     EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
     
     EXPECT_LE(0,dlt_unregister_context(&context));
@@ -1727,6 +1847,8 @@ TEST(t_dlt_log_string, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string normal"));
 
@@ -1758,6 +1880,8 @@ TEST(t_dlt_log_string, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
     
@@ -1779,6 +1903,8 @@ TEST(t_dlt_log_string, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string nullpointer"));
 
@@ -1800,6 +1926,8 @@ TEST(t_dlt_log_string_int, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int normal"));
 
@@ -1841,6 +1969,8 @@ TEST(t_dlt_log_string_int, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
     
@@ -1863,6 +1993,8 @@ TEST(t_dlt_log_string_int, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int nullpointer"));
 
@@ -1885,6 +2017,8 @@ TEST(t_dlt_log_string_uint, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint normal"));
 
@@ -1926,6 +2060,8 @@ TEST(t_dlt_log_string_uint, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
     
@@ -1948,6 +2084,8 @@ TEST(t_dlt_log_string_uint, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint nullpointer"));
 
@@ -1970,6 +2108,8 @@ TEST(t_dlt_log_int, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int normal"));
 
@@ -2009,6 +2149,8 @@ TEST(t_dlt_log_int, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int abnormal"));
     
@@ -2030,6 +2172,8 @@ TEST(t_dlt_log_int, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int nullpointer"));
 
@@ -2049,6 +2193,8 @@ TEST(t_dlt_log_uint, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint normal"));
 
@@ -2088,6 +2234,8 @@ TEST(t_dlt_log_uint, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint abnormal"));
     
@@ -2109,6 +2257,8 @@ TEST(t_dlt_log_uint, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint nullpointer"));
 
@@ -2128,6 +2278,8 @@ TEST(t_dlt_log_raw, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw normal"));
 
@@ -2152,6 +2304,8 @@ TEST(t_dlt_log_raw, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw abnormal"));
     
@@ -2181,15 +2335,17 @@ TEST(t_dlt_log_raw, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw nullpointer"));
 
     // NULL
-    // TODO: char data[5] = "test";
-    // TODO: uint16_t length = 4;
-    // TODO: EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, data, length));
-    // TODO: EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, NULL, length));
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, NULL, length));
+    char data[5] = "test";
+    uint16_t length = 4;
+    EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, data, length));
+    EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, NULL, length));
+    EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, NULL, length));
     
     EXPECT_LE(0,dlt_unregister_context(&context));
     EXPECT_LE(0,dlt_unregister_app());
@@ -2203,6 +2359,8 @@ TEST(t_dlt_log_marker, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_marker normal"));
 
@@ -2219,6 +2377,8 @@ TEST(t_dlt_log_marker, normal)
 TEST(t_dlt_register_app, normal)
 {
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("T", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_unregister_app());
     EXPECT_LE(0,dlt_register_app("TU", "dlt_user.c tests"));
@@ -2233,6 +2393,8 @@ TEST(t_dlt_register_app, normal)
 TEST(t_dlt_register_app, abnormal)
 {
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_GE(-1,dlt_register_app("", "dlt_user.c tests"));
     EXPECT_GE(-1,dlt_unregister_app());
     // TODO: EXPECT_GE(-1,dlt_register_app("TUSR1", "dlt_user.c tests"));
@@ -2241,15 +2403,18 @@ TEST(t_dlt_register_app, abnormal)
     // TODO: EXPECT_GE(-1,dlt_unregister_app());
     // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", ""));
     // TODO: EXPECT_GE(-1,dlt_unregister_app());
+    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", NULL));
     EXPECT_LE(0,dlt_free());
 }
 
 TEST(t_dlt_register_app, nullpointer)
 {
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_GE(-1,dlt_register_app(NULL, NULL));
     EXPECT_GE(-1,dlt_register_app(NULL, "dlt_user.c tests"));
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", NULL));
+
     EXPECT_LE(0,dlt_free());
 }
 
@@ -2258,6 +2423,8 @@ TEST(t_dlt_register_app, nullpointer)
 TEST(t_dlt_unregister_app, normal)
 {
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("T", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_unregister_app());
     EXPECT_LE(0,dlt_register_app("TU", "dlt_user.c tests"));
@@ -2272,6 +2439,8 @@ TEST(t_dlt_unregister_app, normal)
 TEST(t_dlt_unregister_app, abnormal)
 {
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_GE(-1,dlt_unregister_app());
     EXPECT_GE(-1,dlt_register_app("", "dlt_user.c tests"));
     EXPECT_GE(-1,dlt_unregister_app());
@@ -2291,6 +2460,8 @@ TEST(t_dlt_register_context, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
@@ -2305,6 +2476,8 @@ TEST(t_dlt_register_context, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_GE(-1,dlt_register_context(&context, "", "d"));
@@ -2326,6 +2499,7 @@ TEST(t_dlt_register_context, abnormal)
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
     EXPECT_LE(0,dlt_unregister_context(&context));
 
     EXPECT_LE(0,dlt_unregister_app());
@@ -2337,15 +2511,12 @@ TEST(t_dlt_register_context, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
     EXPECT_GE(-1,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
     EXPECT_GE(-1,dlt_register_context(&context, NULL, NULL));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
+    EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
     EXPECT_GE(-1,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_register_context normal"));
     EXPECT_GE(-1,dlt_register_context(NULL, NULL, NULL));
 
@@ -2361,6 +2532,8 @@ TEST(t_dlt_register_context_ll_ts, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
@@ -2401,6 +2574,8 @@ TEST(t_dlt_register_context_ll_ts, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "", "d", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
@@ -2441,6 +2616,7 @@ TEST(t_dlt_register_context_ll_ts, abnormal)
     // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
     EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, 100));
     // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
 
     EXPECT_LE(0,dlt_unregister_app());
     EXPECT_LE(0,dlt_free());
@@ -2451,15 +2627,13 @@ TEST(t_dlt_register_context_ll_ts, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
     EXPECT_GE(-1,dlt_register_context_ll_ts(&context, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
     EXPECT_GE(-1,dlt_register_context_ll_ts(&context, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
 
@@ -2474,6 +2648,8 @@ TEST(t_dlt_unregister_context, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
@@ -2488,6 +2664,8 @@ TEST(t_dlt_unregister_context, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
     EXPECT_GE(-1,dlt_register_context(&context, "", "d"));
@@ -2509,6 +2687,7 @@ TEST(t_dlt_unregister_context, abnormal)
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
     // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
     EXPECT_LE(0,dlt_unregister_context(&context));
 
     EXPECT_LE(0,dlt_unregister_app());
@@ -2520,15 +2699,13 @@ TEST(t_dlt_unregister_context, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
+    EXPECT_GE(-1,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_unregister_context normal"));
     EXPECT_GE(-1,dlt_register_context(&context, NULL, NULL));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
+    EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
     EXPECT_GE(-1,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_unregister_context normal"));
     EXPECT_GE(-1,dlt_register_context(NULL, NULL, NULL));
 
@@ -2550,6 +2727,8 @@ TEST(t_dlt_register_injection_callback, normal)
     // TODO: uint32_t service_id;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback normal"));
 
@@ -2575,6 +2754,8 @@ TEST(t_dlt_register_log_level_changed_callback, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback normal"));
 
@@ -2594,6 +2775,8 @@ TEST(t_dlt_user_trace_network, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network normal"));
 
@@ -2623,6 +2806,8 @@ TEST(t_dlt_user_trace_network, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network abnormal"));
 
@@ -2658,24 +2843,26 @@ TEST(t_dlt_user_trace_network, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network nullpointer"));
 
-    // TODO: char header[16];
-    // TODO: for(char i = 0; i < 16; ++i)
-    // TODO: {
-    // TODO:     header[(int)i] = i;
-    // TODO: }
-    // TODO: char payload[32];
-    // TODO: for(char i = 0; i < 32; ++i)
-    // TODO: {
-    // TODO:     payload[(int)i] = i;
-    // TODO: }
+    char header[16];
+    for(char i = 0; i < 16; ++i)
+    {
+        header[(int)i] = i;
+    }
+    char payload[32];
+    for(char i = 0; i < 32; ++i)
+    {
+        payload[(int)i] = i;
+    }
 
     // what to expect when giving in NULL pointer?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
     EXPECT_LE(0,dlt_unregister_context(&context));
     EXPECT_LE(0,dlt_unregister_app());
@@ -2690,6 +2877,8 @@ TEST(t_dlt_user_trace_network_truncated, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
 
@@ -2719,6 +2908,8 @@ TEST(t_dlt_user_trace_network_truncated, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
 
@@ -2754,24 +2945,26 @@ TEST(t_dlt_user_trace_network_truncated, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated nullpointer"));
 
-    // TODO: char header[16];
-    // TODO: for(char i = 0; i < 16; ++i)
-    // TODO: {
-    // TODO:     header[(int)i] = i;
-    // TODO: }
-    // TODO: char payload[32];
-    // TODO: for(char i = 0; i < 32; ++i)
-    // TODO: {
-    // TODO:     payload[(int)i] = i;
-    // TODO: }
+    char header[16];
+    for(char i = 0; i < 16; ++i)
+    {
+        header[(int)i] = i;
+    }
+    char payload[32];
+    for(char i = 0; i < 32; ++i)
+    {
+        payload[(int)i] = i;
+    }
 
     // what to expect when giving in NULL pointer?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
+    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
+    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
+    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
 
     EXPECT_LE(0,dlt_unregister_context(&context));
     EXPECT_LE(0,dlt_unregister_app());
@@ -2786,6 +2979,8 @@ TEST(t_dlt_user_trace_network_segmented, normal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented normal"));
 
@@ -2815,6 +3010,8 @@ TEST(t_dlt_user_trace_network_segmented, abnormal)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented abnormal"));
 
@@ -2850,24 +3047,26 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
     DltContext context;
     
     EXPECT_LE(0,dlt_init());
+
+
     EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented nullpointer"));
 
-    // TODO: char header[16];
-    // TODO: for(char i = 0; i < 16; ++i)
-    // TODO: {
-    // TODO:     header[(int)i] = i;
-    // TODO: }
-    // TODO: char payload[32];
-    // TODO: for(char i = 0; i < 32; ++i)
-    // TODO: {
-    // TODO:     payload[(int)i] = i;
-    // TODO: }
+    char header[16];
+    for(char i = 0; i < 16; ++i)
+    {
+    header[(int)i] = i;
+    }
+    char payload[32];
+    for(char i = 0; i < 32; ++i)
+    {
+        payload[(int)i] = i;
+    }
 
     // what to expect when giving in NULL pointer?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
     EXPECT_LE(0,dlt_unregister_context(&context));
     EXPECT_LE(0,dlt_unregister_app());
@@ -2881,6 +3080,8 @@ TEST(t_dlt_set_log_mode, normal)
 {
     EXPECT_LE(0,dlt_init());
 
+
+
     EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_OFF));
     EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_EXTERNAL));
     EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_INTERNAL));
@@ -2892,6 +3093,8 @@ TEST(t_dlt_set_log_mode, normal)
 TEST(t_dlt_set_log_mode, abnormal)
 {
     EXPECT_LE(0,dlt_init());
+
+
 
     // TODO: EXPECT_GE(-1,dlt_set_log_mode(DLT_USER_MODE_UNDEFINED));
     // TODO: EXPECT_GE(-1,dlt_set_log_mode((DltUserLogMode)-100));
@@ -2909,6 +3112,8 @@ TEST(t_dlt_get_log_state, normal)
 {
     EXPECT_LE(0,dlt_init());
 
+
+
     EXPECT_GE(-1,dlt_get_log_state());
 
     EXPECT_LE(0,dlt_free());
@@ -2920,6 +3125,8 @@ TEST(t_dlt_get_log_state, normal)
 TEST(t_dlt_verbose_mode, normal)
 {
     EXPECT_LE(0,dlt_init());
+
+
 
     EXPECT_LE(0,dlt_verbose_mode());
 
@@ -2933,6 +3140,8 @@ TEST(t_dlt_nonverbose_mode, normal)
 {
     EXPECT_LE(0,dlt_init());
 
+
+
     EXPECT_LE(0,dlt_nonverbose_mode());
 
     EXPECT_LE(0,dlt_free());
@@ -2944,6 +3153,7 @@ TEST(t_dlt_nonverbose_mode, normal)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     return RUN_ALL_TESTS();
 }
 
