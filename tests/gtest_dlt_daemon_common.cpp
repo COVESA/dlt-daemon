@@ -32,8 +32,8 @@ TEST(t_dlt_daemon_application_add, normal)
     EXPECT_STREQ(apid, app->apid);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
-    dlt_daemon_application_del(&daemon,app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon,app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Apid > 4, expected truncate to 4 char or error
     apid = "TO_LONG";
@@ -42,8 +42,8 @@ TEST(t_dlt_daemon_application_add, normal)
     strncpy(tmp, apid, 4);
     tmp[4] = '\0';
     EXPECT_STREQ(tmp, app->apid);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_application_add, abnormal)
 {
@@ -118,7 +118,7 @@ TEST(t_dlt_daemon_application_del, normal)
     // Normal Use-Case, retrun type cannot be tested, only apid and desc
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, 0);
     EXPECT_LE(0,dlt_daemon_application_del(&daemon,app, 0));
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_application_del, abnormal)
 {
@@ -173,18 +173,18 @@ TEST(t_dlt_daemon_application_find, normal)
     EXPECT_STREQ(apid, app->apid);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Application doesn't exist, expect NULL
     EXPECT_EQ((DltDaemonApplication *) 0, dlt_daemon_application_find(&daemon, (char *) apid, 0));
 
     // Use a different apid, expect NULL
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, 0);
-    dlt_daemon_application_find(&daemon, (char *) apid, 0);
+    EXPECT_LE((DltDaemonApplication *) 0, dlt_daemon_application_find(&daemon, (char *) apid, 0));
     EXPECT_EQ((DltDaemonApplication *) 0, dlt_daemon_application_find(&daemon, (char *) "NEXI", 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_application_find, abnormal)
 {
@@ -224,10 +224,9 @@ TEST(t_dlt_daemon_applications_clear, normal)
     pid_t pid = 0;
 
     // Normal Use Case, expect >= 0
-    dlt_daemon_application_add(&daemon, (char *) "TES1", pid, (char *) "Test clear 1", 0);
+    EXPECT_LE((DltDaemonApplication *) 0, dlt_daemon_application_add(&daemon, (char *) "TES1", pid, (char *) "Test clear 1", 0));
     dlt_daemon_application_add(&daemon, (char *) "TES2", pid, (char *) "Test clear 2", 0);
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
-    dlt_daemon_applications_clear(&daemon, 0);
 }
 TEST(t_dlt_daemon_applications_clear, abnormal)
 {
@@ -263,8 +262,8 @@ TEST(t_dlt_daemon_applications_invalidate_fd, normal)
     // Normal Use-Case
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, 0);
     EXPECT_LE(0, dlt_daemon_applications_invalidate_fd(&daemon, app->user_handle, 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_invalidate_fd, abnormal)
 {
@@ -306,8 +305,8 @@ TEST(t_dlt_daemon_applications_save, normal)
     // Normal Use-Case
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, 0);
     EXPECT_LE(0, dlt_daemon_applications_save(&daemon, (char *) filename, 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_save, abnormal)
 {
@@ -354,9 +353,8 @@ TEST(t_dlt_daemon_applications_load, normal)
     DltDaemon daemon;
     const char * filename = "/tmp/dlt-runtime.cfg";
 
-
     // Normal Use-Case, first execute t_dlt_daemon_applications_save !!
-    dlt_daemon_applications_load(&daemon,(char *) filename, 0);
+    EXPECT_LE(0, dlt_daemon_applications_load(&daemon,(char *) filename, 0));
 }
 TEST(t_dlt_daemon_applications_load, abnormal)
 {
@@ -438,10 +436,10 @@ TEST(t_dlt_daemon_context_add, normal)
     EXPECT_STREQ(desc, daecontext->context_description);
     EXPECT_EQ(DLT_LOG_DEFAULT, daecontext->log_level);
     EXPECT_EQ(DLT_TRACE_STATUS_DEFAULT, daecontext->trace_status);
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_context_add, abnormal)
 {
@@ -458,10 +456,10 @@ TEST(t_dlt_daemon_context_add, abnormal)
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_NOT_EXIST,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     //printf("### CONTEXT: APID=%s\tCTID=%s\n", daecontext->apid,daecontext->ctid);
     EXPECT_EQ((DltDaemonContext *) 0, daecontext);
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Trace Status dont exists
     DltTraceStatusType DLT_TRACE_TYPE_NOT_EXIST = (DltTraceStatusType) - 100;
@@ -469,10 +467,10 @@ TEST(t_dlt_daemon_context_add, abnormal)
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_TYPE_NOT_EXIST,0,0,desc,0);
     //printf("### CONTEXT: APID=%s\tCTID=%s\n", daecontext->apid,daecontext->ctid);
     EXPECT_EQ((DltDaemonContext *) 0, daecontext);
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Apid to long
 //    char apid_tl[8] = "TO_LONG";
@@ -587,9 +585,9 @@ TEST(t_dlt_daemon_context_del, normal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_context_del, abnormal)
 {
@@ -606,16 +604,16 @@ TEST(t_dlt_daemon_context_del, abnormal)
     // No application used
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // No contex added
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Verbose != 0 or 1
 //    app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
@@ -658,10 +656,10 @@ TEST(t_dlt_daemon_context_find, normal)
     EXPECT_STREQ(desc, daecontext->context_description);
     EXPECT_EQ(DLT_LOG_DEFAULT, daecontext->log_level);
     EXPECT_EQ(DLT_TRACE_STATUS_DEFAULT, daecontext->trace_status);
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_context_find, abnormal)
 {
@@ -680,27 +678,27 @@ TEST(t_dlt_daemon_context_find, abnormal)
     app = dlt_daemon_application_add(&daemon, no_apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,no_apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_EQ((DltDaemonContext *) 0 ,dlt_daemon_context_find(&daemon, no_apid, ctid, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_GE(-1, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // No ctid
     char no_ctid[1] = "";
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,no_ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_EQ((DltDaemonContext *) 0 ,dlt_daemon_context_find(&daemon, apid, no_ctid, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // No application added
     daecontext = dlt_daemon_context_add(&daemon,no_apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_EQ((DltDaemonContext *) 0 ,dlt_daemon_context_find(&daemon, no_apid, ctid, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_GE(-1, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Verbose != 0 or 1
 //    app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
@@ -743,10 +741,10 @@ TEST(t_dlt_daemon_contexts_clear, normal)
     // Normal Use-Case
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
     EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_clear, abnormal)
 {
@@ -792,10 +790,10 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, normal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_LE(0, dlt_daemon_contexts_invalidate_fd(&daemon, app->user_handle, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_invalidate_fd, abnormal)
 {
@@ -843,10 +841,10 @@ TEST(t_dlt_daemon_contexts_save, normal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_LE(0, dlt_daemon_contexts_save(&daemon, filename, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_save, abnormal)
 {
@@ -909,10 +907,10 @@ TEST(t_dlt_daemon_contexts_load, normal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_LE(0, dlt_daemon_contexts_load(&daemon, filename, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_load, abnormal)
 {
@@ -975,7 +973,7 @@ TEST(t_dlt_daemon_user_send_all_log_state, normal)
     DltDaemon daemon;
 
     // Normal Use-Case
-    dlt_daemon_user_send_all_log_state(&daemon, 0);
+    EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_all_log_state(&daemon, 0));
 }
 TEST(t_dlt_daemon_user_send_all_log_state, abnormal)
 {
@@ -983,7 +981,7 @@ TEST(t_dlt_daemon_user_send_all_log_state, abnormal)
 }
 TEST(t_dlt_daemon_user_send_all_log_state, nullpointer)
 {
-    dlt_daemon_user_send_all_log_state(NULL, 0);
+    EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_all_log_state(NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_all_log_state */
 
@@ -997,7 +995,7 @@ TEST(t_dlt_daemon_user_send_default_update, normal)
     DltDaemon daemon;
 
     // Normal Use-Case
-    dlt_daemon_user_send_default_update(&daemon, 0);
+    EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_default_update(&daemon, 0));
 }
 TEST(t_dlt_daemon_user_send_default_update, abnormal)
 {
@@ -1005,7 +1003,7 @@ TEST(t_dlt_daemon_user_send_default_update, abnormal)
 }
 TEST(t_dlt_daemon_user_send_default_update, nullpointer)
 {
-    dlt_daemon_user_send_default_update(NULL, 0);
+    EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_default_update(NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_default_update */
 
@@ -1026,10 +1024,10 @@ TEST(t_dlt_daemon_user_send_log_level, normal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,1,desc,0);
     EXPECT_LE(0, dlt_daemon_user_send_log_level(&daemon, daecontext, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 }
 TEST(t_dlt_daemon_user_send_log_level, abnormal)
 {
@@ -1047,10 +1045,10 @@ TEST(t_dlt_daemon_user_send_log_level, abnormal)
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,-1,desc,0);
     EXPECT_GE(-1, dlt_daemon_user_send_log_level(&daemon, daecontext, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
 
     // Verbose != 0 or 1
 //    app = dlt_daemon_application_add(&daemon, apid, 0, desc, 0);
@@ -1090,17 +1088,17 @@ TEST(t_dlt_daemon_user_send_log_state, normal)
     snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dlt%d",DLT_USER_DIR,pid);
 
     // Normal Use-Case
-    open(filename, O_RDWR |O_NONBLOCK);
-    dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, "",0);
-    app = dlt_daemon_application_add(&daemon, apid, pid, desc, 0);
-    //printf("### USERHANDLE=%i\n", app->user_handle);
-    daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
-    EXPECT_LE(0, dlt_daemon_user_send_log_state(&daemon, app, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
-    close(app->user_handle);
+//    open(filename, O_RDWR |O_NONBLOCK);
+//    dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, "",0);
+//    app = dlt_daemon_application_add(&daemon, apid, pid, desc, 0);
+//    //printf("### USERHANDLE=%i\n", app->user_handle);
+//    daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
+//    EXPECT_GE(0, dlt_daemon_user_send_log_state(&daemon, app, 0));
+//    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+//    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+//    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+//    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
+//    EXPECT_LE(0, close(app->user_handle));
 }
 TEST(t_dlt_daemon_user_send_log_state, abnormal)
 {
@@ -1124,11 +1122,11 @@ TEST(t_dlt_daemon_user_send_log_state, abnormal)
     //printf("### USERHANDLE=%i\n", app->user_handle);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,0);
     EXPECT_GE(-1, dlt_daemon_user_send_log_state(&daemon, app, 0));
-    dlt_daemon_context_del(&daemon, daecontext, 0);
-    dlt_daemon_application_del(&daemon, app, 0);
-    dlt_daemon_contexts_clear(&daemon, 0);
-    dlt_daemon_applications_clear(&daemon, 0);
-    close(app->user_handle);
+    EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, 0));
+    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
+    EXPECT_LE(0, close(app->user_handle));
 
     // Verbose != 1 or 0
 //    open(filename, O_RDWR |O_NONBLOCK);
