@@ -292,6 +292,10 @@ void dlt_print_id(char *text,const char *id)
 {
     int i, len;
 
+    // check nullpointer
+    if(!text || !id)
+        return;
+
     if (text==0)
     {
         return;
@@ -314,6 +318,10 @@ void dlt_print_id(char *text,const char *id)
 
 void dlt_set_id(char *id,const char *text)
 {
+    // check nullpointer
+    if(!id || !text)
+        return;
+
     id[0] = 0;
     id[1] = 0;
     id[2] = 0;
@@ -1588,10 +1596,8 @@ int dlt_file_open(DltFile *file,const char *filename,int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (file==0)
-    {
+    if(!file || !filename)
         return -1;
-    }
 
     /* reset counters */
     file->counter = 0;
@@ -1972,8 +1978,12 @@ int get_test_dlt_log_set_level()
 
 void dlt_log_set_filename(const char *filename)
 {
-        strncpy(logging_filename,filename,NAME_MAX);
-        logging_filename[NAME_MAX]=0;
+    // check nullpointer
+    if(!filename)
+        return;
+
+    strncpy(logging_filename,filename,NAME_MAX);
+    logging_filename[NAME_MAX]=0;
 
 }
 
@@ -2334,6 +2344,13 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 	char str[256];
 	DltBufferHead *head;
 
+    // catch null pointer
+    if(!buf)
+        return -1;
+    // catch 0 logical errors
+    if(min_size == 0 || max_size == 0 || step_size == 0)
+        return -1;
+
 	// Init parameters
 	buf->min_size = min_size;
 	buf->max_size = max_size;
@@ -2377,13 +2394,17 @@ int dlt_buffer_free_static(DltBuffer *buf)
 
 int dlt_buffer_free_dynamic(DltBuffer *buf)
 {
+    // catch null pointer
+    if(!buf)
+        return -1;
+
 	if(!buf->shm) {
 		// buffer not initialised
 		dlt_log(LOG_WARNING,"Buffer: Buffer not initialised\n");
 		return -1; /* ERROR */
 	}
 
-	free(buf->shm);
+    free(buf->shm);
 	buf->shm = 0;
 	buf->mem = 0;
 	
@@ -2392,52 +2413,68 @@ int dlt_buffer_free_dynamic(DltBuffer *buf)
 
 void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size)
 {
-	if((int)(*write+size) <= buf->size) {
-		// write one block
-		memcpy(buf->mem+*write,data,size);
-		*write += size;
-	}
-	else {
-		// write two blocks
-		memcpy(buf->mem+*write, data, buf->size-*write);
-		memcpy(buf->mem, data+buf->size-*write, size-buf->size+*write);
-		*write += size-buf->size;
-	}	
+    // catch null pointer
+    if(buf && write && data) {
+        if((int)(*write+size) <= buf->size) {
+            // write one block
+            memcpy(buf->mem+*write,data,size);
+            *write += size;
+        }
+        else {
+            // write two blocks
+            memcpy(buf->mem+*write, data, buf->size-*write);
+            memcpy(buf->mem, data+buf->size-*write, size-buf->size+*write);
+            *write += size-buf->size;
+        }
+    }
 }
 
 int get_test_dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size)
 {
     // Get-Method for gtest. Test dlt_buffer_write_block
     dlt_buffer_write_block(buf, write, data, size);
-    return *write;
+    if (!write)
+        return -1;
+    else
+        return *write;
 }
 
 void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size)
 {
-	if((int)(*read+size) <= buf->size) {
-		// read one block
-		memcpy(data,buf->mem+*read,size);
-		*read += size;
-	}
-	else {
-		// read two blocks
-		memcpy(data, buf->mem+*read, buf->size-*read);
-		memcpy(data+buf->size-*read, buf->mem, size-buf->size+*read);
-		*read += size-buf->size;
-	}	
+    // catch nullpointer
+    if(buf && read && data) {
+        if((int)(*read+size) <= buf->size) {
+            // read one block
+            memcpy(data,buf->mem+*read,size);
+            *read += size;
+        }
+        else {
+            // read two blocks
+            memcpy(data, buf->mem+*read, buf->size-*read);
+            memcpy(data+buf->size-*read, buf->mem, size-buf->size+*read);
+            *read += size-buf->size;
+        }
+    }
 }
 
 int get_test_dlt_buffer_read_block(DltBuffer *buf, int *read,unsigned char *data,unsigned int size)
 {
     // Get-Method for gtest. Test dlt_buffer_read_block
     dlt_buffer_read_block(buf, read, data, size);
-    return *read;
+    if(!read)
+        return -1;
+    else
+        return *read;
 }
 
 int dlt_buffer_increase_size(DltBuffer *buf)
 {
 	DltBufferHead *head,*new_head;
 	unsigned char *new_ptr;
+
+    // catch null pointer
+    if(!buf)
+        return -1;
 
 	/* check size */
 	if(buf->step_size==0) {
@@ -2494,6 +2531,10 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
 {
 	unsigned char *new_ptr;
 
+    // catch null pointer
+    if(!buf)
+        return -1;
+
 	if((buf->size + sizeof(DltBufferHead)) == buf->min_size)
 	{
 		/* already minimized */
@@ -2531,6 +2572,10 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
 
 int dlt_buffer_reset(DltBuffer *buf)
 {
+    // catch null pointer
+    if(!buf)
+        return -1;
+
 	dlt_log(LOG_WARNING,"Buffer: Buffer reset triggered.\n");
 
 	/* reset pointers and counters */	
@@ -2539,14 +2584,14 @@ int dlt_buffer_reset(DltBuffer *buf)
 	((int*)(buf->shm))[2] = 0;  // number of packets
 
 	// clear memory
-	memset(buf->mem,0,buf->size);
+    memset(buf->mem,0,buf->size);
 
 	return 0; /* OK */
 }
 
 int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size)
 {
-	return dlt_buffer_push3(buf,data,size,0,0,0,0);
+    return dlt_buffer_push3(buf,data,size,0,0,0,0);
 }
 
 int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3)
@@ -2554,6 +2599,10 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	int free_size;	
 	int write, read, count;
 	DltBufferBlockHead head;
+
+    // catch null pointer
+    if(!buf)
+        return -1;
 	
 	if(!buf->shm) {
 		// buffer not initialised
@@ -2603,9 +2652,9 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 
 	// write data
 	dlt_buffer_write_block(buf,&write,(unsigned char*)&head,sizeof(DltBufferBlockHead));
-	if(size1) dlt_buffer_write_block(buf,&write,data1,size1);
-	if(size2) dlt_buffer_write_block(buf,&write,data2,size2);
-	if(size3) dlt_buffer_write_block(buf,&write,data3,size3);
+    if(size1) dlt_buffer_write_block(buf,&write,data1,size1);
+    if(size2) dlt_buffer_write_block(buf,&write,data2,size2);
+    if(size3) dlt_buffer_write_block(buf,&write,data3,size3);
 
 	// update global shm pointers
 	((int*)(buf->shm))[0] = write; // set new write pointer 	
@@ -2621,6 +2670,10 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 	int write, read, count;
 	char head_compare[] = DLT_BUFFER_HEAD;
 	DltBufferBlockHead head;
+
+    // catch null pointer
+    if(!buf)
+        return -1;
 	
 	if(!buf->shm) {
 		// shm not initialised
@@ -2767,6 +2820,10 @@ void dlt_buffer_status(DltBuffer *buf)
 	int write, read, count;
 	char str[256];
 
+    // check nullpointer
+    if(!buf)
+        return;
+
     /* check if buffer available */
     if(!buf->shm)
         return;
@@ -2783,21 +2840,22 @@ void dlt_buffer_status(DltBuffer *buf)
 	dlt_log(LOG_DEBUG, str);	
 }
 
-int get_test_dlt_buffer_status(DltBuffer *buf)
-{
-    // Get-Method for gtest. Test dlt_buffer_status
-    dlt_buffer_status(buf);
-    return 0;
-}
-
 int dlt_buffer_get_total_size(DltBuffer *buf)
 {
+    // catch null pointer
+    if(!buf)
+        return -1;
+
 	return buf->max_size;	
 }
 
 int dlt_buffer_get_used_size(DltBuffer *buf)
 {
 	int write, read, count;
+
+    // catch null pointer
+    if(!buf)
+        return -1;
 
     /* check if buffer available */
     if(!buf->shm)
@@ -2818,6 +2876,10 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
 
 int dlt_buffer_get_message_count(DltBuffer *buf)
 {
+    // catch null pointer
+    if(!buf)
+        return -1;
+
     /* check if buffer available */
     if(!buf->shm)
         return 0;
