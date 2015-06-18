@@ -1972,11 +1972,6 @@ void dlt_log_set_level(int level)
 	logging_level = level;
 }
 
-int get_test_dlt_log_set_level()
-{
-    return logging_level;
-}
-
 void dlt_log_set_filename(const char *filename)
 {
     // check nullpointer
@@ -1986,11 +1981,6 @@ void dlt_log_set_filename(const char *filename)
     strncpy(logging_filename,filename,NAME_MAX);
     logging_filename[NAME_MAX]=0;
 
-}
-
-char * get_test_dlt_log_set_filename()
-{
-    return logging_filename;
 }
 
 void dlt_log_init(int mode)
@@ -2009,24 +1999,11 @@ void dlt_log_init(int mode)
 	}
 }
 
-int get_test_dlt_log_init()
-{
-    return logging_mode;
-}
-
 void dlt_log_free(void)
 {
 	if(logging_mode == DLT_LOG_TO_FILE) {
 		fclose(logging_handle);
 	}
-}
-
-int get_test_dlt_log_free()
-{
-    if(logging_mode == DLT_LOG_TO_FILE)
-        return logging_handle;
-    else
-        return logging_mode;
 }
 
 int dlt_log(int prio, char *s)
@@ -2430,16 +2407,6 @@ void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data
     }
 }
 
-int get_test_dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size)
-{
-    // Get-Method for gtest. Test dlt_buffer_write_block
-    dlt_buffer_write_block(buf, write, data, size);
-    if (!write)
-        return -1;
-    else
-        return *write;
-}
-
 void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size)
 {
     // catch nullpointer
@@ -2458,24 +2425,14 @@ void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned
     }
 }
 
-int get_test_dlt_buffer_read_block(DltBuffer *buf, int *read,unsigned char *data,unsigned int size)
-{
-    // Get-Method for gtest. Test dlt_buffer_read_block
-    dlt_buffer_read_block(buf, read, data, size);
-    if(!read)
-        return -1;
-    else
-        return *read;
-}
-
 int dlt_buffer_increase_size(DltBuffer *buf)
 {
-	DltBufferHead *head,*new_head;
-	unsigned char *new_ptr;
-
     // catch null pointer
     if(!buf)
         return -1;
+
+	DltBufferHead *head,*new_head;
+	unsigned char *new_ptr;
 
 	/* check size */
 	if(buf->step_size==0) {
@@ -2798,6 +2755,10 @@ int dlt_buffer_remove(DltBuffer *buf)
 
 void dlt_buffer_info(DltBuffer *buf)
 {
+    // check nullpointer
+    if(!buf)
+        return;
+
 	char str[256];
 
 	snprintf(str,sizeof(str),"Buffer: Available size: %d\n",buf->size);
@@ -2807,13 +2768,6 @@ void dlt_buffer_info(DltBuffer *buf)
 	snprintf(str,sizeof(str),"Buffer: Buffer start address: %lX\n",(unsigned long)buf->mem);
 	dlt_log(LOG_DEBUG, str);
 	
-}
-
-int get_test_dlt_buffer_info(DltBuffer *buf)
-{
-    // Get-Method for gtest. Test dlt_buffer_info
-    dlt_buffer_info(buf);
-    return 0;
 }
 
 void dlt_buffer_status(DltBuffer *buf)
