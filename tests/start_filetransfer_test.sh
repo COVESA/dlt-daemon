@@ -5,7 +5,7 @@ fullpath="$(pwd)/testfile_filetransfer.txt"
 #start dlt-daemon
 dlt-daemon &
 #start dlt-test-receiver
-./../build/tests/dlt_test_receiver localhost &
+./../build/tests/dlt_test_receiver -f localhost &
 #send file to daemon
 dlt-example-filetransfer $fullpath &
 

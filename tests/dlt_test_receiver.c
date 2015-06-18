@@ -77,6 +77,7 @@
 #include <fcntl.h>      /* for open() */
 #include <sys/uio.h>    /* for writev() */
 #include <string.h>
+#include <syslog.h>
 
 #include "dlt_client.h"
 #include <zlib.h>
@@ -94,6 +95,8 @@ typedef struct {
     char *ovalue;
     char *evalue;
     int bvalue;
+    int filetransfervalue;
+    int systemjournalvalue;
     char ecuid[4];
     int ohandle;
     DltFile file;
@@ -101,6 +104,7 @@ typedef struct {
 } DltReceiveData;
 
 FILE *fp;
+int result = 0;
 
 /**
  * Print usage information of tool.
@@ -119,6 +123,8 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
     printf("  -y            Serial device mode\n");
+    printf("  -f            Activate filetransfer test case\n");
+    printf("  -s            Activate systemd journal test case\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
@@ -141,11 +147,13 @@ int main(int argc, char* argv[])
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
     dltdata.ohandle=-1;
+    dltdata.filetransfervalue = 0;
+    dltdata.systemjournalvalue = 0;
 
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vhy:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vshyfa:o:e:b:")) != -1)
         switch (c)
         {
         case 'v':
@@ -161,6 +169,16 @@ int main(int argc, char* argv[])
         case 'y':
             {
                 dltdata.yflag = 1;
+                break;
+            }
+        case 'f':
+            {
+                dltdata.filetransfervalue = 1;
+                break;
+            }
+        case 's':
+            {
+                dltdata.systemjournalvalue = 1;
                 break;
             }
         case 'o':
@@ -312,59 +330,79 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     }
 
     dltdata = (DltReceiveData*)data;
-
-    dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
     
-    // 1st find starting point of tranfering data packages
-    if( strncmp(text, "FLST", 4) == 0)
+    if(dltdata->filetransfervalue)
     {
-        char *tmpFilename;
-        tmpFilename = strrchr(text, '/') + 1;
-        unsigned int i;
-        for(i=0; i<strlen(tmpFilename);i++)
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+
+        // 1st find starting point of tranfering data packages
+        if( strncmp(text, "FLST", 4) == 0)
         {
-            if(isspace(tmpFilename[i]))
+            char *tmpFilename;
+            tmpFilename = strrchr(text, '/') + 1;
+            unsigned int i;
+            for(i=0; i<strlen(tmpFilename);i++)
             {
-                tmpFilename[i] ='\0';
-                break;
+                if(isspace(tmpFilename[i]))
+                {
+                    tmpFilename[i] ='\0';
+                    break;
+                }
+            }
+            // create file for each received file, as named as crc value
+            snprintf(filename, 255, "/tmp/%s", tmpFilename);
+            fp = fopen(filename, "w+");
+        }
+
+        // 3rd close fp
+        if( strncmp(text, "FLFI", 4) == 0)
+        {
+            printf("TEST FILETRANSFER PASSED\n");
+            fclose(fp);
+        }
+
+        // 2nd check if incomming data are filetransfer data
+        if( strncmp(text, "FLDA", 4) == 0)
+        {
+            // truncate beginning of data stream ( FLDA, File identifier and package number)
+            char *position = strchr(text, 32); // search for space
+            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+            position = strchr(text, 32);
+            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+            position = strchr(text, 32);
+            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+
+            // truncate ending of data stream ( FLDA )
+            int len = strlen(text);
+            text[len - 4] = '\0';
+            // hex to ascii and store at /tmp
+            char tmp[3];
+            int i;
+            for(i = 0;i< (int) strlen(text); i = i+3)
+            {
+                tmp[0] = text[i];
+                tmp[1] = text[i+1];
+                tmp[2] = '\0';
+                unsigned long h = strtoul(tmp, NULL, 16);
+                fprintf(fp, "%c", (int) h);
             }
         }
-        // create file for each received file, as named as crc value
-        snprintf(filename, 255, "/tmp/%s", tmpFilename);
-        fp = fopen(filename, "w+");
     }
 
-    // 3rd close fp
-    if( strncmp(text, "FLFI", 4) == 0)
+    if(dltdata->systemjournalvalue)
     {
-        printf("TEST FILETRANSFER PASSED\n");
-        fclose(fp);
-    }
-
-    // 2nd check if incomming data are filetransfer data
-    if( strncmp(text, "FLDA", 4) == 0)
-    {
-        // truncate beginning of data stream ( FLDA, File identifier and package number)
-        char *position = strchr(text, 32); // search for space
-        snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
-        position = strchr(text, 32);
-        snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
-        position = strchr(text, 32);
-        snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
-
-        // truncate ending of data stream ( FLDA )
-        int len = strlen(text);
-        text[len - 4] = '\0';
-        // hex to ascii and store at /tmp
-        char tmp[3];
-        int i;
-        for(i = 0;i< (int) strlen(text); i = i+3)
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+        // 1st find the relevant packages
+        char * tmp = message->extendedheader->ctid;
+        tmp[4] = '\0';
+        if( strcmp( tmp , (const char *) "JOUR") == 0)
         {
-            tmp[0] = text[i];
-            tmp[1] = text[i+1];
-            tmp[2] = '\0';
-            unsigned long h = strtoul(tmp, NULL, 16);
-            fprintf(fp, "%c", (int) h);
+            if(strstr(text,"DLT SYSTEM JOURNAL TEST"))
+            {
+                result ++;
+                if( result == 1000)
+                    exit(159);
+            }
         }
     }
 
