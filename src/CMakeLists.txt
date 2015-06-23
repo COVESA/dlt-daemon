@@ -41,3 +41,7 @@ endif( WITH_DLT_SYSTEM )
 if( WITH_DLT_DBUS )
     add_subdirectory( dbus )
 endif( WITH_DLT_DBUS )
+
+if( WITH_DLT_COREDUMPHANDLER )
+    add_subdirectory( core_dump_handler )
+endif( WITH_DLT_COREDUMPHANDLER )

@@ -16,9 +16,8 @@
  */
 
 /*!
- * \author
- * Jens Bocklage <jens_bocklage@mentor.com>
- * Stefan Held <stefan_held@mentor.com>
+ * \author Jens Bocklage <jens_bocklage@mentor.com>
+ * \author Stefan Held <stefan_held@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.

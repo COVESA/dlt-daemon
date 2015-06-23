@@ -69,6 +69,7 @@ option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"          
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
+option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -88,6 +89,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/dlt
     ${CMAKE_SOURCE_DIR}/src/shared/
+    ${CMAKE_SOURCE_DIR}/src/core_dump_handler/
     ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
@@ -183,12 +185,16 @@ message( STATUS "WITH_DLT_TESTS = ${WITH_DLT_TESTS}")
 message( STATUS "WITH_DLT_SHM_ENABLE = ${WITH_DLT_SHM_ENABLE}" )
 message( STATUS "WITH_DLTTEST = ${WITH_DLTTEST}" )
 message( STATUS "WITH_DLT_CXX11_EXT = ${WITH_DLT_CXX11_EXT}" )
+message( STATUS "WITH_DLT_COREDUMPHANDLER = ${WITH_DLT_COREDUMPHANDLER}" )
 message( STATUS "WITH_CHECK_CONFIG_FILE = ${WITH_CHECK_CONFIG_FILE}" )
 message( STATUS "WITH_TESTSCRIPTS = ${WITH_TESTSCRIPTS}" )
 message( STATUS "WITH_GPROF = ${WITH_GPROF}" )
 message( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
+message( STATUS "TARGET_CPU_NAME = ${TARGET_CPU_NAME}" )
 message( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 message( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
+message( STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}" )
+message( STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}" )
 message( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 message( STATUS "-------------------------------------------------------------------------------" )
 message( STATUS )
