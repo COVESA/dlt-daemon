@@ -97,6 +97,7 @@ typedef struct {
     int bvalue;
     int filetransfervalue;
     int systemjournalvalue;
+    int systemloggervalue;
     char ecuid[4];
     int ohandle;
     DltFile file;
@@ -125,6 +126,7 @@ void usage()
     printf("  -y            Serial device mode\n");
     printf("  -f            Activate filetransfer test case\n");
     printf("  -s            Activate systemd journal test case\n");
+    printf("  -l            Activate system logger test case");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
@@ -153,7 +155,7 @@ int main(int argc, char* argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vshyfa:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vshyfla:o:e:b:")) != -1)
         switch (c)
         {
         case 'v':
@@ -179,6 +181,11 @@ int main(int argc, char* argv[])
         case 's':
             {
                 dltdata.systemjournalvalue = 1;
+                break;
+            }
+        case 'l':
+            {
+                dltdata.systemloggervalue = 1;
                 break;
             }
         case 'o':
@@ -401,6 +408,28 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
             {
                 result ++;
                 if( result == 1000)
+                    exit(159);
+            }
+        }
+    }
+
+    if(dltdata->systemloggervalue)
+    {
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+        // 1st find the relevant packages
+        char * tmp = message->extendedheader->ctid;
+        tmp[4] = '\0';
+        const char * substring = text;
+        const char * founding = "Test Systemlogger";
+        int length = strlen(founding);
+        if( strcmp( tmp , (const char *) "PROC") == 0)
+        {
+            substring = strstr(text, founding);
+            while (substring != NULL)
+            {
+                result ++;
+                substring +=length;
+                if(result == 1000)
                     exit(159);
             }
         }
