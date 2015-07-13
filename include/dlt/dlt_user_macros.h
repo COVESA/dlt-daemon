@@ -200,7 +200,7 @@
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
  * @param MSGID the message id of log message
- * @param ARGS variable list of arguments: 
+ * @param ARGS variable list of arguments:
  calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
  DLT_INT(), DLT_UINT(), DLT_RAW()
  * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"

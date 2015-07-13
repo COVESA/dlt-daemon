@@ -108,7 +108,7 @@ int testFile1Run1(){
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF1P1 - dlt_user_log_file_complete"),DLT_STRING(file1));
 
-	//Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages	
+	//Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages
 	transferResult = dlt_user_log_file_complete(&fileContext,file1,0,20);
 	if(transferResult < 0 )
 	{
@@ -117,16 +117,16 @@ int testFile1Run1(){
 	}
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF1P1"),DLT_STRING(file1));
-	
+
 	printTestResultPositiveExpected(__FUNCTION__,transferResult);
 
 	return transferResult;
 }
 
-//!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer 
+//!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer
 int testFile1Run2(){
 	int total_size, used_size;
-	
+
 	//Get the information how many packages have the file
 	countPackages = dlt_user_log_file_packagesCount(&fileContext,file1);
 	if(countPackages < 0 )
@@ -137,8 +137,8 @@ int testFile1Run2(){
 	}
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF1P2 - transfer single package"),DLT_STRING(file1));
-						
-	//Logs the header of the file transfer. For more details see Mainpage.c. 
+
+	//Logs the header of the file transfer. For more details see Mainpage.c.
 	//The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size
 	transferResult = dlt_user_log_file_header(&fileContext,file1);
 	if(transferResult >= 0)
@@ -154,7 +154,7 @@ int testFile1Run2(){
 				break;
 			}
 
-			//Logs one single package to the file context	
+			//Logs one single package to the file context
 			transferResult = dlt_user_log_file_data(&fileContext,file1,i,20);
 			if(transferResult < 0)
 			{
@@ -165,7 +165,7 @@ int testFile1Run2(){
 		}
 
 		//Logs the end of the file transfer. For more details see Mainpage.c
-		//The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer.	
+		//The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer.
 		transferResult = dlt_user_log_file_end(&fileContext,file1,0);
 		if(transferResult < 0)
 		{
@@ -180,7 +180,7 @@ int testFile1Run2(){
 		printTestResultPositiveExpected(__FUNCTION__,transferResult);
 		return transferResult;
 	}
-	
+
 	//Just some log to main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Finished testF1P2 - transfer single package"),DLT_STRING(file1));
 	printTestResultPositiveExpected(__FUNCTION__,transferResult);
@@ -208,7 +208,7 @@ int testFile2Run1(){
 //!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer
 int testFile2Run2(){
 	int total_size, used_size;
-	
+
 	//Get the information how many packages have the file
 	countPackages = dlt_user_log_file_packagesCount(&fileContext,file2);
 	if(countPackages < 0 )
@@ -217,16 +217,16 @@ int testFile2Run2(){
 			printTestResultPositiveExpected(__FUNCTION__,countPackages);
 			return -1;
 	}
-	
+
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF2P2 - transfer single package"),DLT_STRING(file2));
-	
-	//Logs the header of the file transfer. For more details see Mainpage.c. 
+
+	//Logs the header of the file transfer. For more details see Mainpage.c.
 	//The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size
 	transferResult = dlt_user_log_file_header(&fileContext,file2);
 	if( transferResult >= 0){
-	
-		//Loop to log all packages	
+
+		//Loop to log all packages
 		for(i=1;i<=countPackages;i++)
 		{
 			dlt_user_check_buffer(&total_size, &used_size);
@@ -271,7 +271,7 @@ int testFile2Run2(){
 
 //!Test the file transfer with the condition that the transferred file does not exist using dlt_user_log_file_complete.
 int testFile3Run1(){
-	
+
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3_1));
 
@@ -307,13 +307,13 @@ int testFile3Run2(){
 	}
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P1"),DLT_STRING(file3_2));
-	
-	//Logs the header of the file transfer. For more details see Mainpage.c. 
+
+	//Logs the header of the file transfer. For more details see Mainpage.c.
 	//The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size
 	transferResult = dlt_user_log_file_header(&fileContext,file3_2);
 	if( transferResult >= 0){
-	
-		//Loop to log all packages	
+
+		//Loop to log all packages
 		for(i=1;i<=countPackages;i++)
 		{
 			//Logs one single package to the file context
@@ -343,10 +343,10 @@ int testFile3Run2(){
 
 //!Logs some information about the file.
 int testFile3Run3(){
-	
+
 	//Just some log to the main context
 	DLT_LOG(mainContext,DLT_LOG_INFO,DLT_STRING("Started testF3P2"),DLT_STRING(file3_3));
-	
+
 	//Here's the line where the dlt file file info is called. The method call logs some information to dlt about the file, filesize, file serial number and number of packages
 	transferResult = dlt_user_log_file_infoAbout(&fileContext,file3_3);
 	if(transferResult < 0)

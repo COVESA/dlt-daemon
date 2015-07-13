@@ -88,7 +88,7 @@
 /* Number of indices to be allocated at one, if no more indeces are left */
 #define DLT_COMMON_INDEX_ALLOC	   1000
 
-/* If limited output is called, 
+/* If limited output is called,
    this is the maximum number of characters to be printed out */
 #define DLT_COMMON_ASCII_LIMIT_MAX_CHARS 20
 

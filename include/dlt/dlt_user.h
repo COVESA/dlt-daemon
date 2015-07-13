@@ -272,9 +272,9 @@ typedef struct
                                                   0 not connected,
                                                  -1 unknown */
 
-    //DltRingBuffer rbuf;                 
+    //DltRingBuffer rbuf;
     DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
-    
+
     // Buffer used for resending, locked by DLT semaphore
     uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
 
@@ -575,7 +575,7 @@ int dlt_unregister_context(DltContext *handle);
  * Set the logging mode used by the daemon.
  * The logging mode is stored persistantly by the daemon.
  * @see DltUserLogMode
- * @param mode the new logging mode used by the daemon: off, extern, internal, both. 
+ * @param mode the new logging mode used by the daemon: off, extern, internal, both.
  * @return negative value if there was an error
  */
 int dlt_set_log_mode(DltUserLogMode mode);

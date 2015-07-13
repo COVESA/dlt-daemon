@@ -116,14 +116,14 @@ typedef struct
     int tests_failed;
 
     int sock;
-    
+
     // test values
     unsigned long bytes_received;
     unsigned long time_elapsed;
     int last_value;
     int count_received_messages;
     int count_not_received_messages;
-    
+
 } DltTestclientData;
 
 /**
@@ -489,14 +489,14 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 							DLT_MSG_READ_VALUE(value_tmp,ptr,datalength,int32_t);
 							value=DLT_ENDIAN_GET_32(message->standardheader->htyp, value_tmp);
 							//printf("%d\n",value);
-		
+
 							if(value < dltdata->last_value)
 							{
-								if(dltdata->nvalue == dltdata->count_received_messages)							
-									printf("PASSED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);								
+								if(dltdata->nvalue == dltdata->count_received_messages)
+									printf("PASSED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
 								else
 									printf("FAILED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
-								
+
 								dltdata->last_value = 0;
 								dltdata->count_received_messages = 0;
 								dltdata->count_not_received_messages = value -1;

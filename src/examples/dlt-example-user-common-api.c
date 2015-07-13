@@ -97,7 +97,7 @@ void usage()
 int main(int argc, char* argv[])
 {
 #ifdef DLT_TEST_ENABLE
-    int cflag = 0;    
+    int cflag = 0;
     char *svalue = 0;
     char *zvalue = 0;
 #endif /* DLT_TEST_ENABLE */
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 	char *text;
 	int num,maxnum;
 	int delay;
-	
+
 	int state=-1,newstate;
 
     opterr = 0;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
     DLT_REGISTER_CONTEXT_APP(mycontext,"TEST","LOG","Test Context for Logging");
 
     text = message;
-	
+
     if (nvalue)
     {
         maxnum = atoi(nvalue);
@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
 				printf("Client connected!\n");
 			}
 		}
-				
+
         if (gflag)
         {
             /* Non-verbose mode */

@@ -89,7 +89,7 @@ int dlt_buffer_reset(DltBuffer *buf);
 int dlt_buffer_increase_size(DltBuffer *buf);
 int dlt_buffer_minimize_size(DltBuffer *buf);
 void dlt_buffer_write_block(DltBuffer *buf,int *write, const unsigned char *data,unsigned int size);
-void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size);	
+void dlt_buffer_read_block(DltBuffer *buf,int *read,unsigned char *data,unsigned int size);
 
 void dlt_print_hex(uint8_t *ptr,int size)
 {
@@ -561,7 +561,7 @@ int dlt_filter_find(DltFilter *filter,const char *apid,const char *ctid, int ver
             /* apid matches, now check for ctid */
             if (ctid==0)
             {
-                /* check if empty ctid matches */                
+                /* check if empty ctid matches */
                 //if (memcmp(filter->ctid[num],"",DLT_ID_SIZE)==0)//coverity complains here about Out-of-bounds access.
                 char empty_ctid[DLT_ID_SIZE]="";
                 if (memcmp(filter->ctid[num],empty_ctid,DLT_ID_SIZE)==0)
@@ -1986,7 +1986,7 @@ void dlt_log_set_filename(const char *filename)
 void dlt_log_init(int mode)
 {
     logging_mode = mode;
-    
+
 	if(logging_mode == DLT_LOG_TO_FILE)
 	{
 		/* internal logging to file */
@@ -2278,7 +2278,7 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 	buf->min_size = size;
 	buf->max_size = size;
 	buf->step_size = 0;
-	
+
 	// Init pointers
  	head = (DltBufferHead*)buf->shm;
 	head->read = 0;
@@ -2289,7 +2289,7 @@ int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint
 
 	// clear memory
 	memset(buf->mem,0,buf->size);
-    
+
 	snprintf(str,sizeof(str),"Buffer: Size %d\n",buf->size);
 	dlt_log(LOG_DEBUG, str);
 
@@ -2305,7 +2305,7 @@ int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint
 	buf->min_size = size;
 	buf->max_size = size;
 	buf->step_size = 0;
-	
+
 	// Init pointers
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
     buf->size = buf->min_size - sizeof(DltBufferHead);
@@ -2341,7 +2341,7 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 		dlt_log(LOG_EMERG, str);
 		return -1;
 	}
-	
+
 	// Init pointers
 	head = (DltBufferHead*)buf->shm;
 	head->read = 0;
@@ -2352,7 +2352,7 @@ int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size
 
 	// clear memory
 	memset(buf->mem,0,buf->size);
-    
+
 	//snprintf(str,sizeof(str),"Buffer: Size %d bytes\n",buf->size);
 	//dlt_log(LOG_INFO, str);
 
@@ -2509,14 +2509,14 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
 
 	/* free old data */
 	free(buf->shm);
-	
+
 	/* update data */
 	buf->shm = new_ptr;
 	buf->mem = new_ptr+sizeof(DltBufferHead);
 	buf->size = buf->min_size - sizeof(DltBufferHead);
 
-	/* reset pointers and counters */	
-	((int*)(buf->shm))[0] = 0;  // pointer to write memory  
+	/* reset pointers and counters */
+	((int*)(buf->shm))[0] = 0;  // pointer to write memory
 	((int*)(buf->shm))[1] = 0;  // pointer to read memory
 	((int*)(buf->shm))[2] = 0;  // number of packets
 
@@ -2537,7 +2537,7 @@ int dlt_buffer_reset(DltBuffer *buf)
 	dlt_log(LOG_WARNING,"Buffer: Buffer reset triggered.\n");
 
 	/* reset pointers and counters */	
-	((int*)(buf->shm))[0] = 0;  // pointer to write memory  
+	((int*)(buf->shm))[0] = 0;  // pointer to write memory
 	((int*)(buf->shm))[1] = 0;  // pointer to read memory
 	((int*)(buf->shm))[2] = 0;  // number of packets
 
@@ -2578,17 +2578,17 @@ int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size
 	{
 		dlt_log(LOG_ERR,"Buffer: Pointer out of range\n");
 		dlt_buffer_reset(buf);
-		return -1; // ERROR		
+		return -1; // ERROR
 	}
 
 	// calculate free size
 	if(read>write)
 		free_size = read - write;
 	else if(count && (write == read))
-		free_size = 0;	
+		free_size = 0;
 	else
 		free_size = buf->size - write + read;
-	
+
 	// check size
 	if(free_size < (int)(sizeof(DltBufferBlockHead)+size1+size2+size3)) {
 		// try to increase size if possible
@@ -2649,7 +2649,7 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 	{
 		dlt_log(LOG_ERR,"Buffer: Pointer out of range\n");
 		dlt_buffer_reset(buf);
-		return -1; // ERROR		
+		return -1; // ERROR
 	}
 
 	// check if data is in there
@@ -2659,13 +2659,13 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 			dlt_log(LOG_ERR,"Buffer: SHM should be empty, but is not\n");
 			dlt_buffer_reset(buf);
 		}
-		return -1; // ERROR		
+		return -1; // ERROR
 	}
 
 	// calculate used size
 	if(write>read)
 		used_size = write - read;
-	else	
+	else
 		used_size = buf->size - read + write;
 
 	// first check size
@@ -2713,29 +2713,29 @@ int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete)
 		if(delete)
 		{
 			// update buffer pointers
-			((int*)(buf->shm))[1] = read; // set new read pointer 	
+			((int*)(buf->shm))[1] = read; // set new read pointer
 		}
 	}
 	else
 	{
 		if(delete) {
 			if( (read+head.size) <= buf->size)
-				((int*)(buf->shm))[1] = read+head.size; // set new read pointer 	
+				((int*)(buf->shm))[1] = read+head.size; // set new read pointer
 			else
-				((int*)(buf->shm))[1] = read+head.size-buf->size; // set new read pointer 		
+				((int*)(buf->shm))[1] = read+head.size-buf->size; // set new read pointer
 		}
 	}
 	if(delete) {
 		((int*)(buf->shm))[2] -= 1; // decrease counter
-	
+
 		if(((int*)(buf->shm))[2] == 0)
 		{
 			// try to minimize size
 			dlt_buffer_minimize_size(buf);
 		}
 	}
-	
-	return head.size; // OK	
+
+	return head.size; // OK
 }
 
 int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size)
@@ -2767,7 +2767,7 @@ void dlt_buffer_info(DltBuffer *buf)
 	dlt_log(LOG_DEBUG, str);
 	snprintf(str,sizeof(str),"Buffer: Buffer start address: %lX\n",(unsigned long)buf->mem);
 	dlt_log(LOG_DEBUG, str);
-	
+
 }
 
 void dlt_buffer_status(DltBuffer *buf)
@@ -2822,11 +2822,11 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
 
 	if(count == 0)
 		return 0;
-		
+
 	if(write>read)
 		return (write - read);
-	
-	return (buf->size - read + write);	
+
+	return (buf->size - read + write);
 }
 
 int dlt_buffer_get_message_count(DltBuffer *buf)
@@ -3119,7 +3119,7 @@ uint32_t dlt_uptime(void)
     struct timespec ts;
 
     if (clock_gettime(CLOCK_MONOTONIC,&ts)==0)
-    {        
+    {
         return ( (uint32_t)ts.tv_sec*10000 + (uint32_t)ts.tv_nsec/100000 );// in 0.1 ms = 100 us
     }
     else

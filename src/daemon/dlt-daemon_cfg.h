@@ -79,11 +79,11 @@
 #define DLT_DAEMON_ECU_VERSION_THREAD_STACKSIZE 100000
 
 /* Size of receive buffer for fifo connection  (from user application) */
-#define DLT_DAEMON_RCVBUFSIZE       10024 
+#define DLT_DAEMON_RCVBUFSIZE       10024
 /* Size of receive buffer for socket connection (from dlt client) */
-#define DLT_DAEMON_RCVBUFSIZESOCK   10024 
+#define DLT_DAEMON_RCVBUFSIZESOCK   10024
 /* Size of receive buffer for serial connection (from dlt client) */
-#define DLT_DAEMON_RCVBUFSIZESERIAL 10024 
+#define DLT_DAEMON_RCVBUFSIZESERIAL 10024
 
 /* Size of buffer for text output */
 #define DLT_DAEMON_TEXTSIZE         10024
@@ -95,15 +95,15 @@
 #define DLT_DAEMON_DESCSIZE           256
 
 /* Name of daemon lock file, contain process id of dlt daemon instance */
-#define DLT_DAEMON_LOCK_FILE  "dltd.lock" 
+#define DLT_DAEMON_LOCK_FILE  "dltd.lock"
 
 /* Umask of daemon, creates files with permission 750 */
-#define DLT_DAEMON_UMASK              027 
+#define DLT_DAEMON_UMASK              027
 /* Permissions of daemon lock file */
 #define DLT_DAEMON_LOCK_FILE_PERM    0640
 
 /* Default ECU ID, used in storage header and transmitted to client*/
-#define DLT_DAEMON_ECU_ID "ECU1"          
+#define DLT_DAEMON_ECU_ID "ECU1"
 
 /* Default baudrate for serial interface */
 #define DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE 115200

@@ -19,7 +19,7 @@ echo $md5_2
 #verify the sums
 tput setaf 1
 if [ $md5_1 == $md5_2 ]
-then 
+then
 	echo "Files are equal. Transfer succuess."
 else
 	echo "File not equal. Error on transmission"

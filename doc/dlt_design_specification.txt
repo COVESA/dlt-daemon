@@ -257,7 +257,7 @@ The following table shows, where the DLT messages are created. The message types
 [options="header"]
 |==============================================================================================
 | Type of message  | DLT client | DLT daemon | DLT library
-| Control request  |     X      |      X     | 
+| Control request  |     X      |      X     |
 | Control response |            |      X     |
 | Log message      |            |            |       X
 | Trace message    |            |            |       X
@@ -544,7 +544,7 @@ The DLT daemon implementation uses the following files, besides DLT functions fr
 
 [options="header"]
 |==============================================================================================
-| File | Description 
+| File | Description
 | dlt-daemon.c | DLT daemon implementation
 | dlt-daemon.h | Header file for dlt-daemon.c
 | dlt-daemon_cfg.h | Compile time configuration for DLT daemon, Part1
@@ -570,18 +570,18 @@ The shared directory contains the following files:
 |==============================================================================================
 | File | Description
 | dlt_common.c | Common helper functions, such as:
-- Print functions for DLT messages 
+- Print functions for DLT messages
 - Functions for handling DLT Ids
 - Filter functions
 - DLT message handling functions
-- Functions for handling DLT files 
-- DLT receiver functions 
-- Log handling 
-- Ringbuffer functions 
+- Functions for handling DLT files
+- DLT receiver functions
+- Log handling
+- Ringbuffer functions
 - Setting and checking of storage header
 | dlt_common_cfg.h | Compile time configuration for dlt_common.c
 | dlt_user_shared.c | Shared functions, required by the DLT daemon and the DLT user library, such as:
-- Setting and checking the user header 
+- Setting and checking the user header
 - Sending DLT messages over named pipes (FIFOs)
 | dlt_user_shared.h | Header file for dlt_user_shared.c
 | dlt_user_shared_cfg.h | Compile time configuration for dlt_user_shared.c
@@ -613,7 +613,7 @@ The following important structures are used in the DLT Daemon and DLT User Libra
 | DltDaemonApplication | Parameters of an application, used within DLT daemon
 | DltDaemonContext | Parameters of a context, used within DLT daemon
 | DltUserControlMsg... | User control messages
-| DltContext | Each context is represented with this structure 
+| DltContext | Each context is represented with this structure
 | DltContextData | Temorary used structure for constructing a log message
 | DltUserInjectionCallback | One entry in dynamic callback table for callback function
 | dlt_ll_ts_type | Table managing all contexts (and loglevels and trce statuses) within DLT user library, contains dynamicly growing array with "DltUserInjectionCallback" entries

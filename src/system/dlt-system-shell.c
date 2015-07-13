@@ -67,7 +67,7 @@ DLT_DECLARE_CONTEXT(shellContext)
 int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t length)
 {
 	(void) length;
-	
+
 	DLT_LOG(shellContext,DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-shell, injection callback"));
 	char text[DLT_SHELL_COMMAND_MAX_LENGTH];
@@ -76,14 +76,14 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
 	if(length<=DLT_SHELL_COMMAND_MAX_LENGTH-1)
 	{
 		strncpy(text,data,length);
-		text[length] = 0;			
+		text[length] = 0;
 	}
 	else
 	{
 		strncpy(text,data,DLT_SHELL_COMMAND_MAX_LENGTH-1);
-		text[DLT_SHELL_COMMAND_MAX_LENGTH-1] = 0;	
+		text[DLT_SHELL_COMMAND_MAX_LENGTH-1] = 0;
 	}
-	
+
 	DLT_LOG(shellContext,DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-shell, injection injection id:"),
 			DLT_UINT32(service_id));
@@ -105,7 +105,7 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
 			{
 				DLT_LOG(shellContext,DLT_LOG_INFO,
 						DLT_STRING("Shell command executed:"),
-						DLT_STRING(text));				
+						DLT_STRING(text));
 			}
 			break;
 		default:

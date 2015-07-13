@@ -15,13 +15,13 @@
 
 Extended Network Trace
 ======================
-Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de> 
+Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de>
 0.0.1, 2012/10/11: Initial version
 
 image::images/genivi_chrome_1_transparent.png[width=128]
 
 == Introduction
-The extended network trace allows the user to send or truncate network trace messages 
+The extended network trace allows the user to send or truncate network trace messages
 that are larger than the normal maximum size of a DLT message.
 
 == Protocol
@@ -56,7 +56,7 @@ User can send a segmented network trace message asynchronously using:
 void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
 ----
 
-This will start a background thread and return immediately. 
+This will start a background thread and return immediately.
 
 User can also send all the required packages one by one using:
 

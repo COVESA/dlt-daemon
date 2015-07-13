@@ -15,12 +15,12 @@ logging facility providing
 - the DLT client console utilities
 - the DLT test applications
 
-The DLT daemon is the central component in GENIVI, which gathers all 
-logs and traces from the DLT user applications. The logs and traces 
-are stored optionally directly in a file in the ECU. The DLT daemon 
+The DLT daemon is the central component in GENIVI, which gathers all
+logs and traces from the DLT user applications. The logs and traces
+are stored optionally directly in a file in the ECU. The DLT daemon
 forwards all logs and traces to a connected DLT client.
-The DLT client can send control messages to the daemon, e.g. to set 
-individual log levels of applications and contexts or get the list of 
+The DLT client can send control messages to the daemon, e.g. to set
+individual log levels of applications and contexts or get the list of
 applications and contexts registered in the DLT daemon.
 
 Documentation
@@ -55,7 +55,7 @@ Developped and tested with Ubuntu Linux 12.04 32-bit / Intel PC
 
 License
 -------
-Full information on the license for this software is available in the "LICENSE" file. 
+Full information on the license for this software is available in the "LICENSE" file.
 
 Source Code
 -----------

@@ -131,24 +131,24 @@ case "$1" in
 	esac
 	;;
   status)
-	   if [ -f /var/log/messages ] 
+	   if [ -f /var/log/messages ]
 		then
 			log_daemon_msg "------- messages  ----------------"
 			cat /var/log/messages | grep -a DLT | tail
 		fi
 
-		if [ -f /var/log/syslog ] 
+		if [ -f /var/log/syslog ]
 		then
 			log_daemon_msg "------- SYSLOG -------------------"
 			cat /var/log/syslog | grep -a DLT | tail
 		fi
-		
+
 		pidofdlt=`pidof $DESC`
 		if [ $pidofdlt ]
 		then
 			log_daemon_msg "$NAME has the PID:$pidofdlt"
 		fi
-		
+
         status_of_proc "$DAEMON" "$NAME" || exit $?
        ;;
   #reload|force-reload)

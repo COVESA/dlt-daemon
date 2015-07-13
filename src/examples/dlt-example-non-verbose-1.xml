@@ -313,7 +313,7 @@
 		        </fx:MANUFACTURER-EXTENSION>
 		    </fx:FRAME>
 		</fx:FRAMES>
-		
+
 		<!--*************************** signals **************************-->
 		<fx:SIGNALS>
 			<!--======================= BOOL =====================-->
@@ -388,9 +388,9 @@
 			</fx:SIGNAL>
 		</fx:SIGNALS>
 	</fx:ELEMENTS>
-	
+
 	<!--********************* PROCESSING INFORMATION *********************-->
-	
+
 	<fx:PROCESSING-INFORMATION>
 		<!--*************************** codings ****************************-->
 		<fx:CODINGS>

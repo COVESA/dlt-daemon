@@ -30,9 +30,9 @@ set( DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
 set( DLT_VERSION_STATE STABLE )
 set( DLT_REVISION "")
 
-execute_process(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+execute_process(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE DLT_REVISION
-	ERROR_VARIABLE GIT_ERROR 
+	ERROR_VARIABLE GIT_ERROR
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 	ERROR_STRIP_TRAILING_WHITESPACE)
 if( DLT_REVISION MATCHES "^$")
@@ -83,10 +83,10 @@ if(WITH_DLT_DBUS)
   pkg_check_modules(DBUS REQUIRED dbus-1)
 endif(WITH_DLT_DBUS)
 
-include_directories( 
+include_directories(
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/dlt
-    ${CMAKE_SOURCE_DIR}/src/shared/ 
+    ${CMAKE_SOURCE_DIR}/src/shared/
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
     ${CMAKE_SOURCE_DIR}/systemd/3rdparty/
@@ -101,11 +101,11 @@ endif(WITH_DLTTEST)
 if(WITH_DLT_SHM_ENABLE)
     add_definitions( -DDLT_SHM_ENABLE)
 endif(WITH_DLT_SHM_ENABLE)
- 
+
 if(WITH_GPROF)
   SET(CMAKE_C_FLAGS "-pg")
-endif(WITH_GPROF)    
-   
+endif(WITH_GPROF)
+
 add_definitions( "-Wall" )
 add_definitions( "-Wextra" )
 
@@ -133,7 +133,7 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     if(WITH_SYSTEMD)
         add_definitions( -DDLT_SYSTEMD_ENABLE)
     endif(WITH_SYSTEMD)
-    
+
     if(WITH_SYSTEMD_WATCHDOG)
         add_definitions( -DDLT_SYSTEMD_WATCHDOG_ENABLE)
     endif(WITH_SYSTEMD_WATCHDOG)
@@ -141,9 +141,9 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     if(WITH_SYSTEMD_JOURNAL)
         add_definitions( -DDLT_SYSTEMD_JOURNAL_ENABLE)
     endif(WITH_SYSTEMD_JOURNAL)
-    
+
     set( systemd_SRCS ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
-    
+
     add_subdirectory( systemd )
 endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 

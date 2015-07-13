@@ -180,7 +180,7 @@ char* getFileCreationDate2(const char* file,int *ok){
  */
 int isFile (const char* file)
 {
-	struct stat   st;   
+	struct stat   st;
 	return (stat (file, &st) == 0);
 }
 
@@ -216,7 +216,7 @@ int checkUserBufferForFreeSpace()
  * @return If the file is successfully deleted, a zero value is returned.If the file can not be deleted a nonzero value is returned.
  */
 int doRemoveFile(const char*filename){
-	return remove( filename); 
+	return remove( filename);
 }
 
 void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode){
@@ -247,7 +247,7 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
             DLT_INT(package_count),
 			DLT_UINT(BUFFER_SIZE),
 			DLT_STRING("FLER")
-		);		
+		);
 	} else {
 		DLT_LOG(*fileContext,DLT_LOG_ERROR,
 			DLT_STRING("FLER"),
@@ -268,7 +268,7 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
  * @return Returns 0 if everything was okey.If there was a failure a value < 0 will be returned.
  */
 int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
-	
+
 	if(isFile(filename))
 	{
         int ok;
@@ -307,7 +307,7 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
  * In the next step some generic informations about the file will be logged to dlt.
  * Now the header will be logged to dlt. See the method dlt_user_log_file_header for more informations.
  * Then the method dlt_user_log_data will be called with the parameter to log all packages in a loop with some timeout.
- * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer. 
+ * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
  * @param deleteFlag Flag if the file will be deleted after transfer. 1->delete, 0->notDelete
@@ -315,28 +315,28 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
  * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
  */
 int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout)
-{	
+{
 	if(!isFile(filename))
 	{
 		dlt_user_log_file_errorMessage(fileContext,filename, DLT_FILETRANSFER_ERROR_FILE_COMPLETE);
 		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE;
 	}
-	
+
 	if(dlt_user_log_file_header(fileContext,filename) != 0)
 	{
 		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE1;
 	}
-		
+
 	if(dlt_user_log_file_data(fileContext, filename,DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES,timeout) != 0)
 	{
 		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE2;
 	}
-		
+
 	if(dlt_user_log_file_end(fileContext,filename, deleteFlag) != 0)
 	{
 		return DLT_FILETRANSFER_ERROR_FILE_COMPLETE3;
-	}		
-			
+	}
+
 	return 0;
 }
 
@@ -352,7 +352,7 @@ int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, in
 int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename){
 	int packages;
 	long filesize;
-	
+
 	if(isFile(filename))
 	{
 		packages = 1;
@@ -363,15 +363,15 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
             return -1;
         }
         if(filesize < BUFFER_SIZE)
-		{	
+		{
 			return packages;
-		} 
-		else 
+		}
+		else
 		{
 			packages = filesize/BUFFER_SIZE;
-			
+
 			if(filesize%BUFFER_SIZE == 0)
-			{	
+			{
 				return packages;
 			}
 			else
@@ -473,7 +473,7 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
                     DLT_STRING(fcreationdate);
 					DLT_UINT(dlt_user_log_file_packagesCount(fileContext,filename)),
 					DLT_UINT(BUFFER_SIZE),
-					DLT_STRING("FLST")		
+					DLT_STRING("FLST")
 				);
 
 		return 0;
@@ -497,17 +497,17 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 	FILE *file;
 	int pkgNumber;
 	long readBytes;
-		
+
 	if(isFile(filename))
 	{
-	
+
 		file = fopen (filename,"rb");
 		if (file == NULL)
 		{
 			dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_DATA);
 			return DLT_FILETRANSFER_ERROR_FILE_DATA;
 		}
-		
+
 		if( (packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES && packageToTransfer > dlt_user_log_file_packagesCount(fileContext,filename)) || packageToTransfer <= 0)
 		{
 			DLT_LOG(*fileContext,DLT_LOG_ERROR,
@@ -524,7 +524,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 		}
 
 		readBytes = 0;
-		
+
 		if(packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES)
 		{
 //				If a single package should be transferred. The user has to check that the free space in the user buffer > 50%
@@ -598,16 +598,16 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
 				doTimeout(timeout);
 			}
 		}
-		
+
 		fclose(file);
-		
+
 		return 0;
-		
+
 	} else {
 		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_DATA);
 		return DLT_FILETRANSFER_ERROR_FILE_DATA;
 	}
-	
+
 }
 //!Transfer the end of the file as a dlt logs.
 /**The end of the file must be logged to dlt because the end contains inforamtion about the file serial number.
@@ -638,14 +638,14 @@ int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int delet
                 DLT_UINT(fserial),
 				DLT_STRING("FLFI")
 		);
-		
+
 		if(deleteFlag){
 				if( doRemoveFile(filename) != 0 ){
 					dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_END);
 					return -1;
 				}
 		}
-	
+
 		return 0;
 	}else{
 		dlt_user_log_file_errorMessage(fileContext,filename,DLT_FILETRANSFER_ERROR_FILE_END);

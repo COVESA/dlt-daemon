@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 	if(signal(SIGTERM, quit_handler) == SIG_IGN)
 		signal(SIGTERM, SIG_IGN); 	// kill (nice)
 
-	printf("Setup done. Listening. My pid: %d\n", getpid());    
+	printf("Setup done. Listening. My pid: %d\n", getpid());
 	fflush(stdout);
 
 	int err = wait_for_death();

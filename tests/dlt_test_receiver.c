@@ -337,7 +337,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     }
 
     dltdata = (DltReceiveData*)data;
-    
+
     if(dltdata->filetransfervalue)
     {
         dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);

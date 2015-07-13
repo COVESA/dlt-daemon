@@ -49,10 +49,10 @@ pkg_check_modules(DLT REQUIRED automotive-dlt)
 ----
 
 and use the variables $\{DLT_INCLUDE_DIRS\} and $\{DLT_LIBRARIES\} for the DLT include and library paths.
- 
+
 Include the DLT Header
 ----------------------
-To use DLT you have to include the DLT header file in each file you want to use DLT. 
+To use DLT you have to include the DLT header file in each file you want to use DLT.
 
 ----
 #include <dlt/dlt.h>
@@ -74,7 +74,7 @@ int main(int argc, const char\* argv\[\])
 }
 ----
 
-.Important notes: 
+.Important notes:
 * If your application uses fork(), you may not call DLT_REGISTER_APP before fork(). And fork() should never be called after DLT_REGISTER_APP. This is because of state information and inter process communication channel to daemon would be copied to new process, but threads would be not. If you are not sure where you are calling DLT_REGISTER_APP() the first time, you can initialise the DLT user library by calling the initialisation routine directly.
 ----
 dlt_user_init();
@@ -141,7 +141,7 @@ The log level must be one of the following values:
 | Log level       | Description
 | DLT_LOG_FATAL   | fatal system error
 | DLT_LOG_ERROR   | error with impact to correct functionality
-| DLT_LOG_WARN    | warning, correct behaviour could not be ensured 
+| DLT_LOG_WARN    | warning, correct behaviour could not be ensured
 | DLT_LOG_INFO    | informational (default)
 | DLT_LOG_DEBUG   | debug
 | DLT_LOG_VERBOSE | highest grade of information
@@ -166,11 +166,11 @@ The size of all logging parameters together should not exceed 2kBytes, including
 | DLT_STRING(TEXT)    | String
 | DLT_RAW(BUF,LENGTH) | Raw buffer
 | DLT_INT(VAR)        | Integer variable, dependent on platform
-| DLT_INT16(VAR)      | Integer 16 Bit variable 
+| DLT_INT16(VAR)      | Integer 16 Bit variable
 | DLT_INT32(VAR)      | Integer 32 Bit variable
 | DLT_INT64(VAR)      | Integer 64 bit variable
 | DLT_UINT(VAR)       | Unsigned integer variable
-| DLT_UINT16(VAR)     | Unsigned 16 Bit integer variable 
+| DLT_UINT16(VAR)     | Unsigned 16 Bit integer variable
 | DLT_UINT32(VAR)     | Unsigned 32 Bit integer variable
 | DLT_UINT64(VAR)     | Unsigned 64 bit integer variable
 | DLT_BOOL(VAR)       | Boolean variable
@@ -202,7 +202,7 @@ int main(int argc, const char\* argv\[\])
   DLT_REGISTER_CONTEXT(myContext2,"TES2","Test Context 2 for Logging");
   DLT_REGISTER_CONTEXT(myContext3,"TES3","Test Context 3 for Logging");
 
-  DLT_UNREGISTER_CONTEXT(myContext1);  
+  DLT_UNREGISTER_CONTEXT(myContext1);
   DLT_UNREGISTER_CONTEXT(myContext2);
   DLT_UNREGISTER_CONTEXT(myContext3);
 
@@ -240,12 +240,12 @@ int main()
   DLT_LOG(myContext2,DLT_LOG_INFO,DLT_INT(5),DLT_STRING("But this only information"));
   DLT_LOG(myContext3,DLT_LOG_DEBUG,DLT_INT(5),DLT_STRING("But this only information"));
 
-  /* Sleep some time to avoid a flaw in dlt-daemon that would eat your messages 
+  /* Sleep some time to avoid a flaw in dlt-daemon that would eat your messages
      if you deregister while it still processes your registration */
   sleep(3);
 
   /* unregister your contexts */
-  DLT_UNREGISTER_CONTEXT(myContext1);  
+  DLT_UNREGISTER_CONTEXT(myContext1);
   DLT_UNREGISTER_CONTEXT(myContext2);
   DLT_UNREGISTER_CONTEXT(myContext3);
 
@@ -253,22 +253,22 @@ int main()
   DLT_UNREGISTER_APP();
 
   return 0;
-  
+
 }
 ----
 
 .CMakeLists.txt
 ----
 cmake_minimum_required(VERSION 2.6)
- 
+
 find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
- 
+
 include_directories("${DLT_INCLUDE_DIRS}")
- 
+
 project(DLTexample)
 add_executable(dlt_example dlt_example.c)
- 
+
 target_link_libraries(dlt_example ${DLT_LIBRARIES})
 ----
 

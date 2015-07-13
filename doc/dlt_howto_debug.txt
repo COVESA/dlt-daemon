@@ -15,7 +15,7 @@
 
 How To - Debug DLT Daemon
 =========================
-Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de> 
+Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de>
 0.0.1, 2013/03/18: Initial version
 
 image::images/genivi_chrome_1_transparent.png[width=128]
@@ -32,7 +32,7 @@ The purpose is to provide the user with a clean working environment, where:
 * dlt-daemon, library and all tools can be compiled from Eclipse UI without command line
 * Debugger can be easily launched for any of the binaries in dlt-daemon project
 
-Anything in 
+Anything in
 ----
 code
 ----
@@ -72,7 +72,7 @@ Purpose: DLT utilizes cmake for build management.
 ----
 sudo apt-get install git
 ----
-This will install git version control tool. 
+This will install git version control tool.
 
 Purpose: dlt-daemon version control is managed using git. Git is needed to clone the source code repository.
 
@@ -91,7 +91,7 @@ At the time of writing, _"Eclipse CDT Juno"_ was the latest version.
 
 Extract the package to a directory. You should now have directory named "eclipse", which contains a binary called "eclipse". You should be able to start Eclipse by double clicking on the binary. In case there are problems, make sure you have proper permissions for the directory, sub-directories and that the binary has "executable"-flag set.
 ----
-chmod u+x eclipse 
+chmod u+x eclipse
 ----
 if required.
 
@@ -129,7 +129,7 @@ If these commands succeeded, you can continue. If there were errors, please reme
 
 Clean up the git directory. The following command will delete all files that are not part of the repository. Please use caution.
 ----
-git clean -fdx 
+git clean -fdx
 ----
 
 Now you have a working source directory. We can proceed to setting up the Eclipse project.
@@ -147,7 +147,7 @@ image:images/eclipse-create-c-project.png[]
 
 Name the project _"dlt-daemon"_.
 
-Select: _"Makefile project -> Empty Project"_ from the left and _"-- Other Toolchain --"_ from the right. 
+Select: _"Makefile project -> Empty Project"_ from the left and _"-- Other Toolchain --"_ from the right.
 
 Make a note of the project location. This will be know *DLT_PROJECT_DIR* from now on in this document.
 
@@ -229,11 +229,11 @@ In the following dialog, select _"General -> File system"_ and *click* _"Next"_
 
 image:images/eclipse-import-links.png[]
 
-*Click* _"Browse"_ and navigate to your DLT_GIT_DIR. 
+*Click* _"Browse"_ and navigate to your DLT_GIT_DIR.
 
-*Check* _"dlt-daemon"_ root directory. 
+*Check* _"dlt-daemon"_ root directory.
 
-*Click* _"Advanced"_ and *Check* _"Create links"_ and _"Create virtual folders"_. 
+*Click* _"Advanced"_ and *Check* _"Create links"_ and _"Create virtual folders"_.
 
 *Click* _"Filter types..."_ and only check the file types you want to see _"*.c, *.h"_ is sufficient for most cases.
 

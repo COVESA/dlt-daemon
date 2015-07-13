@@ -96,14 +96,14 @@
 /* Context ID used when the dlt daemon creates a control message */
 #define DLT_DAEMON_CTRL_CTID 		 "DC1"
 
-/* Number of entries to be allocated at one in application table, 
+/* Number of entries to be allocated at one in application table,
    when no more entries are available */
 #define DLT_DAEMON_APPL_ALLOC_SIZE      500
-/* Number of entries to be allocated at one in context table, 
+/* Number of entries to be allocated at one in context table,
    when no more entries are available */
 #define DLT_DAEMON_CONTEXT_ALLOC_SIZE  1000
 
-/* Debug get log info function, 
+/* Debug get log info function,
    set to 1 to enable, 0 to disable debugging */
 #define DLT_DEBUG_GETLOGINFO 0
 

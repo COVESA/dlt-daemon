@@ -12,7 +12,7 @@ The DLT system logging process is the central application, which logs
 system information from the platform. It provides the features
 filetransfer, syslog adapater, logging of any kind of files and
 procfilesystem logger. The individual features can be enabled and
-disabled in the configuration file. 
+disabled in the configuration file.
 
 The configuration file dlt-system.conf allows to configure the different
 runtime behaviour of dlt-system. The configuration file is loaded
@@ -38,7 +38,7 @@ SYSLOG ADAPTER OPTIONS
     Default: 0.
 
 *SyslogContextId*::
-    This value defines context id of the syslog adapter. 
+    This value defines context id of the syslog adapter.
 
     Default: SYSL
 
@@ -107,7 +107,7 @@ FILETRANSFER OPTIONS
     Default: 10
 
 *FiletransferTimeoutBetweenLogs*::
-    This value defines the amount of time to wait between two file transfer 
+    This value defines the amount of time to wait between two file transfer
     logs of a single file.
 
     Default: 10
@@ -121,7 +121,7 @@ LOG FILES OPTIONS
     Default: 0.
 
 *LogFileFilename*::
-    This value sets the full filename path to the file, which should be logged. 
+    This value sets the full filename path to the file, which should be logged.
 
 *LogFileMode*::
     This value the defines in which operation mode this file is logged.
@@ -151,13 +151,13 @@ LOG PROCESSES OPTIONS
 
 *LogProcessName*::
     This value defines the name of the process to be logged, as used in the
-    file stat of each process. 
+    file stat of each process.
     If the value is defined as *, all processes are logged.
 
 *LogProcessFilename*::
     This value sets the relative filename path to the file, which should be
     logged. The path is relative to the procfilesystem folder of the
-    process. 
+    process.
 
 *LogProcessMode*::
     This value the defines in which operation mode this process file is

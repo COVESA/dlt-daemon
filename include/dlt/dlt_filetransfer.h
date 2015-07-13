@@ -58,7 +58,7 @@
  * In the next step some generic informations about the file will be logged to dlt.
  * Now the header will be logged to dlt. See the method dlt_user_log_file_header for more informations.
  * Then the method dlt_user_log_data will be called with the parameter to log all packages in a loop with some timeout.
- * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer. 
+ * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
  * @param deleteFlag Flag if the file will be deleted after transfer. 1->delete, 0->notDelete

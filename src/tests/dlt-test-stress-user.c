@@ -245,7 +245,7 @@ int testall(int count,int repeat,int delay,int size)
     {
         buffer[num] = num;
     }
-    
+
 	/* Test All: Test all start */
     //printf("Test1: Test all\n");
     //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all"));
@@ -258,11 +258,11 @@ int testall(int count,int repeat,int delay,int size)
 			usleep(delay);
 		}
 	}
-	
+
 	/* wait 5 seconds after test */
     //sleep(5);
 	//DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished"));
-	
+
 	return 0;
 }
 

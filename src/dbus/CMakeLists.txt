@@ -15,7 +15,7 @@
 # @licence end@
 #######
 
-include_directories( 
+include_directories(
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/dlt
     ${DBUS_INCLUDE_DIRS}
@@ -24,7 +24,7 @@ include_directories(
 set(dlt_dbus_SRCS dlt-dbus.c dlt-dbus-options.c)
 add_executable(dlt-dbus ${dlt_dbus_SRCS})
 target_link_libraries(dlt-dbus dlt ${DBUS_LIBRARIES})
-	
+
 set_target_properties(dlt-dbus PROPERTIES LINKER_LANGUAGE C)
 
 install(TARGETS dlt-dbus

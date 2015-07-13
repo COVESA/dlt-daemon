@@ -185,10 +185,10 @@ int dlt_init(void)
 
     /* create and open DLT user FIFO */
     snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
-     
+
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
-    
+
     ret=mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
@@ -219,8 +219,8 @@ int dlt_init(void)
     dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
-        /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt) 
-           starts later and some DLT users have already been started before. 
+        /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
+           starts later and some DLT users have already been started before.
            Thus it is OK if the FIFO can't be opened. */
         snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO %s cannot be opened. Retrying later...\n",DLT_USER_FIFO);
         dlt_log(LOG_INFO, str);
@@ -232,16 +232,16 @@ int dlt_init(void)
 		/* init shared memory */
 		if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
 		{
-            /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt) 
-               starts later and some DLT users have already been started before. 
+            /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
+               starts later and some DLT users have already been started before.
                Thus it is OK if the FIFO can't be opened. */
 			snprintf(str,DLT_USER_BUFFER_LENGTH,"Shared memory %d cannot be created. Retrying later...\n",DLT_SHM_KEY);
 			dlt_log(LOG_INFO, str);
-			//return 0; 
-		}   
+			//return 0;
+		}
 #endif
 	}
-		
+
 
     if (dlt_receiver_init(&(dlt_user.receiver),dlt_user.dlt_user_handle, DLT_USER_RCVBUF_MAX_SIZE)==-1)
 	{
@@ -509,7 +509,7 @@ int dlt_user_atexit_blow_out_user_buffer(void){
 	DLT_SEM_LOCK();
 	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
 	DLT_SEM_FREE();
-    
+
     if (count > 0)
     {
         while(dlt_uptime() < exitTime )
@@ -528,8 +528,8 @@ int dlt_user_atexit_blow_out_user_buffer(void){
                         dlt_user.overflow_counter=0;
                     }
                 }
-            } 
-            
+            }
+
             if (dlt_user.dlt_log_handle != -1)
             {
 		        ret = dlt_user_log_resend_buffer();
@@ -1212,7 +1212,7 @@ int dlt_forward_msg(void *msgdata,size_t size)
             {
 				snprintf(str,DLT_USER_BUFFER_LENGTH,"Buffer full! %u messages discarded!\n",dlt_user.overflow_counter);
 				dlt_log(LOG_WARNING, str);
-                dlt_user.overflow_counter=0;            
+                dlt_user.overflow_counter=0;
             }
         }
 
@@ -2698,7 +2698,7 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
 		}
 		free(thread_data->header);
 		free(thread_data->payload);
-		free(thread_data);		
+		free(thread_data);
         char str[256];
         snprintf(str,255,"NWTSegmented: Could not write into queue: %s \n",strerror(errno));
         dlt_log(LOG_WARNING, str);
@@ -3440,7 +3440,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 #ifdef DLT_SHM_ENABLE
 			if(dlt_user.dlt_log_handle!=-1)
 				dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-											log->buffer, log->size,0,0);                   
+											log->buffer, log->size,0,0);
 
 			/* log to FIFO */
 			ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
@@ -3463,10 +3463,10 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 			ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
 									&(userheader), sizeof(DltUserHeader),
 									msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-									log->buffer, log->size);		
-#endif        		
+									log->buffer, log->size);
+#endif
 		}
-		
+
         /* store message in ringbuffer, if an error has occured */
         if (ret!=DLT_RETURN_OK)
         {
@@ -4146,7 +4146,7 @@ int dlt_user_log_resend_buffer(void)
 	int num,count;
     int size;
 	DltReturnValue ret;
-	
+
 	/* Send content of ringbuffer */
 	DLT_SEM_LOCK();
 	count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
@@ -4160,7 +4160,7 @@ int dlt_user_log_resend_buffer(void)
 
 		if (size>0)
 		{
-#ifdef DLT_SHM_ENABLE						
+#ifdef DLT_SHM_ENABLE
 			dlt_shm_push(&dlt_user.dlt_shm,dlt_user.resend_buffer+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);
 
 			/* log to FIFO */
@@ -4170,21 +4170,21 @@ int dlt_user_log_resend_buffer(void)
 			ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer,size,0,0,0,0);
 #endif
 
-			/* in case of error, keep message in ringbuffer */                        
+			/* in case of error, keep message in ringbuffer */
 			if (ret==DLT_RETURN_OK)
 			{
 				dlt_buffer_remove(&(dlt_user.startup_buffer));
 			}
 			else
 			{
-				/* keep message in ringbuffer */   
+				/* keep message in ringbuffer */
 				DLT_SEM_FREE();
 				return -1;
 			}
 		}
 		DLT_SEM_FREE();
 	}
-	
+
 	return 0;
 }
 
@@ -4214,8 +4214,8 @@ void dlt_user_log_reattach_to_daemon(void)
 			{
 				snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
 				dlt_log(LOG_WARNING, str);
-				//return 0; 
-			}   
+				//return 0;
+			}
 #endif
 
             dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
@@ -4306,7 +4306,7 @@ int dlt_user_check_buffer(int *total_size, int *used_size)
 	*total_size = dlt_buffer_get_total_size(&(dlt_user.startup_buffer));
 	*used_size = dlt_buffer_get_used_size(&(dlt_user.startup_buffer));
 #endif
-	
+
 	return 0; /* ok */
 }
 

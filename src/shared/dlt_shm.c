@@ -87,10 +87,10 @@ void dlt_shm_print_hex(char *ptr,int size)
 void dlt_shm_pv(int id,int operation)
 {
 	static struct sembuf semaphor;
-	
+
 	semaphor.sem_op = operation;
 	semaphor.sem_flg = SEM_UNDO;
-	
+
 	if(semop(id, &semaphor,1) == -1) {
 		dlt_log(LOG_WARNING,"SHM: semop() failed");
 	}
@@ -115,14 +115,14 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
 	{
 		dlt_log(LOG_WARNING,"SHM: shmctl() failed");
         return -1; /* ERROR */
-	}	
+	}
 
     // Now we attach the segment to our data space.
     if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
         dlt_log(LOG_WARNING,"SHM: shmat() failed");
         return -1; /* ERROR */
     }
-	
+
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
 		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
@@ -134,7 +134,7 @@ int dlt_shm_init_server(DltShm *buf,int key,int size) {
         dlt_log(LOG_WARNING,"SHM: semctl() failed");
         return -1; /* ERROR */
 	}
-	
+
 	// init buffer
 	dlt_buffer_init_static_server(&(buf->buffer),ptr,shm_buf.shm_segsz);
 
@@ -160,14 +160,14 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 	{
 	    dlt_log(LOG_WARNING,"SHM: shmctl() failed");
             return -1; /* ERROR */
-	}	
+	}
 
 	// Now we attach the segment to our data space.
 	if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
 		dlt_log(LOG_WARNING,"shmat() failed");
 		return -1; /* ERROR */
 	}
-        	
+
 	// Init semaphore
 	if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
             dlt_log(LOG_WARNING,"SHM: semget() failed");
@@ -176,7 +176,7 @@ int dlt_shm_init_client(DltShm *buf,int key) {
 
 	// init buffer
 	dlt_buffer_init_static_client(&(buf->buffer),ptr,shm_buf.shm_segsz);
-    
+
 	return 0; /* OK */
 }
 
@@ -276,7 +276,7 @@ int dlt_shm_remove(DltShm *buf)
 }
 
 int dlt_shm_free_server(DltShm *buf) {
-		
+
 	if(shmdt(buf->buffer.shm)) {
         dlt_log(LOG_WARNING,"SHM: shmdt() failed");
         return -1; /* ERROR */
@@ -297,7 +297,7 @@ int dlt_shm_free_server(DltShm *buf) {
 	buf->semid = 0;
 
 	return dlt_buffer_free_static(&(buf->buffer));
-		
+
 }
 
 int dlt_shm_free_client(DltShm *buf) {
@@ -310,6 +310,6 @@ int dlt_shm_free_client(DltShm *buf) {
 	// Reset parameters
 	buf->shmid = 0;
 	buf->semid = 0;
-		
+
 	return dlt_buffer_free_static(&(buf->buffer));
 }

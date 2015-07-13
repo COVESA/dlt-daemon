@@ -92,8 +92,8 @@ void usage()
     printf("-a apid      - Set application id to apid (default: FLTR)\n");
     printf("-c ctid      - Set context id to ctid (default: FLTR)\n");
     printf("-t ms        - Timeout between file packages in ms (minimum 1 ms)\n");
-    printf("-d           - Flag to delete the file after the transfer (default: false)\n"); 
-    printf("-i           - Flag to log file infos to DLT before transfer file (default: false)\n");  
+    printf("-d           - Flag to delete the file after the transfer (default: false)\n");
+    printf("-i           - Flag to log file infos to DLT before transfer file (default: false)\n");
     printf("-h           - This help\n");
 
 }
@@ -101,13 +101,13 @@ void usage()
 
 //!Main program dlt-test-filestransfer starts here
 int main(int argc, char* argv[])
-{	
+{
 	//char str[MAXSTRLEN];
     int opt, timeout;
 
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
-    
+
     //char version[255];
     int index;
 	int dflag = 0;
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
         }
         }
     }
-	
+
 	for (index = optind; index < argc; index++)
 	{
 		file = argv[index];
@@ -198,11 +198,11 @@ int main(int argc, char* argv[])
 
 	//Register the application at the dlt-daemon
 	DLT_REGISTER_APP(apid,FLTR_APP_DESC);
-	
+
 	//Register the context of the main program at the dlt-daemon
 	DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
-	
-	//More details in corresponding methods	
+
+	//More details in corresponding methods
 	if( iflag )
 	{
 		dlt_user_log_file_infoAbout(&fileContext,file);
@@ -212,11 +212,11 @@ int main(int argc, char* argv[])
 	{
 		printf("File couldn't be transferred. Please check the dlt log messages.\n");
 	}
-	
+
 	//Unregister the context in which the file transfer happened from the dlt-daemon
 	DLT_UNREGISTER_CONTEXT(fileContext);
 	//Unregister the context of the main program from the dlt-daemon
 	DLT_UNREGISTER_APP();
-	
+
 	return 0;
 }

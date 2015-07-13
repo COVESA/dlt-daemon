@@ -14,7 +14,7 @@ DESCRIPTION
 -----------
 Read DLT files, print DLT messages as ASCII and store the messages again.
 Use Ranges and Output file to cut DLT files.
-Use two files and Output file to join DLT files. 
+Use two files and Output file to join DLT files.
 
 OPTIONS
 -------
@@ -26,7 +26,7 @@ OPTIONS
 
 *-x*::
     Print DLT file; payload as hex.
- 
+
 *-m*::
     Print DLT file; payload as hex and ASCII.
 

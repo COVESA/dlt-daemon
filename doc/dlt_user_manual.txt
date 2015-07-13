@@ -219,12 +219,12 @@ DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 }
 ----
 
-.Important notes: 
+.Important notes:
 * If your application uses fork(), you may not call DLT_REGISTER_APP before fork(). And fork() should never be called after DLT_REGISTER_APP. This is because of state information and inter process communication channel to daemon would be copied to new process, but threads would be not.
 * DLT_REGISTER_APP is asynchronous. It may take some milliseconds to establish the IPC channel. Because of this, you might lose messages if you log immediately after registering. Typically this is not a problem, but may arise especially with simple examples.
 
 ==== Use one of the DLT macros or the DLT function interface:
-Here we use the macro interface of DLT. 
+Here we use the macro interface of DLT.
 
 ----
 DLT_LOG(mycontext,DLT_LOG_WARN,DLT_INT(5),DLT_STRING("This is a warning"));
@@ -305,7 +305,7 @@ The DLT functional interface provides a very easy to use interface. The C interf
 [options="header"]
 |==============================================================================================
 | Command | Description
-| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT: 
+| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT:
 | DltContext mycontext; | The next thing is to create an instance of each used context of an application. This has to be done outside of the source code before using any context. The name of the instance can be defined by the user.
 | DltContextData mycontextdata; | Additionally, a data buffer used to construct the DLT log messages must be created:
 | dlt_register_app("LOG","Test Application for Logging"); | In the next step in the initialization of the application the application must be registered in the DLT daemon. The identifier of the application, here "LOG", has a maximum of four characters.
@@ -314,16 +314,16 @@ The DLT functional interface provides a very easy to use interface. The C interf
 | | Choose now between verbose mode and non-verbose mode:
 | dlt_verbose_mode(); | For verbose mode (default): Optionally switch to verbose mode by calling the function dlt_verbose_mode:
 | if (dlt_user_log_write_start(&mycontext,&mycontextdata,DLT_LOG_WARN))
-{ 
-  dlt_user_log_write_int(&mycontextdata,num); 
+{
+  dlt_user_log_write_int(&mycontextdata,num);
   dlt_user_log_write_string(&mycontextdata,text);
-  dlt_user_log_write_finish(&mycontextdata); 
+  dlt_user_log_write_finish(&mycontextdata);
 } | After registration a context can be used to send log messages to the DLT daemon. The dlt_user_log_write function has to be called first with a pointer to the context, a pointer to the data buffer and the used log level of the log messages. For each parameter added to the DLT log message a call to dlt_user_log_write_xxx has to be done. A complete list of parameters you will find in the Addendum API specification. Sending of the DLT message is done by calling dlt_user_log_write_finish.
 | dlt_log_int(&mycontext, DLT_LOG_WARN, num); dlt_log_string_int(&mycontext, DLT_LOG_WARN, text, num); | As an alternative, the high level logging functions can be used which exists for special combination of parameters. A complete list you will find in the Addendum API specification.
 | dlt_nonverbose_mode(); | For non-verbose mode : Switch to non-verbose mode by calling the function dlt_nonverbose_mode:
 | if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_WARN,msgid))
-{ 
-  dlt_user_log_write_int(&mycontextdata,num); 
+{
+  dlt_user_log_write_int(&mycontextdata,num);
   dlt_user_log_write_string(&mycontextdata,text);
   dlt_user_log_write_finish(&mycontextdata);
 } | After registration a context can be used to send log messages to the DLT daemon. The dlt_user_log_write_start_id function has to be called first with a pointer to the context, a pointer to the context data, the used log level of the log messages and the message id. For each parameter added to the DLT log message a call to dlt_user_log_write_xxx has to be done. A complete list of parameters you will find in the Addendum API specification. Sending of the DLT message is done by calling dlt_user_log_write_finish.

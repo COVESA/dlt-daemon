@@ -73,9 +73,9 @@
 /*************/
 
 /* Size of receive buffer */
-#define DLT_USER_RCVBUF_MAX_SIZE 10024 
+#define DLT_USER_RCVBUF_MAX_SIZE 10024
 
-/* Size of ring buffer */      
+/* Size of ring buffer */
 #define DLT_USER_RINGBUFFER_MIN_SIZE   50000
 #define DLT_USER_RINGBUFFER_MAX_SIZE  500000
 #define DLT_USER_RINGBUFFER_STEP_SIZE  50000
@@ -83,7 +83,7 @@
 /* Temporary buffer length */
 #define DLT_USER_BUFFER_LENGTH               255
 
-/* Number of context entries, which will be allocated, 
+/* Number of context entries, which will be allocated,
    if no more context entries are available */
 #define DLT_USER_CONTEXT_ALLOC_SIZE          500
 
@@ -124,7 +124,7 @@
 #define DLT_USER_DEFAULT_MSGID 0xffff
 
 /* delay in receiver routine in usec (100000 usec = 100ms) */
-#define DLT_USER_RECEIVE_DELAY 100000 
+#define DLT_USER_RECEIVE_DELAY 100000
 
 /* Name of environment variable for local print mode */
 #define DLT_USER_ENV_LOCAL_PRINT_MODE "DLT_LOCAL_PRINT_MODE"

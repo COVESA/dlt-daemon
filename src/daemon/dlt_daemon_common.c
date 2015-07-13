@@ -146,7 +146,7 @@ int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned l
     daemon->overflow_counter = 0;
 
     daemon->runtime_context_cfg_loaded = 0;
-    
+
     daemon->mode = DLT_USER_MODE_EXTERNAL;
 
     daemon->connectionState = 0; /* no logger connected */
@@ -200,10 +200,10 @@ int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned l
     {
         daemon->runtime_context_cfg_loaded = 1;
     }
-    
+
     /* load configuration if available */
     dlt_daemon_configuration_load(daemon,daemon->runtime_configuration, verbose);
-    
+
     daemon->sendserialheader = 0;
     daemon->timingpackets = 0;
 
@@ -1061,7 +1061,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 				  pch = strtok (line," =\r\n");
 				  token[0]=0;
 				  value[0]=0;
-				  
+
 				  while (pch != NULL)
 				  {
 					if(strcmp(pch,"#")==0)
@@ -1081,7 +1081,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 
 					pch = strtok (NULL, " =\r\n");
 				  }
-				  
+
 				  if(token[0] && value[0])
 				  {
 						/* parse arguments here */
@@ -1109,8 +1109,8 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
 	{
         snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Cannot open configuration file: %s\n",filename);
         dlt_log(LOG_WARNING, str);
-	}	
-	
+	}
+
     return 0;
 }
 

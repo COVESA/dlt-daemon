@@ -20,7 +20,7 @@
 # Starts the DLT Daemon
 #
 # chkconfig: 2345 21 87
-# description: Provides DLT Debug Logging & Trace functionality 
+# description: Provides DLT Debug Logging & Trace functionality
 # processname: dlt-daemon
 
 # Source function library.
@@ -79,13 +79,13 @@ case "$1" in
 		  echo "DLT Daemon is NOT running"
 		fi
 
-		if [ -f /var/log/messages ] 
+		if [ -f /var/log/messages ]
 		 then
 		echo "------- messages  ----------------"
 		cat /var/log/messages | grep -a DLT | tail
 		fi
 
-		if [ -f /var/log/syslog ] 
+		if [ -f /var/log/syslog ]
 		 then
 		 echo "------- SYSLOG -------------------"
 		 cat /var/log/syslog | grep -a DLT | tail

@@ -150,7 +150,7 @@ void journal_thread(void *v_conf)
     	 buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
 	int loglevel,systemd_loglevel;
 	char* systemd_log_levels[] = { "Emergency","Alert","Critical","Error","Warning","Notice","Informational","Debug" };
-	
+
 	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
 			DLT_STRING("dlt-system-journal, in thread."));
 
@@ -158,14 +158,14 @@ void journal_thread(void *v_conf)
 	DLT_REGISTER_CONTEXT(journalContext, conf->Journal.ContextId, "Journal Adapter");
 
 	r = sd_journal_open(&j,  SD_JOURNAL_LOCAL_ONLY/*SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY*/);
-			printf("journal open return %d\n", r);	
+			printf("journal open return %d\n", r);
 	if (r < 0) {
 			DLT_LOG(dltsystem, DLT_LOG_ERROR,
 					DLT_STRING("dlt-system-journal, cannot open journal:"),DLT_STRING(strerror(-r)));
 			printf("journal open failed: %s\n", strerror(-r));
 			return;
 	}
-			
+
 	if(conf->Journal.CurrentBoot)
 	{
 		/* show only current boot entries */
@@ -176,7 +176,7 @@ void journal_thread(void *v_conf)
 						DLT_STRING("dlt-system-journal failed to get boot id:"),DLT_STRING(strerror(-r)));
 				sd_journal_close(j);
 				return;
-			
+
 		}
 		sd_id128_to_string(boot_id, match + 9);
 		r = sd_journal_add_match(j,match,strlen(match));
@@ -186,9 +186,9 @@ void journal_thread(void *v_conf)
 						DLT_STRING("dlt-system-journal failed to get match:"),DLT_STRING(strerror(-r)));
 				sd_journal_close(j);
 				return;
-			
+
 		}
-	}	
+	}
 
 	if(conf->Journal.Follow)
 	{
@@ -200,7 +200,7 @@ void journal_thread(void *v_conf)
 						DLT_STRING("dlt-system-journal failed to seek to tail:"),DLT_STRING(strerror(-r)));
 				sd_journal_close(j);
 				return;
-			
+
 		}
         r = sd_journal_previous_skip(j, 10);
 		if(r<0)
@@ -209,13 +209,13 @@ void journal_thread(void *v_conf)
 						DLT_STRING("dlt-system-journal failed to seek back 10 entries:"),DLT_STRING(strerror(-r)));
 				sd_journal_close(j);
 				return;
-			
+
 		}
-	
+
 	}
-	
+
 	while(!threads.shutdown)
-	{			
+	{
 
 		r = sd_journal_next(j);
 		if(r<0)
@@ -224,7 +224,7 @@ void journal_thread(void *v_conf)
 						DLT_STRING("dlt-system-journal failed to get next entry:"),DLT_STRING(strerror(-r)));
 				sd_journal_close(j);
 				return;
-			
+
 		}
 		else if(r>0)
 		{
@@ -236,7 +236,7 @@ void journal_thread(void *v_conf)
 							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
 					sd_journal_close(j);
 					return;
-				
+
 			}
 
 			/* get data from journal entry, empty string if invalid fields */
@@ -287,12 +287,12 @@ void journal_thread(void *v_conf)
 						loglevel = DLT_LOG_INFO;
 						break;
 				}
-			}			
+			}
 			if(systemd_loglevel>=0 && systemd_loglevel<=7)
 				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s:",systemd_log_levels[systemd_loglevel]);
 			else
 				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"prio_unknown:");
-			
+
 			/* write log entry */
 			DLT_LOG(journalContext, loglevel,
 						DLT_STRING(buffer_time),DLT_STRING(buffer_process),DLT_STRING(buffer_priority),DLT_STRING(buffer_message));
@@ -300,17 +300,17 @@ void journal_thread(void *v_conf)
 		}
 		else
 		{
-			r = sd_journal_wait(j,1000000);			
+			r = sd_journal_wait(j,1000000);
 			if(r<0)
 			{
 					DLT_LOG(dltsystem, DLT_LOG_ERROR,
 							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
 					sd_journal_close(j);
 					return;
-				
+
 			}
 		}
-		
+
 		if(journal_checkUserBufferForFreeSpace()==-1)
 		{
 			// buffer is nearly full

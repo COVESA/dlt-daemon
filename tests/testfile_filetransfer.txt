@@ -1,4 +1,4 @@
-TEST DATEI. 
+TEST DATEI.
 123.
 qwertzuiopü+
 asdfghjklöä#

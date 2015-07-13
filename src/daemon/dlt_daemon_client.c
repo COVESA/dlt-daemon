@@ -101,8 +101,8 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
     }
 
 	/* write message to offline trace */
-	// In the SEND_BUFFER state we must skip offline tracing because the offline traces 
-	// are going without buffering directly to the offline trace. Thus we have to filter out 
+	// In the SEND_BUFFER state we must skip offline tracing because the offline traces
+	// are going without buffering directly to the offline trace. Thus we have to filter out
 	// the traces that are coming from the buffer.
 	if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER))
 	{

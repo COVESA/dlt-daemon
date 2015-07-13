@@ -65,7 +65,6 @@ typedef struct
     char filename[NAME_MAX + 1]; /**< (String) Filename of currently used log file */
     int  fileSize;               /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int  maxSize;                /**< (int) Maximum size of all trace files (Default: 4000000) */
-    
     int ohandle;
 } DltOfflineTrace;
 
@@ -94,7 +93,7 @@ extern int dlt_offline_trace_free(DltOfflineTrace *buf);
 
 /**
  * Write data into offline trace
- * If the current used log file exceeds the max file size, new log file is created. 
+ * If the current used log file exceeds the max file size, new log file is created.
  * A check of the complete size of the offline trace is done before new file is created.
  * Old files are deleted, if there is not enough space left to create new file.
  * @param trace pointer to offline trace structure

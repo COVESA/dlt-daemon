@@ -38,14 +38,14 @@ Changes
    * Fix PREFIX. Works now with the default PREFIX (/usr/local/) and with the user PREFIX (e.g. /temp/test_with_pref). PREFIX Fix for filetransfer directory (PREFIX/share/)
    * Fixed typo in include guard
    * Resolves BUG-206: Install prefix should be configurable
-   * Adding support for new macros to the daemon. New macros: DLT_HEX8(VAR) 8bits variable displayed in hexadecimal with "0x" prefix DLT_HEX16(VAR) 16bits displayed 
-     in hexadecimal with "0x" prefix DLT_HEX32(VAR) 32bits displayed in hexadecimal with "0x" prefix DLT_HEX64(VAR) 64bits displayed in hexadecimal with "0x" prefix DLT_BIN8(VAR) 
+   * Adding support for new macros to the daemon. New macros: DLT_HEX8(VAR) 8bits variable displayed in hexadecimal with "0x" prefix DLT_HEX16(VAR) 16bits displayed
+     in hexadecimal with "0x" prefix DLT_HEX32(VAR) 32bits displayed in hexadecimal with "0x" prefix DLT_HEX64(VAR) 64bits displayed in hexadecimal with "0x" prefix DLT_BIN8(VAR)
      8bits variable displayed in binary with "0b" prefix DLT_BIN16(VAR) 16bits variable displayed in binary with "0b" prefix
    * Fixed network trace test
    * Fix dlt_user_log_write_start_id return value
    * Added new API to send marker message from application.
    * New Callback function in DLT library, called when log level of context is changed
-   
+
 
 2.11.0
 
@@ -101,7 +101,7 @@ Changes
    * atexit handler fix.
    * Add threadnames to libdlt threads.
    * Security fix on DLT pipes.
-   * Reduce usage of SEM_LOCK in application library and reset pointers.   
+   * Reduce usage of SEM_LOCK in application library and reset pointers.
    * Fix: Systemd Journal Adapter provides corrupted output.
    * Fix: Install Example service file only when example enabled
 
@@ -119,7 +119,7 @@ Changes
    * systemd journal support added.
    * spec file does not package man files when cmake is run with -DWITH_DOC=OFF
    * added length check for paths of files to be transferred
-   * Semaphores and Pointer passing insteasd by value and otehr coverity issue fixes   
+   * Semaphores and Pointer passing insteasd by value and otehr coverity issue fixes
    * Fixed several issues in DLT filetransfer.
    * added creation date and a simple hash on the file name for to improve the uniqueness of getFileSerialNumber
    * modified filetransfer to be more robust in restarting transfers
@@ -138,7 +138,7 @@ Changes
    * [GDLT-120]: truncated and Segmented network tracing
    * [GDLT-137]: Automatically try resending of user buffer after FIFO full
    * [GSWD-85]:  Added authors file
-   
+
 2.8.0
 
    * [GDLT-115]: Encapsulate user macros
@@ -175,9 +175,9 @@ Changes
    * [GDLT-70] Check for malloc failures and return errors where applicable
    * [GDLT-47] Avoid discarding old contexts if no new memory can be allocate
    * [GDLT-69] Fixed bug in dlt-test-multi-process shares context between threads
-   
+
 2.6.0
-   
+
    * [GDLT-75] Use old style directory check on startup
    * [GENDLT-21] Move mcnt from DltContextData to DltContext
    * [GENDLT-15] Fixes to previous integrations from review
@@ -209,7 +209,7 @@ Changes
 2.5.2
 
    * Change to Mozilla Public License Version 2.0
-   
+
 2.5.1
 
    * Fixed bug with comparinson between signed and unsigned integer and protection for a buffer overflow.
@@ -225,10 +225,10 @@ Changes
    * Update of doxygen documentation and generation
    * Rework of root CMake project file, e.g. structure and compile options
    * [GENDLT-16] Create variable in dlt-system.conf to configure the timeout of the filetransfer
-   * [GDLT-37] Extend automated test tools for parallel process/threads tests 
+   * [GDLT-37] Extend automated test tools for parallel process/threads tests
    * [GSW-138] API Extension to resend the log messages in the user buffer
    * [GDLT-36] Prefixing of dlt_version.h fixed
-   * [GDLT-31] Tracefile content stored different under Ubuntu 64 bit version compared to Ubuntu/Win 32 Bit version fixed 
+   * [GDLT-31] Tracefile content stored different under Ubuntu 64 bit version compared to Ubuntu/Win 32 Bit version fixed
    * [GDLT-35] Compile warnings fixed
    * [GSW-137] Wrong include gives error on compailing against dlt fixed
 
@@ -242,7 +242,7 @@ Changes
    * Fixed buffer overflow problem in buffer library.
    * Disabled share memory by default - disabled completely shared memory if not enabled.
 
-2.4.1 
+2.4.1
 
     * Added dynamic increasable ringbuffers to user lib and dlt-daemon.
     * Created abstraction of shm buffer management.
@@ -250,7 +250,7 @@ Changes
     * Added check of file size when starting and deleting files during filetransfer.
     * Added check of shm buffer availability when push to shm.
 
-2.4.1 
+2.4.1
 
     * Added internal logging facility to stdout, syslog or local file, configurable in configuration file.
     * Added deamonise and signal handlers to dlt-system.
@@ -275,14 +275,14 @@ Changes
     * [GSW-61] Replace command line parameter by configuration file
     * [GSW-13] Support for keep-alive messages as configuration parameter
     * [GSW-60] Extended offline DLT Trace memory handling.
-    * Removed filter implementation 
+    * Removed filter implementation
 	
 2.3.0
 
     * [GSW-16] Systemd configuration for syslog to DLT dapater
     * [GSW-62] DLT Library version check
-    * [GSW-28] Directory where persistent data is stored is not configurable  
-    * [GSW-59] Statically allocated large array 
+    * [GSW-28] Directory where persistent data is stored is not configurable
+    * [GSW-59] Statically allocated large array
     * Added init script for Ubuntu
     * Optional adding of gprof compile flags
     * sprintf with float64 fails on ARM platform; disabled this function on QRM platform.
@@ -293,7 +293,7 @@ Changes
     * Added commandline parameter -u to set ring buffer size
     * Reduced cpu consumption needed by applications using DLT library
     * Increased default ringbuffer size to 10024 bytes
-    * Changed delay in receiver routine to 100ms 
+    * Changed delay in receiver routine to 100ms
 
 2.1.0
 
@@ -347,7 +347,7 @@ Changes
  * DLT daemon:
 	* Support for dlt_register_context_ll_ts() added
 	* Enhanced support for get_log_info (all modes, 1 app all contexts, 1 app 1 context, all apps all contexts)
-	* Added -r option, for automatic sending context information to dlt client; if no client connection is available, 
+	* Added -r option, for automatic sending context information to dlt client; if no client connection is available,
       this information is stored in history buffer in dlt daemon
 	* Several internal performance optimizations:
 		* dlt_daemon_context_find(), dlt_daemon_application_find(): Now O(log n) instead O(n)
@@ -375,7 +375,7 @@ Changes
 	* dlt_message_print_* functions added
 	* Semaphore calls added to enable multi-threading
 	* Changed injection interface from direct usage to callback
-	* Requested log level and trace status is set immediately 
+	* Requested log level and trace status is set immediately
           in dlt_set_application_ll_ts_limit()
 	* Implemented receiver thread in DLT library
           (used for setting of log level/trace status and for injection handling)
@@ -388,11 +388,11 @@ Changes
      is now working (also in Windows)
  * DLT library: Fixed bug in dlt_print_mixed_string()
  * DLT library: Fixed bug in dlt_daemon_contexts_get_next_con_id()
- * DLT daemon: dlt_daemon_process_user_message_unregister_application() also removes now 
+ * DLT daemon: dlt_daemon_process_user_message_unregister_application() also removes now
      all corresponding contexts
  * DLT daemon: Added security check to dlt_daemon_control_get_log_info() in order to avoid crash
      which occured under special circumstances
- * DLT daemon: Register app now opens the connection to the DLT library, 
+ * DLT daemon: Register app now opens the connection to the DLT library,
      unregister app closes the connection (was before in register context)
  * Added -lrt to package config file
  * Resolved dependency from dlt_client.h to dlt_common.h -> dlt_common.h is now public
@@ -407,7 +407,7 @@ Changes
  * DLT daemon:
 	* Added several checks within code
  * DLT library:
-	* Added several checks within code 
+	* Added several checks within code
 	* Enhanced local print modes:
 	  a environment variable now can be used to control local print mode:
 	  Variable: DLT_LOCAL_PRINT_MODE
@@ -436,17 +436,17 @@ Changes
  * DLT viewer:
 	* Showing timestamp
 	* Compiles now with MS Visual C++
-	* Support for loading multiple descriptions 
+	* Support for loading multiple descriptions
 	  of plugins is now possible (*)
 	* Plugin description can be loaded individually
-	  by Right-mouse-button (*) 
+	  by Right-mouse-button (*)
  * DLT daemon:
 	* Overflow message is now stored in history buffer,
-	  if necessary 
+	  if necessary
  * DLT library:
 	* Ring-buffer for injection messages implemented
 	* History Buffer for Startup + Overflow implemented
-	* Setting of maximum logged log level/trace status for 
+	* Setting of maximum logged log level/trace status for
           application triggered by application is now possible
 	* Optional local output of Log message is now possible
  * General:

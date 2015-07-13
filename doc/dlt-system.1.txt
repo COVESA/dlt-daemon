@@ -16,9 +16,9 @@ The DLT system logging process is the central application, which logs
 system information from the platform. It provides the features
 filetransfer, syslog adapater, logging of any kind of files and
 procfilesystem logger. The individual features can be enabled and
-disabled in the configuration file. 
+disabled in the configuration file.
 
-dlt-system loads by default the configuration file /etc/dlt-system.conf. 
+dlt-system loads by default the configuration file /etc/dlt-system.conf.
 See dlt-system.conf(1).
 
 OPTIONS

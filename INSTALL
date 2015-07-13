@@ -33,12 +33,12 @@ Compile options with default values
 | WITH_GPROF             | OFF   | Set \-pg to compile flags
 | WITH_MAN               | ON    | Set to OFF to skip building of man pages
 | BUILD_SHARED_LIBS      | ON    | Set to OFF to build static libraries
-| CMAKE_INSTALL_PREFIX   | /usr/local | 
-| CMAKE_BUILD_TYPE       | RelWithDebInfo | 
+| CMAKE_INSTALL_PREFIX   | /usr/local |
+| CMAKE_BUILD_TYPE       | RelWithDebInfo |
 |==============================================================================================
 
 In order to change these options, you can modify this values
-with ccmake, do the appropriate changes in CmakeList.txt or via 
+with ccmake, do the appropriate changes in CmakeList.txt or via
 the commandline for cmake
 
 - Change a value with: cmake -D<Variable>=<Value>

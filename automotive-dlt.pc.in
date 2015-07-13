@@ -21,9 +21,9 @@ libdir=${exec_prefix}/lib
 includedir=${exec_prefix}/include
 
 Name: DLT
-Description: Diagnostic Log and Trace 
+Description: Diagnostic Log and Trace
 Version: @DLT_VERSION@
-Requires: 
+Requires:
 Libs: -L${libdir} -ldlt -lrt -lpthread -lz
 Cflags: -I${includedir}/dlt -DDLT_@DLT_MAJOR_VERSION@_@DLT_MINOR_VERSION@
 

@@ -65,7 +65,7 @@ GENERAL OPTIONS
 *PersistanceStoragePath*::
     This is the directory path, where the DLT daemon stores its runtime
     configuration. Runtime configuration includes stored log levels, trace
-    status and changed logging mode. 
+    status and changed logging mode.
 
     Default: /tmp
 
@@ -82,7 +82,7 @@ OFFLINE TRACE OPTIONS
 *OfflineTraceFileSize*::
     This value defines the max size of a offline trace file, if offline trace
     is enabled. This value is defined in bytes. If the files size of the
-    current used log file is exceeded, a new log file is created. 
+    current used log file is exceeded, a new log file is created.
 
     Default: 1000000
 
@@ -123,7 +123,7 @@ SERIAL CLIENT OPTIONS
 
 *RS232DeviceName*::
     If this value is set to a serial device name, e.g. /dev/ttyS0, a serial
-    port is used for logging to a client. 
+    port is used for logging to a client.
 
     Default: Serial port for logging is disabled
 

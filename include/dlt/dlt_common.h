@@ -1020,7 +1020,7 @@ extern "C"
 
     /**
      * Initialise static ringbuffer with a size of size.
-     * Initialise as server. Init counters. 
+     * Initialise as server. Init counters.
      * Memory is already allocated.
      * @param buf Pointer to ringbuffer structure
      * @param ptr Ptr to ringbuffer memory

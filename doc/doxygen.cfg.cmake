@@ -591,7 +591,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT = @CMAKE_SOURCE_DIR@/doc/mainpage.h \
-        @CMAKE_SOURCE_DIR@/src/ \ 
+        @CMAKE_SOURCE_DIR@/src/ \
         @CMAKE_SOURCE_DIR@/include
 
 
@@ -626,7 +626,7 @@ FILE_PATTERNS          = *.c \
                          *.hh \
                          *.hxx \
                          *.hpp \
-                         *.h++ 
+                         *.h++
 
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories

@@ -116,14 +116,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/dlt-test-multi-process
 %{_bindir}/dlt-test-multi-process-client
 
-%attr(0755,root,root) 
+%attr(0755,root,root)
 %{_bindir}/dlt-daemon
 %{_bindir}/dlt-example-user
 %{_bindir}/dlt-example-user-func
 %{_bindir}/dlt-example-filetransfer
 
 
-%files doc 
+%files doc
 
 @PACKAGE_DOC@%{_mandir}/man1/dlt-convert.1.gz
 @PACKAGE_DOC@%{_mandir}/man1/dlt-daemon.1.gz

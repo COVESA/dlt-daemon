@@ -625,7 +625,7 @@ FILE_PATTERNS          = *.c \
                          *.hh \
                          *.hxx \
                          *.hpp \
-                         *.h++ 
+                         *.h++
 
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
@@ -1378,7 +1378,7 @@ HIDE_UNDOC_RELATIONS   = YES
 # toolkit from AT&T and Lucent Bell Labs. The other options in this section
 # have no effect if this option is set to NO (the default)
 
-HAVE_DOT               = 
+HAVE_DOT               =
 
 # By default doxygen will write a font called FreeSans.ttf to the output
 # directory and reference it in all dot files that doxygen generates. This

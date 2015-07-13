@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Receive DLT messages from DLT daemon and print or store the messages. 
+Receive DLT messages from DLT daemon and print or store the messages.
 
 OPTIONS
 -------
@@ -53,7 +53,7 @@ Print received message headers received from a dlt-daemon running on localhost::
 
 Print received message headers received from a serila interface::
     dlt-receive -s -y /dev/ttySO
- 
+
 Store received message headers from a dlt-daemon to a log file called log.dlt and filter them for e.g. Application ID ABCD and Context ID EFGH (Write:ABCD EFGH as single line to a file claled filter.txt)::
     dlt-receive -s -o log.dlt -f filter.txt localhost
 

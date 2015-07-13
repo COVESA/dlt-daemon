@@ -9,7 +9,7 @@ echo "LogFileTimeDelay = 3" | sudo tee -a /usr/local/etc/dlt-system.conf
 echo "LogFileContextId = PROC" | sudo tee -a /usr/local/etc/dlt-system.conf
 #comile the kernel module for system logging
 cd mod_system_logger
-make 
+make
 cd ..
 #enable mod
 sudo insmod mod_system_logger/mod_system_logger.ko
@@ -21,7 +21,7 @@ dlt-system &
 sleep 1
 #start dlt-receiver
 ../build/tests/dlt_test_receiver -l localhost &
-sleep 1  
+sleep 1
 pid=$!
 wait $pid
 exitcode=$?

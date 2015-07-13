@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
     int aflag = 0;
     int kflag = 0;
 #ifdef DLT_TEST_ENABLE
-    int cflag = 0;    
+    int cflag = 0;
     char *svalue = 0;
     char *zvalue = 0;
 #endif /* DLT_TEST_ENABLE */
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 	char *text;
 	int num,maxnum;
 	int delay;
-	
+
 	int state=-1,newstate;
 
     opterr = 0;
@@ -262,9 +262,9 @@ int main(int argc, char* argv[])
 	if(mvalue)
 	{
         printf("Set log mode to %d\n",atoi(mvalue));
-		dlt_set_log_mode(atoi(mvalue)); 
+		dlt_set_log_mode(atoi(mvalue));
 	}
-	
+
 
     if (gflag)
     {
@@ -350,7 +350,7 @@ int main(int argc, char* argv[])
 				printf("Client connected!\n");
 			}
 		}
-				
+
         if (gflag)
         {
             /* Non-verbose mode */

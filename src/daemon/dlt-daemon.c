@@ -214,7 +214,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 				  pch = strtok (line," =\r\n");
 				  token[0]=0;
 				  value[0]=0;
-				  
+
 				  while (pch != NULL)
 				  {
 					if(strcmp(pch,"#")==0)
@@ -234,7 +234,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
 					pch = strtok (NULL, " =\r\n");
 				  }
-				  
+
 				  if(token[0] && value[0])
 				  {
 						/* parse arguments here */
@@ -393,7 +393,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	else
 	{
 		fprintf(stderr, "Cannot open configuration file: %s\n",filename);
-	}	
+	}
 
 	return 0;
 }
@@ -425,7 +425,7 @@ int main(int argc, char* argv[])
 		}
 		return -1;
 	}
-	
+
     /* Initialize internal logging facility */
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
@@ -489,8 +489,8 @@ int main(int argc, char* argv[])
         create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_sixty_s, "ECU version");
     }
 
-	// For offline tracing we still can use the same states 
-	// as for socket sending. Using this trick we see the traces 
+	// For offline tracing we still can use the same states
+	// as for socket sending. Using this trick we see the traces
 	// In the offline trace AND in the socket stream.
     if(daemon_local.flags.yvalue[0])
     	dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_SEND_DIRECT);
@@ -705,7 +705,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP,  dlt_daemon_signal_handler); /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT,  dlt_daemon_signal_handler);
-	
+
     return 0;
 }
 
@@ -757,7 +757,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 		return -1;
     }
 #endif
-	
+
     /* prepare main loop */
     if (dlt_message_init(&(daemon_local->msg),daemon_local->flags.vflag)==-1)
     {
@@ -783,13 +783,13 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 			return -1;
         }
     }
-    
+
     /* configure sending timing packets */
-    if (daemon_local->flags.sendMessageTime)    
+    if (daemon_local->flags.sendMessageTime)
     {
 		daemon->timingpackets = 1;
 	}
-	
+
     /* Binary semaphore for thread */
     if (sem_init(&dlt_daemon_mutex, 0, 1)==-1)
     {
@@ -1152,10 +1152,10 @@ void dlt_daemon_daemonize(int verbose)
 } /* dlt_daemon_daemonize() */
 
 /* This function logs str to the configured output sink (socket, serial, offline trace).
-   To avoid recursion this function must be called only from DLT highlevel functions.   
+   To avoid recursion this function must be called only from DLT highlevel functions.
    E. g. calling it to output a failure when the open of the offline trace file fails
    would cause an endless loop because dlt_daemon_log_internal() would itself again try
-   to open the offline trace file. 
+   to open the offline trace file.
    This is a dlt-daemon only function. The libdlt has no equivalent function available. */
 int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose)
 {
@@ -1166,18 +1166,18 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     uint16_t uiSize;
     uint32_t uiExtraSize;
     int ret;
-    
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     // Set storageheader
     msg.storageheader = (DltStorageHeader *)(msg.headerbuffer);
     dlt_set_storageheader(msg.storageheader, daemon->ecuid);
 
-    // Set standardheader    
+    // Set standardheader
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
     msg.standardheader->mcnt = uiMsgCount++;
-    
+
     uiExtraSize = DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp)+(DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
     msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + uiExtraSize;
 
@@ -1247,7 +1247,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     }
 
     free(msg.databuffer);
-    
+
     return 0;
 }
 
@@ -1333,7 +1333,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
         	dlt_log(LOG_WARNING,"Can't send contents of ringbuffer to clients\n");
 			return -1;
         }
-		
+
 		/* send new log state to all applications */
 		daemon->connectionState = 1;
 		dlt_daemon_user_send_all_log_state(daemon,verbose);
@@ -2104,12 +2104,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemo
     {
     	if(ret!=DLT_MESSAGE_ERROR_SIZE)
     	{
-            /* This is a normal usecase: The daemon reads the data in 10kb chunks. 
+            /* This is a normal usecase: The daemon reads the data in 10kb chunks.
                Thus the last trace in this chunk is probably not complete and will be completed
                with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
-               the daemon is able to read from the FIFO. 
-               Thus the loglevel of this message is set to DEBUG. 
-               A cleaner solution would be to check more in detail whether the message is not complete (normal usecase) 
+               the daemon is able to read from the FIFO.
+               Thus the loglevel of this message is set to DEBUG.
+               A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
                or the headers are corrupted (error case). */
     		dlt_log(LOG_DEBUG,"Can't read messages from receiver\n");
     	}
@@ -2235,10 +2235,10 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
     }
 
     userheader = (DltUserHeader*) (daemon_local->receiver.buf);
-  
+
 	//dlt_shm_status(&(daemon_local->dlt_shm));
 	while (1)
-    {		
+    {
 		/* log message in SHM */
 		if((size = dlt_shm_copy(&(daemon_local->dlt_shm),rcv_buffer,10000)) <= 0)
 			break;
@@ -2246,13 +2246,13 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 			break;
 			dlt_log(LOG_WARNING,"Can't read messages from shm\n");
 			return -1;
-		}				
+		}
 		bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader)+sizeof(DltUserHeader);
 		if (daemon_local->msg.found_serialheader)
 		{
 			bytes_to_be_removed += sizeof(dltSerialHeader);
 		}
-		
+
 		/* set overwrite ecu id */
 		if (daemon_local->flags.evalue[0])
 		{
@@ -2381,14 +2381,14 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 			if(userheader->message == DLT_USER_MESSAGE_LOG_SHM) {
 				/* dlt message was sent, remove from buffer if log message from shm */
 				dlt_shm_remove(&(daemon_local->dlt_shm));
-			}			
+			}
 		}
 		else
 		{
 			/* dlt message was not sent, keep in buffer */
 			break;
 		}
-		
+
 	}
 
     /* keep not read data in buffer */
@@ -2397,7 +2397,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
 		dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user message overflow\n");
 		return -1;
     }
-    
+
     return 0;
 }
 #endif
@@ -2680,8 +2680,8 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 		daemon->connectionState = 0;
 		dlt_daemon_user_send_all_log_state(daemon,verbose);
 
-		// For offline tracing we still can use the same states 
-		// as for socket sending. Using this trick we see the traces 
+		// For offline tracing we still can use the same states
+		// as for socket sending. Using this trick we see the traces
 		// In the offline trace AND in the socket stream.
         if(daemon_local->flags.yvalue[0] == 0)
     	    dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER);
