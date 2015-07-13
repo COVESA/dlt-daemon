@@ -24,10 +24,10 @@
  * \file dlt_filetransfer.h
 */
 
-#include <limits.h>			/* Needed for LONG_MAX */
-#include <sys/stat.h>		/* Needed for struct stat st*/
-#include "dlt.h"		/* Needed for DLT Logs */
-#include <signal.h>     /* Signal handling */
+#include <limits.h>    /* Needed for LONG_MAX */
+#include <sys/stat.h>  /* Needed for struct stat st*/
+#include "dlt.h"       /* Needed for DLT Logs */
+#include <signal.h>    /* Signal handling */
 #include "errno.h"
 
 
@@ -86,31 +86,31 @@ extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey.If there was a failure value < 0 will be returned.
  */
- extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
+extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
 
 
- //!Transfer the head of the file as a dlt logs.
- /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
-  * the file name, the file size, package number the file have and the buffer size.
-  * All these informations are needed from the plugin of the dlt viewer.
-  * See the Mainpages.c for more informations.
-  * @param fileContext Specific context to log the file to dlt
-  * @param filename Absolute file path
-  * @param alias Alias for the file. An alternative name to show in the receiving end
-  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
-  */
- extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
+//!Transfer the head of the file as a dlt logs.
+/**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
+ * the file name, the file size, package number the file have and the buffer size.
+ * All these informations are needed from the plugin of the dlt viewer.
+ * See the Mainpages.c for more informations.
+ * @param fileContext Specific context to log the file to dlt
+ * @param filename Absolute file path
+ * @param alias Alias for the file. An alternative name to show in the receiving end
+ * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
+ */
+extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
 
- //!Transfer the head of the file as a dlt logs.
- /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
-  * the file name, the file size, package number the file have and the buffer size.
-  * All these informations are needed from the plugin of the dlt viewer.
-  * See the Mainpages.c for more informations.
-  * @param fileContext Specific context to log the file to dlt
-  * @param filename Absolute file path
-  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
-  */
- extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
+//!Transfer the head of the file as a dlt logs.
+/**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
+ * the file name, the file size, package number the file have and the buffer size.
+ * All these informations are needed from the plugin of the dlt viewer.
+ * See the Mainpages.c for more informations.
+ * @param fileContext Specific context to log the file to dlt
+ * @param filename Absolute file path
+ * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
+ */
+extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
 
 
 //!Transfer the content data of a file.

@@ -165,17 +165,17 @@
 #define DLT_ENDIAN_GET_64(htyp,x) ((((htyp) & DLT_HTYP_MSBF)>0)?DLT_BETOH_64(x):DLT_LETOH_64(x))
 
 #if defined (__WIN32__) || defined (_MSC_VER)
-#define	LOG_EMERG	0
-#define	LOG_ALERT	1
-#define	LOG_CRIT	2
-#define	LOG_ERR		3
-#define	LOG_WARNING	4
-#define	LOG_NOTICE	5
-#define	LOG_INFO	6
-#define	LOG_DEBUG	7
+#define LOG_EMERG     0
+#define LOG_ALERT     1
+#define LOG_CRIT      2
+#define LOG_ERR       3
+#define LOG_WARNING   4
+#define LOG_NOTICE    5
+#define LOG_INFO      6
+#define LOG_DEBUG     7
 
-#define	LOG_PID		0x01
-#define	LOG_DAEMON	(3<<3)
+#define LOG_PID     0x01
+#define LOG_DAEMON  (3<<3)
 #endif
 
 enum {
@@ -218,12 +218,12 @@ enum {
 
 #define PRINT_FUNCTION_VERBOSE(_verbose)  \
 { \
-	static char _strbuf[255]; \
+    static char _strbuf[255]; \
     \
     if(_verbose) \
     { \
-		snprintf(_strbuf, 255, "%s()\n",__func__); \
-		dlt_log(LOG_INFO, _strbuf); \
+        snprintf(_strbuf, 255, "%s()\n",__func__); \
+        dlt_log(LOG_INFO, _strbuf); \
     } \
 }
 
@@ -232,29 +232,29 @@ enum {
 #endif
 
 #define DLT_MSG_IS_CONTROL(MSG)          ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-                                          (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL))
 
 #define DLT_MSG_IS_CONTROL_REQUEST(MSG)  ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-                                          (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
-                                          (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_REQUEST))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
+        (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_REQUEST))
 
 #define DLT_MSG_IS_CONTROL_RESPONSE(MSG) ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-                                          (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
-                                          (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_RESPONSE))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
+        (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_RESPONSE))
 
 #define DLT_MSG_IS_CONTROL_TIME(MSG)     ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-                                          (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
-                                          (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_TIME))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_CONTROL) && \
+        (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_CONTROL_TIME))
 
 #define DLT_MSG_IS_NW_TRACE(MSG)         ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-									      (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_NW_TRACE))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_NW_TRACE))
 
 #define DLT_MSG_IS_TRACE_MOST(MSG)       ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
-									      (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_NW_TRACE) && \
-									      (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_NW_TRACE_MOST))
+        (DLT_GET_MSIN_MSTP((MSG)->extendedheader->msin)==DLT_TYPE_NW_TRACE) && \
+        (DLT_GET_MSIN_MTIN((MSG)->extendedheader->msin)==DLT_NW_TRACE_MOST))
 
 #define DLT_MSG_IS_NONVERBOSE(MSG)       (!(DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) || \
-                                          ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
+        ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
 
 /*
 
@@ -275,39 +275,39 @@ enum {
 #define DLT_FILTER_MAX 30 /**< Maximum number of filters */
 
 #define DLT_MSG_READ_VALUE(dst,src,length,type) \
-    { \
+{ \
     if((length<0) || ((length)<((int32_t)sizeof(type)))) \
-        { length = -1; } \
+    { length = -1; } \
     else \
-        { dst = *((type*)src);src+=sizeof(type);length-=sizeof(type); } \
-    }
+    { dst = *((type*)src);src+=sizeof(type);length-=sizeof(type); } \
+}
 
 #define DLT_MSG_READ_ID(dst,src,length) \
-    { \
+{ \
     if((length<0) || ((length)<DLT_ID_SIZE)) \
-        { length = -1; } \
+    { length = -1; } \
     else \
-        { memcpy(dst,src,DLT_ID_SIZE);src+=DLT_ID_SIZE;length-=DLT_ID_SIZE; } \
-    }
+    { memcpy(dst,src,DLT_ID_SIZE);src+=DLT_ID_SIZE;length-=DLT_ID_SIZE; } \
+}
 
 #define DLT_MSG_READ_STRING(dst,src,maxlength,length) \
-    { \
+{ \
     if(((maxlength)<0) || ((length)<0) || ((maxlength)<(length))) \
-        { maxlength = -1; } \
+    { maxlength = -1; } \
     else \
-        { memcpy(dst,src,length);dlt_clean_string(dst,length);dst[length]=0; \
-	  src+=length;maxlength-=length; } \
-    }
+    { memcpy(dst,src,length);dlt_clean_string(dst,length);dst[length]=0; \
+        src+=length;maxlength-=length; } \
+}
 
 #define DLT_MSG_READ_NULL(src,maxlength,length) \
-    { \
+{ \
     if(((maxlength)<0) || ((length)<0) || ((maxlength)<(length))) \
-        { length = -1; } \
+    { length = -1; } \
     else \
-        { src+=length;maxlength-=length; } \
-    }
+    { src+=length;maxlength-=length; } \
+}
 
-#define DLT_HEADER_SHOW_NONE	   0x0000
+#define DLT_HEADER_SHOW_NONE       0x0000
 #define DLT_HEADER_SHOW_TIME       0x0001
 #define DLT_HEADER_SHOW_TMSTP      0x0002
 #define DLT_HEADER_SHOW_MSGCNT     0x0004
@@ -341,10 +341,10 @@ typedef char ID4[DLT_ID_SIZE];
  */
 typedef struct
 {
-    char pattern[DLT_ID_SIZE];		/**< This pattern should be DLT0x01 */
-    uint32_t seconds;				    /**< seconds since 1.1.1970 */
-    int32_t microseconds;			/**< Microseconds */
-    char ecu[DLT_ID_SIZE];			/**< The ECU id is added, if it is not already in the DLT message itself */
+    char pattern[DLT_ID_SIZE]; /**< This pattern should be DLT0x01 */
+    uint32_t seconds;          /**< seconds since 1.1.1970 */
+    int32_t microseconds;      /**< Microseconds */
+    char ecu[DLT_ID_SIZE];     /**< The ECU id is added, if it is not already in the DLT message itself */
 } PACKED DltStorageHeader;
 
 /**
@@ -363,8 +363,8 @@ typedef struct
 typedef struct
 {
     char ecu[DLT_ID_SIZE];       /**< ECU id */
-    uint32_t seid;     /**< Session number */
-    uint32_t tmsp;     /**< Timestamp since system start in 0.1 milliseconds */
+    uint32_t seid;               /**< Session number */
+    uint32_t tmsp;               /**< Timestamp since system start in 0.1 milliseconds */
 } PACKED DltStandardHeaderExtra;
 
 /**
@@ -372,10 +372,10 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t msin;          /**< messsage info */
-    uint8_t noar;          /**< number of arguments */
-    char apid[DLT_ID_SIZE];          /**< application id */
-    char ctid[DLT_ID_SIZE];          /**< context id */
+    uint8_t msin;              /**< messsage info */
+    uint8_t noar;              /**< number of arguments */
+    char apid[DLT_ID_SIZE];    /**< application id */
+    char ctid[DLT_ID_SIZE];    /**< context id */
 } PACKED DltExtendedHeader;
 
 /**
@@ -396,9 +396,9 @@ typedef struct sDltMessage
 
     /* buffer for current loaded message */
     uint8_t headerbuffer[sizeof(DltStorageHeader)+
-                         sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra)+sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
+        sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra)+sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
-	int32_t databuffersize;
+    int32_t databuffersize;
 
     /* header values of current loaded message */
     DltStorageHeader       *storageheader;  /**< pointer to storage header of current loaded header */
@@ -414,9 +414,9 @@ typedef struct
 {
     uint32_t service_id;            /**< service ID */
     uint8_t options;                /**< type of request */
-    char apid[DLT_ID_SIZE];                   /**< application id */
-    char ctid[DLT_ID_SIZE];                   /**< context id */
-    char com[DLT_ID_SIZE];                    /**< communication interface */
+    char apid[DLT_ID_SIZE];         /**< application id */
+    char ctid[DLT_ID_SIZE];         /**< context id */
+    char com[DLT_ID_SIZE];          /**< communication interface */
 } PACKED DltServiceGetLogInfoRequest;
 
 /**
@@ -426,10 +426,10 @@ typedef struct
 {
 
     uint32_t service_id;            /**< service ID */
-    char apid[DLT_ID_SIZE];                   /**< application id */
-    char ctid[DLT_ID_SIZE];                   /**< context id */
+    char apid[DLT_ID_SIZE];         /**< application id */
+    char ctid[DLT_ID_SIZE];         /**< context id */
     uint8_t log_level;              /**< log level to be set */
-    char com[DLT_ID_SIZE];                    /**< communication interface */
+    char com[DLT_ID_SIZE];          /**< communication interface */
 } PACKED DltServiceSetLogLevel;
 
 /**
@@ -437,9 +437,9 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t service_id;            /**< service ID */
-    uint8_t log_level;              /**< default log level to be set */
-    char com[DLT_ID_SIZE];                    /**< communication interface */
+    uint32_t service_id;                /**< service ID */
+    uint8_t log_level;                  /**< default log level to be set */
+    char com[DLT_ID_SIZE];              /**< communication interface */
 } PACKED DltServiceSetDefaultLogLevel;
 
 /**
@@ -457,7 +457,7 @@ typedef struct
 typedef struct
 {
     uint32_t service_id;            /**< service ID */
-    char com[DLT_ID_SIZE];                    /**< communication interface */
+    char com[DLT_ID_SIZE];          /**< communication interface */
     uint8_t new_status;             /**< new status to be set */
 } PACKED DltServiceSetCommunicationInterfaceStatus;
 
@@ -467,7 +467,7 @@ typedef struct
 typedef struct
 {
     uint32_t service_id;            /**< service ID */
-    char com[DLT_ID_SIZE];                    /**< communication interface */
+    char com[DLT_ID_SIZE];          /**< communication interface */
     uint32_t max_bandwidth;         /**< maximum bandwith */
 } PACKED DltServiceSetCommunicationMaximumBandwidth;
 
@@ -569,14 +569,14 @@ typedef struct sDltFile
     int32_t counter;       /**< number of messages in DLT file with filter */
     int32_t counter_total; /**< number of messages in DLT file without filter */
     int32_t position;      /**< current index to message parsed in DLT file starting at 0 */
-    long file_length;  /**< length of the file */
-    long file_position; /**< current position in the file */
+    long file_length;      /**< length of the file */
+    long file_position;    /**< current position in the file */
 
     /* error counters */
     int32_t error_messages; /**< number of incomplete DLT messages found during file parsing */
 
     /* filter parameters */
-    DltFilter *filter;  /**< pointer to filter list. Zero if no filter is set. */
+    DltFilter *filter;      /**< pointer to filter list. Zero if no filter is set. */
     int32_t filter_counter; /**< number of filter set */
 
     /* current loaded message */
@@ -602,10 +602,10 @@ typedef struct
 
 typedef struct
 {
-	unsigned char* shm; /* pointer to beginning of shared memory */
-	int        size;    /* size of data area in shared memory */
-	unsigned char* mem; /* pointer to data area in shared memory */
-	
+    unsigned char* shm; /* pointer to beginning of shared memory */
+    int        size;    /* size of data area in shared memory */
+    unsigned char* mem; /* pointer to data area in shared memory */
+
     uint32_t    min_size;  /**< Minimum size of buffer */
     uint32_t    max_size;  /**< Maximum size of buffer */
     uint32_t    step_size; /**< Step size of buffer */
@@ -613,24 +613,24 @@ typedef struct
 
 typedef struct
 {
-	int write;
-	int read;
-	int count;	
+    int write;
+    int read;
+    int count;
 } DltBufferHead;
 
-#define DLT_BUFFER_HEAD 	"SHM"
+#define DLT_BUFFER_HEAD "SHM"
 
 typedef struct
 {
-	char head[4];
-	unsigned char status;
-	int size;	
+    char head[4];
+    unsigned char status;
+    int size;
 } DltBufferBlockHead;
 
-#define DLT_MESSAGE_ERROR_OK 			0
-#define DLT_MESSAGE_ERROR_UNKNOWN 		-1
-#define DLT_MESSAGE_ERROR_SIZE          -2
-#define DLT_MESSAGE_ERROR_CONTENT    	-3
+#define DLT_MESSAGE_ERROR_OK       0
+#define DLT_MESSAGE_ERROR_UNKNOWN -1
+#define DLT_MESSAGE_ERROR_SIZE    -2
+#define DLT_MESSAGE_ERROR_CONTENT -3
 
 #ifdef __cplusplus
 extern "C"
@@ -1075,7 +1075,7 @@ extern "C"
      * @param size Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-	int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
+    int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
 
     /**
      * Write up to three entries to ringbuffer.
@@ -1089,7 +1089,7 @@ extern "C"
      * @param size3 Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-	int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
+    int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
 
     /**
      * Read one entry from ringbuffer.
@@ -1099,7 +1099,7 @@ extern "C"
      * @param max_size Max size of read data in bytes from ringbuffer
      * @return size of read data, zero if no data available, negative value if there was an error
      */
-	int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size);
+    int dlt_buffer_pull(DltBuffer *buf,unsigned char *data, int max_size);
 
     /**
      * Read one entry from ringbuffer.
@@ -1109,26 +1109,26 @@ extern "C"
      * @param max_size Max size of read data in bytes from ringbuffer
      * @return size of read data, zero if no data available, negative value if there was an error
      */
-	int dlt_buffer_copy(DltBuffer *buf,unsigned char *data, int max_size);
+    int dlt_buffer_copy(DltBuffer *buf,unsigned char *data, int max_size);
 
     /**
      * Remove entry from ringbuffer.
      * @param buf Pointer to ringbuffer structure
      * @return size of read data, zero if no data available, negative value if there was an error
      */
-	int dlt_buffer_remove(DltBuffer *buf);
+    int dlt_buffer_remove(DltBuffer *buf);
 
     /**
      * Print information about buffer and log to internal DLT log.
      * @param buf Pointer to ringbuffer structure
      */
-	void dlt_buffer_info(DltBuffer *buf);
+    void dlt_buffer_info(DltBuffer *buf);
 
     /**
      * Print status of buffer and log to internal DLT log.
      * @param buf Pointer to ringbuffer structure
      */
-	void dlt_buffer_status(DltBuffer *buf);
+    void dlt_buffer_status(DltBuffer *buf);
 
     /**
      * Get total size in bytes of ringbuffer.
@@ -1136,21 +1136,21 @@ extern "C"
      * @param buf Pointer to ringbuffer structure
      * @return total size of buffer
      */
-	int dlt_buffer_get_total_size(DltBuffer *buf);
+    int dlt_buffer_get_total_size(DltBuffer *buf);
 
     /**
      * Get used size in bytes of ringbuffer.
      * @param buf Pointer to ringbuffer structure
      * @return used size of buffer
      */
-	int dlt_buffer_get_used_size(DltBuffer *buf);
+    int dlt_buffer_get_used_size(DltBuffer *buf);
 
     /**
      * Get number of entries in ringbuffer.
      * @param buf Pointer to ringbuffer structure
      * @return number of entries
      */
-	int dlt_buffer_get_message_count(DltBuffer *buf);
+    int dlt_buffer_get_message_count(DltBuffer *buf);
 
 #if !defined (__WIN32__)
 
@@ -1177,17 +1177,17 @@ extern "C"
     void dlt_get_version(char *buf, size_t size);
 
     /**
-    * Print dlt major version to buffer
-    * @param buf Pointer to buffer
-    * @param size size of buffer
-    */
+     * Print dlt major version to buffer
+     * @param buf Pointer to buffer
+     * @param size size of buffer
+     */
     void dlt_get_major_version(char *buf, size_t size);
 
     /**
-    * Print dlt minor version to buffer
-    * @param buf Pointer to buffer
-    * @param size size of buffer
-    */
+     * Print dlt minor version to buffer
+     * @param buf Pointer to buffer
+     * @param size size of buffer
+     */
     void dlt_get_minor_version(char *buf, size_t size);
 
 #endif
@@ -1274,7 +1274,7 @@ extern "C"
     /**
      * Check environment variables.
      */
-	void dlt_check_envvar();
+    void dlt_check_envvar();
 
 #ifdef __cplusplus
 }

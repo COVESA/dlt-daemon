@@ -145,25 +145,25 @@
 /*
  * Definitions of types of arguments in payload.
  */
-#define DLT_TYPE_INFO_TYLE	0x0000000f /**< Length of standard data: 1 = 8bit, 2 = 16bit, 3 = 32 bit, 4 = 64 bit, 5 = 128 bit */
-#define DLT_TYPE_INFO_BOOL	0x00000010 /**< Boolean data */
-#define DLT_TYPE_INFO_SINT	0x00000020 /**< Signed integer data */
-#define DLT_TYPE_INFO_UINT	0x00000040 /**< Unsigned integer data */
-#define DLT_TYPE_INFO_FLOA	0x00000080 /**< Float data */
-#define DLT_TYPE_INFO_ARAY	0x00000100 /**< Array of standard types */
-#define DLT_TYPE_INFO_STRG	0x00000200 /**< String */
-#define DLT_TYPE_INFO_RAWD	0x00000400 /**< Raw data */
-#define DLT_TYPE_INFO_VARI	0x00000800 /**< Set, if additional information to a variable is available */
-#define DLT_TYPE_INFO_FIXP	0x00001000 /**< Set, if quantization and offset are added */
-#define DLT_TYPE_INFO_TRAI	0x00002000 /**< Set, if additional trace information is added */
-#define DLT_TYPE_INFO_STRU	0x00004000 /**< Struct */
-#define DLT_TYPE_INFO_SCOD	0x00038000 /**< coding of the type string: 0 = ASCII, 1 = UTF-8 */
+#define DLT_TYPE_INFO_TYLE 0x0000000f /**< Length of standard data: 1 = 8bit, 2 = 16bit, 3 = 32 bit, 4 = 64 bit, 5 = 128 bit */
+#define DLT_TYPE_INFO_BOOL 0x00000010 /**< Boolean data */
+#define DLT_TYPE_INFO_SINT 0x00000020 /**< Signed integer data */
+#define DLT_TYPE_INFO_UINT 0x00000040 /**< Unsigned integer data */
+#define DLT_TYPE_INFO_FLOA 0x00000080 /**< Float data */
+#define DLT_TYPE_INFO_ARAY 0x00000100 /**< Array of standard types */
+#define DLT_TYPE_INFO_STRG 0x00000200 /**< String */
+#define DLT_TYPE_INFO_RAWD 0x00000400 /**< Raw data */
+#define DLT_TYPE_INFO_VARI 0x00000800 /**< Set, if additional information to a variable is available */
+#define DLT_TYPE_INFO_FIXP 0x00001000 /**< Set, if quantization and offset are added */
+#define DLT_TYPE_INFO_TRAI 0x00002000 /**< Set, if additional trace information is added */
+#define DLT_TYPE_INFO_STRU 0x00004000 /**< Struct */
+#define DLT_TYPE_INFO_SCOD 0x00038000 /**< coding of the type string: 0 = ASCII, 1 = UTF-8 */
 
-#define DLT_TYLE_8BIT		0x00000001
-#define DLT_TYLE_16BIT		0x00000002
-#define DLT_TYLE_32BIT		0x00000003
-#define DLT_TYLE_64BIT		0x00000004
-#define DLT_TYLE_128BIT		0x00000005
+#define DLT_TYLE_8BIT      0x00000001
+#define DLT_TYLE_16BIT     0x00000002
+#define DLT_TYLE_32BIT     0x00000003
+#define DLT_TYLE_64BIT     0x00000004
+#define DLT_TYLE_128BIT    0x00000005
 
 #define DLT_SCOD_ASCII      0x00000000
 #define DLT_SCOD_UTF8       0x00008000
@@ -196,8 +196,8 @@
 #define DLT_SERVICE_ID_LAST_ENTRY                      0x15 /**< Service ID: Last entry to avoid any further modifications in dependent code */
 #define DLT_SERVICE_ID_UNREGISTER_CONTEXT             0xf01 /**< Service ID: Message unregister context */
 #define DLT_SERVICE_ID_CONNECTION_INFO                0xf02 /**< Service ID: Message connection info */
-#define DLT_SERVICE_ID_TIMEZONE						  0xf03 /**< Service ID: Timezone */
-#define DLT_SERVICE_ID_MARKER						  0xf04 /**< Service ID: Marker */
+#define DLT_SERVICE_ID_TIMEZONE                       0xf03 /**< Service ID: Timezone */
+#define DLT_SERVICE_ID_MARKER                         0xf04 /**< Service ID: Marker */
 #define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
 
 /*
@@ -210,8 +210,8 @@
 /*
  * Definitions of DLT service connection state
  */
-#define DLT_CONNECTION_STATUS_DISCONNECTED 		0x01 /**< Client is disconnected */
-#define DLT_CONNECTION_STATUS_CONNECTED 		0x02 /**< Client is connected */
+#define DLT_CONNECTION_STATUS_DISCONNECTED 0x01 /**< Client is disconnected */
+#define DLT_CONNECTION_STATUS_CONNECTED    0x02 /**< Client is connected */
 
 /**
   \}

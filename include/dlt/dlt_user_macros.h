@@ -73,10 +73,10 @@
 #include "dlt_version.h"
 
 /**
- \defgroup userapi DLT User API
- \addtogroup userapi
- \{
- */
+  \defgroup userapi DLT User API
+  \addtogroup userapi
+  \{
+*/
 
 /**************************************************************************************************
  * The folowing macros define a macro interface for DLT
@@ -91,7 +91,7 @@
  *       Example: DLT_DECLARE_CONTEXT(hContext)
  */
 #define DLT_DECLARE_CONTEXT(CONTEXT) \
-DltContext CONTEXT;
+    DltContext CONTEXT;
 
 /**
  * Use an object of a new context created in another module.
@@ -102,7 +102,7 @@ DltContext CONTEXT;
  *       Example: DLT_IMPORT_CONTEXT(hContext)
  */
 #define DLT_IMPORT_CONTEXT(CONTEXT) \
-extern DltContext CONTEXT;
+    extern DltContext CONTEXT;
 
 /**
  * Register application.
@@ -110,15 +110,15 @@ extern DltContext CONTEXT;
  * @param DESCRIPTION ASCII string containing description
  */
 #define DLT_REGISTER_APP(APPID,DESCRIPTION) do {\
-	(void)dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION ); \
-	(void)dlt_register_app( APPID, DESCRIPTION);} while(0)
+    (void)dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION ); \
+    (void)dlt_register_app( APPID, DESCRIPTION);} while(0)
 
 
 /**
  * Unregister application.
  */
 #define DLT_UNREGISTER_APP() do{\
-	(void)dlt_unregister_app();} while(0)
+    (void)dlt_unregister_app();} while(0)
 
 /**
  * Register context (with default log level and default trace status)
@@ -127,7 +127,7 @@ extern DltContext CONTEXT;
  * @param DESCRIPTION ASCII string containing description
  */
 #define DLT_REGISTER_CONTEXT(CONTEXT,CONTEXTID,DESCRIPTION) do{\
-	(void)dlt_register_context(&(CONTEXT), CONTEXTID, DESCRIPTION);} while(0)
+    (void)dlt_register_context(&(CONTEXT), CONTEXTID, DESCRIPTION);} while(0)
 
 /**
  * Register context with pre-defined log level and pre-defined trace status.
@@ -140,14 +140,14 @@ extern DltContext CONTEXT;
  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  */
 #define DLT_REGISTER_CONTEXT_LL_TS(CONTEXT,CONTEXTID,DESCRIPTION,LOGLEVEL,TRACESTATUS) do{\
-	(void)dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);} while(0)
+    (void)dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);} while(0)
 
 /**
  * Unregister context.
  * @param CONTEXT object containing information about one special logging context
  */
 #define DLT_UNREGISTER_CONTEXT(CONTEXT) do{\
-	(void)dlt_unregister_context(&(CONTEXT));} while(0)
+    (void)dlt_unregister_context(&(CONTEXT));} while(0)
 
 /**
  * Register callback function called when injection message was received
@@ -156,7 +156,7 @@ extern DltContext CONTEXT;
  * @param CALLBACK function pointer to callback function
  */
 #define DLT_REGISTER_INJECTION_CALLBACK(CONTEXT, SERVICEID, CALLBACK) do{\
-	(void)dlt_register_injection_callback(&(CONTEXT),SERVICEID, CALLBACK);} while(0)
+    (void)dlt_register_injection_callback(&(CONTEXT),SERVICEID, CALLBACK);} while(0)
 
 /**
  * Register callback function called when log level of context was changed
@@ -164,7 +164,7 @@ extern DltContext CONTEXT;
  * @param CALLBACK function pointer to callback function
  */
 #define DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(CONTEXT, CALLBACK) do{\
-	(void)dlt_register_log_level_changed_callback(&(CONTEXT),CALLBACK);} while(0)
+    (void)dlt_register_log_level_changed_callback(&(CONTEXT),CALLBACK);} while(0)
 
 /**
  * Send log message with variable list of messages (intended for verbose mode)
@@ -180,19 +180,19 @@ extern DltContext CONTEXT;
 /* use function interface instead            */
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			DltContextData log_local; \
-			int dlt_local; \
-			dlt_local = dlt_user_log_write_start(&CONTEXT,&log_local,LOGLEVEL); \
-			if (dlt_local > 0) \
-			{ \
-	            ARGS; \
-	            (void)dlt_user_log_write_finish(&log_local); \
-			} \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            DltContextData log_local; \
+            int dlt_local; \
+            dlt_local = dlt_user_log_write_start(&CONTEXT,&log_local,LOGLEVEL); \
+            if (dlt_local > 0) \
+            { \
+                ARGS; \
+                (void)dlt_user_log_write_finish(&log_local); \
+            } \
+        } \
+    } while(0)
 #endif
 
 /**
@@ -212,19 +212,19 @@ extern DltContext CONTEXT;
 /* use function interface instead               */
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			DltContextData log_local; \
-			int dlt_local; \
-			dlt_local = dlt_user_log_write_start_id(&CONTEXT,&log_local,LOGLEVEL,MSGID); \
-			if (dlt_local > 0) \
-			{ \
-	            ARGS; \
-	            (void)dlt_user_log_write_finish(&log_local); \
-			} \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            DltContextData log_local; \
+            int dlt_local; \
+            dlt_local = dlt_user_log_write_start_id(&CONTEXT,&log_local,LOGLEVEL,MSGID); \
+            if (dlt_local > 0) \
+            { \
+                ARGS; \
+                (void)dlt_user_log_write_finish(&log_local); \
+            } \
+        } \
+    } while(0)
 #endif
 
 /**
@@ -232,80 +232,80 @@ extern DltContext CONTEXT;
  * @param TEXT ASCII string
  */
 #define DLT_STRING(TEXT) \
-        (void)dlt_user_log_write_string(&log_local,TEXT)
+    (void)dlt_user_log_write_string(&log_local,TEXT)
 
 /**
  * Add constant string parameter to the log messsage.
  * @param TEXT Constant ASCII string
  */
 #define DLT_CSTRING(TEXT) \
-        (void)dlt_user_log_write_constant_string(&log_local,TEXT)
+    (void)dlt_user_log_write_constant_string(&log_local,TEXT)
 
 /**
  * Add utf8-encoded string parameter to the log messsage.
  * @param TEXT UTF8-encoded string
  */
 #define DLT_UTF8(TEXT) \
-        (void)dlt_user_log_write_utf8_string(&log_local,TEXT)
+    (void)dlt_user_log_write_utf8_string(&log_local,TEXT)
 
 /**
  * Add boolean parameter to the log messsage.
  * @param BOOL_VAR Boolean value (mapped to uint8)
  */
 #define DLT_BOOL(BOOL_VAR) \
-        (void)dlt_user_log_write_bool(&log_local,BOOL_VAR)
+    (void)dlt_user_log_write_bool(&log_local,BOOL_VAR)
 
 /**
  * Add float32 parameter to the log messsage.
  * @param FLOAT32_VAR Float32 value (mapped to float)
  */
 #define DLT_FLOAT32(FLOAT32_VAR) \
-        (void)dlt_user_log_write_float32(&log_local,FLOAT32_VAR)
+    (void)dlt_user_log_write_float32(&log_local,FLOAT32_VAR)
 
 /**
  * Add float64 parameter to the log messsage.
  * @param FLOAT64_VAR Float64 value (mapped to double)
  */
 #define DLT_FLOAT64(FLOAT64_VAR) \
-        (void)dlt_user_log_write_float64(&log_local,FLOAT64_VAR)
+    (void)dlt_user_log_write_float64(&log_local,FLOAT64_VAR)
 
 /**
  * Add integer parameter to the log messsage.
  * @param INT_VAR integer value
  */
 #define DLT_INT(INT_VAR) \
-        (void)dlt_user_log_write_int(&log_local,INT_VAR)
+    (void)dlt_user_log_write_int(&log_local,INT_VAR)
 
 #define DLT_INT8(INT_VAR) \
-        (void)dlt_user_log_write_int8(&log_local,INT_VAR)
+    (void)dlt_user_log_write_int8(&log_local,INT_VAR)
 
 #define DLT_INT16(INT_VAR) \
-        (void)dlt_user_log_write_int16(&log_local,INT_VAR)
+    (void)dlt_user_log_write_int16(&log_local,INT_VAR)
 
 #define DLT_INT32(INT_VAR) \
-        (void)dlt_user_log_write_int32(&log_local,INT_VAR)
+    (void)dlt_user_log_write_int32(&log_local,INT_VAR)
 
 #define DLT_INT64(INT_VAR) \
-        (void)dlt_user_log_write_int64(&log_local,INT_VAR)
+    (void)dlt_user_log_write_int64(&log_local,INT_VAR)
 
 /**
  * Add unsigned integer parameter to the log messsage.
  * @param UINT_VAR unsigned integer value
  */
 #define DLT_UINT(UINT_VAR) \
-        (void)dlt_user_log_write_uint(&log_local,UINT_VAR)
+    (void)dlt_user_log_write_uint(&log_local,UINT_VAR)
 
 #define DLT_UINT8(UINT_VAR) \
-        (void)dlt_user_log_write_uint8(&log_local,UINT_VAR)
+    (void)dlt_user_log_write_uint8(&log_local,UINT_VAR)
 
 #define DLT_UINT16(UINT_VAR) \
-        (void)dlt_user_log_write_uint16(&log_local,UINT_VAR)
+    (void)dlt_user_log_write_uint16(&log_local,UINT_VAR)
 
 #define DLT_UINT32(UINT_VAR) \
-        (void)dlt_user_log_write_uint32(&log_local,UINT_VAR)
+    (void)dlt_user_log_write_uint32(&log_local,UINT_VAR)
 
 #define DLT_UINT64(UINT_VAR) \
-        (void)dlt_user_log_write_uint64(&log_local,UINT_VAR)
+    (void)dlt_user_log_write_uint64(&log_local,UINT_VAR)
 
 /**
  * Add binary memory block to the log messages.
@@ -313,19 +313,19 @@ extern DltContext CONTEXT;
  * @param LEN length of memory block
  */
 #define DLT_RAW(BUF,LEN) \
-        (void)dlt_user_log_write_raw(&log_local,BUF,LEN)
+    (void)dlt_user_log_write_raw(&log_local,BUF,LEN)
 #define DLT_HEX8(UINT_VAR) \
-        (void)dlt_user_log_write_uint8_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX8)
+    (void)dlt_user_log_write_uint8_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX8)
 #define DLT_HEX16(UINT_VAR) \
-        (void)dlt_user_log_write_uint16_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX16)
+    (void)dlt_user_log_write_uint16_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX16)
 #define DLT_HEX32(UINT_VAR) \
-        (void)dlt_user_log_write_uint32_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX32)
+    (void)dlt_user_log_write_uint32_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX32)
 #define DLT_HEX64(UINT_VAR) \
-        (void)dlt_user_log_write_uint64_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX64)
+    (void)dlt_user_log_write_uint64_formatted(&log_local,UINT_VAR,DLT_FORMAT_HEX64)
 #define DLT_BIN8(UINT_VAR) \
-        (void)dlt_user_log_write_uint8_formatted(&log_local,UINT_VAR,DLT_FORMAT_BIN8)
+    (void)dlt_user_log_write_uint8_formatted(&log_local,UINT_VAR,DLT_FORMAT_BIN8)
 #define DLT_BIN16(UINT_VAR) \
-        (void)dlt_user_log_write_uint16_formatted(&log_local,UINT_VAR,DLT_FORMAT_BIN16)
+    (void)dlt_user_log_write_uint16_formatted(&log_local,UINT_VAR,DLT_FORMAT_BIN16)
 
 /**
  * Trace network message
@@ -338,10 +338,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
-    	{ \
-        	(void)dlt_user_trace_network(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
-		} \
+        if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+        { \
+            (void)dlt_user_trace_network(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+        } \
     }while(0)
 
 /**
@@ -355,10 +355,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK_TRUNCATED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
-    	{ \
-        	(void)dlt_user_trace_network_truncated(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD, 1); \
-		} \
+        if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+        { \
+            (void)dlt_user_trace_network_truncated(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD, 1); \
+        } \
     }while(0)
 
 /**
@@ -372,10 +372,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_TRACE_NETWORK_SEGMENTED(CONTEXT,TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD) \
     do { \
-    	if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
-    	{ \
-        	(void)dlt_user_trace_network_segmented(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
-    	} \
+        if ((CONTEXT).trace_status_ptr && *((CONTEXT).trace_status_ptr)==DLT_TRACE_STATUS_ON) \
+        { \
+            (void)dlt_user_trace_network_segmented(&(CONTEXT),TYPE,HEADERLEN,HEADER,PAYLOADLEN,PAYLOAD); \
+        } \
     }while(0)
 
 /**
@@ -386,10 +386,10 @@ extern DltContext CONTEXT;
  */
 #define DLT_LOG_STRING(CONTEXT,LOGLEVEL,TEXT) \
     do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-        	(void)dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
-		} \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
+        } \
     } while(0)
 
 /**
@@ -400,12 +400,12 @@ extern DltContext CONTEXT;
  * @param INT_VAR integer value
  */
 #define DLT_LOG_STRING_INT(CONTEXT,LOGLEVEL,TEXT,INT_VAR) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-        	(void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+        } \
+    } while(0)
 
 /**
  * Send log message with string parameter and unsigned integer parameter.
@@ -415,12 +415,12 @@ extern DltContext CONTEXT;
  * @param UINT_VAR unsigned integer value
  */
 #define DLT_LOG_STRING_UINT(CONTEXT,LOGLEVEL,TEXT,UINT_VAR) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			(void)dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
+        } \
+    } while(0)
 
 /**
  * Send log message with unsigned integer parameter.
@@ -429,12 +429,12 @@ extern DltContext CONTEXT;
  * @param UINT_VAR unsigned integer value
  */
 #define DLT_LOG_UINT(CONTEXT,LOGLEVEL,UINT_VAR) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			(void)dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
+        } \
+    } while(0)
 
 /**
  * Send log message with integer parameter.
@@ -443,12 +443,12 @@ extern DltContext CONTEXT;
  * @param INT_VAR integer value
  */
 #define DLT_LOG_INT(CONTEXT,LOGLEVEL,INT_VAR) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			(void)dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
+        } \
+    } while(0)
 
 /**
  * Send log message with binary memory block.
@@ -458,34 +458,34 @@ extern DltContext CONTEXT;
  * @param LEN length of memory block
  */
 #define DLT_LOG_RAW(CONTEXT,LOGLEVEL,BUF,LEN) \
-	do { \
-		if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
-		{ \
-			(void)dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
-		} \
-	} while(0)
+    do { \
+        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        { \
+            (void)dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
+        } \
+    } while(0)
 
 /**
  * Send log message with marker.
  */
 #define DLT_LOG_MARKER() \
-	do { \
-			(void)dlt_log_marker(); \
-	} while(0)
+    do { \
+        (void)dlt_log_marker(); \
+    } while(0)
 
 /**
  * Switch to verbose mode
  *
  */
 #define DLT_VERBOSE_MODE() do { \
-	(void)dlt_verbose_mode();} while(0)
+    (void)dlt_verbose_mode();} while(0)
 
 /**
  * Switch to non-verbose mode
  *
  */
 #define DLT_NONVERBOSE_MODE() do {\
-	(void)dlt_nonverbose_mode();} while(0)
+    (void)dlt_nonverbose_mode();} while(0)
 
 /**
  * Set maximum logged log level and trace status of application
@@ -501,17 +501,17 @@ extern DltContext CONTEXT;
  *
  */
 #define DLT_ENABLE_LOCAL_PRINT() do {\
-	(void)dlt_enable_local_print();} while(0)
+    (void)dlt_enable_local_print();} while(0)
 
 /**
  * Disable local printing of messages
  *
  */
 #define DLT_DISABLE_LOCAL_PRINT() do {\
-	(void)dlt_disable_local_print();} while(0)
+    (void)dlt_disable_local_print();} while(0)
 
 /**
- \}
- */
+  \}
+*/
 
 #endif /* DLT_USER_MACROS_H */

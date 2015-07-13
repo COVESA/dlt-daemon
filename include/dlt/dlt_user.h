@@ -94,14 +94,14 @@ extern "C" {
  */
 typedef enum
 {
-	DLT_LOG_DEFAULT =    		  -1,   /**< Default log level */
-	DLT_LOG_OFF     =      		0x00,   /**< Log level off */
-	DLT_LOG_FATAL   =   		0x01, 	/**< fatal system error */
-	DLT_LOG_ERROR   =   		0x02, 	/**< error with impact to correct functionality */
-	DLT_LOG_WARN    =   		0x03, 	/**< warning, correct behaviour could not be ensured */
-	DLT_LOG_INFO    =   		0x04, 	/**< informational */
-	DLT_LOG_DEBUG   =   		0x05, 	/**< debug  */
-	DLT_LOG_VERBOSE =   		0x06 	/**< highest grade of information */
+    DLT_LOG_DEFAULT =             -1,   /**< Default log level */
+    DLT_LOG_OFF     =           0x00,   /**< Log level off */
+    DLT_LOG_FATAL   =           0x01,   /**< fatal system error */
+    DLT_LOG_ERROR   =           0x02,   /**< error with impact to correct functionality */
+    DLT_LOG_WARN    =           0x03,   /**< warning, correct behaviour could not be ensured */
+    DLT_LOG_INFO    =           0x04,   /**< informational */
+    DLT_LOG_DEBUG   =           0x05,   /**< debug  */
+    DLT_LOG_VERBOSE =           0x06    /**< highest grade of information */
 } DltLogLevelType;
 
 /**
@@ -109,13 +109,13 @@ typedef enum
  */
 typedef enum
 {
-	DLT_FORMAT_DEFAULT   =          0x00,   /**< no sepecial format */
-	DLT_FORMAT_HEX8  =   		0x01, 	/**< Hex 8 */
-	DLT_FORMAT_HEX16 =   		0x02, 	/**< Hex 16 */
-	DLT_FORMAT_HEX32 =   		0x03, 	/**< Hex 32 */
-	DLT_FORMAT_HEX64 =   		0x04, 	/**< Hex 64 */
-	DLT_FORMAT_BIN8  =   		0x05, 	/**< Binary 8 */
-	DLT_FORMAT_BIN16 =   		0x06 	/**< Binary 16  */
+    DLT_FORMAT_DEFAULT   =          0x00,   /**< no sepecial format */
+    DLT_FORMAT_HEX8  =          0x01,   /**< Hex 8 */
+    DLT_FORMAT_HEX16 =          0x02,   /**< Hex 16 */
+    DLT_FORMAT_HEX32 =          0x03,   /**< Hex 32 */
+    DLT_FORMAT_HEX64 =          0x04,   /**< Hex 64 */
+    DLT_FORMAT_BIN8  =          0x05,   /**< Binary 8 */
+    DLT_FORMAT_BIN16 =          0x06    /**< Binary 16  */
 } DltFormatType;
 
 /**
@@ -123,9 +123,9 @@ typedef enum
  */
 typedef enum
 {
-	DLT_TRACE_STATUS_DEFAULT =   -1, 	/**< Default trace status */
-	DLT_TRACE_STATUS_OFF	 = 0x00, 	/**< Trace status: Off */
-	DLT_TRACE_STATUS_ON      = 0x01 	/**< Trace status: On */
+    DLT_TRACE_STATUS_DEFAULT =   -1,    /**< Default trace status */
+    DLT_TRACE_STATUS_OFF     = 0x00,    /**< Trace status: Off */
+    DLT_TRACE_STATUS_ON      = 0x01     /**< Trace status: On */
 } DltTraceStatusType;
 
 /**
@@ -134,21 +134,21 @@ typedef enum
  */
 typedef enum
 {
-	DLT_NW_TRACE_IPC     = 0x01, 	/**< Interprocess communication */
-	DLT_NW_TRACE_CAN     = 0x02, 	/**< Controller Area Network Bus */
-	DLT_NW_TRACE_FLEXRAY = 0x03, 	/**< Flexray Bus */
-	DLT_NW_TRACE_MOST    = 0x04, 	/**< Media Oriented System Transport Bus */
-        DLT_NW_TRACE_RESERVED0 = 0x05,
-        DLT_NW_TRACE_RESERVED1 = 0x06,
-        DLT_NW_TRACE_RESERVED2 = 0x07,
-        DLT_NW_TRACE_USER_DEFINED0 = 0x08,
-        DLT_NW_TRACE_USER_DEFINED1 = 0x09,
-        DLT_NW_TRACE_USER_DEFINED2 = 0x0A,
-        DLT_NW_TRACE_USER_DEFINED3 = 0x0B,
-        DLT_NW_TRACE_USER_DEFINED4 = 0x0C,
-        DLT_NW_TRACE_USER_DEFINED5 = 0x0D,
-        DLT_NW_TRACE_USER_DEFINED6 = 0x0E,
-        DLT_NW_TRACE_USER_DEFINED7 = 0x0F
+    DLT_NW_TRACE_IPC     = 0x01,    /**< Interprocess communication */
+    DLT_NW_TRACE_CAN     = 0x02,    /**< Controller Area Network Bus */
+    DLT_NW_TRACE_FLEXRAY = 0x03,    /**< Flexray Bus */
+    DLT_NW_TRACE_MOST    = 0x04,    /**< Media Oriented System Transport Bus */
+    DLT_NW_TRACE_RESERVED0 = 0x05,
+    DLT_NW_TRACE_RESERVED1 = 0x06,
+    DLT_NW_TRACE_RESERVED2 = 0x07,
+    DLT_NW_TRACE_USER_DEFINED0 = 0x08,
+    DLT_NW_TRACE_USER_DEFINED1 = 0x09,
+    DLT_NW_TRACE_USER_DEFINED2 = 0x0A,
+    DLT_NW_TRACE_USER_DEFINED3 = 0x0B,
+    DLT_NW_TRACE_USER_DEFINED4 = 0x0C,
+    DLT_NW_TRACE_USER_DEFINED5 = 0x0D,
+    DLT_NW_TRACE_USER_DEFINED6 = 0x0E,
+    DLT_NW_TRACE_USER_DEFINED7 = 0x0F
 } DltNetworkTraceType;
 
 /**
@@ -156,16 +156,16 @@ typedef enum
  */
 typedef enum
 {
-	DLT_USER_MODE_UNDEFINED   =  -1,
-	DLT_USER_MODE_OFF         =  0,
-	DLT_USER_MODE_EXTERNAL 		  ,
-	DLT_USER_MODE_INTERNAL 		  ,
-	DLT_USER_MODE_BOTH
+    DLT_USER_MODE_UNDEFINED   =  -1,
+    DLT_USER_MODE_OFF         =  0,
+    DLT_USER_MODE_EXTERNAL        ,
+    DLT_USER_MODE_INTERNAL        ,
+    DLT_USER_MODE_BOTH
 } DltUserLogMode;
 
 #define DLT_USER_BUF_MAX_SIZE 2048               /**< maximum size of each user buffer, also used for injection buffer */
 
-#define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)		/**< Size of resend buffer; Max DLT message size is 2K plus some extra header space  */
+#define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)       /**< Size of resend buffer; Max DLT message size is 2K plus some extra header space  */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 #define DLT_SEM_LOCK() { sem_wait(&dlt_mutex); }
@@ -176,11 +176,11 @@ typedef enum
  */
 typedef struct
 {
-	char contextID[4];                            /**< context id */
-	int32_t log_level_pos;                        /**< offset in user-application context field */
-	int8_t *log_level_ptr;                        /**< pointer to the log level */
-	int8_t *trace_status_ptr;                     /**< pointer to the trace status */
-   	uint8_t mcnt;                                 /**< message counter */
+    char contextID[4];                            /**< context id */
+    int32_t log_level_pos;                        /**< offset in user-application context field */
+    int8_t *log_level_ptr;                        /**< pointer to the log level */
+    int8_t *trace_status_ptr;                     /**< pointer to the trace status */
+    uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
 /**
@@ -189,26 +189,26 @@ typedef struct
 typedef struct
 {
     DltContext *handle;                           /**< pointer to DltContext */
-	unsigned char buffer[DLT_USER_BUF_MAX_SIZE];  /**< buffer for building log message*/
-	int32_t size;                                 /**< payload size */
-	int32_t log_level;                            /**< log level */
-	int32_t trace_status;                         /**< trace status */
-	int32_t args_num;                             /**< number of arguments for extended header*/
-	char* context_description;                    /**< description of context */
+    unsigned char buffer[DLT_USER_BUF_MAX_SIZE];  /**< buffer for building log message*/
+    int32_t size;                                 /**< payload size */
+    int32_t log_level;                            /**< log level */
+    int32_t trace_status;                         /**< trace status */
+    int32_t args_num;                             /**< number of arguments for extended header*/
+    char* context_description;                    /**< description of context */
 } DltContextData;
 
 typedef struct
 {
-	uint32_t service_id;
-	int (*injection_callback)(uint32_t service_id, void *data, uint32_t length);
+    uint32_t service_id;
+    int (*injection_callback)(uint32_t service_id, void *data, uint32_t length);
 } DltUserInjectionCallback;
 
 typedef struct
 {
-	char contextID[DLT_ID_SIZE];      /**< Context ID */
+    char contextID[DLT_ID_SIZE];      /**< Context ID */
     int8_t log_level;                 /**< Log level */
     int8_t trace_status;              /**< Trace status */
-	void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
+    void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 } DltUserLogLevelChangedCallback;
 
 /**
@@ -226,7 +226,7 @@ typedef struct
     uint32_t nrcallbacks;
 
     // Log Level changed callback
-	void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
+    void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
 } dlt_ll_ts_type;
 
@@ -235,44 +235,48 @@ typedef struct
  */
 typedef struct
 {
-    char ecuID[DLT_ID_SIZE];             /**< ECU ID */
-    char appID[DLT_ID_SIZE];             /**< Application ID */
-    int dlt_log_handle;                  /**< Handle to fifo of dlt daemon */
-    int dlt_user_handle;                 /**< Handle to own fifo */
-    mqd_t dlt_segmented_queue_read_handle;    /**< Handle message queue */
+    char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
+    char appID[DLT_ID_SIZE];                   /**< Application ID */
+    int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
+    int dlt_user_handle;                       /**< Handle to own fifo */
+    mqd_t dlt_segmented_queue_read_handle;     /**< Handle message queue */
     mqd_t dlt_segmented_queue_write_handle;    /**< Handle message queue */
-    pthread_t dlt_segmented_nwt_handle;  /**< thread handle of segmented sending */
+    pthread_t dlt_segmented_nwt_handle;        /**< thread handle of segmented sending */
 
-    int8_t dlt_is_file;                  /**< Target of logging: 1 to file, 0 to daemon */
+    int8_t dlt_is_file;                        /**< Target of logging: 1 to file, 0 to daemon */
 
-    dlt_ll_ts_type *dlt_ll_ts; //[MAX_DLT_LL_TS_ENTRIES]; /**< Internal management struct for all contexts */
-    uint32_t dlt_ll_ts_max_num_entries;   /**< Maximum number of contexts */
+    dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all
+                                                   contexts */
+    uint32_t dlt_ll_ts_max_num_entries;        /**< Maximum number of contexts */
 
-    uint32_t dlt_ll_ts_num_entries;       /**< Number of used contexts */
+    uint32_t dlt_ll_ts_num_entries;            /**< Number of used contexts */
 
-    int8_t overflow;                     /**< Overflow marker, set to 1 on overflow, 0 otherwise */
-    uint32_t overflow_counter;       	 /**< Counts the number of lost messages */
+    int8_t overflow;                           /**< Overflow marker, set to 1 on overflow, 0 otherwise */
+    uint32_t overflow_counter;                 /**< Counts the number of lost messages */
 
-    char *application_description;        /**< description of application */
+    char *application_description;             /**< description of application */
 
-    DltReceiver receiver;                 /**< Receiver for internal user-defined messages from daemon */
+    DltReceiver receiver;                      /**< Receiver for internal user-defined messages from daemon */
 
-    int8_t verbose_mode;				  		/**< Verbose mode enabled: 1 enabled, 0 disabled */
-    int8_t use_extende_header_for_non_verbose;	/**< Use extended header for non verbose: 1 enabled, 0 disabled */
-    int8_t with_session_id;					    /**< Send always session id: 1 enabled, 0 disabled */
-    int8_t with_timestamp;					    /**< Send always timestamp: 1 enabled, 0 disabled */
-    int8_t with_ecu_id;					        /**< Send always ecu id: 1 enabled, 0 disabled */
+    int8_t verbose_mode;                       /**< Verbose mode enabled: 1 enabled, 0 disabled */
+    int8_t use_extende_header_for_non_verbose; /**< Use extended header for non verbose: 1 enabled, 0 disabled */
+    int8_t with_session_id;                    /**< Send always session id: 1 enabled, 0 disabled */
+    int8_t with_timestamp;                     /**< Send always timestamp: 1 enabled, 0 disabled */
+    int8_t with_ecu_id;                        /**< Send always ecu id: 1 enabled, 0 disabled */
 
-    int8_t enable_local_print;            /**< Local printing of log messages: 1 enabled, 0 disabled */
-    int8_t local_print_mode;              /**< Local print mode, controlled by environment variable */
+    int8_t enable_local_print;                 /**< Local printing of log messages: 1 enabled, 0 disabled */
+    int8_t local_print_mode;                   /**< Local print mode, controlled by environment variable */
 
-    int8_t log_state;					  /**< Log state of external connection: 1 client connected, 0 not connected, -1 unknown */
+    int8_t log_state;                          /**< Log state of external connection:
+                                                  1 client connected,
+                                                  0 not connected,
+                                                 -1 unknown */
 
     //DltRingBuffer rbuf;                 
-	DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
+    DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
     
-	// Buffer used for resending, locked by DLT semaphore
-	uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
+    // Buffer used for resending, locked by DLT semaphore
+    uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
 
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;
@@ -487,8 +491,8 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
 int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
 
 /**************************************************************************************************
-* The folowing API functions define a high level function interface for DLT
-**************************************************************************************************/
+ * The folowing API functions define a high level function interface for DLT
+ **************************************************************************************************/
 
 /**
  * Initialise the user lib communication with daemon.
@@ -552,9 +556,9 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
  * @param contextid four byte long character array with the context id
  * @param description long name of the context
  * @param loglevel This is the log level to be pre-set for this context
-          (DLT_LOG_DEFAULT is not allowed here)
+ (DLT_LOG_DEFAULT is not allowed here)
  * @param tracestatus This is the trace status to be pre-set for this context
-		  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+ (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  * @return negative value if there was an error
  */
 int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);
@@ -594,7 +598,7 @@ int dlt_get_log_state();
  * @return negative value if there was an error
  */
 int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
-      int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length));
+        int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length));
 
 /**
  * Register callback function called when log level of context was changed
@@ -603,7 +607,7 @@ int dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
  * @return negative value if there was an error
  */
 int dlt_register_log_level_changed_callback(DltContext *handle,
-      void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status));
+        void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status));
 
 /**
  * Switch to verbose mode
@@ -774,8 +778,8 @@ int dlt_user_atexit_blow_out_user_buffer(void);
 int dlt_user_log_resend_buffer(void);
 
 #ifdef DLT_TEST_ENABLE
-void dlt_user_test_corrupt_user_header(int enable);
-void dlt_user_test_corrupt_message_size(int enable,int16_t size);
+    void dlt_user_test_corrupt_user_header(int enable);
+    void dlt_user_test_corrupt_message_size(int enable,int16_t size);
 #endif /* DLT_TEST_ENABLE */
 
 #ifdef __cplusplus

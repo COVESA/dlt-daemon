@@ -61,32 +61,32 @@
 
 /* shared memory key */
 /* must be the same for server and cleint */
-#define DLT_SHM_KEY  	11771
+#define DLT_SHM_KEY    11771
 
 /* default size of shared memory */
 /* size is extended during creation to fit segment size */
 /* client retreives real size from shm buffer */
-#define DLT_SHM_SIZE	100000
+#define DLT_SHM_SIZE   100000
 
 /* Id of the used semaphore */
 /* used for synchronisation of write and read access of multiple clients and server */
 /* must be the same for server and client */
-#define DLT_SHM_SEM		22771
+#define DLT_SHM_SEM    22771
 
-#define DLT_SHM_HEAD 	"SHM"
+#define DLT_SHM_HEAD   "SHM"
 
 typedef struct
 {
-	int shmid;	/* Id of shared memory */
-	int semid;	/* Id of semaphore */
-	DltBuffer buffer;
+    int shmid;        /* Id of shared memory */
+    int semid;        /* Id of semaphore */
+    DltBuffer buffer;
 } DltShm;
 
 typedef struct
 {
-	char head[4];
-	unsigned char status;
-	int size;	
+    char head[4];
+    unsigned char status;
+    int size;
 } DltShmBlockHead;
 
 #define DLT_SHM_SEM_GET(id) dlt_shm_pv(id,-1)
