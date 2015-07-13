@@ -20,7 +20,7 @@ if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
     message( STATUS "Added ${systemd_SRCS} to dlt-daemon")
 endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
 
-set(dlt_daemon_SRCS dlt-daemon.c dlt_daemon_common.c dlt_daemon_connection.c dlt_daemon_event_handler.c dlt_daemon_socket.c dlt_daemon_serial.c dlt_daemon_client.c dlt_daemon_offline_logstorage.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_offline_trace.c ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c)
+set(dlt_daemon_SRCS dlt-daemon.c dlt_daemon_common.c dlt_daemon_connection.c dlt_daemon_event_handler.c dlt_daemon_socket.c dlt_daemon_serial.c dlt_daemon_client.c dlt_daemon_offline_logstorage.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_offline_trace.c ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_config_file_parser.c)
 add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
 target_link_libraries(dlt-daemon rt ${CMAKE_THREAD_LIBS_INIT})
 
