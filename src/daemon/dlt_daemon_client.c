@@ -59,15 +59,153 @@
 #include "dlt_daemon_serial.h"
 
 #include "dlt_daemon_client.h"
+#include "dlt_daemon_connection.h"
 
 #include "dlt_daemon_offline_logstorage.h"
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
+/** @brief Sends up to 2 messages to all the clients.
+ *
+ * Runs through the client list and sends the messages to them. If the message
+ * transfer fails and the connection is a socket connection, the socket is closed.
+ * Takes and release dlt_daemon_mutex.
+ *
+ * @param daemon Daemon structure needed for socket closure.
+ * @param daemon_local Daemon local structure
+ * @param data1 The first message to be sent.
+ * @param size1 The size of the first message.
+ * @param data2 The second message to be send.
+ * @param size2 The second message size.
+ * @param verbose Needed for socket closure.
+ *
+ * @return The amount of data transfered.
+ */
+static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
+                                               DltDaemonLocal *daemon_local,
+                                               void* data1,
+                                               int size1,
+                                               void* data2,
+                                               int size2,
+                                               int verbose)
+{
+    int j, sent = 0;
+    DltConnection* temp = NULL;
+    int type_mask =
+        (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Invalid parameters\n",
+                 __func__);
+        dlt_log(LOG_ERR, local_str);
+        return 0;
+    }
+
+    temp = daemon_local->pEvent.connections;
+    temp = dlt_connection_get_next(temp, type_mask);
+
+    /* FIXME: the lock shall include the for loop as data
+     * can be affect between each iteration, but
+     * dlt_daemon_close_socket may call us too ...
+     */
+    for (j = 0; ((j < daemon_local->client_connections) && (temp != NULL)); j++)
+    {
+        int ret = 0;
+        DLT_DAEMON_SEM_LOCK();
+        ret = dlt_connection_send_multiple(temp,
+                                          data1,
+                                          size1,
+                                          data2,
+                                          size2,
+                                          daemon->sendserialheader);
+        DLT_DAEMON_SEM_FREE();
+
+        if((ret != DLT_DAEMON_ERROR_OK) &&
+           DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
+        {
+            dlt_daemon_close_socket(temp->fd,
+                                    daemon,
+                                    daemon_local,
+                                    verbose);
+        }
+
+        if (ret != DLT_DAEMON_ERROR_OK)
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "%s: send dlt message failed\n",
+                     __func__);
+            dlt_log(LOG_WARNING, local_str);
+        }
+        else
+        {
+            /* If sent to at  least one client,
+             * then do not store in ring buffer
+             */
+            sent = 1;
+        }
+
+        temp = dlt_connection_get_next(temp->next, type_mask);
+    } /* for */
+
+    return sent;
+}
+
+/** @brief Send out message to all the clients.
+ *
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ *
+ * @return 1 if transfer succeed, 0 otherwise.
+ */
+int dlt_daemon_client_send_all(DltDaemon *daemon,
+                               DltDaemonLocal *daemon_local,
+                               int verbose)
+{
+    void *msg1, *msg2;
+    int msg1_sz, msg2_sz;
+    int ret = 0;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Invalid parameters\n",
+                 __func__);
+        dlt_log(LOG_ERR, local_str);
+        return 0;
+    }
+
+    /* FIXME: the lock shall include the for loop but
+     * dlt_daemon_close_socket may call us too ...
+     */
+    DLT_DAEMON_SEM_LOCK();
+    msg1 = daemon_local->msg.headerbuffer + sizeof(DltStorageHeader);
+    msg1_sz = daemon_local->msg.headersize - sizeof(DltStorageHeader);
+    msg2 = daemon_local->msg.databuffer;
+    msg2_sz = daemon_local->msg.datasize;
+    DLT_DAEMON_SEM_FREE();
+
+    ret = dlt_daemon_client_send_all_multiple(daemon,
+                                               daemon_local,
+                                               msg1,
+                                               msg1_sz,
+                                               msg2,
+                                               msg2_sz,
+                                               verbose);
+
+    return ret;
+}
+
 int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* storage_header,int storage_header_size,void* data1,int size1,void* data2,int size2,int verbose)
 {
-	int ret;
-	int j;
+	int sent,ret;
 
     if (sock!=DLT_DAEMON_SEND_TO_ALL && sock!=DLT_DAEMON_SEND_FORCE)
     {
@@ -135,58 +273,20 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 	{
 		if ((sock==DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
 		{
-			int sent = 0;
-			/* look if TCP connection to client is available */
-			for (j = 0; j <= daemon_local->fdmax; j++)
-			{
-				/* send to everyone! */
-				if (FD_ISSET(j, &(daemon_local->master)))
-				{
-					if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != daemon_local->sock)
-		#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-								&& (j!=daemon_local->timer_wd)
-		#endif
-					&& (j!=daemon_local->timer_one_s) && (j!=daemon_local->timer_sixty_s))
-					{
-						/* Send message */
-						if (isatty(j))
-						{
-							DLT_DAEMON_SEM_LOCK();
+            sent = dlt_daemon_client_send_all_multiple(daemon,
+                                                       daemon_local,
+                                                       data1,
+                                                       size1,
+                                                       data2,
+                                                       size2,
+                                                       verbose);
 
-							if((ret=dlt_daemon_serial_send(j,data1,size1,data2,size2,daemon->sendserialheader)))
-							{
-								DLT_DAEMON_SEM_FREE();
-								dlt_log(LOG_WARNING,"dlt_daemon_client_send: serial send dlt message failed\n");
-								return ret;
-							}
-
-							DLT_DAEMON_SEM_FREE();
-						}
-						else
-						{
-							DLT_DAEMON_SEM_LOCK();
-
-							if((ret=dlt_daemon_socket_send(j,data1,size1,data2,size2,daemon->sendserialheader)))
-							{
-								DLT_DAEMON_SEM_FREE();
-								dlt_log(LOG_WARNING,"dlt_daemon_client_send: socket send dlt message failed\n");
-								dlt_daemon_close_socket(j, daemon, daemon_local, verbose);
-								return ret;
-							}
-
-							DLT_DAEMON_SEM_FREE();
-						}
-						sent=1;
-
-					}
-				}
-			}
 			if((sock==DLT_DAEMON_SEND_FORCE) && !sent)
 			{
 				return DLT_DAEMON_ERROR_SEND_FAILED;
 			}
 		}
-	}
+    }
 
     /* Message was not sent to client, so store it in client ringbuffer */
     if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state == DLT_DAEMON_STATE_BUFFER || daemon->state == DLT_DAEMON_STATE_SEND_BUFFER || daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))
@@ -1639,6 +1739,182 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     dlt_message_free(&msg,0);
 }
 
+int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
+                                   DltDaemonLocal *daemon_local,
+                                   int verbose)
+{
+    uint64_t expir = 0;
+    ssize_t res = 0;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if((daemon_local == NULL) || (daemon == NULL))
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: invalid parameters",
+                 __func__);
+        dlt_log(LOG_ERR, local_str);
+        return -1;
+    }
+
+    res = read(daemon_local->timer_one_s.fd, &expir, sizeof(expir));
+
+    if(res < 0)
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
+        dlt_log(LOG_WARNING, str);
+        /* Activity received on timer_wd, but unable to read the fd:
+           let's go on sending notification */
+    }
+
+    if((daemon->state == DLT_DAEMON_STATE_SEND_BUFFER) ||
+       (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))
+    {
+        if (dlt_daemon_send_ringbuffer_to_client(daemon,
+                                                 daemon_local,
+                                                 daemon_local->flags.vflag))
+        {
+            dlt_log(LOG_DEBUG,
+                    "Can't send contents of ring buffer to clients\n");
+        }
+    }
+
+    if((daemon->timingpackets) &&
+       (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
+    {
+        dlt_daemon_control_message_time(DLT_DAEMON_SEND_TO_ALL,
+                                        daemon,
+                                        daemon_local,
+                                        daemon_local->flags.vflag);
+    }
+
+    dlt_log(LOG_DEBUG, "Timer timingpacket\n");
+
+    return 0;
+}
+
+int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     int verbose)
+{
+    uint64_t expir = 0;
+    ssize_t res = 0;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if((daemon_local == NULL) || (daemon == NULL))
+    {
+        snprintf(str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: invalid parameters",
+                 __func__);
+        dlt_log(LOG_ERR, str);
+        return -1;
+    }
+
+    res = read(daemon_local->timer_sixty_s.fd, &expir, sizeof(expir));
+
+    if(res < 0)
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
+        dlt_log(LOG_WARNING, str);
+        /* Activity received on timer_wd, but unable to read the fd:
+           let's go on sending notification */
+    }
+
+    if(daemon_local->flags.sendECUSoftwareVersion > 0)
+    {
+        dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
+                                                daemon,
+                                                daemon_local,
+                                                daemon_local->flags.vflag);
+    }
+
+    if(daemon_local->flags.sendTimezone > 0)
+    {
+        // send timezone information
+        time_t t = time(NULL);
+        struct tm lt;
+
+        /*Added memset to avoid compiler warning for near initialization */
+        memset((void*)&lt, 0, sizeof(lt));
+        localtime_r(&t, &lt);
+
+        dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
+                                            daemon,
+                                            daemon_local,
+                                            daemon_local->flags.vflag);
+    }
+
+    dlt_log(LOG_DEBUG, "Timer ecuversion\n");
+
+    return 0;
+}
+
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     int verbose)
+{
+    uint64_t expir = 0;
+    ssize_t res = -1;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if((daemon_local == NULL) || (daemon == NULL))
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: invalid parameters",
+                 __func__);
+        dlt_log(LOG_ERR, local_str);
+        return res;
+    }
+
+    res = read(daemon_local->timer_wd.fd, &expir, sizeof(expir));
+
+    if(res < 0)
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "Failed to read timer_wd; %s\n",
+                 strerror(errno));
+        dlt_log(LOG_WARNING, local_str);
+        /* Activity received on timer_wd, but unable to read the fd:
+           let's go on sending notification */
+    }
+
+    if(sd_notify(0, "WATCHDOG=1") < 0)
+    {
+        dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+    }
+
+    dlt_log(LOG_DEBUG, "Timer watchdog\n");
+
+    return 0;
+}
+#else
+int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     int verbose)
+{
+    (void)daemon;
+    (void)daemon_local;
+    (void)verbose;
+
+    dlt_log(LOG_DEBUG, "Timer watchdog not enabled\n");
+
+    return -1;
+}
+#endif
 
 void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose)
 {

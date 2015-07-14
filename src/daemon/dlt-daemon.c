@@ -59,6 +59,8 @@
 #include "dlt_daemon_serial.h"
 
 #include "dlt_daemon_client.h"
+#include "dlt_daemon_connection.h"
+#include "dlt_daemon_event_handler.h"
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #include "sd-daemon.h"
@@ -441,7 +443,7 @@ int main(int argc, char* argv[])
     char version[DLT_DAEMON_TEXTBUFSIZE];
     DltDaemonLocal daemon_local;
     DltDaemon daemon;
-    int i,back;
+    int back;
 
     /* Command line option handling */
     if ((back = option_handling(&daemon_local,argc,argv))<0)
@@ -490,6 +492,13 @@ int main(int argc, char* argv[])
     }
     /* --- Daemon init phase 1 end --- */
 
+    if (dlt_daemon_prepare_event_handling(&daemon_local.pEvent))
+    {
+        /* TODO: Perform clean-up */
+        dlt_log(LOG_CRIT,"Initialization of event handling failed!\n");
+        return -1;
+    }
+
     /* --- Daemon connection init begin */
     if (dlt_daemon_local_connection_init(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
     {
@@ -518,18 +527,37 @@ int main(int argc, char* argv[])
             watchdogTimeoutSeconds = atoi(watchdogUSec)/2000000;
         }
         watchdog_trigger_interval = watchdogTimeoutSeconds;
-        create_timer_fd(&daemon_local, watchdogTimeoutSeconds, watchdogTimeoutSeconds, &daemon_local.timer_wd, "Systemd watchdog");
+        create_timer_fd(&daemon_local,
+                        watchdogTimeoutSeconds,
+                        watchdogTimeoutSeconds,
+                        &daemon_local.timer_wd.fd,
+                        DLT_TIMER_SYSTEMD);
     }
 #endif
 
     // create fd for timer timing packets
-    create_timer_fd(&daemon_local, 1, 1, &daemon_local.timer_one_s, "Timing packet");
+    create_timer_fd(&daemon_local,
+                    1,
+                    1,
+                    &daemon_local.timer_one_s.fd,
+                    DLT_TIMER_PACKET);
 
     // create fd for timer ecu version
-    if(daemon_local.flags.sendECUSoftwareVersion > 0 || daemon_local.flags.sendTimezone > 0)
+    if((daemon_local.flags.sendECUSoftwareVersion > 0) ||
+       (daemon_local.flags.sendTimezone > 0))
     {
-        //dlt_daemon_init_ecuversion(&daemon_local);
-        create_timer_fd(&daemon_local, 60, 60, &daemon_local.timer_sixty_s, "ECU version");
+        create_timer_fd(&daemon_local,
+                        60,
+                        60,
+                        &daemon_local.timer_sixty_s.fd,
+                        DLT_TIMER_ECU);
+    }
+
+    if (dlt_connection_create_remaining(&daemon_local) == -1)
+    {
+        /* TODO: Perform clean-up */
+        dlt_log(LOG_CRIT,"Fail to create remaining connection handler!\n");
+        return -1;
     }
 
     // For offline tracing we still can use the same states
@@ -542,132 +570,14 @@ int main(int argc, char* argv[])
 
     dlt_daemon_log_internal(&daemon, &daemon_local, "Daemon launched. Starting to output traces...", daemon_local.flags.vflag);
 
-    while (1)
+    /* Even handling loop. */
+    while (back >= 0)
     {
+        back = dlt_daemon_handle_event(&daemon_local.pEvent,
+                                       &daemon,
+                                       &daemon_local);
+    }
 
-        /* wait for events from all FIFO and sockets */
-        daemon_local.read_fds = daemon_local.master;
-        if (select(daemon_local.fdmax+1, &(daemon_local.read_fds), NULL, NULL, NULL) == -1)
-        {
-            int error = errno;
-            /* retry if SIGINT was received, else error out */
-            if ( error != EINTR ) {
-                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"select() failed: %s\n", strerror(error) );
-                dlt_log(LOG_ERR, str);
-                return -1;
-            }
-        } /* if */
-
-        /* run through the existing FIFO and sockets to check for events */
-        for (i = 0; i <= daemon_local.fdmax; i++)
-        {
-            if (FD_ISSET(i, &(daemon_local.read_fds)))
-            {
-                if (i == daemon_local.sock)
-                {
-                    /* event from TCP server socket, new connection */
-                    if (dlt_daemon_process_client_connect(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
-                    {
-                        dlt_log(LOG_ERR,"Connect to dlt client failed!\n");
-                        return -1;
-                    }
-                }
-                else if (i == daemon_local.fp)
-                {
-                    /* event from the FIFO happened */
-                    if (dlt_daemon_process_user_messages(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
-                    {
-                        dlt_log(LOG_WARNING,"Processing of messages from user connection failed!\n");
-                        return -1;
-                    }
-                }
-                else if ((i == daemon_local.fdserial) && (daemon_local.flags.yvalue[0]))
-                {
-                    /* event from serial connection to client received */
-                    if (dlt_daemon_process_client_messages_serial(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
-                    {
-                        dlt_log(LOG_WARNING,"Processing of messages from serial connection failed!\n");
-                        return -1;
-                    }
-                }
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-                else if (i == daemon_local.timer_wd)
-                {
-                    uint64_t expir=0;
-                    ssize_t res = read(daemon_local.timer_wd, &expir, sizeof(expir));
-                    if(res < 0) {
-                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_wd; %s\n", strerror(errno) );
-                        dlt_log(LOG_WARNING, str);
-                        // Activity received on timer_wd, but unable to read the fd:
-                        // let's go on sending notification
-                    }
-
-                    dlt_log(LOG_DEBUG, "Timer watchdog\n");
-
-                    if(sd_notify(0, "WATCHDOG=1") < 0)
-                    {
-                        dlt_log(LOG_WARNING, "Could not reset systemd watchdog\n");
-                    }
-                }
-#endif
-                else if (i == daemon_local.timer_one_s)
-                {
-                    uint64_t expir=0;
-                    ssize_t res = read(daemon_local.timer_one_s, &expir, sizeof(expir));
-                    if(res < 0) {
-                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_timingpacket; %s\n", strerror(errno) );
-                        dlt_log(LOG_WARNING, str);
-                        // Activity received on timer_wd, but unable to read the fd:
-                        // let's go on sending notification
-                    }
-                    if(daemon.state == DLT_DAEMON_STATE_SEND_BUFFER || daemon.state == DLT_DAEMON_STATE_BUFFER_FULL)
-                    {
-                        if (dlt_daemon_send_ringbuffer_to_client(&daemon, &daemon_local, daemon_local.flags.vflag))
-                        {
-                            dlt_log(LOG_DEBUG,"Can't send contents of ringbuffer to clients\n");
-                        }
-                    }
-                    if (daemon.timingpackets && daemon.state == DLT_DAEMON_STATE_SEND_DIRECT)
-                    {
-                        dlt_daemon_control_message_time(DLT_DAEMON_SEND_TO_ALL, &daemon, &daemon_local, daemon_local.flags.vflag);
-                    }
-                    dlt_log(LOG_DEBUG, "Timer timingpacket\n");
-
-                 }
-
-                else if (i == daemon_local.timer_sixty_s)
-                {
-                    uint64_t expir=0;
-                    ssize_t res = read(daemon_local.timer_sixty_s, &expir, sizeof(expir));
-                    if(res < 0) {
-                        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to read timer_ecuversion; %s\n", strerror(errno) );
-                        dlt_log(LOG_WARNING, str);
-                        // Activity received on timer_wd, but unable to read the fd:
-                        // let's go on sending notification
-                    }
-                    if(daemon_local.flags.sendECUSoftwareVersion > 0)
-                        dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL, &daemon,&daemon_local, daemon_local.flags.vflag);
-
-                    if(daemon_local.flags.sendTimezone > 0)
-                    {
-                        dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,&daemon,&daemon_local,daemon_local.flags.vflag);
-                    }
-                    dlt_log(LOG_DEBUG, "Timer ecuversion\n");
-
-                }
-                else
-                {
-                    /* event from tcp connection to client received */
-                    daemon_local.receiverSock.fd = i;
-                    if (dlt_daemon_process_client_messages(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
-                    {
-                        dlt_log(LOG_WARNING,"Processing of messages from client connection failed!\n");
-                        return -1;
-                    }
-                } /* else */
-            } /* if */
-        } /* for */
-    } /* while */
 
     dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
 
@@ -870,17 +780,80 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     return 0;
 }
 
-int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
 {
-    int ret;
-
-    PRINT_FUNCTION_VERBOSE(verbose);
-
-    if ((daemon==0)  || (daemon_local==0))
+    if (!daemon_local->flags.yvalue[0])
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_local_connection_init()\n");
+        /* Nothing to do here. */
+        daemon_local->fdserial = -1;
+        return 0;
+    }
+
+    /* create and open serial connection from/to client */
+    /* open serial connection */
+    daemon_local->fdserial = open(daemon_local->flags.yvalue, O_RDWR);
+    if (daemon_local->fdserial < 0)
+    {
+        snprintf(str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "Failed to open serial device %s\n",
+                 daemon_local->flags.yvalue);
+        dlt_log(LOG_ERR, str);
+
+        daemon_local->flags.yvalue[0] = 0;
         return -1;
     }
+
+    if (isatty(daemon_local->fdserial))
+    {
+        int speed = DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE;
+
+        if (daemon_local->flags.bvalue[0])
+        {
+            speed = atoi(daemon_local->flags.bvalue);
+        }
+
+        daemon_local->baudrate = dlt_convert_serial_speed(speed);
+
+        if (dlt_setup_serial(daemon_local->fdserial,
+                             daemon_local->baudrate) < 0)
+        {
+            close(daemon_local->fdserial);
+            daemon_local->flags.yvalue[0] = 0;
+
+            snprintf(str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Failed to configure serial device %s (%s) \n",
+                     daemon_local->flags.yvalue,
+                     strerror(errno));
+            dlt_log(LOG_ERR, str);
+
+            return -1;
+        }
+
+        if (daemon_local->flags.vflag)
+        {
+            dlt_log(LOG_DEBUG, "Serial init done\n");
+        }
+    }
+    else
+    {
+        close(daemon_local->fdserial);
+        fprintf(stderr,
+                "Device is not a serial device, device = %s (%s) \n",
+                daemon_local->flags.yvalue,
+                strerror(errno));
+        daemon_local->flags.yvalue[0] = 0;
+        return -1;
+    }
+
+    return 0;
+}
+
+static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
+{
+    int ret;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
@@ -890,93 +863,77 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     unlink(tmpFifo);
 
     ret=mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
-    if (ret==-1)
+    if (ret == -1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created (%s)!\n",tmpFifo, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "FIFO user %s cannot be created (%s)!\n",
+                 tmpFifo,
+                 strerror(errno));
+        dlt_log(LOG_WARNING, local_str);
         return -1;
     } /* if */
 
     daemon_local->fp = open(tmpFifo, O_RDWR);
-    if (daemon_local->fp==-1)
+    if (daemon_local->fp == -1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened (%s)!\n",tmpFifo, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "FIFO user %s cannot be opened (%s)!\n",
+                 tmpFifo,
+                 strerror(errno));
+        dlt_log(LOG_WARNING, local_str);
         return -1;
     } /* if */
 
+    /* Early init, to be able to catch client (app) connections
+     * as soon as possible. This registration is automatically ignored
+     * during next execution.
+     */
+    return dlt_connection_create(daemon_local,
+                                 &daemon_local->pEvent,
+                                 daemon_local->fp,
+                                 EPOLLIN,
+                                 DLT_CONNECTION_APP_MSG);
+}
+
+int dlt_daemon_local_connection_init(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     int verbose)
+{
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Invalid function parameters\n",
+                 __func__);
+
+        dlt_log(LOG_ERR, local_str);
+        return -1;
+    }
+
+    if (dlt_daemon_init_fifo(daemon_local))
+    {
+        dlt_log(LOG_ERR, "Unable to initialize fifo.\n");
+        return -1;
+    }
+
     /* create and open socket to receive incoming connections from client */
-    if(dlt_daemon_socket_open(&(daemon_local->sock), daemon_local->flags.port))
+    daemon_local->client_connections = 0;
+    if(dlt_daemon_socket_open(&(daemon_local->sock),daemon_local->flags.port))
     {
-    	return -1;
+        dlt_log(LOG_ERR,"Could not initialize main socket.\n");
+        return -1;
     }
 
-    /* prepare usage of select(), add FIFO and receiving socket */
-    FD_ZERO(&(daemon_local->master));
-    FD_ZERO(&(daemon_local->read_fds));
-    FD_SET(daemon_local->sock, &(daemon_local->master));
-
-    daemon_local->fdmax = daemon_local->sock;
-
-    FD_SET(daemon_local->fp, &(daemon_local->master));
-
-    if (daemon_local->fp > daemon_local->fdmax)
+    /* Init serial */
+    if (dlt_daemon_init_serial(daemon_local) < 0)
     {
-        daemon_local->fdmax = daemon_local->fp;
-    }
-
-    if (daemon_local->flags.yvalue[0])
-    {
-        /* create and open serial connection from/to client */
-        /* open serial connection */
-        daemon_local->fdserial=open(daemon_local->flags.yvalue,O_RDWR);
-        if (daemon_local->fdserial<0)
-        {
-            snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to open serial device %s\n", daemon_local->flags.yvalue);
-            daemon_local->flags.yvalue[0] = 0;
-            dlt_log(LOG_ERR, str);
-            return -1;
-        }
-
-        if (isatty(daemon_local->fdserial))
-        {
-            if (daemon_local->flags.bvalue[0])
-            {
-                daemon_local->baudrate = dlt_convert_serial_speed(atoi(daemon_local->flags.bvalue));
-            }
-            else
-            {
-                daemon_local->baudrate = dlt_convert_serial_speed(DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE);
-            }
-
-            if (dlt_setup_serial(daemon_local->fdserial,daemon_local->baudrate) < DLT_RETURN_OK)
-            {
-                close(daemon_local->fdserial);
-                snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Failed to configure serial device %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
-                daemon_local->flags.yvalue[0] = 0;
-                dlt_log(LOG_ERR, str);
-                return -1;
-            }
-
-            FD_SET(daemon_local->fdserial, &(daemon_local->master));
-
-            if (daemon_local->fdserial > daemon_local->fdmax)
-            {
-                daemon_local->fdmax = daemon_local->fdserial;
-            }
-
-            if (daemon_local->flags.vflag)
-            {
-                dlt_log(LOG_DEBUG, "Serial init done\n");
-            }
-        }
-        else
-        {
-            close(daemon_local->fdserial);
-            fprintf(stderr,"Device is not a serial device, device = %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
-            daemon_local->flags.yvalue[0] = 0;
-            return -1;
-        }
+        dlt_log(LOG_ERR,"Could not initialize daemon data\n");
+        return -1;
     }
 
     return 0;
@@ -1096,6 +1053,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
     /* Try to delete lock file, ignore result of unlink() */
     unlink(DLT_DAEMON_LOCK_FILE);
+
+    dlt_event_handler_cleanup_connections(&daemon_local->pEvent);
 }
 
 void dlt_daemon_signal_handler(int sig)
@@ -1359,20 +1318,17 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     if (setsockopt (in_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout_send, sizeof(timeout_send)) < 0)
         dlt_log(LOG_WARNING, "setsockopt failed\n");
 
-    /* Set to non blocking mode */
-    //flags = fcntl(in_sock, F_GETFL, 0);
-    //fcntl(in_sock, F_SETFL, flags | O_NONBLOCK);
-
-    //snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Client Connection from %s\n", inet_ntoa(cli.sin_addr));
-    //dlt_log(str);
-    FD_SET(in_sock, &(daemon_local->master)); /* add to master set */
-    if (in_sock > daemon_local->fdmax)
+    if (dlt_connection_create(daemon_local,
+                             &daemon_local->pEvent,
+                             in_sock,
+                             EPOLLIN,
+                             DLT_CONNECTION_CLIENT_MSG_TCP))
     {
-        /* keep track of the maximum */
-        daemon_local->fdmax = in_sock;
-    } /* if */
+        dlt_log(LOG_ERR, "Failed to register new client. \n");
+        /* TODO: Perform clean-up */
+        return -1;
+    }
 
-    daemon_local->client_connections++;
     if (daemon_local->flags.vflag)
     {
         snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "New connection to client established, #connections: %d\n",daemon_local->client_connections);
@@ -1429,9 +1385,15 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
 
     if (dlt_receiver_receive_socket(&(daemon_local->receiverSock))<=0)
     {
-        dlt_daemon_close_socket(daemon_local->receiverSock.fd, daemon, daemon_local, verbose);
+          dlt_daemon_close_socket(daemon_local->receiverSock.fd,
+                                daemon,
+                                daemon_local,
+                                verbose);
         daemon_local->receiverSock.fd = -1;
-        /* check: return 0; */
+        /* FIXME: Why the hell do we need to close the socket
+         * on control message reception ??
+         */
+        //return 0;
     }
 
     /* Process all received messages */
@@ -2407,55 +2369,11 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *d
         }
 
         /* look if TCP connection to client is available */
-        for (j = 0;((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&  (j <= daemon_local->fdmax); j++)
+        if((daemon->mode == DLT_USER_MODE_EXTERNAL) ||
+           (daemon->mode == DLT_USER_MODE_BOTH))
         {
-            /* send to everyone! */
-            if (FD_ISSET(j, &(daemon_local->master)))
-            {
-                /* except the listener and ourselves */
-                if (daemon_local->flags.yvalue[0])
-                {
-                    third_value = daemon_local->fdserial;
-                }
-                else
-                {
-                    third_value = daemon_local->sock;
-                }
-
-                if ((j != daemon_local->fp) && (j != daemon_local->sock) && (j != third_value))
-                {
-                    DLT_DAEMON_SEM_LOCK();
-
-                    if (daemon_local->flags.lflag)
-                    {
-                        send(j,dltSerialHeader,sizeof(dltSerialHeader),0);
-                    }
-
-                    send(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader),0);
-                    send(j,daemon_local->msg.databuffer,daemon_local->msg.datasize,0);
-
-                    DLT_DAEMON_SEM_FREE();
-
-                    sent=1;
-                } /* if */
-                else if ((j == daemon_local->fdserial) && (daemon_local->flags.yvalue[0]))
-                {
-                    DLT_DAEMON_SEM_LOCK();
-
-                    if (daemon_local->flags.lflag)
-                    {
-                        ret=write(j,dltSerialHeader,sizeof(dltSerialHeader));
-                    }
-
-                    ret=write(j,daemon_local->msg.headerbuffer+sizeof(DltStorageHeader),daemon_local->msg.headersize-sizeof(DltStorageHeader));
-                    ret=write(j,daemon_local->msg.databuffer,daemon_local->msg.datasize);
-
-                    DLT_DAEMON_SEM_FREE();
-
-                    sent=1;
-                }
-            } /* if */
-        } /* for */
+            sent = dlt_daemon_client_send_all(daemon, daemon_local, verbose);
+        }
 
         /* Message was not sent to client, so store it in client ringbuffer */
         if (sent==1 || (daemon->mode == DLT_USER_MODE_OFF))
@@ -2679,14 +2597,34 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     return DLT_DAEMON_ERROR_OK;
 }
 
-int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name)
+static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
+    [DLT_TIMER_PACKET]  = "Timing packet",
+    [DLT_TIMER_ECU]     = "ECU version",
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = "Systemd watchdog",
+#endif
+    [DLT_TIMER_UNKNOWN] = "Unknown timer"
+};
+
+int create_timer_fd(DltDaemonLocal *daemon_local,
+                    int period_sec,
+                    int starts_in,
+                    int* fd,
+                    DltTimers timer_id)
 {
     int local_fd = -1;
     struct itimerspec l_timer_spec;
+    char *timer_name = dlt_timer_names[timer_id];
 
     if(timer_name == NULL)
     {
         timer_name = "timer_not_named";
+    }
+
+    if(daemon_local == NULL)
+    {
+        dlt_log(DLT_LOG_ERROR, "Daemaon local structure is NULL");
+        return -1;
     }
 
     if( fd == NULL )
@@ -2725,18 +2663,17 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
         local_fd = -1;
     }
 
-    // If fd is fully initialized, let's add it to the fd sets
-    if(local_fd>0)
+    /* If fully initialized we are done.
+     * Event handling registration is done later on with other connections.
+     */
+    if(local_fd > 0)
     {
-        snprintf(str, sizeof(str), "<%s> initialized with %ds timer\n", timer_name, period_sec);
+        snprintf(str,
+                 sizeof(str),
+                 "<%s> initialized with %d timer\n",
+                 timer_name,
+                 period_sec);
         dlt_log(LOG_INFO, str);
-
-        FD_SET(local_fd, &(daemon_local->master));
-        //FD_SET(local_fd, &(daemon_local->timer_fds));
-        if (local_fd > daemon_local->fdmax)
-        {
-            daemon_local->fdmax = local_fd;
-        }
     }
 
     *fd = local_fd;
@@ -2747,16 +2684,22 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
 /* Close connection function */
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    dlt_daemon_socket_close(sock);
+    PRINT_FUNCTION_VERBOSE(verbose);
 
-    FD_CLR(sock, &(daemon_local->master));
-
-    if (daemon_local->client_connections)
+    if((daemon_local == NULL)|| (daemon == NULL))
     {
-        daemon_local->client_connections--;
+        dlt_log(LOG_ERR, "dlt_daemon_close_socket: Invalid input parmeters\n");
+        return -1;
     }
 
-    if(daemon_local->client_connections==0)
+    /* Closure is done while unregistering has for any connection */
+    dlt_event_handler_unregister_connection(&daemon_local->pEvent,
+                                           daemon_local,
+                                           sock,
+                                           DLT_CONNECTION_CLIENT_MSG_TCP);
+
+
+	if(daemon_local->client_connections==0)
     {
         /* send new log state to all applications */
         daemon->connectionState = 0;
