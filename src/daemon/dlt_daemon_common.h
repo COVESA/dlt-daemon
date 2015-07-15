@@ -105,11 +105,11 @@ extern sem_t dlt_daemon_mutex;
  */
 typedef enum
 {
-	DLT_DAEMON_STATE_INIT =    		  	 0,  /**< Initial state */
-	DLT_DAEMON_STATE_BUFFER =            1,  /**< logging is buffered until external logger is connected or internal logging is activated */
-	DLT_DAEMON_STATE_BUFFER_FULL =       2,  /**< then internal buffer is full, wait for connect from client */
-	DLT_DAEMON_STATE_SEND_BUFFER =       3,  /**< external logger is connected, but buffer is still not empty or external logger queue is full */
-	DLT_DAEMON_STATE_SEND_DIRECT =       4   /**< External logger is connected or internal logging is active, and buffer is empty */
+    DLT_DAEMON_STATE_INIT =                   0,  /**< Initial state */
+    DLT_DAEMON_STATE_BUFFER =            1,  /**< logging is buffered until external logger is connected or internal logging is activated */
+    DLT_DAEMON_STATE_BUFFER_FULL =       2,  /**< then internal buffer is full, wait for connect from client */
+    DLT_DAEMON_STATE_SEND_BUFFER =       3,  /**< external logger is connected, but buffer is still not empty or external logger queue is full */
+    DLT_DAEMON_STATE_SEND_DIRECT =       4   /**< External logger is connected or internal logging is active, and buffer is empty */
 } DltDaemonState;
 
 /**
@@ -117,11 +117,11 @@ typedef enum
  */
 typedef struct
 {
-	char  apid[DLT_ID_SIZE];                  /**< application id */
-	pid_t pid;                   /**< process id of user application */
-	int user_handle;    /**< connection handle for connection to user application */
-	char *application_description; /**< context description */
-	int num_contexts; /**< number of contexts for this application */
+    char  apid[DLT_ID_SIZE];                  /**< application id */
+    pid_t pid;                   /**< process id of user application */
+    int user_handle;    /**< connection handle for connection to user application */
+    char *application_description; /**< context description */
+    int num_contexts; /**< number of contexts for this application */
 } DltDaemonApplication;
 
 /**
@@ -129,14 +129,14 @@ typedef struct
  */
 typedef struct
 {
-	char apid[DLT_ID_SIZE];               /**< application id */
-	char ctid[DLT_ID_SIZE];   	        /**< context id */
-	int8_t log_level;		/**< the current log level of the context */
-	int8_t trace_status;	/**< the current trace status of the context */
-	int log_level_pos;  /**< offset of context in context field on user application */
-	int user_handle;    /**< connection handle for connection to user application */
-	char *context_description; /**< context description */
-	int8_t storage_log_level; /**< log level set for offline logstorage */
+    char apid[DLT_ID_SIZE];               /**< application id */
+    char ctid[DLT_ID_SIZE];               /**< context id */
+    int8_t log_level;        /**< the current log level of the context */
+    int8_t trace_status;    /**< the current trace status of the context */
+    int log_level_pos;  /**< offset of context in context field on user application */
+    int user_handle;    /**< connection handle for connection to user application */
+    char *context_description; /**< context description */
+    int8_t storage_log_level; /**< log level set for offline logstorage */
 } DltDaemonContext;
 
 /**
@@ -144,23 +144,23 @@ typedef struct
  */
 typedef struct
 {
-	int num_contexts;               /**< Total number of all contexts in all applications */
-	DltDaemonContext *contexts;         /**< Pointer to contexts */
-	int num_applications;			/**< Number of available application */
-	DltDaemonApplication *applications; /**< Pointer to applications */
-	int8_t default_log_level;          /**< Default log level (of daemon) */
-	int8_t default_trace_status;       /**< Default trace status (of daemon) */
-	unsigned int overflow_counter;   /**< counts the number of lost messages. */
-	int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
-	char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
-	int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
-	int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
-	DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
+    int num_contexts;               /**< Total number of all contexts in all applications */
+    DltDaemonContext *contexts;         /**< Pointer to contexts */
+    int num_applications;            /**< Number of available application */
+    DltDaemonApplication *applications; /**< Pointer to applications */
+    int8_t default_log_level;          /**< Default log level (of daemon) */
+    int8_t default_trace_status;       /**< Default trace status (of daemon) */
+    unsigned int overflow_counter;   /**< counts the number of lost messages. */
+    int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
+    char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
+    int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
+    int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
+    DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
     char runtime_application_cfg[PATH_MAX + 1]; /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
     char runtime_context_cfg[PATH_MAX + 1]; /**< Path and filename of persistent context configuration */
     char runtime_configuration[PATH_MAX + 1]; /**< Path and filename of persistent configuration */
-    DltUserLogMode mode;	/**< Mode used for tracing: off, external, internal, both */
-    char connectionState;				/**< state for tracing: 0 = no client connected, 1 = client connected */
+    DltUserLogMode mode;    /**< Mode used for tracing: off, external, internal, both */
+    char connectionState;                /**< state for tracing: 0 = no client connected, 1 = client connected */
     char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
     DltDaemonState state;   /**< the current logging state of dlt daemon. */
     DltLogStorage *storage_handle;

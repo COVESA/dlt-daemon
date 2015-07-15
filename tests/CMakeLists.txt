@@ -5,6 +5,8 @@ include_directories(${gtest_SOURCE_DIR}/include)
 #SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g")
 #SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=gnu++0x")
+
 configure_file(${CMAKE_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 configure_file(${CMAKE_SOURCE_DIR}/tests/testfilter.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 

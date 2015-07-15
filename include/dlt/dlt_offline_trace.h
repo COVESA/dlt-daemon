@@ -59,6 +59,8 @@
 
 #include <limits.h>
 
+#include "dlt_types.h"
+
 typedef struct
 {
     char directory[NAME_MAX + 1];/**< (String) Store DLT messages to local directory */
@@ -80,7 +82,7 @@ typedef struct
  * @param maxSize maximum size of complete offline trace in bytes.
  * @return negative value if there was an error
  */
-extern int dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize);
+extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize);
 
 /**
  * Uninitialise the offline trace
@@ -89,7 +91,7 @@ extern int dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,i
  * @param trace pointer to offline trace structure
  * @return negative value if there was an error
  */
-extern int dlt_offline_trace_free(DltOfflineTrace *buf);
+extern DltReturnValue dlt_offline_trace_free(DltOfflineTrace *buf);
 
 /**
  * Write data into offline trace
@@ -105,7 +107,7 @@ extern int dlt_offline_trace_free(DltOfflineTrace *buf);
  * @param size3 size in bytes of third data block to be written, 0 if not used
  * @return negative value if there was an error
  */
-extern int dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size1,unsigned char *data2,int size2,unsigned char *data3,int size3);
+extern DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size1,unsigned char *data2,int size2,unsigned char *data3,int size3);
 
 /**
  * Get size of currently used offline trace buffer

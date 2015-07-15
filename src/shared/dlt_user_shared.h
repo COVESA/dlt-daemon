@@ -76,24 +76,12 @@
 #include <sys/types.h>
 
 /**
- * This are the return values for the functions dlt_user_log_out2() and dlt_user_log_out3()
- */
-typedef enum
-{
-	DLT_RETURN_BUFFER_FULL	= -4,
-	DLT_RETURN_PIPE_FULL	= -3,
-	DLT_RETURN_PIPE_ERROR	= -2,
-	DLT_RETURN_ERROR		= -1,
-	DLT_RETURN_OK			=  0
-} DltReturnValue;
-
-/**
  * This is the header of each message to be exchanged between application and daemon.
  */
 typedef struct
 {
-	char pattern[DLT_ID_SIZE];      /**< This pattern should be DUH0x01 */
-	uint32_t message;               /**< messsage info */
+    char pattern[DLT_ID_SIZE];      /**< This pattern should be DUH0x01 */
+    uint32_t message;               /**< messsage info */
 } PACKED DltUserHeader;
 
 /**
@@ -101,8 +89,8 @@ typedef struct
  */
 typedef struct
 {
-	char apid[DLT_ID_SIZE];          /**< application id */
-	pid_t pid;                       /**< process id of user application */
+    char apid[DLT_ID_SIZE];          /**< application id */
+    pid_t pid;                       /**< process id of user application */
     uint32_t description_length;     /**< length of description */
 } PACKED DltUserControlMsgRegisterApplication;
 
@@ -111,7 +99,7 @@ typedef struct
  */
 typedef struct
 {
-	char apid[DLT_ID_SIZE];         /**< application id */
+    char apid[DLT_ID_SIZE];         /**< application id */
     pid_t pid;                      /**< process id of user application */
 } PACKED DltUserControlMsgUnregisterApplication;
 
@@ -120,12 +108,12 @@ typedef struct
  */
 typedef struct
 {
-	char apid[DLT_ID_SIZE];          /**< application id */
-	char ctid[DLT_ID_SIZE];          /**< context id */
-	int32_t log_level_pos;           /**< offset in management structure on user-application side */
-	int8_t log_level;                /**< log level */
-	int8_t trace_status;             /**< trace status */
-	pid_t pid;                       /**< process id of user application */
+    char apid[DLT_ID_SIZE];          /**< application id */
+    char ctid[DLT_ID_SIZE];          /**< context id */
+    int32_t log_level_pos;           /**< offset in management structure on user-application side */
+    int8_t log_level;                /**< log level */
+    int8_t trace_status;             /**< trace status */
+    pid_t pid;                       /**< process id of user application */
     uint32_t description_length;     /**< length of description */
 } PACKED DltUserControlMsgRegisterContext;
 
@@ -134,9 +122,9 @@ typedef struct
  */
 typedef struct
 {
-	char apid[DLT_ID_SIZE];         /**< application id */
-	char ctid[DLT_ID_SIZE];         /**< context id */
-	pid_t pid;                      /**< process id of user application */
+    char apid[DLT_ID_SIZE];         /**< application id */
+    char ctid[DLT_ID_SIZE];         /**< context id */
+    pid_t pid;                      /**< process id of user application */
 } PACKED DltUserControlMsgUnregisterContext;
 
 /**
@@ -144,9 +132,9 @@ typedef struct
  */
 typedef struct
 {
-	uint8_t log_level;             /**< log level */
-	uint8_t trace_status;          /**< trace status */
-	int32_t log_level_pos;          /**< offset in management structure on user-application side */
+    uint8_t log_level;             /**< log level */
+    uint8_t trace_status;          /**< trace status */
+    int32_t log_level_pos;          /**< offset in management structure on user-application side */
 } PACKED DltUserControlMsgLogLevel;
 
 /**
@@ -154,8 +142,8 @@ typedef struct
  */
 typedef struct
 {
-	int32_t log_level_pos;          /**< offset in management structure on user-application side */
-	uint32_t service_id;            /**< service id of injection */
+    int32_t log_level_pos;          /**< offset in management structure on user-application side */
+    uint32_t service_id;            /**< service id of injection */
     uint32_t data_length_inject;    /**< length of injection message data field */
 } PACKED DltUserControlMsgInjection;
 
@@ -166,8 +154,8 @@ typedef struct
 typedef struct
 {
     char apid[DLT_ID_SIZE];        /**< application id */
-	uint8_t log_level;             /**< log level */
-	uint8_t trace_status;          /**< trace status */
+    uint8_t log_level;             /**< log level */
+    uint8_t trace_status;          /**< trace status */
 } PACKED DltUserControlMsgAppLogLevelTraceStatus;
 
 /**
@@ -175,7 +163,7 @@ typedef struct
  */
 typedef struct
 {
-	int8_t log_mode;          /**< the mode to be used for logging: off, external, internal, both */
+    int8_t log_mode;          /**< the mode to be used for logging: off, external, internal, both */
 } PACKED DltUserControlMsgLogMode;
 
 /**
@@ -183,7 +171,7 @@ typedef struct
  */
 typedef struct
 {
-	int8_t log_state;          /**< the state to be used for logging state: 0 = off, 1 = external client connected */
+    int8_t log_state;          /**< the state to be used for logging state: 0 = off, 1 = external client connected */
 } PACKED DltUserControlMsgLogState;
 
 /**
@@ -191,8 +179,8 @@ typedef struct
  */
 typedef struct
 {
-	uint32_t overflow_counter;          /**< counts the number of lost messages */
-	char apid[4];						/**< application which lost messages */
+    uint32_t overflow_counter;          /**< counts the number of lost messages */
+    char apid[4];                        /**< application which lost messages */
 } PACKED DltUserControlMsgBufferOverflow;
 
 /**************************************************************************************************
@@ -203,11 +191,9 @@ typedef struct
  * Set user header marker and store message type in user header
  * @param userheader pointer to the userheader
  * @param mtype user message type of internal message
- * @return negative value if there was an error {
-                    	return -1;
-                    }
+ * @return Value from DltReturnValue enum
  */
-int dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
+DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
 
 /**
  * Check if user header contains its marker

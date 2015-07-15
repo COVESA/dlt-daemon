@@ -196,7 +196,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 
         DLT_DAEMON_SEM_LOCK();
         /* Store message in history buffer */
-        if (dlt_buffer_push3(&(daemon->client_ringbuffer),data1,size1,data2,size2,0, 0)<0)
+        if (dlt_buffer_push3(&(daemon->client_ringbuffer),data1,size1,data2,size2,0, 0) < DLT_RETURN_OK)
 		{
         	DLT_DAEMON_SEM_FREE();
 			dlt_log(LOG_DEBUG,"dlt_daemon_client_send: Buffer is full! Message discarded.\n");
@@ -225,7 +225,7 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
     /* prepare storage header */
     msg->storageheader = (DltStorageHeader*)msg->headerbuffer;
 
-    if (dlt_set_storageheader(msg->storageheader,daemon->ecuid)==-1)
+    if (dlt_set_storageheader(msg->storageheader,daemon->ecuid) == DLT_RETURN_ERROR)
     {
 		return DLT_DAEMON_ERROR_UNKNOWN;
     }
@@ -470,7 +470,7 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	dlt_daemon_control_service_response(sock, daemon,daemon_local, DLT_SERVICE_ID_GET_SOFTWARE_VERSION, DLT_SERVICE_RESPONSE_ERROR,  verbose);
 		return;
@@ -521,7 +521,7 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDa
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	dlt_daemon_control_service_response(sock, daemon,daemon_local, DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL, DLT_SERVICE_RESPONSE_ERROR,  verbose);
         return;
@@ -590,7 +590,7 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
     req = (DltServiceGetLogInfoRequest*) (msg->databuffer);
 
     /* initialise new message */
-    if (dlt_message_init(&resp,0)==-1)
+    if (dlt_message_init(&resp,0) == DLT_RETURN_ERROR)
     {
 		dlt_daemon_control_service_response(sock, daemon,daemon_local, DLT_SERVICE_ID_GET_LOG_INFO, DLT_SERVICE_RESPONSE_ERROR,  verbose);
         return;
@@ -951,7 +951,7 @@ int dlt_daemon_control_message_buffer_overflow(int sock, DltDaemon *daemon, DltD
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	dlt_daemon_control_service_response(sock, daemon,daemon_local, DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW, DLT_SERVICE_RESPONSE_ERROR,  verbose);
     	return DLT_DAEMON_ERROR_UNKNOWN;
@@ -1005,7 +1005,7 @@ void dlt_daemon_control_service_response( int sock, DltDaemon *daemon, DltDaemon
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
 		return;
     }
@@ -1050,7 +1050,7 @@ int dlt_daemon_control_message_unregister_context(int sock, DltDaemon *daemon, D
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	return -1;
     }
@@ -1104,7 +1104,7 @@ int dlt_daemon_control_message_connection_info(int sock, DltDaemon *daemon, DltD
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	return -1;
     }
@@ -1157,7 +1157,7 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	return -1;
     }
@@ -1216,7 +1216,7 @@ int dlt_daemon_control_message_marker(int sock, DltDaemon *daemon, DltDaemonLoca
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
     	return -1;
     }
@@ -1321,7 +1321,7 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltDaemon
         }
 
         /* Send user message to handle, specified in context */
-		if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_INJECTION)==-1)
+		if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_INJECTION) < DLT_RETURN_OK)
 		{
 			dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
 			return;
@@ -1353,7 +1353,7 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltDaemon
 				dlt_user_log_out3(context->user_handle, &(userheader), sizeof(DltUserHeader),
 				  &(usercontext), sizeof(DltUserControlMsgInjection),
 				  userbuffer, data_length_inject);
-		if (ret != DLT_RETURN_OK)
+		if (ret < DLT_RETURN_OK)
 		{
 			if (ret == DLT_RETURN_PIPE_ERROR)
 			{
@@ -1577,7 +1577,7 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     }
 
     /* initialise new message */
-    if (dlt_message_init(&msg,0)==-1)
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
     {
         return;
     }

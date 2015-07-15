@@ -116,8 +116,8 @@ int main(int argc, char* argv[])
     int index;
     int c;
     char *text;
-	int num,maxnum;
-	int delay;
+    int num,maxnum;
+    int delay;
 
     opterr = 0;
 
@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-		maxnum = 10;
+        maxnum = 10;
     }
 
     if (dvalue)
@@ -235,35 +235,35 @@ int main(int argc, char* argv[])
         delay = 500 * 1000;
     }
 
-	if (gflag)
+    if (gflag)
     {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,10)>0)
-		{
-			dlt_user_log_write_finish(&mycontextdata);
-		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,11)>0)
-		{
-			dlt_user_log_write_uint16(&mycontextdata,1011);
-			dlt_user_log_write_finish(&mycontextdata);
-		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,12)>0)
-		{
-			dlt_user_log_write_uint32(&mycontextdata,1012);
-			dlt_user_log_write_uint32(&mycontextdata,1013);
-			dlt_user_log_write_finish(&mycontextdata);
-		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,13)>0)
-		{
-			dlt_user_log_write_uint8(&mycontextdata,123);
-			dlt_user_log_write_float32(&mycontextdata,1.12);
-			dlt_user_log_write_finish(&mycontextdata);
-		}
-		if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,14)>0)
-		{
-			dlt_user_log_write_string(&mycontextdata,"DEAD BEEF");
-			dlt_user_log_write_finish(&mycontextdata);
-		}
+        if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,10)>0)
+        {
+            dlt_user_log_write_finish(&mycontextdata);
+        }
+        if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,11)>0)
+        {
+            dlt_user_log_write_uint16(&mycontextdata,1011);
+            dlt_user_log_write_finish(&mycontextdata);
+        }
+        if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,12)>0)
+        {
+            dlt_user_log_write_uint32(&mycontextdata,1012);
+            dlt_user_log_write_uint32(&mycontextdata,1013);
+            dlt_user_log_write_finish(&mycontextdata);
+        }
+        if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,13)>0)
+        {
+            dlt_user_log_write_uint8(&mycontextdata,123);
+            dlt_user_log_write_float32(&mycontextdata,1.12);
+            dlt_user_log_write_finish(&mycontextdata);
+        }
+        if (dlt_user_log_write_start_id(&mycontext,&mycontextdata,DLT_LOG_INFO,14)>0)
+        {
+            dlt_user_log_write_string(&mycontextdata,"DEAD BEEF");
+            dlt_user_log_write_finish(&mycontextdata);
+        }
     }
 
     for (num=0;num<maxnum;num++)

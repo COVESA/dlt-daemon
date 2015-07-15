@@ -85,9 +85,9 @@ void usage()
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
 #ifdef DLT_TEST_ENABLE
-    printf("  -c       		Corrupt user header\n");
+    printf("  -c               Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
-    printf("  -z size      	Size of message\n");
+    printf("  -z size          Size of message\n");
 #endif /* DLT_TEST_ENABLE */
 }
 
@@ -109,11 +109,11 @@ int main(int argc, char* argv[])
     int index;
     int c;
 
-	char *text;
-	int num,maxnum;
-	int delay;
+    char *text;
+    int num,maxnum;
+    int delay;
 
-	int state=-1,newstate;
+    int state=-1,newstate;
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-		maxnum = 10;
+        maxnum = 10;
     }
 
     if (dvalue)
@@ -232,44 +232,44 @@ int main(int argc, char* argv[])
 #ifdef DLT_TEST_ENABLE
     if (cflag)
     {
-		dlt_user_test_corrupt_user_header(1);
+        dlt_user_test_corrupt_user_header(1);
     }
     if (svalue)
     {
-		dlt_user_test_corrupt_message_size(1,atoi(svalue));
+        dlt_user_test_corrupt_message_size(1,atoi(svalue));
     }
-	if (zvalue)
-	{
-		char* buffer = malloc(atoi(zvalue));
-		if(buffer==0)
-		{
-	        /* no message, show usage and terminate */
-	        fprintf(stderr,"Cannot allocate buffer memory!\n");
-	        return -1;
-		}
+    if (zvalue)
+    {
+        char* buffer = malloc(atoi(zvalue));
+        if(buffer==0)
+        {
+            /* no message, show usage and terminate */
+            fprintf(stderr,"Cannot allocate buffer memory!\n");
+            return -1;
+        }
         DLT_LOG2(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
-		free(buffer);
-	}
+        free(buffer);
+    }
 #endif /* DLT_TEST_ENABLE */
 
     for (num=0;num<maxnum;num++)
     {
         printf("Send %d %s\n",num,text);
 
-		newstate = dlt_get_log_state();
-		if(state!=newstate)
-		{
-			state = newstate;
-			if(state == -1) {
-				printf("Client unknown state!\n");
-			}
-			else if(state == 0) {
-				printf("Client disconnected!\n");
-			}
-			else if(state == 1) {
-				printf("Client connected!\n");
-			}
-		}
+        newstate = dlt_get_log_state();
+        if(state!=newstate)
+        {
+            state = newstate;
+            if(state == -1) {
+                printf("Client unknown state!\n");
+            }
+            else if(state == 0) {
+                printf("Client disconnected!\n");
+            }
+            else if(state == 1) {
+                printf("Client connected!\n");
+            }
+        }
 
         if (gflag)
         {

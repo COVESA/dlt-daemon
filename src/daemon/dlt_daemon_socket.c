@@ -133,35 +133,35 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
 int dlt_daemon_socket_close(int sock)
 {
-	close(sock);
+    close(sock);
 
-	return 0;
+    return 0;
 }
 
 int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader)
 {
-	/* Optional: Send serial header, if requested */
-	if (serialheader)
-	{
-		if ( 0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
-			return DLT_DAEMON_ERROR_SEND_FAILED;
+    /* Optional: Send serial header, if requested */
+    if (serialheader)
+    {
+        if ( 0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
+            return DLT_DAEMON_ERROR_SEND_FAILED;
 
-	}
+    }
 
-	/* Send data */
-	if(data1 && size1>0)
-	{
-		if (0 > send(sock, data1,size1,0))
-			return DLT_DAEMON_ERROR_SEND_FAILED;
-	}
+    /* Send data */
+    if(data1 && size1>0)
+    {
+        if (0 > send(sock, data1,size1,0))
+            return DLT_DAEMON_ERROR_SEND_FAILED;
+    }
 
-	if(data2 && size2>0)
-	{
-		if (0 > send(sock, data2,size2,0))
-		return DLT_DAEMON_ERROR_SEND_FAILED;
-	}
+    if(data2 && size2>0)
+    {
+        if (0 > send(sock, data2,size2,0))
+        return DLT_DAEMON_ERROR_SEND_FAILED;
+    }
 
-	return DLT_DAEMON_ERROR_OK;
+    return DLT_DAEMON_ERROR_OK;
 }
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock)

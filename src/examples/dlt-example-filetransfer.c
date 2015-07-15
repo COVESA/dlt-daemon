@@ -58,8 +58,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include <dlt_filetransfer.h> 	/*Needed for transferring files with the dlt protocol*/
-#include <dlt.h>			/*Needed for dlt logging*/
+#include <dlt_filetransfer.h>     /*Needed for transferring files with the dlt protocol*/
+#include <dlt.h>            /*Needed for dlt logging*/
 
 
 #define MAXSTRLEN 1024
@@ -81,9 +81,9 @@ DLT_DECLARE_CONTEXT(fileContext);
  */
 void usage()
 {
-	char version[255];
+    char version[255];
 
-	dlt_get_version(version,255);
+    dlt_get_version(version,255);
 
     printf("Usage: dlt-example-filetransfer [options] absolute-path-to-file\n");
     printf("Simple filetransfer example");
@@ -102,7 +102,7 @@ void usage()
 //!Main program dlt-test-filestransfer starts here
 int main(int argc, char* argv[])
 {
-	//char str[MAXSTRLEN];
+    //char str[MAXSTRLEN];
     int opt, timeout;
 
     char apid[DLT_ID_SIZE];
@@ -110,19 +110,19 @@ int main(int argc, char* argv[])
 
     //char version[255];
     int index;
-	int dflag = 0;
-	int iflag = 0;
-	char *file = 0;
-	char *tvalue = 0;
+    int dflag = 0;
+    int iflag = 0;
+    char *file = 0;
+    char *tvalue = 0;
 
     dlt_set_id(apid, FLTR_APP);
     dlt_set_id(ctid, FLTR_CONTEXT);
 
-	while ((opt = getopt(argc, argv, "idf:t:a:c:h")) != -1)
+    while ((opt = getopt(argc, argv, "idf:t:a:c:h")) != -1)
     {
         switch (opt)
         {
-		case 'd':
+        case 'd':
         {
             dflag = 1;
             break;
@@ -173,21 +173,21 @@ int main(int argc, char* argv[])
         }
     }
 
-	for (index = optind; index < argc; index++)
-	{
-		file = argv[index];
-	}
+    for (index = optind; index < argc; index++)
+    {
+        file = argv[index];
+    }
 
-	if (file == 0)
-	{
-		/* no message, show usage and terminate */
-		fprintf(stderr,"ERROR: No absolute path to file specified\n");
-		usage();
-		return -1;
-	}
+    if (file == 0)
+    {
+        /* no message, show usage and terminate */
+        fprintf(stderr,"ERROR: No absolute path to file specified\n");
+        usage();
+        return -1;
+    }
 
 
-	if (tvalue)
+    if (tvalue)
     {
         timeout = atoi(tvalue);
     }
@@ -196,27 +196,27 @@ int main(int argc, char* argv[])
         timeout = TIMEOUT;
     }
 
-	//Register the application at the dlt-daemon
-	DLT_REGISTER_APP(apid,FLTR_APP_DESC);
+    //Register the application at the dlt-daemon
+    DLT_REGISTER_APP(apid,FLTR_APP_DESC);
 
-	//Register the context of the main program at the dlt-daemon
-	DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
+    //Register the context of the main program at the dlt-daemon
+    DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
 
-	//More details in corresponding methods
-	if( iflag )
-	{
-		dlt_user_log_file_infoAbout(&fileContext,file);
-	}
+    //More details in corresponding methods
+    if( iflag )
+    {
+        dlt_user_log_file_infoAbout(&fileContext,file);
+    }
 
-	if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
-	{
-		printf("File couldn't be transferred. Please check the dlt log messages.\n");
-	}
+    if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
+    {
+        printf("File couldn't be transferred. Please check the dlt log messages.\n");
+    }
 
-	//Unregister the context in which the file transfer happened from the dlt-daemon
-	DLT_UNREGISTER_CONTEXT(fileContext);
-	//Unregister the context of the main program from the dlt-daemon
-	DLT_UNREGISTER_APP();
+    //Unregister the context in which the file transfer happened from the dlt-daemon
+    DLT_UNREGISTER_CONTEXT(fileContext);
+    //Unregister the context of the main program from the dlt-daemon
+    DLT_UNREGISTER_APP();
 
-	return 0;
+    return 0;
 }

@@ -104,29 +104,25 @@ void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage 
     message_callback_function = registerd_callback;
 }
 
-int dlt_client_init(DltClient *client, int verbose)
+DltReturnValue dlt_client_init(DltClient *client, int verbose)
 {
     if (verbose)
-	{
-		printf("Init dlt client struct\n");
-	}
+        printf("Init dlt client struct\n");
 
-    if (client==0)
-    {
-        return -1;
-    }
+    if (client == NULL)
+        return DLT_RETURN_ERROR;
 
-    client->sock=-1;
-    client->servIP=0;
-    client->serialDevice=0;
-    client->baudrate=DLT_CLIENT_INITIAL_BAUDRATE;
-    client->serial_mode=0;
-    client->receiver.buffer=0;
+    client->sock = -1;
+    client->servIP = 0;
+    client->serialDevice = 0;
+    client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
+    client->serial_mode = 0;
+    client->receiver.buffer = 0;
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_connect(DltClient *client, int verbose)
+DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
@@ -139,7 +135,7 @@ int dlt_client_connect(DltClient *client, int verbose)
 
     if (client==0)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* the port may be specified by an environment variable */
@@ -158,7 +154,7 @@ int dlt_client_connect(DltClient *client, int verbose)
         snprintf(portnumbuffer, 32, "%d", servPort);
         if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
         for(p = servinfo; p != NULL; p = p->ai_next) {
@@ -179,13 +175,13 @@ int dlt_client_connect(DltClient *client, int verbose)
 
         if (p == NULL) {
             fprintf(stderr, "ERROR: failed to connect - %s\n", str);
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
         if (verbose)
-		{
-			printf("Connected to DLT daemon (%s)\n",client->servIP);
-		}
+        {
+            printf("Connected to DLT daemon (%s)\n",client->servIP);
+        }
     }
     else
     {
@@ -194,55 +190,55 @@ int dlt_client_connect(DltClient *client, int verbose)
         if (client->sock<0)
         {
             fprintf(stderr,"ERROR: Failed to open device %s\n", client->serialDevice);
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
         if (isatty(client->sock))
         {
-			#if !defined (__WIN32__)
-            if (dlt_setup_serial(client->sock,client->baudrate)<0)
+            #if !defined (__WIN32__)
+            if (dlt_setup_serial(client->sock,client->baudrate) < DLT_RETURN_OK)
             {
                 fprintf(stderr,"ERROR: Failed to configure serial device %s (%s) \n", client->serialDevice, strerror(errno));
-                return -1;
+                return DLT_RETURN_ERROR;
             }
-			#else
-				return -1;
-			#endif
+            #else
+                return DLT_RETURN_ERROR;
+            #endif
         }
         else
         {
             if (verbose)
             {
-            	fprintf(stderr,"ERROR: Device is not a serial device, device = %s (%s) \n", client->serialDevice, strerror(errno));
+                fprintf(stderr,"ERROR: Device is not a serial device, device = %s (%s) \n", client->serialDevice, strerror(errno));
             }
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
         if (verbose)
         {
-        	printf("Connected to %s\n", client->serialDevice);
+            printf("Connected to %s\n", client->serialDevice);
         }
     }
 
-    if (dlt_receiver_init(&(client->receiver),client->sock,DLT_CLIENT_RCVBUFSIZE)!=0)
+    if (dlt_receiver_init(&(client->receiver),client->sock,DLT_CLIENT_RCVBUFSIZE) != DLT_RETURN_OK)
     {
         fprintf(stderr, "ERROR initializing receiver\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_cleanup(DltClient *client, int verbose)
+DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
 {
     if (verbose)
-	{
-		printf("Cleanup dlt client\n");
-	}
+    {
+        printf("Cleanup dlt client\n");
+    }
 
     if (client==0)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (client->sock!=-1)
@@ -250,27 +246,27 @@ int dlt_client_cleanup(DltClient *client, int verbose)
         close(client->sock);
     }
 
-    if (dlt_receiver_free(&(client->receiver))==-1)
+    if (dlt_receiver_free(&(client->receiver)) == DLT_RETURN_ERROR)
     {
-		return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_main_loop(DltClient *client, void *data, int verbose)
+DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 {
-	DltMessage msg;
+    DltMessage msg;
     int ret;
 
-	if (client==0)
-	{
-        return -1;
-	}
-
-    if (dlt_message_init(&msg,verbose)==-1)
+    if (client==0)
     {
-		return -1;
+        return DLT_RETURN_ERROR;
+    }
+
+    if (dlt_message_init(&msg,verbose) == DLT_RETURN_ERROR)
+    {
+        return DLT_RETURN_ERROR;
     }
 
     while (1)
@@ -289,15 +285,15 @@ int dlt_client_main_loop(DltClient *client, void *data, int verbose)
         if (ret<=0)
         {
             /* No more data to be received */
-            if (dlt_message_free(&msg,verbose)==-1)
+            if (dlt_message_free(&msg,verbose) == DLT_RETURN_ERROR)
             {
-				return -1;
+                return DLT_RETURN_ERROR;
             }
 
-            return 1;
+            return DLT_RETURN_TRUE;
         }
 
-        while (dlt_message_read(&msg,(unsigned char*)(client->receiver.buf),client->receiver.bytesRcvd,0,verbose)==DLT_MESSAGE_ERROR_OK)
+        while (dlt_message_read(&msg,(unsigned char*)(client->receiver.buf),client->receiver.bytesRcvd,0,verbose) == DLT_MESSAGE_ERROR_OK)
         {
             /* Call callback function */
             if (message_callback_function)
@@ -307,121 +303,121 @@ int dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
             if (msg.found_serialheader)
             {
-                if (dlt_receiver_remove(&(client->receiver),msg.headersize+msg.datasize-sizeof(DltStorageHeader)+sizeof(dltSerialHeader))==-1)
+                if (dlt_receiver_remove(&(client->receiver),msg.headersize+msg.datasize-sizeof(DltStorageHeader)+sizeof(dltSerialHeader)) == DLT_RETURN_ERROR)
                 {
-                	/* Return value ignored */
-                	dlt_message_free(&msg,verbose);
-					return -1;
+                    /* Return value ignored */
+                    dlt_message_free(&msg,verbose);
+                    return DLT_RETURN_ERROR;
                 }
             }
             else
             {
-                if (dlt_receiver_remove(&(client->receiver),msg.headersize+msg.datasize-sizeof(DltStorageHeader))==-1)
+                if (dlt_receiver_remove(&(client->receiver),msg.headersize+msg.datasize-sizeof(DltStorageHeader)) == DLT_RETURN_ERROR)
                 {
-                	/* Return value ignored */
-                	dlt_message_free(&msg,verbose);
-					return -1;
+                    /* Return value ignored */
+                    dlt_message_free(&msg,verbose);
+                    return DLT_RETURN_ERROR;
                 }
             }
         }
 
-        if (dlt_receiver_move_to_begin(&(client->receiver))==-1)
-		{
-			/* Return value ignored */
-			dlt_message_free(&msg,verbose);
-			return -1;
-		}
+        if (dlt_receiver_move_to_begin(&(client->receiver)) == DLT_RETURN_ERROR)
+        {
+            /* Return value ignored */
+            dlt_message_free(&msg,verbose);
+            return DLT_RETURN_ERROR;
+        }
     }
 
-    if (dlt_message_free(&msg,verbose)==-1)
+    if (dlt_message_free(&msg,verbose) == DLT_RETURN_ERROR)
     {
-		return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size)
+DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size)
 {
-	DltMessage msg;
+    DltMessage msg;
     int ret;
 
-	int32_t len;
+    int32_t len;
 
-	if ((client==0) || (client->sock<0) || (apid==0) || (ctid==0))
-	{
-		return -1;
-	}
+    if ((client==0) || (client->sock<0) || (apid==0) || (ctid==0))
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	/* initialise new message */
-	if (dlt_message_init(&msg,0)==-1)
-	{
-		return -1;
-	}
+    /* initialise new message */
+    if (dlt_message_init(&msg,0) == DLT_RETURN_ERROR)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	/* prepare payload of data */
-	msg.datasize = size;
-	if (msg.databuffer && (msg.databuffersize < msg.datasize))
-	{
-		free(msg.databuffer);
-		msg.databuffer=0;
-	}
-	if (msg.databuffer == 0){
-		msg.databuffer = (uint8_t *) malloc(msg.datasize);
-		msg.databuffersize = msg.datasize;
-	}
-	if(msg.databuffer == 0)
-	{
-		dlt_message_free(&msg,0);
-		return -1;
-	}
+    /* prepare payload of data */
+    msg.datasize = size;
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+    {
+        free(msg.databuffer);
+        msg.databuffer=0;
+    }
+    if (msg.databuffer == 0){
+        msg.databuffer = (uint8_t *) malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+    if(msg.databuffer == 0)
+    {
+        dlt_message_free(&msg,0);
+        return DLT_RETURN_ERROR;
+    }
 
-	/* copy data */
-	memcpy(msg.databuffer,payload,size);
+    /* copy data */
+    memcpy(msg.databuffer,payload,size);
 
-	/* prepare storage header */
+    /* prepare storage header */
     msg.storageheader = (DltStorageHeader*)msg.headerbuffer;
 
-	if (dlt_set_storageheader(msg.storageheader,"")==-1)
-	{
-		dlt_message_free(&msg,0);
-		return -1;
-	}
+    if (dlt_set_storageheader(msg.storageheader,"") == DLT_RETURN_ERROR)
+    {
+        dlt_message_free(&msg,0);
+        return DLT_RETURN_ERROR;
+    }
 
     /* prepare standard header */
     msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1 ;
 
-	#if (BYTE_ORDER==BIG_ENDIAN)
-		msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
-	#endif
+    #if (BYTE_ORDER==BIG_ENDIAN)
+        msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
+    #endif
 
     msg.standardheader->mcnt = 0;
 
     /* Set header extra parameters */
-	dlt_set_id(msg.headerextra.ecu,"");
+    dlt_set_id(msg.headerextra.ecu,"");
     //msg.headerextra.seid = 0;
     msg.headerextra.tmsp = dlt_uptime();
 
     /* Copy header extra parameters to headerbuffer */
-    if (dlt_message_set_extraparameters(&msg,0)==-1)
-	{
-		dlt_message_free(&msg,0);
-		return -1;
-	}
+    if (dlt_message_set_extraparameters(&msg,0) == DLT_RETURN_ERROR)
+    {
+        dlt_message_free(&msg,0);
+        return DLT_RETURN_ERROR;
+    }
 
     /* prepare extended header */
     msg.extendedheader = (DltExtendedHeader*)(msg.headerbuffer +
-						 sizeof(DltStorageHeader) +
-						 sizeof(DltStandardHeader) +
-						 DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) );
+                         sizeof(DltStorageHeader) +
+                         sizeof(DltStandardHeader) +
+                         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) );
 
     msg.extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
 
     msg.extendedheader->noar = 1; /* number of arguments */
 
     dlt_set_id(msg.extendedheader->apid,(apid[0]=='\0')?DLT_CLIENT_DUMMY_APP_ID:apid);
-	dlt_set_id(msg.extendedheader->ctid,(ctid[0]=='\0')?DLT_CLIENT_DUMMY_CON_ID:ctid);
+    dlt_set_id(msg.extendedheader->ctid,(ctid[0]=='\0')?DLT_CLIENT_DUMMY_CON_ID:ctid);
 
     /* prepare length information */
     msg.headersize = sizeof(DltStorageHeader) +
@@ -429,271 +425,272 @@ int dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t 
                      sizeof(DltExtendedHeader) +
                      DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
 
-	len=msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
-	if (len>UINT16_MAX)
-	{
-		fprintf(stderr,"Critical: Huge injection message discarded!\n");
-		dlt_message_free(&msg,0);
+    len=msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
+    if (len>UINT16_MAX)
+    {
+        fprintf(stderr,"Critical: Huge injection message discarded!\n");
+        dlt_message_free(&msg,0);
 
-		return -1;
-	}
+        return DLT_RETURN_ERROR;
+    }
 
     msg.standardheader->len = DLT_HTOBE_16(len);
 
-	/* Send data (without storage header) */
-	if (client->serial_mode)
-	{
-		/* via FileDescriptor */
-		ret=write(client->sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
+    /* Send data (without storage header) */
+    if (client->serial_mode)
+    {
+        /* via FileDescriptor */
+        ret=write(client->sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
                 if (0 > ret){
                         dlt_message_free(&msg,0);
-                        return -1;
+                        return DLT_RETURN_ERROR;
                 }
-		ret=write(client->sock, msg.databuffer,msg.datasize);
+        ret=write(client->sock, msg.databuffer,msg.datasize);
                 if (0 > ret){
                         dlt_message_free(&msg,0);
-                        return -1;
+                        return DLT_RETURN_ERROR;
                 }
-	}
-	else
-	{
-		/* via Socket */
-		send(client->sock, (const char *)(msg.headerbuffer+sizeof(DltStorageHeader)),msg.headersize-sizeof(DltStorageHeader),0);
-		send(client->sock, (const char *)msg.databuffer,msg.datasize,0);
-	}
+    }
+    else
+    {
+        /* via Socket */
+        send(client->sock, (const char *)(msg.headerbuffer+sizeof(DltStorageHeader)),msg.headersize-sizeof(DltStorageHeader),0);
+        send(client->sock, (const char *)msg.databuffer,msg.datasize,0);
+    }
 
-	/* free message */
-	if (dlt_message_free(&msg,0)==-1)
-	{
-		return -1;
-	}
+    /* free message */
+    if (dlt_message_free(&msg,0) == DLT_RETURN_ERROR)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size)
+DltReturnValue dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size)
 {
-	uint8_t *payload;
-	int offset;
+    uint8_t *payload;
+    int offset;
 
-	payload = (uint8_t *) malloc(sizeof(uint32_t) + sizeof(uint32_t) + size);
+    payload = (uint8_t *) malloc(sizeof(uint32_t) + sizeof(uint32_t) + size);
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	offset = 0;
-	memcpy(payload  , &serviceID,sizeof(serviceID));
-	offset+=sizeof(uint32_t);
-	memcpy(payload+offset, &size, sizeof(size));
-	offset+=sizeof(uint32_t);
-	memcpy(payload+offset, buffer, size);
+    offset = 0;
+    memcpy(payload  , &serviceID,sizeof(serviceID));
+    offset+=sizeof(uint32_t);
+    memcpy(payload+offset, &size, sizeof(size));
+    offset+=sizeof(uint32_t);
+    memcpy(payload+offset, buffer, size);
 
-	/* free message */
-	if (dlt_client_send_ctrl_msg(client,apid,ctid,payload,sizeof(uint32_t) + sizeof(uint32_t) + size)==-1)
-	{
-		free(payload);
-		return -1;
-	}
+    /* free message */
+    if (dlt_client_send_ctrl_msg(client,apid,ctid,payload,sizeof(uint32_t) + sizeof(uint32_t) + size) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
+
 }
 
-int dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel)
+DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel)
 {
-	DltServiceSetLogLevel *req;
-	uint8_t *payload;
+    DltServiceSetLogLevel *req;
+    uint8_t *payload;
 
-	payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	req = (DltServiceSetLogLevel *) payload;
+    req = (DltServiceSetLogLevel *) payload;
 
-	req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
-	dlt_set_id(req->apid,apid);
-	dlt_set_id(req->ctid,ctid);
-	req->log_level=logLevel;
-	dlt_set_id(req->com,"remo");
+    req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+    dlt_set_id(req->apid,apid);
+    dlt_set_id(req->ctid,ctid);
+    req->log_level=logLevel;
+    dlt_set_id(req->com,"remo");
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel))==-1)
-	{
-		free(payload);
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel)) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
+DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
 {
-	DltServiceSetLogLevel *req;
-	uint8_t *payload;
+    DltServiceSetLogLevel *req;
+    uint8_t *payload;
 
-	payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	req = (DltServiceSetLogLevel *) payload;
+    req = (DltServiceSetLogLevel *) payload;
 
-	req->service_id = DLT_SERVICE_ID_SET_TRACE_STATUS;
-	dlt_set_id(req->apid,apid);
-	dlt_set_id(req->ctid,ctid);
-	req->log_level=traceStatus;
-	dlt_set_id(req->com,"remo");
+    req->service_id = DLT_SERVICE_ID_SET_TRACE_STATUS;
+    dlt_set_id(req->apid,apid);
+    dlt_set_id(req->ctid,ctid);
+    req->log_level=traceStatus;
+    dlt_set_id(req->com,"remo");
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel))==-1)
-	{
-		free(payload);
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel)) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel)
+DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel)
 {
-	DltServiceSetDefaultLogLevel *req;
-	uint8_t *payload;
+    DltServiceSetDefaultLogLevel *req;
+    uint8_t *payload;
 
-	payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	req = (DltServiceSetDefaultLogLevel *) payload;
+    req = (DltServiceSetDefaultLogLevel *) payload;
 
-	req->service_id = DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
-	req->log_level=defaultLogLevel;
-	dlt_set_id(req->com,"remo");
+    req->service_id = DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
+    req->log_level=defaultLogLevel;
+    dlt_set_id(req->com,"remo");
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel))==-1)
-	{
-		free(payload);
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel)) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus)
+DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus)
 {
-	DltServiceSetDefaultLogLevel *req;
-	uint8_t *payload;
+    DltServiceSetDefaultLogLevel *req;
+    uint8_t *payload;
 
-	payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	req = (DltServiceSetDefaultLogLevel *) payload;
+    req = (DltServiceSetDefaultLogLevel *) payload;
 
-	req->service_id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
-	req->log_level=defaultTraceStatus;
-	dlt_set_id(req->com,"remo");
+    req->service_id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
+    req->log_level=defaultTraceStatus;
+    dlt_set_id(req->com,"remo");
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel))==-1)
-	{
-		free(payload);
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetDefaultLogLevel)) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets)
+DltReturnValue dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets)
 {
-	DltServiceSetVerboseMode *req;
-	uint8_t *payload;
+    DltServiceSetVerboseMode *req;
+    uint8_t *payload;
 
-	payload = (uint8_t *) malloc(sizeof(DltServiceSetVerboseMode));
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetVerboseMode));
 
-	if(payload==0)
-	{
-		return -1;
-	}
+    if(payload==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	req = (DltServiceSetVerboseMode *) payload;
+    req = (DltServiceSetVerboseMode *) payload;
 
-	req->service_id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
-	req->new_status=timingPakets;
+    req->service_id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
+    req->new_status=timingPakets;
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetVerboseMode))==-1)
-	{
-		free(payload);
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetVerboseMode)) == DLT_RETURN_ERROR)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
 
-	free(payload);
+    free(payload);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_store_config(DltClient *client)
+DltReturnValue dlt_client_send_store_config(DltClient *client)
 {
-	uint32_t service_id;
+    uint32_t service_id;
 
-	service_id = DLT_SERVICE_ID_STORE_CONFIG;
+    service_id = DLT_SERVICE_ID_STORE_CONFIG;
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t))==-1)
-	{
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t)) == DLT_RETURN_ERROR)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_send_reset_to_factory_default(DltClient *client)
+DltReturnValue dlt_client_send_reset_to_factory_default(DltClient *client)
 {
-	uint32_t service_id;
+    uint32_t service_id;
 
-	service_id = DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT;
+    service_id = DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT;
 
-		/* free message */
-	if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t))==-1)
-	{
-		return -1;
-	}
+        /* free message */
+    if (dlt_client_send_ctrl_msg(client,"APP","CON",(uint8_t*)&service_id,sizeof(uint32_t)) == DLT_RETURN_ERROR)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 
-int dlt_client_setbaudrate(DltClient *client, int baudrate)
+DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
 {
-	if (client==0)
-	{
-		return -1;
-	}
+    if (client==0)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
-	client->baudrate = dlt_convert_serial_speed(baudrate);
+    client->baudrate = dlt_convert_serial_speed(baudrate);
 
-	return 0;
+    return DLT_RETURN_OK;
 }
 

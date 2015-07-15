@@ -108,8 +108,11 @@ if(WITH_GPROF)
   SET(CMAKE_C_FLAGS "-pg")
 endif(WITH_GPROF)
 
+SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -std=gnu99 -Wno-variadic-macros")
+
 add_definitions( "-Wall" )
 add_definitions( "-Wextra" )
+#add_definitions( "-pedantic" )
 
 IF(${WITH_DOC} STREQUAL "OFF")
 	SET(PACKAGE_DOC "#")

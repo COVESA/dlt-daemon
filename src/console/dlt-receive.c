@@ -479,7 +479,7 @@ int main(int argc, char* argv[])
 
     if (dltdata.fvalue)
     {
-        if (dlt_filter_load(&(dltdata.filter),dltdata.fvalue,dltdata.vflag)<0)
+        if (dlt_filter_load(&(dltdata.filter),dltdata.fvalue,dltdata.vflag) < DLT_RETURN_OK)
         {
             dlt_file_free(&(dltdata.file),dltdata.vflag);
             return -1;
@@ -521,7 +521,7 @@ int main(int argc, char* argv[])
 	}
 
     /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag)!=-1)
+    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
     {
 
         /* Dlt Client Main Loop */
@@ -571,7 +571,8 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         dlt_set_storageheader(message->storageheader,dltdata->ecuid);
     }
 
-    if ((dltdata->fvalue==0) || (dltdata->fvalue && dlt_message_filter_check(message,&(dltdata->filter),dltdata->vflag)==1))
+    if ((dltdata->fvalue==0) ||
+                    (dltdata->fvalue && dlt_message_filter_check(message,&(dltdata->filter),dltdata->vflag) == DLT_RETURN_TRUE))
     {
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag)

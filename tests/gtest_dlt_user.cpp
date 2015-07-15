@@ -31,7 +31,6 @@
 #include <limits.h>
 
 extern "C" {
-#include "dlt_common.h"
 #include "dlt_user.h"
 }
 
@@ -196,7 +195,7 @@ int dlt_nonverbose_mode(void);
 // start initial dlt
 TEST(t_dlt_init, onetime)
 {
-    EXPECT_EQ(0, dlt_init());
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 }
 
 /////////////////////////////////////////
@@ -207,50 +206,50 @@ TEST(t_dlt_user_log_write_start, normal)
     DltContextData contextData;
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start normal"));
 
     // the defined enum values for log level
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_OFF));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_FATAL));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_ERROR));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_WARN));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_INFO));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEBUG));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_VERBOSE));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_FATAL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_ERROR));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_WARN));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_INFO));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEBUG));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_VERBOSE));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start, abnormal)
 {
     DltContext context;
-    // TODO: DltContextData contextData;
+    DltContextData contextData;
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)-100));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)-10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)100));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)-100));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)-10));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)10));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_user_log_write_start(&context, &contextData, (DltLogLevelType)100));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start, startstartfinish)
@@ -260,15 +259,15 @@ TEST(t_dlt_user_log_write_start, startstartfinish)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start startstartfinish"));
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start startstartfinish"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // shouldn't it return -1, because it is already started?
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start, nullpointer)
@@ -277,17 +276,17 @@ TEST(t_dlt_user_log_write_start, nullpointer)
     DltContextData contextData;
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start nullpointer"));
     // NULL's
-    EXPECT_GE(-1,dlt_user_log_write_start(NULL, &contextData, DLT_LOG_DEFAULT));
-    //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
-    EXPECT_GE(-1,dlt_user_log_write_start(NULL, NULL, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_start(&context, NULL, DLT_LOG_DEFAULT));
-    //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start(NULL, &contextData, DLT_LOG_DEFAULT));
+    //EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start(NULL, NULL, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start(&context, NULL, DLT_LOG_DEFAULT));
+    //EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -300,48 +299,48 @@ TEST(t_dlt_user_log_write_start_id, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id normal"));
 
     // the defined enum values for log level
     messageid = UINT32_MIN;
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_FATAL, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_ERROR, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_WARN, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_FATAL, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_ERROR, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_WARN, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
     messageid = UINT32_MAX;
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_FATAL, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_ERROR, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_WARN, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_FATAL, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_ERROR, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_WARN, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start_id, abnormal)
@@ -352,19 +351,19 @@ TEST(t_dlt_user_log_write_start_id, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: messageid = UINT32_MIN;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-100, messageid));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-10, messageid));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)10, messageid));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)100, messageid));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-100, messageid));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-10, messageid));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)10, messageid));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)100, messageid));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start_id, startstartfinish)
@@ -375,17 +374,17 @@ TEST(t_dlt_user_log_write_start_id, startstartfinish)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
 
     messageid = UINT32_MIN;
-    EXPECT_LE(0,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
     // shouldn't it return -1, because it is already started?
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_start_id, nullpointer)
@@ -396,18 +395,18 @@ TEST(t_dlt_user_log_write_start_id, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
 
     // NULL's
     messageid = UINT32_MIN;
-    EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, &contextData, DLT_LOG_DEFAULT, messageid));
-    //EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
-    EXPECT_GE(-1,dlt_user_log_write_start_id(NULL, NULL, DLT_LOG_DEFAULT, messageid));
-    EXPECT_GE(-1,dlt_user_log_write_start_id(&context, NULL, DLT_LOG_DEFAULT, messageid));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(NULL, &contextData, DLT_LOG_DEFAULT, messageid));
+    //EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(NULL, NULL, DLT_LOG_DEFAULT, messageid));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, NULL, DLT_LOG_DEFAULT, messageid));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -419,28 +418,28 @@ TEST(t_dlt_user_log_write_finish, finish)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start finish"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start finish"));
 
     // finish without start
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(NULL));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(NULL));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_finish finish"));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_finish finish"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
 
     // finish with start and initialized context
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
     // 2nd finish
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -453,19 +452,19 @@ TEST(t_dlt_user_log_write_bool, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = true;
-    EXPECT_LE(0,dlt_user_log_write_bool(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_bool(&contextData, data));
     data = false;
-    EXPECT_LE(0,dlt_user_log_write_bool(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_bool(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_bool, abnormal)
@@ -476,21 +475,21 @@ TEST(t_dlt_user_log_write_bool, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = 2;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_bool(&contextData, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_bool(&contextData, data));
     // TODO: data = 100;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_bool(&contextData, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_bool(&contextData, data));
     // TODO: data = UINT8_MAX;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_bool(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_bool(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_bool, nullpointer)
@@ -500,15 +499,15 @@ TEST(t_dlt_user_log_write_bool, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool nullpointer"));
 
     // NULL
     data = true;
-    EXPECT_GE(-1,dlt_user_log_write_bool(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_bool(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -521,27 +520,27 @@ TEST(t_dlt_user_log_write_float32, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = 3.141592653589793238;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
     data = -3.141592653589793238;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
     data = 0.;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
     data = -0.;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
     data = FLT_MIN;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
     data = FLT_MAX;
-    EXPECT_LE(0,dlt_user_log_write_float32(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_float32, nullpointer)
@@ -551,15 +550,15 @@ TEST(t_dlt_user_log_write_float32, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 nullpointer"));
 
     // NULL
     data = 1.;
-    EXPECT_GE(-1,dlt_user_log_write_float32(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_float32(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -572,27 +571,27 @@ TEST(t_dlt_user_log_write_float64, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = 3.14159265358979323846;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
     data = -3.14159265358979323846;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
     data = 0.;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
     data = -0.;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
     data = DBL_MIN;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
     data = DBL_MAX;
-    EXPECT_LE(0,dlt_user_log_write_float64(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_float64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_float64, nullpointer)
@@ -602,15 +601,15 @@ TEST(t_dlt_user_log_write_float64, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 nullpointer"));
 
     // NULL
     data = 1.;
-    EXPECT_GE(-1,dlt_user_log_write_float64(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_float64(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -623,21 +622,21 @@ TEST(t_dlt_user_log_write_uint, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint(&contextData, data));
     data = UINT_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint, abnormal)
@@ -648,17 +647,17 @@ TEST(t_dlt_user_log_write_uint, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = -1;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint, nullpointer)
@@ -668,15 +667,15 @@ TEST(t_dlt_user_log_write_uint, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -689,21 +688,21 @@ TEST(t_dlt_user_log_write_uint8, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT8_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8(&contextData, data));
     data = UINT8_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint8(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint8, nullpointer)
@@ -713,15 +712,15 @@ TEST(t_dlt_user_log_write_uint8, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint8(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -734,21 +733,21 @@ TEST(t_dlt_user_log_write_uint16, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT16_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16(&contextData, data));
     data = UINT16_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint16(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint16, nullpointer)
@@ -758,15 +757,15 @@ TEST(t_dlt_user_log_write_uint16, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint16(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -779,21 +778,21 @@ TEST(t_dlt_user_log_write_uint32, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT32_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32(&contextData, data));
     data = UINT32_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint32(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint32, nullpointer)
@@ -803,15 +802,15 @@ TEST(t_dlt_user_log_write_uint32, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint32(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -824,21 +823,21 @@ TEST(t_dlt_user_log_write_uint64, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT64_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64(&contextData, data));
     data = UINT64_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint64(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint64, nullpointer)
@@ -848,15 +847,15 @@ TEST(t_dlt_user_log_write_uint64, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint64(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -869,39 +868,39 @@ TEST(t_dlt_user_log_write_uint8_formatted, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT8_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = UINT8_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint8_formatted, abnormal)
@@ -912,20 +911,20 @@ TEST(t_dlt_user_log_write_uint8_formatted, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = 1;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)-100));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)-10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)100));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)-100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)-10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(&contextData, data, (DltFormatType)100));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint8_formatted, nullpointer)
@@ -935,21 +934,21 @@ TEST(t_dlt_user_log_write_uint8_formatted, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX8));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX16));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX32));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX64));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_BIN8));
-    EXPECT_GE(-1,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_BIN16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX32));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_HEX64));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_BIN8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint8_formatted(NULL, data, DLT_FORMAT_BIN16));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -962,39 +961,39 @@ TEST(t_dlt_user_log_write_uint16_formatted, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT16_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = UINT16_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint16_formatted, abnormal)
@@ -1005,20 +1004,20 @@ TEST(t_dlt_user_log_write_uint16_formatted, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = 1;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-100));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)100));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)100));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint16_formatted, nullpointer)
@@ -1028,21 +1027,21 @@ TEST(t_dlt_user_log_write_uint16_formatted, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX8));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX16));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX32));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX64));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_BIN8));
-    EXPECT_GE(-1,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_BIN16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX32));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_HEX64));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_BIN8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(NULL, data, DLT_FORMAT_BIN16));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1055,39 +1054,39 @@ TEST(t_dlt_user_log_write_uint32_formatted, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT32_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = UINT32_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint32_formatted, abnormal)
@@ -1098,20 +1097,20 @@ TEST(t_dlt_user_log_write_uint32_formatted, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = 1;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-100));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)100));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)100));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint32_formatted, nullpointer)
@@ -1121,21 +1120,21 @@ TEST(t_dlt_user_log_write_uint32_formatted, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX8));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX16));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX32));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX64));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_BIN8));
-    EXPECT_GE(-1,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_BIN16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX32));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_HEX64));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_BIN8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(NULL, data, DLT_FORMAT_BIN16));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1148,39 +1147,39 @@ TEST(t_dlt_user_log_write_uint64_formatted, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = UINT64_MIN;
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
     data = UINT64_MAX;
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint64_formatted, abnormal)
@@ -1191,20 +1190,20 @@ TEST(t_dlt_user_log_write_uint64_formatted, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted abnormal"));
 
     // abnormal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     // TODO: data = 1;
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-100));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)10));
-    // TODO: EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)100));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)100));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_uint64_formatted, nullpointer)
@@ -1214,21 +1213,21 @@ TEST(t_dlt_user_log_write_uint64_formatted, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX8));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX16));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX32));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX64));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_BIN8));
-    EXPECT_GE(-1,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_BIN16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX16));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX32));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_HEX64));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_BIN8));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(NULL, data, DLT_FORMAT_BIN16));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1241,25 +1240,25 @@ TEST(t_dlt_user_log_write_int, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = -1;
-    EXPECT_LE(0,dlt_user_log_write_int(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int(&contextData, data));
     data = 0;
-    EXPECT_LE(0,dlt_user_log_write_int(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_int(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int(&contextData, data));
     data = INT_MIN;
-    EXPECT_LE(0,dlt_user_log_write_int(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int(&contextData, data));
     data = INT_MAX;
-    EXPECT_LE(0,dlt_user_log_write_int(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_int, nullpointer)
@@ -1269,15 +1268,15 @@ TEST(t_dlt_user_log_write_int, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_int(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_int(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1290,25 +1289,25 @@ TEST(t_dlt_user_log_write_int8, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = -1;
-    EXPECT_LE(0,dlt_user_log_write_int8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int8(&contextData, data));
     data = 0;
-    EXPECT_LE(0,dlt_user_log_write_int8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int8(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_int8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int8(&contextData, data));
     data = INT8_MIN;
-    EXPECT_LE(0,dlt_user_log_write_int8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int8(&contextData, data));
     data = INT8_MAX;
-    EXPECT_LE(0,dlt_user_log_write_int8(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int8(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_int8, nullpointer)
@@ -1318,15 +1317,15 @@ TEST(t_dlt_user_log_write_int8, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_int8(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_int8(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1339,25 +1338,25 @@ TEST(t_dlt_user_log_write_int16, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = -1;
-    EXPECT_LE(0,dlt_user_log_write_int16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int16(&contextData, data));
     data = 0;
-    EXPECT_LE(0,dlt_user_log_write_int16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int16(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_int16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int16(&contextData, data));
     data = INT16_MIN;
-    EXPECT_LE(0,dlt_user_log_write_int16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int16(&contextData, data));
     data = INT16_MAX;
-    EXPECT_LE(0,dlt_user_log_write_int16(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int16(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_int16, nullpointer)
@@ -1367,15 +1366,15 @@ TEST(t_dlt_user_log_write_int16, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_int16(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_int16(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1388,25 +1387,25 @@ TEST(t_dlt_user_log_write_int32, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = -1;
-    EXPECT_LE(0,dlt_user_log_write_int32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int32(&contextData, data));
     data = 0;
-    EXPECT_LE(0,dlt_user_log_write_int32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int32(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_int32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int32(&contextData, data));
     data = INT32_MIN;
-    EXPECT_LE(0,dlt_user_log_write_int32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int32(&contextData, data));
     data = INT32_MAX;
-    EXPECT_LE(0,dlt_user_log_write_int32(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int32(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_int32, nullpointer)
@@ -1416,15 +1415,15 @@ TEST(t_dlt_user_log_write_int32, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_int32(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_int32(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1437,25 +1436,25 @@ TEST(t_dlt_user_log_write_int64, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     data = -1;
-    EXPECT_LE(0,dlt_user_log_write_int64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int64(&contextData, data));
     data = 0;
-    EXPECT_LE(0,dlt_user_log_write_int64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int64(&contextData, data));
     data = 1;
-    EXPECT_LE(0,dlt_user_log_write_int64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int64(&contextData, data));
     data = INT64_MIN;
-    EXPECT_LE(0,dlt_user_log_write_int64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int64(&contextData, data));
     data = INT64_MAX;
-    EXPECT_LE(0,dlt_user_log_write_int64(&contextData, data));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_int64(&contextData, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_int64, nullpointer)
@@ -1465,15 +1464,15 @@ TEST(t_dlt_user_log_write_int64, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 nullpointer"));
 
     // NULL
     data = 1;
-    EXPECT_GE(-1,dlt_user_log_write_int64(NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_int64(NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1485,19 +1484,19 @@ TEST(t_dlt_user_log_write_string, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_string(&contextData, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_string(&contextData, text1));
     const char *text2 = "";
-    EXPECT_LE(0,dlt_user_log_write_string(&contextData, text2));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_string(&contextData, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_string, nullpointer)
@@ -1507,19 +1506,19 @@ TEST(t_dlt_user_log_write_string, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string nullpointer"));
 
     // NULL
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_string(NULL, text1));
-    EXPECT_GE(-1,dlt_user_log_write_string(NULL, NULL));
-    EXPECT_GE(-1,dlt_user_log_write_string(&contextData, NULL));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_string(NULL, text1));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_string(NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1531,19 +1530,19 @@ TEST(t_dlt_user_log_write_constant_string, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_constant_string(&contextData, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_constant_string(&contextData, text1));
     const char *text2 = "";
-    EXPECT_LE(0,dlt_user_log_write_constant_string(&contextData, text2));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_constant_string(&contextData, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_constant_string, nullpointer)
@@ -1553,19 +1552,19 @@ TEST(t_dlt_user_log_write_constant_string, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string nullpointer"));
 
     // NULL
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_constant_string(NULL, text1));
-    EXPECT_GE(-1,dlt_user_log_write_constant_string(NULL, NULL));
-    EXPECT_GE(-1,dlt_user_log_write_constant_string(&contextData, NULL));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_constant_string(NULL, text1));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_constant_string(NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_constant_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1577,19 +1576,19 @@ TEST(t_dlt_user_log_write_utf8_string, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_utf8_string(&contextData, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_utf8_string(&contextData, text1));
     const char *text2 = "";
-    EXPECT_LE(0,dlt_user_log_write_utf8_string(&contextData, text2));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_utf8_string(&contextData, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_utf8_string, nullpointer)
@@ -1599,19 +1598,19 @@ TEST(t_dlt_user_log_write_utf8_string, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string nullpointer"));
 
     // NULL
     const char *text1 = "test1";
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_utf8_string(NULL, text1));
-    EXPECT_GE(-1,dlt_user_log_write_utf8_string(NULL, NULL));
-    EXPECT_GE(-1,dlt_user_log_write_utf8_string(&contextData, NULL));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_utf8_string(NULL, text1));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_utf8_string(NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_utf8_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1623,19 +1622,19 @@ TEST(t_dlt_user_log_write_raw, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     char text1[6] = "test1";
-    EXPECT_LE(0,dlt_user_log_write_raw(&contextData, text1, 6));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw(&contextData, text1, 6));
     char text2[1] = "";
-    EXPECT_LE(0,dlt_user_log_write_raw(&contextData, text2, 0));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw(&contextData, text2, 0));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_raw, nullpointer)
@@ -1645,20 +1644,20 @@ TEST(t_dlt_user_log_write_raw, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw nullpointer"));
 
     // NULL
     char text1[6] = "test1";
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_raw(NULL, text1, 6));
-    EXPECT_GE(-1,dlt_user_log_write_raw(NULL, NULL, 0));
-    EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 0));
-    EXPECT_GE(-1,dlt_user_log_write_raw(&contextData, NULL, 1));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(NULL, text1, 6));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(NULL, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(&contextData, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(&contextData, NULL, 1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1670,31 +1669,31 @@ TEST(t_dlt_user_log_write_raw_formatted, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted normal"));
 
     // normal values
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     char text1[6] = "test1";
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text1, 6, DLT_FORMAT_BIN16));
     char text2[1] = "";
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX8));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX16));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX32));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX64));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_BIN8));
-    EXPECT_LE(0,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_BIN16));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX32));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_HEX64));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_BIN8));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, text2, 0, DLT_FORMAT_BIN16));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_raw_formatted, abnormal)
@@ -1704,19 +1703,19 @@ TEST(t_dlt_user_log_write_raw_formatted, abnormal)
 //
 //
 //
-//    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-//    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
+//    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+//    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
 
     // undefined values for DltFormatType
     // shouldn't it return -1?
 //    char text1[6] = "test1";
-//    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-100));
-//    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-10));
-//    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10));
-//    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-100));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-10));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100));
 //
-//    EXPECT_LE(0,dlt_unregister_context(&context));
-//    EXPECT_LE(0,dlt_unregister_app());
+//    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+//    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
@@ -1726,20 +1725,20 @@ TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted nullpointer"));
 
     // NULL
     char text1[6] = "test1";
-    EXPECT_LE(0,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(NULL, text1, 6, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(NULL, NULL, 0, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(-1,dlt_user_log_write_raw_formatted(&contextData, NULL, 1, DLT_FORMAT_DEFAULT));
-    EXPECT_LE(0,dlt_user_log_write_finish(&contextData));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(NULL, text1, 6, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(NULL, NULL, 0, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, NULL, 1, DLT_FORMAT_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /*
@@ -1760,29 +1759,29 @@ TEST(t_dlt_log_string, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string normal"));
 
     // normal values
     const char text1[6] = "test1";
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_DEFAULT, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_OFF, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_FATAL, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_ERROR, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_WARN, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_INFO, text1));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_VERBOSE, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_DEFAULT, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_OFF, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_FATAL, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_ERROR, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_WARN, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_INFO, text1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_VERBOSE, text1));
     const char text2[1] = "";
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_DEFAULT, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_OFF, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_FATAL, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_ERROR, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_WARN, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_INFO, text2));
-    EXPECT_LE(0,dlt_log_string(&context, DLT_LOG_VERBOSE, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_DEFAULT, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_OFF, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_FATAL, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_ERROR, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_WARN, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_INFO, text2));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string(&context, DLT_LOG_VERBOSE, text2));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string, abnormal)
@@ -1791,19 +1790,19 @@ TEST(t_dlt_log_string, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: const char text1[6] = "test1";
-    // TODO: EXPECT_GE(-1,dlt_log_string(&context, (DltLogLevelType)-100, text1));
-    // TODO: EXPECT_GE(-1,dlt_log_string(&context, (DltLogLevelType)-10, text1));
-    // TODO: EXPECT_GE(-1,dlt_log_string(&context, (DltLogLevelType)10, text1));
-    // TODO: EXPECT_GE(-1,dlt_log_string(&context, (DltLogLevelType)100, text1));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)-100, text1));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)-10, text1));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)10, text1));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)100, text1));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string, nullpointer)
@@ -1812,17 +1811,17 @@ TEST(t_dlt_log_string, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string nullpointer"));
 
     // NULL
     char text1[6] = "test1";
-    EXPECT_GE(-1,dlt_log_string(NULL, DLT_LOG_DEFAULT, text1));
-    EXPECT_GE(-1,dlt_log_string(NULL, DLT_LOG_DEFAULT, NULL));
-    EXPECT_GE(-1,dlt_log_string(&context, DLT_LOG_DEFAULT, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(NULL, DLT_LOG_DEFAULT, text1));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(NULL, DLT_LOG_DEFAULT, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, DLT_LOG_DEFAULT, NULL));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1833,39 +1832,39 @@ TEST(t_dlt_log_string_int, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int normal"));
 
     // normal values
     const char text1[6] = "test1";
     int data = INT_MIN;
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_OFF, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_FATAL, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_ERROR, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_WARN, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_INFO, text1, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_OFF, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_FATAL, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_ERROR, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_WARN, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_INFO, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text1, data));
     const char text2[1] = "";
     data = 0;
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_OFF, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_FATAL, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_ERROR, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_WARN, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_INFO, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_OFF, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_FATAL, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_ERROR, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_WARN, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_INFO, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text2, data));
     data = INT_MAX;
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_OFF, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_FATAL, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_ERROR, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_WARN, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_INFO, text2, data));
-    EXPECT_LE(0,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_DEFAULT, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_OFF, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_FATAL, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_ERROR, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_WARN, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_INFO, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_int(&context, DLT_LOG_VERBOSE, text2, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_int, abnormal)
@@ -1874,20 +1873,20 @@ TEST(t_dlt_log_string_int, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: const char text1[6] = "test1";
     // TODO: int data = 1;
-    // TODO: EXPECT_GE(-1,dlt_log_string_int(&context, (DltLogLevelType)-100, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_int(&context, (DltLogLevelType)-10, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_int(&context, (DltLogLevelType)10, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_int(&context, (DltLogLevelType)100, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)-100, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)-10, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)10, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)100, text1, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_int, nullpointer)
@@ -1896,18 +1895,18 @@ TEST(t_dlt_log_string_int, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int nullpointer"));
 
     // NULL
     char text1[6] = "test1";
     int data = 0;
-    EXPECT_GE(-1,dlt_log_string_int(NULL, DLT_LOG_DEFAULT, text1, data));
-    EXPECT_GE(-1,dlt_log_string_int(NULL, DLT_LOG_DEFAULT, NULL, data));
-    EXPECT_GE(-1,dlt_log_string_int(&context, DLT_LOG_DEFAULT, NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(NULL, DLT_LOG_DEFAULT, text1, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(NULL, DLT_LOG_DEFAULT, NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, DLT_LOG_DEFAULT, NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -1918,39 +1917,39 @@ TEST(t_dlt_log_string_uint, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint normal"));
 
     // normal values
     const char text1[6] = "test1";
     unsigned int data = UINT_MIN;
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_OFF, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_FATAL, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_ERROR, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_WARN, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_INFO, text1, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_OFF, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_FATAL, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_ERROR, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_WARN, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_INFO, text1, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text1, data));
     const char text2[1] = "";
     data = 0;
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_OFF, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_FATAL, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_ERROR, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_WARN, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_INFO, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_OFF, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_FATAL, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_ERROR, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_WARN, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_INFO, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text2, data));
     data = UINT_MAX;
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_OFF, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_FATAL, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_ERROR, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_WARN, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_INFO, text2, data));
-    EXPECT_LE(0,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_OFF, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_FATAL, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_ERROR, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_WARN, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_INFO, text2, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_string_uint(&context, DLT_LOG_VERBOSE, text2, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_uint, abnormal)
@@ -1959,20 +1958,20 @@ TEST(t_dlt_log_string_uint, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: const char text1[6] = "test1";
     // TODO: unsigned int data = 1;
-    // TODO: EXPECT_GE(-1,dlt_log_string_uint(&context, (DltLogLevelType)-100, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_uint(&context, (DltLogLevelType)-10, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_uint(&context, (DltLogLevelType)10, text1, data));
-    // TODO: EXPECT_GE(-1,dlt_log_string_uint(&context, (DltLogLevelType)100, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)-100, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)-10, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)10, text1, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)100, text1, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_uint, nullpointer)
@@ -1981,18 +1980,18 @@ TEST(t_dlt_log_string_uint, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint nullpointer"));
 
     // NULL
     char text1[6] = "test1";
     unsigned int data = 0;
-    EXPECT_GE(-1,dlt_log_string_uint(NULL, DLT_LOG_DEFAULT, text1, data));
-    EXPECT_GE(-1,dlt_log_string_uint(NULL, DLT_LOG_DEFAULT, NULL, data));
-    EXPECT_GE(-1,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(NULL, DLT_LOG_DEFAULT, text1, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(NULL, DLT_LOG_DEFAULT, NULL, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, DLT_LOG_DEFAULT, NULL, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2003,37 +2002,37 @@ TEST(t_dlt_log_int, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int normal"));
 
     // normal values
     int data = INT_MIN;
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
     data = 0;
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
     data = INT_MAX;
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_int(&context, DLT_LOG_VERBOSE, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_int, abnormal)
@@ -2042,19 +2041,19 @@ TEST(t_dlt_log_int, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: int data = 1;
-    // TODO: EXPECT_GE(-1,dlt_log_int(&context, (DltLogLevelType)-100, data));
-    // TODO: EXPECT_GE(-1,dlt_log_int(&context, (DltLogLevelType)-10, data));
-    // TODO: EXPECT_GE(-1,dlt_log_int(&context, (DltLogLevelType)10, data));
-    // TODO: EXPECT_GE(-1,dlt_log_int(&context, (DltLogLevelType)100, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_int(&context, (DltLogLevelType)-100, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_int(&context, (DltLogLevelType)-10, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_int(&context, (DltLogLevelType)10, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_int(&context, (DltLogLevelType)100, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_int, nullpointer)
@@ -2063,15 +2062,15 @@ TEST(t_dlt_log_int, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_int nullpointer"));
 
     // NULL
     int data = 0;
-    EXPECT_GE(-1,dlt_log_int(NULL, DLT_LOG_DEFAULT, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_int(NULL, DLT_LOG_DEFAULT, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2082,37 +2081,37 @@ TEST(t_dlt_log_uint, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint normal"));
 
     // normal values
     unsigned int data = UINT_MIN;
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
     data = 0;
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
     data = UINT_MAX;
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_OFF, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_FATAL, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_ERROR, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_WARN, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_INFO, data));
-    EXPECT_LE(0,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_OFF, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_FATAL, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_ERROR, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_WARN, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_INFO, data));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_uint(&context, DLT_LOG_VERBOSE, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_uint, abnormal)
@@ -2121,19 +2120,19 @@ TEST(t_dlt_log_uint, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     // TODO: unsigned int data = 1;
-    // TODO: EXPECT_GE(-1,dlt_log_uint(&context, (DltLogLevelType)-100, data));
-    // TODO: EXPECT_GE(-1,dlt_log_uint(&context, (DltLogLevelType)-10, data));
-    // TODO: EXPECT_GE(-1,dlt_log_uint(&context, (DltLogLevelType)10, data));
-    // TODO: EXPECT_GE(-1,dlt_log_uint(&context, (DltLogLevelType)100, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_uint(&context, (DltLogLevelType)-100, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_uint(&context, (DltLogLevelType)-10, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_uint(&context, (DltLogLevelType)10, data));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_uint(&context, (DltLogLevelType)100, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_uint, nullpointer)
@@ -2142,15 +2141,15 @@ TEST(t_dlt_log_uint, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint nullpointer"));
 
     // NULL
     unsigned int data = 0;
-    EXPECT_GE(-1,dlt_log_uint(NULL, DLT_LOG_DEFAULT, data));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_uint(NULL, DLT_LOG_DEFAULT, data));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2161,22 +2160,22 @@ TEST(t_dlt_log_raw, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw normal"));
 
     // normal values
     char data[5] = "test";
     uint16_t length = 4;
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_OFF, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_FATAL, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_ERROR, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_WARN, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_INFO, data, length));
-    EXPECT_LE(0,dlt_log_raw(&context, DLT_LOG_VERBOSE, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_OFF, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_FATAL, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_ERROR, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_WARN, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_INFO, data, length));
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_raw(&context, DLT_LOG_VERBOSE, data, length));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_raw, abnormal)
@@ -2185,27 +2184,27 @@ TEST(t_dlt_log_raw, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw abnormal"));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
     char data[5] = "test";
     // TODO: uint16_t length = 4;
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, (DltLogLevelType)-100, data, length));
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, (DltLogLevelType)-10, data, length));
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, (DltLogLevelType)10, data, length));
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, (DltLogLevelType)100, data, length));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-100, data, length));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-10, data, length));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)10, data, length));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)100, data, length));
 
     // zero length
-    // TODO: EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, 0));
 
     // negative length
-    EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1));
-    EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_raw, nullpointer)
@@ -2214,18 +2213,18 @@ TEST(t_dlt_log_raw, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw nullpointer"));
 
     // NULL
     char data[5] = "test";
     uint16_t length = 4;
-    EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, data, length));
-    EXPECT_GE(-1,dlt_log_raw(NULL, DLT_LOG_DEFAULT, NULL, length));
-    EXPECT_GE(-1,dlt_log_raw(&context, DLT_LOG_DEFAULT, NULL, length));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(NULL, DLT_LOG_DEFAULT, data, length));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(NULL, DLT_LOG_DEFAULT, NULL, length));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, NULL, length));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2236,14 +2235,14 @@ TEST(t_dlt_log_marker, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_marker normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_marker normal"));
 
     // normal
-    EXPECT_LE(0,dlt_log_marker());
+    EXPECT_LE(DLT_RETURN_OK,dlt_log_marker());
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2252,37 +2251,37 @@ TEST(t_dlt_register_app, normal)
 {
 
 
-    EXPECT_LE(0,dlt_register_app("T", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TU", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TUS", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("T", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TU", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUS", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_register_app, abnormal)
 {
 
 
-    EXPECT_GE(-1,dlt_register_app("", "dlt_user.c tests"));
-    EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR1", "dlt_user.c tests"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR123445667", "dlt_user.c tests"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("", "dlt_user.c tests"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR1", "dlt_user.c tests"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR123445667", "dlt_user.c tests"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR", NULL));
 }
 
 TEST(t_dlt_register_app, nullpointer)
 {
 
 
-    EXPECT_GE(-1,dlt_register_app(NULL, NULL));
-    EXPECT_GE(-1,dlt_register_app(NULL, "dlt_user.c tests"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app(NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app(NULL, "dlt_user.c tests"));
 
 }
 
@@ -2292,29 +2291,29 @@ TEST(t_dlt_unregister_app, normal)
 {
 
 
-    EXPECT_LE(0,dlt_register_app("T", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TU", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TUS", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("T", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TU", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUS", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_unregister_app, abnormal)
 {
 
 
-    EXPECT_GE(-1,dlt_unregister_app());
-    EXPECT_GE(-1,dlt_register_app("", "dlt_user.c tests"));
-    EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR1", "dlt_user.c tests"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR123445667", "dlt_user.c tests"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
-    // TODO: EXPECT_GE(-1,dlt_register_app("TUSR", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_app());
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("", "dlt_user.c tests"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR1", "dlt_user.c tests"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR123445667", "dlt_user.c tests"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2325,12 +2324,12 @@ TEST(t_dlt_register_context, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_register_context, abnormal)
@@ -2339,31 +2338,31 @@ TEST(t_dlt_register_context, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context(&context, "", "d"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "T", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context(&context, "", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1", "1"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1234567890", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1234567890", "1"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "", "d"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "T", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1", "1"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", "1"));
 
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_register_context, nullpointer)
@@ -2371,15 +2370,15 @@ TEST(t_dlt_register_context, nullpointer)
     DltContext context;
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_register_context normal"));
-    EXPECT_GE(-1,dlt_register_context(&context, NULL, NULL));
-    EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
-    EXPECT_GE(-1,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_register_context normal"));
-    EXPECT_GE(-1,dlt_register_context(NULL, NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_register_context normal"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, "TEST", NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_register_context normal"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, NULL, NULL));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 
@@ -2391,38 +2390,38 @@ TEST(t_dlt_register_context_ll_ts, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_OFF));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_register_context_ll_ts, abnormal)
@@ -2431,49 +2430,50 @@ TEST(t_dlt_register_context_ll_ts, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "", "d", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "T", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST1", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST1", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST1234567890", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST1234567890", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "", "d", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "T", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
 
-    EXPECT_LE(0,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
     // DLT_LOG_DEFAULT and DLT_TRACE_STATUS_DEFAULT not allowed
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_DEFAULT));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
+    // TODO: Why not?
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_OFF));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+//    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_DEFAULT));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
 
     // abnormal values for loglevel and tracestatus
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", -1, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", 100, DLT_TRACE_STATUS_OFF));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, -1));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, 100));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", -3, DLT_TRACE_STATUS_OFF));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", 100, DLT_TRACE_STATUS_OFF));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, -3));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, 100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_register_context_ll_ts, nullpointer)
@@ -2482,15 +2482,15 @@ TEST(t_dlt_register_context_ll_ts, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(&context, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_GE(-1,dlt_register_context_ll_ts(NULL, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(NULL, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(NULL, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(NULL, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 /////////////////////////////////////////
@@ -2501,12 +2501,12 @@ TEST(t_dlt_unregister_context, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_unregister_context, abnormal)
@@ -2515,31 +2515,31 @@ TEST(t_dlt_unregister_context, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context(&context, "", "d"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "T", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    EXPECT_GE(-1,dlt_register_context(&context, "", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1", "1"));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1234567890", ""));
-    // TODO: EXPECT_GE(-1,dlt_unregister_context(&context));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST1234567890", "1"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "", "d"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "T", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1", "1"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", ""));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", "1"));
 
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    // TODO: EXPECT_GE(-1,dlt_register_context(&context, "TEST", NULL));
-    EXPECT_LE(0,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_unregister_context, nullpointer)
@@ -2548,15 +2548,15 @@ TEST(t_dlt_unregister_context, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(-1,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_unregister_context normal"));
-    EXPECT_GE(-1,dlt_register_context(&context, NULL, NULL));
-    EXPECT_GE(-1,dlt_register_context(NULL, "TEST", NULL));
-    EXPECT_GE(-1,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_unregister_context normal"));
-    EXPECT_GE(-1,dlt_register_context(NULL, NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, NULL, "dlt_user.c t_dlt_unregister_context normal"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, NULL, NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, "TEST", NULL));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, NULL, "dlt_user.c t_dlt_unregister_context normal"));
+    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(NULL, NULL, NULL));
 
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 
@@ -2574,14 +2574,14 @@ TEST(t_dlt_register_injection_callback, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback normal"));
 
     // TODO: service_id = 0x123;
-    // TODO: EXPECT_LE(0,dlt_register_injection_callback(&context, service_id, dlt_user_injection_callback));
+    // TODO: EXPECT_LE(DLT_RETURN_OK,dlt_register_injection_callback(&context, service_id, dlt_user_injection_callback));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 
 }
 
@@ -2599,13 +2599,13 @@ TEST(t_dlt_register_log_level_changed_callback, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback normal"));
 
-    EXPECT_LE(0,dlt_register_log_level_changed_callback(&context, dlt_user_log_level_changed_callback));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_log_level_changed_callback(&context, dlt_user_log_level_changed_callback));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 
 }
 
@@ -2618,8 +2618,8 @@ TEST(t_dlt_user_trace_network, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network normal"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2632,13 +2632,13 @@ TEST(t_dlt_user_trace_network, normal)
         payload[(int)i] = i;
     }
 
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network, abnormal)
@@ -2647,8 +2647,8 @@ TEST(t_dlt_user_trace_network, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network abnormal"));
 
     // TODO: char header[16];
     // TODO: for(char i = 0; i < 16; ++i)
@@ -2662,18 +2662,18 @@ TEST(t_dlt_user_trace_network, abnormal)
     // TODO: }
 
     // data length = 0. Does this make sense?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload));
 
     // invalid DltNetworkTraceType value
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, (DltNetworkTraceType)-100, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, (DltNetworkTraceType)-10, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, (DltNetworkTraceType)10, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network(&context, (DltNetworkTraceType)100, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-100, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-10, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)10, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)100, 16, header, 32, payload));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network, nullpointer)
@@ -2682,8 +2682,8 @@ TEST(t_dlt_user_trace_network, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network nullpointer"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2697,12 +2697,12 @@ TEST(t_dlt_user_trace_network, nullpointer)
     }
 
     // what to expect when giving in NULL pointer?
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    EXPECT_LE(0,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 
@@ -2714,8 +2714,8 @@ TEST(t_dlt_user_trace_network_truncated, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2728,13 +2728,13 @@ TEST(t_dlt_user_trace_network_truncated, normal)
         payload[(int)i] = i;
     }
 
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload, 0));
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload, 1));
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload, 0));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload, 1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network_truncated, abnormal)
@@ -2743,8 +2743,8 @@ TEST(t_dlt_user_trace_network_truncated, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
 
     // TODO: char header[16];
     // TODO: for(char i = 0; i < 16; ++i)
@@ -2758,18 +2758,18 @@ TEST(t_dlt_user_trace_network_truncated, abnormal)
     // TODO: }
 
     // data length = 0. Does this make sense?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload, 0));
 
     // invalid DltNetworkTraceType value
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-100, 16, header, 32, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-10, 16, header, 32, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)10, 16, header, 32, payload, 0));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)100, 16, header, 32, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-100, 16, header, 32, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-10, 16, header, 32, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)10, 16, header, 32, payload, 0));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)100, 16, header, 32, payload, 0));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network_truncated, nullpointer)
@@ -2778,8 +2778,8 @@ TEST(t_dlt_user_trace_network_truncated, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated nullpointer"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2793,12 +2793,12 @@ TEST(t_dlt_user_trace_network_truncated, nullpointer)
     }
 
     // what to expect when giving in NULL pointer?
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
-    EXPECT_LE(0,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 
@@ -2810,8 +2810,8 @@ TEST(t_dlt_user_trace_network_segmented, normal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented normal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented normal"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2824,13 +2824,13 @@ TEST(t_dlt_user_trace_network_segmented, normal)
         payload[(int)i] = i;
     }
 
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network_segmented, abnormal)
@@ -2839,8 +2839,8 @@ TEST(t_dlt_user_trace_network_segmented, abnormal)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented abnormal"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented abnormal"));
 
     // TODO: char header[16];
     // TODO: for(char i = 0; i < 16; ++i)
@@ -2854,18 +2854,18 @@ TEST(t_dlt_user_trace_network_segmented, abnormal)
     // TODO: }
 
     // data length = 0. Does this make sense?
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload));
 
     // invalid DltNetworkTraceType value
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-100, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-10, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)10, 16, header, 32, payload));
-    // TODO: EXPECT_GE(-1,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)100, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-100, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-10, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)10, 16, header, 32, payload));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)100, 16, header, 32, payload));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_trace_network_segmented, nullpointer)
@@ -2874,8 +2874,8 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
 
 
 
-    EXPECT_LE(0,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(0,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented nullpointer"));
 
     char header[16];
     for(char i = 0; i < 16; ++i)
@@ -2889,12 +2889,12 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
     }
 
     // what to expect when giving in NULL pointer?
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    EXPECT_LE(0,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
-    EXPECT_LE(0,dlt_unregister_context(&context));
-    EXPECT_LE(0,dlt_unregister_app());
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 
@@ -2905,10 +2905,10 @@ TEST(t_dlt_set_log_mode, normal)
 
 
 
-    EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_OFF));
-    EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_EXTERNAL));
-    EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_INTERNAL));
-    EXPECT_LE(0,dlt_set_log_mode(DLT_USER_MODE_BOTH));
+    EXPECT_LE(DLT_RETURN_OK,dlt_set_log_mode(DLT_USER_MODE_OFF));
+    EXPECT_LE(DLT_RETURN_OK,dlt_set_log_mode(DLT_USER_MODE_EXTERNAL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_set_log_mode(DLT_USER_MODE_INTERNAL));
+    EXPECT_LE(DLT_RETURN_OK,dlt_set_log_mode(DLT_USER_MODE_BOTH));
 
 }
 
@@ -2917,11 +2917,11 @@ TEST(t_dlt_set_log_mode, abnormal)
 
 
 
-    // TODO: EXPECT_GE(-1,dlt_set_log_mode(DLT_USER_MODE_UNDEFINED));
-    // TODO: EXPECT_GE(-1,dlt_set_log_mode((DltUserLogMode)-100));
-    // TODO: EXPECT_GE(-1,dlt_set_log_mode((DltUserLogMode)-10));
-    // TODO: EXPECT_GE(-1,dlt_set_log_mode((DltUserLogMode)10));
-    // TODO: EXPECT_GE(-1,dlt_set_log_mode((DltUserLogMode)100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode(DLT_USER_MODE_UNDEFINED));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)-100));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)-10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)10));
+    // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)100));
 
 }
 
@@ -2946,7 +2946,7 @@ TEST(t_dlt_verbose_mode, normal)
 
 
 
-    EXPECT_LE(0,dlt_verbose_mode());
+    EXPECT_LE(DLT_RETURN_OK,dlt_verbose_mode());
 
 }
 
@@ -2958,7 +2958,7 @@ TEST(t_dlt_nonverbose_mode, normal)
 
 
 
-    EXPECT_LE(0,dlt_nonverbose_mode());
+    EXPECT_LE(DLT_RETURN_OK,dlt_nonverbose_mode());
 
 }
 
@@ -2966,7 +2966,7 @@ TEST(t_dlt_nonverbose_mode, normal)
 // free dlt
 TEST(t_dlt_free, onetime)
 {
-    EXPECT_EQ(0, dlt_free());
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
 }
 
 /////////////////////////////////////////

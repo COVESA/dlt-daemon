@@ -221,15 +221,15 @@ int main(int argc, char* argv[])
 
     if (test[0])
     {
-    	stress1();
+        stress1();
     }
     if (test[1])
     {
-    	stress2();
+        stress2();
     }
     if (test[2])
     {
-    	stress3();
+        stress3();
     }
 
     DLT_UNREGISTER_APP();
@@ -301,7 +301,7 @@ void stress2(void)
         ret=pthread_create(&(thread[index]), NULL, (void *) &thread_function, (void *) &(thread_data[index]));
         if (ret!=0)
         {
-			printf("Error creating thread %d: %s \n", index, strerror(errno));
+            printf("Error creating thread %d: %s \n", index, strerror(errno));
         }
 
         usleep(1000);
@@ -309,7 +309,7 @@ void stress2(void)
 
     for (index=0;index<STRESS2_MAX_NUM_THREADS;index++)
     {
-		pthread_join(thread[index], NULL);
+        pthread_join(thread[index], NULL);
     }
 
     printf("Finished stress test2 \n\n");

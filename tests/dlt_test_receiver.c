@@ -300,7 +300,7 @@ int main(int argc, char* argv[])
     }
 
     /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag)!=-1)
+    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
     {
 
         /* Dlt Client Main Loop */

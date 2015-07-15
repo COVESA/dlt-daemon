@@ -667,7 +667,7 @@ extern "C"
      * @param size number of bytes to be printed.
      * @return negative value if there was an error
      */
-    int dlt_print_hex_string(char *text,int textlength,uint8_t *ptr,int size);
+    DltReturnValue dlt_print_hex_string(char *text,int textlength,uint8_t *ptr,int size);
     /**
      * Helper function to print a byte array in hex and ascii into a string.
      * @param text pointer to a ASCII string, in which the text is written
@@ -677,7 +677,7 @@ extern "C"
      * @param html output is html? 0 - false, 1 - true
      * @return negative value if there was an error
      */
-    int dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int html);
+    DltReturnValue dlt_print_mixed_string(char *text,int textlength,uint8_t *ptr,int size,int html);
     /**
      * Helper function to print a byte array in ascii into a string.
      * @param text pointer to a ASCII string, in which the text is written
@@ -686,7 +686,7 @@ extern "C"
      * @param size number of bytes to be printed.
      * @return negative value if there was an error
      */
-    int dlt_print_char_string(char **text,int textlength,uint8_t *ptr,int size);
+    DltReturnValue dlt_print_char_string(char **text,int textlength,uint8_t *ptr,int size);
 
     /**
      * Helper function to print an id.
@@ -716,14 +716,14 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_init(DltFilter *filter,int verbose);
+    DltReturnValue dlt_filter_init(DltFilter *filter,int verbose);
     /**
      * Free the used memory by the organising structure of filter.
      * @param filter pointer to structure of organising DLT filter
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_free(DltFilter *filter,int verbose);
+    DltReturnValue dlt_filter_free(DltFilter *filter,int verbose);
     /**
      * Load filter list from file.
      * @param filter pointer to structure of organising DLT filter
@@ -731,7 +731,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_load(DltFilter *filter,const char *filename,int verbose);
+    DltReturnValue dlt_filter_load(DltFilter *filter,const char *filename,int verbose);
     /**
      * Save filter list to file.
      * @param filter pointer to structure of organising DLT filter
@@ -739,7 +739,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_save(DltFilter *filter,const char *filename,int verbose);
+    DltReturnValue dlt_filter_save(DltFilter *filter,const char *filename,int verbose);
     /**
      * Find index of filter in filter list
      * @param filter pointer to structure of organising DLT filter
@@ -757,7 +757,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_add(DltFilter *filter,const char *apid,const char *ctid,int verbose);
+    DltReturnValue dlt_filter_add(DltFilter *filter,const char *apid,const char *ctid,int verbose);
     /**
      * Delete filter from filter list
      * @param filter pointer to structure of organising DLT filter
@@ -766,7 +766,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_filter_delete(DltFilter *filter,const char *apid,const char *ctid,int verbose);
+    DltReturnValue dlt_filter_delete(DltFilter *filter,const char *apid,const char *ctid,int verbose);
 
     /**
      * Initialise the structure used to access a DLT message.
@@ -775,14 +775,14 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_init(DltMessage *msg,int verbose);
+    DltReturnValue dlt_message_init(DltMessage *msg,int verbose);
     /**
      * Free the used memory by the organising structure of file.
      * @param msg pointer to structure of organising access to DLT messages
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_free(DltMessage *msg,int verbose);
+    DltReturnValue dlt_message_free(DltMessage *msg,int verbose);
     /**
      * Print Header into an ASCII string.
      * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
@@ -792,7 +792,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_header(DltMessage *msg,char *text,int textlength,int verbose);
+    DltReturnValue dlt_message_header(DltMessage *msg,char *text,int textlength,int verbose);
     /**
      * Print Header into an ASCII string, selective.
      * @param msg pointer to structure of organising access to DLT messages
@@ -802,7 +802,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags, int verbose);
+    DltReturnValue dlt_message_header_flags(DltMessage *msg,char *text,int textlength,int flags, int verbose);
     /**
      * Print Payload into an ASCII string.
      * @param msg pointer to structure of organising access to DLT messages
@@ -812,7 +812,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int verbose);
+    DltReturnValue dlt_message_payload(DltMessage *msg,char *text,int textlength,int type,int verbose);
     /**
      * Check if message is filtered or not. All filters are applied (logical OR).
      * @param msg pointer to structure of organising access to DLT messages
@@ -820,7 +820,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return 1 = filter matches, 0 = filter does not match, negative value if there was an error
      */
-    int dlt_message_filter_check(DltMessage *msg,DltFilter *filter,int verbose);
+    DltReturnValue dlt_message_filter_check(DltMessage *msg,DltFilter *filter,int verbose);
 
     /**
      * Read message from memory buffer.
@@ -840,7 +840,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_get_extraparameters(DltMessage *msg,int verbose);
+    DltReturnValue dlt_message_get_extraparameters(DltMessage *msg,int verbose);
 
     /**
      * Set standard header extra parameters
@@ -848,7 +848,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_set_extraparameters(DltMessage *msg,int verbose);
+    DltReturnValue dlt_message_set_extraparameters(DltMessage *msg,int verbose);
 
     /**
      * Initialise the structure used to access a DLT file.
@@ -857,7 +857,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_init(DltFile *file,int verbose);
+    DltReturnValue dlt_file_init(DltFile *file,int verbose);
     /**
      * Set a list to filters.
      * This function should be called before loading a DLT file, if filters should be used.
@@ -868,7 +868,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_set_filter(DltFile *file,DltFilter *filter,int verbose);
+    DltReturnValue dlt_file_set_filter(DltFile *file,DltFilter *filter,int verbose);
     /**
      * Initialising loading a DLT file.
      * @param file pointer to structure of organising access to DLT file
@@ -876,7 +876,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_open(DltFile *file,const char *filename,int verbose);
+    DltReturnValue dlt_file_open(DltFile *file,const char *filename,int verbose);
     /**
      * Find next message in the DLT file and parse them.
      * This function finds the next message in the DLT file.
@@ -885,7 +885,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return 0 = message does not match filter, 1 = message was read, negative value if there was an error
      */
-    int dlt_file_read(DltFile *file,int verbose);
+    DltReturnValue dlt_file_read(DltFile *file,int verbose);
     /**
      * Find next message in the DLT file in RAW format (without storage header) and parse them.
      * This function finds the next message in the DLT file.
@@ -895,21 +895,21 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return 0 = message does not match filter, 1 = message was read, negative value if there was an error
      */
-    int dlt_file_read_raw(DltFile *file,int resync,int verbose);
+    DltReturnValue dlt_file_read_raw(DltFile *file,int resync,int verbose);
     /**
      * Closing loading a DLT file.
      * @param file pointer to structure of organising access to DLT file
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_close(DltFile *file,int verbose);
+    DltReturnValue dlt_file_close(DltFile *file,int verbose);
     /**
      * Load standard header of a message from file
      * @param file pointer to structure of organising access to DLT file
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_read_header(DltFile *file,int verbose);
+    DltReturnValue dlt_file_read_header(DltFile *file,int verbose);
     /**
      * Load standard header of a message from file in RAW format (without storage header)
      * @param file pointer to structure of organising access to DLT file
@@ -917,7 +917,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_read_header_raw(DltFile *file,int resync,int verbose);
+    DltReturnValue dlt_file_read_header_raw(DltFile *file,int resync,int verbose);
     /**
      * Load, if available in message, extra standard header fields and
      * extended header of a message from file
@@ -926,7 +926,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_read_header_extended(DltFile *file, int verbose);
+    DltReturnValue dlt_file_read_header_extended(DltFile *file, int verbose);
     /**
      * Load payload of a message from file
      * (dlt_file_read_header() must have been called before this call!)
@@ -934,7 +934,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_read_data(DltFile *file, int verbose);
+    DltReturnValue dlt_file_read_data(DltFile *file, int verbose);
     /**
      * Load headers and payload of a message selected by the index.
      * If filters are set, index is based on the filtered list.
@@ -943,14 +943,14 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return number of messages loaded, negative value if there was an error
      */
-    int dlt_file_message(DltFile *file,int index,int verbose);
+    DltReturnValue dlt_file_message(DltFile *file,int index,int verbose);
     /**
      * Free the used memory by the organising structure of file.
      * @param file pointer to structure of organising access to DLT file
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_file_free(DltFile *file,int verbose);
+    DltReturnValue dlt_file_free(DltFile *file,int verbose);
 
     /**
      * Set internal logging filename if mode 2
@@ -973,7 +973,22 @@ extern "C"
      * @param s Pointer to ASCII string with null-termination
      * @return negative value if there was an error
      */
-    int dlt_log(int prio, char *s);
+    DltReturnValue dlt_log(int prio, char *s);
+    /**
+     * Log with variable arguments to (external) logging facility (like printf)
+     * @param prio priority (see syslog() call)
+     * @param format format string for log message
+     * @return negative value if there was an error
+     */
+    DltReturnValue dlt_vlog(int prio, const char *format, ...);
+    /**
+     * Log size bytes with variable arguments to (external) logging facility (similar to snprintf)
+     * @param prio priority (see syslog() call)
+     * @param size number of bytes to log
+     * @param format format string for log message
+     * @return negative value if there was an error
+     */
+    DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...);
     /**
      * De-Initialize (external) logging facility
      */
@@ -986,23 +1001,23 @@ extern "C"
      * @param _buffersize size of data buffer for storing the received data
      * @return negative value if there was an error
      */
-    int dlt_receiver_init(DltReceiver *receiver,int _fd, int _buffersize);
+    DltReturnValue dlt_receiver_init(DltReceiver *receiver,int _fd, int _buffersize);
     /**
      * De-Initialize a dlt receiver structure
      * @param receiver pointer to dlt receiver structure
      * @return negative value if there was an error
      */
-    int dlt_receiver_free(DltReceiver *receiver);
+    DltReturnValue dlt_receiver_free(DltReceiver *receiver);
     /**
      * Receive data from socket using the dlt receiver structure
      * @param receiver pointer to dlt receiver structure
-     * @return negative value if there was an error
+     * @return number of received bytes or negative value if there was an error
      */
     int dlt_receiver_receive_socket(DltReceiver *receiver);
     /**
      * Receive data from file/fifo using the dlt receiver structure
      * @param receiver pointer to dlt receiver structure
-     * @return negative value if there was an error
+     * @return number of received bytes or negative value if there was an error
      */
     int dlt_receiver_receive_fd(DltReceiver *receiver);
     /**
@@ -1011,13 +1026,13 @@ extern "C"
      * @param size amount of bytes to be removed
      * @return negative value if there was an error
      */
-    int dlt_receiver_remove(DltReceiver *receiver,int size);
+    DltReturnValue dlt_receiver_remove(DltReceiver *receiver,int size);
     /**
      * Move data from last receive call to front of receive buffer
      * @param receiver pointer to dlt receiver structure
      * @return negative value if there was an error
      */
-    int dlt_receiver_move_to_begin(DltReceiver *receiver);
+    DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver);
 
     /**
      * Fill out storage header of a dlt message
@@ -1025,13 +1040,13 @@ extern "C"
      * @param ecu name of ecu to be set in storage header
      * @return negative value if there was an error
      */
-    int dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu);
+    DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu);
     /**
      * Check if a storage header contains its marker
      * @param storageheader pointer to storage header of a dlt message
      * @return 0 no, 1 yes, negative value if there was an error
      */
-    int dlt_check_storageheader(DltStorageHeader *storageheader);
+    DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
 
 
     /**
@@ -1043,7 +1058,7 @@ extern "C"
      * @param size Maximum size of buffer in bytes
      * @return negative value if there was an error
      */
-    int dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+    DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
 
     /**
      * Initialize static ringbuffer with a size of size.
@@ -1054,7 +1069,7 @@ extern "C"
      * @param size Maximum size of buffer in bytes
      * @return negative value if there was an error
      */
-    int dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+    DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
 
     /**
      * Initialize dynamic ringbuffer with a size of size.
@@ -1068,21 +1083,21 @@ extern "C"
      * @param step_size size of which ringbuffer is increased
      * @return negative value if there was an error
      */
-    int dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size);
+    DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size,uint32_t step_size);
 
     /**
      * Deinitilaise usage of static ringbuffer
      * @param buf Pointer to ringbuffer structure
      * @return negative value if there was an error
      */
-    int dlt_buffer_free_static(DltBuffer *buf);
+    DltReturnValue dlt_buffer_free_static(DltBuffer *buf);
 
     /**
      * Release and free memory used by dynamic ringbuffer
      * @param buf Pointer to ringbuffer structure
      * @return negative value if there was an error
      */
-    int dlt_buffer_free_dynamic(DltBuffer *buf);
+    DltReturnValue dlt_buffer_free_dynamic(DltBuffer *buf);
 
     /**
      * Write one entry to ringbuffer
@@ -1091,7 +1106,7 @@ extern "C"
      * @param size Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-    int dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
+    DltReturnValue dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size);
 
     /**
      * Write up to three entries to ringbuffer.
@@ -1105,7 +1120,7 @@ extern "C"
      * @param size3 Size of data in bytes to be written to ringbuffer
      * @return negative value if there was an error
      */
-    int dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
+    DltReturnValue dlt_buffer_push3(DltBuffer *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
 
     /**
      * Read one entry from ringbuffer.
@@ -1152,7 +1167,7 @@ extern "C"
      * @param buf Pointer to ringbuffer structure
      * @return total size of buffer
      */
-    int dlt_buffer_get_total_size(DltBuffer *buf);
+    uint32_t dlt_buffer_get_total_size(DltBuffer *buf);
 
     /**
      * Get used size in bytes of ringbuffer.
@@ -1176,7 +1191,7 @@ extern "C"
      * @param speed Serial line speed, as defined in termios.h
      * @return negative value if there was an error
      */
-    int dlt_setup_serial(int fd, speed_t speed);
+    DltReturnValue dlt_setup_serial(int fd, speed_t speed);
 
     /**
      * Helper function: Convert serial line baudrate (as number) to line speed (as defined in termios.h)
@@ -1215,7 +1230,7 @@ extern "C"
      * Common part of initialisation
      * @return negative value if there was an error
      */
-    int dlt_init_common(void);
+    DltReturnValue dlt_init_common(void);
 
     /**
      * Return the uptime of the system in 0.1 ms resolution
@@ -1231,7 +1246,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_print_header(DltMessage *message, char *text, uint32_t size, int verbose);
+    DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_t size, int verbose);
 
     /**
      * Print payload of a DLT message as Hex-Output
@@ -1241,7 +1256,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_print_hex(DltMessage *message, char *text, uint32_t size, int verbose);
+    DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t size, int verbose);
 
     /**
      * Print payload of a DLT message as ASCII-Output
@@ -1251,7 +1266,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose);
+    DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose);
 
     /**
      * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output
@@ -1261,7 +1276,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_print_mixed_plain(DltMessage *message, char *text, uint32_t size, int verbose);
+    DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, uint32_t size, int verbose);
 
     /**
      * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for HTML text output
@@ -1271,7 +1286,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_print_mixed_html(DltMessage *message, char *text, uint32_t size, int verbose);
+    DltReturnValue dlt_message_print_mixed_html(DltMessage *message, char *text, uint32_t size, int verbose);
 
     /**
      * Decode and print a argument of a DLT message
@@ -1285,7 +1300,7 @@ extern "C"
      * @param verbose if set to true verbose information is printed out.
      * @return negative value if there was an error
      */
-    int dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,int32_t *datalength,char *text,int textlength,int byteLength,int verbose);
+    DltReturnValue dlt_message_argument_print(DltMessage *msg,uint32_t type_info,uint8_t **ptr,int32_t *datalength,char *text,int textlength,int byteLength,int verbose);
 
     /**
      * Check environment variables.

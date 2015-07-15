@@ -106,7 +106,7 @@ void usage()
 #ifdef DLT_TEST_ENABLE
     printf("  -c            Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
-    printf("  -z size      	Size of message\n");
+    printf("  -z size          Size of message\n");
 #endif /* DLT_TEST_ENABLE */
 }
 
@@ -134,11 +134,11 @@ int main(int argc, char* argv[])
     int index;
     int c;
 
-	char *text;
-	int num,maxnum;
-	int delay;
+    char *text;
+    int num,maxnum;
+    int delay;
 
-	int state=-1,newstate;
+    int state=-1,newstate;
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
@@ -273,11 +273,11 @@ int main(int argc, char* argv[])
 
     text = message;
 
-	if(mvalue)
-	{
+    if(mvalue)
+    {
         printf("Set log mode to %d\n",atoi(mvalue));
-		dlt_set_log_mode(atoi(mvalue));
-	}
+        dlt_set_log_mode(atoi(mvalue));
+    }
 
 
     if (gflag)
@@ -292,7 +292,7 @@ int main(int argc, char* argv[])
 
     if (kflag)
     {
-    	DLT_LOG_MARKER();
+        DLT_LOG_MARKER();
     }
 
     if (nvalue)
@@ -301,7 +301,7 @@ int main(int argc, char* argv[])
     }
     else
     {
-		maxnum = 10;
+        maxnum = 10;
     }
 
     if (dvalue)
@@ -331,44 +331,44 @@ int main(int argc, char* argv[])
 #ifdef DLT_TEST_ENABLE
     if (cflag)
     {
-		dlt_user_test_corrupt_user_header(1);
+        dlt_user_test_corrupt_user_header(1);
     }
     if (svalue)
     {
-		dlt_user_test_corrupt_message_size(1,atoi(svalue));
+        dlt_user_test_corrupt_message_size(1,atoi(svalue));
     }
-	if (zvalue)
-	{
-		char* buffer = malloc(atoi(zvalue));
-		if(buffer==0)
-		{
-	        /* no message, show usage and terminate */
-	        fprintf(stderr,"Cannot allocate buffer memory!\n");
-	        return -1;
-		}
-		DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
-		free(buffer);
-	}
+    if (zvalue)
+    {
+        char* buffer = malloc(atoi(zvalue));
+        if(buffer==0)
+        {
+            /* no message, show usage and terminate */
+            fprintf(stderr,"Cannot allocate buffer memory!\n");
+            return -1;
+        }
+        DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
+        free(buffer);
+    }
 #endif /* DLT_TEST_ENABLE */
 
     for (num=0;num<maxnum;num++)
     {
         printf("Send %d %s\n",num,text);
 
-		newstate = dlt_get_log_state();
-		if(state!=newstate)
-		{
-			state = newstate;
-			if(state == -1) {
-				printf("Client unknown state!\n");
-			}
-			else if(state == 0) {
-				printf("Client disconnected!\n");
-			}
-			else if(state == 1) {
-				printf("Client connected!\n");
-			}
-		}
+        newstate = dlt_get_log_state();
+        if(state!=newstate)
+        {
+            state = newstate;
+            if(state == -1) {
+                printf("Client unknown state!\n");
+            }
+            else if(state == 0) {
+                printf("Client disconnected!\n");
+            }
+            else if(state == 1) {
+                printf("Client connected!\n");
+            }
+        }
 
         if (gflag)
         {
@@ -414,10 +414,10 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
 
 void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status)
 {
-	char text[5];
-	text[4]=0;
+    char text[5];
+    text[4]=0;
 
-	memcpy(text,context_id,DLT_ID_SIZE);
+    memcpy(text,context_id,DLT_ID_SIZE);
 
     printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n",text,log_level,trace_status);
 }

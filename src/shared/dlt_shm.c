@@ -76,240 +76,240 @@ void dlt_shm_print_hex(char *ptr,int size)
 
     for (num=0;num<size;num++)
     {
-		if((num%16)==15)
-			printf("%.2x\n",((unsigned char*)ptr)[num]);
-		else
-			printf("%.2x ",((unsigned char*)ptr)[num]);
+        if((num%16)==15)
+            printf("%.2x\n",((unsigned char*)ptr)[num]);
+        else
+            printf("%.2x ",((unsigned char*)ptr)[num]);
     }
     printf("\n");
 }
 
 void dlt_shm_pv(int id,int operation)
 {
-	static struct sembuf semaphor;
+    static struct sembuf semaphor;
 
-	semaphor.sem_op = operation;
-	semaphor.sem_flg = SEM_UNDO;
+    semaphor.sem_op = operation;
+    semaphor.sem_flg = SEM_UNDO;
 
-	if(semop(id, &semaphor,1) == -1) {
-		dlt_log(LOG_WARNING,"SHM: semop() failed");
-	}
+    if(semop(id, &semaphor,1) == -1) {
+        dlt_log(LOG_WARNING,"SHM: semop() failed");
+    }
 }
 
 int dlt_shm_init_server(DltShm *buf,int key,int size) {
-	struct shmid_ds shm_buf;
-	unsigned char *ptr;
+    struct shmid_ds shm_buf;
+    unsigned char *ptr;
 
-	// Init parameters
-	buf->shmid = 0;
-	buf->semid = 0;
+    // Init parameters
+    buf->shmid = 0;
+    buf->semid = 0;
 
     // Create the segment.
     if ((buf->shmid = shmget(key, size, IPC_CREAT | 0666)) < 0) {
         dlt_log(LOG_WARNING,"SHM: shmget() failed");
-        return -1; /* ERROR */
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
-	// get the size of shm
-	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
-	{
-		dlt_log(LOG_WARNING,"SHM: shmctl() failed");
-        return -1; /* ERROR */
-	}
+    // get the size of shm
+    if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
+    {
+        dlt_log(LOG_WARNING,"SHM: shmctl() failed");
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
     // Now we attach the segment to our data space.
     if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
         dlt_log(LOG_WARNING,"SHM: shmat() failed");
-        return -1; /* ERROR */
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
-	// Init semaphore
-	if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
-		if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
-			dlt_log(LOG_WARNING,"SHM: semget() failed");
-			return -1; /* ERROR */
-		}
-	}
-	if( semctl(buf->semid,0,SETVAL,(int)1) == -1 ) {
+    // Init semaphore
+    if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_CREAT|IPC_EXCL)) == -1 ) {
+        if( (buf->semid = semget(DLT_SHM_SEM,1,S_IRWXU|S_IRWXG|S_IRWXO|IPC_EXCL)) == -1 ) {
+            dlt_log(LOG_WARNING,"SHM: semget() failed");
+            return DLT_RETURN_ERROR; /* ERROR */
+        }
+    }
+    if( semctl(buf->semid,0,SETVAL,(int)1) == -1 ) {
         dlt_log(LOG_WARNING,"SHM: semctl() failed");
-        return -1; /* ERROR */
-	}
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	// init buffer
-	dlt_buffer_init_static_server(&(buf->buffer),ptr,shm_buf.shm_segsz);
+    // init buffer
+    dlt_buffer_init_static_server(&(buf->buffer),ptr,shm_buf.shm_segsz);
 
-	return 0; /* OK */
+    return DLT_RETURN_OK; /* OK */
 }
 
-int dlt_shm_init_client(DltShm *buf,int key) {
-	struct shmid_ds shm_buf;
-	unsigned char *ptr;
+DltReturnValue dlt_shm_init_client(DltShm *buf,int key) {
+    struct shmid_ds shm_buf;
+    unsigned char *ptr;
 
-	// init parameters
-	buf->shmid = 0;
-	buf->semid = 0;
+    // init parameters
+    buf->shmid = 0;
+    buf->semid = 0;
 
     // Create the segment.
     if ((buf->shmid = shmget(key, 0, 0666)) < 0) {
         dlt_log(LOG_WARNING,"SHM: shmget() failed");
-        return -1; /* ERROR */
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
-	// get the size of shm
-	if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
-	{
-	    dlt_log(LOG_WARNING,"SHM: shmctl() failed");
-            return -1; /* ERROR */
-	}
+    // get the size of shm
+    if (shmctl(buf->shmid,  IPC_STAT, &shm_buf))
+    {
+        dlt_log(LOG_WARNING,"SHM: shmctl() failed");
+            return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	// Now we attach the segment to our data space.
-	if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
-		dlt_log(LOG_WARNING,"shmat() failed");
-		return -1; /* ERROR */
-	}
+    // Now we attach the segment to our data space.
+    if ((ptr = shmat(buf->shmid, NULL, 0)) == (unsigned char *) -1) {
+        dlt_log(LOG_WARNING,"shmat() failed");
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	// Init semaphore
-	if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
+    // Init semaphore
+    if( (buf->semid = semget(DLT_SHM_SEM,0,0)) == -1 ) {
             dlt_log(LOG_WARNING,"SHM: semget() failed");
-            return -1; /* ERROR */
-	}
+            return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	// init buffer
-	dlt_buffer_init_static_client(&(buf->buffer),ptr,shm_buf.shm_segsz);
+    // init buffer
+    dlt_buffer_init_static_client(&(buf->buffer),ptr,shm_buf.shm_segsz);
 
-	return 0; /* OK */
+    return DLT_RETURN_OK; /* OK */
 }
 
 void dlt_shm_info(DltShm *buf)
 {
-	dlt_buffer_info(&(buf->buffer));
+    dlt_buffer_info(&(buf->buffer));
 }
 
 void dlt_shm_status(DltShm *buf)
 {
-	dlt_buffer_status(&(buf->buffer));
+    dlt_buffer_status(&(buf->buffer));
 }
 
 int dlt_shm_get_total_size(DltShm *buf)
 {
-	return dlt_buffer_get_total_size(&(buf->buffer));
+    return dlt_buffer_get_total_size(&(buf->buffer));
 }
 
 int dlt_shm_get_used_size(DltShm *buf)
 {
-	int ret;
+    int ret;
 
-	/* check if buffer available */
-	if(!buf->buffer.mem)
-		return -1;
+    /* check if buffer available */
+    if(!buf->buffer.mem)
+        return -1;
 
-	DLT_SHM_SEM_GET(buf->semid);
-	ret =  dlt_buffer_get_used_size(&(buf->buffer));
-	DLT_SHM_SEM_FREE(buf->semid);
+    DLT_SHM_SEM_GET(buf->semid);
+    ret =  dlt_buffer_get_used_size(&(buf->buffer));
+    DLT_SHM_SEM_FREE(buf->semid);
 
-	return ret;
+    return ret;
 }
 
 int dlt_shm_get_message_count(DltShm *buf)
 {
-	return dlt_buffer_get_message_count(&(buf->buffer));
+    return dlt_buffer_get_message_count(&(buf->buffer));
 }
 
 int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3)
 {
-	int ret;
+    int ret;
 
-	/* check if buffer available */
-	if(!buf->buffer.mem)
-		return -1;
+    /* check if buffer available */
+    if(!buf->buffer.mem)
+        return -1;
 
-	DLT_SHM_SEM_GET(buf->semid);
-	ret =  dlt_buffer_push3(&(buf->buffer),data1,size1,data2,size2,data3,size3);
-	DLT_SHM_SEM_FREE(buf->semid);
+    DLT_SHM_SEM_GET(buf->semid);
+    ret =  dlt_buffer_push3(&(buf->buffer),data1,size1,data2,size2,data3,size3);
+    DLT_SHM_SEM_FREE(buf->semid);
 
-	return ret;
+    return ret;
 }
 
 int dlt_shm_pull(DltShm *buf,unsigned char *data, int max_size)
 {
-	int ret;
+    int ret;
 
-	/* check if buffer available */
-	if(!buf->buffer.mem)
-		return -1;
+    /* check if buffer available */
+    if(!buf->buffer.mem)
+        return -1;
 
-	DLT_SHM_SEM_GET(buf->semid);
-	ret =  dlt_buffer_pull(&(buf->buffer),data,max_size);
-	DLT_SHM_SEM_FREE(buf->semid);
+    DLT_SHM_SEM_GET(buf->semid);
+    ret =  dlt_buffer_pull(&(buf->buffer),data,max_size);
+    DLT_SHM_SEM_FREE(buf->semid);
 
-	return ret;
+    return ret;
 }
 
 int dlt_shm_copy(DltShm *buf,unsigned char *data, int max_size)
 {
-	int ret;
+    int ret;
 
-	/* check if buffer available */
-	if(!buf->buffer.mem)
-		return -1;
+    /* check if buffer available */
+    if(!buf->buffer.mem)
+        return -1;
 
-	DLT_SHM_SEM_GET(buf->semid);
-	ret =  dlt_buffer_copy(&(buf->buffer),data,max_size);
-	DLT_SHM_SEM_FREE(buf->semid);
+    DLT_SHM_SEM_GET(buf->semid);
+    ret =  dlt_buffer_copy(&(buf->buffer),data,max_size);
+    DLT_SHM_SEM_FREE(buf->semid);
 
-	return ret;
+    return ret;
 }
 
 int dlt_shm_remove(DltShm *buf)
 {
-	int ret;
+    int ret;
 
-	/* check if buffer available */
-	if(!buf->buffer.mem)
-		return -1;
+    /* check if buffer available */
+    if(!buf->buffer.mem)
+        return -1;
 
-	DLT_SHM_SEM_GET(buf->semid);
-	ret =  dlt_buffer_remove(&(buf->buffer));
-	DLT_SHM_SEM_FREE(buf->semid);
+    DLT_SHM_SEM_GET(buf->semid);
+    ret =  dlt_buffer_remove(&(buf->buffer));
+    DLT_SHM_SEM_FREE(buf->semid);
 
-	return ret;
+    return ret;
 }
 
-int dlt_shm_free_server(DltShm *buf) {
+DltReturnValue dlt_shm_free_server(DltShm *buf) {
 
-	if(shmdt(buf->buffer.shm)) {
+    if(shmdt(buf->buffer.shm)) {
         dlt_log(LOG_WARNING,"SHM: shmdt() failed");
-        return -1; /* ERROR */
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
-	if(shmctl(buf->shmid,IPC_RMID,NULL) == -1) {
+    if(shmctl(buf->shmid,IPC_RMID,NULL) == -1) {
         dlt_log(LOG_WARNING,"SHM: shmdt() failed");
-        return -1; /* ERROR */
-	}
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	if(semctl(buf->semid,0,IPC_RMID,(int)0) == -1) {
+    if(semctl(buf->semid,0,IPC_RMID,(int)0) == -1) {
         dlt_log(LOG_WARNING,"SHM: shmdt() failed");
-        return -1; /* ERROR */
-	}
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
-	// Reset parameters
-	buf->shmid = 0;
-	buf->semid = 0;
+    // Reset parameters
+    buf->shmid = 0;
+    buf->semid = 0;
 
-	return dlt_buffer_free_static(&(buf->buffer));
+    return dlt_buffer_free_static(&(buf->buffer));
 
 }
 
-int dlt_shm_free_client(DltShm *buf) {
+DltReturnValue dlt_shm_free_client(DltShm *buf) {
 
-	if(shmdt(buf->buffer.shm)) {
+    if(shmdt(buf->buffer.shm)) {
         dlt_log(LOG_WARNING,"SHM: shmdt() failed");
-        return -1; /* ERROR */
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
-	// Reset parameters
-	buf->shmid = 0;
-	buf->semid = 0;
+    // Reset parameters
+    buf->shmid = 0;
+    buf->semid = 0;
 
-	return dlt_buffer_free_static(&(buf->buffer));
+    return dlt_buffer_free_static(&(buf->buffer));
 }

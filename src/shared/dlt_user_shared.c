@@ -77,17 +77,13 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
-int dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype)
+DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype)
 {
-    if (userheader==0)
-    {
-        return -1;
-    }
+    if (userheader == 0)
+        return DLT_RETURN_ERROR;
 
-    if (mtype<=0)
-    {
-        return -1;
-    }
+    if (mtype <= 0)
+        return DLT_RETURN_ERROR;
 
     userheader->pattern[0] = 'D';
     userheader->pattern[1] = 'U';
@@ -95,15 +91,15 @@ int dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype)
     userheader->pattern[3] = 1;
     userheader->message = mtype;
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_user_check_userheader(DltUserHeader *userheader)
 {
     if (userheader==0)
-	{
+    {
         return -1;
-	}
+    }
 
     return  ((userheader->pattern[0] == 'D') &&
              (userheader->pattern[1] == 'U') &&

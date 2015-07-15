@@ -125,7 +125,7 @@ TEST(t_dlt_daemon_application_add, abnormal)
 //    EXPECT_STREQ(tmp, app->apid);
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 
 }
 TEST(t_dlt_daemon_application_add, nullpointer)
@@ -159,7 +159,7 @@ TEST(t_dlt_daemon_application_del, normal)
     // Normal Use-Case, retrun type cannot be tested, only apid and desc
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, 0);
-    EXPECT_LE(0,dlt_daemon_application_del(&daemon,app, 0));
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon,app, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -248,7 +248,7 @@ TEST(t_dlt_daemon_application_find, abnormal)
 //    EXPECT_EQ((DltDaemonApplication *) 0, dlt_daemon_application_find(&daemon, (char *) apid, 123456789));
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 
 }
 TEST(t_dlt_daemon_application_find, nullpointer)
@@ -285,14 +285,14 @@ TEST(t_dlt_daemon_applications_clear, abnormal)
 //    pid_t pid = 0;
 
     // No applications added, expect < -1
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_applications_clear(&daemon, 0));
 
     // Verbose != 0 or 1, expect error
 //    dlt_daemon_application_add(&daemon, (char *) "TEST", pid, (char *) "Test clear", 0);
 //    EXPECT_GE(-1, dlt_daemon_applications_clear(&daemon, 123456789));
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_clear, nullpointer)
 {
@@ -329,7 +329,7 @@ TEST(t_dlt_daemon_applications_invalidate_fd, abnormal)
 //    DltDaemonApplication *app;
 
     // Daemon isn't initialized, expected error
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_applications_invalidate_fd(&daemon, 0, 0));
 
     // Verbose != 0 or 1, expect error
@@ -337,7 +337,7 @@ TEST(t_dlt_daemon_applications_invalidate_fd, abnormal)
 //    EXPECT_GE(-1, dlt_daemon_applications_invalidate_fd(&daemon, app->user_handle, 123456789));
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_invalidate_fd, nullpointer)
 {
@@ -377,7 +377,7 @@ TEST(t_dlt_daemon_applications_save, abnormal)
 //    const char * filename = "/tmp/dlt-runtime.cfg";
 
     // Uninitialized
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_applications_save(&daemon, (char *) filename, 0));
 
     // Verbose != 1 or 0, expect error
@@ -391,7 +391,7 @@ TEST(t_dlt_daemon_applications_save, abnormal)
 //    EXPECT_GE(-1, dlt_daemon_applications_save(&daemon, (char *) "PATH_DONT_EXIST", 0));
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_save, nullpointer)
 {
@@ -429,7 +429,7 @@ TEST(t_dlt_daemon_applications_load, abnormal)
 //    const char * filename = "/tmp/dlt-runtime.cfg";
 
     // Uninitialized
-// 	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_applications_load(&daemon, (char *) filename, 0));
 
     // Verbose != 1 or 0, expect error
@@ -443,7 +443,7 @@ TEST(t_dlt_daemon_applications_load, abnormal)
 //    EXPECT_GE(-1, dlt_daemon_applications_load(&daemon, (char *) "PATH_DONT_EXIST", 0));
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-// 	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_load, nullpointer)
 {
@@ -471,19 +471,19 @@ TEST(t_dlt_daemon_applications_load, nullpointer)
 TEST(t_dlt_daemon_context_add, normal)
 {
 //  Log Level
-//  DLT_LOG_DEFAULT =    		  -1,   /**< Default log level */
-//	DLT_LOG_OFF     =      		0x00,   /**< Log level off */
-//	DLT_LOG_FATAL   =   		0x01, 	/**< fatal system error */
-//	DLT_LOG_ERROR   =   		0x02, 	/**< error with impact to correct functionality */
-//	DLT_LOG_WARN    =   		0x03, 	/**< warning, correct behaviour could not be ensured */
-//	DLT_LOG_INFO    =   		0x04, 	/**< informational */
-//	DLT_LOG_DEBUG   =   		0x05, 	/**< debug  */
-//	DLT_LOG_VERBOSE =   		0x06 	/**< highest grade of information */
+//  DLT_LOG_DEFAULT =             -1,   /**< Default log level */
+//  DLT_LOG_OFF     =           0x00,   /**< Log level off */
+//  DLT_LOG_FATAL   =           0x01,   /**< fatal system error */
+//  DLT_LOG_ERROR   =           0x02,   /**< error with impact to correct functionality */
+//  DLT_LOG_WARN    =           0x03,   /**< warning, correct behaviour could not be ensured */
+//  DLT_LOG_INFO    =           0x04,   /**< informational */
+//  DLT_LOG_DEBUG   =           0x05,   /**< debug  */
+//  DLT_LOG_VERBOSE =           0x06    /**< highest grade of information */
 
 //  Trace Status
-//  DLT_TRACE_STATUS_DEFAULT =   -1, 	/**< Default trace status */
-//	DLT_TRACE_STATUS_OFF	 = 0x00, 	/**< Trace status: Off */
-//	DLT_TRACE_STATUS_ON      = 0x01 	/**< Trace status: On */
+//  DLT_TRACE_STATUS_DEFAULT =   -1,    /**< Default trace status */
+//  DLT_TRACE_STATUS_OFF     = 0x00,    /**< Trace status: Off */
+//  DLT_TRACE_STATUS_ON      = 0x01     /**< Trace status: On */
 
     DltDaemon daemon;
     ID4 apid = "TES";
@@ -837,7 +837,7 @@ TEST(t_dlt_daemon_contexts_clear, abnormal)
 //    DltDaemonApplication *app;
 
     // No context added
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_contexts_clear(&daemon, 0));
 
     // Verbose != 0 or 1
@@ -847,7 +847,7 @@ TEST(t_dlt_daemon_contexts_clear, abnormal)
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, 123456789));
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_clear, nullpointer)
 {
@@ -890,7 +890,7 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, abnormal)
 //    DltDaemonApplication *app;
 
     // Uninitialized
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_contexts_invalidate_fd(&daemon, app->user_handle, 0));
 
     // Verbose != 0 or 1
@@ -901,7 +901,7 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, abnormal)
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_contexts_clear(&daemon, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_invalidate_fd, nullpointer)
 {
@@ -946,7 +946,7 @@ TEST(t_dlt_daemon_contexts_save, abnormal)
 //    const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Uninitialized
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_contexts_save(&daemon, filename, 0));
 
     // Verbose != 1 or 0, expect error
@@ -966,7 +966,7 @@ TEST(t_dlt_daemon_contexts_save, abnormal)
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_contexts_clear(&daemon, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_save, nullpointer)
 {
@@ -1016,7 +1016,7 @@ TEST(t_dlt_daemon_contexts_load, abnormal)
 //    const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Uninitialized
-//	  EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
+//    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
 //    EXPECT_GE(-1, dlt_daemon_contexts_load(&daemon, filename, 0));
 
     // Verbose != 1 or 0, expect error
@@ -1036,7 +1036,7 @@ TEST(t_dlt_daemon_contexts_load, abnormal)
 //    dlt_daemon_application_del(&daemon, app, 0);
 //    dlt_daemon_contexts_clear(&daemon, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_contexts_load, nullpointer)
 {
@@ -1246,7 +1246,7 @@ TEST(t_dlt_daemon_user_send_log_state, abnormal)
 //    dlt_daemon_contexts_clear(&daemon, 0);
 //    dlt_daemon_applications_clear(&daemon, 0);
 //    close(app->user_handle);
-//	  EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+//    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_user_send_log_state, nullpointer)
 {

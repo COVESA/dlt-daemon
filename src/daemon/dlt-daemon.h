@@ -100,13 +100,13 @@ typedef struct
     char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
     char ivalue[NAME_MAX + 1];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
-    int  sharedMemorySize;	   /**< (int) Size of shared memory (Default: 100000) */
-    int  sendMessageTime;	   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
+    int  sharedMemorySize;       /**< (int) Size of shared memory (Default: 100000) */
+    int  sendMessageTime;       /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
-    int  offlineTraceFileSize;	/**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
-    int  offlineTraceMaxSize;	/**< (int) Maximum size of all trace files (Default: 4000000) */
-    int  loggingMode;	/**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
-    int  loggingLevel;	/**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
+    int  offlineTraceFileSize;    /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
+    int  offlineTraceMaxSize;    /**< (int) Maximum size of all trace files (Default: 4000000) */
+    int  loggingMode;    /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
+    int  loggingLevel;    /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
     int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
@@ -138,7 +138,7 @@ typedef struct
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
-    DltShm dlt_shm;				/**< Shared memory handling */
+    DltShm dlt_shm;                /**< Shared memory handling */
 #endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
@@ -166,11 +166,11 @@ typedef struct
 
 typedef DltDaemonTimingPacketThreadData DltDaemonECUVersionThreadData;
 
-#define DLT_DAEMON_ERROR_OK 			0
-#define DLT_DAEMON_ERROR_UNKNOWN 		-1
-#define DLT_DAEMON_ERROR_BUFFER_FULL 	-2
-#define DLT_DAEMON_ERROR_SEND_FAILED 	-3
-#define DLT_DAEMON_ERROR_WRITE_FAILED 	-4
+#define DLT_DAEMON_ERROR_OK             0
+#define DLT_DAEMON_ERROR_UNKNOWN         -1
+#define DLT_DAEMON_ERROR_BUFFER_FULL     -2
+#define DLT_DAEMON_ERROR_SEND_FAILED     -3
+#define DLT_DAEMON_ERROR_WRITE_FAILED     -4
 
 /* Function prototypes */
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
@@ -205,7 +205,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-	void dlt_daemon_systemd_watchdog_thread(void *ptr);
+    void dlt_daemon_systemd_watchdog_thread(void *ptr);
 #endif
 
 int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, int* fd, const char* timer_name);

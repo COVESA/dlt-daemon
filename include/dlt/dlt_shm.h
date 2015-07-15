@@ -99,7 +99,7 @@ typedef struct
  * @param key the identifier of the shm, must be the same for server and client
  * @return negative value if there was an error
  */
-extern int dlt_shm_init_client(DltShm *buf,int key);
+extern DltReturnValue dlt_shm_init_client(DltShm *buf,int key);
 
 /**
  * Initialise the shared memory on the server side.
@@ -109,7 +109,7 @@ extern int dlt_shm_init_client(DltShm *buf,int key);
  * @param size the requested size of the shm
  * @return negative value if there was an error
  */
-extern int dlt_shm_init_server(DltShm *buf,int key,int size);
+extern DltReturnValue dlt_shm_init_server(DltShm *buf,int key,int size);
 
 /**
  * Push data from client onto the shm.
@@ -172,7 +172,7 @@ extern void dlt_shm_status(DltShm *buf);
  * @param buf pointer to shm structure
  * @return negative value if there was an error
  */
-extern int dlt_shm_free_client(DltShm *buf);
+extern DltReturnValue dlt_shm_free_client(DltShm *buf);
 
 /**
  * Returns the total size of the shm.

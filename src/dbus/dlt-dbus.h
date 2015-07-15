@@ -38,30 +38,30 @@
 // Macros
 #define UNUSED(x) (void)(x)
 #define MALLOC_ASSERT(x) if(x == NULL) {\
-	fprintf(stderr, "Out of memory\n");\
-	abort();}
+    fprintf(stderr, "Out of memory\n");\
+    abort();}
 
 #define MAX_LINE 1024
 
 // Command line options
 typedef struct {
-	char 	*ConfigurationFileName;
-	char 	*ApplicationId;
-	char 	*BusType;
-	int 	Daemonize;
+    char     *ConfigurationFileName;
+    char     *ApplicationId;
+    char     *BusType;
+    int     Daemonize;
 } DltDBusCliOptions;
 
 // Configuration dbus options
 typedef struct {
-	char 	*ContextId;
-	char 	*BusType;
-	int  FilterCount;
-	char *FilterMatch[DLT_DBUS_FILTER_MAX];
+    char     *ContextId;
+    char     *BusType;
+    int  FilterCount;
+    char *FilterMatch[DLT_DBUS_FILTER_MAX];
 } DBusOptions;
 
 typedef struct {
-	char *ApplicationId;
-	DBusOptions			DBus;
+    char *ApplicationId;
+    DBusOptions            DBus;
 
 } DltDBusConfiguration;
 

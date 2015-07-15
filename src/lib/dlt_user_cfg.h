@@ -91,10 +91,10 @@
 #define DLT_USER_MAX_FILENAME_LENGTH         255
 
 /* Maximum length of a single version number */
-#define DLT_USER_MAX_LIB_VERSION_LENGTH		3
+#define DLT_USER_MAX_LIB_VERSION_LENGTH        3
 
 /* Length of buffer for constructing text output */
-#define DLT_USER_TEXT_LENGTH         	   10024
+#define DLT_USER_TEXT_LENGTH                10024
 
 /* Stack size of receiver thread */
 #define DLT_USER_RECEIVERTHREAD_STACKSIZE 100000
@@ -146,7 +146,7 @@
 /* Defines of the different local print modes */
 #define DLT_PM_UNSET     0
 #define DLT_PM_AUTOMATIC 1
-#define	DLT_PM_FORCE_ON  2
-#define	DLT_PM_FORCE_OFF 3
+#define    DLT_PM_FORCE_ON  2
+#define    DLT_PM_FORCE_OFF 3
 
 #endif /* DLT_USER_CFG_H */

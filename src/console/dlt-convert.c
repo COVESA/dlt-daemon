@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
     /* first parse filter file if filter parameter is used */
     if (fvalue)
     {
-        if (dlt_filter_load(&filter,fvalue,vflag)<0)
+        if (dlt_filter_load(&filter,fvalue,vflag) < DLT_RETURN_OK)
         {
             dlt_file_free(&file,vflag);
             return -1;
@@ -273,9 +273,9 @@ int main(int argc, char* argv[])
     for (index = optind; index < argc; index++)
     {
         /* load, analyse data file and create index list */
-        if (dlt_file_open(&file,argv[index],vflag)>=0)
+        if (dlt_file_open(&file,argv[index],vflag) >= DLT_RETURN_OK)
         {
-            while (dlt_file_read(&file,vflag)>=0)
+            while (dlt_file_read(&file,vflag) >= DLT_RETURN_OK)
             {
             }
         }

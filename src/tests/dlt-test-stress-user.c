@@ -100,20 +100,20 @@ DltContextData context_data;
  */
 void usage()
 {
-	char version[255];
+    char version[255];
 
-	dlt_get_version(version,255);
+    dlt_get_version(version,255);
 
-	printf("Usage: dlt-test-stress-user [options]\n");
-	printf("Test user application providing Test messages.\n");
-	printf("%s \n", version);
-	printf("Options:\n");
-	printf("  -v            Verbose mode\n");
-	printf("  -f filename   Use local log file instead of sending to daemon\n");
-	printf("  -n count      Number of messages to be sent per test (Default: 10000)\n");
-	printf("  -r repeat     How often test is repeated (Default: 100)\n");
-	printf("  -d delay      Delay between sent messages in uSec (Default: 1000)\n");
-	printf("  -s size       Size of extra message data in bytes (Default: 100)\n");
+    printf("Usage: dlt-test-stress-user [options]\n");
+    printf("Test user application providing Test messages.\n");
+    printf("%s \n", version);
+    printf("Options:\n");
+    printf("  -v            Verbose mode\n");
+    printf("  -f filename   Use local log file instead of sending to daemon\n");
+    printf("  -n count      Number of messages to be sent per test (Default: 10000)\n");
+    printf("  -r repeat     How often test is repeated (Default: 100)\n");
+    printf("  -d delay      Delay between sent messages in uSec (Default: 1000)\n");
+    printf("  -s size       Size of extra message data in bytes (Default: 100)\n");
 }
 
 /**
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     opterr = 0;
 
     while ((c = getopt (argc, argv, "vf:n:r:d:s:")) != -1)
-	{
+    {
         switch (c)
         {
         case 'v':
@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
             return -1;//for parasoft
         }
         }
-	}
+    }
 
     if (fvalue)
     {
@@ -201,11 +201,11 @@ int main(int argc, char* argv[])
         }
     }
 
-	/* Register APP */
-	DLT_REGISTER_APP("DIFT","DLT Interface Test");
+    /* Register APP */
+    DLT_REGISTER_APP("DIFT","DLT Interface Test");
 
-	/* Register CONTEXTS... */
-	DLT_REGISTER_CONTEXT(context_info,"INFO","Information context");
+    /* Register CONTEXTS... */
+    DLT_REGISTER_CONTEXT(context_info,"INFO","Information context");
 
     /* Tests starting */
     printf("Tests starting\n");
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
     /* wait 3 seconds before starting */
     //sleep(3);
 
-	testall(nvalue,rvalue,dvalue,svalue);
+    testall(nvalue,rvalue,dvalue,svalue);
 
     /* Tests finished */
     printf("Tests finished\n");
@@ -223,10 +223,10 @@ int main(int argc, char* argv[])
     /* wait 3 seconds before terminating application */
     //sleep(3);
 
-	/* Unregister CONTEXTS... */
-	DLT_UNREGISTER_CONTEXT(context_info);
+    /* Unregister CONTEXTS... */
+    DLT_UNREGISTER_CONTEXT(context_info);
 
-	/* Unregister APP */
+    /* Unregister APP */
     DLT_UNREGISTER_APP();
 
     return 0;
@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
 
 int testall(int count,int repeat,int delay,int size)
 {
-	char buffer[size];
+    char buffer[size];
     int num,rnum;
 
     for(num=0;num< size;num++)
@@ -246,24 +246,24 @@ int testall(int count,int repeat,int delay,int size)
         buffer[num] = num;
     }
 
-	/* Test All: Test all start */
+    /* Test All: Test all start */
     //printf("Test1: Test all\n");
     //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all"));
 
-	for(rnum=0;rnum<repeat;rnum++)
-	{
-		for(num=1;num<=count;num++)
-		{
-			DLT_LOG(context_info,DLT_LOG_INFO,DLT_INT(num),DLT_RAW(buffer, size));
-			usleep(delay);
-		}
-	}
+    for(rnum=0;rnum<repeat;rnum++)
+    {
+        for(num=1;num<=count;num++)
+        {
+            DLT_LOG(context_info,DLT_LOG_INFO,DLT_INT(num),DLT_RAW(buffer, size));
+            usleep(delay);
+        }
+    }
 
-	/* wait 5 seconds after test */
+    /* wait 5 seconds after test */
     //sleep(5);
-	//DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished"));
+    //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished"));
 
-	return 0;
+    return 0;
 }
 
 

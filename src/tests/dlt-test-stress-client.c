@@ -81,7 +81,7 @@
 #define DLT_TESTCLIENT_TEXTBUFSIZE 10024  /* Size of buffer for text output */
 #define DLT_TESTCLIENT_ECU_ID     "ECU1"
 
-#define DLT_TESTCLIENT_NUM_TESTS 	  7
+#define DLT_TESTCLIENT_NUM_TESTS       7
 
 /* Function prototypes */
 int dlt_testclient_message_callback(DltMessage *message, void *data);
@@ -188,8 +188,8 @@ int main(int argc, char* argv[])
     dltdata.tests_passed = 0;
     dltdata.tests_failed = 0;
 
-	dltdata.bytes_received = 0;
-	dltdata.time_elapsed = dlt_uptime();
+    dltdata.bytes_received = 0;
+    dltdata.time_elapsed = dlt_uptime();
 
     dltdata.last_value = 0;
     dltdata.count_received_messages = 0;
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-		dlt_client_setbaudrate(&dltclient,dltdata.bvalue);
+        dlt_client_setbaudrate(&dltclient,dltdata.bvalue);
     }
 
     /* initialise structure to use DLT file */
@@ -342,7 +342,7 @@ int main(int argc, char* argv[])
 
     if (dltdata.fvalue)
     {
-        if (dlt_filter_load(&(dltdata.filter),dltdata.fvalue,dltdata.vflag)<0)
+        if (dlt_filter_load(&(dltdata.filter),dltdata.fvalue,dltdata.vflag) < DLT_RETURN_OK)
         {
             dlt_file_free(&(dltdata.file),dltdata.vflag);
             return -1;
@@ -374,7 +374,7 @@ int main(int argc, char* argv[])
     }
 
     /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag)!=-1)
+    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
     {
         dltdata.sock = dltclient.sock;
 
@@ -403,15 +403,15 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
     static char text[DLT_TESTCLIENT_TEXTBUFSIZE];
     DltTestclientData *dltdata;
 
-	uint32_t type_info, type_info_tmp;
-	int16_t length,length_tmp; /* the macro can set this variable to -1 */
-	uint8_t *ptr;
-	int32_t datalength;
-	int32_t value;
-	uint32_t value_tmp = 0;
+    uint32_t type_info, type_info_tmp;
+    int16_t length,length_tmp; /* the macro can set this variable to -1 */
+    uint8_t *ptr;
+    int32_t datalength;
+    int32_t value;
+    uint32_t value_tmp = 0;
 
-	struct iovec iov[2];
-	int bytes_written;
+    struct iovec iov[2];
+    int bytes_written;
 
     if ((message==0) || (data==0))
     {
@@ -430,7 +430,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         dlt_set_storageheader(message->storageheader,dltdata->ecuid);
     }
 
-    if ((dltdata->fvalue==0) || (dltdata->fvalue && dlt_message_filter_check(message,&(dltdata->filter),dltdata->vflag)==1))
+    if ((dltdata->fvalue==0) || (dltdata->fvalue && dlt_message_filter_check(message,&(dltdata->filter),dltdata->vflag) == DLT_RETURN_TRUE))
     {
 
         //dlt_message_header(message,text,sizeof(text),dltdata->vflag);
@@ -444,98 +444,98 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             //printf("[%s]\n",text);
         }
 
-		/* do something here */
+        /* do something here */
 
-		// Count number of received bytes
-		dltdata->bytes_received += message->datasize+message->headersize-sizeof(DltStorageHeader);
+        // Count number of received bytes
+        dltdata->bytes_received += message->datasize+message->headersize-sizeof(DltStorageHeader);
 
-		// print number of received bytes
-		if((dlt_uptime() - dltdata->time_elapsed) > 10000)
-		{
-			printf("Received %lu Bytes/s\n",dltdata->bytes_received/**10000/(dlt_uptime()-dltdata->time_elapsed)*/);
-			//printf("Received %lu Bytes received\n",dltdata->bytes_received);
-			dltdata->time_elapsed = dlt_uptime();
-			dltdata->bytes_received = 0;
-		}
+        // print number of received bytes
+        if((dlt_uptime() - dltdata->time_elapsed) > 10000)
+        {
+            printf("Received %lu Bytes/s\n",dltdata->bytes_received/**10000/(dlt_uptime()-dltdata->time_elapsed)*/);
+            //printf("Received %lu Bytes received\n",dltdata->bytes_received);
+            dltdata->time_elapsed = dlt_uptime();
+            dltdata->bytes_received = 0;
+        }
 
-		/* Extended header */
-		if (DLT_IS_HTYP_UEH(message->standardheader->htyp))
-		{
-			/* Log message */
-			if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin))==DLT_TYPE_LOG)
-			{
-				/* Verbose */
-				if (DLT_IS_MSIN_VERB(message->extendedheader->msin))
-				{
-					/* 2 arguments */
-					if (message->extendedheader->noar==2)
-					{
-						/* verbose mode */
-						type_info=0;
-						type_info_tmp=0;
-						length=0;
-						length_tmp=0; /* the macro can set this variable to -1 */
+        /* Extended header */
+        if (DLT_IS_HTYP_UEH(message->standardheader->htyp))
+        {
+            /* Log message */
+            if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin))==DLT_TYPE_LOG)
+            {
+                /* Verbose */
+                if (DLT_IS_MSIN_VERB(message->extendedheader->msin))
+                {
+                    /* 2 arguments */
+                    if (message->extendedheader->noar==2)
+                    {
+                        /* verbose mode */
+                        type_info=0;
+                        type_info_tmp=0;
+                        length=0;
+                        length_tmp=0; /* the macro can set this variable to -1 */
 
-						ptr = message->databuffer;
-						datalength = message->datasize;
+                        ptr = message->databuffer;
+                        datalength = message->datasize;
 
-						/* first read the type info of the first argument: must be string */
-						DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
-						type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        /* first read the type info of the first argument: must be string */
+                        DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
+                        type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 
-						if (type_info & DLT_TYPE_INFO_SINT)
-						{
-							/* read value */
-							DLT_MSG_READ_VALUE(value_tmp,ptr,datalength,int32_t);
-							value=DLT_ENDIAN_GET_32(message->standardheader->htyp, value_tmp);
-							//printf("%d\n",value);
+                        if (type_info & DLT_TYPE_INFO_SINT)
+                        {
+                            /* read value */
+                            DLT_MSG_READ_VALUE(value_tmp,ptr,datalength,int32_t);
+                            value=DLT_ENDIAN_GET_32(message->standardheader->htyp, value_tmp);
+                            //printf("%d\n",value);
 
-							if(value < dltdata->last_value)
-							{
-								if(dltdata->nvalue == dltdata->count_received_messages)
-									printf("PASSED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
-								else
-									printf("FAILED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
+                            if(value < dltdata->last_value)
+                            {
+                                if(dltdata->nvalue == dltdata->count_received_messages)
+                                    printf("PASSED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
+                                else
+                                    printf("FAILED: %d Msg received, %d not received\n",dltdata->count_received_messages,dltdata->count_not_received_messages);
 
-								dltdata->last_value = 0;
-								dltdata->count_received_messages = 0;
-								dltdata->count_not_received_messages = value -1;
-							}
-							else
-							{
-								dltdata->count_not_received_messages += value - dltdata->last_value -1;
-							}
-							dltdata->last_value = value;
-							dltdata->count_received_messages++;
+                                dltdata->last_value = 0;
+                                dltdata->count_received_messages = 0;
+                                dltdata->count_not_received_messages = value -1;
+                            }
+                            else
+                            {
+                                dltdata->count_not_received_messages += value - dltdata->last_value -1;
+                            }
+                            dltdata->last_value = value;
+                            dltdata->count_received_messages++;
 
-							if (length>=0)
-							{
-								ptr+=length;
-								datalength-=length;
+                            if (length>=0)
+                            {
+                                ptr+=length;
+                                datalength-=length;
 
-								/* read type of second argument: must be raw */
-								DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
-								type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                /* read type of second argument: must be raw */
+                                DLT_MSG_READ_VALUE(type_info_tmp,ptr,datalength,uint32_t);
+                                type_info=DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 
-								if (type_info & DLT_TYPE_INFO_RAWD)
-								{
-									/* get length of raw data block */
-									DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
-									length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                if (type_info & DLT_TYPE_INFO_RAWD)
+                                {
+                                    /* get length of raw data block */
+                                    DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
+                                    length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
 
-									if ((length>=0) && (length==datalength))
-									{
-										//printf("Raw data found in payload, length=");
-										//printf("%d, datalength=%d \n", length, datalength);
-										dltdata->test_counter_macro[3]++;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+                                    if ((length>=0) && (length==datalength))
+                                    {
+                                        //printf("Raw data found in payload, length=");
+                                        //printf("%d, datalength=%d \n", length, datalength);
+                                        dltdata->test_counter_macro[3]++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag)
