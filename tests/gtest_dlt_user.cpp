@@ -2932,8 +2932,9 @@ TEST(t_dlt_get_log_state, normal)
 {
 
 
-
-    EXPECT_LE(0,dlt_get_log_state());
+    sleep(1);
+    dlt_init_common();
+    EXPECT_EQ(-1,dlt_get_log_state());
 
 }
 
