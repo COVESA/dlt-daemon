@@ -198,6 +198,7 @@
 #define DLT_SERVICE_ID_CONNECTION_INFO                0xf02 /**< Service ID: Message connection info */
 #define DLT_SERVICE_ID_TIMEZONE                       0xf03 /**< Service ID: Timezone */
 #define DLT_SERVICE_ID_MARKER                         0xf04 /**< Service ID: Marker */
+#define DLT_SERVICE_ID_OFFLINE_LOGSTORAGE             0xf05 /**< Service ID: Offline log storage */
 #define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
 
 /*

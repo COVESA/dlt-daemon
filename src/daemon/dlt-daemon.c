@@ -195,6 +195,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 	daemon_local->flags.sendTimezone = 0;
+	daemon_local->flags.offlineLogstorageMaxDevices = 0;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -376,6 +377,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 						{
 							daemon_local->flags.sendTimezone = atoi(value);
 							//printf("Option: %s=%s\n",token,value);
+						}
+						else if(strcmp(token, "OfflineLogstorageMaxDevices")==0)
+						{
+							daemon_local->flags.offlineLogstorageMaxDevices = atoi(value);
 						}
 						else
 						{
@@ -735,6 +740,19 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 			return -1;
 		}
 	}
+
+    /* Init offline logstorage for MAX devices */
+    if(daemon_local->flags.offlineLogstorageMaxDevices > 0)
+    {
+        daemon->storage_handle = malloc(sizeof(DltLogStorage) * daemon_local->flags.offlineLogstorageMaxDevices);
+
+        if(daemon->storage_handle == NULL)
+        {
+            dlt_log(LOG_ERR,"Could not initialize offline logstorage\n");
+            return -1;
+        }
+        memset(daemon->storage_handle, 0, (sizeof(DltLogStorage) * daemon_local->flags.offlineLogstorageMaxDevices));
+    }
 
     /* Set ECU id of daemon */
     if (daemon_local->flags.evalue[0])
@@ -1862,6 +1880,15 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemo
 		snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ContextID '%.4s' registered for ApplicationID '%.4s', Description=%s\n", context->ctid, context->apid, context->context_description);
         dlt_daemon_log_internal(daemon, daemon_local, str, daemon_local->flags.vflag);
 		dlt_log(LOG_DEBUG,str);
+    }
+    if(daemon_local->flags.offlineLogstorageMaxDevices)
+    {
+        /* Store log level set for offline logstorage into context structure*/
+        context->storage_log_level = dlt_daemon_logstorage_get_loglevel(daemon, daemon_local->flags.offlineLogstorageMaxDevices, usercontext->apid, usercontext->ctid);
+    }
+    else
+    {
+        context->storage_log_level = DLT_LOG_DEFAULT;
     }
     /* Create automatic get log info response for registered context */
     if (daemon_local->flags.rflag)

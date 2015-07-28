@@ -79,6 +79,7 @@
 #include <dlt_offline_trace.h>
 #include <sys/time.h>
 
+#include "dlt_daemon_offline_logstorage.h"
 
 /**
  * The flags of a dlt daemon.
@@ -110,6 +111,7 @@ typedef struct
     int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
     int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
+    int  offlineLogstorageMaxDevices; /**< (int) Maximum devices to be used as offline logstorage devices */
 } DltDaemonFlags;
 
 /**

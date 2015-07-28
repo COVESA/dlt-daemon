@@ -81,6 +81,7 @@
 #include <semaphore.h>
 #include "dlt_common.h"
 #include "dlt_user.h"
+#include "dlt_offline_logstorage.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -135,6 +136,7 @@ typedef struct
 	int log_level_pos;  /**< offset of context in context field on user application */
 	int user_handle;    /**< connection handle for connection to user application */
 	char *context_description; /**< context description */
+	int8_t storage_log_level; /**< log level set for offline logstorage */
 } DltDaemonContext;
 
 /**
@@ -161,6 +163,7 @@ typedef struct
     char connectionState;				/**< state for tracing: 0 = no client connected, 1 = client connected */
     char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
     DltDaemonState state;   /**< the current logging state of dlt daemon. */
+    DltLogStorage *storage_handle;
 } DltDaemon;
 
 /**

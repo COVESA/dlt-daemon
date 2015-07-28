@@ -543,6 +543,17 @@ typedef struct
     uint8_t status;                 /**< reponse status */
 } PACKED DltServiceMarker;
 
+/***
+ * The structure of the DLT Service Offline Logstorage
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t dev_num;                /**< device number of the connected device */
+    uint8_t connection_type;        /**< connection status of the connected device connected/disconnected */
+    char comid[DLT_ID_SIZE];        /**< communication interface */
+} PACKED DltServiceOfflineLogstorage;
+
 /**
  * Structure to store filter parameters.
  * ID are maximal four characters. Unused values are filled with zeros.

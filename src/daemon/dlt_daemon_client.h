@@ -246,5 +246,14 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltDaemo
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+/**
+ * Service offline logstorage command request
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose);
 
 #endif /* DLT_DAEMON_CLIENT_H */

@@ -87,6 +87,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/
     ${CMAKE_SOURCE_DIR}/include/dlt
     ${CMAKE_SOURCE_DIR}/src/shared/
+    ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
     ${CMAKE_SOURCE_DIR}/systemd/3rdparty/

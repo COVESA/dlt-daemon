@@ -217,6 +217,7 @@ int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned l
     	return -1;
     }
 
+    daemon->storage_handle = NULL;
     return 0;
 }
 
@@ -1131,8 +1132,15 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context,i
     {
     	return -1;
     }
+    if(context->storage_log_level != DLT_LOG_DEFAULT)
+    {
+        usercontext.log_level = context->log_level > context->storage_log_level ? context->log_level:context->storage_log_level;
+    }
+    else /* Storage log level is not updated (is DEFAULT) then  no device is yet connected so ignore */
+    {
+        usercontext.log_level = ((context->log_level == DLT_LOG_DEFAULT)?daemon->default_log_level:context->log_level);
+    }
 
-    usercontext.log_level = ((context->log_level == DLT_LOG_DEFAULT)?daemon->default_log_level:context->log_level);
     usercontext.trace_status = ((context->trace_status == DLT_TRACE_STATUS_DEFAULT)?daemon->default_trace_status:context->trace_status);
 
     usercontext.log_level_pos = context->log_level_pos;

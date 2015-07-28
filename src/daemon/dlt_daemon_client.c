@@ -60,6 +60,7 @@
 
 #include "dlt_daemon_client.h"
 
+#include "dlt_daemon_offline_logstorage.h"
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
@@ -120,6 +121,13 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 				//return DLT_DAEMON_ERROR_WRITE_FAILED;
 			}
 		}
+        /* write messages to offline logstorage only if there is an extended header set
+         * this need to be checked because the function is dlt_daemon_client_send is called by
+         * newly introduced dlt_daemon_log_internal */
+        if(daemon_local->flags.offlineLogstorageMaxDevices > 0)
+        {
+            dlt_daemon_logstorage_write(daemon, daemon_local->flags.offlineLogstorageMaxDevices, storage_header, storage_header_size, data1, size1, data2, size2);
+        }
 	}
 
 	/* send messages to daemon socket */
@@ -304,7 +312,7 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
     id_tmp = *((uint32_t*)(msg->databuffer));
     id=DLT_ENDIAN_GET_32(msg->standardheader->htyp ,id_tmp);
 
-    if ((id > 0) && (id < DLT_SERVICE_ID_LAST_ENTRY))
+    if ((id > 0) && ((id < DLT_SERVICE_ID_LAST_ENTRY) || ((id == DLT_SERVICE_ID_OFFLINE_LOGSTORAGE))))
     {
         /* Control message handling */
         switch (id)
@@ -425,6 +433,11 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
         case DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW:
         {
             dlt_daemon_control_message_buffer_overflow(sock, daemon, daemon_local, daemon->overflow_counter,"",verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_OFFLINE_LOGSTORAGE:
+        {
+            dlt_daemon_control_service_logstorage(sock, daemon, daemon_local, msg, verbose);
             break;
         }
         default:
@@ -1627,3 +1640,77 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
 }
 
 
+void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose)
+{
+    DltServiceOfflineLogstorage *req;
+    int ret;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0) ||(msg == 0) ||(daemon_local == 0))
+    {
+        dlt_log(LOG_ERR, "Invalid function parameters used for dlt_daemon_control_service_logstorage\n");
+        return ;
+    }
+
+    if(daemon_local->flags.offlineLogstorageMaxDevices <= 0)
+    {
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
+        dlt_log(LOG_INFO, "Offline logstorage functionality not enabled or MAX device set is 0\n");
+        return;
+    }
+
+    req = (DltServiceOfflineLogstorage*) (msg->databuffer);
+
+     /* Check for device connection request from log storage ctrl app  */
+    if (req->connection_type == DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+    {
+        if(req->dev_num > daemon_local->flags.offlineLogstorageMaxDevices)
+        {
+            dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            dlt_log(LOG_INFO, "Device number received is greater than MAX device configured \n");
+            return;
+        }
+        /* Adding +1 to device number as ctrl app sends device number 1 less (to support indexing of storage_handle */
+        ret = dlt_logstorage_device_connected(&(daemon->storage_handle[req->dev_num]), req->dev_num+1);
+        if(ret != 0)
+        {
+            dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        /* Setup logstorage with config file settings */
+        ret = dlt_logstorage_load_config(&(daemon->storage_handle[req->dev_num]));
+        if(ret != 0)
+        {
+            dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,DLT_SERVICE_RESPONSE_OK, verbose);
+
+        /* Check if log level of running application needs an update */
+        dlt_daemon_logstorage_update_application_loglevel(daemon, req->dev_num, verbose);
+
+    }
+    /* Check for device disconnection request from log storage ctrl app  */
+    else if(req->connection_type == DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED)
+    {
+        if(req->dev_num > daemon_local->flags.offlineLogstorageMaxDevices)
+        {
+            dlt_log(LOG_INFO, "Device number received is greater than MAX device configured \n");
+            return;
+        }
+
+        /* Check if log level of running application needs to be reset */
+        dlt_daemon_logstorage_reset_application_loglevel(daemon, req->dev_num, daemon_local->flags.offlineLogstorageMaxDevices, verbose);
+
+        dlt_logstorage_device_disconnected(&(daemon->storage_handle[req->dev_num]));
+
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else
+    {
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
