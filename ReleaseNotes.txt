@@ -4,10 +4,20 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.12.0 STABLE
+2.12.1 STABLE
 
 Changes
 -------
+
+2.12.1
+
+  * Removed all trailing whitespaces
+  * Replaced all tabs with spaces in all files in include folder
+  * Rework of addon tests filtetransfer, systemd-journal and system-logger
+  * Fix compilation warnings and possible misuse of snprint
+  * Added licence and Doxygen headers
+  * Rework of unit tests
+  * Fix installation paths on x86_64 (lib64 instead of lib)
 
 2.12.0
 
