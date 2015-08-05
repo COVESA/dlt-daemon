@@ -79,7 +79,6 @@
 #include <dlt_offline_trace.h>
 #include <sys/time.h>
 
-#include "dlt_daemon_offline_logstorage.h"
 #define DLT_DAEMON_FLAG_MAX 256
 
 /**
@@ -114,6 +113,11 @@ typedef struct
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
     int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
     int  offlineLogstorageMaxDevices; /**< (int) Maximum devices to be used as offline logstorage devices */
+    char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
+    int  offlineLogstorageTimestamp; /**< (int) Append timestamp in offline logstorage filename */
+    char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
+    unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
+    unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     unsigned int  port; /**< port number */

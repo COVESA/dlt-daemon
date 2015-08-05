@@ -466,7 +466,7 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon, int max_device, char *
  * to write to the device, DltDaemon will disconnect this device.
  *
  * @param daemon        Pointer to Dlt Daemon structure
- * @param max_devices   number of configured storage devices
+ * @param user_config   User configurations for log file
  * @param data1         message header buffer
  * @param size1         message header buffer size
  * @param data2         message extended header buffer
@@ -474,21 +474,26 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon, int max_device, char *
  * @param data3         message data buffer
  * @param size3         message data size
  */
-void dlt_daemon_logstorage_write(DltDaemon *daemon, int max_devices, unsigned char *data1, int size1, unsigned char *data2, int size2, unsigned char *data3, int size3)
+void dlt_daemon_logstorage_write(DltDaemon *daemon, DltDaemonFlags user_config,
+                        unsigned char *data1, int size1, unsigned char *data2, int size2,
+                        unsigned char *data3, int size3)
 {
     int i = 0;
 
     /* data2 contains DltStandardHeader, DltStandardHeaderExtra and DltExtendedHeader. We are interested
      * in last one, because it contains apid, ctid and loglevel */
     DltExtendedHeader ext;
-    char apid[4] = {0};
-    char ctid[4] = {0};
+    DltLogStorageUserConfig file_config;
+    char apid[DLT_ID_SIZE] = {0};
+    char ctid[DLT_ID_SIZE] = {0};
     int log_level = -1;
 
-    if (daemon == NULL || max_devices <= 0 || data1 == NULL || data2 == NULL || data3 == NULL
-            || ((unsigned int)size2 < (sizeof(DltStandardHeader) + sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader))))
+    if (daemon == NULL || user_config.offlineLogstorageMaxDevices <= 0
+        || data1 == NULL || data2 == NULL || data3 == NULL
+        || ((unsigned int)size2 < (sizeof(DltStandardHeader) +
+        sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader))))
     {
-        dlt_log(LOG_INFO, "dlt_daemon_logstorage_write: message type is not log. Skip storing.\n");
+        dlt_log(LOG_DEBUG, "dlt_daemon_logstorage_write: message type is not log. Skip storing.\n");
         return;
     }
 
@@ -499,11 +504,18 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon, int max_devices, unsigned ch
     dlt_set_id(ctid, ext.ctid);
     log_level = DLT_GET_MSIN_MTIN(ext.msin);
 
-    for (i = 0; i < max_devices; i++)
+    /* Copy user configuration */
+    file_config.logfile_timestamp = user_config.offlineLogstorageTimestamp;
+    file_config.logfile_delimiter = user_config.offlineLogstorageDelimiter;
+    file_config.logfile_maxcounter = user_config.offlineLogstorageMaxCounter;
+    file_config.logfile_counteridxlen = user_config.offlineLogstorageMaxCounterIdx;
+
+    for (i = 0; i < user_config.offlineLogstorageMaxDevices; i++)
     {
         if (daemon->storage_handle[i].config_status == DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
         {
-            if (dlt_logstorage_write(&(daemon->storage_handle[i]), apid, ctid, log_level, data1, size1, data2, size2, data3, size3) != 0)
+            if (dlt_logstorage_write(&(daemon->storage_handle[i]), file_config, apid, ctid,
+                log_level, data1, size1, data2, size2, data3, size3) != 0)
             {
                 dlt_log(LOG_ERR,"dlt_daemon_logstorage_write: dlt_logstorage_write failed. Disable storage device\n");
                 /* DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS happened, therefore remove logstorage device */
@@ -511,4 +523,45 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon, int max_devices, unsigned ch
             }
         }
     }
+}
+
+/**
+ * dlt_daemon_logstorage_setup_internal_storage
+ *
+ * Setup user defined path as offline log storage device
+ *
+ * @param daemon        Pointer to Dlt Daemon structure
+ * @param path          User configured internal storage path
+ * @param verbose       If set to true verbose information is printed out
+ */
+int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon, char *path, int verbose)
+{
+    int ret = 0;
+
+    if((path == NULL) || (daemon == NULL))
+    {
+       return -1;
+    }
+
+    /* connect internal storage device */
+    /* Device index always used as 0 as it is setup on DLT daemon startup */
+    ret = dlt_logstorage_device_connected(&(daemon->storage_handle[0]), path);
+    if(ret != 0)
+    {
+        dlt_log(LOG_ERR,"dlt_daemon_logstorage_setup_emmc_support : Device connect failed\n");
+        return -1;
+    }
+
+    /* setup logstorage with config file settings */
+    ret = dlt_logstorage_load_config(&(daemon->storage_handle[0]));
+    if(ret != 0)
+    {
+        dlt_log(LOG_ERR,"dlt_daemon_logstorage_setup_emmc_support : Loading configuration file failed\n");
+        return -1;
+    }
+
+    /* check if log level of running application need an update */
+    dlt_daemon_logstorage_update_application_loglevel(daemon, 0, verbose);
+
+    return ret;
 }

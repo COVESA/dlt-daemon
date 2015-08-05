@@ -30,14 +30,6 @@ add_executable(dlt-control ${dlt_control_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-control dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-control PROPERTIES LINKER_LANGUAGE C)
 
-set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c)
-add_executable(dlt-logstorage-ctrl ${dlt_logstorage_ctrl_SRCS} ${dlt_most_SRCS})
-target_link_libraries(dlt-logstorage-ctrl dlt ${EXPAT_LIBRARIES})
-set_target_properties(dlt-logstorage-ctrl PROPERTIES LINKER_LANGUAGE C)
 install(TARGETS dlt-convert dlt-receive dlt-control
-	RUNTIME DESTINATION bin
-	COMPONENT base)
-
-install(TARGETS dlt-logstorage-ctrl
 	RUNTIME DESTINATION bin
 	COMPONENT base)

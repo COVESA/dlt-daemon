@@ -103,7 +103,7 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon, int de
  * to write to the device, DltDaemon will disconnect this device.
  *
  * @param daemon        Pointer to Dlt Daemon structure
- * @param max_devices   number of configured storage devices
+ * @param user_config   User configurations for log file
  * @param apid          application id
  * @param ctid          context id
  * @param log_level     log level
@@ -112,5 +112,18 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon, int de
  * @param data2         message data buffer
  * @param size2         message data size
  */
-void dlt_daemon_logstorage_write(DltDaemon *daemon, int max_devices, unsigned char *data1, int size1, unsigned char *data2, int size2, unsigned char *data3, int size3);
+void dlt_daemon_logstorage_write(DltDaemon *daemon, DltDaemonFlags user_config, unsigned char *data1,
+                                int size1, unsigned char *data2, int size2,
+                                unsigned char *data3, int size3);
+
+/**
+ * dlt_daemon_logstorage_setup_internal_storage
+ *
+ * Setup user defined path as offline log storage device
+ *
+ * @param daemon        Pointer to Dlt Daemon structure
+ * @param path          User configured internal storage path
+ * @param verbose       If set to true verbose information is printed out
+ */
+int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon, char *path, int verbose);
 #endif /* DLT_DAEMON_OFFLINE_LOGSTORAGE_H */

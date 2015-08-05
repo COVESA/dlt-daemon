@@ -322,6 +322,11 @@ enum {
 #define DLT_HEADER_SHOW_ALL        0xFFFF
 
 /**
+ * Maximal length of mounted path
+ */
+#define DLT_MOUNT_PATH_MAX  1024
+
+/**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
 extern const char dltSerialHeader[DLT_ID_SIZE];
@@ -553,10 +558,10 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t service_id;            /**< service ID */
-    uint8_t dev_num;                /**< device number of the connected device */
-    uint8_t connection_type;        /**< connection status of the connected device connected/disconnected */
-    char comid[DLT_ID_SIZE];        /**< communication interface */
+    uint32_t service_id;                  /**< service ID */
+    char mount_point[DLT_MOUNT_PATH_MAX]; /**< storage device mount point */
+    uint8_t connection_type;              /**< connection status of the connected device connected/disconnected */
+    char comid[DLT_ID_SIZE];              /**< communication interface */
 } PACKED DltServiceOfflineLogstorage;
 
 /**

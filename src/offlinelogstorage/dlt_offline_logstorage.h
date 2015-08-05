@@ -67,7 +67,6 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         10  /* Maximum size for key */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   50  /* Maximum file name length of the log file */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_LINE_SIZE       80  /* Maximum length of a line in configuration file */
 
 #define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN   4
 #define DLT_OFFLINE_LOGSTORAGE_INDEX_LEN            3
@@ -96,7 +95,6 @@
 #define DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(A) ((A) & DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT)
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN 50
-#define DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH     "/tmp/dltlogs/dltlogsdev"
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME    "dlt_logstorage.conf"
 
 /* +3 because of device number and \0 */
@@ -107,15 +105,36 @@
 #define DLT_OFFLINE_LOGSTORAGE_MIN(A, B)   ((A) < (B) ? (A) : (B))
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS     5
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          6
+
+#define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
+
+typedef struct
+{
+    /* File name user configurations */
+    int logfile_timestamp;              /* Timestamp set/reset */
+    char logfile_delimiter;             /* Choice of delimiter */
+    unsigned int logfile_maxcounter;    /* Maximum file index counter */
+    unsigned int logfile_counteridxlen; /* File index counter length */
+}DltLogStorageUserConfig;
+
+typedef struct DltLogStorageFileList
+{
+    /* List for filenames */
+    char *name;                         /* Filename */
+    unsigned int idx;                   /* File index */
+    struct DltLogStorageFileList *next;
+}DltLogStorageFileList;
 
 typedef struct
 {
     /* filter section */
-    int log_level;              /* Log level number configured for filter */
-    char *file_name;            /* File name for log storage configured for filter */
-    unsigned int file_size;     /* MAX FIle size of storage file configured for filter */
-    unsigned int num_files;     /* MAX number of storage files configured for filters */
-    FILE *log;                  /* current open log file */
+    int log_level;                  /* Log level number configured for filter */
+    char *file_name;                /* File name for log storage configured for filter */
+    unsigned int file_size;         /* MAX File size of storage file configured for filter */
+    unsigned int num_files;         /* MAX number of storage files configured for filters */
+    FILE *log;                      /* current open log file */
+    DltLogStorageFileList *records; /* File name list */
 }DltLogStorageConfigData;
 
 
@@ -132,7 +151,7 @@ typedef struct
     DltLogStorageConfig *config_data; /* Configuration data  */
     char *filter_keys;                 /* List of all keys stored in config_htab */
     int num_filter_keys;                /* Number of keys */
-    unsigned int device_num;           /* Number of device to be used */
+    char device_mount_point[DLT_MOUNT_PATH_MAX]; /* Device mount path */
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
     int write_errors;                  /* number of write errors */
@@ -145,10 +164,10 @@ typedef struct
  *
  *
  * @param handle         DLT Logstorage handle
- * @param device_num     device number
+ * @param mount_point    Device mount path
  * @return               0 on success, -1 on error
  */
-extern int dlt_logstorage_device_connected(DltLogStorage *handle, int device_num);
+extern int dlt_logstorage_device_connected(DltLogStorage *handle, char  *mount_point);
 
 /**
   * dlt_logstorage_load_config
@@ -201,6 +220,7 @@ extern int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * Write a message to one or more configured log files, based on filter configuration.
  *
  * @param handle    DltLogStorage handle
+ * @param file_config   User configurations for log file
  * @param appid     Application id of sender
  * @param ctxid     Context id of sender
  * @param log_level log_level of message to store
@@ -210,5 +230,8 @@ extern int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param size2     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
-extern int dlt_logstorage_write(DltLogStorage *handle, char *appid, char *ctxid, int loglevel, unsigned char *data1, int size1, unsigned char *data2, int size2, unsigned char *data3, int size3);
+extern int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_config,
+                                char *appid, char *ctxid, int log_level,
+                                unsigned char *data1, int size1, unsigned char *data2,
+                                int size2, unsigned char *data3, int size3);
 #endif /* DLT_OFFLINE_LOGSTORAGE_H */

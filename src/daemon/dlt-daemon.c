@@ -63,6 +63,7 @@
 #include "dlt_daemon_client.h"
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_event_handler.h"
+#include "dlt_daemon_offline_logstorage.h"
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #include "sd-daemon.h"
@@ -231,6 +232,12 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 	daemon_local->flags.sendTimezone = 0;
 	daemon_local->flags.offlineLogstorageMaxDevices = 0;
+	daemon_local->flags.offlineLogstorageDirPath[0] = 0;
+	daemon_local->flags.offlineLogstorageMaxDevices = 0;
+	daemon_local->flags.offlineLogstorageTimestamp = 1;
+	daemon_local->flags.offlineLogstorageDelimiter = '_';
+	daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
+	daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
     strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
@@ -421,11 +428,38 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             daemon_local->flags.sendTimezone = atoi(value);
                             //printf("Option: %s=%s\n",token,value);
                         }
-                        else if(strcmp(token, "OfflineLogstorageMaxDevices")==0)
+                        else if(strcmp(token, "OfflineLogstorageMaxDevices") == 0)
                         {
                             daemon_local->flags.offlineLogstorageMaxDevices = atoi(value);
                         }
-                         else if(strcmp(token,"ControlSocketPath")==0)
+                        else if(strcmp(token, "OfflineLogstorageDirPath") == 0)
+                        {
+                            strncpy(daemon_local->flags.offlineLogstorageDirPath,
+                                    value,
+                                    sizeof(daemon_local->flags.offlineLogstorageDirPath) - 1);
+                        }
+                        else if(strcmp(token, "OfflineLogstorageTimestamp") == 0)
+                        {
+                            /* Check if set to 0, default otherwise */
+                            if(atoi(value) == 0)
+                            {
+                                daemon_local->flags.offlineLogstorageTimestamp = 0;
+                            }
+                        }
+                        else if(strcmp(token, "OfflineLogstorageDelimiter") == 0)
+                        {
+                            /* Check if valid punctuation, default otherwise*/
+                            if(ispunct((char)value[0]))
+                            {
+                                daemon_local->flags.offlineLogstorageDelimiter = (char)value[0];
+                            }
+                        }
+                        else if(strcmp(token, "OfflineLogstorageMaxCounter") == 0)
+                        {
+                            daemon_local->flags.offlineLogstorageMaxCounter = atoi(value);
+                            daemon_local->flags.offlineLogstorageMaxCounterIdx = strlen(value);
+                        }
+                        else if(strcmp(token,"ControlSocketPath") == 0)
                         {
                             memset(
                                 daemon_local->flags.ctrlSockPath,
@@ -536,6 +570,16 @@ int main(int argc, char* argv[])
         return -1;
     }
     /* --- Daemon init phase 2 end --- */
+
+    if(daemon_local.flags.offlineLogstorageDirPath[0])
+    {
+        if(dlt_daemon_logstorage_setup_internal_storage(&daemon,
+                                                        daemon_local.flags.offlineLogstorageDirPath,
+                                                        daemon_local.flags.vflag)==-1)
+        {
+            dlt_log(LOG_INFO,"Setting up internal offline log storage failed!\n");
+        }
+    }
 
     // create fd for watchdog
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
