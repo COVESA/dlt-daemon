@@ -411,6 +411,7 @@ int dlt_init_message_queue(void)
 int dlt_init_common(void)
 {
     char *env_local_print;
+    char * env_initial_log_level;
 
     /* Binary semaphore for threads */
     if (sem_init(&dlt_mutex, 0, 1)==-1)
@@ -465,6 +466,16 @@ int dlt_init_common(void)
         {
             dlt_user.local_print_mode = DLT_PM_FORCE_OFF;
         }
+    }
+
+    env_initial_log_level = getenv("DLT_INITIAL_LOG_LEVEL");
+    if( env_initial_log_level != NULL )
+    {
+      if (dlt_env_extract_ll_set(&env_initial_log_level, &dlt_user.initial_ll_set) != 0)
+      {
+        snprintf(str, DLT_USER_BUFFER_LENGTH, "Unable to parse initial set of log-levels from environment! Env:\n%s\n", getenv("DLT_INITIAL_LOG_LEVEL"));
+        dlt_log(LOG_WARNING, str);
+      }
     }
 
     /* Initialize LogLevel/TraceStatus field */
@@ -650,6 +661,8 @@ int dlt_free(void)
         dlt_user.dlt_ll_ts_max_num_entries = 0;
         dlt_user.dlt_ll_ts_num_entries = 0;
     }
+
+    dlt_env_free_ll_set(&dlt_user.initial_ll_set);
     DLT_SEM_FREE();
 
     char queue_name[NAME_MAX];
@@ -982,9 +995,13 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 	}
 
 	if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
-	{
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
-	}
+    {
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, loglevel);
+    }
+    else
+    {
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level);
+    }
 
 	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
 	{
@@ -1004,23 +1021,8 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
 	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
 	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
 
-	if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
-	{
-		log.log_level = loglevel;
-	}
-	else
-	{
-		log.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
-	}
-
-	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
-	{
-		log.trace_status = tracestatus;
-	}
-	else
-	{
-		log.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
-	}
+  log.log_level = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
+  log.trace_status = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status;
 
 	dlt_user.dlt_ll_ts_num_entries++;
 

@@ -176,11 +176,11 @@ typedef enum
  */
 typedef struct
 {
-    char contextID[4];                            /**< context id */
-    int32_t log_level_pos;                        /**< offset in user-application context field */
-    int8_t *log_level_ptr;                        /**< pointer to the log level */
-    int8_t *trace_status_ptr;                     /**< pointer to the trace status */
-    uint8_t mcnt;                                 /**< message counter */
+	char contextID[DLT_ID_SIZE];                  /**< context id */
+	int32_t log_level_pos;                        /**< offset in user-application context field */
+	int8_t *log_level_ptr;                        /**< pointer to the log level */
+	int8_t *trace_status_ptr;                     /**< pointer to the trace status */
+   	uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
 /**
@@ -231,6 +231,28 @@ typedef struct
 } dlt_ll_ts_type;
 
 /**
+ * @brief holds initial log-level for given appId:ctxId pair
+ */
+typedef struct
+{
+    char appId[DLT_ID_SIZE];
+    char ctxId[DLT_ID_SIZE];
+    int8_t ll;
+} dlt_env_ll_item;
+
+
+/**
+ * @brief holds all initial log-levels given via environment variable DLT_INITIAL_LOG_LEVEL
+ */
+typedef struct
+{
+    dlt_env_ll_item * item;
+    size_t array_size;
+    size_t num_elem;
+} dlt_env_ll_set;
+
+
+/**
  * This structure is used once for one application.
  */
 typedef struct
@@ -277,6 +299,8 @@ typedef struct
 
     // Buffer used for resending, locked by DLT semaphore
     uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
+
+    dlt_env_ll_set initial_ll_set;
 
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;
@@ -491,7 +515,7 @@ int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_
 int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
 
 /**************************************************************************************************
- * The folowing API functions define a high level function interface for DLT
+ * The following API functions define a high level function interface for DLT
  **************************************************************************************************/
 
 /**
@@ -556,9 +580,9 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
  * @param contextid four byte long character array with the context id
  * @param description long name of the context
  * @param loglevel This is the log level to be pre-set for this context
- (DLT_LOG_DEFAULT is not allowed here)
+          (DLT_LOG_DEFAULT is not allowed here)
  * @param tracestatus This is the trace status to be pre-set for this context
- (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+		  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  * @return negative value if there was an error
  */
 int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);
@@ -669,6 +693,40 @@ int dlt_with_ecu_id(int8_t with_ecu_id);
  * @return negative value if there was an error
  */
 int dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType tracestatus);
+
+
+/**
+ * @brief adjust log-level based on values given through environment
+ *
+ * Iterate over the set of items, and find the best match.
+ * For any item that matches, the one with the highest priority is selected and that
+ * log-level is returned.
+ *
+ * Priorities are determined as follows:
+ * - no apid, no ctid only ll given in item: use ll with prio 1
+ * - no apid, ctid matches: use ll with prio 2
+ * - no ctid, apid matches: use ll with prio 3
+ * - apid, ctid matches: use ll with prio 4
+ *
+ * If no item matches or in case of error, the original log-level (\param ll) is returned
+ */
+int dlt_env_adjust_ll_from_env(dlt_env_ll_set const * const ll_set, char const * const apid, char const * const ctid, int const ll);
+
+/**
+ * @brief extract log-level settings from given string
+ *
+ * Scan \param env for setttings like apid:ctid:log-level and store them
+ * in given \param ll_set
+ *
+ * @param env reference to a string to be parsed, after parsing env will point after the last parse character
+ * @param ll_set set of log-level extracted from given string
+ *
+ * @return 0 on success
+ * @return -1 on failure
+ */
+int dlt_env_extract_ll_set(char ** const env, dlt_env_ll_set * const ll_set);
+
+void dlt_env_free_ll_set(dlt_env_ll_set * const ll_set);
 
 /**
  * Enable local printing of messages

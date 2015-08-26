@@ -101,6 +101,7 @@ void usage()
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
     printf("  -k            Send marker message\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
+    printf("  -l level      Set log level to <level>, level=-1..6\n");
 #ifdef DLT_TEST_ENABLE
     printf("  -c       		Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
@@ -126,6 +127,7 @@ int main(int argc, char* argv[])
     char *nvalue = 0;
     char *mvalue = 0;
     char *message = 0;
+    int lvalue = DLT_LOG_WARN;
 
     int index;
     int c;
@@ -138,9 +140,9 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
-    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:")) != -1)
+    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:l:")) != -1)
 #else
-    while ((c = getopt (argc, argv, "vgakd:f:n:m:")) != -1)
+    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c)
@@ -197,9 +199,14 @@ int main(int argc, char* argv[])
             mvalue = optarg;
             break;
         }
+        case 'l':
+        {
+            lvalue = atoi(optarg);
+            break;
+        }
         case '?':
         {
-            if (optopt == 'd' || optopt == 'f' || optopt == 'n')
+            if (optopt == 'd' || optopt == 'f' || optopt == 'n'|| optopt == 'l')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -239,7 +246,7 @@ int main(int argc, char* argv[])
 
     if (fvalue)
     {
-        /* DLT is intialised automatically, except another output target will be used */
+        /* DLT is initialized automatically, except another output target will be used */
         if (dlt_init_file(fvalue)<0) /* log to file */
         {
             return -1;
@@ -262,7 +269,7 @@ int main(int argc, char* argv[])
 	if(mvalue)
 	{
         printf("Set log mode to %d\n",atoi(mvalue));
-		dlt_set_log_mode(atoi(mvalue));
+		dlt_set_log_mode(atoi(mvalue)); 
 	}
 
 
@@ -354,12 +361,12 @@ int main(int argc, char* argv[])
         if (gflag)
         {
             /* Non-verbose mode */
-            DLT_LOG_ID(mycontext,DLT_LOG_WARN,num,DLT_INT(num),DLT_STRING(text));
+            DLT_LOG_ID(mycontext,lvalue,num,DLT_INT(num),DLT_STRING(text));
         }
         else
         {
             /* Verbose mode */
-            DLT_LOG(mycontext,DLT_LOG_WARN,DLT_INT(num),DLT_STRING(text));
+            DLT_LOG(mycontext,lvalue,DLT_INT(num),DLT_STRING(text));
         }
 
         if (delay>0)
