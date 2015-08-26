@@ -31,7 +31,7 @@
 dlt-receive \- Console based client for DLT Logging
 .SH "SYNOPSIS"
 .sp
-\fBdlt\-receive\fR [\-h] [\-a] [\-x] [\-m] [\-s][\-o filename] [\-v] [\-y] [\-b baudrate] [\-e ecuid]hostname/serial_device_name
+\fBdlt\-receive\fR [\-h] [\-a] [\-x] [\-m] [\-s] [\-o filename] [\-c limit] [\-v] [\-y] [\-b baudrate] [\-e ecuid] hostname/serial_device_name
 .SH "DESCRIPTION"
 .sp
 Receive DLT messages from DLT daemon and print or store the messages\&.
@@ -67,6 +67,11 @@ Print DLT file; only headers\&.
 Output messages in new DLT file\&.
 .RE
 .PP
+\fB\-c\fR
+.RS 4
+Set limit when storing messages in file\&. When limit is reached, a new file is opened\&. Use K,M,G as suffix to specify kilo\-, mega\-, giga\-bytes respectively, e\&.g\&. 1M for one megabyte (Default: unlimited)\&.
+.RE
+.PP
 \fB\-v\fR
 .RS 4
 Verbose mode\&.
@@ -98,13 +103,21 @@ Print received message headers received from a serila interface
 dlt\-receive \-s \-y /dev/ttySO
 .RE
 .PP
-Store received message headers from a dlt\-daemon to a log file called log\&.dlt and filter them for e\&.g\&. Application ID ABCD and Context ID EFGH (Write:ABCD EFGH as single line to a file claled filter\&.txt)
+Store received message headers from a dlt\-daemon to a log file called log\&.dlt and filter them for e\&.g\&. Application ID ABCD and Context ID EFGH (Write:ABCD EFGH as single line to a file called filter\&.txt)
 .RS 4
 dlt\-receive \-s \-o log\&.dlt \-f filter\&.txt localhost
+.RE
+.PP
+Store incoming messages in file(s) and restrict file sizes to 1 megabyte\&. If limit is reached, log\&.dlt will be renamed into log\&.0\&.dlt, log\&.1\&.dlt, \&... No files will be overwritten in this mode
+.RS 4
+dlt\-receive \-o log\&.dlt \-c 1M localhost
 .RE
 .SH "EXIT STATUS"
 .sp
 Non zero is returned in case of failure\&.
+.SH "NOTES"
+.sp
+Be aware that dlt\-receive will never delete any files\&. Instead, it creates a new file\&.
 .SH "AUTHOR"
 .sp
 Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)

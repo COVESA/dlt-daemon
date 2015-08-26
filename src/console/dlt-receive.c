@@ -73,6 +73,11 @@
 #include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
 #include <fcntl.h>      /* for open() */
 #include <sys/uio.h>    /* for writev() */
+#include <errno.h>
+#include <string.h>
+#include <glob.h>
+#include <syslog.h>
+#include <linux/limits.h> /* for PATH_MAX */
 
 #include "dlt_client.h"
 
@@ -91,11 +96,15 @@ typedef struct {
     int vflag;
     int yflag;
     char *ovalue;
+    char *ovaluebase; /* ovalue without ".dlt" */
     char *fvalue;
     char *evalue;
     int bvalue;
+    int64_t climit;
     char ecuid[4];
     int ohandle;
+    int64_t totalbytes; /* bytes written so far into the output file, used to check the file size limit */
+    int part_num;    /* number of current output file if limit was exceeded */
     DltFile file;
     DltFilter filter;
 } DltReceiveData;
@@ -124,8 +133,167 @@ void usage()
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
+    printf("  -c limit      Restrict file size to <limit> bytes when output to file\n");
+    printf("                When limit is reached, a new file is opened. Use K,M,G as\n");
+    printf("                suffix to specify kilo-, mega-, giga-bytes respectively\n");
     printf("  -f filename   Enable filtering of messages\n");
 }
+
+
+int64_t convert_arg_to_byte_size(char * arg)
+{
+    size_t i;
+    int64_t factor;
+    int64_t result;
+    /* check if valid input */
+    for (i = 0; i<strlen(arg)-1; ++i)
+    {
+        if (!isdigit(arg[i]))
+        {
+            return -2;
+        }
+    }
+
+    /* last character */
+    factor = 1;
+    if ((arg[strlen(arg)-1] == 'K') || (arg[strlen(arg)-1] == 'k'))
+    {
+        factor = 1024;
+    }
+    else if ((arg[strlen(arg)-1] == 'M') || (arg[strlen(arg)-1] == 'm'))
+    {
+        factor = 1024 * 1024;
+    }
+    else if ((arg[strlen(arg)-1] == 'G') || (arg[strlen(arg)-1] == 'g'))
+    {
+        factor = 1024 * 1024 * 1024;
+    }
+    else
+    {
+        if (!isdigit(arg[strlen(arg)-1]))
+        {
+            return -2;
+        }
+    }
+
+    /* range checking */
+    int64_t const mult = atoll(arg);
+    if (((INT64_MAX)/factor) < mult)
+    {
+      /* Would overflow! */
+      return -2;
+    }
+
+    result = factor * mult;
+
+    /* The result be at least the size of one message
+     * One message consists of its header + user data:
+     */
+    DltMessage msg;
+    int64_t min_size = sizeof(msg.headerbuffer);
+    min_size += 2048 /* DLT_USER_BUF_MAX_SIZE */;
+
+    if (min_size > result)
+    {
+        char tmp[256];
+        snprintf(tmp, 256, "ERROR: Specified limit: %li is smaller than a the size of a single message: %li !\n", result, min_size);
+        dlt_log(LOG_ERR, tmp);
+        result = -2;
+    }
+
+    return result;
+}
+
+
+/*
+ * open output file
+ */
+int dlt_receive_open_output_file(DltReceiveData * dltdata)
+{
+    /* if (file_already_exists) */
+    glob_t outer;
+    if (glob(dltdata->ovalue, GLOB_TILDE_CHECK | GLOB_NOSORT, NULL, &outer) == 0)
+    {
+        if (dltdata->vflag)
+        {
+          char tmp[256];
+          snprintf(tmp, 256, "File %s already exists, need to rename first\n", dltdata->ovalue);
+          dlt_log(LOG_INFO, tmp);
+        }
+
+        if (dltdata->part_num < 0)
+        {
+            char pattern[PATH_MAX+1];
+            pattern[PATH_MAX] = 0;
+            snprintf(pattern, PATH_MAX, "%s.*.dlt", dltdata->ovaluebase);
+            glob_t inner;
+
+            /* sort does not help here because we have to traverse the
+             * full result in any case. Remember, a sorted list would look like:
+             * foo.1.dlt
+             * foo.10.dlt
+             * foo.1000.dlt
+             * foo.11.dlt
+             */
+            if (glob(pattern, GLOB_TILDE_CHECK | GLOB_NOSORT, NULL, &inner) == 0)
+            {
+              /* search for the highest number used */
+              size_t i;
+              for (i= 0; i<inner.gl_pathc; ++i)
+              {
+                /* convert string that follows the period after the initial portion,
+                 * e.g. gt.gl_pathv[i] = foo.1.dlt -> atoi("1.dlt");
+                 */
+                int cur = atoi(&inner.gl_pathv[i][strlen(dltdata->ovaluebase)+1]);
+                if (cur > dltdata->part_num)
+                {
+                  dltdata->part_num = cur;
+                }
+              }
+            }
+            globfree(&inner);
+
+            ++dltdata->part_num;
+
+        }
+
+        char filename[PATH_MAX+1];
+        filename[PATH_MAX] = 0;
+
+        snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase, dltdata->part_num++);
+        if (rename(dltdata->ovalue, filename) != 0)
+        {
+          char tmp[256];
+          snprintf(tmp, 256, "ERROR: rename %s to %s failed with error %s\n", dltdata->ovalue, filename, strerror(errno));
+          dlt_log(LOG_ERR, tmp);
+        }
+        else
+        {
+          if (dltdata->vflag)
+          {
+            char tmp[256];
+            snprintf(tmp, 256, "Renaming existing file from %s to %s\n", dltdata->ovalue, filename);
+            dlt_log(LOG_INFO, tmp);
+          }
+        }
+
+    } /* if (file_already_exists) */
+    globfree(&outer);
+
+    dltdata->ohandle = open(dltdata->ovalue, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    return dltdata->ohandle;
+}
+
+
+void dlt_receive_close_output_file(DltReceiveData * dltdata)
+{
+    if (dltdata->ohandle)
+    {
+        close(dltdata->ohandle);
+        dltdata->ohandle = -1;
+    }
+}
+
 
 /**
  * Main function of tool.
@@ -145,15 +313,19 @@ int main(int argc, char* argv[])
     dltdata.vflag = 0;
     dltdata.yflag = 0;
     dltdata.ovalue = 0;
+    dltdata.ovaluebase = 0;
     dltdata.fvalue = 0;
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
+    dltdata.climit = -1; /* default: -1 = unlimited */
     dltdata.ohandle=-1;
+    dltdata.totalbytes = 0;
+    dltdata.part_num = -1;
 
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:c:")) != -1)
         switch (c)
         {
         case 'v':
@@ -199,6 +371,13 @@ int main(int argc, char* argv[])
         case 'o':
 			{
             	dltdata.ovalue = optarg;
+            	size_t to_copy = strlen(dltdata.ovalue);
+            	if (strcmp(&dltdata.ovalue[to_copy-4], ".dlt") == 0)
+            	{
+            	  to_copy = to_copy - 4;
+            	}
+
+            	dltdata.ovaluebase = strndup(dltdata.ovalue, to_copy);
             	break;
 			}
         case 'e':
@@ -211,9 +390,22 @@ int main(int argc, char* argv[])
             	dltdata.bvalue = atoi(optarg);
             	break;
 			}
+
+        case 'c':
+			{
+            	dltdata.climit = convert_arg_to_byte_size(optarg);
+            	if (dltdata.climit < -1)
+            	{
+		            fprintf (stderr, "Invalid argument for option -c.\n");
+			        /* unknown or wrong option used, show usage information and terminate */
+			        usage();
+			        return -1;
+            	}
+            	break;
+			}
         case '?':
 			{
-		        if (optopt == 'o' || optopt == 'f')
+		        if (optopt == 'o' || optopt == 'f' || optopt == 'c')
 				{
 		            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 		        }
@@ -299,7 +491,17 @@ int main(int argc, char* argv[])
     /* open DLT output file */
     if (dltdata.ovalue)
     {
-        dltdata.ohandle = open(dltdata.ovalue,O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+        if (dltdata.climit > -1)
+        {
+          char tmp[256];
+          snprintf(tmp, 256, "Using file size limit of %li bytes\n", dltdata.climit);
+          dlt_log(LOG_INFO, tmp);
+          dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
+        }
+        else /* in case no limit for the output file is given, we simply overwrite any existing file */
+        {
+          dltdata.ohandle = open(dltdata.ovalue, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        }
 
         if (dltdata.ohandle == -1)
         {
@@ -334,6 +536,8 @@ int main(int argc, char* argv[])
 	{
         close(dltdata.ohandle);
 	}
+
+    free(dltdata.ovaluebase);
 
     dlt_file_free(&(dltdata.file),dltdata.vflag);
 
@@ -405,7 +609,23 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = message->datasize;
 
+            if (dltdata->climit > -1)
+            {
+            	int bytes_to_write = message->headersize + message->datasize;
+            	if ((bytes_to_write + dltdata->totalbytes > dltdata->climit))
+            	{
+                dlt_receive_close_output_file(dltdata);
+            		if (dlt_receive_open_output_file(dltdata) < 0)
+            		{
+                        printf("ERROR: dlt_receive_message_callback: Unable to open log when maximum filesize was reached!\n");
+                        return -1;
+            		}
+            		dltdata->totalbytes = 0;
+            	}
+            }
             bytes_written = writev(dltdata->ohandle, iov, 2);
+
+            dltdata->totalbytes += bytes_written;
 
             if (0 > bytes_written){
                     printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!" );
