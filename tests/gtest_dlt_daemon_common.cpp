@@ -155,7 +155,7 @@ TEST(t_dlt_daemon_application_del, normal)
 }
 TEST(t_dlt_daemon_application_del, abnormal)
 {
-    DltDaemon daemon;
+//    DltDaemon daemon;
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
@@ -182,11 +182,11 @@ TEST(t_dlt_daemon_application_del, abnormal)
 TEST(t_dlt_daemon_application_del, nullpointer)
 {
     DltDaemon daemon;
-    DltDaemonApplication *app;
+    DltDaemonApplication app;
 
     // NULL-Pointer
     EXPECT_GE(-1, dlt_daemon_application_del(NULL,NULL, 0));
-    EXPECT_GE(-1, dlt_daemon_application_del(NULL, app , 0));
+    EXPECT_GE(-1, dlt_daemon_application_del(NULL, &app , 0));
     EXPECT_GE(-1, dlt_daemon_application_del(&daemon,NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_application_del */
@@ -654,12 +654,12 @@ TEST(t_dlt_daemon_context_del, normal)
 }
 TEST(t_dlt_daemon_context_del, abnormal)
 {
-    DltDaemon daemon;
-    ID4 apid = "TES";
-    ID4 ctid = "CON";
-    char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+//    DltDaemon daemon;
+//    ID4 apid = "TES";
+//    ID4 ctid = "CON";
+//    char desc[255] = "TEST dlt_daemon_context_add";
+//    DltDaemonContext *daecontext;
+//    DltDaemonApplication *app;
 
     // Context uninitialized
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -691,11 +691,11 @@ TEST(t_dlt_daemon_context_del, abnormal)
 TEST(t_dlt_daemon_context_del, nullpointer)
 {
     DltDaemon daemon;
-    DltDaemonContext *daecontext;
+    DltDaemonContext daecontext;
 
     //NULL-Pointer
     EXPECT_GE(-1, dlt_daemon_context_del(NULL, NULL, 0));
-    EXPECT_GE(-1, dlt_daemon_context_del(NULL, daecontext, 0));
+    EXPECT_GE(-1, dlt_daemon_context_del(NULL, &daecontext, 0));
     EXPECT_GE(-1, dlt_daemon_context_del(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_context_del */
@@ -1155,11 +1155,11 @@ TEST(t_dlt_daemon_user_send_log_level, abnormal)
 TEST(t_dlt_daemon_user_send_log_level, nullpointer)
 {
     DltDaemon daemon;
-    DltDaemonContext *daecontext;
+    DltDaemonContext daecontext;
 
     // NULL-Pointer
     EXPECT_GE(-1, dlt_daemon_user_send_log_level(NULL, NULL, 0));
-    EXPECT_GE(-1, dlt_daemon_user_send_log_level(NULL, daecontext, 0));
+    EXPECT_GE(-1, dlt_daemon_user_send_log_level(NULL, &daecontext, 0));
     EXPECT_GE(-1, dlt_daemon_user_send_log_level(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_log_level */
@@ -1171,11 +1171,11 @@ TEST(t_dlt_daemon_user_send_log_level, nullpointer)
 TEST(t_dlt_daemon_user_send_log_state, normal)
 {
     DltDaemon daemon;
-    ID4 apid = "TES";
-    ID4 ctid = "CON";
-    char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+//    ID4 apid = "TES";
+//    ID4 ctid = "CON";
+//    char desc[255] = "TEST dlt_daemon_context_add";
+//    DltDaemonContext *daecontext;
+//    DltDaemonApplication *app;
     pid_t pid = 18166;
     char filename[DLT_DAEMON_COMMON_TEXTBUFSIZE+1];
     snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dlt%d",DLT_USER_DIR,pid);
@@ -1241,10 +1241,10 @@ TEST(t_dlt_daemon_user_send_log_state, abnormal)
 TEST(t_dlt_daemon_user_send_log_state, nullpointer)
 {
     DltDaemon daemon;
-    DltDaemonApplication *app;
+    DltDaemonApplication app;
 
     EXPECT_GE(0, dlt_daemon_user_send_log_state(NULL, NULL, 0));
-    EXPECT_GE(0, dlt_daemon_user_send_log_state(NULL, app, 0));
+    EXPECT_GE(0, dlt_daemon_user_send_log_state(NULL, &app, 0));
     EXPECT_GE(0, dlt_daemon_user_send_log_state(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_log_state */

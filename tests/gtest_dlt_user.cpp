@@ -141,7 +141,7 @@ int dlt_nonverbose_mode(void);
 #endif
 
 #ifndef UINT64_MAX
-#define UINT64_MAX 18446744073709551615
+#define UINT64_MAX 18446744073709551615UL
 #endif
 
 #ifndef INT8_MIN
@@ -157,7 +157,7 @@ int dlt_nonverbose_mode(void);
 #endif
 
 #ifndef INT64_MIN
-#define INT64_MIN -9223372036854775808
+#define INT64_MIN -9223372036854775807
 #endif
 
 #ifndef INT8_MAX

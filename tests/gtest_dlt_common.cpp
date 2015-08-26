@@ -54,7 +54,7 @@ void dlt_buffer_info(DltBuffer *);
 }
 
 
-/* Beginn Method: dlt_common::dlt_buffer_init_dynamic */
+/* Begin Method: dlt_common::dlt_buffer_init_dynamic */
 TEST(t_dlt_buffer_init_dynamic, normal)
 {
     DltBuffer init_dynamic;
@@ -118,7 +118,7 @@ TEST(t_dlt_buffer_init_dynamic, nullpointer)
 
 
 
-/* Beginn Method: dlt_common::dlt_buffer_free_dynamic */
+/* Begin Method: dlt_common::dlt_buffer_free_dynamic */
 TEST(t_dlt_buffer_free_dynamic, normal)
 {
     DltBuffer buf;
@@ -154,7 +154,7 @@ TEST(t_dlt_buffer_free_dynamic, nullpointer)
 
 
 
-/* Beginn Method: dlt_common::dlt_buffer_increase_size */
+/* Begin Method: dlt_common::dlt_buffer_increase_size */
 TEST(t_dlt_buffer_increase_size, normal)
 {
     DltBuffer buf;
@@ -204,7 +204,7 @@ TEST(t_dlt_buffer_increase_size, nullpointer)
 
 
 
-/* Beginn Method: dlt_common::dlt_buffer_minimize_size */
+/* Begin Method: dlt_common::dlt_buffer_minimize_size */
 TEST(t_dlt_buffer_minimize_size, normal)
 {
     DltBuffer buf;
@@ -254,7 +254,7 @@ TEST(t_dlt_buffer_minimize_size, nullpointer)
 
 
 
-/* Beginn Method: dlt_common::dlt_buffer_reset */
+/* Begin Method: dlt_common::dlt_buffer_reset */
 TEST(t_dlt_buffer_reset, normal)
 {
     DltBuffer buf;
@@ -281,7 +281,7 @@ TEST(t_dlt_buffer_reset, nullpointer)
 
 
 
-/* Beginn Method: dlt_common::dlt_buffer_push*/
+/* Begin Method: dlt_common::dlt_buffer_push*/
 TEST(t_dlt_buffer_push, normal)
 {
     DltBuffer buf;
@@ -295,7 +295,7 @@ TEST(t_dlt_buffer_push, normal)
 
     // Push till buffer is full, expected 0
     EXPECT_LE(0,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    for(int i=0; i<= (DLT_USER_RINGBUFFER_MIN_SIZE/size); i++)
+    for(unsigned int i=0; i<= (DLT_USER_RINGBUFFER_MIN_SIZE/size); i++)
     {
         EXPECT_LE(0, dlt_buffer_push(&buf,(unsigned char *)&test,size));
     }
@@ -343,7 +343,7 @@ TEST(t_dlt_buffer_push, abnormal)
 }
 TEST(t_dlt_buffer_push, nullpointer)
 {
-    DltBuffer buf;
+//    DltBuffer buf;
     char * test;
     int size = sizeof(test);
 
@@ -587,7 +587,7 @@ TEST(t_dlt_buffer_push3, abnormal)
 }
 TEST(t_dlt_buffer_push3, nullpointer)
 {
-    DltBuffer buf;
+//    DltBuffer buf;
     char * test;
     int size = sizeof(test);
 
@@ -1097,7 +1097,7 @@ TEST(t_dlt_buffer_get_used_size, nullpointer)
 TEST(t_dlt_buffer_write_block, normal)
 {
     DltBuffer buf;
-    unsigned char * data;
+    unsigned char * data = NULL;
     int write;
     int size1 = 516;
     int size2 = 1024;
@@ -1169,7 +1169,7 @@ TEST(t_dlt_buffer_write_block, nullpointer)
 TEST(t_dlt_buffer_read_block, normal)
 {
     DltBuffer buf;
-    unsigned char * data;
+    unsigned char * data = NULL;
     int write, read;
     int size1 = 516;
     int size2 = 1024;
@@ -3002,7 +3002,7 @@ TEST(t_dlt_message_read, normal)
     /*---------------------------------------*/
 
     DltBuffer buf;
-    char *buffer;
+    char *buffer = NULL;
 
     EXPECT_LE(0, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_LE(0, dlt_file_init(&file, 0));

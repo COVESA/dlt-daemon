@@ -250,7 +250,7 @@ int dlt_logstorage_message_callback(DltMessage *message, void *data)
     char text[DLT_RECEIVE_TEXTBUFSIZE] = {0};
     int ret = 0;
 
-    (void *)data; /* ignore data */
+    (void)data; /* ignore data */
 
     if (message == 0)
     {
