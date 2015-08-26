@@ -68,7 +68,9 @@ static char str[DLT_USER_BUFFER_LENGTH];
 
 static sem_t dlt_mutex;
 static pthread_t dlt_receiverthread_handle;
-static pthread_attr_t dlt_receiverthread_attr;
+
+// calling dlt_user_atexit_handler() second time fails with error message
+static int  atexit_registered = 0;
 
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
@@ -78,6 +80,26 @@ static pthread_attr_t dlt_receiverthread_attr;
 /* Mutex to wait on while message queue is not initialized */
 pthread_mutex_t mq_mutex;
 pthread_cond_t  mq_init_condition;
+
+void dlt_lock_mutex(pthread_mutex_t *mutex)
+{
+  int32_t lock_mutex_result = pthread_mutex_lock(mutex);
+  if (lock_mutex_result == EOWNERDEAD)
+  {
+    pthread_mutex_consistent(mutex);
+    lock_mutex_result = 0;
+  }
+  else if ( lock_mutex_result != 0 )
+  {
+    snprintf(str,DLT_USER_BUFFER_LENGTH, "Mutex lock failed unexpected pid=%i with result %i!\n", getpid(), lock_mutex_result);
+    dlt_log(LOG_ERR, str);
+  }
+}
+
+inline void dlt_unlock_mutex(pthread_mutex_t *mutex)
+{
+  pthread_mutex_unlock(mutex);
+}
 
 /* Structure to pass data to segmented thread */
 typedef struct {
@@ -109,6 +131,13 @@ static int dlt_user_log_send_overflow(void);
 static void dlt_user_trace_network_segmented_thread(void *unused);
 static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
 static int dlt_user_queue_resend(void);
+
+static int dlt_start_threads();
+static void dlt_stop_threads();
+static void dlt_fork_pre_fork_handler();
+static void dlt_fork_parent_fork_handler();
+static void dlt_fork_child_fork_handler();
+
 
 int dlt_user_check_library_version(const char *user_major_version,const char *user_minor_version){
 
@@ -249,44 +278,38 @@ int dlt_init(void)
         return -1;
     }
 
-    /* Start receiver thread */
-    if (pthread_create(&(dlt_receiverthread_handle),
-                       0,
-                       (void *) &dlt_user_receiverthread_function,
-                       0)!=0)
-	{
-		if (pthread_attr_destroy(&dlt_receiverthread_attr)!=0)
-		{
-			dlt_log(LOG_WARNING, "Can't destroy thread attributes!\n");
-		}
-
-		dlt_log(LOG_CRIT, "Can't create receiver thread!\n");
-		dlt_user_initialised = 0;
-        return -1;
-	}
-
-    if (pthread_attr_destroy(&dlt_receiverthread_attr)!=0)
-	{
-		dlt_log(LOG_WARNING, "Can't destroy thread attributes!\n");
-	}
-
     /* These will be lazy initialized only when needed */
     dlt_user.dlt_segmented_queue_read_handle = -1;
     dlt_user.dlt_segmented_queue_write_handle = -1;
 
     /* Wait mutext for segmented thread */
-    pthread_mutex_init(&mq_mutex, NULL);
-    pthread_cond_init(&mq_init_condition, NULL);
-
-    /* Start the segmented thread */
-    if(pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
-                      (void *)dlt_user_trace_network_segmented_thread, NULL))
+    pthread_mutexattr_t attr;
+    if (pthread_mutexattr_init(&attr) != 0)
     {
-        dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
-        return -1;
+      dlt_user_initialised = 0;
+      return -1;
+    }
+    /* make mutex robust to prevent from deadlock when the segmented thread was cancelled, but held the mutex */
+    if ( pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST) != 0 )
+    {
+      dlt_user_initialised = 0;
+      return -1;
     }
 
-	return 0;
+    pthread_mutex_init(&mq_mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
+    pthread_cond_init(&mq_init_condition, NULL);
+
+    if (dlt_start_threads() < 0)
+    {
+      dlt_user_initialised = 0;
+      return -1;
+    }
+
+    // prepare for fork() call
+    pthread_atfork(&dlt_fork_pre_fork_handler, &dlt_fork_parent_fork_handler, &dlt_fork_child_fork_handler);
+
+    return 0;
 }
 
 int dlt_init_file(const char *name)
@@ -316,12 +339,12 @@ int dlt_init_file(const char *name)
 
 int dlt_init_message_queue(void)
 {
-	pthread_mutex_lock(&mq_mutex);
+	dlt_lock_mutex(&mq_mutex);
 	if(dlt_user.dlt_segmented_queue_read_handle >= 0 &&
 	   dlt_user.dlt_segmented_queue_write_handle >= 0)
 	{
 		// Already intialized
-		pthread_mutex_unlock(&mq_mutex);
+		dlt_unlock_mutex(&mq_mutex);
 		return 0;
 	}
 
@@ -364,7 +387,7 @@ int dlt_init_message_queue(void)
             char str[256];
             snprintf(str,255,"Can't create message queue read handle!: %s \n",strerror(errno));
             dlt_log(LOG_CRIT, str);
-    		pthread_mutex_unlock(&mq_mutex);
+    		dlt_unlock_mutex(&mq_mutex);
     		return -1;
     	}
     }
@@ -376,12 +399,12 @@ int dlt_init_message_queue(void)
         char str[256];
         snprintf(str,255,"Can't open message queue write handle!: %s \n",strerror(errno));
         dlt_log(LOG_CRIT, str);
-    	pthread_mutex_unlock(&mq_mutex);
+    	dlt_unlock_mutex(&mq_mutex);
     	return -1;
     }
 
     pthread_cond_signal(&mq_init_condition);
-    pthread_mutex_unlock(&mq_mutex);
+    dlt_unlock_mutex(&mq_mutex);
     return 0;
 }
 
@@ -460,7 +483,11 @@ int dlt_init_common(void)
 
     signal(SIGPIPE,SIG_IGN);                  /* ignore pipe signals */
 
-    atexit(dlt_user_atexit_handler);
+    if (atexit_registered == 0)
+    {
+       atexit(dlt_user_atexit_handler);
+       atexit_registered = 1;
+    }
 
 #ifdef DLT_TEST_ENABLE
     dlt_user.corrupt_user_header = 0;
@@ -570,16 +597,7 @@ int dlt_free(void)
     }
     dlt_user_initialised = 0;
 
-    if (dlt_receiverthread_handle)
-    {
-    	/* Ignore return value */
-        pthread_cancel(dlt_receiverthread_handle);
-    }
-
-    if (dlt_user.dlt_segmented_nwt_handle)
-    {
-    	pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
-    }
+    dlt_stop_threads();
 
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
@@ -643,7 +661,13 @@ int dlt_free(void)
      */
     mq_close(dlt_user.dlt_segmented_queue_write_handle);
     mq_close(dlt_user.dlt_segmented_queue_read_handle);
+    dlt_user.dlt_segmented_queue_write_handle = -1;
+    dlt_user.dlt_segmented_queue_read_handle = -1;
     mq_unlink(queue_name);
+
+    pthread_cond_destroy(&mq_init_condition);
+    pthread_mutex_destroy(&mq_mutex);
+    sem_destroy(&dlt_mutex);
 
     // allow the user app to do dlt_init() again.
     // The flag is unset only to keep almost the same behaviour as before, on EntryNav
@@ -2541,12 +2565,12 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         while(1)
         {
                 // Wait until message queue is initialized
-                pthread_mutex_lock(&mq_mutex);
+                dlt_lock_mutex(&mq_mutex);
                 if(dlt_user.dlt_segmented_queue_read_handle < 0)
                 {
                         pthread_cond_wait(&mq_init_condition, &mq_mutex);
                 }
-                pthread_mutex_unlock(&mq_mutex);
+                dlt_unlock_mutex(&mq_mutex);
 
                 ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
                                         sizeof(s_segmented_data * ), NULL);
@@ -3646,7 +3670,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 {
     DltUserHeader userheader;
     DltUserControlMsgRegisterContext usercontext;
-    DltReturnValue ret;
+    DltReturnValue ret = 0;
 
     if (log==0)
     {
@@ -4323,3 +4347,103 @@ void dlt_user_test_corrupt_message_size(int enable,int16_t size)
 #endif
 
 
+int dlt_start_threads()
+{
+  /* Start receiver thread */
+  if (pthread_create(&(dlt_receiverthread_handle),
+                     0,
+                     (void *) &dlt_user_receiverthread_function,
+                     0)!=0)
+  {
+    dlt_log(LOG_CRIT, "Can't create receiver thread!\n");
+    return -1;
+  }
+
+  /* Start the segmented thread */
+  if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
+                    (void *)dlt_user_trace_network_segmented_thread, NULL))
+  {
+    dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
+    return -1;
+  }
+
+  return 0;
+}
+
+
+void dlt_stop_threads()
+{
+  int dlt_receiverthread_result = 0;
+  int dlt_segmented_nwt_result = 0;
+  if (dlt_receiverthread_handle)
+  {
+   	/* do not ignore return value */
+    dlt_receiverthread_result = pthread_cancel(dlt_receiverthread_handle);
+    if (dlt_receiverthread_result != 0)
+    {
+      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_cancel(dlt_receiverthread_handle): %s\n", strerror(errno));
+      dlt_log(LOG_ERR, str);
+    }
+  }
+
+  if (dlt_user.dlt_segmented_nwt_handle)
+  {
+    dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
+    if (dlt_segmented_nwt_result != 0)
+    {
+      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n", strerror(errno));
+      dlt_log(LOG_ERR, str);
+    }
+  }
+
+  /* make sure that the threads really finished working */
+  if ((dlt_receiverthread_result==0) && dlt_receiverthread_handle)
+  {
+    int joined = pthread_join(dlt_receiverthread_handle, NULL);
+    if (joined < 0)
+    {
+      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_join(dlt_receiverthread_handle, NULL): %s\n", strerror(errno));
+      dlt_log(LOG_ERR, str);
+    }
+    dlt_receiverthread_handle = 0; /* set to invalid */
+  }
+
+  if ((dlt_segmented_nwt_result==0) && dlt_user.dlt_segmented_nwt_handle)
+  {
+    int joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
+    if (joined < 0)
+    {
+      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n", strerror(errno));
+      dlt_log(LOG_ERR, str);
+    }
+    dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
+  }
+}
+
+
+static void dlt_fork_pre_fork_handler()
+{
+  dlt_stop_threads();
+}
+
+
+static void dlt_fork_parent_fork_handler()
+{
+  if (dlt_start_threads() < 0)
+  {
+    snprintf(str,DLT_USER_BUFFER_LENGTH,"Logging disabled, failed re-start thread after fork(pid=%i)!\n", getpid());
+    dlt_log(LOG_WARNING, str);
+    /* cleanup is the only thing we can do here */
+    dlt_log_free();
+    dlt_free();
+  }
+}
+
+
+static void dlt_fork_child_fork_handler()
+{
+  /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
+  dlt_log_free();
+  dlt_free();
+  /* the only thing that remains is the atexit-handler */
+}

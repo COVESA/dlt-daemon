@@ -55,7 +55,12 @@ add_executable(dlt-test-filetransfer ${dlt_test_filetransfer_SRCS})
 target_link_libraries(dlt-test-filetransfer dlt)
 set_target_properties(dlt-test-filetransfer PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-filetransfer
+set(dlt_test_fork_handler_SRCS dlt-test-fork-handler.c)
+add_executable(dlt-test-fork-handler ${dlt_test_fork_handler_SRCS})
+target_link_libraries(dlt-test-fork-handler dlt)
+set_target_properties(dlt-test-fork-handler PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-filetransfer dlt-test-fork-handler
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
