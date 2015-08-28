@@ -496,8 +496,8 @@ int dlt_init_common(void)
 
     if (atexit_registered == 0)
     {
-       atexit(dlt_user_atexit_handler);
        atexit_registered = 1;
+       atexit(dlt_user_atexit_handler);
     }
 
 #ifdef DLT_TEST_ENABLE
@@ -772,6 +772,11 @@ int dlt_register_app(const char *appid, const char * description)
 
     ret = dlt_user_log_send_register_application();
 
+    if (( ret == DLT_RETURN_OK ) && (dlt_user.dlt_log_handle!=-1))
+    {
+        ret = dlt_user_log_resend_buffer();
+    }
+
     return ret;
 }
 int dlt_register_context(DltContext *handle, const char *contextid, const char * description)
@@ -789,15 +794,6 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
     }
 
     DLT_SEM_LOCK();
-
-    if (dlt_user.appID[0]=='\0')
-    {
-        snprintf(str, DLT_USER_BUFFER_LENGTH, "No application registered while trying to register ContextID %4s!\n", contextid);
-        dlt_log(LOG_WARNING, str);
-
-        DLT_SEM_FREE();
-        return -1;
-    }
 
     if ((contextid==0) || (contextid[0]=='\0'))
     {
@@ -826,19 +822,6 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
             return -1;
         }
     }
-
-    DLT_SEM_LOCK();
-
-    if (dlt_user.appID[0]=='\0')
-    {
-        snprintf(str, DLT_USER_BUFFER_LENGTH, "No application registered while trying to register ContextID %4s!\n", contextid);
-        dlt_log(LOG_WARNING, str);
-
-        DLT_SEM_FREE();
-        return -1;
-    }
-
-    DLT_SEM_FREE();
 
     if ((contextid==0) || (contextid[0]=='\0'))
     {
@@ -3458,9 +3441,11 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
 		/* try to resent old data first */
 		ret = DLT_RETURN_OK;
-		if(dlt_user.dlt_log_handle!=-1)
-			ret = dlt_user_log_resend_buffer();
-		if(ret==DLT_RETURN_OK)
+		if((dlt_user.dlt_log_handle!=-1) && (dlt_user.appID[0]!='\0'))
+		{
+		  ret = dlt_user_log_resend_buffer();
+		}
+		if((ret == DLT_RETURN_OK) && (dlt_user.appID[0] != '\0'))
 		{
 			/* resend ok or nothing to resent */
 #ifdef DLT_SHM_ENABLE
@@ -3494,7 +3479,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 		}
 
         /* store message in ringbuffer, if an error has occured */
-        if (ret!=DLT_RETURN_OK)
+        if ((ret!=DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
         {
             DLT_SEM_LOCK();
 
@@ -3514,7 +3499,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             DLT_SEM_FREE();
 
         	// Fail silenty if FIFO is not open
-            if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
+            if((dlt_user.appID[0] != '\0') &&(dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
             {
                 ;//dlt_log(LOG_WARNING, "dlt_user_log_send_log: Failed to queue resending.\n");
             }
@@ -3672,7 +3657,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 {
     DltUserHeader userheader;
     DltUserControlMsgRegisterContext usercontext;
-    DltReturnValue ret = 0;
+    DltReturnValue ret = DLT_RETURN_ERROR;
 
     if (log==0)
     {
@@ -3684,7 +3669,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
         return -1;
     }
 
-    if ((dlt_user.appID[0]=='\0') || (log->handle->contextID=='\0'))
+    if (log->handle->contextID=='\0')
     {
         return -1;
     }
@@ -3719,10 +3704,14 @@ int dlt_user_log_send_register_context(DltContextData *log)
     }
 
     /* log to FIFO */
-    ret=dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
+    if (dlt_user.appID[0]!='\0')
+    {
+      ret = dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
+    }
+
 
     /* store message in ringbuffer, if an error has occured */
-    if (ret!=DLT_RETURN_OK)
+    if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
     {
         DLT_SEM_LOCK();
 
@@ -3738,7 +3727,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
         DLT_SEM_FREE();
 
-        if(dlt_user_queue_resend() < 0 && dlt_user.dlt_log_handle >= 0)
+        if((dlt_user.appID[0] != '\0') && (dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
         {
             ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
         }
@@ -3764,7 +3753,7 @@ int dlt_user_log_send_unregister_context(DltContextData *log)
         return -1;
     }
 
-    if ((dlt_user.appID[0]=='\0') || (log->handle->contextID=='\0'))
+    if (log->handle->contextID=='\0')
     {
     	return -1;
     }
@@ -4172,6 +4161,11 @@ int dlt_user_log_resend_buffer(void)
 	int num,count;
     int size;
 	DltReturnValue ret;
+	
+	if (dlt_user.appID[0]=='\0')
+	{
+	  return 0;
+	}
 
 	/* Send content of ringbuffer */
 	DLT_SEM_LOCK();
@@ -4186,6 +4180,38 @@ int dlt_user_log_resend_buffer(void)
 
 		if (size>0)
 		{
+		  DltUserHeader *userheader = (DltUserHeader*) (dlt_user.resend_buffer);
+		  /* Add application id to the messages of needed*/
+      if (dlt_user_check_userheader(userheader))
+      {
+        switch (userheader->message)
+        {
+          case DLT_USER_MESSAGE_REGISTER_CONTEXT:
+          {
+            DltUserControlMsgRegisterContext *usercontext = (DltUserControlMsgRegisterContext*) (dlt_user.resend_buffer+sizeof(DltUserHeader));
+            if ((usercontext != 0) && (usercontext->apid[0]=='\0'))
+            {
+              dlt_set_id(usercontext->apid,dlt_user.appID);
+            }
+            break;
+          }
+          case DLT_USER_MESSAGE_LOG:
+          {
+            DltExtendedHeader * extendedHeader = (DltExtendedHeader *)(dlt_user.resend_buffer+sizeof(DltUserHeader)+
+                sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra) - DLT_ID_SIZE);
+            if ((extendedHeader) != 0 && (extendedHeader->apid[0]=='\0'))
+            { // if application id is empty, add it
+              dlt_set_id(extendedHeader->apid,dlt_user.appID);
+            }
+            break;
+          }
+          default:
+          {
+            break;
+          }
+        }
+      }
+
 #ifdef DLT_SHM_ENABLE
 			dlt_shm_push(&dlt_user.dlt_shm,dlt_user.resend_buffer+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);
 
