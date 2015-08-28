@@ -24,7 +24,8 @@ Vendor: BMW Group AG
 License: @LICENSE@
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-Requires: %{name} = %{version}-%{release}, pkgconfig
+BuildRequires: pkg-configure
+BuildRequires: cmake
 
 %description
 This component provides a standardised log and trace interface, based on the
@@ -50,10 +51,20 @@ This component provides the documentation for %{name}.
 %package devel
 Summary:        %{name} - Diagnostic Log and Trace: Development files
 Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release}, pkgconfig
+Requires:       %{name} = %{version}-%{release}
+Provides:       pkgconfig(%{name})
 
 %description devel
 This component provides the development libraries and includes for %{name}.
+
+%package c++-devel
+Summary:        %{name} - Diagnostic Log and Trace: Development files
+Group:          Development/Libraries
+Requires:       %{name} = %{version}-%{release}-devel
+Provides:       pkgconfig(%{name}-c++)
+
+%description c++devel
+This component adds a C++ extension for %{name}.
 
 
 %prep
@@ -135,3 +146,7 @@ rm -rf $RPM_BUILD_ROOT
 %files devel
 %{_includedir}/dlt/*.h
 %{_libdir}/pkgconfig/@PROJECT_NAME@.pc
+
+%files c++-devel
+%{_includedir}/dlt/*.hpp
+%{_libdir}/pkgconfig/@PROJECT_NAME@-c++.pc

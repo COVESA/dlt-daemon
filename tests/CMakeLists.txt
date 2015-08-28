@@ -21,3 +21,8 @@ target_link_libraries(dlt_test_receiver dlt)
 target_link_libraries(dlt_env_ll_unit_test gtest gtest_main dlt)
 target_link_libraries(dlt-test-preregister-context gtest gtest_main dlt)
 
+if(${WITH_DLT_CXX11_EXT})
+  add_executable(dlt-test-cpp-extension dlt-test-cpp-extension.cpp)
+  set_target_properties(dlt-test-cpp-extension PROPERTIES COMPILE_FLAGS "-std=c++11")
+  target_link_libraries(dlt-test-cpp-extension gtest gtest_main dlt)
+endif()

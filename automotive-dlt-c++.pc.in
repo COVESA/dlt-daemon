@@ -1,0 +1,9 @@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${exec_prefix}/include
+
+Name: DLT C++
+Description: Diagnostic Log and Trace C++ extensions
+Version: @DLTCPP_VERSION@
+Requires: automotive-dlt
+Cflags: -std=c++11
+
