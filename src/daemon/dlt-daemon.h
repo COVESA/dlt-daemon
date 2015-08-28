@@ -105,6 +105,7 @@ typedef struct
     char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
     int  offlineTraceFileSize;    /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int  offlineTraceMaxSize;    /**< (int) Maximum size of all trace files (Default: 4000000) */
+    int  offlineTraceFilenameTimestampBased; /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
     int  loggingMode;    /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
     int  loggingLevel;    /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */

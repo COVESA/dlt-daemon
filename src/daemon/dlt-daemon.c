@@ -216,6 +216,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceDirectory[0] = 0;
 	daemon_local->flags.offlineTraceFileSize = 1000000;
 	daemon_local->flags.offlineTraceMaxSize = 0;
+	daemon_local->flags.offlineTraceFilenameTimestampBased = 1;
 	daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
 	daemon_local->flags.loggingLevel = LOG_INFO;
 	snprintf(daemon_local->flags.loggingFilename, sizeof(daemon_local->flags.loggingFilename)-1, "%s/dlt.log", dltFifoBaseDir);
@@ -394,6 +395,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             daemon_local->flags.offlineTraceMaxSize = atoi(value);
                             //printf("Option: %s=%s\n",token,value);
                         }
+                        else if(strcmp(token,"OfflineTraceFileNameTimestampBased")==0)
+						{
+							daemon_local->flags.offlineTraceFilenameTimestampBased = atoi(value);
+							//printf("Option: %s=%s\n",token,value);
+						}
                         else if(strcmp(token,"SendECUSoftwareVersion")==0)
                         {
                             daemon_local->flags.sendECUSoftwareVersion = atoi(value);
@@ -684,7 +690,11 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* init offline trace */
     if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) && daemon_local->flags.offlineTraceDirectory[0])
     {
-        if (dlt_offline_trace_init(&(daemon_local->offlineTrace),daemon_local->flags.offlineTraceDirectory,daemon_local->flags.offlineTraceFileSize,daemon_local->flags.offlineTraceMaxSize)==-1)
+        if (dlt_offline_trace_init(&(daemon_local->offlineTrace),
+            daemon_local->flags.offlineTraceDirectory,
+            daemon_local->flags.offlineTraceFileSize,
+            daemon_local->flags.offlineTraceMaxSize,
+            daemon_local->flags.offlineTraceFilenameTimestampBased)==-1)
         {
             dlt_log(LOG_ERR,"Could not initialize offline trace\n");
             return -1;

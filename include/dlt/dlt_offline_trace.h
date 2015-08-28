@@ -61,12 +61,24 @@
 
 #include "dlt_types.h"
 
+#define DLT_OFFLINETRACE_FILENAME_BASE "dlt_offlinetrace"
+#define DLT_OFFLINETRACE_FILENAME_DELI "."
+#define DLT_OFFLINETRACE_FILENAME_EXT  ".dlt"
+#define DLT_OFFLINETRACE_INDEX_MAX_SIZE 10
+#define DLT_OFFLINETRACE_FILENAME_TO_COMPARE "dlt_offlinetrace_"
+/* "dlt_offlinetrace.4294967295.dlt" -> MAX 32byte include NULL terminate */
+#define DLT_OFFLINETRACE_FILENAME_MAX_SIZE   (sizeof(DLT_OFFLINETRACE_FILENAME_BASE) + \
+                                          sizeof(DLT_OFFLINETRACE_FILENAME_DELI) + \
+                                          DLT_OFFLINETRACE_INDEX_MAX_SIZE + \
+                                          sizeof(DLT_OFFLINETRACE_FILENAME_EXT) + 1)
+
 typedef struct
 {
     char directory[NAME_MAX + 1];/**< (String) Store DLT messages to local directory */
     char filename[NAME_MAX + 1]; /**< (String) Filename of currently used log file */
     int  fileSize;               /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int  maxSize;                /**< (int) Maximum size of all trace files (Default: 4000000) */
+    int  filenameTimestampBased; /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
     int ohandle;
 } DltOfflineTrace;
 
@@ -80,9 +92,10 @@ typedef struct
  * @param directory directory where to store offline trace files
  * @param fileSize maximum size of one offline trace file.
  * @param maxSize maximum size of complete offline trace in bytes.
+ *.@param filenameTimestampBased filename to be created on timestamp based or index based
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize);
+extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize,int filenameTimestampBased);
 
 /**
  * Uninitialise the offline trace
@@ -114,5 +127,31 @@ extern DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,unsigned ch
  * @return size in bytes
  */
 extern unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace);
+
+/**
+ * Provides info about the offline logs storage directory
+ * @param path of the storage directory
+ * @param filename to search for
+ * @param pointer to store newest filename
+ * @param pointer to store oldest filename
+ * @return num of files in the directory
+ */
+unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, char *newest, char *oldest);
+
+/**
+ * creates filename with index
+ * @param log file name created with index
+ * @param filename base
+ * @param index to be used for file name creation
+ */
+void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx);
+
+/**
+ * generates index for log file name
+ * @param filename supplied to create index
+ * @return the index to be used for log file name
+ */
+unsigned int dlt_offline_trace_get_idx_of_log_file(char *file);
+
 
 #endif /* DLT_OFFLINE_TRACE_H */
