@@ -34,6 +34,9 @@
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
 
+#include <errno.h>
+#include <sys/stat.h> /* for mkdir() */
+
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
 
@@ -64,6 +67,7 @@ static char str[DLT_COMMON_BUFFER_LENGTH];
 
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D','L','S',1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D','L','S',1 };
+char dltFifoBaseDir[PATH_MAX + 1] = "/tmp";
 
 /* internal logging parameters */
 static int logging_mode = DLT_LOG_TO_CONSOLE;
@@ -1983,6 +1987,12 @@ void dlt_log_set_filename(const char *filename)
 
 }
 
+void dlt_log_set_fifo_basedir(const char * env_pipe_dir)
+{
+    strncpy(dltFifoBaseDir, env_pipe_dir, PATH_MAX);
+    dltFifoBaseDir[PATH_MAX] = 0;
+}
+
 void dlt_log_init(int mode)
 {
     logging_mode = mode;
@@ -3723,5 +3733,48 @@ void dlt_check_envvar()
 		}
 	}
 
+    char* env_pipe_dir = getenv("DLT_PIPE_DIR");
+    if( env_pipe_dir != NULL )
+    {
+        dlt_log_set_fifo_basedir(env_pipe_dir);
+    }
+}
 
+int dlt_mkdir_recursive(const char *dir)
+{
+  int ret = 0;
+  char tmp[PATH_MAX+1];
+  char *p = NULL;
+  char *end = NULL;
+  size_t len;
+
+  strncpy(tmp, dir, PATH_MAX);
+  len = strlen(tmp);
+  if(tmp[len - 1] == '/')
+  {
+    tmp[len - 1] = 0;
+  }
+  end = tmp + len;
+
+  for(p = tmp + 1; ((*p) && (ret == 0)) || ((ret == -1 && errno == EEXIST) && (p != end)); p++)
+  {
+    if(*p == '/')
+    {
+      *p = 0;
+      ret = mkdir(tmp, S_IRWXU);
+      *p = '/';
+    }
+  }
+
+  if (ret == 0 || (ret == -1 && errno == EEXIST))
+  {
+    ret = mkdir(tmp, S_IRWXU);
+  }
+
+  if (ret == -1 && errno == EEXIST)
+  {
+    ret = 0;
+  }
+
+  return ret;
 }

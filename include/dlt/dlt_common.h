@@ -76,6 +76,7 @@
 */
 
 #include <stdio.h>
+#include <linux/limits.h>
 
 #if !defined(_MSC_VER)
 #include <unistd.h>
@@ -186,12 +187,12 @@ enum {
 };
 
 /**
- * The standard TCP Port used for DLT daemon
+ * The standard TCP Port used for DLT daemon, can be overwritten via -p <port> when starting dlt-daemon
  */
 #define DLT_DAEMON_TCP_PORT 3490
 
 
-/* Initi value for file descritpor */
+/* Initial value for file descriptor */
 #define DLT_FD_INIT -1
 
 /* Minimum value for a file descriptor except the POSIX Standards: stdin=0, stdout=1, stderr=2 */
@@ -331,7 +332,11 @@ extern const char dltSerialHeader[DLT_ID_SIZE];
 extern char dltSerialHeaderChar[DLT_ID_SIZE];
 
 /**
+ * The common base-path of the dlt-daemon-fifo and application-generated fifos
+ */
+extern char dltFifoBaseDir[PATH_MAX + 1];
 
+/**
  * The type of a DLT ID (context id, application id, etc.)
  */
 typedef char ID4[DLT_ID_SIZE];
@@ -1286,6 +1291,12 @@ extern "C"
      * Check environment variables.
      */
     void dlt_check_envvar();
+
+    /**
+     * Create the specified path, recursive if necessary
+     * behaves like calling mkdir -p <dir> on the console
+     */
+    int dlt_mkdir_recursive(const char *dir);
 
 #ifdef __cplusplus
 }

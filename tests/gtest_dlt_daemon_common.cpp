@@ -44,6 +44,16 @@ extern "C" {
 #include "dlt_offline_trace.h"
 }
 
+#ifndef DLT_USER_DIR
+#define DLT_USER_DIR  "/tmp/dltpipes"
+#endif
+
+/* Name of named pipe to DLT daemon */
+#ifndef DLT_USER_FIFO
+#define DLT_USER_FIFO "/tmp/dlt"
+#endif
+
+
 /* Begin Method:dlt_daemon_common::dlt_daemon_application_add */
 TEST(t_dlt_daemon_application_add, normal)
 {

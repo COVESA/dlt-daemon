@@ -131,7 +131,9 @@ int dlt_client_connect(DltClient *client, int verbose)
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
     int rv;
-
+    char *env_daemon_port;
+   /* the port may be specified by an environment variable, defaults to DLT_DAEMON_TCP_PORT */
+    unsigned short servPort = DLT_DAEMON_TCP_PORT;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
@@ -140,9 +142,20 @@ int dlt_client_connect(DltClient *client, int verbose)
         return -1;
     }
 
+    /* the port may be specified by an environment variable */
+    env_daemon_port = getenv(DLT_CLIENT_ENV_DAEMON_TCP_PORT);
+    if (env_daemon_port != NULL)
+    {
+      servPort = atoi(env_daemon_port);
+    }
+    if (servPort == 0)
+    {
+      servPort = DLT_DAEMON_TCP_PORT;
+    }
+
     if (client->serial_mode==0)
     {
-        sprintf(portnumbuffer, "%d", DLT_DAEMON_TCP_PORT);
+        snprintf(portnumbuffer, 32, "%d", servPort);
         if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
             return -1;

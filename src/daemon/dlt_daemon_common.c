@@ -390,7 +390,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
         {
     		if ( close(application->user_handle) < 0 )
     		{
-    			snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "close() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
+    			snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "close() failed to %s/dltpipes/dlt%d, errno=%d (%s)!\n",dltFifoBaseDir,pid,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
     		    dlt_log(LOG_WARNING, str);
     		}
 
@@ -402,7 +402,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pi
     /* open user pipe only if it is not yet opened */
     if (application->user_handle==DLT_FD_INIT && pid!=0)
     {
-        snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dlt%d",DLT_USER_DIR,pid);
+        snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dltpipes/dlt%d",dltFifoBaseDir,pid);
 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if ( dlt_user_handle < 0 )

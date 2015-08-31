@@ -63,7 +63,7 @@
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
-int dlt_daemon_socket_open(int *sock)
+int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 {
     int yes = 1;
     char portnumbuffer[33];
@@ -75,7 +75,7 @@ int dlt_daemon_socket_open(int *sock)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP address
 
-    sprintf(portnumbuffer, "%d", DLT_DAEMON_TCP_PORT);
+    snprintf(portnumbuffer, 32, "%d", servPort);
     if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
         snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "getaddrinfo: %s\n", gai_strerror(rv));
         dlt_log(LOG_WARNING, str);
@@ -115,7 +115,7 @@ int dlt_daemon_socket_open(int *sock)
 
     freeaddrinfo(servinfo);
 
-    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on port: %u\n", __FUNCTION__, DLT_DAEMON_TCP_PORT);
+    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on port: %u\n", __FUNCTION__, servPort);
     dlt_log(LOG_INFO, str);
 
     // get socket buffer size

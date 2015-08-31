@@ -62,7 +62,7 @@
 #include "dlt_common.h"
 #include "dlt_user.h"
 
-int dlt_daemon_socket_open(int *sock);
+int dlt_daemon_socket_open(int *sock, unsigned int servPort);
 int dlt_daemon_socket_close(int sock);
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock);

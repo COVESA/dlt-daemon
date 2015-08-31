@@ -64,6 +64,9 @@ static DltUser dlt_user;
 static int dlt_user_initialised = 0;
 static int dlt_user_freeing = 0;
 
+static char dlt_user_dir[NAME_MAX + 1];
+static char dlt_daemon_fifo[NAME_MAX + 1];
+
 static char str[DLT_USER_BUFFER_LENGTH];
 
 static sem_t dlt_mutex;
@@ -183,6 +186,9 @@ int dlt_init(void)
     /* check environment variables */
     dlt_check_envvar();
 
+    snprintf(dlt_user_dir, NAME_MAX, "%s/dltpipes", dltFifoBaseDir);
+    snprintf(dlt_daemon_fifo, NAME_MAX, "%s/dlt", dltFifoBaseDir);
+
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
     dlt_user.overflow_counter = 0;
@@ -191,10 +197,18 @@ int dlt_init(void)
 #endif
 
     /* create dlt pipes directory */
-    ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
+    /* Make sure the parent user directory is created */
+    if (dlt_mkdir_recursive(dltFifoBaseDir) != 0)
+    {
+      snprintf(str,DLT_USER_BUFFER_LENGTH, "Base dir %s cannot be created!\n", dltFifoBaseDir);
+      dlt_log(LOG_ERR, str);
+      return -1;
+    }
+
+    ret=mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
     if (ret==-1 && errno != EEXIST)
     {
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be created!\n", DLT_USER_DIR);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be created!\n", dlt_user_dir);
         dlt_log(LOG_ERR, str);
         return -1;
     }
@@ -203,25 +217,25 @@ int dlt_init(void)
     if(ret == 0)
     {
 		// S_ISGID cannot be set by mkdir, let's reassign right bits
-		ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
+		ret=chmod(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
 		if (ret==-1)
 		{
-			snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be chmoded!\n", DLT_USER_DIR);
+			snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user dir %s cannot be chmoded!\n", dlt_user_dir);
 			dlt_log(LOG_ERR, str);
 			return -1;
 		}
     }
 
     /* create and open DLT user FIFO */
-    snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
-
+    snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
+     
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
 
     ret=mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO user %s cannot be created!\n",filename);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Logging disabled, FIFO user %s cannot be created!\n",filename);
         dlt_log(LOG_WARNING, str);
         /* return 0; */ /* removed to prevent error, when FIFO already exists */
     }
@@ -230,7 +244,7 @@ int dlt_init(void)
     ret=chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP );
     if (ret==-1)
     {
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user %s cannot be chmoded!\n", DLT_USER_DIR);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO user %s cannot be chmoded!\n", dlt_user_dir);
         dlt_log(LOG_WARNING, str);
         return -1;
     }
@@ -238,20 +252,20 @@ int dlt_init(void)
     dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);
     if (dlt_user.dlt_user_handle == DLT_FD_INIT)
     {
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"Loging disabled, FIFO user %s cannot be opened!\n",filename);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Logging disabled, FIFO user %s cannot be opened!\n",filename);
         dlt_log(LOG_WARNING, str);
         unlink(filename);
         return 0;
     }
 
     /* open DLT output FIFO */
-    dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
+    dlt_user.dlt_log_handle = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
         /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
            starts later and some DLT users have already been started before.
            Thus it is OK if the FIFO can't be opened. */
-        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO %s cannot be opened. Retrying later...\n",DLT_USER_FIFO);
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"FIFO %s cannot be opened. Retrying later...\n",dlt_daemon_fifo);
         dlt_log(LOG_INFO, str);
         //return 0;
     }
@@ -612,7 +626,7 @@ int dlt_free(void)
 
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
-        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",DLT_USER_DIR,getpid());
+        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
 
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle=DLT_FD_INIT;
@@ -4252,7 +4266,7 @@ void dlt_user_log_reattach_to_daemon(void)
         dlt_user.dlt_log_handle=-1;
 
         /* try to open pipe to dlt daemon */
-        dlt_user.dlt_log_handle = open(DLT_USER_FIFO, O_WRONLY | O_NONBLOCK);
+        dlt_user.dlt_log_handle = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK);
         if (dlt_user.dlt_log_handle > 0)
         {
             if (dlt_user_log_init(&handle,&log_new)==-1)

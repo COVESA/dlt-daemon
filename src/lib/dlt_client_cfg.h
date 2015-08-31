@@ -92,6 +92,9 @@
 #define DLT_CLIENT_INITIAL_BAUDRATE 0
 #endif
 
+/* Name of environment variable for specifying the daemon port */
+#define DLT_CLIENT_ENV_DAEMON_TCP_PORT "DLT_DAEMON_TCP_PORT"
+
 /************************/
 /* Don't change please! */
 /************************/

@@ -96,6 +96,14 @@ void usage()
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
     printf("  -c filename   DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
+    printf("  -t directory  Directory for local fifo and user-pipes (Default: /tmp)\n");
+    printf("                (Applications wanting to connect to a daemon using a\n");
+    printf("                custom directory need to be started with the environment \n");
+    printf("                variable DLT_PIPE_DIR set appropriately)\n");
+    printf("  -p port       port to monitor for incoming requests (Default: 3490)\n");
+    printf("                (Applications wanting to connect to a daemon using a custom\n");
+    printf("                port need to be started with the environment variable\n");
+    printf("                DLT_DAEMON_TCP_PORT set appropriately)\n");
 } /* usage() */
 
 /**
@@ -114,9 +122,13 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
     /* Initialize flags */
     memset(daemon_local,0,sizeof(DltDaemonLocal));
 
+    /* default values */
+    daemon_local->flags.port = DLT_DAEMON_TCP_PORT;
+    strncpy(dltFifoBaseDir, "/tmp", NAME_MAX);
+
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hdc:")) != -1)
+    while ((c = getopt (argc, argv, "hdc:t:p:")) != -1)
     {
         switch (c)
         {
@@ -130,6 +142,21 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
             strncpy(daemon_local->flags.cvalue,optarg,NAME_MAX);
             break;
         }
+        case 't':
+        {
+            strncpy(dltFifoBaseDir, optarg, NAME_MAX);
+            break;
+        }
+        case 'p':
+        {
+            daemon_local->flags.port = atoi(optarg);
+            if (daemon_local->flags.port == 0)
+            {
+              fprintf (stderr, "Invalid port `%s' specified.\n", optarg);
+              return -1;
+            }
+            break;
+        }
         case 'h':
         {
             usage();
@@ -137,7 +164,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'c')
+            if (optopt == 'c' || optopt == 't' || optopt == 'p')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -160,6 +187,9 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         }
         } /* switch() */
     }
+
+    snprintf(daemon_local->flags.userPipesDir, NAME_MAX + 1, "%s/dltpipes", dltFifoBaseDir);
+    snprintf(daemon_local->flags.daemonFifoName, NAME_MAX + 1, "%s/dlt", dltFifoBaseDir);
 
     return 0;
 
@@ -186,7 +216,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineTraceMaxSize = 0;
 	daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
 	daemon_local->flags.loggingLevel = LOG_INFO;
-	strncpy(daemon_local->flags.loggingFilename, DLT_USER_DIR "/dlt.log",sizeof(daemon_local->flags.loggingFilename)-1);
+	snprintf(daemon_local->flags.loggingFilename, sizeof(daemon_local->flags.loggingFilename)-1, "%s/dlt.log", dltFifoBaseDir);
 	daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename)-1]=0;
 	daemon_local->timeoutOnSend = 4;
 	daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -444,6 +474,14 @@ int main(int argc, char* argv[])
 
 	PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
+    /* Make sure the parent user directory is created */
+    if (dlt_mkdir_recursive(dltFifoBaseDir) != 0)
+    {
+      snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "Base dir %s cannot be created!\n", dltFifoBaseDir);
+      dlt_log(LOG_ERR, str);
+      return -1;
+    }
+
     /* --- Daemon init phase 1 begin --- */
     if (dlt_daemon_local_init_p1(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
     {
@@ -671,20 +709,22 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 #endif
 
+    const char *tmpFifo = daemon_local->flags.userPipesDir;
+
     /* create dlt pipes directory */
-    ret=mkdir(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
+    ret=mkdir(tmpFifo, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
     if (ret==-1 && errno != EEXIST)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created (%s)!\n", DLT_USER_DIR, strerror(errno));
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created (%s)!\n", tmpFifo, strerror(errno));
         dlt_log(LOG_WARNING, str);
         return -1;
     }
 
     // S_ISGID cannot be set by mkdir, let's reassign right bits
-    ret=chmod(DLT_USER_DIR, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
+    ret=chmod(tmpFifo, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
     if (ret==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded (%s)!\n", DLT_USER_DIR, strerror(errno));
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded (%s)!\n", tmpFifo, strerror(errno));
         dlt_log(LOG_WARNING, str);
         return -1;
     }
@@ -846,27 +886,30 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
     umask(0);
 
     /* Try to delete existing pipe, ignore result of unlink */
-    unlink(DLT_USER_FIFO);
+    const char *tmpFifo = daemon_local->flags.daemonFifoName;
+    unlink(tmpFifo);
 
-    ret=mkfifo(DLT_USER_FIFO, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
+    ret=mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP );
     if (ret==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created (%s)!\n",DLT_USER_FIFO, strerror(errno));
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be created (%s)!\n",tmpFifo, strerror(errno));
         dlt_log(LOG_WARNING, str);
         return -1;
     } /* if */
 
-    daemon_local->fp = open(DLT_USER_FIFO, O_RDWR);
+    daemon_local->fp = open(tmpFifo, O_RDWR);
     if (daemon_local->fp==-1)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened (%s)!\n",DLT_USER_FIFO, strerror(errno));
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user %s cannot be opened (%s)!\n",tmpFifo, strerror(errno));
         dlt_log(LOG_WARNING, str);
         return -1;
     } /* if */
 
     /* create and open socket to receive incoming connections from client */
-    if(dlt_daemon_socket_open(&(daemon_local->sock)))
+    if(dlt_daemon_socket_open(&(daemon_local->sock), daemon_local->flags.port))
+    {
     	return -1;
+    }
 
     /* prepare usage of select(), add FIFO and receiving socket */
     FD_ZERO(&(daemon_local->master));
@@ -1044,7 +1087,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
 
     /* Try to delete existing pipe, ignore result of unlink() */
-    unlink(DLT_USER_FIFO);
+    unlink(daemon_local->flags.daemonFifoName);
 
 #ifdef DLT_SHM_ENABLE
 	/* free shared memory */
@@ -1069,10 +1112,16 @@ void dlt_daemon_signal_handler(int sig)
         dlt_log(LOG_NOTICE, str);
 
         /* Try to delete existing pipe, ignore result of unlink() */
-        unlink(DLT_USER_FIFO);
+        char tmp[PATH_MAX + 1];
+        snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
+        tmp[PATH_MAX] = 0;
+        unlink(tmp);
 
         /* Try to delete lock file, ignore result of unlink() */
-        unlink(DLT_DAEMON_LOCK_FILE);
+        snprintf(tmp, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
+        tmp[PATH_MAX] = 0;
+        unlink(tmp);
+
 
 		/* Terminate program */
         exit(0);
@@ -1138,12 +1187,18 @@ void dlt_daemon_daemonize(int verbose)
     umask(DLT_DAEMON_UMASK);
 
     /* Change to known directory */
-    if(chdir(DLT_USER_DIR) < 0)
-        dlt_log(LOG_WARNING, "Failed to chdir to DLT_USER_DIR.\n");;
+    if(chdir(dltFifoBaseDir) < 0)
+    {
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Failed to chdir to fifo-dir %s\n", dltFifoBaseDir);
+        dlt_log(LOG_WARNING, str);
+    }
 
-    /* Ensure single copy of daemon;
+    /* Ensure single copy of daemon; if started with same directory
        run only one instance at a time */
-    lfp=open(DLT_DAEMON_LOCK_FILE,O_RDWR|O_CREAT,DLT_DAEMON_LOCK_FILE_PERM);
+    char dlt_daemon_lock_file[PATH_MAX + 1];
+    snprintf(dlt_daemon_lock_file, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
+    dlt_daemon_lock_file[PATH_MAX] = 0;
+    lfp=open(dlt_daemon_lock_file,O_RDWR|O_CREAT,DLT_DAEMON_LOCK_FILE_PERM);
     if (lfp<0)
     {
     	dlt_log(LOG_CRIT, "Can't open lock file, exiting DLT daemon\n");

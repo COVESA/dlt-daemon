@@ -112,6 +112,9 @@ typedef struct
     char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
     int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
     int  offlineLogstorageMaxDevices; /**< (int) Maximum devices to be used as offline logstorage devices */
+    char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
+    char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
+    unsigned int  port; /**< port number */
 } DltDaemonFlags;
 
 /**
