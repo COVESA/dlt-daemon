@@ -465,6 +465,8 @@ int dlt_init_common(void)
 
     dlt_user.local_print_mode = DLT_PM_UNSET;
 
+    dlt_user.timeout_at_exit_handler = DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT;
+
     env_local_print = getenv(DLT_USER_ENV_LOCAL_PRINT_MODE);
     if (env_local_print)
     {
@@ -555,7 +557,7 @@ int dlt_user_atexit_blow_out_user_buffer(void){
 
 	int count,ret;
 
-	uint32_t exitTime = dlt_uptime() + DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT;
+	uint32_t exitTime = dlt_uptime() + dlt_user.timeout_at_exit_handler;
 
 	/* Send content of ringbuffer */
 	DLT_SEM_LOCK();
@@ -1201,6 +1203,20 @@ int dlt_set_log_mode(DltUserLogMode mode)
 
 	return dlt_user_log_send_log_mode(mode);
 }
+
+int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
+{
+  if (dlt_user_initialised==0)
+  {
+    if (dlt_init()<0)
+    {
+      return -1;
+    }
+  }
+  dlt_user.timeout_at_exit_handler = timeout_in_milliseconds * 10;
+  return 0;
+}
+
 
 int dlt_forward_msg(void *msgdata,size_t size)
 {

@@ -102,8 +102,9 @@ void usage()
     printf("  -k            Send marker message\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
     printf("  -l level      Set log level to <level>, level=-1..6\n");
+    printf("  -t timeout    Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
 #ifdef DLT_TEST_ENABLE
-    printf("  -c       		Corrupt user header\n");
+    printf("  -c            Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
     printf("  -z size      	Size of message\n");
 #endif /* DLT_TEST_ENABLE */
@@ -128,6 +129,7 @@ int main(int argc, char* argv[])
     char *mvalue = 0;
     char *message = 0;
     int lvalue = DLT_LOG_WARN;
+    char *tvalue = 0;
 
     int index;
     int c;
@@ -140,9 +142,9 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
-    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:l:")) != -1)
+    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:l:t:")) != -1)
 #else
-    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:")) != -1)
+    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:t:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c)
@@ -204,9 +206,14 @@ int main(int argc, char* argv[])
             lvalue = atoi(optarg);
             break;
         }
+        case 't':
+        {
+            tvalue = optarg;
+            break;
+        }
         case '?':
         {
-            if (optopt == 'd' || optopt == 'f' || optopt == 'n'|| optopt == 'l')
+            if (optopt == 'd' || optopt == 'f' || optopt == 'n'|| optopt == 'l' || optopt == 't')
             {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             }
@@ -304,6 +311,11 @@ int main(int argc, char* argv[])
     else
     {
         delay = 500 * 1000;
+    }
+
+    if (tvalue)
+    {
+      dlt_set_resend_timeout_atexit(atoi(tvalue));
     }
 
     if (gflag)

@@ -90,11 +90,12 @@ int main(int argc, char* argv[])
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
     char version[255];
+    int timeout = -1;
 
     dlt_set_id(apid, PS_DLT_APP);
     dlt_set_id(ctid, PS_DLT_CONTEXT);
 
-    while ((opt = getopt(argc, argv, "a:c:h")) != -1)
+    while ((opt = getopt(argc, argv, "a:c:ht:")) != -1)
     {
         switch (opt)
         {
@@ -108,6 +109,11 @@ int main(int argc, char* argv[])
             dlt_set_id(ctid,optarg);
             break;
         }
+        case 't':
+        {
+          timeout = atoi(optarg);
+          break;
+        }
         case 'h':
         {
             dlt_get_version(version,255);
@@ -116,9 +122,10 @@ int main(int argc, char* argv[])
             printf("Adaptor for forwarding input from stdin to DLT daemon.\n");
             printf("%s \n", version);
             printf("Options:\n");
-            printf("-a apid      - Set application id to apid (default: SINA)\n");
-            printf("-c ctid      - Set context id to ctid (default: SINC)\n");
-            printf("-h           - This help\n");
+            printf("  -a apid      - Set application id to apid (default: SINA)\n");
+            printf("  -c ctid      - Set context id to ctid (default: SINC)\n");
+            printf("  -t timeout   - Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
+            printf("  -h           - This help\n");
             return 0;
             break;
         }
@@ -132,6 +139,10 @@ int main(int argc, char* argv[])
 
     DLT_REGISTER_APP(apid,PS_DLT_APP_DESC);
     DLT_REGISTER_CONTEXT(mycontext, ctid, PS_DLT_CONTEXT_DESC);
+    if (timeout > -1)
+    {
+      dlt_set_resend_timeout_atexit(timeout);
+    }
 
     while (fgets(str, MAXSTRLEN, stdin))
     {

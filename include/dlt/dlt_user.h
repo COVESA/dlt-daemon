@@ -300,6 +300,7 @@ typedef struct
     // Buffer used for resending, locked by DLT semaphore
     uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
 
+    uint32_t timeout_at_exit_handler; /**< timeout used in dlt_user_atexit_blow_out_user_buffer, in 0.1 milliseconds */
     dlt_env_ll_set initial_ll_set;
 
 #ifdef DLT_SHM_ENABLE
@@ -313,11 +314,11 @@ typedef struct
 } DltUser;
 
 /**************************************************************************************************
-* The folowing API functions define a low level function interface for DLT
+* The following API functions define a low level function interface for DLT
 **************************************************************************************************/
 
 /**
- * Initialise the generation of a DLT log message (intended for usage in non-verbose mode)
+ * Initialize the generation of a DLT log message (intended for usage in non-verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
  * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
  * when return value is bigger than zero.
@@ -329,7 +330,7 @@ typedef struct
 int dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
 
 /**
- * Initialise the generation of a DLT log message (intended for usage in verbose mode)
+ * Initialize the generation of a DLT log message (intended for usage in verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
  * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
  * when return value is bigger than zero.
@@ -519,14 +520,14 @@ int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_
  **************************************************************************************************/
 
 /**
- * Initialise the user lib communication with daemon.
+ * Initialize the user lib communication with daemon.
  * This function has to be called first, before using any DLT user lib functions.
  * @return negative value if there was an error
  */
 int dlt_init();
 
 /**
- * Initialise the user lib writing only to file.
+ * Initialize the user lib writing only to file.
  * This function has to be called first, before using any DLT user lib functions.
  * @param name name of an optional log file
  * @return negative value if there was an error
@@ -594,6 +595,13 @@ int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const 
  * @return negative value if there was an error
  */
 int dlt_unregister_context(DltContext *handle);
+
+
+/**
+ * Set maximum timeout for re-sending at exit
+ * @param timeout_in_milliseconds maximum time to wait until giving up re-sending, default 10000 (equals to 10 seconds)
+ */
+int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
 
 /**
  * Set the logging mode used by the daemon.
