@@ -66,6 +66,11 @@ extern DltSystemThreads threads;
 #define DLT_SYSTEM_JOURNAL_ASCII_FIRST_VISIBLE_CHARACTER 31
 #define DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH 9+32+1
 
+typedef struct
+{
+	char real[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
+	char monotonic[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
+} MessageTimestamp;
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(journalContext)
@@ -133,21 +138,87 @@ int dlt_system_journal_get(sd_journal* j,char *target,const char *field,size_t m
 	return 0;
 }
 
+void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *timestamp)
+{
+	int ret              = 0;
+	uint64_t time_secs   = 0;
+	uint64_t time_usecs  = 0;
+	struct tm * timeinfo = NULL;
+
+	char buffer_realtime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]           = { 0 };
+	char buffer_realtime_formatted[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
+	char buffer_monotime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]           = { 0 };
+
+	/* Try to get realtime from message source and if not successful try to get realtime from journal entry */
+	ret = dlt_system_journal_get(journal, buffer_realtime, "_SOURCE_REALTIME_TIMESTAMP", sizeof(buffer_realtime));
+	if (ret == 0 && strlen(buffer_realtime) > 0)
+	{
+		errno = 0;
+		time_usecs = strtoull(buffer_realtime, NULL, 10);
+		if (errno != 0)
+			time_usecs = 0;
+	}
+	else
+	{
+		if ((ret = sd_journal_get_realtime_usec(journal, &time_usecs)) < 0)
+		{
+			DLT_LOG(dltsystem, DLT_LOG_WARN,
+							DLT_STRING("dlt-system-journal failed to get realtime: "),
+							DLT_STRING(strerror(-ret)));
+
+			/* just to be sure to have a defined value */
+			time_usecs = 0;
+		}
+	}
+
+	time_secs = time_usecs / 1000000;
+	timeinfo = localtime((const time_t*) (&time_secs));
+	strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
+
+	snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06llu", buffer_realtime_formatted, time_usecs % 1000000);
+
+
+	/* Try to get monotonic time from message source and if not successful try to get monotonic time from journal entry */
+	ret = dlt_system_journal_get(journal, buffer_monotime, "_SOURCE_MONOTONIC_TIMESTAMP", sizeof(buffer_monotime));
+	if (ret == 0 && strlen(buffer_monotime) > 0)
+	{
+		errno = 0;
+		time_usecs = strtoull(buffer_monotime, NULL, 10);
+		if (errno != 0)
+			time_usecs = 0;
+	}
+	else
+	{
+		if ((ret = sd_journal_get_monotonic_usec(journal, &time_usecs, NULL)) < 0)
+		{
+			DLT_LOG(dltsystem, DLT_LOG_WARN,
+							DLT_STRING("dlt-system-journal failed to get monotonic time: "),
+							DLT_STRING(strerror(-ret)));
+
+			/* just to be sure to have a defined value */
+			time_usecs = 0;
+		}
+	}
+
+	snprintf(timestamp->monotonic, sizeof(timestamp->monotonic), "%llu.%06llu", time_usecs / 1000000, time_usecs % 1000000);
+}
+
 void journal_thread(void *v_conf)
 {
 	int r;
 	sd_journal *j;
 	char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
 	sd_id128_t boot_id;
-	uint64_t time_usecs = 0;
-	struct tm * timeinfo;
-	char buffer_time[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE],
-	     buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG],
-    	 buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
+
+    char buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]     = { 0 },
+         buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]    = { 0 },
+         buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]         = { 0 },
+         buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]        = { 0 },
+         buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG] = { 0 },
+         buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]   = { 0 };
+
+    MessageTimestamp timestamp;
+
 	int loglevel,systemd_loglevel;
 	char* systemd_log_levels[] = { "Emergency","Alert","Critical","Error","Warning","Notice","Informational","Debug" };
 
@@ -229,15 +300,7 @@ void journal_thread(void *v_conf)
 		else if(r>0)
 		{
 			/* get all data from current journal entry */
-			r = sd_journal_get_realtime_usec(j, &time_usecs);
-			if(r<0)
-			{
-					DLT_LOG(dltsystem, DLT_LOG_ERROR,
-							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
-					sd_journal_close(j);
-					return;
-
-			}
+			dlt_system_journal_get_timestamp(j, &timestamp);
 
 			/* get data from journal entry, empty string if invalid fields */
 			dlt_system_journal_get(j,buffer_comm,"_COMM",sizeof(buffer_comm));
@@ -245,11 +308,6 @@ void journal_thread(void *v_conf)
 			dlt_system_journal_get(j,buffer_priority,"PRIORITY",sizeof(buffer_priority));
 			dlt_system_journal_get(j,buffer_message,"MESSAGE",sizeof(buffer_message));
 			dlt_system_journal_get(j,buffer_transport,"_TRANSPORT",sizeof(buffer_transport));
-
-			/* prepare time string */
-			time_usecs /=1000000;
-			timeinfo = localtime ((const time_t*)(&(time_usecs)));
-            strftime (buffer_time,sizeof(buffer_time),"%Y/%m/%d %H:%M:%S",timeinfo);
 
 			/* prepare process string */
 			if(strcmp(buffer_transport,"kernel")==0)
@@ -294,9 +352,13 @@ void journal_thread(void *v_conf)
 				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"prio_unknown:");
 
 			/* write log entry */
-			DLT_LOG(journalContext, loglevel,
-						DLT_STRING(buffer_time),DLT_STRING(buffer_process),DLT_STRING(buffer_priority),DLT_STRING(buffer_message));
-
+            DLT_LOG(journalContext, loglevel,
+                        DLT_STRING(timestamp.real),
+                        DLT_STRING(timestamp.monotonic),
+                        DLT_STRING(buffer_process),
+                        DLT_STRING(buffer_priority),
+                        DLT_STRING(buffer_message)
+                        );
 		}
 		else
 		{
