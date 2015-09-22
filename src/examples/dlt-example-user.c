@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
 	if(mvalue)
 	{
         printf("Set log mode to %d\n",atoi(mvalue));
-		dlt_set_log_mode(atoi(mvalue)); 
+		dlt_set_log_mode(atoi(mvalue));
 	}
 
 

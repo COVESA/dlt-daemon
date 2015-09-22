@@ -1,25 +1,31 @@
-/**
+/*
  * @licence app begin@
+ * SPDX license identifier: MPL-2.0
+ *
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
- * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
+ * Copyright of Advanced Driver Information Technology, Bosch and DENSO
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
- *
- * \copyright
  * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
- * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- *
- * \author Syed Hameed <shameed@jp.adit-jv.com> ADIT 2013 - 2015
- * \author Christoph Lipka <clipka@jp.adit-jv.com> ADIT 2015
- *
- * \file dlt-logstorage-ctrl.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
+
+/*!
+ * \author Syed Hameed <shameed@jp.adit-jv.com> ADIT 2013 - 2015
+ * \author Christoph Lipka <clipka@jp.adit-jv.com> ADIT 2015
+ *
+ * \copyright Copyright © 2013-2015 Advanced Driver Information Technology. \n
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt-logstorage-ctrl.c
+*/
 
 /*******************************************************************************
 **                                                                            **

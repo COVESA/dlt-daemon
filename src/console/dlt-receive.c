@@ -493,14 +493,14 @@ int main(int argc, char* argv[])
     {
         if (dltdata.climit > -1)
         {
-          char tmp[256];
-          snprintf(tmp, 256, "Using file size limit of %li bytes\n", dltdata.climit);
-          dlt_log(LOG_INFO, tmp);
-          dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
+            char tmp[256];
+            snprintf(tmp, 256, "Using file size limit of %li bytes\n", dltdata.climit);
+            dlt_log(LOG_INFO, tmp);
+            dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
         }
         else /* in case no limit for the output file is given, we simply overwrite any existing file */
         {
-          dltdata.ohandle = open(dltdata.ovalue, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            dltdata.ohandle = open(dltdata.ovalue, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         }
 
         if (dltdata.ohandle == -1)
@@ -612,17 +612,21 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
             if (dltdata->climit > -1)
             {
             	int bytes_to_write = message->headersize + message->datasize;
+            	
             	if ((bytes_to_write + dltdata->totalbytes > dltdata->climit))
             	{
-                dlt_receive_close_output_file(dltdata);
+                    dlt_receive_close_output_file(dltdata);
+                    
             		if (dlt_receive_open_output_file(dltdata) < 0)
             		{
                         printf("ERROR: dlt_receive_message_callback: Unable to open log when maximum filesize was reached!\n");
                         return -1;
             		}
+            		
             		dltdata->totalbytes = 0;
             	}
             }
+            
             bytes_written = writev(dltdata->ohandle, iov, 2);
 
             dltdata->totalbytes += bytes_written;

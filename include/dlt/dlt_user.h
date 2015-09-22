@@ -176,11 +176,11 @@ typedef enum
  */
 typedef struct
 {
-	char contextID[DLT_ID_SIZE];                  /**< context id */
-	int32_t log_level_pos;                        /**< offset in user-application context field */
-	int8_t *log_level_ptr;                        /**< pointer to the log level */
-	int8_t *trace_status_ptr;                     /**< pointer to the trace status */
-   	uint8_t mcnt;                                 /**< message counter */
+    char contextID[DLT_ID_SIZE];                  /**< context id */
+    int32_t log_level_pos;                        /**< offset in user-application context field */
+    int8_t *log_level_ptr;                        /**< pointer to the log level */
+    int8_t *trace_status_ptr;                     /**< pointer to the trace status */
+    uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 
 /**
@@ -582,7 +582,7 @@ int dlt_register_context(DltContext *handle, const char *contextid, const char *
  * @param loglevel This is the log level to be pre-set for this context
           (DLT_LOG_DEFAULT is not allowed here)
  * @param tracestatus This is the trace status to be pre-set for this context
-		  (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+          (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  * @return negative value if there was an error
  */
 int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);

@@ -343,7 +343,6 @@ TEST(t_dlt_buffer_push, abnormal)
 }
 TEST(t_dlt_buffer_push, nullpointer)
 {
-//    DltBuffer buf;
     char * test;
     int size = sizeof(test);
 
@@ -587,7 +586,6 @@ TEST(t_dlt_buffer_push3, abnormal)
 }
 TEST(t_dlt_buffer_push3, nullpointer)
 {
-//    DltBuffer buf;
     char * test;
     int size = sizeof(test);
 

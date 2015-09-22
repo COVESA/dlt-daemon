@@ -1,24 +1,28 @@
-/**
+/*
  * @licence app begin@
+ * SPDX license identifier: MPL-2.0
+ *
  * Copyright (C) 2015  Intel Corporation
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
- * Contributions are licensed to the GENIVI Alliance under one or more
- * Contribution License Agreements.
- *
- * \copyright
  * This Source Code Form is subject to the terms of the
- * Mozilla Public License, v. 2.0. If a  copy of the MPL was not distributed with
- * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- *
- * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
- *
- * \file dlt_env_ll.c
  * For further information see http://www.genivi.org/.
  * @licence end@
  */
+
+/*!
+ * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
+ *
+ * \copyright Copyright © 2015 Intel Corporation. \n
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt_env_ll.c
+*/
 
 #include "dlt_user.h"
 #include <string.h>

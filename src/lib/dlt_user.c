@@ -83,22 +83,22 @@ pthread_cond_t  mq_init_condition;
 
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
-  int32_t lock_mutex_result = pthread_mutex_lock(mutex);
-  if (lock_mutex_result == EOWNERDEAD)
-  {
-    pthread_mutex_consistent(mutex);
-    lock_mutex_result = 0;
-  }
-  else if ( lock_mutex_result != 0 )
-  {
-    snprintf(str,DLT_USER_BUFFER_LENGTH, "Mutex lock failed unexpected pid=%i with result %i!\n", getpid(), lock_mutex_result);
-    dlt_log(LOG_ERR, str);
-  }
+    int32_t lock_mutex_result = pthread_mutex_lock(mutex);
+    if (lock_mutex_result == EOWNERDEAD)
+    {
+        pthread_mutex_consistent(mutex);
+        lock_mutex_result = 0;
+    }
+    else if ( lock_mutex_result != 0 )
+    {
+        snprintf(str,DLT_USER_BUFFER_LENGTH, "Mutex lock failed unexpected pid=%i with result %i!\n", getpid(), lock_mutex_result);
+        dlt_log(LOG_ERR, str);
+    }
 }
 
 inline void dlt_unlock_mutex(pthread_mutex_t *mutex)
 {
-  pthread_mutex_unlock(mutex);
+    pthread_mutex_unlock(mutex);
 }
 
 /* Structure to pass data to segmented thread */
@@ -286,14 +286,14 @@ int dlt_init(void)
     pthread_mutexattr_t attr;
     if (pthread_mutexattr_init(&attr) != 0)
     {
-      dlt_user_initialised = 0;
-      return -1;
+        dlt_user_initialised = 0;
+        return -1;
     }
     /* make mutex robust to prevent from deadlock when the segmented thread was cancelled, but held the mutex */
     if ( pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST) != 0 )
     {
-      dlt_user_initialised = 0;
-      return -1;
+        dlt_user_initialised = 0;
+        return -1;
     }
 
     pthread_mutex_init(&mq_mutex, &attr);
@@ -302,8 +302,8 @@ int dlt_init(void)
 
     if (dlt_start_threads() < 0)
     {
-      dlt_user_initialised = 0;
-      return -1;
+        dlt_user_initialised = 0;
+        return -1;
     }
 
     // prepare for fork() call
@@ -471,11 +471,11 @@ int dlt_init_common(void)
     env_initial_log_level = getenv("DLT_INITIAL_LOG_LEVEL");
     if( env_initial_log_level != NULL )
     {
-      if (dlt_env_extract_ll_set(&env_initial_log_level, &dlt_user.initial_ll_set) != 0)
-      {
-        snprintf(str, DLT_USER_BUFFER_LENGTH, "Unable to parse initial set of log-levels from environment! Env:\n%s\n", getenv("DLT_INITIAL_LOG_LEVEL"));
-        dlt_log(LOG_WARNING, str);
-      }
+        if (dlt_env_extract_ll_set(&env_initial_log_level, &dlt_user.initial_ll_set) != 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH, "Unable to parse initial set of log-levels from environment! Env:\n%s\n", getenv("DLT_INITIAL_LOG_LEVEL"));
+            dlt_log(LOG_WARNING, str);
+        }
     }
 
     /* Initialize LogLevel/TraceStatus field */
@@ -496,8 +496,8 @@ int dlt_init_common(void)
 
     if (atexit_registered == 0)
     {
-       atexit_registered = 1;
-       atexit(dlt_user_atexit_handler);
+        atexit_registered = 1;
+        atexit(dlt_user_atexit_handler);
     }
 
 #ifdef DLT_TEST_ENABLE
@@ -3443,7 +3443,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 		ret = DLT_RETURN_OK;
 		if((dlt_user.dlt_log_handle!=-1) && (dlt_user.appID[0]!='\0'))
 		{
-		  ret = dlt_user_log_resend_buffer();
+		    ret = dlt_user_log_resend_buffer();
 		}
 		if((ret == DLT_RETURN_OK) && (dlt_user.appID[0] != '\0'))
 		{
@@ -3706,7 +3706,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
     /* log to FIFO */
     if (dlt_user.appID[0]!='\0')
     {
-      ret = dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
+        ret = dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
     }
 
 
@@ -3727,7 +3727,7 @@ int dlt_user_log_send_register_context(DltContextData *log)
 
         DLT_SEM_FREE();
 
-        if((dlt_user.appID[0] != '\0') && (dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
+        if ((dlt_user.appID[0] != '\0') && (dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
         {
             ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
         }
@@ -4164,7 +4164,7 @@ int dlt_user_log_resend_buffer(void)
 	
 	if (dlt_user.appID[0]=='\0')
 	{
-	  return 0;
+	    return 0;
 	}
 
 	/* Send content of ringbuffer */
@@ -4180,37 +4180,37 @@ int dlt_user_log_resend_buffer(void)
 
 		if (size>0)
 		{
-		  DltUserHeader *userheader = (DltUserHeader*) (dlt_user.resend_buffer);
-		  /* Add application id to the messages of needed*/
-      if (dlt_user_check_userheader(userheader))
-      {
-        switch (userheader->message)
-        {
-          case DLT_USER_MESSAGE_REGISTER_CONTEXT:
-          {
-            DltUserControlMsgRegisterContext *usercontext = (DltUserControlMsgRegisterContext*) (dlt_user.resend_buffer+sizeof(DltUserHeader));
-            if ((usercontext != 0) && (usercontext->apid[0]=='\0'))
+		    DltUserHeader *userheader = (DltUserHeader*) (dlt_user.resend_buffer);
+		    /* Add application id to the messages of needed*/
+            if (dlt_user_check_userheader(userheader))
             {
-              dlt_set_id(usercontext->apid,dlt_user.appID);
+                switch (userheader->message)
+                {
+                    case DLT_USER_MESSAGE_REGISTER_CONTEXT:
+                    {
+                        DltUserControlMsgRegisterContext *usercontext = (DltUserControlMsgRegisterContext*) (dlt_user.resend_buffer+sizeof(DltUserHeader));
+                        if ((usercontext != 0) && (usercontext->apid[0]=='\0'))
+                        {
+                            dlt_set_id(usercontext->apid,dlt_user.appID);
+                        }
+                        break;
+                    }
+                    case DLT_USER_MESSAGE_LOG:
+                    {
+                        DltExtendedHeader * extendedHeader = (DltExtendedHeader *)(dlt_user.resend_buffer+sizeof(DltUserHeader)+
+                              sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra) - DLT_ID_SIZE);
+                        if ((extendedHeader) != 0 && (extendedHeader->apid[0]=='\0'))
+                        { // if application id is empty, add it
+                            dlt_set_id(extendedHeader->apid,dlt_user.appID);
+                        }
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
             }
-            break;
-          }
-          case DLT_USER_MESSAGE_LOG:
-          {
-            DltExtendedHeader * extendedHeader = (DltExtendedHeader *)(dlt_user.resend_buffer+sizeof(DltUserHeader)+
-                sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra) - DLT_ID_SIZE);
-            if ((extendedHeader) != 0 && (extendedHeader->apid[0]=='\0'))
-            { // if application id is empty, add it
-              dlt_set_id(extendedHeader->apid,dlt_user.appID);
-            }
-            break;
-          }
-          default:
-          {
-            break;
-          }
-        }
-      }
 
 #ifdef DLT_SHM_ENABLE
 			dlt_shm_push(&dlt_user.dlt_shm,dlt_user.resend_buffer+sizeof(DltUserHeader),size-sizeof(DltUserHeader),0,0,0,0);
@@ -4377,101 +4377,107 @@ void dlt_user_test_corrupt_message_size(int enable,int16_t size)
 
 int dlt_start_threads()
 {
-  /* Start receiver thread */
-  if (pthread_create(&(dlt_receiverthread_handle),
-                     0,
-                     (void *) &dlt_user_receiverthread_function,
-                     0)!=0)
-  {
-    dlt_log(LOG_CRIT, "Can't create receiver thread!\n");
-    return -1;
-  }
+    /* Start receiver thread */
+    if (pthread_create(&(dlt_receiverthread_handle),
+                    0,
+                    (void *) &dlt_user_receiverthread_function,
+                    0) != 0)
+    {
+        dlt_log(LOG_CRIT, "Can't create receiver thread!\n");
+        return -1;
+    }
 
-  /* Start the segmented thread */
-  if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
-                    (void *)dlt_user_trace_network_segmented_thread, NULL))
-  {
-    dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
-    return -1;
-  }
+    /* Start the segmented thread */
+    if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
+                    (void *) dlt_user_trace_network_segmented_thread, NULL))
+    {
+        dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
+        return -1;
+    }
 
-  return 0;
+    return 0;
 }
-
 
 void dlt_stop_threads()
 {
-  int dlt_receiverthread_result = 0;
-  int dlt_segmented_nwt_result = 0;
-  if (dlt_receiverthread_handle)
-  {
-   	/* do not ignore return value */
-    dlt_receiverthread_result = pthread_cancel(dlt_receiverthread_handle);
-    if (dlt_receiverthread_result != 0)
+    int dlt_receiverthread_result = 0;
+    int dlt_segmented_nwt_result = 0;
+    if (dlt_receiverthread_handle)
     {
-      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_cancel(dlt_receiverthread_handle): %s\n", strerror(errno));
-      dlt_log(LOG_ERR, str);
+        /* do not ignore return value */
+        dlt_receiverthread_result = pthread_cancel(dlt_receiverthread_handle);
+        if (dlt_receiverthread_result != 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH,
+                            "ERROR pthread_cancel(dlt_receiverthread_handle): %s\n",
+                            strerror(errno));
+            dlt_log(LOG_ERR, str);
+        }
     }
-  }
 
-  if (dlt_user.dlt_segmented_nwt_handle)
-  {
-    dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
-    if (dlt_segmented_nwt_result != 0)
+    if (dlt_user.dlt_segmented_nwt_handle)
     {
-      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n", strerror(errno));
-      dlt_log(LOG_ERR, str);
+        dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
+        if (dlt_segmented_nwt_result != 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH,
+                            "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
+                            strerror(errno));
+            dlt_log(LOG_ERR, str);
+        }
     }
-  }
 
-  /* make sure that the threads really finished working */
-  if ((dlt_receiverthread_result==0) && dlt_receiverthread_handle)
-  {
-    int joined = pthread_join(dlt_receiverthread_handle, NULL);
-    if (joined < 0)
+    /* make sure that the threads really finished working */
+    if ((dlt_receiverthread_result == 0) && dlt_receiverthread_handle)
     {
-      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_join(dlt_receiverthread_handle, NULL): %s\n", strerror(errno));
-      dlt_log(LOG_ERR, str);
+        int joined = pthread_join(dlt_receiverthread_handle, NULL);
+        if (joined < 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH,
+                            "ERROR pthread_join(dlt_receiverthread_handle, NULL): %s\n",
+                            strerror(errno));
+            dlt_log(LOG_ERR, str);
+        }
+        dlt_receiverthread_handle = 0; /* set to invalid */
     }
-    dlt_receiverthread_handle = 0; /* set to invalid */
-  }
 
-  if ((dlt_segmented_nwt_result==0) && dlt_user.dlt_segmented_nwt_handle)
-  {
-    int joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
-    if (joined < 0)
+    if ((dlt_segmented_nwt_result == 0) && dlt_user.dlt_segmented_nwt_handle)
     {
-      snprintf(str,DLT_USER_BUFFER_LENGTH, "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n", strerror(errno));
-      dlt_log(LOG_ERR, str);
+        int joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
+        if (joined < 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH,
+                            "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n",
+                            strerror(errno));
+            dlt_log(LOG_ERR, str);
+        }
+        dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
     }
-    dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
-  }
 }
-
 
 static void dlt_fork_pre_fork_handler()
 {
-  dlt_stop_threads();
+    dlt_stop_threads();
 }
-
 
 static void dlt_fork_parent_fork_handler()
 {
-  if (dlt_start_threads() < 0)
-  {
-    snprintf(str,DLT_USER_BUFFER_LENGTH,"Logging disabled, failed re-start thread after fork(pid=%i)!\n", getpid());
-    dlt_log(LOG_WARNING, str);
-    /* cleanup is the only thing we can do here */
-    dlt_log_free();
-    dlt_free();
-  }
+    if (dlt_start_threads() < 0)
+    {
+        snprintf(str, DLT_USER_BUFFER_LENGTH,
+                        "Logging disabled, failed re-start thread after fork(pid=%i)!\n",
+                        getpid());
+        dlt_log(LOG_WARNING, str);
+        /* cleanup is the only thing we can do here */
+        dlt_log_free();
+        dlt_free();
+    }
 }
-
 
 static void dlt_fork_child_fork_handler()
 {
-  /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
-  dlt_log_free();
-  dlt_free();
-  /* the only thing that remains is the atexit-handler */
+    /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
+    dlt_log_free();
+    dlt_free();
+    /* the only thing that remains is the atexit-handler */
 }

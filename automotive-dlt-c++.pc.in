@@ -5,5 +5,4 @@ Name: DLT C++
 Description: Diagnostic Log and Trace C++ extensions
 Version: @DLTCPP_VERSION@
 Requires: automotive-dlt
-Cflags: -std=c++11
-
+Cflags: -std=gnu++0x
