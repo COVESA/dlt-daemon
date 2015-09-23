@@ -563,7 +563,7 @@ int main(int argc, char* argv[])
         {
             if (FD_ISSET(i, &(daemon_local.read_fds)))
             {
-                if (i == daemon_local.sock && ((daemon.mode == DLT_USER_MODE_EXTERNAL) || (daemon.mode == DLT_USER_MODE_BOTH)))
+                if (i == daemon_local.sock)
                 {
                     /* event from TCP server socket, new connection */
                     if (dlt_daemon_process_client_connect(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
