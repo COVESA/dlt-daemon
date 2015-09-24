@@ -27,11 +27,12 @@
 #ifndef DLT_CPP_EXTENSION_HPP
 #define DLT_CPP_EXTENSION_HPP
 
-#include <dlt/dlt.h>
 #include <string>
 #include <vector>
 #include <list>
 #include <map>
+
+#include "dlt.h"
 
 template<typename T>
 int32_t logToDlt(DltContextData &log, T const &value) = delete;

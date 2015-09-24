@@ -68,7 +68,7 @@ option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"        
 option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                          ON)
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
-option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             ON)
+option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
