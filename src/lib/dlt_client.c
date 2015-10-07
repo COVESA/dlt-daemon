@@ -531,6 +531,49 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
     return DLT_RETURN_OK;
 }
 
+int dlt_client_get_log_info(DltClient *client)
+{
+    DltServiceGetLogInfoRequest *req;
+    uint8_t *payload;
+    int ret_main_loop = 0;
+    int ret = -1;
+
+    if (client == NULL)
+    {
+        return ret;
+    }
+    payload = (uint8_t *) malloc(sizeof(DltServiceGetLogInfoRequest));
+
+    if (payload == 0)
+    {
+        return ret;
+    }
+
+    req = (DltServiceGetLogInfoRequest *) payload;
+
+    req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+    req->options = 7;
+    dlt_set_id(req->apid, "");
+    dlt_set_id(req->ctid, "");
+    dlt_set_id(req->com, "remo");
+
+    /* send control message to daemon*/
+    ret = dlt_client_send_ctrl_msg(client, "", "", payload, sizeof(DltServiceGetLogInfoRequest));
+    free(payload);
+    if (ret == -1)
+    {
+        return -1;
+    }
+
+    ret_main_loop = dlt_client_main_loop(client, NULL, 0);
+    if (ret_main_loop == 1)
+    {
+        printf("DLT-daemon's response is invalid.\n");
+    }
+
+    return 0;
+}
+
 DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
 {
     DltServiceSetLogLevel *req;

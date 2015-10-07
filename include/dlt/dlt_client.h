@@ -154,6 +154,24 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client, char *apid, char *c
  */
 DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
 /**
+ * Send an request to get log info message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_get_log_info(DltClient *client);
+/**
+ * Initialise get log info structure
+ * @param void
+ * @return void
+ */
+void dlt_getloginfo_init( void );
+/**
+ * To free the memory allocated for app description in get log info
+ * @param void
+ * @return void
+ */
+void dlt_getloginfo_free( void );
+/**
  * Send a set trace status message to the dlt daemon
  * @param client pointer to dlt client structure
  * @param apid application id
