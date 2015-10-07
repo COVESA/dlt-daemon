@@ -70,6 +70,8 @@ option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"            
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
 option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF)
+option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control application with udev support" OFF)
+option(WITH_DLT_LOGSTORAGE_CTRL_PROP "PROTOTYPE! Set to ON to build logstorage control application with proprietary support" OFF)
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -93,6 +95,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
+    ${CMAKE_SOURCE_DIR}/src/console/
     ${CMAKE_SOURCE_DIR}/systemd/3rdparty/
 )
 
@@ -163,6 +166,14 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     add_subdirectory( systemd )
 endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 
+if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+	add_definitions( -DDLT_LOGSTORAGE_CTRL_UDEV_ENABLE)
+endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+
+if(WITH_DLT_LOGSTORAGE_CTRL_PROP)
+	add_definitions( -DDLT_LOGSTORAGE_CTRL_PROP)
+endif(WITH_DLT_LOGSTORAGE_CTRL_PROP)
+
 add_subdirectory( doc )
 add_subdirectory( src )
 add_subdirectory( include )
@@ -201,6 +212,8 @@ message( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 message( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
 message( STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}" )
 message( STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}" )
+message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_UDEV = ${WITH_DLT_LOGSTORAGE_CTRL_UDEV}" )
+message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_PROP = ${WITH_DLT_LOGSTORAGE_CTRL_PROP}" )
 message( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 message( STATUS "-------------------------------------------------------------------------------" )
 message( STATUS )

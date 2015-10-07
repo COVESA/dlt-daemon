@@ -30,6 +30,9 @@ add_executable(dlt-control ${dlt_control_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-control dlt ${EXPAT_LIBRARIES})
 set_target_properties(dlt-control PROPERTIES LINKER_LANGUAGE C)
 
+set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
+add_subdirectory( logstorage )
+
 install(TARGETS dlt-convert dlt-receive dlt-control
 	RUNTIME DESTINATION bin
 	COMPONENT base)

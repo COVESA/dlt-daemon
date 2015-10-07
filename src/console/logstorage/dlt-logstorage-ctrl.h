@@ -1,0 +1,30 @@
+/**
+ * @licence app begin@
+ * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
+ * This code is developed by Advanced Driver Information Technology.
+ * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
+ *
+ * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ *
+ *
+ * \copyright
+ * This Source Code Form is subject to the terms of the
+ * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
+ * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *
+ * \author Syed Hameed <shameed@jp.adit-jv.com> ADIT 2013 - 2015
+ * \author Christoph Lipka <clipka@jp.adit-jv.com> ADIT 2015
+ *
+ * \file dlt-logstorage-ctrl.h
+ * For further information see http://www.genivi.org/.
+ * @licence end@
+ */
+
+#ifndef _DLT_LOGSTORAGE_CONTROL_H_
+#define _DLT_LOGSTORAGE_CONTROL_H_
+
+/* Triggers the exit at the end of the event */
+void dlt_logstorage_exit(void);
+
+#endif
