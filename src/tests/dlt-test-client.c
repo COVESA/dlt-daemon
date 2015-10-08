@@ -84,6 +84,8 @@
 
 #define DLT_TESTCLIENT_NUM_TESTS       9
 
+static int g_testsFailed = 0;
+
 /* Function prototypes */
 int dlt_testclient_message_callback(DltMessage *message, void *data);
 
@@ -372,7 +374,7 @@ int main(int argc, char* argv[])
 
     dlt_filter_free(&(dltdata.filter),dltdata.vflag);
 
-    return 0;
+    return g_testsFailed == 0 ? 0 : 1;
 }
 
 int dlt_testclient_message_callback(DltMessage *message, void *data)
@@ -1340,7 +1342,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                         DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
                                         length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                                         // Size of the truncated message after headers
-                                        if(length == 2001)
+                                        if(length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))
                                         {
                                             dltdata->test_counter_macro[7]++;
                                         }
@@ -2495,7 +2497,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                         DLT_MSG_READ_VALUE(length_tmp,ptr,datalength,uint16_t);
                                         length=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                                         // Size of the truncated message after headers
-                                        if(length == 2001)
+                                        if(length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))
                                         {
                                             dltdata->test_counter_function[7]++;
                                         }
@@ -2783,6 +2785,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             {
                 close(dltdata->sock);
             }
+
+            g_testsFailed = dltdata->tests_failed;
 
             return 0;
         }

@@ -89,9 +89,9 @@
 extern "C" {
 #endif
 
-#define DLT_USER_BUF_MAX_SIZE 2048               /**< maximum size of each user buffer, also used for injection buffer */
+#define DLT_USER_BUF_MAX_SIZE 1390               /**< maximum size of each user buffer, also used for injection buffer */
 
-#define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)       /**< Size of resend buffer; Max DLT message size is 2K plus some extra header space  */
+#define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)       /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 #define DLT_SEM_LOCK() { sem_wait(&dlt_mutex); }

@@ -76,6 +76,7 @@ char *file3_2;
 char *file3_3;
 //!Just some variables
 int i,countPackages, transferResult;
+static int g_numFailed = 0;
 
 //!Prints the test result
 void printTestResultPositiveExpected(const char *function, int result){
@@ -86,6 +87,7 @@ void printTestResultPositiveExpected(const char *function, int result){
     else
     {
         printf("%s failed\n",function);
+        g_numFailed++;
     }
 
 }
@@ -99,6 +101,7 @@ void printTestResultNegativeExpected(const char *function, int result){
     else
     {
         printf("%s failed\n",function);
+        g_numFailed++;
     }
 
 }
@@ -366,9 +369,9 @@ int testFile3Run3(){
 int main(void)
 {
     //First file contains some text
-    file1 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-file";
+    file1 = "/usr/local/share/dlt-filetransfer/dlt-test-filetransfer-file";
     //Second file is a picture
-    file2 = "/usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png";
+    file2 = "/usr/local/share/dlt-filetransfer/dlt-test-filetransfer-image.png";
     //Third file doesn't exist. Just to test the reaction when the file isn't available.
     file3_1 = "dlt-test-filetransfer-doesntExist_1";
     //Third file doesn't exist. Just to test the reaction when the file isn't available.
@@ -401,5 +404,5 @@ int main(void)
     //Unregister the app from the dlt-daemon
     DLT_UNREGISTER_APP();
 
-    return(0);
+    return g_numFailed == 0 ? 0 : 1;
 }
