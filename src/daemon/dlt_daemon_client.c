@@ -1183,7 +1183,7 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
     resp->status = DLT_SERVICE_RESPONSE_OK;
 
 	time_t t = time(NULL);
-	struct tm lt = {0};
+	struct tm lt;
 	localtime_r(&t, &lt);
 #if !defined(__CYGWIN__)
     resp->timezone = (int32_t) lt.tm_gmtoff;

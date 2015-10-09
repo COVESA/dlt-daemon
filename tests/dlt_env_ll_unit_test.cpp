@@ -530,7 +530,7 @@ TEST(DltExtensionTests, dlt_env_extract_symbolic_ll)
 
     result = 18;
     ASSERT_EQ(-1, dlt_env_extract_symbolic_ll(&tmp1, &result));
-    ASSERT_EQ(NULL, *tmp1);
+    ASSERT_EQ(0, *tmp1);
     ASSERT_EQ(18, result); /* 'result' is not touched */
 
     // incorrect behavior

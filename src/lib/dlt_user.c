@@ -1409,7 +1409,8 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
     if (log == NULL || data == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
+    // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
+    if ((int16_t)type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
     {
         dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1760,7 +1761,8 @@ DltReturnValue dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t d
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
+    // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
+    if ((int16_t)type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
     {
         dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1815,7 +1817,8 @@ DltReturnValue dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
+    // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
+    if ((int16_t)type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
     {
         dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1870,7 +1873,8 @@ DltReturnValue dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
+    // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
+    if ((int16_t)type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
     {
         dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1925,7 +1929,8 @@ DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
+    // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
+    if ((int16_t)type < DLT_FORMAT_DEFAULT || type >= DLT_FORMAT_MAX)
     {
         dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
