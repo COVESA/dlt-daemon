@@ -35,8 +35,8 @@
 
 #include <time.h>
 
-DLT_DECLARE_CONTEXT(dbusLog);
-DLT_DECLARE_CONTEXT(dbusContext);
+DLT_DECLARE_CONTEXT(dbusLog)
+DLT_DECLARE_CONTEXT(dbusContext)
 
 static char dbus_message_buffer[DBUS_MAXIMUM_MESSAGE_LENGTH];
 

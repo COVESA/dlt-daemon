@@ -59,10 +59,10 @@
 #include <dlt.h>                /*Needed for dlt logging*/
 
 //!Declare some context for the main program. It's a must have to do this, when you want to log with dlt.
-DLT_DECLARE_CONTEXT(mainContext);
+DLT_DECLARE_CONTEXT(mainContext)
 
 //!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer.
-DLT_DECLARE_CONTEXT(fileContext);
+DLT_DECLARE_CONTEXT(fileContext)
 
 //!Textfile which will be transferred.
 char *file1;

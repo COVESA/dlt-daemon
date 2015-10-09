@@ -57,7 +57,7 @@
 
 volatile DltSystemThreads threads;
 
-DLT_IMPORT_CONTEXT(dltsystem);
+DLT_IMPORT_CONTEXT(dltsystem)
 
 int daemonize()
 {

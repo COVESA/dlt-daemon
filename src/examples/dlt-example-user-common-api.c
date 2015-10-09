@@ -63,7 +63,7 @@
 
 #include "dlt_common_api.h"
 
-DLT_DECLARE_CONTEXT(mycontext);
+DLT_DECLARE_CONTEXT(mycontext)
 
 /**
  * Print usage information of tool.

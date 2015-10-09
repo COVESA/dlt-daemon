@@ -82,7 +82,7 @@ extern DltSystemThreads threads;
 // From dlt_filetransfer
 extern unsigned long getFileSerialNumber(const char* file, int *ok);
 
-DLT_IMPORT_CONTEXT(dltsystem);
+DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(filetransferContext)
 
 #ifdef linux

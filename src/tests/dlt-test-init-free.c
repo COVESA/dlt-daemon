@@ -27,11 +27,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "dlt_common.h"
 #include "dlt_user.h"
 
-char* exec(const char* cmd);
+void exec(const char* cmd, char *buffer, size_t length);
 void printMemoryUsage();
 char* occupyMemory(uint size);
 void do_example_test();
@@ -110,32 +111,28 @@ void do_dlt_test()
     }
 }
 
-char* exec(const char* cmd)
+void exec(const char* cmd, char *buffer, size_t length)
 {
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe)
-        return "ERROR";
+    FILE* pipe = NULL;
+    strncpy(buffer, "ERROR", length);
 
-    char* buffer = (char*)malloc(128);
-    while (!feof(pipe))
-    {
-        fgets(buffer, 128, pipe);
-    }
-    pclose(pipe);
+    if ( (pipe = popen(cmd, "r")) == NULL )
+        return;
 
-    return buffer;
+    while (fgets(buffer, length, pipe) != NULL);
+
+    if(pipe != NULL)
+        pclose(pipe);
 }
 
 void printMemoryUsage()
 {
-    char command[128] = "pmap ";
+    char result[128] = { 0 };
+    char command[128] = { 0 };
 
-    char buf[128];
-    snprintf(buf, sizeof(command), "%d", getpid());
-    strcat(command, buf);
-    strcat(command, " | grep total");
+    snprintf(command, sizeof(command), "pmap %d | grep total", getpid());
 
-    char* result = exec(command);
+    exec(command, result, sizeof(result));
 
     printf("%s", result);
 }

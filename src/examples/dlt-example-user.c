@@ -79,7 +79,7 @@
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
 void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
-DLT_DECLARE_CONTEXT(mycontext);
+DLT_DECLARE_CONTEXT(mycontext)
 
 /**
  * Print usage information of tool.

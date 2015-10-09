@@ -373,11 +373,11 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         {
             // truncate beginning of data stream ( FLDA, File identifier and package number)
             char *position = strchr(text, 32); // search for space
-            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
             position = strchr(text, 32);
-            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
             position = strchr(text, 32);
-            snprintf(text, DLT_RECEIVE_TEXTBUFSIZE, position+1);
+            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
 
             // truncate ending of data stream ( FLDA )
             int len = strlen(text);

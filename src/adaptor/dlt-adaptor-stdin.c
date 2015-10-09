@@ -80,7 +80,7 @@
 #define PS_DLT_APP "SINA"
 #define PS_DLT_CONTEXT "SINC"
 
-DLT_DECLARE_CONTEXT(mycontext);
+DLT_DECLARE_CONTEXT(mycontext)
 
 int main(int argc, char* argv[])
 {

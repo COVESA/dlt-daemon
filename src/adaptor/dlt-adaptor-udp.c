@@ -89,7 +89,7 @@
 #define PU_DLT_APP "UDPA"
 #define PU_DLT_CONTEXT "UDPC"
 
-DLT_DECLARE_CONTEXT(mycontext);
+DLT_DECLARE_CONTEXT(mycontext)
 
 int main(int argc, char* argv[])
 {

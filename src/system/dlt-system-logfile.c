@@ -55,7 +55,7 @@
 #define SEND_MODE_ONCE 1
 #define SEND_MODE_ON   2
 
-DLT_IMPORT_CONTEXT(dltsystem);
+DLT_IMPORT_CONTEXT(dltsystem)
 
 extern DltSystemThreads threads;
 DltContext logfileContext[DLT_SYSTEM_LOG_FILE_MAX];

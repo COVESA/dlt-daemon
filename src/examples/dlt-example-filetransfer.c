@@ -73,7 +73,7 @@
 #define TIMEOUT 1
 
 //!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer.
-DLT_DECLARE_CONTEXT(fileContext);
+DLT_DECLARE_CONTEXT(fileContext)
 
 
 /**

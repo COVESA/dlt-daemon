@@ -1368,8 +1368,11 @@ TEST(t_dlt_file_open, normal)
     DltFile file;
     /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1407,8 +1410,11 @@ TEST(t_dlt_file_open, nullpointer)
     DltFile file;
     /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
-    char  openfile[114];;
+    char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1432,10 +1438,13 @@ TEST(t_dlt_message_print_ascii, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1489,10 +1498,13 @@ TEST(t_dlt_message_print_ascii, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1522,10 +1534,13 @@ TEST(t_dlt_message_print_ascii_with_filter, normal)
     DltFilter filter;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -1569,10 +1584,13 @@ TEST(t_dlt_message_print_header, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1626,10 +1644,13 @@ TEST(t_dlt_message_print_header, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1660,10 +1681,13 @@ TEST(t_dlt_message_print_header_with_filter, normal)
     DltFilter filter;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -1707,10 +1731,13 @@ TEST(t_dlt_message_print_hex, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1764,10 +1791,13 @@ TEST(t_dlt_message_print_hex, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1798,10 +1828,13 @@ TEST(t_dlt_message_print_hex_with_filter, normal)
     DltFilter filter;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -1845,10 +1878,13 @@ TEST(t_dlt_message_print_mixed_plain, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1902,10 +1938,13 @@ TEST(t_dlt_message_print_mixed_plain, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -1936,10 +1975,13 @@ TEST(t_dlt_message_print_mixed_plain_with_filter, normal)
     DltFilter filter;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -1982,10 +2024,13 @@ TEST(t_dlt_message_print_mixed_html, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2039,10 +2084,13 @@ TEST(t_dlt_message_print_mixed_html, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2072,10 +2120,13 @@ TEST(t_dlt_message_print_mixed_html_with_filter, normal)
     DltFilter filter;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -2119,10 +2170,13 @@ TEST(t_dlt_message_filter_check, normal)
     DltFile file;
     DltFilter filter;
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -2183,10 +2237,13 @@ TEST(t_dlt_message_filter_check, nullpointer)
     DltFile file;
     DltFilter filter;
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     char openfilter[117];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     sprintf(openfilter, "%s/testfilter.txt", pwd);
@@ -2210,10 +2267,13 @@ TEST(t_dlt_message_get_extraparamters, normal)
 {
     DltFile file;
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2278,10 +2338,13 @@ TEST(t_dlt_message_header, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2338,10 +2401,13 @@ TEST(t_dlt_message_header, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2388,10 +2454,13 @@ TEST(t_dlt_message_header_flags, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2514,10 +2583,13 @@ TEST(t_dlt_message_header_flags, nullpointer)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2724,10 +2796,13 @@ TEST(t_dlt_message_payload, normal)
     DltFile file;
     static char text[DLT_DAEMON_TEXTSIZE];
 
-    /* Get PWD so file and filter can be used*/
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2927,10 +3002,13 @@ TEST(t_dlt_message_payload, nullpointer)
 TEST(t_dlt_message_set_extraparamters, normal)
 {
     DltFile file;
-    // Get PWD so file and filter can be used
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -2991,10 +3069,13 @@ TEST(t_dlt_message_set_extraparamters, nullpointer)
 TEST(t_dlt_message_read, normal)
 {
     DltFile file;
-    // Get PWD so file and filter can be used
+    // Get PWD so file can be used
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -3030,10 +3111,13 @@ TEST(t_dlt_message_read, abnormal)
 TEST(t_dlt_message_read, nullpointer)
 {
     DltFile file;
-    // Get PWD so file and filter can be used
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
@@ -3055,10 +3139,13 @@ TEST(t_dlt_message_read, nullpointer)
 TEST(t_dlt_message_argument_print, normal)
 {
     DltFile file;
-    // Get PWD so file and filter can be used
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     static char text[DLT_DAEMON_TEXTSIZE];
     /*---------------------------------------*/
@@ -3136,10 +3223,13 @@ TEST(t_dlt_message_argument_print, abnormal)
 TEST(t_dlt_message_argument_print, nullpointer)
 {
     DltFile file;
-    // Get PWD so file and filter can be used
+    /* Get PWD so file can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
     char  openfile[114];
+
+    // ignore returned value from getcwd
+    if (getcwd(pwd, 100) == NULL) {}
+
     sprintf(openfile, "%s/testfile.dlt", pwd);
     static char text[DLT_DAEMON_TEXTSIZE];
     /*---------------------------------------*/

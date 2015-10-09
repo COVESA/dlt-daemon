@@ -61,7 +61,7 @@ TEST(t_dlt_daemon_application_add, normal)
     const char * apid = "TEST";
     pid_t pid = 0;
     const char * desc = "HELLO_TEST";
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -90,7 +90,7 @@ TEST(t_dlt_daemon_application_add, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 
     // Add the same application with same pid twice
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -154,7 +154,7 @@ TEST(t_dlt_daemon_application_del, normal)
     const char * apid = "TEST";
     pid_t pid = 0;
     const char * desc = "HELLO_TEST";
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case, retrun type cannot be tested, only apid and desc
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -169,7 +169,7 @@ TEST(t_dlt_daemon_application_del, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 
     // no application exists, expect < 0
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -211,7 +211,7 @@ TEST(t_dlt_daemon_application_find, normal)
     const char * apid = "TEST";
     pid_t pid = 0;
     const char * desc = "HELLO_TEST";
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -239,7 +239,7 @@ TEST(t_dlt_daemon_application_find, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 
     // Verbose != 0 or 1, expect error
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -310,7 +310,7 @@ TEST(t_dlt_daemon_applications_invalidate_fd, normal)
     const char * apid = "TEST";
     pid_t pid = 0;
     const char * desc = "HELLO_TEST";
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -326,7 +326,7 @@ TEST(t_dlt_daemon_applications_invalidate_fd, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 
     // Daemon isn't initialized, expected error
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -356,7 +356,7 @@ TEST(t_dlt_daemon_applications_save, normal)
     const char * apid = "TEST";
     pid_t pid = 0;
     const char * desc = "HELLO_TEST";
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = NULL;
     const char * filename = "/tmp/dlt-runtime.cfg";
 
     // Normal Use-Case
@@ -373,7 +373,7 @@ TEST(t_dlt_daemon_applications_save, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 //    const char * filename = "/tmp/dlt-runtime.cfg";
 
     // Uninitialized
@@ -425,7 +425,7 @@ TEST(t_dlt_daemon_applications_load, abnormal)
 //    const char * apid = "TEST";
 //    pid_t pid = 0;
 //    const char * desc = "HELLO_TEST";
-//    DltDaemonApplication *app;
+//    DltDaemonApplication *app = NULL;
 //    const char * filename = "/tmp/dlt-runtime.cfg";
 
     // Uninitialized
@@ -489,8 +489,8 @@ TEST(t_dlt_daemon_context_add, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -514,8 +514,8 @@ TEST(t_dlt_daemon_context_add, abnormal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Log Level dont exists
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -649,8 +649,8 @@ TEST(t_dlt_daemon_context_del, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -720,8 +720,8 @@ TEST(t_dlt_daemon_context_find, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -744,8 +744,8 @@ TEST(t_dlt_daemon_context_find, abnormal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Uninitialized
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -814,8 +814,8 @@ TEST(t_dlt_daemon_contexts_clear, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -833,8 +833,8 @@ TEST(t_dlt_daemon_contexts_clear, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 
     // No context added
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -866,8 +866,8 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -886,8 +886,8 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 
     // Uninitialized
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -920,8 +920,8 @@ TEST(t_dlt_daemon_contexts_save, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
     const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Normal Use-Case
@@ -941,8 +941,8 @@ TEST(t_dlt_daemon_contexts_save, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 //    const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Uninitialized
@@ -990,8 +990,8 @@ TEST(t_dlt_daemon_contexts_load, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
     const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Normal Use-Case
@@ -1011,8 +1011,8 @@ TEST(t_dlt_daemon_contexts_load, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 //    const char * filename = "/tmp/dlt-runtime-context.cfg";
 
     // Uninitialized
@@ -1116,8 +1116,8 @@ TEST(t_dlt_daemon_user_send_log_level, normal)
     ID4 apid = "TES";
     ID4 ctid = "CON";
     char desc[255] = "TEST dlt_daemon_context_add";
-    DltDaemonContext *daecontext;
-    DltDaemonApplication *app;
+    DltDaemonContext *daecontext = NULL;
+    DltDaemonApplication *app = NULL;
 
     // Normal Use-Case
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -1136,8 +1136,8 @@ TEST(t_dlt_daemon_user_send_log_level, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 
     // Uninitialized
 //    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,0));
@@ -1211,8 +1211,8 @@ TEST(t_dlt_daemon_user_send_log_state, abnormal)
 //    ID4 apid = "TES";
 //    ID4 ctid = "CON";
 //    char desc[255] = "TEST dlt_daemon_context_add";
-//    DltDaemonContext *daecontext;
-//    DltDaemonApplication *app;
+//    DltDaemonContext *daecontext = NULL;
+//    DltDaemonApplication *app = NULL;
 //    pid_t pid = 18166;
 //    char filename[DLT_DAEMON_COMMON_TEXTBUFSIZE+1];
 //    snprintf(filename,DLT_DAEMON_COMMON_TEXTBUFSIZE,"%s/dlt%d",DLT_USER_DIR,pid);

@@ -107,11 +107,11 @@ int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t leng
 int test_injection_function_callback(uint32_t service_id, void *data, uint32_t length);
 
 /* Context declaration.. */
-DLT_DECLARE_CONTEXT(context_info);
+DLT_DECLARE_CONTEXT(context_info)
 
 /* for macro interface */
-DLT_DECLARE_CONTEXT(context_macro_callback);
-DLT_DECLARE_CONTEXT(context_macro_test[DLT_TEST_NUM_CONTEXT]);
+DLT_DECLARE_CONTEXT(context_macro_callback)
+DLT_DECLARE_CONTEXT(context_macro_test[DLT_TEST_NUM_CONTEXT])
 
 /* for function interface */
 DltContext context_function_callback;
