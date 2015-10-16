@@ -56,6 +56,7 @@ Developped and tested with Ubuntu Linux 12.04 32-bit / Intel PC
 License
 -------
 Full information on the license for this software is available in the "LICENSE" file.
+Full information on the license for the cityhash code is available in "LICENSE" file in src/core_dump_handler/cityhash_c.
 
 Source Code
 -----------

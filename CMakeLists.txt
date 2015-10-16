@@ -24,8 +24,8 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 include ( GNUInstallDirs )
 # Set version parameters
 set( DLT_MAJOR_VERSION 2)
-set( DLT_MINOR_VERSION 12)
-set( DLT_PATCH_LEVEL 1)
+set( DLT_MINOR_VERSION 13)
+set( DLT_PATCH_LEVEL 0)
 set( DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
 set( DLT_VERSION_STATE STABLE )
 set( DLT_REVISION "")
@@ -69,7 +69,7 @@ option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"          
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
-option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF
+option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF)
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -116,6 +116,7 @@ add_definitions( "-Wall" )
 add_definitions( "-Wextra" )
 #add_definitions( "-pedantic" )
 add_definitions( "-Wno-variadic-macros" )
+add_definitions( "-Wno-strict-aliasing" )
 
 IF(${WITH_DOC} STREQUAL "OFF")
 	SET(PACKAGE_DOC "#")

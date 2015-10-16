@@ -4,10 +4,35 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.12.1 STABLE
+2.13.0 STABLE
 
 Changes
 -------
+
+2.13.0
+
+  * Added core dump handler code
+  * Purged all warnings for -Wall -Wextra with gcc 4.9.1
+  * Set DLT_USER_BUF_MAX_SIZE to 1390 to prepare UDP message transport
+  * dlt-test-client and dlt-test-filetransfer have global failed test counter so they can return 1 on failure
+  * Using DLT_USER_BUF_MAX_SIZE in dlt-test-client.c truncated check
+  * Set path to /usr/local/share/ in dlt-test-filetransfer.c
+  * Added programme to test repeated calls of dlt_init and dlt_free
+  * DLT daemon improvement - dlt_init()-check
+  * DLT daemon improvement - parameter value range check
+  * Adapt unit tests to check for enum return values
+  * Changed C version to gnu99 and C++ version to gnu++0x
+  * Fixed bug in INTERNAL-mode connection
+  * Use the best possible timestamp for all system journal entries
+  * Make timeout in at_exit handler configurable
+  * Allow multiple instances of dlt-daemon
+  * Fixed whitespace, formatting and licence headers of new code
+  * Add C++ extension which uses variadic templates from C++ 11 (disabled by default)
+  * Allow registration of contexts before application is registered
+  * Add env-var to set initial log-levels
+  * Allow applications to fork()
+  * Fixed file permissions
+  * Added offline logstorage implementation which can be used instead of the already available offline trace functionality
 
 2.12.1
 
