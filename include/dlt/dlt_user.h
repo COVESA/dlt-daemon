@@ -537,6 +537,13 @@ DltReturnValue dlt_unregister_app(void);
 DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
 
 /**
+ * Get the application id
+ * @param four byte long character array to store the application id
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_get_appid(char *appid);
+
+/**
  * Register a context in the daemon.
  * This function has to be called before first usage of the context.
  * @param handle pointer to an object containing information about one special logging context

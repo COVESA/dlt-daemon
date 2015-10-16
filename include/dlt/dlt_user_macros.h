@@ -126,6 +126,13 @@
         (void)dlt_unregister_app_flush_buffered_logs(); } while (0)
 
 /**
+ * To Get application ID.
+ * @Param APPID character pointer of minimum 4 bytes
+ */
+#define DLT_GET_APPID(APPID) do{\
+    dlt_get_appid(APPID);} while(0)
+
+/**
  * Register context (with default log level and default trace status)
  * @param CONTEXT object containing information about one special logging context
  * @param CONTEXTID context id with maximal four characters

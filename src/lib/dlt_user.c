@@ -414,6 +414,17 @@ DltReturnValue dlt_init(void)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_get_appid(char *appid)
+{
+    if (appid != NULL) {
+        strncpy(appid, dlt_user.appID, 4);
+        return DLT_RETURN_OK;
+    } else {
+        dlt_log(LOG_ERR, "Invalid parameter.\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+}
+
 DltReturnValue dlt_init_file(const char *name)
 {
     /* check null pointer */

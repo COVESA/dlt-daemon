@@ -405,6 +405,25 @@ the IPC channel. Because of this, messages might be lost if logs are emitted
 immediately after registering. Typically this is not a problem, but may arise
 especially with simple examples.
 
+### Get application ID
+
+To get the application ID value, requested to allocate a char array at least
+4 byte length and input to the function call.
+
+The application ID will be stored in this input char array.
+
+#### MACRO
+
+```
+DLT_GET_APPID(appid);
+```
+
+#### Function
+
+```
+dlt_get_appid(appid);
+```
+
 ### Define and register all logging contexts
 
 As many contexts as needed can be defined. These contexts can be declared as
