@@ -17,6 +17,7 @@
 
 add_subdirectory( lib )
 add_subdirectory( daemon )
+add_subdirectory( gateway )
 
 if( WITH_DLT_CONSOLE )
     add_subdirectory( console )

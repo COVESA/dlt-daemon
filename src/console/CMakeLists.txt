@@ -33,6 +33,10 @@ set_target_properties(dlt-control PROPERTIES LINKER_LANGUAGE C)
 set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
 add_subdirectory( logstorage )
 
-install(TARGETS dlt-convert dlt-receive dlt-control
+set(dlt_passive_node_ctrl_SRCS dlt-passive-node-ctrl.c dlt-control-common.c)
+add_executable(dlt-passive-node-ctrl ${dlt_passive_node_ctrl_SRCS} ${dlt_most_SRCS})
+target_link_libraries(dlt-passive-node-ctrl dlt ${EXPAT_LIBRARIES})
+
+install(TARGETS dlt-convert dlt-receive dlt-control dlt-passive-node-ctrl
 	RUNTIME DESTINATION bin
 	COMPONENT base)

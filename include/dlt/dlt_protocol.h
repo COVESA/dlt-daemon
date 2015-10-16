@@ -199,6 +199,8 @@
 #define DLT_SERVICE_ID_TIMEZONE                       0xf03 /**< Service ID: Timezone */
 #define DLT_SERVICE_ID_MARKER                         0xf04 /**< Service ID: Marker */
 #define DLT_SERVICE_ID_OFFLINE_LOGSTORAGE             0xf05 /**< Service ID: Offline log storage */
+#define DLT_SERVICE_ID_PASSIVE_NODE_CONNECT           0xf0E /**< Service ID: (Dis)Connect passive Node */
+#define DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS 0xf0F /**< Service ID: Passive Node status information */
 #define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
 
 /*

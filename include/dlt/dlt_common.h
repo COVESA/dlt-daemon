@@ -327,6 +327,10 @@ enum {
 #define DLT_MOUNT_PATH_MAX  1024
 
 /**
+ * Maximal length of an entry
+ */
+#define DLT_ENTRY_MAX 100
+/**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
 extern const char dltSerialHeader[DLT_ID_SIZE];
@@ -563,6 +567,42 @@ typedef struct
     uint8_t connection_type;              /**< connection status of the connected device connected/disconnected */
     char comid[DLT_ID_SIZE];              /**< communication interface */
 } PACKED DltServiceOfflineLogstorage;
+
+/**
+ * The structure of DLT Service Get Filter Config
+ */
+typedef struct
+{
+    uint32_t service_id;                      /**< service ID */
+    uint8_t status;                           /**< response status */
+    char name[DLT_ENTRY_MAX];                 /**< config name */
+    uint32_t level;                           /**< filter level */
+    uint32_t client_mask;                     /**< client mask */
+    uint32_t ctrl_mask;                       /**< control message mask */
+    char injections[DLT_ENTRY_MAX];           /**< list of injections */
+} PACKED DltServiceGetCurrentFilterInfo;
+
+/**
+ * The structure of DLT Service Passive Node Connect
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint32_t connection_status;     /**< connect/disconnect */
+    char node_id[DLT_ID_SIZE];      /**< passive node ID */
+} PACKED DltServicePassiveNodeConnect;
+
+/**
+ * The structure of DLT Service Passive Node Connection Status
+ */
+typedef struct
+{
+    uint32_t service_id;                       /**< service ID */
+    uint8_t status;                            /**< response status */
+    uint32_t num_connections;                  /**< number of connections */
+    uint8_t connection_status[DLT_ENTRY_MAX];  /**< list of connection status */
+    char node_id[DLT_ENTRY_MAX];               /**< list of passive node IDs */
+} PACKED DltServicePassiveNodeConnectionInfo;
 
 /**
  * Structure to store filter parameters.

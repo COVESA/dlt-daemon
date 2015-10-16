@@ -45,6 +45,7 @@
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_common.h"
 #include "dlt_common.h"
+#include "dlt_gateway.h"
 
 /** @brief Generic sending function.
  *
@@ -171,7 +172,8 @@ DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
  * @return DltReceiver structure or NULL if none corresponds to the type.
  */
 static DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
-                                               DltConnectionType type)
+                                               DltConnectionType type,
+                                               int fd)
 {
     DltReceiver *ret = NULL;
 
@@ -205,6 +207,16 @@ static DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
     /* There must be the same structure for this case */
     case DLT_CONNECTION_CONTROL_MSG:
         ret = &daemon_local->receiverCtrlSock;
+        break;
+    case DLT_CONNECTION_GATEWAY:
+        /* FIXME: This is complete different approach compared to having the
+         *        receiver as part of daemon_local structure. Approaches need
+         *        to be harmonized.
+         */
+        ret = dlt_gateway_get_connection_receiver(&daemon_local->pGateway, fd);
+        break;
+    case DLT_CONNECTION_GATEWAY_TIMER:
+        ret = &daemon_local->timer_gateway;
         break;
     default:
         ret = NULL;
@@ -264,6 +276,12 @@ void *dlt_connection_get_callback(DltConnection *con)
         break;
     case DLT_CONNECTION_CONTROL_MSG:
         ret = dlt_daemon_process_control_messages;
+        break;
+    case DLT_CONNECTION_GATEWAY:
+        ret = dlt_gateway_process_passive_node_messages;
+        break;
+    case DLT_CONNECTION_GATEWAY_TIMER:
+        ret = dlt_gateway_process_gateway_timer;
         break;
     default:
         ret = NULL;
@@ -332,7 +350,7 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
 
     temp->fd = fd;
     temp->type = type;
-    temp->receiver = dlt_connection_get_receiver(daemon_local, type);
+    temp->receiver = dlt_connection_get_receiver(daemon_local, type, fd);
 
     /* Now give the ownership of the newly created connection
      * to the event handler, by registering for events.
@@ -358,7 +376,7 @@ int dlt_connection_create_remaining(DltDaemonLocal *daemon_local)
     for (i = 0 ; i < DLT_CONNECTION_TYPE_MAX ; i++)
     {
         int fd = 0;
-        DltReceiver *rec = dlt_connection_get_receiver(daemon_local, i);
+        DltReceiver *rec = dlt_connection_get_receiver(daemon_local, i, fd);
 
         if (rec == NULL)
         {

@@ -46,6 +46,7 @@ typedef enum {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     DLT_TIMER_SYSTEMD,
 #endif
+    DLT_TIMER_GATEWAY,
     DLT_TIMER_UNKNOWN
 } DltTimers;
 

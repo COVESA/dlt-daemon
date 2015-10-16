@@ -265,4 +265,30 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
  */
 void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose);
 
+/**
+ * Process and generate response to received passive node connect control
+ * message
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessage *msg,
+                                             int verbose);
+/**
+ * Process and generate response to received passive node connection status
+ * control message
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect_status(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose);
 #endif /* DLT_DAEMON_CLIENT_H */

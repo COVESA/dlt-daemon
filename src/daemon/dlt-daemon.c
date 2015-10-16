@@ -64,6 +64,7 @@
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_event_handler.h"
 #include "dlt_daemon_offline_logstorage.h"
+#include "dlt_gateway.h"
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #include "sd-daemon.h"
@@ -246,6 +247,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
+    daemon_local->flags.gatewayMode = 0;
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -482,6 +484,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                 value,
                                 DLT_DAEMON_FLAG_MAX-1);
                         }
+                        else if(strcmp(token,"GatewayMode")==0)
+                        {
+                            daemon_local->flags.gatewayMode = atoi(value);
+                            //printf("Option: %s=%s\n",token,value);
+                        }
                         else
                         {
                             fprintf(stderr, "Unknown option: %s=%s\n",token,value);
@@ -631,6 +638,22 @@ int main(int argc, char* argv[])
                         DLT_TIMER_ECU);
     }
 
+    /* initiate gateway */
+    if (daemon_local.flags.gatewayMode == 1)
+    {
+        if (dlt_gateway_init(&daemon_local, daemon_local.flags.vflag) == -1)
+        {
+            dlt_log(LOG_CRIT, "Fail to create gateway\n");
+            return -1;
+        }
+
+        /* create gateway timer */
+        create_timer_fd(&daemon_local,
+                        DLT_GATEWAY_TIMER_INTERVAL,
+                        DLT_GATEWAY_TIMER_INTERVAL,
+                        &daemon_local.timer_gateway.fd,
+                        DLT_TIMER_GATEWAY);
+    }
     if (dlt_connection_create_remaining(&daemon_local) == -1)
     {
         /* TODO: Perform clean-up */
@@ -655,7 +678,6 @@ int main(int argc, char* argv[])
                                        &daemon,
                                        &daemon_local);
     }
-
 
     dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
 
@@ -1409,7 +1431,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     return 0;
 }
 
-int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_process_client_connect(DltDaemon *daemon,
+                                      DltDaemonLocal *daemon_local,
+                                      DltReceiver *receiver,
+                                      int verbose)
 {
     socklen_t cli_size;
     struct sockaddr cli;
@@ -1418,31 +1443,40 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_client_connect()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_client_connect()\n");
         return -1;
     }
 
     /* event from TCP server socket, new connection */
     cli_size = sizeof(cli);
-    if ((in_sock  = accept(daemon_local->sock,&cli, &cli_size)) < 0)
+    if ((in_sock  = accept(receiver->fd,&cli, &cli_size)) < 0)
     {
         dlt_log(LOG_ERR, "accept() failed!\n");
         return -1 ;
     }
 
-    /* check if file file descriptor was already used, and make it invalid if it is reused */
+    /* check if file file descriptor was already used, and make it invalid if it
+     * is reused. */
     /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon,in_sock,verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon,in_sock,verbose);
+    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
 
     /* Set socket timeout in reception */
     struct timeval timeout_send;
     timeout_send.tv_sec = daemon_local->timeoutOnSend;
     timeout_send.tv_usec = 0;
-    if (setsockopt (in_sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout_send, sizeof(timeout_send)) < 0)
+    if (setsockopt (in_sock,
+                    SOL_SOCKET,
+                    SO_SNDTIMEO,
+                    (char *)&timeout_send,
+                    sizeof(timeout_send)) < 0)
+    {
         dlt_log(LOG_WARNING, "setsockopt failed\n");
+    }
 
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
@@ -1457,26 +1491,42 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
 
     if (daemon_local->flags.vflag)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "New connection to client established, #connections: %d\n",daemon_local->client_connections);
+        snprintf(str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "New connection to client established, #connections: %d\n",
+                 daemon_local->client_connections);
         dlt_log(LOG_INFO, str);
     }
 
     // send connection info about connected
-    dlt_daemon_control_message_connection_info(in_sock,daemon,daemon_local,DLT_CONNECTION_STATUS_CONNECTED,"",verbose);
+    dlt_daemon_control_message_connection_info(in_sock,
+                                               daemon,
+                                               daemon_local,
+                                               DLT_CONNECTION_STATUS_CONNECTED,
+                                               "",
+                                               verbose);
 
     // send ecu version string
-    if(daemon_local->flags.sendECUSoftwareVersion > 0)
+    if (daemon_local->flags.sendECUSoftwareVersion > 0)
     {
-        if(daemon_local->flags.sendECUSoftwareVersion > 0)
-            dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local, daemon_local->flags.vflag);
-
-        if(daemon_local->flags.sendTimezone > 0)
+        if (daemon_local->flags.sendECUSoftwareVersion > 0)
         {
-            dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,daemon_local->flags.vflag);
+            dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
+                                                    daemon,
+                                                    daemon_local,
+                                                    daemon_local->flags.vflag);
+        }
+
+        if (daemon_local->flags.sendTimezone > 0)
+        {
+            dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
+                                                daemon,
+                                                daemon_local,
+                                                daemon_local->flags.vflag);
         }
     }
 
-    if (daemon_local->client_connections==1)
+    if (daemon_local->client_connections == 1)
     {
         if (daemon_local->flags.vflag)
         {
@@ -1497,25 +1547,30 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_
     return 0;
 }
 
-int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_process_client_messages(DltDaemon *daemon,
+                                       DltDaemonLocal *daemon_local,
+                                       DltReceiver *receiver,
+                                       int verbose)
 {
     int bytes_to_be_removed=0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_client_messages()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_client_messages()\n");
         return -1;
     }
 
-    if (dlt_receiver_receive_socket(&(daemon_local->receiverSock))<=0)
+    if (dlt_receiver_receive_socket(receiver) <= 0)
     {
-          dlt_daemon_close_socket(daemon_local->receiverSock.fd,
+        dlt_daemon_close_socket(receiver->fd,
                                 daemon,
                                 daemon_local,
                                 verbose);
-        daemon_local->receiverSock.fd = -1;
+        receiver->fd = -1;
         /* FIXME: Why the hell do we need to close the socket
          * on control message reception ??
          */
@@ -1523,15 +1578,26 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
     }
 
     /* Process all received messages */
-    while (dlt_message_read(&(daemon_local->msg),(uint8_t*)daemon_local->receiverSock.buf,daemon_local->receiverSock.bytesRcvd,daemon_local->flags.nflag,daemon_local->flags.vflag)==DLT_MESSAGE_ERROR_OK)
+    while (dlt_message_read(&(daemon_local->msg),
+                            (uint8_t*)receiver->buf,
+                            receiver->bytesRcvd,
+                            daemon_local->flags.nflag,
+                            daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK)
     {
         /* Check for control message */
-        if ( 0 < daemon_local->receiverSock.fd && DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)) )
+        if (0 < receiver->fd &&
+            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
         {
-            dlt_daemon_client_process_control(daemon_local->receiverSock.fd, daemon,daemon_local, &(daemon_local->msg), daemon_local->flags.vflag);
+            dlt_daemon_client_process_control(receiver->fd,
+                                              daemon,
+                                              daemon_local,
+                                              &(daemon_local->msg),
+                                              daemon_local->flags.vflag);
         }
 
-        bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader);
+        bytes_to_be_removed = daemon_local->msg.headersize +
+                              daemon_local->msg.datasize -
+                              sizeof(DltStorageHeader);
         if (daemon_local->msg.found_serialheader)
         {
             bytes_to_be_removed += sizeof(dltSerialHeader);
@@ -1541,56 +1607,76 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon
             bytes_to_be_removed += daemon_local->msg.resync_offset;
         }
 
-        if (dlt_receiver_remove(&(daemon_local->receiverSock),bytes_to_be_removed) == DLT_RETURN_ERROR)
+        if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1)
         {
-            dlt_log(LOG_WARNING,"Can't remove bytes from receiver for sockets\n");
+            dlt_log(LOG_WARNING,
+                    "Can't remove bytes from receiver for sockets\n");
             return -1;
         }
 
     } /* while */
 
-
-    if (dlt_receiver_move_to_begin(&(daemon_local->receiverSock)) == DLT_RETURN_ERROR)
+    if (dlt_receiver_move_to_begin(receiver) == -1)
     {
-        dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for sockets\n");
+        dlt_log(LOG_WARNING,
+                "Can't move bytes to beginning of receiver buffer for sockets\n");
         return -1;
     }
 
     return 0;
 }
 
-int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
+                                              DltDaemonLocal *daemon_local,
+                                              DltReceiver *receiver,
+                                              int verbose)
 {
     int bytes_to_be_removed=0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_client_messages_serial()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_client_messages_serial()\n");
         return -1;
     }
 
-    if (dlt_receiver_receive_fd(&(daemon_local->receiverSerial))<=0)
+    if (dlt_receiver_receive_fd(receiver) <= 0)
     {
-        dlt_log(LOG_WARNING, "dlt_receiver_receive_fd() for messages from serial interface failed!\n");
+        dlt_log(LOG_WARNING,
+                "dlt_receiver_receive_fd() for messages from serial interface "
+                "failed!\n");
         return -1;
     }
 
     /* Process all received messages */
-    while (dlt_message_read(&(daemon_local->msg),(uint8_t*)daemon_local->receiverSerial.buf,daemon_local->receiverSerial.bytesRcvd,daemon_local->flags.mflag,daemon_local->flags.vflag)==DLT_MESSAGE_ERROR_OK)
+    while (dlt_message_read(&(daemon_local->msg),
+                            (uint8_t*)receiver->buf,
+                            receiver->bytesRcvd,
+                            daemon_local->flags.mflag,
+                            daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK)
     {
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
         {
-            if (dlt_daemon_client_process_control(daemon_local->receiverSerial.fd, daemon,daemon_local, &(daemon_local->msg), daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_client_process_control(receiver->fd,
+                                                  daemon,
+                                                  daemon_local,
+                                                  &(daemon_local->msg),
+                                                  daemon_local->flags.vflag)
+                    == -1)
             {
-                dlt_log(LOG_WARNING,"Can't process control messages\n");
+                dlt_log(LOG_WARNING, "Can't process control messages\n");
                 return -1;
             }
         }
 
-        bytes_to_be_removed = daemon_local->msg.headersize+daemon_local->msg.datasize-sizeof(DltStorageHeader);
+        bytes_to_be_removed = daemon_local->msg.headersize +
+                              daemon_local->msg.datasize -
+                              sizeof(DltStorageHeader);
+
         if (daemon_local->msg.found_serialheader)
         {
             bytes_to_be_removed += sizeof(dltSerialHeader);
@@ -1600,18 +1686,20 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
             bytes_to_be_removed += daemon_local->msg.resync_offset;
         }
 
-        if (dlt_receiver_remove(&(daemon_local->receiverSerial),bytes_to_be_removed) == DLT_RETURN_ERROR)
+        if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1)
         {
-            dlt_log(LOG_WARNING,"Can't remove bytes from receiver for serial connection\n");
+            dlt_log(LOG_WARNING,
+                    "Can't remove bytes from receiver for serial connection\n");
             return -1;
         }
 
     } /* while */
 
-
-    if (dlt_receiver_move_to_begin(&(daemon_local->receiverSerial)) == DLT_RETURN_ERROR)
+    if (dlt_receiver_move_to_begin(receiver) == -1)
     {
-        dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for serial connection\n");
+        dlt_log(LOG_WARNING,
+                "Can't move bytes to beginning of receiver buffer for serial "
+                "connection\n");
         return -1;
     }
 
@@ -1621,6 +1709,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
 int dlt_daemon_process_control_connect(
         DltDaemon *daemon,
         DltDaemonLocal *daemon_local,
+        DltReceiver *receiver,
         int verbose)
 {
     socklen_t ctrl_size;
@@ -1629,24 +1718,27 @@ int dlt_daemon_process_control_connect(
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_control_connect()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_control_connect()\n");
         return -1;
     }
 
     /* event from UNIX server socket, new connection */
     ctrl_size = sizeof(ctrl);
-    if ((in_sock = accept(daemon_local->ctrlsock, &ctrl, &ctrl_size)) < 0)
+    if ((in_sock = accept(receiver->fd, &ctrl, &ctrl_size)) < 0)
     {
         dlt_log(LOG_ERR, "accept() on UNIX socket failed!\n");
         return -1 ;
     }
 
-    /* check if file file descriptor was already used, and make it invalid if it is reused */
+    /* check if file file descriptor was already used, and make it invalid if it
+     *  is reused */
     /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon,in_sock,verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon,in_sock,verbose);
+    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
 
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
@@ -1661,8 +1753,8 @@ int dlt_daemon_process_control_connect(
 
     if (verbose)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "New connection to client established, #connections: %d\n",
-                daemon_local->client_connections);
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,
+                 "New connection to control client established\n");
         dlt_log(LOG_INFO, str);
     }
 
@@ -1673,25 +1765,28 @@ int dlt_daemon_process_control_connect(
 int dlt_daemon_process_control_messages(
         DltDaemon *daemon,
         DltDaemonLocal *daemon_local,
+        DltReceiver *receiver,
         int verbose)
 {
     int bytes_to_be_removed=0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_control_messages()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_control_messages()\n");
         return -1;
     }
 
-    if (dlt_receiver_receive_socket(&(daemon_local->receiverCtrlSock)) <= 0)
+    if (dlt_receiver_receive_socket(receiver) <= 0)
     {
-        dlt_daemon_close_socket(daemon_local->receiverCtrlSock.fd,
+        dlt_daemon_close_socket(receiver->fd,
                                 daemon,
                                 daemon_local,
                                 verbose);
-        daemon_local->receiverCtrlSock.fd = -1;
+        receiver->fd = -1;
         /* FIXME: Why the hell do we need to close the socket
          * on control message reception ??
          */
@@ -1701,25 +1796,24 @@ int dlt_daemon_process_control_messages(
     /* Process all received messages */
     while (dlt_message_read(
                 &(daemon_local->msg),
-                (uint8_t*)daemon_local->receiverCtrlSock.buf,
-                daemon_local->receiverCtrlSock.bytesRcvd,
+                (uint8_t*)receiver->buf,
+                receiver->bytesRcvd,
                 daemon_local->flags.nflag,
                 daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK)
     {
         /* Check for control message */
-        if (daemon_local->receiverCtrlSock.fd > 0 &&
+        if (receiver->fd > 0 &&
             DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
         {
-            dlt_daemon_client_process_control(
-                    daemon_local->receiverCtrlSock.fd,
-                    daemon,daemon_local,
-                    &(daemon_local->msg),
-                    daemon_local->flags.vflag);
+            dlt_daemon_client_process_control(receiver->fd,
+                                              daemon,daemon_local,
+                                              &(daemon_local->msg),
+                                              daemon_local->flags.vflag);
         }
 
-        bytes_to_be_removed =
-            daemon_local->msg.headersize+daemon_local->msg.datasize -
-            sizeof(DltStorageHeader);
+        bytes_to_be_removed = daemon_local->msg.headersize +
+                              daemon_local->msg.datasize -
+                              sizeof(DltStorageHeader);
 
         if (daemon_local->msg.found_serialheader)
         {
@@ -1730,16 +1824,16 @@ int dlt_daemon_process_control_messages(
             bytes_to_be_removed += daemon_local->msg.resync_offset;
         }
 
-        if (dlt_receiver_remove(&(daemon_local->receiverCtrlSock),bytes_to_be_removed)==-1)
+        if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1)
         {
-            dlt_log(LOG_WARNING,"Can't remove bytes from receiver for sockets\n");
+            dlt_log(LOG_WARNING,
+                    "Can't remove bytes from receiver for sockets\n");
             return -1;
         }
 
     } /* while */
 
-
-    if (dlt_receiver_move_to_begin(&(daemon_local->receiverCtrlSock)) == -1)
+    if (dlt_receiver_move_to_begin(receiver) == -1)
     {
         dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for sockets\n");
         return -1;
@@ -1748,40 +1842,46 @@ int dlt_daemon_process_control_messages(
     return 0;
 }
 
-int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_process_user_messages(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     DltReceiver *receiver,
+                                     int verbose)
 {
-    int offset=0;
-    int run_loop=1;
+    int offset = 0;
+    int run_loop = 1;
     DltUserHeader *userheader;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0)  || (daemon_local==0))
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_messages()\n");
+        dlt_log(LOG_ERR,
+                "Invalid function parameters used for function "
+                "dlt_daemon_process_user_messages()\n");
         return -1;
     }
 
     /* read data from FIFO */
-    if (dlt_receiver_receive_fd(&(daemon_local->receiver))<0)
+    if (dlt_receiver_receive_fd(receiver) < 0)
     {
-        dlt_log(LOG_WARNING, "dlt_receiver_receive_fd() for user messages failed!\n");
+        dlt_log(LOG_WARNING,
+                "dlt_receiver_receive_fd() for user messages failed!\n");
         return -1;
     }
 
     /* look through buffer as long as data is in there */
     do
     {
-        if (daemon_local->receiver.bytesRcvd < (int32_t)sizeof(DltUserHeader))
+        if (receiver->bytesRcvd < (int32_t)sizeof(DltUserHeader))
         {
             break;
         }
 
         /* resync if necessary */
-        offset=0;
+        offset = 0;
         do
         {
-            userheader = (DltUserHeader*) (daemon_local->receiver.buf+offset);
+            userheader = (DltUserHeader*) (receiver->buf+offset);
 
             /* Check for user header pattern */
             if (dlt_user_check_userheader(userheader))
@@ -1790,88 +1890,111 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
             }
 
             offset++;
-
-        }
-        while ((int32_t)(sizeof(DltUserHeader)+offset)<=daemon_local->receiver.bytesRcvd);
+        } while ((int32_t)(sizeof(DltUserHeader) + offset) <=
+                 receiver->bytesRcvd);
 
         /* Check for user header pattern */
-        if (dlt_user_check_userheader(userheader)==0)
+        if (dlt_user_check_userheader(userheader) == 0)
         {
             break;
         }
 
         /* Set new start offset */
-        if (offset>0)
+        if (offset > 0)
         {
-            daemon_local->receiver.buf+=offset;
-            daemon_local->receiver.bytesRcvd-=offset;
+            receiver->buf += offset;
+            receiver->bytesRcvd -= offset;
         }
 
         switch (userheader->message)
         {
         case DLT_USER_MESSAGE_OVERFLOW:
         {
-            if (dlt_daemon_process_user_message_overflow(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_overflow(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         case DLT_USER_MESSAGE_REGISTER_CONTEXT:
         {
-            if (dlt_daemon_process_user_message_register_context(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_register_context(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         case DLT_USER_MESSAGE_UNREGISTER_CONTEXT:
         {
-            if (dlt_daemon_process_user_message_unregister_context(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_unregister_context(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         case DLT_USER_MESSAGE_LOG:
         {
-            if (dlt_daemon_process_user_message_log(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_log(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
 #ifdef DLT_SHM_ENABLE
         case DLT_USER_MESSAGE_LOG_SHM:
         {
-            if (dlt_daemon_process_user_message_log_shm(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_log_shm(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
 #endif
         case DLT_USER_MESSAGE_REGISTER_APPLICATION:
         {
-            if (dlt_daemon_process_user_message_register_application(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_register_application(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         case DLT_USER_MESSAGE_UNREGISTER_APPLICATION:
         {
-            if (dlt_daemon_process_user_message_unregister_application(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_unregister_application(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         case DLT_USER_MESSAGE_APP_LL_TS:
         {
-            if (dlt_daemon_process_user_message_set_app_ll_ts(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_set_app_ll_ts(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
@@ -1885,26 +2008,34 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
         }
         case DLT_USER_MESSAGE_MARKER:
         {
-            if (dlt_daemon_process_user_message_marker(daemon, daemon_local, daemon_local->flags.vflag)==-1)
+            if (dlt_daemon_process_user_message_marker(
+                    daemon,
+                    daemon_local,
+                    daemon_local->flags.vflag) == -1)
             {
-                run_loop=0;
+                run_loop = 0;
             }
             break;
         }
         default:
         {
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Invalid user message type received: %d!\n", userheader->message);
+            snprintf(str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Invalid user message type received: %d!\n",
+                     userheader->message);
             dlt_log(LOG_ERR,str);
 
             /* remove user header */
-            if (dlt_receiver_remove(&(daemon_local->receiver),sizeof(DltUserHeader)) == DLT_RETURN_ERROR)
+            if (dlt_receiver_remove(receiver, sizeof(DltUserHeader)) == -1)
             {
-                dlt_log(LOG_WARNING,"Can't remove bytes from receiver for user messages\n");
+                dlt_log(LOG_WARNING,
+                        "Can't remove bytes from receiver for user messages\n");
                 return -1;
             }
 
-            /* In next invocation of do-while loop, a resync will be triggered if additional data was received */
-            run_loop=0;
+            /* In next invocation of do-while loop, a resync will be triggered
+             * if additional data was received */
+            run_loop = 0;
 
             break;
         }
@@ -1914,9 +2045,11 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
     while (run_loop);
 
     /* keep not read data in buffer */
-    if (dlt_receiver_move_to_begin(&(daemon_local->receiver)) == DLT_RETURN_ERROR)
+    if (dlt_receiver_move_to_begin(receiver) == -1)
     {
-        dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for user messages\n");
+        dlt_log(LOG_WARNING,
+                "Can't move bytes to beginning of receiver buffer for user "
+                "messages\n");
         return -1;
     }
 

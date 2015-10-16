@@ -91,7 +91,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
     int nfds = 0;
     int i = 0;
     char str[DLT_DAEMON_TEXTBUFSIZE];
-    int (*callback)(DltDaemon *, DltDaemonLocal *, int) = NULL;
+    int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
 
     /*CM Change begin*/
     nfds = epoll_wait(pEvent->epfd,
@@ -142,7 +142,6 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                                                    type);
             continue;
         }
-
         /* Get the function to be used to handle the event */
         callback = dlt_connection_get_callback((DltConnection *)ev->data.ptr);
 
@@ -161,7 +160,10 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         ((DltConnection *)ev->data.ptr)->receiver->fd = fd;
 
         /* From now on, callback is correct */
-        if (callback(daemon, daemon_local, daemon_local->flags.vflag) == -1)
+        if (callback(daemon,
+                     daemon_local,
+                     ((DltConnection *)ev->data.ptr)->receiver,
+                     daemon_local->flags.vflag) == -1)
         {
             snprintf(str,
                      DLT_DAEMON_TEXTBUFSIZE,
@@ -171,7 +173,6 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
             return -1;
         }
     }
-
     return 0;
 }
 

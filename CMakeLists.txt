@@ -96,6 +96,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/lib/
     ${CMAKE_SOURCE_DIR}/src/daemon/
     ${CMAKE_SOURCE_DIR}/src/console/
+    ${CMAKE_SOURCE_DIR}/src/gateway/
     ${CMAKE_SOURCE_DIR}/systemd/3rdparty/
 )
 

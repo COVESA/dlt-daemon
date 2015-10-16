@@ -41,6 +41,8 @@ typedef enum {
     DLT_CONNECTION_SYSTEMD_TIMER,
     DLT_CONNECTION_CONTROL_CONNECT,
     DLT_CONNECTION_CONTROL_MSG,
+    DLT_CONNECTION_GATEWAY,
+    DLT_CONNECTION_GATEWAY_TIMER,
     DLT_CONNECTION_TYPE_MAX
 } DltConnectionType;
 
@@ -53,7 +55,9 @@ typedef enum {
 #define DLT_CON_MASK_SYSTEMD_TIMER      (1 << DLT_CONNECTION_SYSTEMD_TIMER)
 #define DLT_CON_MASK_CONTROL_CONNECT    (1 << DLT_CONNECTION_CONTROL_CONNECT)
 #define DLT_CON_MASK_CONTROL_MSG        (1 << DLT_CONNECTION_CONTROL_MSG)
-#define DLT_CON_MASK_ALL                (0xff)
+#define DLT_CON_MASK_GATEWAY            (1 << DLT_CONNECTION_GATEWAY)
+#define DLT_CON_MASK_GATEWAY_TIMER      (1 << DLT_CONNECTION_GATEWAY_TIMER)
+#define DLT_CON_MASK_ALL                (0xffff)
 
 /* TODO: squash the DltReceiver structure in there
  * and remove any other duplicates of FDs

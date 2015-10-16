@@ -62,6 +62,8 @@
 #include "dlt_daemon_connection.h"
 
 #include "dlt_daemon_offline_logstorage.h"
+#include "dlt_gateway.h"
+
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
@@ -402,10 +404,11 @@ int dlt_daemon_client_send_control_message( int sock, DltDaemon *daemon, DltDaem
 int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose)
 {
     uint32_t id,id_tmp=0;
+    DltStandardHeaderExtra extra;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0) || (msg==0))
+    if (daemon == NULL || daemon_local == NULL|| msg == NULL)
     {
         return -1;
     }
@@ -415,10 +418,24 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
         return -1;
     }
 
+    extra = msg->headerextra;
+
+    /* check if the message needs to be forwarded */
+    if (daemon_local->flags.gatewayMode == 1)
+    {
+        if (strcmp(daemon_local->flags.evalue, extra.ecu) != 0)
+        {
+            return dlt_gateway_forward_control_message(&daemon_local->pGateway,
+                                                       daemon_local,
+                                                       msg,
+                                                       extra.ecu,
+                                                       verbose);
+        }
+    }
     id_tmp = *((uint32_t*)(msg->databuffer));
     id=DLT_ENDIAN_GET_32(msg->standardheader->htyp ,id_tmp);
 
-    if ((id > 0) && ((id < DLT_SERVICE_ID_LAST_ENTRY) || ((id == DLT_SERVICE_ID_OFFLINE_LOGSTORAGE))))
+    if ((id > 0) && (id != DLT_SERVICE_ID_CALLSW_CINJECTION))
     {
         /* Control message handling */
         switch (id)
@@ -544,6 +561,23 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
         case DLT_SERVICE_ID_OFFLINE_LOGSTORAGE:
         {
             dlt_daemon_control_service_logstorage(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_PASSIVE_NODE_CONNECT:
+        {
+            dlt_daemon_control_passive_node_connect(sock,
+                                                    daemon,
+                                                    daemon_local,
+                                                    msg,
+                                                    verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS:
+        {
+            dlt_daemon_control_passive_node_connect_status(sock,
+                                                          daemon,
+                                                          daemon_local,
+                                                          verbose);
             break;
         }
         default:
@@ -1747,6 +1781,7 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
 
 int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local,
+                                   DltReceiver *receiver,
                                    int verbose)
 {
     uint64_t expir = 0;
@@ -1755,7 +1790,7 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if((daemon_local == NULL) || (daemon == NULL))
+    if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL))
     {
         snprintf(local_str,
                  DLT_DAEMON_TEXTBUFSIZE,
@@ -1765,7 +1800,7 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
         return -1;
     }
 
-    res = read(daemon_local->timer_one_s.fd, &expir, sizeof(expir));
+    res = read(receiver->fd, &expir, sizeof(expir));
 
     if(res < 0)
     {
@@ -1805,6 +1840,7 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
 
 int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
+                                     DltReceiver *receiver,
                                      int verbose)
 {
     uint64_t expir = 0;
@@ -1813,7 +1849,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if((daemon_local == NULL) || (daemon == NULL))
+    if((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL))
     {
         snprintf(str,
                  DLT_DAEMON_TEXTBUFSIZE,
@@ -1823,7 +1859,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
         return -1;
     }
 
-    res = read(daemon_local->timer_sixty_s.fd, &expir, sizeof(expir));
+    res = read(receiver->fd, &expir, sizeof(expir));
 
     if(res < 0)
     {
@@ -1867,6 +1903,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
+                                     DltReceiver *receiver,
                                      int verbose)
 {
     uint64_t expir = 0;
@@ -1875,7 +1912,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if((daemon_local == NULL) || (daemon == NULL))
+    if((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL))
     {
         snprintf(local_str,
                  DLT_DAEMON_TEXTBUFSIZE,
@@ -1885,7 +1922,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
         return res;
     }
 
-    res = read(daemon_local->timer_wd.fd, &expir, sizeof(expir));
+    res = read(receiver->fd, &expir, sizeof(expir));
 
     if(res < 0)
     {
@@ -1910,10 +1947,12 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
 #else
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
+                                     DltReceiver *receiver,
                                      int verbose)
 {
     (void)daemon;
     (void)daemon_local;
+    (void)receiver;
     (void)verbose;
 
     dlt_log(LOG_DEBUG, "Timer watchdog not enabled\n");
@@ -2014,4 +2053,170 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
     {
         dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
     }
+}
+
+void dlt_daemon_control_passive_node_connect(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessage *msg,
+                                             int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServicePassiveNodeConnect *req;
+    uint32_t id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+
+    if (daemon == NULL || daemon_local == NULL || msg == NULL ||
+        msg->databuffer == NULL)
+    {
+        return;
+    }
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0)
+    {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    req = (DltServicePassiveNodeConnect *) msg->databuffer;
+
+    if (dlt_gateway_process_on_demand_request(&daemon_local->pGateway,
+                                              daemon_local,
+                                              req->node_id,
+                                              req->connection_status,
+                                              verbose) < 0)
+    {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+    }
+    else
+    {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_OK,
+                                            verbose);
+    }
+}
+
+void dlt_daemon_control_passive_node_connect_status(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose)
+{
+    DltMessage msg;
+    DltServicePassiveNodeConnectionInfo *resp;
+    DltGatewayConnection *con = NULL;
+    unsigned int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || daemon_local == NULL)
+    {
+        return;
+    }
+
+    if (dlt_message_init(&msg, verbose) == -1)
+    {
+        return;
+    }
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0)
+    {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServicePassiveNodeConnectionInfo);
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+    {
+        msg.databuffer = NULL;
+    }
+    if (msg.databuffer == NULL)
+    {
+        msg.databuffer = (uint8_t *) malloc(msg.datasize);
+        if (msg.databuffer == NULL)
+        {
+            dlt_log(LOG_CRIT, "Cannot allocate memory for message response\n");
+            return;
+        }
+        msg.databuffersize = msg.datasize;
+    }
+
+    resp = (DltServicePassiveNodeConnectionInfo *) msg.databuffer;
+    memset(resp, 0, msg.datasize);
+    resp->service_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->num_connections = daemon_local->pGateway.num_connections;
+
+    for (i = 0; i < resp->num_connections; i++)
+    {
+        if ((i * DLT_ID_SIZE) > DLT_ENTRY_MAX)
+        {
+            dlt_log(LOG_ERR,
+                    "Maximal message size reached. Skip further information\n");
+            break;
+        }
+
+        con = &daemon_local->pGateway.connections[i];
+        if (con == NULL)
+        {
+            dlt_log(LOG_CRIT, "Passive node connection structure is NULL\n");
+            dlt_daemon_control_service_response(
+                sock,
+                daemon,
+                daemon_local,
+                DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+                DLT_SERVICE_RESPONSE_ERROR,
+                verbose);
+
+            /* free message */
+            dlt_message_free(&msg, verbose);
+
+            return;
+        }
+
+        resp->connection_status[i] = con->status;
+        memcpy(&resp->node_id[i * DLT_ID_SIZE], con->ecuid, DLT_ID_SIZE);
+    }
+
+    dlt_daemon_client_send_control_message(sock,
+                                           daemon,
+                                           daemon_local,
+                                           &msg,
+                                           "",
+                                           "",
+                                           verbose);
+    /* free message */
+    dlt_message_free(&msg, verbose);
 }
