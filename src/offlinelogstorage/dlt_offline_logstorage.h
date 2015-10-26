@@ -81,16 +81,18 @@
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
 
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT       0
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT      (1<<6)
-#define DLT_OFFLINE_LOGSTORAGE_APP_INIT            (1<<5)
-#define DLT_OFFLINE_LOGSTORAGE_CTX_INIT            (1<<4)
-#define DLT_OFFLINE_LOGSTORAGE_LOG_LVL_INIT        (1<<3)
-#define DLT_OFFLINE_LOGSTORAGE_NAME_INIT           (1<<2)
-#define DLT_OFFLINE_LOGSTORAGE_SIZE_INIT           (1<<1)
+#define DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT      (1<<7)
+#define DLT_OFFLINE_LOGSTORAGE_APP_INIT            (1<<6)
+#define DLT_OFFLINE_LOGSTORAGE_CTX_INIT            (1<<5)
+#define DLT_OFFLINE_LOGSTORAGE_LOG_LVL_INIT        (1<<4)
+#define DLT_OFFLINE_LOGSTORAGE_NAME_INIT           (1<<3)
+#define DLT_OFFLINE_LOGSTORAGE_SIZE_INIT           (1<<2)
+#define DLT_OFFLINE_LOGSTORAGE_SYNC_BEHAVIOR       (1<<1)
 #define DLT_OFFLINE_LOGSTORAGE_NUM_INIT            1
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_INIT         0x7F
+/* Sync behavior is optional */
+#define DLT_OFFLINE_LOGSTORAGE_FILTER_INIT         0xFD
 
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(A) ((A) == DLT_OFFLINE_LOGSTORAGE_FILTER_INIT)
+#define DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(A) ((A) >= DLT_OFFLINE_LOGSTORAGE_FILTER_INIT)
 
 #define DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(A) ((A) & DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT)
 
@@ -105,9 +107,25 @@
 #define DLT_OFFLINE_LOGSTORAGE_MIN(A, B)   ((A) < (B) ? (A) : (B))
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS     5
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          6
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          7
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
+
+/* Offline Logstorage sync strategies */
+#define DLT_LOGSTORAGE_SYNC_ON_MSG           0x00 /* default, on message sync */
+#define DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT   0x01 /* sync on daemon exit */
+
+
+/* logstorage max cache */
+unsigned int g_logstorage_cache_max;
+/* current logstorage cache size */
+unsigned int g_logstorage_cache_size;
+
+typedef struct
+{
+    int offset;                   /* current write offset */
+    unsigned int wrap_around_cnt; /* wrap around counter */
+}DltLogStorageCacheFooter;
 
 typedef struct
 {
@@ -126,14 +144,33 @@ typedef struct DltLogStorageFileList
     struct DltLogStorageFileList *next;
 }DltLogStorageFileList;
 
-typedef struct
+typedef struct DltLogStorageConfigData DltLogStorageConfigData;
+
+typedef struct DltLogStorageConfigData
 {
     /* filter section */
     int log_level;                  /* Log level number configured for filter */
     char *file_name;                /* File name for log storage configured for filter */
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
+    int sync;                       /* Sync strategy */
+    /* callback function for filter configurations */
+    int (*dlt_logstorage_prepare)(DltLogStorageConfigData *config,
+                                  DltLogStorageUserConfig *file_config,
+                                  char *dev_path,
+                                  int log_msg_size);
+    int (*dlt_logstorage_write)(DltLogStorageConfigData *config,
+                                unsigned char *data1,
+                                int size1,
+                                unsigned char *data2,
+                                int size2,
+                                unsigned char *data3,
+                                int size3);
+    /* status is strategy, e.g. DLT_LOGSTORAGE_SYNC_ON_MSG is used when callback
+     * is called on message received */
+    int (*dlt_logstorage_sync)(DltLogStorageConfigData *config, int status);
     FILE *log;                      /* current open log file */
+    void *cache;                    /* log data cache */
     DltLogStorageFileList *records; /* File name list */
 }DltLogStorageConfigData;
 

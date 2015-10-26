@@ -32,6 +32,7 @@
 #include <time.h>
 
 #include "dlt_offline_logstorage.h"
+#include "dlt_offline_logstorage_behavior.h"
 #include "dlt_config_file_parser.h"
 
 
@@ -312,6 +313,41 @@ int dlt_logstorage_read_number(unsigned int *number, char *value)
     return 0;
 }
 
+/**
+ * dlt_logstorage_set_sync_strategy
+ *
+ * Evaluate sync strategy. The sync strategy is an optional filter
+ * configuration parameter.
+ * If the given value cannot be associated with a sync strategy, the default
+ * sync strategy will be assigned.
+ *
+ * @param file_name    int to store the sync strategy
+ * @param value        string given in config file
+ * @return             0 on success, -1 on error
+ */
+int dlt_logstorage_set_sync_strategy(int *strategy, char *value)
+{
+    if (value == NULL || strategy == NULL)
+    {
+        return -1;
+    }
+
+    if (strncasecmp(value, "ON_MSG", strlen(value)) == 0)
+    {
+        *strategy = DLT_LOGSTORAGE_SYNC_ON_MSG;
+    }
+    else if (strncasecmp(value, "ON_DAEMON_EXIT", strlen(value)) == 0)
+    {
+        *strategy = DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT;
+    }
+    else
+    {
+        dlt_log(LOG_WARNING, "Unknown sync strategy. Set default ON_MSG\n");
+        *strategy = DLT_LOGSTORAGE_SYNC_ON_MSG;
+    }
+
+    return 0;
+}
 
 /**
  * dlt_logstorage_create_keys
@@ -518,10 +554,23 @@ void dlt_logstorage_free(DltLogStorage *handle)
 
     for(i=0; i<handle->num_filter_keys; i++)
     {
+        /* sync data if necessary */
+        /* ignore return value */
+        handle->config_data[i].data.dlt_logstorage_sync(
+                &(handle->config_data[i].data),
+                DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
+
         free(handle->config_data[i].data.file_name);
 
         if (handle->config_data[i].data.log != NULL)
-                fclose(handle->config_data[i].data.log);
+        {
+            fclose(handle->config_data[i].data.log);
+        }
+
+        if (handle->config_data[i].data.cache != NULL)
+        {
+            free(handle->config_data[i].data.cache);
+        }
 
         DltLogStorageFileList *n = handle->config_data[i].data.records;
         while(n)
@@ -624,6 +673,8 @@ int dlt_logstorage_prepare_table(DltLogStorage *handle, char *appid, char *ctxid
         memcpy(&p_node->data, tmp_data, sizeof(DltLogStorageConfigData));
         p_node->data.file_name = strdup(tmp_data->file_name);
         p_node->data.records = NULL;
+        p_node->data.log = NULL;
+        p_node->data.cache = NULL;
 
         if(dlt_logstorage_hash_add(p_node->key, &p_node->data, &(handle->config_htab)) != 0)
         {
@@ -703,6 +754,14 @@ int dlt_logstorage_validate_filter_value(char *filter_key, char *filter_value,
         if (ret == 0)
             ret = DLT_OFFLINE_LOGSTORAGE_NUM_INIT;
     }
+    else if (strncmp(filter_key, "SyncBehavior", strlen ("SyncBehavior")) == 0)
+    {
+       ret = dlt_logstorage_set_sync_strategy(&(tmp_data->sync), filter_value);
+       if (ret == 0)
+       {
+           return DLT_OFFLINE_LOGSTORAGE_SYNC_BEHAVIOR;
+       }
+    }
     else
     {
         /* Invalid filter key */
@@ -754,6 +813,29 @@ int dlt_logstorage_validate_filter_name(char *name)
     return -1;
 }
 
+void dlt_logstorage_filter_set_strategy(DltLogStorageConfigData *config,
+                                        int strategy)
+{
+    if (config == NULL)
+    {
+        return;
+    }
+
+    switch(strategy)
+    {
+    case DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT:
+        config->dlt_logstorage_prepare = &dlt_logstorage_prepare_on_daemon_exit;
+        config->dlt_logstorage_write = &dlt_logstorage_write_on_daemon_exit;
+        config->dlt_logstorage_sync = &dlt_logstorage_sync_on_daemon_exit;
+        break;
+    case DLT_LOGSTORAGE_SYNC_ON_MSG: /* ON_MSG is the default strategy */
+    default:
+        config->dlt_logstorage_prepare = &dlt_logstorage_prepare_on_msg;
+        config->dlt_logstorage_write = &dlt_logstorage_write_on_msg;
+        config->dlt_logstorage_sync = &dlt_logstorage_sync_on_msg;
+    }
+}
+
 /**
  * dlt_logstorage_store_filters
  *
@@ -783,7 +865,8 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
                             "LogLevel",
                             "File",
                             "FileSize",
-                            "NOFiles"
+                            "NOFiles",
+                            "SyncBehavior"
                             };
 
     config_file = dlt_config_file_init(config_file_name);
@@ -805,6 +888,7 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
     int j = 0;
     int ret = -1;
     memset(&tmp_data, 0, sizeof(DltLogStorageConfigData));
+
     for (i = 0; i < num_filters; i++)
     {
         if (tmp_data.file_name != NULL)
@@ -841,7 +925,9 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         {
             /* Get filter value for filter keys */
             ret = dlt_config_file_get_value(config_file, filter_name, filter_key[j], filter_value);
-            if (ret != 0)
+            if (ret != 0 &&
+                strncmp(filter_key[j], "SyncBehavior", strlen(filter_key[j]))
+                != 0)
             {
                 is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
                 dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : Reading filter value failed\n");
@@ -849,20 +935,35 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
             }
 
             /* Validate filter value */
-            ret = dlt_logstorage_validate_filter_value(filter_key[j], filter_value, &appid, &ctxid, &tmp_data);
-            if ((ret != -1) &&  DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(is_filter_set))
+            if (ret == 0)
             {
-                is_filter_set |= ret;
+                ret = dlt_logstorage_validate_filter_value(filter_key[j], filter_value, &appid, &ctxid, &tmp_data);
+                if ((ret != -1) &&  DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(is_filter_set))
+                {
+                    is_filter_set |= ret;
+                }
+                else
+                {
+                    is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
+                    break;
+                }
             }
             else
             {
-                is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
-                break;
+                dlt_log(LOG_INFO,
+                        "Sync strategy not given. Use default ON_MSG\n");
+                /* set default sync strategy */
+                tmp_data.sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
             }
         }
+
         /* If all items of the filter is populated store them */
         if (DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(is_filter_set))
         {
+            /* depending on the specified strategy set function pointers for
+             * prepare, write and sync */
+            dlt_logstorage_filter_set_strategy(&tmp_data, tmp_data.sync);
+
             ret = dlt_logstorage_prepare_table(handle, appid, ctxid, &tmp_data);
             if (ret != 0)
             {
@@ -1088,469 +1189,6 @@ DltLogStorageConfigData **dlt_logstorage_filter(DltLogStorage *handle, char *app
 }
 
 /**
- * dlt_logstorage_log_file_name
- *
- * Create log file name in the form configured by the user
- *      <filename><delimeter><index><delimeter><timestamp>.dlt
- *
- *      filename:       given in configuration file
- *      delimeter:      Punctuation characters (configured in dlt.conf)
- *      timestamp:      yyyy-mm-dd-hh-mm-ss (enabled/disabled in dlt.conf)
- *      index:          Index len depends on wrap around value in dlt.conf
- *                      ex: wrap around = 99, index will 01..99
- *
- * @param log_file_name     contains complete logfile name
- * @param file_config       User configurations for log file
- * @param name              file name given in configuration file
- * @param idx               continous index of log files
- * @ return                 None
- */
-void dlt_logstorage_log_file_name(char *log_file_name, DltLogStorageUserConfig file_config, char *name, int idx)
-{
-    char file_index[10] = {0};
-
-    // create log file name
-    memset(log_file_name, 0, PATH_MAX * sizeof(char));
-    strcat(log_file_name, name);
-    strcat(log_file_name, &file_config.logfile_delimiter);
-
-    sprintf(file_index,"%d",idx);
-    if(file_config.logfile_maxcounter != UINT_MAX)
-    {
-        /* Setup 0's to be appended in file index until max index len*/
-        unsigned int digit_idx = 0;
-        unsigned int i = 0;
-        sprintf(file_index,"%d",idx);
-        digit_idx = strlen(file_index);
-        for(i=0; i<(file_config.logfile_counteridxlen - digit_idx); i++) {
-            strcat(log_file_name, "0");
-        }
-    }
-    strcat(log_file_name, file_index);
-
-    /* Add time stamp if user has configured */
-    if(file_config.logfile_timestamp)
-    {
-        char stamp[DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + 1] = {0};
-        time_t t = time(NULL);
-        struct tm *tm_info = localtime(&t);
-        sprintf(stamp, "%c%04d%02d%02d-%02d%02d%02d", file_config.logfile_delimiter, 1900 + tm_info->tm_year, 1 + tm_info->tm_mon,
-            tm_info->tm_mday, tm_info->tm_hour, tm_info->tm_min, tm_info->tm_sec);
-        strcat(log_file_name, stamp);
-    }
-
-    strcat(log_file_name, ".dlt");
-}
-
-/**
- * dlt_logstorage_sort_file_name
- *
- * Sort the filenames with index based ascending order (bubble sort)
- *
- * @param head              Log filename list
- * @ return                 None
- */
-void dlt_logstorage_sort_file_name(DltLogStorageFileList **head)
-{
-    int done = 0;
-
-    if (*head == NULL || (*head)->next == NULL)
-        return;
-
-    while (!done)
-    {
-        DltLogStorageFileList **pv = head;            // "source" of the pointer to the current node in the list struct
-        DltLogStorageFileList *nd = *head;            // local iterator pointer
-        DltLogStorageFileList *nx = (*head)->next;  // local next pointer
-
-        done = 1;
-
-        while (nx)
-        {
-            if (nd->idx > nx->idx)
-            {
-                nd->next = nx->next;
-                nx->next = nd;
-                *pv = nx;
-
-                done = 0;
-            }
-            pv = &nd->next;
-            nd = nx;
-            nx = nx->next;
-        }
-    }
-}
-
-/**
- * dlt_logstorage_rearrange_file_name
- *
- * Rearrange the filenames in the order of latest and oldest
- *
- * @param head              Log filename list
- * @ return                 None
- */
-void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head)
-{
-    DltLogStorageFileList *n_prev = NULL;
-    DltLogStorageFileList *tail = NULL;
-    DltLogStorageFileList *wrap_pre = NULL;
-    DltLogStorageFileList *wrap_post = NULL;
-    DltLogStorageFileList *n = NULL;
-
-    if (*head == NULL || (*head)->next == NULL)
-        return;
-
-    for (n = *head; n != NULL; n = n->next )
-    {
-        if (n && n_prev)
-        {
-            if ((n->idx - n_prev->idx) != 1)
-            {
-                wrap_post = n;
-                wrap_pre = n_prev;
-            }
-        }
-        n_prev = n;
-    }
-    tail = n_prev;
-
-    if (wrap_post && wrap_pre)
-    {
-        wrap_pre->next = NULL;
-        tail->next = *head;
-        *head = wrap_post;
-    }
-}
-
-/**
- * dlt_logstorage_get_idx_of_log_file
- *
- * Extract index of log file name passed as input argument
- *
- * @param file          file name to extract the index from
- * @param file_config   User configurations for log file
- * @return index on success, -1 if no index is found
- */
-unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig file_config, char *file)
-{
-    unsigned int idx = -1;
-    char *endptr;
-    char *filename;
-    unsigned int filename_len = 0 ;
-    unsigned int fileindex_len = 0;
-
-    /* Calculate actual file name length */
-    filename=strchr(file,file_config.logfile_delimiter);
-    filename_len = strlen(file)- strlen(filename);
-
-    /* index is retrived from file name */
-    if(file_config.logfile_timestamp)
-    {
-        fileindex_len = strlen(file)-(DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN
-                        + DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + filename_len + 1);
-        idx = (int) strtol(&file[strlen(file)-
-            (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN+fileindex_len
-                +DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN)],
-                &endptr, 10);
-    }
-    else
-    {
-        fileindex_len = strlen(file)-(DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN  + filename_len + 1);
-        idx = (int) strtol(&file[strlen(file)-
-                        (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN
-                        +fileindex_len)], &endptr, 10);
-    }
-
-    if(endptr == file || idx == 0)
-        dlt_log(LOG_ERR, "Unable to calculate index from log file name. Reset index to 001.\n");
-
-    return idx;
-}
-
-/**
- * dlt_logstorage_storage_dir_info
- *
- * Read file names of storage directory.
- * Update the file list, arrange it in order of latest and oldest
- *
- * @param file_config   User configurations for log file
- * @param path      Path to storage directory
- * @param  config    DltLogStorageConfigData
- * @return         0 on success, -1 on error
- */
-int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig file_config, char *path, DltLogStorageConfigData *config)
-{
-    int i = 0;
-    int cnt = 0;
-    int ret = 0;
-    struct dirent **files = {0};
-    unsigned int current_idx = 0;
-
-    if (path == NULL || config->file_name == NULL)
-        return -1;
-
-    cnt = scandir(path, &files, 0, alphasort);
-    if (cnt < 0)
-    {
-        dlt_log(LOG_ERR, "dlt_logstorage_storage_dir_info: Unable to scan storage directory.\n");
-        return -1;
-    }
-
-    for (i = 0; i < cnt; i++)
-    {
-        int len = 0;
-        len = strlen(config->file_name);
-        if ((strncmp(files[i]->d_name, config->file_name, len) == 0) && (files[i]->d_name[len] == file_config.logfile_delimiter))
-        {
-            DltLogStorageFileList **tmp = NULL;
-            current_idx = dlt_logstorage_get_idx_of_log_file(file_config, files[i]->d_name);
-
-            if(config->records == NULL)
-            {
-                config->records = malloc(sizeof(DltLogStorageFileList));
-                if (config->records == NULL)
-                {
-                    ret = -1;
-                    dlt_log(LOG_ERR, "Memory allocation failure while preparing file list \n");
-                    break;
-                }
-                tmp = &config->records;
-            }
-            else
-            {
-                tmp = &config->records;
-                while(*(tmp) != NULL)
-                {
-                    tmp = &(*tmp)->next;
-                }
-                *tmp = malloc(sizeof(DltLogStorageFileList));
-                if (*tmp == NULL)
-                {
-                    ret = -1;
-                    dlt_log(LOG_ERR, "Memory allocation failure while preparing file list \n");
-                    break;
-                }
-            }
-            (*tmp)->name = strdup(files[i]->d_name);
-            (*tmp)->idx =  current_idx;
-            (*tmp)->next = NULL;
-        }
-    }
-
-    if (ret == 0)
-    {
-        dlt_logstorage_sort_file_name(&config->records);
-        dlt_logstorage_rearrange_file_name(&config->records);
-    }
-
-    /* free scandir result */
-    for (i = 0; i < cnt; i++)
-    {
-        free(files[i]);
-    }
-    free(files);
-
-    return ret;
-}
-
-/**
- * dlt_logstorage_open_log_file
- *
- * Open a log file. Check storage directory for already created files and open the oldest if
- * there is enough space to store at least msg_size.
- * Otherwise create a new file, but take configured max number of files into account and remove
- * the oldest file if needed.
- *
- * @param  config    DltLogStorageConfigData
- * @param  file_config   User configurations for log file
- * @param  dev_path      Storage device path
- * @param  msg_size  Size of incoming message
- * @return 0 on succes, -1 on error
- */
-int dlt_logstorage_open_log_file(DltLogStorageConfigData *config, DltLogStorageUserConfig file_config,
-                                char *dev_path, int msg_size)
-{
-    int ret = 0;
-    char absolute_file_path[PATH_MAX + 1] = {0};
-    char storage_path[DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN] = {0};
-    unsigned int num_log_files = 0;
-    struct stat s;
-    DltLogStorageFileList **tmp = NULL;
-    DltLogStorageFileList **newest = NULL;
-    char file_name[PATH_MAX + 1] = {0};
-
-    if (config == NULL)
-        return -1;
-
-    sprintf(storage_path, "%s/", dev_path);
-
-    /* check if there are already files stored */
-    if (config->records == NULL)
-    {
-        if (dlt_logstorage_storage_dir_info(file_config, storage_path, config) != 0)
-            return -1;
-    }
-
-    /* obtain locations of newest, current file names, file count */
-    tmp = &config->records;
-    while(*(tmp) != NULL)
-    {
-        num_log_files += 1;
-        if((*tmp)->next == NULL)
-            newest = tmp;
-
-        tmp = &(*tmp)->next;
-    }
-
-     /* need new file*/
-    if (num_log_files == 0)
-    {
-        dlt_logstorage_log_file_name(file_name, file_config, config->file_name, 1);
-
-        /* concatenate path and file and open absolute path */
-        strcat(absolute_file_path, storage_path);
-        strcat(absolute_file_path, file_name);
-        config->log = fopen(absolute_file_path, "a+");
-
-        /* Add file to file list */
-        *tmp = malloc(sizeof(DltLogStorageFileList));
-        if (*tmp == NULL)
-        {
-            dlt_log(LOG_ERR, "Memory allocation failure while adding file name to file list \n");
-            return -1;
-        }
-        (*tmp)->name = strdup(file_name);
-        (*tmp)->idx =  1;
-        (*tmp)->next = NULL;
-    }
-    else /* newest file available*/
-    {
-        strcat(absolute_file_path, storage_path);
-        strcat(absolute_file_path, (*newest)->name);
-
-        ret = stat(absolute_file_path, &s);
-
-        /* if size is enough, open it */
-        if (ret == 0 && s.st_size + msg_size < (int)config->file_size)
-        {
-            config->log = fopen(absolute_file_path, "a+");
-        }
-        else /* no space in file or file stats cannot be read */
-        {
-            unsigned int idx = 0;
-
-            /* get index of newest log file */
-            idx = dlt_logstorage_get_idx_of_log_file(file_config, (*newest)->name);
-            idx += 1;
-
-            /* wrap around if max index is reached or an error occured
- *             while calculating index from file name */
-            if (idx > file_config.logfile_maxcounter || idx == 0)
-                idx = 1;
-
-            dlt_logstorage_log_file_name(file_name, file_config, config->file_name, idx);
-
-            /* concatenate path and file and open absolute path */
-            memset(absolute_file_path, 0, sizeof(absolute_file_path)/sizeof(char));
-            strcat(absolute_file_path, storage_path);
-            strcat(absolute_file_path, file_name);
-            config->log = fopen(absolute_file_path, "a+");
-
-            /* Add file to file list */
-            *tmp = malloc(sizeof(DltLogStorageFileList));
-            if (*tmp == NULL)
-            {
-                dlt_log(LOG_ERR, "Memory allocation failure while adding file name to file list \n");
-                return -1;
-            }
-            (*tmp)->name = strdup(file_name);
-            (*tmp)->idx =  idx;
-            (*tmp)->next = NULL;
-
-            num_log_files += 1;
-
-            /* check if number of log files exceeds configured max value */
-            if (num_log_files > config->num_files)
-            {
-                /* delete oldest */
-                DltLogStorageFileList **head = &config->records;
-                DltLogStorageFileList *n = *head;
-                memset(absolute_file_path, 0, sizeof(absolute_file_path)/sizeof(char));
-                strcat(absolute_file_path, storage_path);
-                strcat(absolute_file_path, (*head)->name);
-                remove(absolute_file_path);
-                free((*head)->name);
-                *head = n->next;
-                n->next = NULL;
-                free(n);
-            }
-        }
-    }
-
-    if (config->log == NULL)
-    {
-        dlt_log(LOG_ERR, "dlt_logstorage_create_log_file: Unable to open log file.\n");
-        return -1;
-    }
-
-    return ret;
-}
-
-/**
- * dlt_logstorage_prepare_log_file
- *
- * Prepare the log file for a certain filer. If log file not open or log files max size reached,
- * open a new file.
- *
- * @param config        DltLogStorageConfigData
- * @param file_config   User configurations for log file
- * @param dev_path      Storage device path
- * @param log_msg_size  Size of log message
- * @return 0 on success, -1 on error
- */
-int dlt_logstorage_prepare_log_file(DltLogStorageConfigData *config,
-                                    DltLogStorageUserConfig file_config,
-                                    char *dev_path, int log_msg_size)
-{
-    int ret = 0;
-    struct stat s;
-
-    if (config == NULL)
-    {
-        return -1;
-    }
-
-    if (config->log == NULL) /* open a new log file */
-    {
-        ret = dlt_logstorage_open_log_file(config, file_config, dev_path, log_msg_size);
-    }
-    else /* already open, check size and create a new file if needed */
-    {
-        ret = fstat(fileno(config->log), &s);
-        if (ret == 0) {
-            /* check if adding new data do not exceed max file size */
-            if (s.st_size + log_msg_size >= (int)config->file_size)
-            {
-                fclose(config->log);
-                config->log = NULL;
-                ret = dlt_logstorage_open_log_file(config, file_config, dev_path, log_msg_size);
-            }
-            else /*everything is prepared */
-            {
-                ret = 0;
-            }
-        }
-        else
-        {
-            dlt_log(LOG_ERR, "dlt_logstorage_prepare_log_file: Unable to determine file stats.\n");
-            ret = -1;
-        }
-    }
-    return ret;
-}
-
-/**
  * dlt_logstorage_write
  *
  * Write a message to one or more configured log files, based on filter configuration.
@@ -1582,7 +1220,8 @@ int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_con
         return 0;
     }
 
-    /* check if log message need to be stored in a certain device based on filter config */
+    /* check if log message need to be stored in a certain device based on
+     * filter configuration */
     config = dlt_logstorage_filter(handle, appid, ctxid, log_level, &num);
 
     if (config != NULL)
@@ -1593,39 +1232,48 @@ int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_con
             if(config[i] != NULL)
             {
                 /* prepare logfile (create and/or open)*/
-                ret = dlt_logstorage_prepare_log_file(config[i], file_config,
-                                            handle->device_mount_point,
-                                            size1 + size2 + size3);
+                ret = config[i]->dlt_logstorage_prepare(config[i],
+                                                        &file_config,
+                                                        handle->device_mount_point,
+                                                        size1 + size2 + size3);
                 if (ret == 0) /* log data (write) */
                 {
-                    fwrite(data1, 1, size1, config[i]->log);
-                    fwrite(data2, 1, size2, config[i]->log);
-                    fwrite(data3, 1, size3, config[i]->log);
-                    ret = ferror(config[i]->log);
+                    ret = config[i]->dlt_logstorage_write(config[i],
+                                                          data1,
+                                                          size1,
+                                                          data2,
+                                                          size2,
+                                                          data3,
+                                                          size3);
 
-                    if (ret != 0)
+                    if (ret == 0)
+                    {
+                        /* flush to be sure log is stored on device */
+                        ret = config[i]->dlt_logstorage_sync(config[i],
+                              DLT_LOGSTORAGE_SYNC_ON_MSG);
+                        if (ret != 0)
+                        {
+                            dlt_log(LOG_ERR,
+                                    "dlt_logstorage_write: Unable to sync.\n");
+                        }
+                    }
+                    else
                     {
                         handle->write_errors += 1;
-                        if (handle->write_errors >= DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS)
+                        if (handle->write_errors >=
+                            DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS)
                         {
                             err = -1;
                         }
 
-                        dlt_log(LOG_ERR, "dlt_logstorage_write: Unable to write log to file.\n");
-                    }
-                    else
-                    {
-                        /* flush to be sure log is stored on device */
-                        ret = fflush(config[i]->log);
-                        if (ret != 0)
-                        {
-                            dlt_log(LOG_ERR, "dlt_logstorage_write: Unable to flush log to file.\n");
-                        }
+                        dlt_log(LOG_ERR,
+                                "dlt_logstorage_write: Unable to write.\n");
                     }
                 }
                 else
                 {
-                    dlt_log(LOG_ERR, "dlt_logstorage_write: Unable to prepare log file.\n");
+                    dlt_log(LOG_ERR,
+                            "dlt_logstorage_write: Unable to prepare.\n");
                 }
             }
             i++;

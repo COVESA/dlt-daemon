@@ -84,6 +84,8 @@ static int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_loc
 static uint32_t watchdog_trigger_interval;  // watchdog trigger interval in [s]
 #endif
 
+/* used in main event loop and signal handler */
+int g_exit = 0;
 
 /**
  * Print usage information of tool.
@@ -238,6 +240,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineLogstorageDelimiter = '_';
 	daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
 	daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
+    daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
+	dlt_daemon_logstorage_set_logstorage_cache_size(
+	        daemon_local->flags.offlineLogstorageCacheSize);
     strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
@@ -459,6 +464,13 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             daemon_local->flags.offlineLogstorageMaxCounter = atoi(value);
                             daemon_local->flags.offlineLogstorageMaxCounterIdx = strlen(value);
                         }
+                        else if(strcmp(token, "OfflineLogstorageCacheSize") == 0)
+                        {
+                            daemon_local->flags.offlineLogstorageCacheSize =
+                                (unsigned int)atoi(value);
+                            dlt_daemon_logstorage_set_logstorage_cache_size(
+                                daemon_local->flags.offlineLogstorageCacheSize);
+                        }
                         else if(strcmp(token,"ControlSocketPath") == 0)
                         {
                             memset(
@@ -499,7 +511,7 @@ int main(int argc, char* argv[])
     char version[DLT_DAEMON_TEXTBUFSIZE];
     DltDaemonLocal daemon_local;
     DltDaemon daemon;
-    int back;
+    int back = 0;
 
     /* Command line option handling */
     if ((back = option_handling(&daemon_local,argc,argv))<0)
@@ -637,7 +649,7 @@ int main(int argc, char* argv[])
     dlt_daemon_log_internal(&daemon, &daemon_local, "Daemon launched. Starting to output traces...", daemon_local.flags.vflag);
 
     /* Even handling loop. */
-    while (back >= 0)
+    while ((back >= 0) && (g_exit >= 0))
     {
         back = dlt_daemon_handle_event(&daemon_local.pEvent,
                                        &daemon,
@@ -647,7 +659,13 @@ int main(int argc, char* argv[])
 
     dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
 
-    dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
+    /* disconnect all logstorage devices */
+    dlt_daemon_logstorage_cleanup(&daemon,
+                                  &daemon_local,
+                                  daemon_local.flags.vflag);
+
+
+//    dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
     dlt_log(LOG_NOTICE, "Leaving DLT daemon\n");
 
@@ -1167,9 +1185,8 @@ void dlt_daemon_signal_handler(int sig)
         tmp[PATH_MAX] = 0;
         unlink(tmp);
 
-
-        /* Terminate program */
-        exit(0);
+        /* stop event loop */
+        g_exit = -1;
         break;
     }
     default:

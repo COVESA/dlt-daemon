@@ -565,3 +565,35 @@ int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon, char *path, 
 
     return ret;
 }
+
+void dlt_daemon_logstorage_set_logstorage_cache_size(unsigned int size)
+{
+    /* store given [KB] size in [Bytes] */
+    g_logstorage_cache_max = size * 1000;
+}
+
+int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
+                                  DltDaemonLocal *daemon_local,
+                                  int verbose)
+{
+    int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || daemon_local == NULL)
+    {
+        return -1;
+    }
+
+    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
+    {
+        /* call disconnect on all currently connected devices */
+        if (daemon->storage_handle[i].connection_type ==
+            DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+        {
+            dlt_logstorage_device_disconnected(&daemon->storage_handle[i]);
+        }
+    }
+
+    return 0;
+}

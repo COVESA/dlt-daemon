@@ -118,6 +118,7 @@ typedef struct
     char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
+    unsigned int offlineLogstorageCacheSize; /**< Max cache size offline logstorage cache */
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     unsigned int  port; /**< port number */

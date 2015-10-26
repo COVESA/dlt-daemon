@@ -126,4 +126,23 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon, DltDaemonFlags user_config, 
  * @param verbose       If set to true verbose information is printed out
  */
 int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon, char *path, int verbose);
+
+/**
+ * Set max size of logstorage cache. Stored internally in bytes
+ *
+ * @param size  Size of logstorage cache [in KB]
+ */
+void dlt_daemon_logstorage_set_logstorage_cache_size(unsigned int size);
+
+/**
+ * Cleanup dlt logstorage
+ *
+ * @param daemon       Pointer to Dlt Daemon structure
+ * @param daemon_local Pointer to Dlt Daemon Local structure
+ * @param verbose      If set to true verbose information is printed out
+ */
+int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
+                                  DltDaemonLocal *daemon_local,
+                                  int verbose);
+
 #endif /* DLT_DAEMON_OFFLINE_LOGSTORAGE_H */
