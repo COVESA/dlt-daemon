@@ -55,7 +55,7 @@ Include the DLT Header
 To use DLT you have to include the DLT header file in each file you want to use DLT.
 
 ----
-#include <dlt/dlt.h>
+#include <dlt.h>
 ----
 
 Register your application
@@ -91,7 +91,7 @@ Each context is only allowed to be declared once.
 You have to provide a unique variable name for your context.
 
 ----
-#include <dlt/dlt.h>
+#include <dlt.h>
 
 DLT_DECLARE_CONTEXT(myContext1);
 DLT_DECLARE_CONTEXT(myContext2);
@@ -101,7 +101,7 @@ DLT_DECLARE_CONTEXT(myContext3);
 If you want to use a context in another C or CPP file, you can import the context by calling
 
 ----
-#include <dlt/dlt.h>
+#include <dlt.h>
 
 DLT_IMPORT_CONTEXT(myContext1);
 DLT_IMPORT_CONTEXT(myContext2);
@@ -219,7 +219,7 @@ Finally here is a complete example for using DLT:
 .dlt_example.c
 ----
 #include <stdio.h>
-#include <dlt/dlt.h>
+#include <dlt.h>
 
 DLT_DECLARE_CONTEXT(myContext1);
 DLT_DECLARE_CONTEXT(myContext2);

@@ -197,7 +197,7 @@ ${DLT_LIBRARIES}
 ==== Include the dlt header file:
 
 ----
-#include <dlt/dlt.h>
+#include <dlt.h>
 ----
 
 ==== Create logging context (place it beneath the define section):
@@ -248,7 +248,7 @@ DLT_UNREGISTER_APP();
 .DLT - Hello world
 ----
 #include <stdio.h>
-#include <dlt/dlt.h>
+#include <dlt.h>
 DLT_DECLARE_CONTEXT(mycontext);
 int main()
 {
@@ -283,7 +283,7 @@ The DLT macro interface provides a very easy to use interface. It is very easy t
 [options="header"]
 |==============================================================================================
 | Command | Description
-| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT
+| #include <dlt.h> | The first thing to do is to include the standard header file of DLT
 | DLT_DECLARE_CONTEXT(mycontext); | The next thing is to create instances of each used context of an application. This has to be done outside of the source code before using any context.
 | DLT_IMPORT_CONTEXT(mycontext); | If a context is used a second time in another software module, the following macro has to be called to get access to the context.
 | DLT_REGISTER_APP("LOG","Test Application for Logging"); | In the next step in the initialization of the application the application must be registered in the DLT daemon. The identifier of the application, here "LOG", has a maximum of four characters.
@@ -305,7 +305,7 @@ The DLT functional interface provides a very easy to use interface. The C interf
 [options="header"]
 |==============================================================================================
 | Command | Description
-| #include <dlt/dlt.h> | The first thing to do is to include the standard header file of DLT:
+| #include <dlt.h> | The first thing to do is to include the standard header file of DLT:
 | DltContext mycontext; | The next thing is to create an instance of each used context of an application. This has to be done outside of the source code before using any context. The name of the instance can be defined by the user.
 | DltContextData mycontextdata; | Additionally, a data buffer used to construct the DLT log messages must be created:
 | dlt_register_app("LOG","Test Application for Logging"); | In the next step in the initialization of the application the application must be registered in the DLT daemon. The identifier of the application, here "LOG", has a maximum of four characters.
