@@ -659,13 +659,7 @@ int main(int argc, char* argv[])
 
     dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
 
-    /* disconnect all logstorage devices */
-    dlt_daemon_logstorage_cleanup(&daemon,
-                                  &daemon_local,
-                                  daemon_local.flags.vflag);
-
-
-//    dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
+    dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
     dlt_log(LOG_NOTICE, "Leaving DLT daemon\n");
 
@@ -1131,6 +1125,14 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     dlt_receiver_free(&(daemon_local->receiverSock));
 
     /* Ignore result */
+    dlt_receiver_free(&(daemon_local->receiverCtrlSock));
+    /* Ignore result */
+    if (daemon_local->flags.yvalue[0])
+    {
+        /* Ignore result */
+        dlt_receiver_free(&(daemon_local->receiverSerial));
+    }
+	/* Ignore result */
     dlt_message_free(&(daemon_local->msg),daemon_local->flags.vflag);
     close(daemon_local->fp);
 
@@ -1143,6 +1145,9 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
         close(daemon_local->ohandle);
     } /* if */
 #endif
+
+    /* free ringbuffer */
+    dlt_buffer_free_dynamic(&(daemon->client_ringbuffer));
 
     /* Ignore result */
     dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
@@ -1157,6 +1162,24 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
     /* Try to delete lock file, ignore result of unlink() */
     unlink(DLT_DAEMON_LOCK_FILE);
+
+    if (daemon_local->flags.offlineLogstorageMaxDevices > 0)
+    {
+        /* disconnect all logstorage devices */
+        dlt_daemon_logstorage_cleanup(daemon,
+                                      daemon_local,
+                                      daemon_local->flags.vflag);
+
+        free(daemon->storage_handle);
+    }
+
+    if (daemon->ECUVersionString != NULL)
+    {
+        free(daemon->ECUVersionString);
+    }
+
+    dlt_daemon_unix_socket_close(daemon_local->ctrlsock);
+    unlink(daemon_local->flags.ctrlSockPath);
 
     dlt_event_handler_cleanup_connections(&daemon_local->pEvent);
 }
