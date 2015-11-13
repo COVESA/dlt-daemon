@@ -81,6 +81,7 @@
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
 
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT       0
+#define DLT_OFFLINE_LOGSTORAGE_ECUID               (1<<8)
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT      (1<<7)
 #define DLT_OFFLINE_LOGSTORAGE_APP_INIT            (1<<6)
 #define DLT_OFFLINE_LOGSTORAGE_CTX_INIT            (1<<5)
@@ -89,7 +90,7 @@
 #define DLT_OFFLINE_LOGSTORAGE_SIZE_INIT           (1<<2)
 #define DLT_OFFLINE_LOGSTORAGE_SYNC_BEHAVIOR       (1<<1)
 #define DLT_OFFLINE_LOGSTORAGE_NUM_INIT            1
-/* Sync behavior is optional */
+/* Sync behavior and ECUid are optional */
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_INIT         0xFD
 
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(A) ((A) >= DLT_OFFLINE_LOGSTORAGE_FILTER_INIT)
@@ -107,7 +108,7 @@
 #define DLT_OFFLINE_LOGSTORAGE_MIN(A, B)   ((A) < (B) ? (A) : (B))
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS     5
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          7
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          8
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
 
@@ -154,6 +155,7 @@ typedef struct DltLogStorageConfigData
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
+    char *ecuid;                    /* ECU identifier */
     /* callback function for filter configurations */
     int (*dlt_logstorage_prepare)(DltLogStorageConfigData *config,
                                   DltLogStorageUserConfig *file_config,
@@ -254,21 +256,23 @@ extern int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
 /**
  * dlt_logstorage_write
  *
- * Write a message to one or more configured log files, based on filter configuration.
+ * Write a message to one or more configured log files, based on filter
+ * configuration.
  *
  * @param handle    DltLogStorage handle
- * @param file_config   User configurations for log file
- * @param appid     Application id of sender
- * @param ctxid     Context id of sender
- * @param log_level log_level of message to store
+ * @param uconfig   User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
  * @param data2     Data buffer of message body
  * @param size2     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
-extern int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_config,
-                                char *appid, char *ctxid, int log_level,
-                                unsigned char *data1, int size1, unsigned char *data2,
-                                int size2, unsigned char *data3, int size3);
+extern int dlt_logstorage_write(DltLogStorage *handle,
+                                DltLogStorageUserConfig *uconfig,
+                                unsigned char *data1,
+                                int size1,
+                                unsigned char *data2,
+                                int size2,
+                                unsigned char *data3,
+                                int size3);
 #endif /* DLT_OFFLINE_LOGSTORAGE_H */

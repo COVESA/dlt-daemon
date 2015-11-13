@@ -68,6 +68,7 @@ void dlt_logstorage_log_file_name(char *log_file_name,
     strncat(log_file_name, &file_config->logfile_delimiter, 1);
 
     snprintf(file_index, 10, "%d",idx);
+
     if (file_config->logfile_maxcounter != UINT_MAX)
     {
         /* Setup 0's to be appended in file index until max index len*/

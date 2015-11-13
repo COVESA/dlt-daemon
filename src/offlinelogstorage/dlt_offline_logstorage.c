@@ -350,6 +350,37 @@ int dlt_logstorage_set_sync_strategy(int *strategy, char *value)
 }
 
 /**
+ * dlt_logstorage_set_ecuid
+ *
+ * Evaluate if ECU idenfifier given in config file
+ *
+ * @param ecuid        string to store the ecuid name
+ * @param value        string given in config file
+ * @return             0 on success, -1 on error
+ */
+int dlt_logstorage_set_ecuid(char **ecuid, char *value)
+{
+    int len;
+
+    if (ecuid == NULL || value == NULL || value[0] == '\0')
+    {
+        return -1;
+    }
+
+    if (*ecuid != NULL)
+    {
+        free(*ecuid);
+        *ecuid = NULL;
+    }
+
+    len = strlen(value);
+    *ecuid = calloc((len+1), sizeof(char));
+    strncpy(*ecuid, value, len);
+
+    return 0;
+}
+
+/**
  * dlt_logstorage_create_keys
  *
  * Create keys for hash table
@@ -562,6 +593,11 @@ void dlt_logstorage_free(DltLogStorage *handle)
 
         free(handle->config_data[i].data.file_name);
 
+        if (handle->config_data[i].data.ecuid != NULL)
+        {
+            free(handle->config_data[i].data.ecuid);
+        }
+
         if (handle->config_data[i].data.log != NULL)
         {
             fclose(handle->config_data[i].data.log);
@@ -672,6 +708,14 @@ int dlt_logstorage_prepare_table(DltLogStorage *handle, char *appid, char *ctxid
         strcpy(p_node->key, keys+(idx * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN));
         memcpy(&p_node->data, tmp_data, sizeof(DltLogStorageConfigData));
         p_node->data.file_name = strdup(tmp_data->file_name);
+        if (tmp_data->ecuid != NULL)
+        {
+            p_node->data.ecuid = strdup(tmp_data->ecuid);
+        }
+        else
+        {
+            p_node->data.ecuid = NULL;
+        }
         p_node->data.records = NULL;
         p_node->data.log = NULL;
         p_node->data.cache = NULL;
@@ -761,6 +805,14 @@ int dlt_logstorage_validate_filter_value(char *filter_key, char *filter_value,
        {
            return DLT_OFFLINE_LOGSTORAGE_SYNC_BEHAVIOR;
        }
+    }
+    else if (strncmp(filter_key, "EcuID", strlen("EcuID")) == 0)
+    {
+        ret = dlt_logstorage_set_ecuid(&(tmp_data->ecuid), filter_value);
+        if (ret == 0)
+        {
+            return DLT_OFFLINE_LOGSTORAGE_ECUID;
+        }
     }
     else
     {
@@ -866,7 +918,8 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
                             "File",
                             "FileSize",
                             "NOFiles",
-                            "SyncBehavior"
+                            "SyncBehavior",
+                            "EcuID"
                             };
 
     config_file = dlt_config_file_init(config_file_name);
@@ -892,7 +945,15 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
     for (i = 0; i < num_filters; i++)
     {
         if (tmp_data.file_name != NULL)
+        {
             free(tmp_data.file_name);
+        }
+
+        if (tmp_data.ecuid != NULL)
+        {
+            free(tmp_data.ecuid);
+            tmp_data.ecuid = NULL;
+        }
 
         if (appid != NULL)
         {
@@ -917,16 +978,25 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         /* Validate filter name */
         ret = dlt_logstorage_validate_filter_name(filter_name);
         if (ret !=0)
+        {
             continue;
+        }
         else
+        {
             is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT;
+        }
 
         for (j = 0; j < num_filter_keys; j++)
         {
             /* Get filter value for filter keys */
             ret = dlt_config_file_get_value(config_file, filter_name, filter_key[j], filter_value);
+
+            /* only return an error when the failure occurred on a mandatory
+             * value. */
             if (ret != 0 &&
                 strncmp(filter_key[j], "SyncBehavior", strlen(filter_key[j]))
+                != 0 &&
+                strncmp(filter_key[j], "EcuID", strlen(filter_key[j]))
                 != 0)
             {
                 is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
@@ -980,6 +1050,11 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         free(ctxid);
     if (tmp_data.file_name != NULL)
         free(tmp_data.file_name);
+
+    if (tmp_data.ecuid != NULL)
+    {
+        free(tmp_data.ecuid);
+    }
 
     dlt_config_file_release(config_file);
 
@@ -1159,10 +1234,16 @@ DltLogStorageConfigData **dlt_logstorage_get_config(DltLogStorage *handle, char 
  * @param appid     application id
  * @param ctxid     context id
  * @param log_level Log level of message
+ * @param ecuid     EcuID given in the message
  * @param num       Number of found configurations
  * @return          list of filters received from hashmap or NULL
  */
-DltLogStorageConfigData **dlt_logstorage_filter(DltLogStorage *handle, char *appid, char *ctxid, int log_level, int *num)
+DltLogStorageConfigData **dlt_logstorage_filter(DltLogStorage *handle,
+                                                char *appid,
+                                                char *ctxid,
+                                                char *ecuid,
+                                                int log_level,
+                                                int *num)
 {
     DltLogStorageConfigData **config = NULL;
     int i = 0;
@@ -1182,6 +1263,16 @@ DltLogStorageConfigData **dlt_logstorage_filter(DltLogStorage *handle, char *app
         if (log_level > config[i]->log_level)
         {
             config[i] = NULL;
+            continue;
+        }
+
+        /* filter on ECU id only if EcuID is set */
+        if (config[i]->ecuid != NULL)
+        {
+            if (strncmp(ecuid, config[i]->ecuid, strlen(ecuid)) != 0)
+            {
+                config[i] = NULL;
+            }
         }
     }
 
@@ -1191,38 +1282,60 @@ DltLogStorageConfigData **dlt_logstorage_filter(DltLogStorage *handle, char *app
 /**
  * dlt_logstorage_write
  *
- * Write a message to one or more configured log files, based on filter configuration.
+ * Write a message to one or more configured log files, based on filter
+ * configuration.
  *
  * @param handle    DltLogStorage handle
- * @param file_config   User configurations for log file
- * @param appid     Application id of sender
- * @param ctxid     Context id of sender
- * @param log_level log_level of message to store
+ * @param config    User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
  * @param data2     Data buffer of message body
  * @param size2     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
-int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_config,
-                        char *appid, char *ctxid, int log_level,
-                        unsigned char *data1, int size1, unsigned char *data2,
-                        int size2, unsigned char *data3, int size3)
+int dlt_logstorage_write(DltLogStorage *handle,
+                         DltLogStorageUserConfig *uconfig,
+                         unsigned char *data1,
+                         int size1,
+                         unsigned char *data2,
+                         int size2,
+                         unsigned char *data3,
+                         int size3)
 {
     DltLogStorageConfigData **config = NULL;
     int i = 0;
     int ret = 0;
     int num = 0;
     int err = 0;
+    /* data2 contains DltStandardHeader, DltStandardHeaderExtra and
+     * DltExtendedHeader. We are interested in ecuid, apid, ctid and loglevel */
+    DltExtendedHeader *extendedHeader;
+    DltStandardHeaderExtra *extraHeader;
+    int log_level = -1;
 
-    if (handle == NULL || handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED || handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
+    if (handle == NULL || uconfig == NULL ||
+        data1 == NULL || data2 == NULL || data3 == NULL ||
+        handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED ||
+        handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
     {
         return 0;
     }
 
+    extendedHeader = (DltExtendedHeader *)(data2 +
+                                           sizeof(DltStandardHeader) +
+                                           sizeof(DltStandardHeaderExtra));
+    extraHeader = (DltStandardHeaderExtra *)(data2 + sizeof(DltStandardHeader));
+
+    log_level = DLT_GET_MSIN_MTIN(extendedHeader->msin);
+
     /* check if log message need to be stored in a certain device based on
      * filter configuration */
-    config = dlt_logstorage_filter(handle, appid, ctxid, log_level, &num);
+    config = dlt_logstorage_filter(handle,
+                                   extendedHeader->apid,
+                                   extendedHeader->ctid,
+                                   extraHeader->ecu,
+                                   log_level,
+                                   &num);
 
     if (config != NULL)
     {
@@ -1231,9 +1344,9 @@ int dlt_logstorage_write(DltLogStorage *handle, DltLogStorageUserConfig file_con
         {
             if(config[i] != NULL)
             {
-                /* prepare logfile (create and/or open)*/
+                /* prepare log file (create and/or open)*/
                 ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                        &file_config,
+                                                        uconfig,
                                                         handle->device_mount_point,
                                                         size1 + size2 + size3);
                 if (ret == 0) /* log data (write) */

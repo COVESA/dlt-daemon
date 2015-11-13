@@ -266,7 +266,8 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
          * newly introduced dlt_daemon_log_internal */
         if(daemon_local->flags.offlineLogstorageMaxDevices > 0)
         {
-            dlt_daemon_logstorage_write(daemon, daemon_local->flags,
+            dlt_daemon_logstorage_write(daemon,
+                                        &daemon_local->flags,
                                         storage_header,
                                         storage_header_size,
                                         data1,

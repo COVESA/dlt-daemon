@@ -103,7 +103,7 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon, int de
  * to write to the device, DltDaemon will disconnect this device.
  *
  * @param daemon        Pointer to Dlt Daemon structure
- * @param user_config   User configurations for log file
+ * @param user_config   DltDaemon configuration
  * @param apid          application id
  * @param ctid          context id
  * @param log_level     log level
@@ -112,9 +112,14 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon, int de
  * @param data2         message data buffer
  * @param size2         message data size
  */
-void dlt_daemon_logstorage_write(DltDaemon *daemon, DltDaemonFlags user_config, unsigned char *data1,
-                                int size1, unsigned char *data2, int size2,
-                                unsigned char *data3, int size3);
+void dlt_daemon_logstorage_write(DltDaemon *daemon,
+                                 DltDaemonFlags *user_config,
+                                 unsigned char *data1,
+                                 int size1,
+                                 unsigned char *data2,
+                                 int size2,
+                                 unsigned char *data3,
+                                 int size3);
 
 /**
  * dlt_daemon_logstorage_setup_internal_storage
