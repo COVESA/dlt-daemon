@@ -277,9 +277,9 @@ int main(int argc, char* argv[])
     dlt_client_register_message_callback(dlt_testclient_message_callback);
 
     /* Setup DLT Client structure */
-    dltclient.serial_mode = dltdata.yflag;
+    dltclient.mode = dltdata.yflag;
 
-    if (dltclient.serial_mode==0)
+    if (dltclient.mode==0)
     {
         for (index = optind; index < argc; index++)
         {

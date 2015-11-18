@@ -74,6 +74,7 @@
 /* Changable */
 /*************/
 
+
 /* Default Path for runtime configuration */
 #define DLT_RUNTIME_DEFAULT_DIRECTORY "/tmp"
 /* Path and filename for runtime configuration (applications) */
@@ -82,6 +83,10 @@
 #define DLT_RUNTIME_CONTEXT_CFG     "/dlt-runtime-context.cfg"
 /* Path and filename for runtime configuration */
 #define DLT_RUNTIME_CONFIGURATION     "/dlt-runtime.cfg"
+
+/* Default Path for control socket */
+#define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
+                                          "/dlt-ctrl.sock"
 
 /* Size of text buffer */
 #define DLT_DAEMON_COMMON_TEXTBUFSIZE          255
@@ -120,4 +125,3 @@
 #define DLT_DAEMON_REMO_STRING "remo"
 
 #endif /* DLT_DAEMON_COMMON_CFG_H */
-

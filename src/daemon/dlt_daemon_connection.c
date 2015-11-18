@@ -200,6 +200,12 @@ static DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
         ret = &daemon_local->timer_wd;
         break;
 #endif
+    case DLT_CONNECTION_CONTROL_CONNECT:
+    /* FALL THROUGH */
+    /* There must be the same structure for this case */
+    case DLT_CONNECTION_CONTROL_MSG:
+        ret = &daemon_local->receiverCtrlSock;
+        break;
     default:
         ret = NULL;
     }
@@ -253,6 +259,12 @@ void *dlt_connection_get_callback(DltConnection *con)
         ret = dlt_daemon_process_systemd_timer;
         break;
 #endif
+    case DLT_CONNECTION_CONTROL_CONNECT:
+        ret = dlt_daemon_process_control_connect;
+        break;
+    case DLT_CONNECTION_CONTROL_MSG:
+        ret = dlt_daemon_process_control_messages;
+        break;
     default:
         ret = NULL;
     }

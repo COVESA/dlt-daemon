@@ -77,6 +77,7 @@
 #include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
 #include <netdb.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #endif
 
 #if defined(_MSC_VER)
@@ -116,7 +117,8 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
     client->servIP = 0;
     client->serialDevice = 0;
     client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
-    client->serial_mode = 0;
+    client->socketPath = 0;
+    client->mode=DLT_CLIENT_MODE_TCP;
     client->receiver.buffer = 0;
 
     return DLT_RETURN_OK;
@@ -126,6 +128,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_un addr;
     int rv;
     char *env_daemon_port;
    /* the port may be specified by an environment variable, defaults to DLT_DAEMON_TCP_PORT */
@@ -149,8 +152,9 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
       servPort = DLT_DAEMON_TCP_PORT;
     }
 
-    if (client->serial_mode==0)
+    switch (client->mode)
     {
+    case DLT_CLIENT_MODE_TCP:
         snprintf(portnumbuffer, 32, "%d", servPort);
         if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -182,9 +186,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         {
             printf("Connected to DLT daemon (%s)\n",client->servIP);
         }
-    }
-    else
-    {
+        break;
+    case DLT_CLIENT_MODE_SERIAL:
         /* open serial connection */
         client->sock=open(client->serialDevice,O_RDWR);
         if (client->sock<0)
@@ -218,6 +221,39 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         {
             printf("Connected to %s\n", client->serialDevice);
         }
+        break;
+    case DLT_CLIENT_MODE_UNIX:
+        if ((client->sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+        {
+            fprintf(stderr, "ERROR: (unix) socket error: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        memset(&addr, 0, sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        memcpy(addr.sun_path, client->socketPath, sizeof(addr.sun_path)-1);
+
+        if (connect(client->sock,
+                    (struct sockaddr_un *)&addr,
+                    sizeof(addr)) == -1)
+        {
+            fprintf(stderr, "ERROR: (unix) connect error: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        if (client->sock < 0)
+        {
+            fprintf(stderr,"ERROR: Failed to open device %s\n",
+                    client->socketPath);
+            return DLT_RETURN_ERROR;
+        }
+        break;
+    default:
+        if (verbose)
+        {
+            fprintf(stderr, "ERROR: Mode not supported: %d\n", client->mode);
+        }
+        return DLT_RETURN_ERROR;
     }
 
     if (dlt_receiver_init(&(client->receiver),client->sock,DLT_CLIENT_RCVBUFSIZE) != DLT_RETURN_OK)
@@ -271,7 +307,7 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
     while (1)
     {
-        if (client->serial_mode==0)
+        if (client->mode==0)
         {
             /* wait for data from socket */
             ret = dlt_receiver_receive_socket(&(client->receiver));
@@ -437,7 +473,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     msg.standardheader->len = DLT_HTOBE_16(len);
 
     /* Send data (without storage header) */
-    if (client->serial_mode)
+    if (client->mode)
     {
         /* via FileDescriptor */
         ret=write(client->sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));

@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <stdio.h>      /* for printf() and fprintf() */
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
+#include <sys/un.h>
 #include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
@@ -56,6 +57,7 @@
 #include "dlt_daemon_common_cfg.h"
 
 #include "dlt_daemon_socket.h"
+#include "dlt_daemon_unix_socket.h"
 #include "dlt_daemon_serial.h"
 
 #include "dlt_daemon_client.h"
@@ -229,6 +231,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 	daemon_local->flags.sendTimezone = 0;
 	daemon_local->flags.offlineLogstorageMaxDevices = 0;
+    strncpy(daemon_local->flags.ctrlSockPath,
+            DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
+            sizeof(daemon_local->flags.ctrlSockPath) - 1);
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -419,6 +424,17 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         else if(strcmp(token, "OfflineLogstorageMaxDevices")==0)
                         {
                             daemon_local->flags.offlineLogstorageMaxDevices = atoi(value);
+                        }
+                         else if(strcmp(token,"ControlSocketPath")==0)
+                        {
+                            memset(
+                                daemon_local->flags.ctrlSockPath,
+                                0,
+                                DLT_DAEMON_FLAG_MAX);
+                            strncpy(
+                                daemon_local->flags.ctrlSockPath,
+                                value,
+                                DLT_DAEMON_FLAG_MAX-1);
                         }
                         else
                         {
@@ -753,6 +769,12 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
         dlt_log(LOG_ERR,"Could not initialize receiver for socket\n");
         return -1;
     }
+    if (dlt_receiver_init(&(daemon_local->receiverCtrlSock),
+                daemon_local->ctrlsock, DLT_DAEMON_RCVBUFSIZESOCK)==-1)
+    {
+        dlt_log(LOG_ERR,"Could not initialize receiver for control socket\n");
+        return -1;
+    }
     if (daemon_local->flags.yvalue[0])
     {
         if (dlt_receiver_init(&(daemon_local->receiverSerial),daemon_local->fdserial,DLT_DAEMON_RCVBUFSIZESERIAL) == DLT_RETURN_ERROR)
@@ -936,6 +958,16 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     if(dlt_daemon_socket_open(&(daemon_local->sock),daemon_local->flags.port))
     {
         dlt_log(LOG_ERR,"Could not initialize main socket.\n");
+        return -1;
+    }
+
+    /* create and open unix socket to receive incoming connections from
+     * control application */
+    if (dlt_daemon_unix_socket_open(
+                &(daemon_local->ctrlsock),
+                daemon_local->flags.ctrlSockPath))
+    {
+        dlt_log(LOG_ERR, "Could not initialize control socket.\n");
         return -1;
     }
 
@@ -1496,6 +1528,136 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal 
     if (dlt_receiver_move_to_begin(&(daemon_local->receiverSerial)) == DLT_RETURN_ERROR)
     {
         dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for serial connection\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int dlt_daemon_process_control_connect(
+        DltDaemon *daemon,
+        DltDaemonLocal *daemon_local,
+        int verbose)
+{
+    socklen_t ctrl_size;
+    struct sockaddr_un ctrl;
+    int in_sock = -1;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0)  || (daemon_local==0))
+    {
+        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_control_connect()\n");
+        return -1;
+    }
+
+    /* event from UNIX server socket, new connection */
+    ctrl_size = sizeof(ctrl);
+    if ((in_sock = accept(daemon_local->ctrlsock, &ctrl, &ctrl_size)) < 0)
+    {
+        dlt_log(LOG_ERR, "accept() on UNIX socket failed!\n");
+        return -1 ;
+    }
+
+    /* check if file file descriptor was already used, and make it invalid if it is reused */
+    /* This prevents sending messages to wrong file descriptor */
+    dlt_daemon_applications_invalidate_fd(daemon,in_sock,verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon,in_sock,verbose);
+
+    if (dlt_connection_create(daemon_local,
+                             &daemon_local->pEvent,
+                             in_sock,
+                             EPOLLIN,
+                             DLT_CONNECTION_CONTROL_MSG))
+    {
+        dlt_log(LOG_ERR, "Failed to register new client. \n");
+        /* TODO: Perform clean-up */
+        return -1;
+    }
+
+    if (verbose)
+    {
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "New connection to client established, #connections: %d\n",
+                daemon_local->client_connections);
+        dlt_log(LOG_INFO, str);
+    }
+
+    return 0;
+}
+
+// FIXME: More or less copy of dlt_daemon_process_control_messages
+int dlt_daemon_process_control_messages(
+        DltDaemon *daemon,
+        DltDaemonLocal *daemon_local,
+        int verbose)
+{
+    int bytes_to_be_removed=0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon==0)  || (daemon_local==0))
+    {
+        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_control_messages()\n");
+        return -1;
+    }
+
+    if (dlt_receiver_receive_socket(&(daemon_local->receiverCtrlSock)) <= 0)
+    {
+        dlt_daemon_close_socket(daemon_local->receiverCtrlSock.fd,
+                                daemon,
+                                daemon_local,
+                                verbose);
+        daemon_local->receiverCtrlSock.fd = -1;
+        /* FIXME: Why the hell do we need to close the socket
+         * on control message reception ??
+         */
+        //return 0;
+    }
+
+    /* Process all received messages */
+    while (dlt_message_read(
+                &(daemon_local->msg),
+                (uint8_t*)daemon_local->receiverCtrlSock.buf,
+                daemon_local->receiverCtrlSock.bytesRcvd,
+                daemon_local->flags.nflag,
+                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK)
+    {
+        /* Check for control message */
+        if (daemon_local->receiverCtrlSock.fd > 0 &&
+            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
+        {
+            dlt_daemon_client_process_control(
+                    daemon_local->receiverCtrlSock.fd,
+                    daemon,daemon_local,
+                    &(daemon_local->msg),
+                    daemon_local->flags.vflag);
+        }
+
+        bytes_to_be_removed =
+            daemon_local->msg.headersize+daemon_local->msg.datasize -
+            sizeof(DltStorageHeader);
+
+        if (daemon_local->msg.found_serialheader)
+        {
+            bytes_to_be_removed += sizeof(dltSerialHeader);
+        }
+        if (daemon_local->msg.resync_offset)
+        {
+            bytes_to_be_removed += daemon_local->msg.resync_offset;
+        }
+
+        if (dlt_receiver_remove(&(daemon_local->receiverCtrlSock),bytes_to_be_removed)==-1)
+        {
+            dlt_log(LOG_WARNING,"Can't remove bytes from receiver for sockets\n");
+            return -1;
+        }
+
+    } /* while */
+
+
+    if (dlt_receiver_move_to_begin(&(daemon_local->receiverCtrlSock)) == -1)
+    {
+        dlt_log(LOG_WARNING,"Can't move bytes to beginning of receiver buffer for sockets\n");
         return -1;
     }
 

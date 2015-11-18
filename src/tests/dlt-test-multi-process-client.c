@@ -166,7 +166,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
         return -1;
     if(params->serial > 0)
     {
-        client->serial_mode = 1;
+        client->mode = 1;
         client->serialDevice = argv[argc - 1];
         dlt_client_setbaudrate(client, params->baudrate);
     }
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 
     err = dlt_client_connect(&client, params.verbose);
     if (err != DLT_RETURN_OK) {
-            printf("Failed to connect %s.\n", client.serial_mode > 0 ? client.serialDevice : client.servIP);
+            printf("Failed to connect %s.\n", client.mode > 0 ? client.serialDevice : client.servIP);
         return err;
     }
 

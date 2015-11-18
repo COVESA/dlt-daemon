@@ -78,14 +78,23 @@
 #include "dlt_types.h"
 #include "dlt_common.h"
 
+typedef enum
+{
+    DLT_CLIENT_MODE_UNDEFINED = -1,
+    DLT_CLIENT_MODE_TCP,
+    DLT_CLIENT_MODE_SERIAL,
+    DLT_CLIENT_MODE_UNIX
+} DltClientMode;
+
 typedef struct
 {
     DltReceiver receiver;  /**< receiver pointer to dlt receiver structure */
     int sock;              /**< sock Connection handle/socket */
     char *servIP;          /**< servIP IP adress/Hostname of TCP/IP interface */
     char *serialDevice;    /**< serialDevice Devicename of serial device */
+    char *socketPath;      /**< socketPath Unix socket path */
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
-    int serial_mode;       /**< serial_mode Serial mode enabled =1, disabled =0 */
+    DltClientMode mode;    /**< mode DltClientMode */
 } DltClient;
 
 #ifdef __cplusplus

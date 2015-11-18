@@ -80,6 +80,7 @@
 #include <sys/time.h>
 
 #include "dlt_daemon_offline_logstorage.h"
+#define DLT_DAEMON_FLAG_MAX 256
 
 /**
  * The flags of a dlt daemon.
@@ -102,20 +103,21 @@ typedef struct
     char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
     int  sharedMemorySize;       /**< (int) Size of shared memory (Default: 100000) */
     int  sendMessageTime;       /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
-    char offlineTraceDirectory[256]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
+    char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
     int  offlineTraceFileSize;    /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int  offlineTraceMaxSize;    /**< (int) Maximum size of all trace files (Default: 4000000) */
     int  offlineTraceFilenameTimestampBased; /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
     int  loggingMode;    /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
     int  loggingLevel;    /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
-    char loggingFilename[256]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
+    char loggingFilename[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
     int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
-    char pathToECUSoftwareVersion[256]; /**< (String: Filename) The file from which to read the ECU version from. */
+    char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
     int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
     int  offlineLogstorageMaxDevices; /**< (int) Maximum devices to be used as offline logstorage devices */
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     unsigned int  port; /**< port number */
+    char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
 } DltDaemonFlags;
 
 /**
@@ -127,12 +129,14 @@ typedef struct
     int fp;               /**< handle for own fifo */
     int sock;             /**< handle for tcp connection to client */
     int fdserial;         /**< handle for serial connection */
+    int ctrlsock;         /**< handle for control socket connection */
     DltFile file;             /**< struct for file access */
     DltEventHandler pEvent; /**< struct for message producer event handling */
     DltMessage msg;           /**< one dlt message */
     DltReceiver receiver;     /**< receiver for fifo connection */
     DltReceiver receiverSock; /**< receiver for socket connection */
     DltReceiver receiverSerial; /**< receiver for serial connection */
+    DltReceiver receiverCtrlSock; /**< receiver for control socket  */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
@@ -186,6 +190,9 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_one_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local,int verbose);
+int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local,int verbose);
 
 int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
