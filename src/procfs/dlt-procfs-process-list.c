@@ -1,0 +1,288 @@
+/*
+ * @licence app begin@
+ * SPDX license identifier: MPL-2.0
+ *
+ * Copyright (C) 2011-2015, BMW AG
+ *
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ *
+ * This Source Code Form is subject to the terms of the
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * For further information see http://www.genivi.org/.
+ * @licence end@
+ */
+
+/*!
+ * \author Sven Hassler <sven_hassler@mentor.com>
+ *
+ * \copyright Copyright © 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt-procfs-process-list.c
+ */
+
+#include "dlt-procfs-process-list.h"
+
+DltProcfsProcessList *dlt_procfs_create_process_list()
+{
+    DltProcfsProcessList *new_list = malloc(sizeof(DltProcfsProcessList));
+    if(new_list == NULL)
+    {
+        fprintf(stderr, "Cannot create process list, out of memory\n");
+        return NULL;
+    }
+
+    memset(new_list, 0, sizeof(DltProcfsProcessList));
+    new_list->start = new_list->cursor = NULL;
+
+    return new_list;
+}
+
+DltReturnValue dlt_procfs_free_process_list_soft(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_free_process_list_soft: Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    free(list);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_free_process_list(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_free_process_list: Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    DltProcfsProcess *tmp;
+
+    list->cursor = list->start;
+    while(list->cursor != NULL)
+    {
+        tmp = list->cursor->next;
+        dlt_procfs_free_process(list->cursor);
+        list->cursor = tmp;
+    }
+
+    return dlt_procfs_free_process_list_soft(list);
+}
+
+DltProcfsProcess *dlt_procfs_get_process_at_cursor(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_get_process_at_cursor(): Nullpointer parameter\n");
+        return NULL;
+    }
+
+    return list->cursor;
+}
+
+DltReturnValue dlt_procfs_reset_cursor(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_reset_cursor(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    list->cursor = list->start;
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_set_cursor_at_end(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    list->cursor = list->start;
+    if(list->cursor == NULL)
+        return DLT_RETURN_OK;
+
+    while(list->cursor->next != NULL)
+        dlt_procfs_increment_cursor(list);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_increment_cursor(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->cursor == NULL)
+        return DLT_RETURN_ERROR;
+
+    list->cursor = list->cursor->next;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_decrement_cursor(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->cursor == NULL)
+        return DLT_RETURN_ERROR;
+
+    list->cursor = list->cursor->prev;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_add_process_at_start(DltProcfsProcessList *list, DltProcfsProcess *process)
+{
+    if(list == NULL || process == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_add_process_at_start(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->start != NULL)
+        list->start->prev = process;
+
+    process->next = list->start;
+    list->start = process;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_add_process_before_cursor(DltProcfsProcessList *list, DltProcfsProcess *process)
+{
+    if(list == NULL || process == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_add_process_before_cursor(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->start == NULL) // Empty list?
+    {
+        DltReturnValue ret = dlt_procfs_add_process_at_start(list, process);
+        list->cursor = NULL;
+        return ret;
+    }
+    else if(list->cursor == NULL)
+    {
+        dlt_procfs_set_cursor_at_end(list);
+        DltReturnValue ret = dlt_procfs_add_process_after_cursor(list, process);
+        list->cursor = NULL;
+        return ret;
+    }
+
+    if(list->cursor->prev != NULL)
+        list->cursor->prev->next = process;
+    else
+        list->start = process;
+
+    process->next = list->cursor;
+    process->prev = list->cursor->prev;
+    list->cursor->prev = process;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_add_process_after_cursor(DltProcfsProcessList *list, DltProcfsProcess *process)
+{
+    if(list == NULL || process == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_add_process_after_cursor: Nullpointer parameter\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if(list->cursor == NULL)
+        return dlt_procfs_add_process_at_start(list, process);
+
+    if(list->cursor->next != NULL)
+        list->cursor->next->prev = process;
+
+    process->next = list->cursor->next;
+    process->prev = list->cursor;
+    list->cursor->next = process;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_remove_process_at_cursor_soft(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->cursor == NULL)
+    {
+        fprintf(stderr, "Could not remove process from list - cursor is NULL!\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    DltProcfsProcess *tmp = list->cursor;
+
+    if(tmp->prev != NULL)
+    {
+        if(tmp->next != NULL)
+        {
+            tmp->prev->next = tmp->next;
+            tmp->next->prev = tmp->prev;
+        }
+        else
+            tmp->prev->next = NULL;
+    }
+    else
+    {
+        if(tmp->next != NULL)
+        {
+            tmp->next->prev = NULL;
+            list->start = tmp->next;
+        }
+        else
+            list->start = NULL;
+    }
+
+    list->cursor = tmp->next; // becomes NULL if list is at end
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_procfs_remove_process_at_cursor(DltProcfsProcessList *list)
+{
+    if(list == NULL)
+    {
+        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if(list->cursor == NULL)
+    {
+        fprintf(stderr, "Could not remove process from list - cursor is NULL!\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    DltProcfsProcess *tmp = list->cursor;
+    DltReturnValue ret = dlt_procfs_remove_process_at_cursor_soft(list);
+    if(ret < DLT_RETURN_OK)
+        return ret;
+
+    dlt_procfs_free_process(tmp);
+
+    return DLT_RETURN_OK;
+}
+

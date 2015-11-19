@@ -46,3 +46,7 @@ endif( WITH_DLT_DBUS )
 if( WITH_DLT_COREDUMPHANDLER )
     add_subdirectory( core_dump_handler )
 endif( WITH_DLT_COREDUMPHANDLER )
+
+if( WITH_DLT_PROCFS )
+    add_subdirectory( procfs )
+endif( WITH_DLT_PROCFS )
