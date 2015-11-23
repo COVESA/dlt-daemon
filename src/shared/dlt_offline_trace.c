@@ -256,7 +256,7 @@ unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
     /* go through all dlt files in directory */
     DIR *dir = opendir(trace->directory);
     while ((dp=readdir(dir)) != NULL) {
-        if(strstr(dp->d_name,".dlt"))
+        if(strstr(dp->d_name,DLT_OFFLINETRACE_FILENAME_BASE))
         {
             int res = snprintf(filename, sizeof(filename), "%s/%s",trace->directory,dp->d_name);
             // if the total length of the string is greater than the buffer, silently forget it.
