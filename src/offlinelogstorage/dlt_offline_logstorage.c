@@ -1311,6 +1311,9 @@ int dlt_logstorage_write(DltLogStorage *handle,
      * DltExtendedHeader. We are interested in ecuid, apid, ctid and loglevel */
     DltExtendedHeader *extendedHeader;
     DltStandardHeaderExtra *extraHeader;
+    DltStandardHeader *standardHeader;
+    int standardHeaderExtraLen = 0;
+
     int log_level = -1;
 
     if (handle == NULL || uconfig == NULL ||
@@ -1320,10 +1323,25 @@ int dlt_logstorage_write(DltLogStorage *handle,
     {
         return 0;
     }
+    /* Calculate real length of DltStandardHeaderExtra */
+    standardHeader = (DltStandardHeader *)data2;
+    standardHeaderExtraLen = sizeof(DltStandardHeaderExtra);
+    if (!DLT_IS_HTYP_WEID(standardHeader->htyp))
+    {
+        standardHeaderExtraLen -= DLT_ID_SIZE;
+    }
+    if (!DLT_IS_HTYP_WSID(standardHeader->htyp))
+    {
+        standardHeaderExtraLen -= DLT_SIZE_WSID;
+    }
+    if (!DLT_IS_HTYP_WTMS(standardHeader->htyp))
+    {
+        standardHeaderExtraLen -= DLT_SIZE_WTMS;
+    }
 
     extendedHeader = (DltExtendedHeader *)(data2 +
                                            sizeof(DltStandardHeader) +
-                                           sizeof(DltStandardHeaderExtra));
+                                           standardHeaderExtraLen);
     extraHeader = (DltStandardHeaderExtra *)(data2 + sizeof(DltStandardHeader));
 
     log_level = DLT_GET_MSIN_MTIN(extendedHeader->msin);
