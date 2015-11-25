@@ -21,10 +21,10 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-options.c
+ * \file dlt-kpi-options.c
  */
 
-#include "dlt-procfs.h"
+#include "dlt-kpi.h"
 
 /**
  * Print information how to use this program.
@@ -47,26 +47,26 @@ void usage(char *prog_name)
 /**
  * Initialize command line options with default values.
  */
-void dlt_procfs_init_cli_options(DltProcfsOptions *options)
+void dlt_kpi_init_cli_options(DltKpiOptions *options)
 {
     options->configurationFileName = DEFAULT_CONF_FILE;
     options->customConfigFile = 0;
 }
 
-void dlt_procfs_free_cli_options(DltProcfsOptions *options)
+void dlt_kpi_free_cli_options(DltKpiOptions *options)
 {
     if(options->customConfigFile)
         free(options->configurationFileName);
 }
 
-DltReturnValue dlt_procfs_read_command_line(DltProcfsOptions *options, int argc, char **argv)
+DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char **argv)
 {
     if(options == NULL)
     {
-        fprintf(stderr, "dlt_procfs_read_command_line(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_read_command_line(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
-    dlt_procfs_init_cli_options(options);
+    dlt_kpi_init_cli_options(options);
     int opt;
 
     while((opt = getopt(argc, argv, "c:h")) != -1)
@@ -104,7 +104,7 @@ DltReturnValue dlt_procfs_read_command_line(DltProcfsOptions *options, int argc,
 /**
  * Initialize configuration to default values.
  */
-void dlt_procfs_init_configuration(DltProcfsConfig *config)
+void dlt_kpi_init_configuration(DltKpiConfig *config)
 {
     config->process_log_interval = 1000;
     config->irq_log_interval = 1000;
@@ -114,7 +114,7 @@ void dlt_procfs_init_configuration(DltProcfsConfig *config)
 /**
  * Read options from the configuration file
  */
-DltReturnValue dlt_procfs_read_configuration_file(DltProcfsConfig *config, char *file_name)
+DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name)
 {
     FILE *file;
     char *line, *token, *value, *pch, *strchk;
@@ -126,7 +126,7 @@ DltReturnValue dlt_procfs_read_configuration_file(DltProcfsConfig *config, char 
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    dlt_procfs_init_configuration(config);
+    dlt_kpi_init_configuration(config);
 
     file = fopen(file_name, "r");
 
@@ -229,9 +229,9 @@ DltReturnValue dlt_procfs_read_configuration_file(DltProcfsConfig *config, char 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_init(int argc, char **argv, DltProcfsConfig *config)
+DltReturnValue dlt_kpi_init(int argc, char **argv, DltKpiConfig *config)
 {
-    DltProcfsOptions options;
+    DltKpiOptions options;
 
     DltReturnValue ret;
 
@@ -241,19 +241,19 @@ DltReturnValue dlt_procfs_init(int argc, char **argv, DltProcfsConfig *config)
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if((ret = dlt_procfs_read_command_line(&options, argc, argv)) < DLT_RETURN_OK)
+    if((ret = dlt_kpi_read_command_line(&options, argc, argv)) < DLT_RETURN_OK)
     {
         fprintf(stderr, "Failed to read command line!");
         return ret;
     }
 
-    if((ret = dlt_procfs_read_configuration_file(config, options.configurationFileName)) < DLT_RETURN_OK)
+    if((ret = dlt_kpi_read_configuration_file(config, options.configurationFileName)) < DLT_RETURN_OK)
     {
         fprintf(stderr, "Failed to read configuration file!");
         return ret;
     }
 
-    dlt_procfs_free_cli_options(&options);
+    dlt_kpi_free_cli_options(&options);
 
     return DLT_RETURN_OK;
 }

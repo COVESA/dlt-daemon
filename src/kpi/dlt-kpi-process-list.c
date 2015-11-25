@@ -21,31 +21,31 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-process-list.c
+ * \file dlt-kpi-process-list.c
  */
 
-#include "dlt-procfs-process-list.h"
+#include "dlt-kpi-process-list.h"
 
-DltProcfsProcessList *dlt_procfs_create_process_list()
+DltKpiProcessList *dlt_kpi_create_process_list()
 {
-    DltProcfsProcessList *new_list = malloc(sizeof(DltProcfsProcessList));
+    DltKpiProcessList *new_list = malloc(sizeof(DltKpiProcessList));
     if(new_list == NULL)
     {
         fprintf(stderr, "Cannot create process list, out of memory\n");
         return NULL;
     }
 
-    memset(new_list, 0, sizeof(DltProcfsProcessList));
+    memset(new_list, 0, sizeof(DltKpiProcessList));
     new_list->start = new_list->cursor = NULL;
 
     return new_list;
 }
 
-DltReturnValue dlt_procfs_free_process_list_soft(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_free_process_list_soft(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_free_process_list_soft: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_free_process_list_soft: Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -54,43 +54,43 @@ DltReturnValue dlt_procfs_free_process_list_soft(DltProcfsProcessList *list)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_free_process_list(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_free_process_list(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_free_process_list: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_free_process_list: Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    DltProcfsProcess *tmp;
+    DltKpiProcess *tmp;
 
     list->cursor = list->start;
     while(list->cursor != NULL)
     {
         tmp = list->cursor->next;
-        dlt_procfs_free_process(list->cursor);
+        dlt_kpi_free_process(list->cursor);
         list->cursor = tmp;
     }
 
-    return dlt_procfs_free_process_list_soft(list);
+    return dlt_kpi_free_process_list_soft(list);
 }
 
-DltProcfsProcess *dlt_procfs_get_process_at_cursor(DltProcfsProcessList *list)
+DltKpiProcess *dlt_kpi_get_process_at_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_get_process_at_cursor(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_get_process_at_cursor(): Nullpointer parameter\n");
         return NULL;
     }
 
     return list->cursor;
 }
 
-DltReturnValue dlt_procfs_reset_cursor(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_reset_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_reset_cursor(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_reset_cursor(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -98,11 +98,11 @@ DltReturnValue dlt_procfs_reset_cursor(DltProcfsProcessList *list)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_set_cursor_at_end(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_set_cursor_at_end(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -111,16 +111,16 @@ DltReturnValue dlt_procfs_set_cursor_at_end(DltProcfsProcessList *list)
         return DLT_RETURN_OK;
 
     while(list->cursor->next != NULL)
-        dlt_procfs_increment_cursor(list);
+        dlt_kpi_increment_cursor(list);
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_increment_cursor(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_increment_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -132,11 +132,11 @@ DltReturnValue dlt_procfs_increment_cursor(DltProcfsProcessList *list)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_decrement_cursor(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -148,11 +148,11 @@ DltReturnValue dlt_procfs_decrement_cursor(DltProcfsProcessList *list)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_add_process_at_start(DltProcfsProcessList *list, DltProcfsProcess *process)
+DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProcess *process)
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_add_process_at_start(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_add_process_at_start(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -165,24 +165,24 @@ DltReturnValue dlt_procfs_add_process_at_start(DltProcfsProcessList *list, DltPr
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_add_process_before_cursor(DltProcfsProcessList *list, DltProcfsProcess *process)
+DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpiProcess *process)
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_add_process_before_cursor(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_add_process_before_cursor(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if(list->start == NULL) // Empty list?
     {
-        DltReturnValue ret = dlt_procfs_add_process_at_start(list, process);
+        DltReturnValue ret = dlt_kpi_add_process_at_start(list, process);
         list->cursor = NULL;
         return ret;
     }
     else if(list->cursor == NULL)
     {
-        dlt_procfs_set_cursor_at_end(list);
-        DltReturnValue ret = dlt_procfs_add_process_after_cursor(list, process);
+        dlt_kpi_set_cursor_at_end(list);
+        DltReturnValue ret = dlt_kpi_add_process_after_cursor(list, process);
         list->cursor = NULL;
         return ret;
     }
@@ -199,16 +199,16 @@ DltReturnValue dlt_procfs_add_process_before_cursor(DltProcfsProcessList *list, 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_add_process_after_cursor(DltProcfsProcessList *list, DltProcfsProcess *process)
+DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiProcess *process)
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_add_process_after_cursor: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_add_process_after_cursor: Nullpointer parameter\n");
         return DLT_RETURN_ERROR;
     }
 
     if(list->cursor == NULL)
-        return dlt_procfs_add_process_at_start(list, process);
+        return dlt_kpi_add_process_at_start(list, process);
 
     if(list->cursor->next != NULL)
         list->cursor->next->prev = process;
@@ -220,11 +220,11 @@ DltReturnValue dlt_procfs_add_process_after_cursor(DltProcfsProcessList *list, D
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_remove_process_at_cursor_soft(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_remove_process_at_cursor_soft(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -234,7 +234,7 @@ DltReturnValue dlt_procfs_remove_process_at_cursor_soft(DltProcfsProcessList *li
         return DLT_RETURN_ERROR;
     }
 
-    DltProcfsProcess *tmp = list->cursor;
+    DltKpiProcess *tmp = list->cursor;
 
     if(tmp->prev != NULL)
     {
@@ -262,11 +262,11 @@ DltReturnValue dlt_procfs_remove_process_at_cursor_soft(DltProcfsProcessList *li
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_remove_process_at_cursor(DltProcfsProcessList *list)
+DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_procfs_set_cursor_at_end(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -276,12 +276,12 @@ DltReturnValue dlt_procfs_remove_process_at_cursor(DltProcfsProcessList *list)
         return DLT_RETURN_ERROR;
     }
 
-    DltProcfsProcess *tmp = list->cursor;
-    DltReturnValue ret = dlt_procfs_remove_process_at_cursor_soft(list);
+    DltKpiProcess *tmp = list->cursor;
+    DltReturnValue ret = dlt_kpi_remove_process_at_cursor_soft(list);
     if(ret < DLT_RETURN_OK)
         return ret;
 
-    dlt_procfs_free_process(tmp);
+    dlt_kpi_free_process(tmp);
 
     return DLT_RETURN_OK;
 }

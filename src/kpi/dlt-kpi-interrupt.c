@@ -21,16 +21,16 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-interrupt.c
+ * \file dlt-kpi-interrupt.c
  */
 
-#include "dlt-procfs-interrupt.h"
+#include "dlt-kpi-interrupt.h"
 
-DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_level)
+DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level)
 {
     if(ctx == NULL)
     {
-        fprintf(stderr, "dlt_procfs_log_interrupts(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_log_interrupts(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -42,7 +42,7 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
     int head_line = 1, first_row = 1, cpu_count = 0, column = 0, buffer_offset = 0;
     DltReturnValue ret;
 
-    if((ret = dlt_procfs_read_file("/proc/interrupts", file_buffer, BUFFER_SIZE)) < DLT_RETURN_OK) return ret;
+    if((ret = dlt_kpi_read_file("/proc/interrupts", file_buffer, BUFFER_SIZE)) < DLT_RETURN_OK) return ret;
 
     token = strtok(file_buffer, delim);
     while(token != NULL)
@@ -53,7 +53,7 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
                 cpu_count++;
             else if(cpu_count <= 0)
             {
-                fprintf(stderr, "dlt_procfs_log_interrupts: Could not parse CPU count\n");
+                fprintf(stderr, "dlt_kpi_log_interrupts: Could not parse CPU count\n");
                 return DLT_RETURN_ERROR;
             }
             else if(strcmp(token, "\n") == 0)
@@ -83,7 +83,7 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
                 long int interrupt_count = strtol(token, &check, 10);
                 if(*check != '\0')
                 {
-                    fprintf(stderr, "dlt_procfs_log_interrupts: Could not parse interrupt count for CPU %d\n", column - 1);
+                    fprintf(stderr, "dlt_kpi_log_interrupts: Could not parse interrupt count for CPU %d\n", column - 1);
                     return DLT_RETURN_ERROR;
                 }
 
@@ -96,16 +96,19 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
         }
     }
 
+    // synchronization message
+    DLT_LOG(*ctx, log_level, DLT_STRING("IRQ"), DLT_STRING("BEG"));
+
     DltContextData ctx_data;
     if((ret = dlt_user_log_write_start(ctx, &ctx_data, log_level)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_start() returned error\n");
+        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_start() returned error\n");
         return ret;
     }
 
     if((ret = dlt_user_log_write_string(&ctx_data, "IRQ")) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_string() returned error\n");
+        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_string() returned error\n");
         return ret;
     }
 
@@ -117,19 +120,19 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
             /* message buffer full, start new one */
             if((ret = dlt_user_log_write_finish(&ctx_data)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_finish() returned error\n");
+                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_finish() returned error\n");
                 return ret;
             }
 
             if((ret = dlt_user_log_write_start(ctx, &ctx_data, log_level)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_start() returned error\n");
+                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_start() returned error\n");
                 return ret;
             }
 
             if((ret = dlt_user_log_write_string(&ctx_data, "IRQ")) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_string() returned error\n");
+                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_string() returned error\n");
                 return ret;
             }
         }
@@ -139,9 +142,12 @@ DltReturnValue dlt_procfs_log_interrupts(DltContext *ctx, DltLogLevelType log_le
 
     if((ret = dlt_user_log_write_finish(&ctx_data)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_procfs_log_interrupts(): dlt_user_log_write_finish() returned error\n");
+        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_finish() returned error\n");
         return ret;
     }
+
+    // synchronization message
+    DLT_LOG(*ctx, log_level, DLT_STRING("IRQ"), DLT_STRING("END"));
 
     return DLT_RETURN_OK;
 }

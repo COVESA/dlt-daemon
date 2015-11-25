@@ -21,15 +21,15 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-common.c
+ * \file dlt-kpi-common.c
  */
 
-#include "dlt-procfs-common.h"
+#include "dlt-kpi-common.h"
 
-DltReturnValue dlt_procfs_read_file_compact(char *filename, char **target)
+DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target)
 {
     char buffer[BUFFER_SIZE];
-    int ret = dlt_procfs_read_file(filename, buffer, BUFFER_SIZE);
+    int ret = dlt_kpi_read_file(filename, buffer, BUFFER_SIZE);
     if(ret < DLT_RETURN_OK)
         return ret;
 
@@ -44,7 +44,7 @@ DltReturnValue dlt_procfs_read_file_compact(char *filename, char **target)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_read_file(char* filename, char* buffer, uint maxLength)
+DltReturnValue dlt_kpi_read_file(char* filename, char* buffer, uint maxLength)
 {
     if(filename == NULL || buffer == NULL)
     {

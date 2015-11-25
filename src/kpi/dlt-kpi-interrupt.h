@@ -21,20 +21,15 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-common.h
+ * \file dlt-kpi-interrupt.h
  */
 
-#ifndef SRC_PROCFS_DLT_PROCFS_COMMON_H_
-#define SRC_PROCFS_DLT_PROCFS_COMMON_H_
+#ifndef SRC_KPI_DLT_KPI_INTERRUPT_H_
+#define SRC_KPI_DLT_KPI_INTERRUPT_H_
 
-#include <dlt_types.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "dlt.h"
+#include "dlt-kpi-common.h"
 
-#define BUFFER_SIZE 4096
+DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level);
 
-DltReturnValue dlt_procfs_read_file(char* filename, char* buffer, uint maxLength);
-DltReturnValue dlt_procfs_read_file_compact(char *filename, char **target);
-
-#endif /* SRC_PROCFS_DLT_PROCFS_COMMON_H_ */
+#endif /* SRC_KPI_DLT_KPI_INTERRUPT_H_ */

@@ -21,26 +21,27 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs-process.c
+ * \file dlt-kpi-process.c
  */
 
-#include "dlt-procfs-process.h"
+#include "dlt-kpi-process.h"
+
 #include <pthread.h>
 #include <unistd.h>
 
-DltReturnValue dlt_procfs_read_process_file_to_str(pid_t pid, char **target_str, char *subdir);
-unsigned long int dlt_procfs_read_process_stat_to_ulong(pid_t pid, unsigned int index);
-DltReturnValue dlt_procfs_read_process_stat_cmdline(pid_t pid, char **buffer);
+DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, char *subdir);
+unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int index);
+DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer);
 
-DltReturnValue dlt_procfs_process_update_io_wait(DltProcfsProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process, unsigned long int time_dif_ms)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_process_update_io_wait(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_process_update_io_wait(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    unsigned long int total_io_wait = dlt_procfs_read_process_stat_to_ulong(process->pid, 42);
+    unsigned long int total_io_wait = dlt_kpi_read_process_stat_to_ulong(process->pid, 42);
 
     process->io_wait = (total_io_wait - process->last_io_wait) * 1000 / sysconf(_SC_CLK_TCK); // busy milliseconds since last update
     if(time_dif_ms > 0)
@@ -51,16 +52,16 @@ DltReturnValue dlt_procfs_process_update_io_wait(DltProcfsProcess *process, unsi
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_process_update_cpu_time(DltProcfsProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process, unsigned long int time_dif_ms)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_process_update_cpu_time(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_process_update_cpu_time(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    unsigned long int utime = dlt_procfs_read_process_stat_to_ulong(process->pid, 14);
-    unsigned long int stime = dlt_procfs_read_process_stat_to_ulong(process->pid, 15);
+    unsigned long int utime = dlt_kpi_read_process_stat_to_ulong(process->pid, 14);
+    unsigned long int stime = dlt_kpi_read_process_stat_to_ulong(process->pid, 15);
 
     unsigned long total_cpu_time = utime + stime;
 
@@ -73,24 +74,24 @@ DltReturnValue dlt_procfs_process_update_cpu_time(DltProcfsProcess *process, uns
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_process_update_rss(DltProcfsProcess *process)
+DltReturnValue dlt_kpi_process_update_rss(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_process_update_rss(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_process_update_rss(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    process->rss = dlt_procfs_read_process_stat_to_ulong(process->pid, 24);
+    process->rss = dlt_kpi_read_process_stat_to_ulong(process->pid, 24);
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_process_update_ctx_switches(DltProcfsProcess *process)
+DltReturnValue dlt_kpi_process_update_ctx_switches(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_process_update_ctx_switches(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_process_update_ctx_switches(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -99,7 +100,7 @@ DltReturnValue dlt_procfs_process_update_ctx_switches(DltProcfsProcess *process)
     last_tok = NULL;
 
     DltReturnValue ret;
-    if((ret = dlt_procfs_read_process_file_to_str(process->pid, &buffer, "status")) < DLT_RETURN_OK) return ret;
+    if((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer, "status")) < DLT_RETURN_OK) return ret;
 
     process->ctx_switches = 0;
 
@@ -131,11 +132,11 @@ DltReturnValue dlt_procfs_process_update_ctx_switches(DltProcfsProcess *process)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_process_update_io_bytes(DltProcfsProcess *process)
+DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_process_update_io_bytes: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_process_update_io_bytes: Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -144,7 +145,7 @@ DltReturnValue dlt_procfs_process_update_io_bytes(DltProcfsProcess *process)
     last_tok = NULL;
 
     DltReturnValue ret;
-    if((ret = dlt_procfs_read_process_file_to_str(process->pid, &buffer, "io")) < DLT_RETURN_OK)
+    if((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer, "io")) < DLT_RETURN_OK)
         return ret;
 
     process->io_bytes = 0;
@@ -177,55 +178,55 @@ DltReturnValue dlt_procfs_process_update_io_bytes(DltProcfsProcess *process)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_update_process(DltProcfsProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int time_dif_ms)
 {
-    dlt_procfs_process_update_io_wait(process, time_dif_ms);
-    dlt_procfs_process_update_cpu_time(process, time_dif_ms);
-    dlt_procfs_process_update_rss(process);
-    dlt_procfs_process_update_ctx_switches(process);
-    dlt_procfs_process_update_io_bytes(process);
+    dlt_kpi_process_update_io_wait(process, time_dif_ms);
+    dlt_kpi_process_update_cpu_time(process, time_dif_ms);
+    dlt_kpi_process_update_rss(process);
+    dlt_kpi_process_update_ctx_switches(process);
+    dlt_kpi_process_update_io_bytes(process);
 
     return DLT_RETURN_OK;
 }
 
-DltProcfsProcess *dlt_procfs_create_process(int pid)
+DltKpiProcess *dlt_kpi_create_process(int pid)
 {
-    DltProcfsProcess *new_process = malloc(sizeof(DltProcfsProcess));
-    memset(new_process, 0, sizeof(DltProcfsProcess));
+    DltKpiProcess *new_process = malloc(sizeof(DltKpiProcess));
+    memset(new_process, 0, sizeof(DltKpiProcess));
 
     new_process->pid = pid;
-    new_process->ppid = (pid_t)dlt_procfs_read_process_stat_to_ulong(pid, 4);
+    new_process->ppid = (pid_t)dlt_kpi_read_process_stat_to_ulong(pid, 4);
 
-    dlt_procfs_read_process_file_to_str(pid, &(new_process->command_line), "cmdline");
+    dlt_kpi_read_process_file_to_str(pid, &(new_process->command_line), "cmdline");
     if(new_process->command_line != NULL)
         if(strlen(new_process->command_line) == 0)
         {
             free(new_process->command_line);
-            dlt_procfs_read_process_stat_cmdline(pid, &(new_process->command_line));
+            dlt_kpi_read_process_stat_cmdline(pid, &(new_process->command_line));
         }
 
-    dlt_procfs_update_process(new_process, 0);
+    dlt_kpi_update_process(new_process, 0);
 
     return new_process;
 }
 
-DltProcfsProcess *dlt_procfs_clone_process(DltProcfsProcess *original)
+DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
 {
     if(original == NULL)
     {
-        fprintf(stderr, "dlt_procfs_clone_process: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_clone_process: Nullpointer parameter\n");
         return NULL;
     }
 
-    // DltProcfsProcess *new_process = dlt_procfs_create_process(original->pid);
-    DltProcfsProcess *new_process = malloc(sizeof(DltProcfsProcess));
+    // DltKpiProcess *new_process = dlt_kpi_create_process(original->pid);
+    DltKpiProcess *new_process = malloc(sizeof(DltKpiProcess));
     if(new_process == NULL)
     {
         fprintf(stderr, "Out of memory\n");
         return NULL;
     }
 
-    memcpy(new_process, original, sizeof(DltProcfsProcess));
+    memcpy(new_process, original, sizeof(DltKpiProcess));
 
     if(original->command_line != NULL)
     {
@@ -245,11 +246,11 @@ DltProcfsProcess *dlt_procfs_clone_process(DltProcfsProcess *original)
     return new_process;
 }
 
-DltReturnValue dlt_procfs_free_process(DltProcfsProcess *process)
+DltReturnValue dlt_kpi_free_process(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_procfs_free_process: Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_free_process: Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -261,7 +262,7 @@ DltReturnValue dlt_procfs_free_process(DltProcfsProcess *process)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_print_process(DltProcfsProcess *process)
+DltReturnValue dlt_kpi_print_process(DltKpiProcess *process)
 {
     if(process == NULL)
     {
@@ -281,7 +282,7 @@ DltReturnValue dlt_procfs_print_process(DltProcfsProcess *process)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_read_process_file_to_str(pid_t pid, char **target_str, char *subdir)
+DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, char *subdir)
 {
     if(target_str == NULL)
     {
@@ -306,19 +307,19 @@ DltReturnValue dlt_procfs_read_process_file_to_str(pid_t pid, char **target_str,
     char filename[BUFFER_SIZE];
     snprintf(filename, BUFFER_SIZE, "/proc/%d/%s", pid, subdir);
 
-    return dlt_procfs_read_file_compact(filename, target_str);
+    return dlt_kpi_read_file_compact(filename, target_str);
 }
 
-unsigned long int dlt_procfs_read_process_stat_to_ulong(pid_t pid, unsigned int index)
+unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int index)
 {
     if(pid <= 0)
     {
-        fprintf(stderr, "dlt_procfs_read_process_stat_to_ulong(): Invalid PID\n");
+        fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Invalid PID\n");
         return 0;
     }
 
     char *buffer = NULL;
-    DltReturnValue tmp = dlt_procfs_read_process_file_to_str(pid, &buffer, "stat");
+    DltReturnValue tmp = dlt_kpi_read_process_file_to_str(pid, &buffer, "stat");
     if(tmp < DLT_RETURN_OK)
     {
         if(buffer != NULL)
@@ -349,34 +350,34 @@ unsigned long int dlt_procfs_read_process_stat_to_ulong(pid_t pid, unsigned int 
         ret = strtoul(tok, &check, 10);
         if(*check != '\0')
         {
-            fprintf(stderr, "dlt_procfs_read_process_stat_to_ulong(): Could not extract token\n");
+            fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Could not extract token\n");
             ret = 0;
         }
     }
     else
-        fprintf(stderr, "dlt_procfs_read_process_stat_to_ulong(): Index not found\n");
+        fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Index not found\n");
 
     free(buffer);
 
     return ret;
 }
 
-DltReturnValue dlt_procfs_read_process_stat_cmdline(pid_t pid, char **buffer)
+DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
 {
     if(pid <= 0)
     {
-        fprintf(stderr, "dlt_procfs_read_process_stat_cmdline(): Invalid PID\n");
+        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): Invalid PID\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if(buffer == NULL)
     {
-        fprintf(stderr, "dlt_procfs_read_process_stat_cmdline(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     char *tmp_buffer = NULL;
-    DltReturnValue tmp = dlt_procfs_read_process_file_to_str(pid, &tmp_buffer, "stat");
+    DltReturnValue tmp = dlt_kpi_read_process_file_to_str(pid, &tmp_buffer, "stat");
     if(tmp < DLT_RETURN_OK)
     {
         if(tmp_buffer != NULL)
@@ -405,7 +406,7 @@ DltReturnValue dlt_procfs_read_process_stat_cmdline(pid_t pid, char **buffer)
     }
     else
     {
-        fprintf(stderr, "dlt_procfs_read_process_stat_cmdline(): cmdline entry not found\n");
+        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): cmdline entry not found\n");
         return DLT_RETURN_ERROR;
     }
 
@@ -414,11 +415,11 @@ DltReturnValue dlt_procfs_read_process_stat_cmdline(pid_t pid, char **buffer)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_get_msg_process_update(DltProcfsProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buffer, int maxlen)
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_procfs_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -427,11 +428,11 @@ DltReturnValue dlt_procfs_get_msg_process_update(DltProcfsProcess *process, char
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_get_msg_process_new(DltProcfsProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer, int maxlen)
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_procfs_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -440,11 +441,11 @@ DltReturnValue dlt_procfs_get_msg_process_new(DltProcfsProcess *process, char *b
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_get_msg_process_stop(DltProcfsProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer, int maxlen)
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_procfs_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -453,11 +454,11 @@ DltReturnValue dlt_procfs_get_msg_process_stop(DltProcfsProcess *process, char *
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_procfs_get_msg_process_commandline(DltProcfsProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char *buffer, int maxlen)
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_procfs_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 

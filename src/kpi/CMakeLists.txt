@@ -15,15 +15,15 @@
 # @licence end@
 #######
 
-set (dlt_procfs_SRCS dlt-procfs.c dlt-procfs-options.c dlt-procfs-process.c dlt-procfs-process-list.c dlt-procfs-common.c dlt-procfs-interrupt.c)
-add_executable (dlt-procfs ${dlt_procfs_SRCS})
-target_link_libraries (dlt-procfs dlt)
-set_target_properties(dlt-procfs PROPERTIES LINKER_LANGUAGE C)
+set (dlt_kpi_SRCS dlt-kpi.c dlt-kpi-options.c dlt-kpi-process.c dlt-kpi-process-list.c dlt-kpi-common.c dlt-kpi-interrupt.c)
+add_executable (dlt-kpi ${dlt_kpi_SRCS})
+target_link_libraries (dlt-kpi dlt)
+set_target_properties(dlt-kpi PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-procfs
+install(TARGETS dlt-kpi
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
-INSTALL(FILES dlt-procfs.conf
+INSTALL(FILES dlt-kpi.conf
 	DESTINATION ${CONFIGURATION_FILES_DIR}
 	COMPONENT base)

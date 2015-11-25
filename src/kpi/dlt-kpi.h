@@ -21,21 +21,22 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-procfs.h
+ * \file dlt-kpi.h
  */
 
-#ifndef SRC_PROCFS_DLT_PROCFS_H_
-#define SRC_PROCFS_DLT_PROCFS_H_
+#ifndef SRC_KPI_DLT_KPI_H_
+#define SRC_KPI_DLT_KPI_H_
 
 #include "dlt.h"
-#include "dlt-procfs-common.h"
-#include "dlt-procfs-process.h"
-#include "dlt-procfs-process-list.h"
-#include "dlt-procfs-interrupt.h"
 #include <syslog.h>
 
+#include "dlt-kpi-common.h"
+#include "dlt-kpi-interrupt.h"
+#include "dlt-kpi-process.h"
+#include "dlt-kpi-process-list.h"
+
 // CONSTANT DEFINITIONS
-#define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-procfs.conf")
+#define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-kpi.conf")
 
 #define COMMAND_LINE_SIZE 1024
 
@@ -44,18 +45,18 @@ typedef struct
 {
     char *configurationFileName;
     int customConfigFile;
-} DltProcfsOptions;
+} DltKpiOptions;
 
 typedef struct
 {
     int process_log_interval, irq_log_interval, check_log_interval;
     DltLogLevelType log_level;
-} DltProcfsConfig;
+} DltKpiConfig;
 
 // FUNCTION DECLARATIONS:
-DltReturnValue dlt_procfs_read_command_line(DltProcfsOptions *options, int argc, char **argv);
-DltReturnValue dlt_procfs_read_configuration_file(DltProcfsConfig *config, char *file_name);
-void dlt_procfs_free_cli_options(DltProcfsOptions *options);
-DltReturnValue dlt_procfs_init(int argc, char **argv, DltProcfsConfig *config);
+DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char **argv);
+DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name);
+void dlt_kpi_free_cli_options(DltKpiOptions *options);
+DltReturnValue dlt_kpi_init(int argc, char **argv, DltKpiConfig *config);
 
-#endif /* SRC_PROCFS_DLT_PROCFS_H_ */
+#endif /* SRC_KPI_DLT_KPI_H_ */
