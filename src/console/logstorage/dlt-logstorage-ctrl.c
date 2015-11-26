@@ -374,6 +374,12 @@ static int dlt_logstorage_ctrl_single_request()
         return -1;
     }
 
+    if (!dlt_logstorage_check_directory_permission(get_default_path()))
+    {
+        pr_error("'%s' is not writable\n", get_default_path());
+        return -1;
+    }
+
     /* Initializing the communication with the daemon */
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
            !dlt_logstorage_must_exit())

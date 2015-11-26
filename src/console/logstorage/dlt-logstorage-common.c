@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -232,6 +233,28 @@ int dlt_logstorage_check_config_file(char *mnt_point)
 
     free(files);
     return ret;
+}
+
+/** @brief Check if given mount point is writable
+ *
+ * @param mnt_point The mount point to check
+ *
+ * @return 1 if the file is writable, 0 otherwise.
+ */
+int dlt_logstorage_check_directory_permission(char *mnt_point)
+{
+    if (mnt_point == NULL)
+    {
+        pr_error("Given mount point is NULL\n");
+        return 0;
+    }
+
+    if (access(mnt_point, W_OK) == 0)
+    {
+        return 1;
+    }
+
+    return 0;
 }
 
 /** @brief Prepares the body of the message to be send to DLT

@@ -80,4 +80,12 @@ int dlt_logstorage_send_event(int, char *);
  */
 int dlt_logstorage_check_config_file(char *);
 
+/** @brief Check if given mount point is writable
+ *
+ * @param mnt_point The mount point to check
+ *
+ * @return 1 if the file is writable, 0 otherwise.
+ */
+int dlt_logstorage_check_directory_permission(char *mnt_point);
+
 #endif
