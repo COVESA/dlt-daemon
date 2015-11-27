@@ -152,13 +152,21 @@ int main(int argc, char* argv[])
         }
     }
 
+#ifdef DLT_USE_IPv6
     if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+#else
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+#endif
     {
         perror("Socket");
         exit(1);
     }
 
+#ifdef DLT_USE_IPv6
     server_addr.sin_family = AF_INET6;
+#else
+    server_addr.sin_family = AF_INET;
+#endif
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(server_addr.sin_zero), 8);

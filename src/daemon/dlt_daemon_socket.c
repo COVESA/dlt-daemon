@@ -71,7 +71,11 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
     int rv;
 
     memset(&hints, 0, sizeof hints);
+#ifdef DLT_USE_IPv6
     hints.ai_family = AF_INET6; // force IPv6 - will still work with IPv4
+#else
+    hints.ai_family = AF_INET;
+#endif
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP address
 
