@@ -634,6 +634,8 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
             {
                 /* connection to passive node established, add to event loop */
                 con->status = DLT_GATEWAY_CONNECTED;
+                con->reconnect_cnt = 0;
+                con->timeout_cnt = 0;
 
                 /* setup dlt connection and add to epoll event loop here */
                 if (dlt_connection_create(daemon_local,
@@ -745,17 +747,25 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             return -1;
         }
 
-        con->status = DLT_GATEWAY_DISCONNECTED;
-        if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
-                                                   daemon_local,
-                                                   receiver->fd,
-                                                   DLT_CONNECTION_GATEWAY) != 0)
-        {
-            dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
-        }
-
         dlt_log(LOG_WARNING, "Connection to passive node lost\n");
 
+        if (con->reconnect_cnt < DLT_GATEWAY_RECONNECT_MAX)
+        {
+            dlt_log(LOG_WARNING, "Try to reconnect.\n");
+            con->reconnect_cnt += 1;
+            con->timeout_cnt = 0;
+        }
+        else
+        {
+            con->status = DLT_GATEWAY_DISCONNECTED;
+            if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
+                                                       daemon_local,
+                                                       receiver->fd,
+                                                       DLT_CONNECTION_GATEWAY) != 0)
+            {
+                dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
+            }
+        }
         return 0;
     }
 

@@ -63,6 +63,8 @@
 #define DLT_GATEWAY_CONFIG_PATH CONFIGURATION_FILES_DIR "/dlt_gateway.conf"
 #define DLT_GATEWAY_TIMER_INTERVAL 1
 
+#define DLT_GATEWAY_RECONNECT_MAX 1 /* reconnect once after connection loss */
+
 typedef enum
 {
     DLT_GATEWAY_UNINITIALIZED,
@@ -92,6 +94,7 @@ typedef struct {
     connection_trigger trigger; /* connection trigger */
     int timeout;                /* connection timeout */
     int timeout_cnt;            /* connection timeout counter */
+    int reconnect_cnt;          /* reconnection counter */
 
     DltClient client;           /* DltClient structure */
 } DltGatewayConnection;
