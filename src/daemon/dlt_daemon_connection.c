@@ -67,7 +67,7 @@ static int dlt_connection_send(DltConnection *conn,
 {
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
 
-    if (conn != NULL)
+    if ((conn != NULL) && (conn->receiver != NULL))
     {
         type = conn->type;
     }
@@ -75,9 +75,9 @@ static int dlt_connection_send(DltConnection *conn,
     switch (type)
     {
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-        return write(conn->fd, msg, msg_size);
+        return write(conn->receiver->fd, msg, msg_size);
     case DLT_CONNECTION_CLIENT_MSG_TCP:
-        return send(conn->fd, msg, msg_size, 0);
+        return send(conn->receiver->fd, msg, msg_size, 0);
     default:
         return -1;
     }
@@ -158,6 +158,23 @@ DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
     return current;
 }
 
+static void dlt_connection_destroy_receiver(DltConnection *con)
+{
+    if (!con)
+        return;
+
+    switch (con->type)
+    {
+    case DLT_CONNECTION_GATEWAY:
+        /* We rely on the gateway for clean-up */
+        break;
+    default:
+        (void) dlt_receiver_free(con->receiver);
+        free(con->receiver);
+        break;
+    }
+}
+
 /** @brief Get the receiver structure associated to a connection.
  *
  * The receiver structure is sometimes needed while handling the event.
@@ -168,55 +185,55 @@ DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
  *
  * @param dameon_local Structure where to take the DltReceiver pointer from.
  * @param type Type of the connection.
+ * @param fd File descriptor
  *
  * @return DltReceiver structure or NULL if none corresponds to the type.
  */
 static DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
-                                               DltConnectionType type,
-                                               int fd)
+                                                DltConnectionType type,
+                                                int fd)
 {
     DltReceiver *ret = NULL;
 
     switch (type)
     {
-    case DLT_CONNECTION_CLIENT_CONNECT:
-    /* FALL THROUGH */
-    /* There must be the same structure for this case */
-    case DLT_CONNECTION_CLIENT_MSG_TCP:
-        ret = &daemon_local->receiverSock;
-        break;
-    case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-        ret = &daemon_local->receiverSerial;
-        break;
-    case DLT_CONNECTION_APP_MSG:
-        ret = &daemon_local->receiver;
-        break;
-    case DLT_CONNECTION_ONE_S_TIMER:
-        ret = &daemon_local->timer_one_s;
-        break;
-    case DLT_CONNECTION_SIXTY_S_TIMER:
-        ret = &daemon_local->timer_sixty_s;
-        break;
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    case DLT_CONNECTION_SYSTEMD_TIMER:
-        ret = &daemon_local->timer_wd;
-        break;
-#endif
     case DLT_CONNECTION_CONTROL_CONNECT:
     /* FALL THROUGH */
-    /* There must be the same structure for this case */
     case DLT_CONNECTION_CONTROL_MSG:
-        ret = &daemon_local->receiverCtrlSock;
+    /* FALL THROUGH */
+    case DLT_CONNECTION_CLIENT_CONNECT:
+    /* FALL THROUGH */
+    case DLT_CONNECTION_CLIENT_MSG_TCP:
+        ret = calloc(1, sizeof(DltReceiver));
+        if (ret) {
+            dlt_receiver_init(ret, fd, DLT_DAEMON_RCVBUFSIZESOCK);
+        }
+        break;
+    case DLT_CONNECTION_CLIENT_MSG_SERIAL:
+        ret = calloc(1, sizeof(DltReceiver));
+        if (ret) {
+            dlt_receiver_init(ret, fd, DLT_DAEMON_RCVBUFSIZESERIAL);
+        }
+        break;
+    case DLT_CONNECTION_APP_MSG:
+    /* FALL THROUGH */
+    case DLT_CONNECTION_ONE_S_TIMER:
+    /* FALL THROUGH */
+    case DLT_CONNECTION_SIXTY_S_TIMER:
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    /* FALL THROUGH */
+    case DLT_CONNECTION_SYSTEMD_TIMER:
+#endif
+    /* FALL THROUGH */
+    case DLT_CONNECTION_GATEWAY_TIMER:
+        ret = calloc(1, sizeof(DltReceiver));
+        if (ret) {
+            dlt_receiver_init(ret, fd, DLT_DAEMON_RCVBUFSIZE);
+        }
         break;
     case DLT_CONNECTION_GATEWAY:
-        /* FIXME: This is complete different approach compared to having the
-         *        receiver as part of daemon_local structure. Approaches need
-         *        to be harmonized.
-         */
+        /* We rely on the gateway for init */
         ret = dlt_gateway_get_connection_receiver(&daemon_local->pGateway, fd);
-        break;
-    case DLT_CONNECTION_GATEWAY_TIMER:
-        ret = &daemon_local->timer_gateway;
         break;
     default:
         ret = NULL;
@@ -301,7 +318,8 @@ void *dlt_connection_get_callback(DltConnection *con)
  */
 void dlt_connection_destroy(DltConnection *to_destroy)
 {
-    close(to_destroy->fd);
+    close(to_destroy->receiver->fd);
+    dlt_connection_destroy_receiver(to_destroy);
     free(to_destroy);
 }
 
@@ -328,6 +346,11 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
 {
     DltConnection *temp = NULL;
 
+    if (fd < 0) {
+        /* Nothing to do */
+        return 0;
+    }
+
     if (dlt_event_handler_find_connection(evh, fd) != NULL)
     {
         /* No need for the same client to be registered twice
@@ -348,57 +371,24 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
 
     memset(temp, 0, sizeof(DltConnection));
 
-    temp->fd = fd;
-    temp->type = type;
     temp->receiver = dlt_connection_get_receiver(daemon_local, type, fd);
+    if (!temp->receiver) {
+        char local_str[DLT_DAEMON_TEXTBUFSIZE];
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "Unable to get receiver from %d connection.\n",
+                 type);
+
+        dlt_log(LOG_CRIT, local_str);
+        free(temp);
+        return -1;
+    }
+
+    temp->type = type;
+    temp->status = ACTIVE;
 
     /* Now give the ownership of the newly created connection
      * to the event handler, by registering for events.
      */
     return dlt_event_handler_register_connection(evh, daemon_local, temp, mask);
-}
-
-/** @brief Creates connection from all types.
- *
- * This functions run through all connection types and tries to register
- * on the event handler the one that were not already registered.
- *
- * @param daemon_local Structure to retrieve information from.
- *
- * @return 0 on success, -1 if a failure occurs.
- */
-int dlt_connection_create_remaining(DltDaemonLocal *daemon_local)
-{
-    DltConnectionType i = 0;
-    DltEventHandler *ev = &daemon_local->pEvent;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
-
-    for (i = 0 ; i < DLT_CONNECTION_TYPE_MAX ; i++)
-    {
-        int fd = 0;
-        DltReceiver *rec = dlt_connection_get_receiver(daemon_local, i, fd);
-
-        if (rec == NULL)
-        {
-            /* We are not interested if there is no receiver available */
-            continue;
-        }
-
-        fd = rec->fd;
-
-        /* Already created connections are ignored here */
-        if ((fd > 0) && dlt_connection_create(daemon_local, ev, fd, EPOLLIN, i))
-        {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Unable to register type %i event handler.\n",
-                     i);
-
-            dlt_log(LOG_ERR, local_str);
-
-            return -1;
-        }
-    }
-
-    return 0;
 }

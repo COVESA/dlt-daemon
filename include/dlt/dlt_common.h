@@ -1085,6 +1085,19 @@ extern "C"
     DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver);
 
     /**
+     * Check whether to_get amount of data is available in receiver and
+     * copy it to dest. Skip the DltUserHeader if skip_header is set to 1.
+     * @param receiver pointer to dlt receiver structure
+     * @param dest pointer to the destination buffer
+     * @param to_get size of the data to copy in dest
+     * @skip_header whether if the DltUserHeader must be skipped.
+     */
+    int dlt_receiver_check_and_get(DltReceiver *receiver,
+                                   void *dest,
+                                   unsigned int to_get,
+                                   unsigned int skip_header);
+
+    /**
      * Fill out storage header of a dlt message
      * @param storageheader pointer to storage header of a dlt message
      * @param ecu name of ecu to be set in storage header

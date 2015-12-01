@@ -32,6 +32,14 @@
 #include "dlt_common.h"
 
 typedef enum {
+    UNDEFINED, /* Undefined status */
+    INACTIVE,  /* Connection is inactive, excluded from epoll handling */
+    ACTIVE,    /* Connection is actively handled by epoll */
+    DEACTIVATE,/* Request for deactivation of the connection */
+    ACTIVATE   /* Request for activation of the connection */
+} DltConnectionStatus;
+
+typedef enum {
     DLT_CONNECTION_CLIENT_CONNECT = 0,
     DLT_CONNECTION_CLIENT_MSG_TCP,
     DLT_CONNECTION_CLIENT_MSG_SERIAL,
@@ -63,9 +71,9 @@ typedef enum {
  * and remove any other duplicates of FDs
  */
 typedef struct DltConnection {
-    int fd;               /**< File descriptor */
+    DltReceiver *receiver; /**< Receiver structure for this connection */
     DltConnectionType type; /**< Represents what type of handle is this (like FIFO, serial, client, server) */
-    DltReceiver *receiver; /**< Pointer to the affected receiver structure */
+    DltConnectionStatus status; /**< Status of connection */
     struct DltConnection *next;   /**< For multiple client connection using linked list */
 } DltConnection;
 

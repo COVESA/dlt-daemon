@@ -92,6 +92,7 @@
 #define DLT_USER_MESSAGE_LOG_MODE 11
 #define DLT_USER_MESSAGE_LOG_STATE 12
 #define DLT_USER_MESSAGE_MARKER 13
+#define DLT_USER_MESSAGE_NOT_SUPPORTED 16
 
 /* Internal defined values */
 

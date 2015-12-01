@@ -133,7 +133,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
         if((ret != DLT_DAEMON_ERROR_OK) &&
            DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
         {
-            dlt_daemon_close_socket(temp->fd,
+            dlt_daemon_close_socket(temp->receiver->fd,
                                     daemon,
                                     daemon_local,
                                     verbose);

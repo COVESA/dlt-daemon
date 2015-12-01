@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <sys/stat.h> /* for mkdir() */
 
+#include "dlt_user_shared.h"
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
 
@@ -2264,6 +2265,44 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver)
     }
 
     return DLT_RETURN_OK;
+}
+
+int dlt_receiver_check_and_get(DltReceiver *receiver,
+                               void *dest,
+                               unsigned int to_get,
+                               unsigned int skip_header)
+{
+    unsigned int min_size = to_get;
+    void *src = NULL;
+
+    if (skip_header) {
+        min_size += sizeof(DltUserHeader);
+    }
+
+    if (!receiver ||
+        (receiver->bytesRcvd < (int32_t)min_size) ||
+        !receiver->buf ||
+        !dest) {
+        return -1;
+    }
+
+    src = (void *)receiver->buf;
+
+    if (skip_header) {
+        src += sizeof(DltUserHeader);
+    }
+
+    memset(dest, 0, to_get);
+
+    memcpy(dest, src, to_get);
+
+    if (dlt_receiver_remove(receiver, min_size) == -1)
+    {
+        dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
+        return -1;
+    }
+
+    return to_get;
 }
 
 DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu)

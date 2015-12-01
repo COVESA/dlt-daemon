@@ -120,13 +120,14 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
     for (i = 0 ; i < nfds ; i++)
     {
         struct epoll_event *ev = &pEvent->events[i];
+        DltConnection *con = (DltConnection *)ev->data.ptr;
         int fd = 0;
         DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
 
-        if ((DltConnection *)ev->data.ptr)
+        if (con && con->receiver)
         {
-            type = ((DltConnection *)ev->data.ptr)->type;
-            fd = ((DltConnection *)ev->data.ptr)->fd;
+            type = con->type;
+            fd = con->receiver->fd;
         }
 
         /* First of all handle epoll error events
@@ -142,8 +143,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                                                    type);
             continue;
         }
+
         /* Get the function to be used to handle the event */
-        callback = dlt_connection_get_callback((DltConnection *)ev->data.ptr);
+        callback = dlt_connection_get_callback(con);
 
         if (!callback)
         {
@@ -155,14 +157,10 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
             return -1;
         }
 
-        /* TODO: Review the design to clean-up this line.
-         * fd are currently wrongly duplicated which may lead to errors. */
-        ((DltConnection *)ev->data.ptr)->receiver->fd = fd;
-
         /* From now on, callback is correct */
         if (callback(daemon,
                      daemon_local,
-                     ((DltConnection *)ev->data.ptr)->receiver,
+                     con->receiver,
                      daemon_local->flags.vflag) == -1)
         {
             snprintf(str,
@@ -192,7 +190,7 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
 {
     DltConnection *temp = ev->connections;
 
-    while ((temp != NULL) && (temp->fd != fd))
+    while ((temp != NULL) && (temp->receiver->fd != fd))
     {
         temp = temp->next;
     }
@@ -300,13 +298,21 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
                                          int mask)
 {
     struct epoll_event ev; /* Content will be copied by the kernel */
+    int fd = -1;
+
+    if (!evhdl || !connection || !connection->receiver) {
+        dlt_log(LOG_ERR, "Wrong parameters when registering connection.\n");
+        return -1;
+    }
+
+    fd = connection->receiver->fd;
 
     dlt_daemon_add_connection(evhdl, connection);
 
     ev.events = mask;
     ev.data.ptr = (void *)connection;
 
-    if (epoll_ctl(evhdl->epfd, EPOLL_CTL_ADD, connection->fd, &ev) == -1)
+    if (epoll_ctl(evhdl->epfd, EPOLL_CTL_ADD, fd, &ev) == -1)
     {
         dlt_log(LOG_ERR, "epoll_ctl() failed!\n");
         dlt_daemon_remove_connection(evhdl, connection);
@@ -352,13 +358,8 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         return -1;
     }
 
-    if (epoll_ctl(evhdl->epfd, EPOLL_CTL_DEL, fd, NULL) < 0)
-    {
-        dlt_log(LOG_ERR, "Unable to unregister event.\n");
-        return -1;
-    }
-
-    if ((type == DLT_CONNECTION_CLIENT_MSG_TCP) || (type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
+    if ((type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
+        (type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
     {
         daemon_local->client_connections--;
 
