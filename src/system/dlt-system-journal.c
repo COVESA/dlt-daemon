@@ -57,6 +57,7 @@
 
 #include <systemd/sd-journal.h>
 #include <systemd/sd-id128.h>
+#include <inttypes.h> /* for PRI formatting macro */
 
 extern DltSystemThreads threads;
 
@@ -177,7 +178,6 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
 
 	snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06"PRIu64, buffer_realtime_formatted, time_usecs % 1000000);
 
-
 	/* Try to get monotonic time from message source and if not successful try to get monotonic time from journal entry */
 	ret = dlt_system_journal_get(journal, buffer_monotime, "_SOURCE_MONOTONIC_TIMESTAMP", sizeof(buffer_monotime));
 	if (ret == 0 && strlen(buffer_monotime) > 0)
@@ -200,7 +200,7 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
 		}
 	}
 
-	snprintf(timestamp->monotonic, sizeof(timestamp->monotonic), "%"PRIu64".%06"PRIu64, time_usecs / 1000000, time_usecs % 1000000);
+	snprintf(timestamp->monotonic, sizeof(timestamp->monotonic), "%llu.%06llu", time_usecs / 1000000, time_usecs % 1000000);
 }
 
 void journal_thread(void *v_conf)

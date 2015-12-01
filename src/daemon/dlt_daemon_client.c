@@ -50,6 +50,10 @@
 #include <linux/stat.h>
 #endif
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "dlt_types.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"

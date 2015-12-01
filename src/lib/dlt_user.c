@@ -805,14 +805,6 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
 
     DLT_SEM_LOCK();
 
-    if (dlt_user.appID[0]=='\0')
-    {
-        dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "No application registered while trying to register ContextID %4s!\n", contextid);
-
-        DLT_SEM_FREE();
-        return DLT_RETURN_ERROR;
-    }
-
     if ((contextid == NULL) || (contextid[0] == '\0'))
     {
         DLT_SEM_FREE();
@@ -3354,7 +3346,6 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
     if (log == NULL ||
         log->handle == NULL ||
-        dlt_user.appID[0] == '\0' ||
         log->handle->contextID[0] == '\0' ||
         (mtype < DLT_TYPE_LOG) || (mtype > DLT_TYPE_CONTROL)
         )
@@ -4295,7 +4286,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
                     case DLT_USER_MESSAGE_LOG:
                     {
                         DltExtendedHeader * extendedHeader = (DltExtendedHeader *)(dlt_user.resend_buffer+sizeof(DltUserHeader)+
-                              sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra) - DLT_ID_SIZE);
+                              sizeof(DltStandardHeader)+sizeof(DltStandardHeaderExtra));
                         if ((extendedHeader) != 0 && (extendedHeader->apid[0]=='\0'))
                         { // if application id is empty, add it
                             dlt_set_id(extendedHeader->apid,dlt_user.appID);
