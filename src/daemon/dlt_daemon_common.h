@@ -150,6 +150,7 @@ typedef struct
     DltDaemonApplication *applications; /**< Pointer to applications */
     int8_t default_log_level;          /**< Default log level (of daemon) */
     int8_t default_trace_status;       /**< Default trace status (of daemon) */
+    int8_t force_ll_ts;                /**< Enforce ll and ts to not exceed default_log_level, default_trace_status */
     unsigned int overflow_counter;   /**< counts the number of lost messages. */
     int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
     char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
@@ -174,10 +175,13 @@ typedef struct
  * @param RingbufferMaxSize ringbuffer size
  * @param RingbufferStepSize ringbuffer size
  * @param runtime_directory Directory of persistent configuration
+ * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
+ * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param ForceLLTS force default log-level
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int verbose);
+int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int InitialContextLogLevel, int InitialContextTraceStatus, int ForceLLTS, int verbose);
 /**
  * De-Initialise the dlt daemon structure
  * @param daemon pointer to dlt daemon structure
@@ -363,9 +367,12 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
  * @param daemon pointer to dlt daemon structure
  * @param filename name of file containing the runtime defaults for applications
  * @param filename1 name of file containing the runtime defaults for contexts
+ * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
+ * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param ForceLLTS force default log-level
  * @param verbose if set to true verbose information is printed out.
  */
-void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *filename, const char *filename1, int verbose);
+void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *filename, const char *filename1, int InitialContextLogLevel, int InitialContextTraceStatus, int InitialEnforceLlTsStatus, int verbose);
 
 /**
  * Change the logging state of dlt daemon

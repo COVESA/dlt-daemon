@@ -241,13 +241,16 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->flags.offlineLogstorageDelimiter = '_';
 	daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
 	daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
-    daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
+	daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
 	dlt_daemon_logstorage_set_logstorage_cache_size(
-	        daemon_local->flags.offlineLogstorageCacheSize);
-    strncpy(daemon_local->flags.ctrlSockPath,
+	daemon_local->flags.offlineLogstorageCacheSize);
+	strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
-    daemon_local->flags.gatewayMode = 0;
+	daemon_local->flags.gatewayMode = 0;
+	daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
+	daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
+	daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
 
 	/* open configuration file */
 	if(daemon_local->flags.cvalue[0])
@@ -488,6 +491,45 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         {
                             daemon_local->flags.gatewayMode = atoi(value);
                             //printf("Option: %s=%s\n",token,value);
+                        }
+                        else if(strcmp(token,"ContextLogLevel")==0)
+                        {
+                            int const intval = atoi(value);
+                            if ( (intval >= DLT_LOG_OFF) && (intval <= DLT_LOG_VERBOSE))
+                            {
+                                daemon_local->flags.contextLogLevel = intval;
+                                printf("Option: %s=%s\n",token,value);
+                            }
+                            else
+                            {
+                                fprintf(stderr, "Invalid value for ContextLogLevel: %i. Must be in range [%i..%i]\n", intval, DLT_LOG_OFF, DLT_LOG_VERBOSE);
+                            }
+                        }
+                        else if(strcmp(token,"ContextTraceStatus")==0)
+                        {
+                            int const intval = atoi(value);
+                            if ( (intval >= DLT_TRACE_STATUS_OFF) && (intval <= DLT_TRACE_STATUS_ON))
+                            {
+                                daemon_local->flags.contextTraceStatus = intval;
+                                printf("Option: %s=%s\n",token,value);
+                            }
+                            else
+                            {
+                                fprintf(stderr, "Invalid value for ContextTraceStatus: %i. Must be in range [%i..%i]\n", intval, DLT_TRACE_STATUS_OFF, DLT_TRACE_STATUS_ON);
+                            }
+                        }
+                        else if(strcmp(token,"ForceContextLogLevelAndTraceStatus")==0)
+                        {
+                            int const intval = atoi(value);
+                            if ( (intval >= 0) && (intval <= 1))
+                            {
+                                daemon_local->flags.enforceContextLLAndTS = intval;
+                                printf("Option: %s=%s\n",token,value);
+                            }
+                            else
+                            {
+                                fprintf(stderr, "Invalid value for ForceContextLogLevelAndTraceStatus: %i. Must be 0, 1\n", intval);
+                            }
                         }
                         else
                         {
@@ -775,7 +817,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Daemon data */
-    if (dlt_daemon_init(daemon,daemon_local->RingbufferMinSize,daemon_local->RingbufferMaxSize,daemon_local->RingbufferStepSize,daemon_local->flags.ivalue,daemon_local->flags.vflag)==-1)
+    if (dlt_daemon_init(daemon,daemon_local->RingbufferMinSize,daemon_local->RingbufferMaxSize,daemon_local->RingbufferStepSize, daemon_local->flags.ivalue,daemon_local->flags.contextLogLevel, daemon_local->flags.contextTraceStatus,daemon_local->flags.enforceContextLLAndTS,daemon_local->flags.vflag)==-1)
     {
         dlt_log(LOG_ERR,"Could not initialize daemon data\n");
         return -1;

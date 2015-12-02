@@ -129,7 +129,7 @@ static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
     return ret;
 }
 
-int dlt_daemon_init(DltDaemon *daemon, unsigned long RingbufferMinSize, unsigned long RingbufferMaxSize, unsigned long RingbufferStepSize, const char *runtime_directory, int verbose)
+int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int InitialContextLogLevel, int InitialContextTraceStatus, int ForceLLTS, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -143,8 +143,9 @@ int dlt_daemon_init(DltDaemon *daemon, unsigned long RingbufferMinSize, unsigned
     daemon->num_applications = 0;
     daemon->applications = NULL;
 
-    daemon->default_log_level = DLT_DAEMON_INITIAL_LOG_LEVEL ;
-    daemon->default_trace_status = DLT_DAEMON_INITIAL_TRACE_STATUS ;
+    daemon->default_log_level = InitialContextLogLevel;
+    daemon->default_trace_status = InitialContextTraceStatus;
+    daemon->force_ll_ts = ForceLLTS;
 
     daemon->overflow_counter = 0;
 
@@ -704,6 +705,20 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ct
         }
     }
 
+    if (daemon->force_ll_ts)
+    {
+        if (log_level > daemon->default_log_level)
+        {
+            log_level = daemon->default_log_level;
+        }
+        if (trace_status > daemon->default_trace_status)
+        {
+            trace_status = daemon->default_trace_status;
+        }
+        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Adapting ll_ts for context: %.4s:%.4s with %i %i\n", apid, ctid, log_level, trace_status);
+        dlt_log(LOG_NOTICE, str);
+    }
+
     /* Store log level and trace status,
        if this is a new context, or
        if this is an old context and the runtime cfg was not loaded */
@@ -1122,6 +1137,10 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
 
     usercontext.log_level_pos = context->log_level_pos;
 
+    snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Send log-level to context: %.4s:%.4s [%i -> %i] [%i -> %i]\n",
+             context->apid, context->ctid, context->log_level, usercontext.log_level, context->trace_status, usercontext.trace_status);
+    dlt_log(LOG_NOTICE, str);
+
     /* log to FIFO */
     ret = dlt_user_log_out2(context->user_handle,
                     &(userheader), sizeof(DltUserHeader),
@@ -1174,7 +1193,7 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
     return ((ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR);
 }
 
-void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon, const char *filename, const char *filename1, int verbose)
+void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *filename, const char *filename1, int InitialContextLogLevel, int InitialContextTraceStatus, int InitialEnforceLlTsStatus, int verbose)
 {
     FILE *fd;
 
@@ -1211,8 +1230,9 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon, const char *
         unlink(filename1);
     }
 
-    daemon->default_log_level = DLT_DAEMON_INITIAL_LOG_LEVEL ;
-    daemon->default_trace_status = DLT_DAEMON_INITIAL_TRACE_STATUS ;
+    daemon->default_log_level = InitialContextLogLevel;
+    daemon->default_trace_status = InitialContextTraceStatus;
+    daemon->force_ll_ts = InitialEnforceLlTsStatus;
 
     /* Reset all other things (log level, trace status, etc.
                                to default values             */

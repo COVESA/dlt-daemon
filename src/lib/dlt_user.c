@@ -102,7 +102,7 @@ void dlt_lock_mutex(pthread_mutex_t *mutex)
     }
 }
 
-inline void dlt_unlock_mutex(pthread_mutex_t *mutex)
+void dlt_unlock_mutex(pthread_mutex_t *mutex)
 {
     pthread_mutex_unlock(mutex);
 }
@@ -1054,6 +1054,8 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
     DltContextData log;
     DltReturnValue ret = DLT_RETURN_OK;
 
+    log.handle = NULL;
+    log.context_description = NULL;
     if (dlt_user_log_init(handle, &log) <= DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 

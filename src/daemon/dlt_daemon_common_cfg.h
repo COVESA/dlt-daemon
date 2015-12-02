@@ -91,11 +91,6 @@
 /* Size of text buffer */
 #define DLT_DAEMON_COMMON_TEXTBUFSIZE          255
 
-/* Initial log level */
-#define DLT_DAEMON_INITIAL_LOG_LEVEL    DLT_LOG_INFO
-/* Initial trace status */
-#define DLT_DAEMON_INITIAL_TRACE_STATUS DLT_TRACE_STATUS_OFF
-
 /* Application ID used when the dlt daemon creates a control message */
 #define DLT_DAEMON_CTRL_APID 		 "DA1"
 /* Context ID used when the dlt daemon creates a control message */

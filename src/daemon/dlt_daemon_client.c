@@ -469,26 +469,26 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
         {
             if (dlt_daemon_applications_save(daemon, daemon->runtime_application_cfg, verbose)==0)
             {
-				if (dlt_daemon_contexts_save(daemon, daemon->runtime_context_cfg, verbose)==0)
-				{
-					dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK,  verbose);
-				}
-				else
-				{
-					/* Delete saved files */
-					dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, verbose);
-					dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
-				}
+                if (dlt_daemon_contexts_save(daemon, daemon->runtime_context_cfg, verbose)==0)
+                {
+                    dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK,  verbose);
+                }
+                else
+                {
+                    /* Delete saved files */
+                    dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, daemon_local->flags.contextLogLevel, daemon_local->flags.contextTraceStatus, daemon_local->flags.enforceContextLLAndTS, verbose);
+                    dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+                }
             }
             else
             {
-            	dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
+                dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
             }
             break;
         }
         case DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT:
         {
-            dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, verbose);
+            dlt_daemon_control_reset_to_factory_default(daemon, daemon->runtime_application_cfg, daemon->runtime_context_cfg, daemon_local->flags.contextLogLevel, daemon_local->flags.contextTraceStatus, daemon_local->flags.enforceContextLLAndTS, verbose);
             dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK,  verbose);
             break;
         }
