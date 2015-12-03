@@ -139,8 +139,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
              */
             dlt_event_handler_unregister_connection(pEvent,
                                                    daemon_local,
-                                                   fd,
-                                                   type);
+                                                   fd);
             continue;
         }
 
@@ -276,6 +275,97 @@ static void dlt_daemon_add_connection(DltEventHandler *ev,
     *temp = connection;
 }
 
+/** @brief Check for connection activation
+ *
+ * If the connection is active and it's not allowed anymore or it the user
+ * ask for deactivation, the connection will be deactivated.
+ * If the connection is inactive, the user asks for activation and it's
+ * allowed for it to be activated, the connection will be activated.
+ *
+ * @param evhdl The event handler structure.
+ * @param con The connection to act on
+ * @param activation_type The type of activation requested ((DE)ACTIVATE)
+ *
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_connection_check_activate(DltEventHandler *evhdl,
+                                  DltConnection *con,
+                                  int activation_type)
+{
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+
+    if (!evhdl || !con || !con->receiver)
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: wrong parameters (%p %p).\n",
+                 __func__,
+                 evhdl,
+                 con);
+            dlt_log(LOG_ERR, local_str);
+            return -1;
+    }
+
+    switch (con->status)
+    {
+    case ACTIVE:
+        if (activation_type == DEACTIVATE)
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Deactivate connection type: %d\n",
+                     con->type);
+            dlt_log(LOG_INFO, local_str);
+
+            if (epoll_ctl(evhdl->epfd,
+                          EPOLL_CTL_DEL,
+                          con->receiver->fd,
+                          NULL) == -1)
+            {
+                dlt_log(LOG_ERR, "epoll_ctl() in deactivate failed!\n");
+                return -1;
+            }
+
+            con->status = INACTIVE;
+        }
+        break;
+    case INACTIVE:
+        if (activation_type == ACTIVATE)
+        {
+            struct epoll_event ev; /* Content will be copied by the kernel */
+            ev.events = con->ev_mask;
+            ev.data.ptr = (void *)con;
+
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Activate connection type: %d\n",
+                     con->type);
+            dlt_log(LOG_INFO, local_str);
+
+
+            if (epoll_ctl(evhdl->epfd,
+                          EPOLL_CTL_ADD,
+                          con->receiver->fd,
+                          &ev) == -1)
+            {
+                dlt_log(LOG_ERR, "epoll_ctl() in activate failed!\n");
+                return -1;
+            }
+            con->status = ACTIVE;
+        }
+        break;
+    default:
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Unknown connection status: %d\n",
+                     con->status);
+            dlt_log(LOG_ERR, local_str);
+            return -1;
+    }
+
+    return 0;
+}
+
 /** @brief Registers a connection for event handling and takes its ownership.
  *
  * As we add the connection to the list of connection, we take its ownership.
@@ -297,34 +387,28 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
                                          DltConnection *connection,
                                          int mask)
 {
-    struct epoll_event ev; /* Content will be copied by the kernel */
-    int fd = -1;
-
     if (!evhdl || !connection || !connection->receiver) {
         dlt_log(LOG_ERR, "Wrong parameters when registering connection.\n");
         return -1;
     }
 
-    fd = connection->receiver->fd;
-
     dlt_daemon_add_connection(evhdl, connection);
 
-    ev.events = mask;
-    ev.data.ptr = (void *)connection;
-
-    if (epoll_ctl(evhdl->epfd, EPOLL_CTL_ADD, fd, &ev) == -1)
-    {
-        dlt_log(LOG_ERR, "epoll_ctl() failed!\n");
-        dlt_daemon_remove_connection(evhdl, connection);
-        return -1;
-    }
-
-    if ((connection->type == DLT_CONNECTION_CLIENT_MSG_TCP) || (connection->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
+    if ((connection->type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
+        (connection->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
     {
         daemon_local->client_connections++;
     }
 
-    return 0;
+    /* On creation the connection is not active by default */
+    connection->status = INACTIVE;
+
+    connection->next = NULL;
+    connection->ev_mask = mask;
+
+    return dlt_connection_check_activate(evhdl,
+                                         connection,
+                                         ACTIVATE);
 }
 
 /** @brief Unregisters a connection from the event handler and destroys it.
@@ -338,14 +422,12 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
  * @param evhdl The event handler structure where the connection list is.
  * @param daemon_local Structure containing needed information.
  * @param fd The file descriptor of the connection to be unregistered.
- * @param type the connection type.
  *
  * @return 0 on success, -1 otherwise.
  */
 int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
                                            DltDaemonLocal *daemon_local,
-                                           int fd,
-                                           DltConnectionType type)
+                                           int fd)
 {
     /* Look for the pointer in the client list.
      * There shall be only one event handler with the same fd.
@@ -358,8 +440,8 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         return -1;
     }
 
-    if ((type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
-        (type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
+    if ((temp->type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
+        (temp->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
     {
         daemon_local->client_connections--;
 
@@ -368,6 +450,13 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
             daemon_local->client_connections = 0;
             dlt_log(LOG_CRIT, "Unregistering more client than registered!\n");
         }
+    }
+
+    if (dlt_connection_check_activate(evhdl,
+                                      temp,
+                                      DEACTIVATE) < 0)
+    {
+        dlt_log(LOG_ERR, "Unable to unregister event.\n");
     }
 
     /* Cannot fail as far as dlt_daemon_find_connection succeed */

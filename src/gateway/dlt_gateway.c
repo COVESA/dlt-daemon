@@ -793,8 +793,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             con->status = DLT_GATEWAY_DISCONNECTED;
             if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
                                                        daemon_local,
-                                                       receiver->fd,
-                                                       DLT_CONNECTION_GATEWAY) != 0)
+                                                       receiver->fd) != 0)
             {
                 dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
             }
@@ -854,8 +853,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
              con->trigger = DLT_GATEWAY_DISABLED;
              if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
                                                         daemon_local,
-                                                        receiver->fd,
-                                                        DLT_CONNECTION_GATEWAY)
+                                                        receiver->fd)
                  != 0)
              {
                  dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
@@ -1095,8 +1093,7 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
         con->status = DLT_GATEWAY_DISCONNECTED;
         if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
                                                    daemon_local,
-                                                   con->client.sock,
-                                                   DLT_CONNECTION_GATEWAY) != 0)
+                                                   con->client.sock) != 0)
         {
             dlt_log(LOG_ERR,
                     "Remove passive node event handler connection failed\n");

@@ -51,7 +51,9 @@ int dlt_event_handler_register_connection(DltEventHandler *,
 
 int dlt_event_handler_unregister_connection(DltEventHandler *,
                                            DltDaemonLocal *,
-                                           int,
-                                           DltConnectionType);
+                                           int);
 
+int dlt_connection_check_activate(DltEventHandler *,
+                                  DltConnection *,
+                                  int);
 #endif /* DLT_DAEMON_EVENT_HANDLER_H */

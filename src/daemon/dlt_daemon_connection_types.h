@@ -75,6 +75,7 @@ typedef struct DltConnection {
     DltConnectionType type; /**< Represents what type of handle is this (like FIFO, serial, client, server) */
     DltConnectionStatus status; /**< Status of connection */
     struct DltConnection *next;   /**< For multiple client connection using linked list */
+    int ev_mask; /**< Mask to set when registering the connection for events */
 } DltConnection;
 
 #endif /* DLT_DAEMON_CONNECTION_TYPES_H */

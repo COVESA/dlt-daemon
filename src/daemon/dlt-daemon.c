@@ -3106,8 +3106,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     /* Closure is done while unregistering has for any connection */
     dlt_event_handler_unregister_connection(&daemon_local->pEvent,
                                            daemon_local,
-                                           sock,
-                                           DLT_CONNECTION_CLIENT_MSG_TCP);
+                                           sock);
 
 
 	if(daemon_local->client_connections==0)
