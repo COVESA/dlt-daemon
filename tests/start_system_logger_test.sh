@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 #enable logging of files and setup
 sudo sed -i 's/LogFileEnable = 0/LogFileEnable = 1/g' /usr/local/etc/dlt-system.conf

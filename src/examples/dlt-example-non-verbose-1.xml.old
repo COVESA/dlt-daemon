@@ -19,12 +19,32 @@
                     <SW_VERSION>001.004.062</SW_VERSION>
                     <APPLICATIONS>
                         <APPLICATION>
-                            <APPLICATION_ID>LOG</APPLICATION_ID>
+                            <APPLICATION_ID>APP1</APPLICATION_ID>
                             <APPLICATION_DESCRIPTION>Application 1</APPLICATION_DESCRIPTION>
                             <CONTEXTS>
                                 <CONTEXT>
-                                    <CONTEXT_ID>TEST</CONTEXT_ID>
-                                                        <CONTEXT_DESCRIPTION>Context 1</CONTEXT_DESCRIPTION>
+                                    <CONTEXT_ID>CON1</CONTEXT_ID>
+                                    <CONTEXT_DESCRIPTION>Context 1</CONTEXT_DESCRIPTION>
+                                </CONTEXT>
+                            </CONTEXTS>
+                        </APPLICATION>
+                        <APPLICATION>
+                            <APPLICATION_ID>TEST</APPLICATION_ID>
+                            <APPLICATION_DESCRIPTION>Test Application</APPLICATION_DESCRIPTION>
+                            <CONTEXTS>
+                                <CONTEXT>
+                                    <CONTEXT_ID>CON1</CONTEXT_ID>
+                                    <CONTEXT_DESCRIPTION>Context 1</CONTEXT_DESCRIPTION>
+                                </CONTEXT>
+                            </CONTEXTS>
+                        </APPLICATION>
+                        <APPLICATION>
+                            <APPLICATION_ID>LAT</APPLICATION_ID>
+                            <APPLICATION_DESCRIPTION>Log And Trace</APPLICATION_DESCRIPTION>
+                            <CONTEXTS>
+                                <CONTEXT>
+                                    <CONTEXT_ID>NV</CONTEXT_ID>
+                                    <CONTEXT_DESCRIPTION>NV test</CONTEXT_DESCRIPTION>
                                 </CONTEXT>
                             </CONTEXTS>
                         </APPLICATION>
@@ -178,8 +198,8 @@
                 <fx:MANUFACTURER-EXTENSION>
                     <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
                     <MESSAGE_INFO>DLT_LOG_INFO</MESSAGE_INFO>
-                    <APPLICATION_ID>LOG</APPLICATION_ID>
-                    <CONTEXT_ID>TEST</CONTEXT_ID>
+                    <APPLICATION_ID>TEST</APPLICATION_ID>
+                    <CONTEXT_ID>CON1</CONTEXT_ID>
                     <MESSAGE_SOURCE_FILE>dlt_test.c</MESSAGE_SOURCE_FILE>
                     <MESSAGE_LINE_NUMBER>411</MESSAGE_LINE_NUMBER>
                 </fx:MANUFACTURER-EXTENSION>
@@ -202,8 +222,8 @@
                 <fx:MANUFACTURER-EXTENSION>
                     <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
                     <MESSAGE_INFO>DLT_LOG_WARN</MESSAGE_INFO>
-                    <APPLICATION_ID>LOG</APPLICATION_ID>
-                    <CONTEXT_ID>TEST</CONTEXT_ID>
+                    <APPLICATION_ID>APP1</APPLICATION_ID>
+                    <CONTEXT_ID>CON1</CONTEXT_ID>
                     <MESSAGE_SOURCE_FILE>application_file.c</MESSAGE_SOURCE_FILE>
                     <MESSAGE_LINE_NUMBER>955</MESSAGE_LINE_NUMBER>
                 </fx:MANUFACTURER-EXTENSION>
@@ -234,8 +254,8 @@
                 <fx:MANUFACTURER-EXTENSION>
                     <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
                     <MESSAGE_INFO>DLT_LOG_ERROR</MESSAGE_INFO>
-                    <APPLICATION_ID>LOG</APPLICATION_ID>
-                    <CONTEXT_ID>TEST</CONTEXT_ID>
+                    <APPLICATION_ID>APP1</APPLICATION_ID>
+                    <CONTEXT_ID>CON1</CONTEXT_ID>
                     <MESSAGE_SOURCE_FILE>application_file.c</MESSAGE_SOURCE_FILE>
                     <MESSAGE_LINE_NUMBER>1058</MESSAGE_LINE_NUMBER>
                 </fx:MANUFACTURER-EXTENSION>
@@ -262,8 +282,8 @@
                 <fx:MANUFACTURER-EXTENSION>
                     <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
                     <MESSAGE_INFO>DLT_LOG_INFO</MESSAGE_INFO>
-                    <APPLICATION_ID>LOG</APPLICATION_ID>
-                    <CONTEXT_ID>TEST</CONTEXT_ID>
+                    <APPLICATION_ID>APP1</APPLICATION_ID>
+                    <CONTEXT_ID>CON1</CONTEXT_ID>
                     <MESSAGE_SOURCE_FILE>temp_meas.c</MESSAGE_SOURCE_FILE>
                     <MESSAGE_LINE_NUMBER>42</MESSAGE_LINE_NUMBER>
                 </fx:MANUFACTURER-EXTENSION>
@@ -286,8 +306,8 @@
                 <fx:MANUFACTURER-EXTENSION>
                     <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
                     <MESSAGE_INFO>DLT_LOG_INFO</MESSAGE_INFO>
-                    <APPLICATION_ID>LOG</APPLICATION_ID>
-                    <CONTEXT_ID>TEST</CONTEXT_ID>
+                    <APPLICATION_ID>LAT</APPLICATION_ID>
+                    <CONTEXT_ID>NV</CONTEXT_ID>
                     <MESSAGE_SOURCE_FILE>latsTask.c</MESSAGE_SOURCE_FILE>
                     <MESSAGE_LINE_NUMBER>421</MESSAGE_LINE_NUMBER>
                 </fx:MANUFACTURER-EXTENSION>
