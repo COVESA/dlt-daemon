@@ -78,6 +78,10 @@ static pthread_t dlt_receiverthread_handle;
 // calling dlt_user_atexit_handler() second time fails with error message
 static int  atexit_registered = 0;
 
+// calling atfork_handler() only once
+static int  atfork_registered = 0;
+
+
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
@@ -322,7 +326,11 @@ DltReturnValue dlt_init(void)
     }
 
     // prepare for fork() call
-    pthread_atfork(&dlt_fork_pre_fork_handler, &dlt_fork_parent_fork_handler, &dlt_fork_child_fork_handler);
+    if (atfork_registered == 0)
+    {
+      atfork_registered = 1;
+      pthread_atfork(&dlt_fork_pre_fork_handler, &dlt_fork_parent_fork_handler, &dlt_fork_child_fork_handler);
+    }
 
     return DLT_RETURN_OK;
 }
@@ -4553,22 +4561,28 @@ static void dlt_fork_pre_fork_handler()
 
 static void dlt_fork_parent_fork_handler()
 {
-    if (dlt_start_threads() < 0)
+    if (dlt_user_initialised)
     {
-        snprintf(str, DLT_USER_BUFFER_LENGTH,
+        if (dlt_start_threads() < 0)
+        {
+            snprintf(str, DLT_USER_BUFFER_LENGTH,
                         "Logging disabled, failed re-start thread after fork(pid=%i)!\n",
                         getpid());
-        dlt_log(LOG_WARNING, str);
-        /* cleanup is the only thing we can do here */
-        dlt_log_free();
-        dlt_free();
+            dlt_log(LOG_WARNING, str);
+            /* cleanup is the only thing we can do here */
+            dlt_log_free();
+            dlt_free();
+        }
     }
 }
 
 static void dlt_fork_child_fork_handler()
 {
+  if (dlt_user_initialised)
+  {
     /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
     dlt_log_free();
     dlt_free();
     /* the only thing that remains is the atexit-handler */
+  }
 }
