@@ -440,7 +440,7 @@ int dlt_daemon_client_process_control(int sock, DltDaemon *daemon, DltDaemonLoca
     id_tmp = *((uint32_t*)(msg->databuffer));
     id=DLT_ENDIAN_GET_32(msg->standardheader->htyp ,id_tmp);
 
-    if ((id > 0) && (id != DLT_SERVICE_ID_CALLSW_CINJECTION))
+    if ((id > 0) && (id < DLT_SERVICE_ID_CALLSW_CINJECTION))
     {
         /* Control message handling */
         switch (id)
