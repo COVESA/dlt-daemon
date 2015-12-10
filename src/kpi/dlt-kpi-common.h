@@ -36,5 +36,6 @@
 
 DltReturnValue dlt_kpi_read_file(char* filename, char* buffer, uint maxLength);
 DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target);
+int dlt_kpi_get_cpu_count();
 
 #endif /* SRC_KPI_DLT_KPI_COMMON_H_ */

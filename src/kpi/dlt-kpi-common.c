@@ -26,6 +26,8 @@
 
 #include "dlt-kpi-common.h"
 
+static int dlt_kpi_cpu_count = -1;
+
 DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target)
 {
     char buffer[BUFFER_SIZE];
@@ -65,4 +67,50 @@ DltReturnValue dlt_kpi_read_file(char* filename, char* buffer, uint maxLength)
     fclose(file);
 
     return DLT_RETURN_OK;
+}
+
+int dlt_kpi_read_cpu_count()
+{
+    char buffer[BUFFER_SIZE];
+    int ret = dlt_kpi_read_file("/proc/cpuinfo", buffer, sizeof(buffer));
+    if(ret != 0)
+    {
+        fprintf(stderr, "dlt_kpi_get_cpu_count(): Could not read /proc/cpuinfo\n");
+        return -1;
+    }
+
+    char* delim = "[] \t\n";
+    char* tok = strtok(buffer, delim);
+    if(tok == NULL)
+    {
+        fprintf(stderr, "dlt_kpi_get_cpu_count(): Could not extract token\n");
+        return -1;
+    }
+
+    int num = 0;
+    do
+    {
+        if(strcmp(tok, "processor") == 0)
+            num++;
+
+        tok = strtok(NULL, delim);
+    }
+    while(tok != NULL);
+
+    return num;
+}
+
+int dlt_kpi_get_cpu_count()
+{
+    if(dlt_kpi_cpu_count <= 0)
+    {
+        dlt_kpi_cpu_count = dlt_kpi_read_cpu_count();
+        if(dlt_kpi_cpu_count <= 0)
+        {
+            fprintf(stderr, "Could not get CPU count\n");
+            dlt_kpi_cpu_count = -1;
+        }
+    }
+
+    return dlt_kpi_cpu_count;
 }

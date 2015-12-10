@@ -43,9 +43,11 @@ DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process, unsigned l
 
     unsigned long int total_io_wait = dlt_kpi_read_process_stat_to_ulong(process->pid, 42);
 
+    int cpu_count = dlt_kpi_get_cpu_count();
+
     process->io_wait = (total_io_wait - process->last_io_wait) * 1000 / sysconf(_SC_CLK_TCK); // busy milliseconds since last update
-    if(time_dif_ms > 0)
-        process->io_wait = process->io_wait * 1000 / time_dif_ms; // busy milliseconds per second
+    if(time_dif_ms > 0 && cpu_count > 0)
+        process->io_wait = process->io_wait * 1000 / time_dif_ms / cpu_count; // busy milliseconds per second per CPU
 
     process->last_io_wait = total_io_wait;
 
@@ -65,9 +67,16 @@ DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process, unsigned 
 
     unsigned long total_cpu_time = utime + stime;
 
-    process->cpu_time = (total_cpu_time - process->last_cpu_time) * 1000 / sysconf(_SC_CLK_TCK); // busy milliseconds since last update
-    if(time_dif_ms > 0)
-        process->cpu_time = process->cpu_time * 1000 / time_dif_ms; // busy milliseconds per second
+    if(process->last_cpu_time > 0 && process->last_cpu_time <= total_cpu_time)
+    {
+        int cpu_count = dlt_kpi_get_cpu_count();
+
+        process->cpu_time = (total_cpu_time - process->last_cpu_time) * 1000 / sysconf(_SC_CLK_TCK); // busy milliseconds since last update
+        if(time_dif_ms > 0 && cpu_count > 0)
+            process->cpu_time = process->cpu_time * 1000 / time_dif_ms / cpu_count; // busy milliseconds per second per CPU
+    }
+    else
+        process->cpu_time = 0;
 
     process->last_cpu_time = total_cpu_time;
 
@@ -319,13 +328,14 @@ unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int ind
     }
 
     char *buffer = NULL;
-    DltReturnValue tmp = dlt_kpi_read_process_file_to_str(pid, &buffer, "stat");
-    if(tmp < DLT_RETURN_OK)
+    if(dlt_kpi_read_process_file_to_str(pid, &buffer, "stat") < DLT_RETURN_OK)
     {
+        // fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Error while reading process stat file. Pid: %d. Requested index: %u\n", pid, index); // can happen if process closed shortly before
+
         if(buffer != NULL)
             free(buffer);
 
-        return tmp;
+        return 0;
     }
 
     char *tok = strtok(buffer, " \t\n");
