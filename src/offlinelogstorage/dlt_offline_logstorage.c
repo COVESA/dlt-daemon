@@ -901,6 +901,13 @@ void dlt_logstorage_filter_set_strategy(DltLogStorageConfigData *config,
  */
 int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
 {
+    /* Read and store filters */
+    int i = 0;
+    int j = 0;
+    int ret = -1;
+    /* we have to make sure that this function returns success as soon as one
+     * filter configuration is valid */
+    int valid = -1;
     int is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
     char *appid = NULL;
     char *ctxid = NULL;
@@ -936,10 +943,6 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         return -1;
     }
 
-   /* Read and store filters */
-    int i = 0;
-    int j = 0;
-    int ret = -1;
     memset(&tmp_data, 0, sizeof(DltLogStorageConfigData));
 
     for (i = 0; i < num_filters; i++)
@@ -947,6 +950,7 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         if (tmp_data.file_name != NULL)
         {
             free(tmp_data.file_name);
+            tmp_data.file_name = NULL;
         }
 
         if (tmp_data.ecuid != NULL)
@@ -1040,6 +1044,11 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
                 dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error :  Storing filter values failed\n");
                 break;
             }
+            else
+            {
+                /* we successfully stored one filter configuration */
+                valid = 0;
+            }
             is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
         }
     }
@@ -1058,7 +1067,7 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
 
     dlt_config_file_release(config_file);
 
-    return ret;
+    return valid;
 }
 
 /**
