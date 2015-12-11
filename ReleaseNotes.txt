@@ -4,10 +4,27 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.13.0 STABLE
+2.14.0 STABLE
 
 Changes
 -------
+
+2.14.0
+  * Fix fork()-handler in libdlt
+  * Set default log-levels in dlt.conf
+  * Fix register context before application is registered
+  * Fixed compiler warnings about format issues in dlt-system-journal.c by replacing llu with PRIu64
+  * Make IP version compile time configurable
+  * Implemented Dlt MultiNode to connect DLT Daemons running on different operating systems
+  * Daemon shutdown: fixed memory leaks and missing removal of created sockets
+  * DltLogstorage: reduce writing to internal storage device as much as possible
+  * Control appliction to support offline log storage trigger implemented
+  * Offline log storage to internal and external devices implemented
+  * Unix socket control interface implemented
+  * Parse INI files for Offline Logstorage, Multinode and potentially other DLT extensions implmented
+  * Linking library systemd instead of systemd-journal systemd-id128 if systemd version >= 209
+  * Event handling has been reworked in order to use epoll and restructure the code
+  * Fixed include paths in dlt_user_manual.txt and dlt_cheatsheet.txt
 
 2.13.0
 
