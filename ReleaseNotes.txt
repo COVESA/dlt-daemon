@@ -4,10 +4,14 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.14.0 STABLE
+2.14.1 STABLE
 
 Changes
 -------
+
+2.14.1
+  * MultiNode: Reconnection after connection loss
+  * Fix injection message handling
 
 2.14.0
   * Fix fork()-handler in libdlt
