@@ -68,6 +68,8 @@ option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"        
 option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                          ON)
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
+option(WITH_DLT_USER          "Set user for process not run as root"                                            genivi)
+option(SYSTEMD_UNITDIR        "Set directory to install systemd unit files"                                     ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
 option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF)
 option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control application with udev support" OFF)
@@ -194,6 +196,8 @@ message( STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version 
 message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
 message( STATUS "WITH_SYSTEMD_WATCHDOG = ${WITH_SYSTEMD_WATCHDOG}" )
 message( STATUS "WITH_SYSTEMD_JOURNAL = ${WITH_SYSTEMD_JOURNAL}" )
+message( STATUS "SYSTEMD_UNITDIR = ${SYSTEMD_UNITDIR}" )
+message( STATUS "WITH_DLT_USER = ${WITH_DLT_USER}" )
 message( STATUS "WITH_DOC = ${WITH_DOC}" )
 
 message( STATUS "WITH_MAN = ${WITH_MAN}" )
