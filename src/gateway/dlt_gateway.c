@@ -948,6 +948,20 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         return -1;
     }
 
+    if (daemon_local->flags.lflag) /* send serial header */
+    {
+        ret = send(con->client.sock,
+                   (void *)dltSerialHeader,
+                   sizeof(dltSerialHeader),
+                   0);
+
+        if (ret == -1)
+        {
+            dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+            return -1;
+        }
+    }
+
     ret = send(con->client.sock,
          msg->headerbuffer + sizeof(DltStorageHeader),
          msg->headersize - sizeof(DltStorageHeader),
