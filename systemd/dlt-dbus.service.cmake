@@ -21,7 +21,7 @@ Documentation=man:dlt-dbus(1) man:dlt-dbus.conf(5)
 Wants=dlt.service
 
 [Service]
-Type=Simple
+Type=simple
 User=root
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-dbus
 WatchdogSec=@DLT_WatchdogSec@

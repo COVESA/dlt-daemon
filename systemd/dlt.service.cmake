@@ -20,7 +20,7 @@ Description=GENIVI DLT logging daemon
 Documentation=man:dlt-daemon(1) man:dlt.conf(5)
 
 [Service]
-Type=Simple
+Type=simple
 User=@DLT_USER@
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
 WatchdogSec=@DLT_WatchdogSec@
