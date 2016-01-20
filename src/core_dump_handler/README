@@ -3,11 +3,12 @@ To build use cmake with -DWITH_DLT_COREDUMPHANDLER=ON -DTARGET_CPU_NAME={i686|x8
 
 Temporary replacement of default crash handler:
 If you don't want to make the change persistent just become root (not sudo) and execute the following ("man core" for details):
-echo "|/usr/local/bin/dlt-cdh %t %p %s %e" > /proc/sys/kernel/core_pattern
+echo "|/usr/local/bin/dlt-cdh %t %p %s %e" > /proc/sys/kernel/core_pattern (replace /usr/local/bin with the path dlt-cdh has
+been installed to)
 
 
 Persistent replacement of default crash handler:
-We have to install "50-coredump.conf" to "/usr/lib/sysctl.d/" which is done automatically by "make install".
-Unfortunately we also have to remove abrt with "yum remove abrtd*" because this ruthlessly overwrites our change at
-every boot. This must be done when installing this stuff as Debian package.
+We have to generate "50-coredump.conf" in "/usr/lib/sysctl.d/" which is done automatically by "make install".
+Unfortunately at least on Fedora systems we also have to remove abrt with "yum remove abrtd*" because this ruthlessly overwrites
+our change at every boot. This must be done when installing this stuff as Debian package.
 To enable the core dump handler without rebooting we have to execute "sysctl -p /usr/lib/sysctl.d/50-coredump.conf"
