@@ -163,6 +163,19 @@ int dlt_gateway_process_on_demand_request(DltGateway *g,
                                           int connection_status,
                                           int verbose);
 
+/**
+ * Send control message to passive node.
+ *
+ * @param con           DltGatewayConnection
+ * @param g             DltGateway
+ * @param daemon_local  DltDaemonLocal
+ * @param verbose       verbose flag
+ */
+void dlt_gateway_send_control_message(DltGatewayConnection *con,
+                                      DltGateway *g,
+                                      DltDaemonLocal *daemon_local,
+                                      int verbose);
+
 /* _ONLY_ for development purposes */
 void print_gateway_connection_details(const DltGateway *g);
 

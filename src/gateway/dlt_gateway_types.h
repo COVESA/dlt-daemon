@@ -65,6 +65,10 @@
 
 #define DLT_GATEWAY_RECONNECT_MAX 1 /* reconnect once after connection loss */
 
+/* maximum number of control messages that can be send after connection is
+ * established */
+#define DLT_GATEWAY_MAX_STARTUP_CTRL_MSG 10
+
 typedef enum
 {
     DLT_GATEWAY_UNINITIALIZED,
@@ -95,7 +99,7 @@ typedef struct {
     int timeout;                /* connection timeout */
     int timeout_cnt;            /* connection timeout counter */
     int reconnect_cnt;          /* reconnection counter */
-
+    int control_msgs[DLT_GATEWAY_MAX_STARTUP_CTRL_MSG]; /* msg IDs send on startup */
     DltClient client;           /* DltClient structure */
 } DltGatewayConnection;
 

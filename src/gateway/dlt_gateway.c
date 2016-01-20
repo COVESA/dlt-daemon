@@ -56,10 +56,11 @@ char *configuration_entries [] =
     "Port",
     "EcuID",
     "Connect",
-    "Timeout"
+    "Timeout",
+    "SendControl"
 };
 
-#define DLT_GATEWAY_NUM_PROPERTIES_MAX 5
+#define DLT_GATEWAY_NUM_PROPERTIES_MAX 6
 
 /**
  * Check if given string is a valid IP address
@@ -309,6 +310,63 @@ int dlt_gateway_check_timeout(int *timeout, char *value)
 }
 
 /**
+ * Check the specified control messages identifier
+ *
+ * @param ids   ids of control messages to be send after connection is established
+ * @param value string to be tested
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_gateway_check_control_messages(int *ids, char *value)
+{
+    /* list of allowed clients given */
+    char *token = NULL;
+    char *rest = NULL;
+    int i = 0;
+    char error_msg[DLT_DAEMON_TEXTBUFSIZE];
+
+    if (ids == NULL || value == NULL)
+    {
+        return -1;
+    }
+
+    if (strlen(value) == 0)
+    {
+        memset(ids, 0, sizeof(int) * DLT_GATEWAY_MAX_STARTUP_CTRL_MSG);
+        return 0;
+    }
+
+    token = strtok_r(value, ",", &rest);
+    while (token != NULL && i < DLT_GATEWAY_MAX_STARTUP_CTRL_MSG)
+    {
+
+        ids[i] = strtol(token, NULL, 16);
+
+        if (errno == EINVAL || errno == ERANGE)
+        {
+            snprintf(error_msg,
+                     DLT_DAEMON_TEXTBUFSIZE-1,
+                     "Control message ID is not an integer: %s\n", token);
+            dlt_log(LOG_ERR, error_msg);
+            return -1;
+        }
+        else if (ids[i] < DLT_SERVICE_ID_SET_LOG_LEVEL ||
+                 ids[i] >= DLT_SERVICE_ID_LAST_ENTRY)
+        {
+            snprintf(error_msg,
+                     DLT_DAEMON_TEXTBUFSIZE-1,
+                     "Control message ID is not valid: %s\n", token);
+            dlt_log(LOG_ERR, error_msg);
+            return -1;
+        }
+
+        token = strtok_r(NULL, ",", &rest);
+        i++;
+    }
+
+    return 0;
+}
+
+/**
  * Check if gateway connection configuration parameter is valid.
  *
  * @param g     DltGateway
@@ -358,6 +416,10 @@ int dlt_gateway_check_param(DltGateway *gateway,
     else if (strncmp(key, "Timeout", sizeof("Timeout")) == 0)
     {
         return dlt_gateway_check_timeout(&(con->timeout), value);
+    }
+    else if (strncmp(key, "SendControl", sizeof("SendControl")) == 0)
+    {
+        return dlt_gateway_check_control_messages(con->control_msgs, value);
     }
     else
     {
@@ -414,6 +476,9 @@ int dlt_gateway_store_connection(DltGateway *gateway,
     gateway->connections[i].timeout = tmp->timeout;
     gateway->connections[i].handle = 0;
     gateway->connections[i].status = DLT_GATEWAY_INITIALIZED;
+    memcpy(gateway->connections[i].control_msgs,
+           tmp->control_msgs,
+           sizeof(tmp->control_msgs));
 
     if (dlt_client_init(&gateway->connections[i].client, verbose) != 0)
     {
@@ -647,6 +712,13 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");
                     return -1;
                 }
+
+                /* immediately send configured control messages */
+                dlt_gateway_send_control_message(con,
+                                                 gateway,
+                                                 daemon_local,
+                                                 verbose);
+
             }
             else
             {
@@ -1073,4 +1145,178 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
     }
 
     return 0;
+}
+
+void dlt_gateway_send_control_message(DltGatewayConnection *con,
+                                      DltGateway *gateway,
+                                      DltDaemonLocal *daemon_local,
+                                      int verbose)
+{
+    int i = 0;
+    uint32_t len = 0;
+    DltMessage msg;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (con == NULL || gateway == NULL || daemon_local == NULL)
+    {
+        snprintf(local_str,
+                 DLT_DAEMON_TEXTBUFSIZE,
+                 "%s: Invalid parameter given\n", __func__);
+        dlt_log(LOG_WARNING, local_str);
+        return;
+    }
+
+    for (i = 0; i < DLT_GATEWAY_MAX_STARTUP_CTRL_MSG; i++)
+    {
+        if (con->control_msgs[i] == 0)
+        {
+            break; /* no (more) control message to be send */
+        }
+
+        memset(&msg, 0, sizeof(msg));
+
+        if (dlt_message_init(&msg, verbose) == -1)
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Initialization of message failed\n");
+            dlt_log(LOG_WARNING, local_str);
+            return;
+        }
+
+        if (con->control_msgs[i] == DLT_SERVICE_ID_GET_LOG_INFO)
+        {
+            DltServiceGetLogInfoRequest *req;
+            msg.databuffer = (uint8_t *)
+                             malloc(sizeof(DltServiceGetLogInfoRequest));
+            if (msg.databuffer == NULL)
+            {
+                snprintf(local_str,
+                         DLT_DAEMON_TEXTBUFSIZE,
+                         "Initialization of 'GetLogInfo' failed\n");
+                dlt_log(LOG_WARNING, local_str);
+                dlt_message_free(&msg, verbose);
+                return;
+            }
+
+            req = (DltServiceGetLogInfoRequest *)msg.databuffer;
+            req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+            req->options = 7;
+            dlt_set_id(req->apid, "");
+            dlt_set_id(req->ctid, "");
+            dlt_set_id(req->com, "remo");
+
+            msg.databuffersize = sizeof(DltServiceGetLogInfoRequest);
+            msg.datasize = msg.databuffersize;
+        }
+        else if (con->control_msgs[i] == DLT_SERVICE_ID_GET_SOFTWARE_VERSION)
+        {
+            DltServiceGetSoftwareVersion *req;
+
+            msg.databuffer = (uint8_t *)
+                             malloc(sizeof(DltServiceGetSoftwareVersion));
+            if (msg.databuffer == NULL)
+            {
+                snprintf(local_str,
+                         DLT_DAEMON_TEXTBUFSIZE,
+                         "Initialization of 'GetSoftwareVersion' failed\n");
+                dlt_log(LOG_WARNING, local_str);
+                dlt_message_free(&msg, verbose);
+                return;
+            }
+
+            req = (DltServiceGetSoftwareVersion *)msg.databuffer;
+            req->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+
+            msg.databuffersize = sizeof(DLT_SERVICE_ID_GET_SOFTWARE_VERSION);
+            msg.datasize = msg.databuffersize;
+        }
+        else
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Unknown control message. Skip.\n");
+            dlt_log(LOG_WARNING, local_str);
+            dlt_message_free(&msg, verbose);
+            return;
+        }
+
+        /* prepare storage header */
+        msg.storageheader = (DltStorageHeader*)msg.headerbuffer;
+
+        if (dlt_set_storageheader(msg.storageheader,"") == DLT_RETURN_ERROR)
+        {
+            dlt_message_free(&msg,0);
+            return;
+        }
+
+        /* prepare standard header */
+        msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
+        msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1 ;
+
+        #if (BYTE_ORDER==BIG_ENDIAN)
+            msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
+        #endif
+
+        msg.standardheader->mcnt = 0;
+
+        /* Set header extra parameters */
+        dlt_set_id(msg.headerextra.ecu,"");
+        //msg.headerextra.seid = 0;
+        msg.headerextra.tmsp = dlt_uptime();
+
+        /* Copy header extra parameters to headerbuffer */
+        if (dlt_message_set_extraparameters(&msg,0) == DLT_RETURN_ERROR)
+        {
+            dlt_message_free(&msg,0);
+            return;
+        }
+
+        /* prepare extended header */
+        msg.extendedheader = (DltExtendedHeader*)(msg.headerbuffer +
+                             sizeof(DltStorageHeader) +
+                             sizeof(DltStandardHeader) +
+                             DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) );
+
+        msg.extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
+
+        msg.extendedheader->noar = 1; /* number of arguments */
+
+        dlt_set_id(msg.extendedheader->apid, "APP");
+        dlt_set_id(msg.extendedheader->ctid, "CON");
+
+        /* prepare length information */
+        msg.headersize = sizeof(DltStorageHeader) +
+                         sizeof(DltStandardHeader) +
+                         sizeof(DltExtendedHeader) +
+                         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
+
+        len=msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
+        if (len>UINT16_MAX)
+        {
+            fprintf(stderr,"Critical: Huge injection message discarded!\n");
+            dlt_message_free(&msg,0);
+
+            return;
+        }
+
+        msg.standardheader->len = DLT_HTOBE_16(len);
+
+        /* forward message to passive node */
+        if (dlt_gateway_forward_control_message(gateway,
+                                                daemon_local,
+                                                &msg,
+                                                con->ecuid,
+                                                verbose) != 0)
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Failed to forward message to passive node.\n");
+            dlt_log(LOG_WARNING, local_str);
+        }
+
+        dlt_message_free(&msg, verbose);
+    }
 }
