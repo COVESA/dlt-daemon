@@ -479,6 +479,8 @@ int test5m(void)
     char buffer[32];
     int num;
 
+    void *ptr = malloc(sizeof(int));
+
     for(num=0;num<32;num++)
     {
         buffer[num] = num;
@@ -506,10 +508,13 @@ int test5m(void)
     DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_STRING("Next line: DLT_LOG_STRING_UINT"));
     DLT_LOG_STRING_UINT(context_macro_test[4], DLT_LOG_INFO,"String output: ", 42);
 
+    DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_STRING("Next line: DLT_LOG_PTR"));
+    DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_PTR(ptr));
     /* wait 2 second before next test */
     sleep(2);
     DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test5: (Macro IF) finished"));
 
+    free(ptr);
     return 0;
 }
 

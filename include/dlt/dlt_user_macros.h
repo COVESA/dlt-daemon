@@ -328,6 +328,18 @@
     (void)dlt_user_log_write_uint16_formatted(&log_local,UINT_VAR,DLT_FORMAT_BIN16)
 
 /**
+ * Architecture independent macro to print pointers
+ */
+#define DLT_PTR(PTR_VAR) \
+    do { \
+        if (sizeof(void *) < 8) { \
+            DLT_HEX32((uintptr_t)PTR_VAR); \
+        } else { \
+            DLT_HEX64((uintptr_t)PTR_VAR); \
+        } \
+    } while(0)
+
+/**
  * Trace network message
  * @param CONTEXT object containing information about one special logging context
  * @param TYPE type of network trace message
