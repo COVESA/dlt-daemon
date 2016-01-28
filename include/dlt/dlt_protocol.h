@@ -201,6 +201,7 @@
 #define DLT_SERVICE_ID_OFFLINE_LOGSTORAGE             0xf05 /**< Service ID: Offline log storage */
 #define DLT_SERVICE_ID_PASSIVE_NODE_CONNECT           0xf0E /**< Service ID: (Dis)Connect passive Node */
 #define DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS 0xf0F /**< Service ID: Passive Node status information */
+#define DLT_SERVICE_ID_SET_ALL_LOG_LEVEL              0xf10 /**< Service ID: set all log level */
 #define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
 
 /*

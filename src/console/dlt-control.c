@@ -62,15 +62,18 @@
 #include <string.h>     /* for open() */
 
 #include "dlt_client.h"
+#include "dlt_user.h"
 
 #define DLT_RECEIVE_TEXTBUFSIZE 10024  /* Size of buffer for text output */
+
+#define DLT_CTRL_SOCK "/tmp/dlt-ctrl.sock"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
 
 #define DLT_GLOGINFO_APID_NUM_MAX   150
 #define DLT_GLOGINFO_DATA_MAX       800
 #define DLT_GET_LOG_INFO_HEADER     18      /*Get log info header size in response text */
-
+#define DLT_INVALID_LOG_LEVEL       0xF
 /* Option of GET_LOG_INFO */
 #define DLT_SERVICE_GET_LOG_INFO_OPT7    7    /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
 
@@ -208,7 +211,14 @@ void usage()
     printf("  -m message    Control message injection in ASCII\n");
     printf("  -x message    Control message injection in Hex e.g. 'ad 01 24 ef'\n");
     printf("  -t milliseconds Timeout to terminate application (Default:1000)'\n");
-    printf("  -l loglevel	  Set the log level (0=off - 5=verbose,255=default)\n");
+    printf("  -l loglevel      Set the log level (0=off - 6=verbose default= -1)\n");
+    printf("      supported options:\n");
+    printf("       -l level -a appid -c ctid\n");
+    printf("       -l level -a abc* (set level for all ctxts of apps name starts with abc)\n");
+    printf("       -l level -a appid (set level for all ctxts of this app)\n");
+    printf("       -l level -c xyz* (set level for all ctxts whose name starts with xyz)\n");
+    printf("       -l level -c ctxid (set level for the particular ctxt)\n");
+    printf("       -l level (set level for all the registered contexts)\n");
     printf("  -r tracestatus  Set the trace status (0=off - 1=on,255=default)\n");
     printf("  -d loglevel	  Set the default log level (0=off - 5=verbose)\n");
     printf("  -f tracestatus  Set the default trace status (0=off - 1=on)\n");
@@ -216,6 +226,7 @@ void usage()
     printf("  -o 		  	  Store configuration\n");
     printf("  -g 		  	  Reset to factory default\n");
     printf("  -j               Get log info\n");
+    printf("  -u               unix port\n");
 }
 /**
  * Function for sending get log info ctrl msg and printing the response.
@@ -269,6 +280,7 @@ int main(int argc, char* argv[])
     DltReceiveData dltdata;
     int c;
     int index;
+    char *endptr = NULL;
 
     /* Initialize dltdata */
     dltdata.vflag = 0;
@@ -282,7 +294,7 @@ int main(int argc, char* argv[])
     dltdata.mvalue = 0;
     dltdata.xvalue = 0;
     dltdata.tvalue = 1000;
-    dltdata.lvalue = -1;
+    dltdata.lvalue = DLT_INVALID_LOG_LEVEL;
     dltdata.rvalue = -1;
     dltdata.dvalue = -1;
     dltdata.fvalue = -1;
@@ -293,7 +305,7 @@ int main(int argc, char* argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogj")) != -1)
+    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogju")) != -1)
         switch (c)
         {
         case 'v':
@@ -307,10 +319,10 @@ int main(int argc, char* argv[])
             	return -1;
 			}
         case 'y':
-			{
-            	dltdata.yflag = 1;
-            	break;
-			}
+            {
+                dltdata.yflag = DLT_CLIENT_MODE_SERIAL;
+                break;
+            }
         case 'e':
 			{
             	dltdata.evalue = optarg;
@@ -323,15 +335,25 @@ int main(int argc, char* argv[])
 			}
 
         case 'a':
-			{
-            	dltdata.avalue = optarg;
-            	break;
-			}
+            {
+                dltdata.avalue = optarg;
+                if (strlen(dltdata.avalue) > DLT_ID_SIZE)
+                {
+                    fprintf (stderr, "Invalid appid\n");
+                    return -1;
+                }
+                break;
+            }
         case 'c':
-			{
-            	dltdata.cvalue = optarg;
-            	break;
-			}
+            {
+                dltdata.cvalue = optarg;
+                if (strlen(dltdata.cvalue) > DLT_ID_SIZE)
+                {
+                    fprintf (stderr, "Invalid context id\n");
+                    return -1;
+                }
+                break;
+            }
         case 's':
 			{
             	dltdata.svalue = atoi(optarg);
@@ -353,10 +375,15 @@ int main(int argc, char* argv[])
             	break;
 			}
         case 'l':
-			{
-            	dltdata.lvalue = atoi(optarg);;
-            	break;
-			}
+            {
+                dltdata.lvalue = strtol(optarg, &endptr, 10);
+                if ((dltdata.lvalue < DLT_LOG_DEFAULT) || (dltdata.lvalue > DLT_LOG_VERBOSE))
+                {
+                    fprintf (stderr, "invalid log level, supported log level 0-6\n");
+                    return -1;
+                }
+                break;
+            }
         case 'r':
 			{
             	dltdata.rvalue = atoi(optarg);;
@@ -392,6 +419,11 @@ int main(int argc, char* argv[])
                 dltdata.jvalue = 1;
                 break;
             }
+        case 'u':
+            {
+                dltdata.yflag = DLT_CLIENT_MODE_UNIX;
+                break;
+            }
         case '?':
 			{
 		        if (optopt == 'o' || optopt == 'f')
@@ -424,7 +456,19 @@ int main(int argc, char* argv[])
     dlt_client_register_message_callback(dlt_receive_message_callback);
 
     /* Setup DLT Client structure */
-    g_dltclient.mode = dltdata.yflag;
+    if (dltdata.yflag == DLT_CLIENT_MODE_SERIAL)
+    {
+        g_dltclient.mode = DLT_CLIENT_MODE_SERIAL;
+    }
+    else if (dltdata.yflag == DLT_CLIENT_MODE_UNIX)
+    {
+        g_dltclient.mode = DLT_CLIENT_MODE_UNIX;
+        g_dltclient.socketPath = DLT_CTRL_SOCK;
+    }
+    else
+    {
+        g_dltclient.mode = DLT_CLIENT_MODE_TCP;
+    }
 
     if (g_dltclient.mode==DLT_CLIENT_MODE_TCP)
     {
@@ -442,7 +486,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
-    else
+    else if (g_dltclient.mode == DLT_CLIENT_MODE_SERIAL)
     {
         for (index = optind; index < argc; index++)
         {
@@ -520,22 +564,41 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "ERROR: Could not send inject message\n");
             }
 		}
-    	else if(dltdata.lvalue!=-1 && dltdata.avalue && dltdata.cvalue)
-    	{
-    		/* log level */
-    		printf("Set log level:\n");
-    		printf("AppId: %s\n",dltdata.avalue);
-    		printf("ConId: %s\n",dltdata.cvalue);
-    		printf("Loglevel: %d\n",dltdata.lvalue);
-    		/* send control message*/
-            if (dlt_client_send_log_level(&g_dltclient,
-                                               dltdata.avalue,
-                                               dltdata.cvalue,
-                                               dltdata.lvalue) != DLT_RETURN_OK)
+         else if (dltdata.lvalue != DLT_INVALID_LOG_LEVEL) /*&& dltdata.avalue && dltdata.cvalue)*/
+        {
+            if ((dltdata.avalue == 0) && (dltdata.cvalue == 0))
             {
-                fprintf(stderr, "ERROR: Could not send log level\n");
+                if (dltdata.vflag)
+                {
+                    printf("Set all log level:\n");
+                    printf("Loglevel: %d\n", dltdata.lvalue);
+                }
+                if (0 != dlt_client_send_all_log_level(&g_dltclient,
+                                                       dltdata.lvalue))
+                {
+                    fprintf(stderr, "ERROR: Could not send log level\n");
+                }
             }
-    	}
+            else
+            {
+                /* log level */
+                if (dltdata.vflag)
+                {
+                    printf("Set log level:\n");
+                    printf("AppId: %s\n", dltdata.avalue);
+                    printf("ConId: %s\n", dltdata.cvalue);
+                    printf("Loglevel: %d\n", dltdata.lvalue);
+                }
+                /* send control message*/
+                if (0 != dlt_client_send_log_level(&g_dltclient,
+                                                   dltdata.avalue,
+                                                   dltdata.cvalue,
+                                                   dltdata.lvalue))
+                {
+                    fprintf(stderr, "ERROR: Could not send log level\n");
+                }
+            }
+        }
     	else if(dltdata.rvalue!=-1 && dltdata.avalue && dltdata.cvalue)
     	{
     		/* trace status */

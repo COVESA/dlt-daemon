@@ -230,6 +230,16 @@ void dlt_daemon_control_set_trace_status(int sock, DltDaemon *daemon, DltDaemonL
  */
 void dlt_daemon_control_set_default_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose);
 /**
+ * Process and generate response to received set all log level control message
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_all_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, DltMessage *msg, int verbose);
+
+/**
  * Process and generate response to received set default trace status control message
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure

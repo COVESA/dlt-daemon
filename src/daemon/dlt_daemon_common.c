@@ -1275,6 +1275,35 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
     }
 }
 
+void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int verbose)
+{
+    int32_t count = 0;
+    DltDaemonContext *context = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL)
+    {
+        return;
+    }
+
+    for (count = 0; count < daemon->num_contexts; count++)
+    {
+        context = &(daemon->contexts[count]);
+        if (context)
+        {
+            if (context->user_handle >= DLT_FD_MINIMUM)
+            {
+                context->log_level = log_level;
+                if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
+                {
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
 {
     int32_t count;

@@ -207,6 +207,13 @@ DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char 
  */
 DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel);
 /**
+ * Send the log level to all contexts registered with dlt daemon
+ * @param client pointer to dlt client structure
+ * @param LogLevel Log Level to be set
+ * @return negative value if there was an error
+ */
+int dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel);
+/**
  * Send the default trace status to the dlt daemon
  * @param client pointer to dlt client structure
  * @param defaultTraceStatus Default Trace Status
