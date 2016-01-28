@@ -45,41 +45,36 @@
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_client.h"
 
-/**
- * Expected entries for a passive node configuration
- * Caution: after changing entries here,
- * dlt_gateway_check_param needs to be updated as well
- * */
-char *configuration_entries [] =
-{
-    "IPaddress",
-    "Port",
-    "EcuID",
-    "Connect",
-    "Timeout",
-    "SendControl",
-    "SendSerialHeader"
-};
+typedef struct {
+    char *key;  /* The configuration key*/
+    int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
+    int is_opt; /* If the configuration is optional or not */
+} DltGatewayConf;
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
-#endif
-
-#define DLT_GATEWAY_NUM_PROPERTIES_MAX ARRAY_SIZE(configuration_entries)
+typedef enum {
+    GW_CONF_IP_ADDRESS = 0,
+    GW_CONF_PORT,
+    GW_CONF_ECUID,
+    GW_CONF_CONNECT,
+    GW_CONF_TIMEOUT,
+    GW_CONF_SEND_CONTROL,
+    GW_CONF_SEND_SERIAL_HEADER,
+    GW_CONF_COUNT
+} DltGatewayConfType;
 
 /**
  * Check if given string is a valid IP address
  *
- * @param ip    IP address
+ * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_ip(char **ip, char *value)
+static int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
     struct sockaddr_in sa;
     int ret = -1;
 
-    if (ip == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
@@ -89,9 +84,9 @@ int dlt_gateway_check_ip(char **ip, char *value)
     /* valid IP address */
     if (ret != 0)
     {
-        *ip = strdup(value);
+        con->ip_address = strdup(value);
 
-        if (*ip == NULL)
+        if (con->ip_address == NULL)
         {
             dlt_log(LOG_ERR, "Cannot copy passive node IP address string\n");
             return -1;
@@ -108,112 +103,17 @@ int dlt_gateway_check_ip(char **ip, char *value)
 }
 
 /**
- * Check socket domain
- *
- * This function is currently not used; only AF_INET is supported.
- *
- * @param domain    socket domain
- * @param value     string to be tested
- * @return 0 on success, -1 otherwise
- */
-int dlt_gateway_check_domain(int *domain, char *value)
-{
-    int ret = -1;
-
-    if (domain == NULL || value == NULL)
-    {
-        return -1;
-    }
-
-    ret = strncmp(value, "AF_INET", strlen("AF_INET"));
-
-    if (ret == 0)
-    {
-        *domain = AF_INET;
-        return 0;
-    }
-    else
-    {
-        dlt_log(LOG_ERR, "Only socket domain AF_INET supported\n");
-    }
-
-    return -1;
-}
-
-/**
- * Check socket type
- *
- * This function is currently not used; only SOCK_STREAM is supported.
- *
- * @param type      socket type
- * @param value     string to be tested
- * @return 0 on success, -1 otherwise
- */
-int dlt_gateway_check_type(int *type, char *value)
-{
-    int ret = -1;
-
-    if (type == NULL || value == NULL)
-    {
-        return -1;
-    }
-
-    ret = strncmp(value, "SOCK_STREAM", strlen("SOCK_STREAM"));
-
-    if (ret == 0)
-    {
-        *type = SOCK_STREAM;
-        return 0;
-    }
-    else
-    {
-        dlt_log(LOG_ERR, "Only socket type SOCK_STREAM is supported\n");
-    }
-
-    return -1;
-}
-
-/**
- * Check socket protocol
- *
- * This function is currently not used; only IPPROTO_TCP is supported.
- *
- * @param protocol  socket protocol
- * @param value     string to be tested
- * @return 0 on success, -1 otherwise
- */
-int dlt_gateway_check_protocol(int *protocol, char *value)
-{
-    if (protocol == NULL || value == NULL)
-    {
-        return -1;
-    }
-
-    if (strncmp(value, "IPPROTO_TCP", strlen("IPPROTO_TCP")) == 0)
-    {
-        *protocol = IPPROTO_TCP;
-        return 0;
-    }
-    else
-    {
-        dlt_log(LOG_ERR, "Only protocol IPPROTO_TCP is supported\n");
-    }
-
-    return -1;
-}
-
-/**
  * Check port number
  *
- * @param port      port number
- * @param value     string to be tested
+ * @param con     DltGatewayConnection to be updated
+ * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_port(int *port, char *value)
+static int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
 {
     int tmp = -1;
 
-    if (port == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
@@ -223,7 +123,7 @@ int dlt_gateway_check_port(int *port, char *value)
     /* port ranges for unprivileged applications */
     if (tmp > IPPORT_RESERVED && tmp <= USHRT_MAX)
     {
-        *port = tmp;
+        con->port = tmp;
         return 0;
     }
     else
@@ -237,20 +137,20 @@ int dlt_gateway_check_port(int *port, char *value)
 /**
  * Check ECU name
  *
- * @param ecuid     ecu name
- * @param value     string to be used as ECU identifier
+ * @param con     DltGatewayConnection to be updated
+ * @param value   string to be used as ECU identifier
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_ecu(char **ecuid, char *value)
+static int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
 {
-    if (ecuid == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
 
-    *ecuid = strdup(value);
+    con->ecuid = strdup(value);
 
-    if (*ecuid == NULL)
+    if (con->ecuid == NULL)
     {
         return -1;
     }
@@ -261,29 +161,30 @@ int dlt_gateway_check_ecu(char **ecuid, char *value)
 /**
  * Check connection trigger
  *
- * @param trigger   connection setup trigger
- * @param value     string to be tested
+ * @param con     DltGatewayConnection to be updated
+ * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_connect_trigger(int *trigger, char *value)
+static int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+                                             char *value)
 {
-    if (trigger == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
 
     if (strncasecmp(value, "OnStartup", strlen("OnStartup")) == 0)
     {
-        *trigger = DLT_GATEWAY_ON_STARTUP;
+        con->trigger = DLT_GATEWAY_ON_STARTUP;
     }
     else if (strncasecmp(value, "OnDemand", strlen("OnDemand")) == 0)
     {
-        *trigger = DLT_GATEWAY_ON_DEMAND;
+        con->trigger = DLT_GATEWAY_ON_DEMAND;
     }
     else
     {
         dlt_log(LOG_ERR, "Wrong connection trigger state given.\n");
-        *trigger = DLT_GATEWAY_UNDEFINED;
+        con->trigger = DLT_GATEWAY_UNDEFINED;
         return -1;
     }
 
@@ -293,20 +194,20 @@ int dlt_gateway_check_connect_trigger(int *trigger, char *value)
 /**
  * Check connection timeout value
  *
- * @param timeout   connection timeout
- * @param value     string to be tested
+ * @param con     DltGatewayConnection to be updated
+ * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_timeout(int *timeout, char *value)
+static int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
 {
-    if (timeout == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
 
-    *timeout = (int) strtol(value, NULL, 10);
+    con->timeout = (int) strtol(value, NULL, 10);
 
-    if (*timeout > 0)
+    if (con->timeout > 0)
     {
         return 0;
     }
@@ -317,21 +218,18 @@ int dlt_gateway_check_timeout(int *timeout, char *value)
 /**
  * Check the value for SendSerialHeader
  *
- * @param send_serial Where the value must be put
+ * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_send_serial(int *send_serial, char *value)
+static int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
 {
-    if (send_serial == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
 
-    *send_serial = (int) strtol(value, NULL, 10);
-
-    if (*send_serial != 0)
-        *send_serial = 1;
+    con->send_serial = !!((int) strtol(value, NULL, 10));
 
     return 0;
 }
@@ -339,11 +237,12 @@ int dlt_gateway_check_send_serial(int *send_serial, char *value)
 /**
  * Check the specified control messages identifier
  *
- * @param ids   ids of control messages to be send after connection is established
+ * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_control_messages(int *ids, char *value)
+static int dlt_gateway_check_control_messages(DltGatewayConnection *con,
+                                              char *value)
 {
     /* list of allowed clients given */
     char *token = NULL;
@@ -351,14 +250,16 @@ int dlt_gateway_check_control_messages(int *ids, char *value)
     int i = 0;
     char error_msg[DLT_DAEMON_TEXTBUFSIZE];
 
-    if (ids == NULL || value == NULL)
+    if (con == NULL || value == NULL)
     {
         return -1;
     }
 
     if (strlen(value) == 0)
     {
-        memset(ids, 0, sizeof(int) * DLT_GATEWAY_MAX_STARTUP_CTRL_MSG);
+        memset(con->control_msgs,
+               0,
+               sizeof(int) * DLT_GATEWAY_MAX_STARTUP_CTRL_MSG);
         return 0;
     }
 
@@ -366,7 +267,7 @@ int dlt_gateway_check_control_messages(int *ids, char *value)
     while (token != NULL && i < DLT_GATEWAY_MAX_STARTUP_CTRL_MSG)
     {
 
-        ids[i] = strtol(token, NULL, 16);
+        con->control_msgs[i] = strtol(token, NULL, 16);
 
         if (errno == EINVAL || errno == ERANGE)
         {
@@ -376,8 +277,8 @@ int dlt_gateway_check_control_messages(int *ids, char *value)
             dlt_log(LOG_ERR, error_msg);
             return -1;
         }
-        else if (ids[i] < DLT_SERVICE_ID_SET_LOG_LEVEL ||
-                 ids[i] >= DLT_SERVICE_ID_LAST_ENTRY)
+        else if (con->control_msgs[i] < DLT_SERVICE_ID_SET_LOG_LEVEL ||
+                 con->control_msgs[i] >= DLT_SERVICE_ID_LAST_ENTRY)
         {
             snprintf(error_msg,
                      DLT_DAEMON_TEXTBUFSIZE-1,
@@ -394,6 +295,45 @@ int dlt_gateway_check_control_messages(int *ids, char *value)
 }
 
 /**
+ * Expected entries for a passive node configuration
+ * Caution: after changing entries here,
+ * dlt_gateway_check_param needs to be updated as well
+ * */
+static DltGatewayConf configuration_entries[GW_CONF_COUNT] =
+{
+    [GW_CONF_IP_ADDRESS] = {
+        .key = "IPaddress",
+        .func = dlt_gateway_check_ip,
+        .is_opt = 0 },
+    [GW_CONF_PORT] = {
+        .key = "Port",
+        .func = dlt_gateway_check_port,
+        .is_opt = 1 },
+    [GW_CONF_ECUID] = {
+        .key = "EcuID",
+        .func = dlt_gateway_check_ecu,
+        .is_opt = 0 },
+    [GW_CONF_CONNECT] = {
+        .key = "Connect",
+        .func = dlt_gateway_check_connect_trigger,
+        .is_opt = 1 },
+    [GW_CONF_TIMEOUT] = {
+        .key = "Timeout",
+        .func = dlt_gateway_check_timeout,
+        .is_opt = 0 },
+    [GW_CONF_SEND_CONTROL] = {
+        .key = "SendControl",
+        .func = dlt_gateway_check_control_messages,
+        .is_opt = 1 },
+    [GW_CONF_SEND_SERIAL_HEADER] = {
+        .key = "SendSerialHeader",
+        .func = dlt_gateway_check_send_serial,
+        .is_opt = 1 }
+};
+
+#define DLT_GATEWAY_NUM_PROPERTIES_MAX GW_CONF_COUNT
+
+/**
  * Check if gateway connection configuration parameter is valid.
  *
  * @param g     DltGateway
@@ -402,60 +342,20 @@ int dlt_gateway_check_control_messages(int *ids, char *value)
  * @param value specified property value from configuration file
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_check_param(DltGateway *gateway,
-                            DltGatewayConnection *con,
-                            char *key,
-                            char *value)
+static int dlt_gateway_check_param(DltGateway *gateway,
+                                   DltGatewayConnection *con,
+                                   DltGatewayConfType ctype,
+                                   char *value)
 {
-    if (gateway == NULL || con == NULL || key == NULL || value == NULL)
+    if (gateway == NULL || con == NULL || value == NULL)
     {
         return -1;
     }
 
-    if (strncmp(key, "IPaddress", sizeof("IPaddress")) == 0)
-    {
-        return dlt_gateway_check_ip(&con->ip_address, value);
-    }
-    else if (strncmp(key, "SockDomain", sizeof("SockDomain")) == 0)
-    {
-        return dlt_gateway_check_domain(&(con->sock_domain), value);
-    }
-    else if (strncmp(key, "SockType", sizeof("SockType")) == 0)
-    {
-        return dlt_gateway_check_type(&(con->sock_type), value);
-    }
-    else if (strncmp(key, "SockProtocol", sizeof("SockProtocol")) == 0)
-    {
-        return dlt_gateway_check_protocol(&(con->sock_protocol), value);
-    }
-    else if (strncmp(key, "Port", sizeof("Port")) == 0)
-    {
-        return dlt_gateway_check_port(&(con->port), value);
-    }
-    else if (strncmp(key, "EcuID", sizeof("EcuID")) == 0)
-    {
-        return dlt_gateway_check_ecu(&con->ecuid,value);
-    }
-    else if (strncmp(key, "Connect", sizeof("Connect")) == 0)
-    {
-        return dlt_gateway_check_connect_trigger(&(con->trigger), value);
-    }
-    else if (strncmp(key, "Timeout", sizeof("Timeout")) == 0)
-    {
-        return dlt_gateway_check_timeout(&(con->timeout), value);
-    }
-    else if (strncmp(key, "SendSerialHeader", sizeof("SendSerialHeader")) == 0)
-    {
-        return dlt_gateway_check_send_serial(&con->send_serial, value);
-    }
-    else if (strncmp(key, "SendControl", sizeof("SendControl")) == 0)
-    {
-        return dlt_gateway_check_control_messages(con->control_msgs, value);
-    }
-    else
-    {
-        return -1;
-    }
+    if (ctype < GW_CONF_COUNT)
+        return configuration_entries[ctype].func(con, value);
+
+    return -1;
 }
 
 /**
@@ -552,7 +452,6 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 {
     int ret = 0;
     int i = 0;
-    DltGatewayConnection tmp;
     DltConfigFile *file = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -561,12 +460,6 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
     {
         return -1;
     }
-
-    memset(&tmp, 0, sizeof(tmp));
-
-    /* Set default */
-    tmp.send_serial = gateway->send_serial;
-    tmp.port = DLT_DAEMON_TCP_PORT;
 
     /* read configuration file */
     file = dlt_config_file_init(DLT_GATEWAY_CONFIG_PATH);
@@ -593,53 +486,79 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 
     for (i = 0; i < gateway->num_connections; i++)
     {
-        unsigned int j = 0;
+        char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+        DltGatewayConnection tmp;
+        int invalid = 0;
+        DltGatewayConfType j = 0;
         char section[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
         char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
 
+        memset(&tmp, 0, sizeof(tmp));
+
+        /* Set default */
+        tmp.send_serial = gateway->send_serial;
+        tmp.port = DLT_DAEMON_TCP_PORT;
+
         ret = dlt_config_file_get_section_name(file, i, section);
 
-        for (j = 0; j < DLT_GATEWAY_NUM_PROPERTIES_MAX; j++)
+        for (j = 0; j < GW_CONF_COUNT; j++)
         {
             ret = dlt_config_file_get_value(file,
                                             section,
-                                            configuration_entries[j],
+                                            configuration_entries[j].key,
                                             value);
 
-            if (ret != 0)
+            if ((ret != 0) && configuration_entries[j].is_opt)
             {
                 /* Use default values for this key */
-                char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
                 snprintf(local_str,
                          DLT_DAEMON_TEXTBUFSIZE,
                          "Using default for %s.\n",
-                         configuration_entries[j]);
+                         configuration_entries[j].key);
                 dlt_log(LOG_WARNING, local_str);
                 continue;
             }
+            else if (ret != 0)
+            {
+                snprintf(local_str,
+                         DLT_DAEMON_TEXTBUFSIZE,
+                         "Missing configuration for %s.\n",
+                         configuration_entries[j].key);
+                dlt_log(LOG_WARNING, local_str);
+                invalid = 1;
+                break;
+            }
 
             /* check value and store temporary */
-            ret = dlt_gateway_check_param(gateway,
-                                          &tmp,
-                                          configuration_entries[j],
-                                          value);
+            ret = dlt_gateway_check_param(gateway, &tmp, j, value);
 
             if (ret != 0)
             {
-                char error_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
-                sprintf(error_str,
+                sprintf(local_str,
                         "Configuration %s = %s is invalid.\n"
                         "Using default.\n",
-                        configuration_entries[j], value);
-                dlt_log(LOG_ERR, error_str);
+                        configuration_entries[j].key, value);
+                dlt_log(LOG_ERR, local_str);
             }
         }
 
-        ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
-
-        if (ret != 0)
+        if (invalid)
         {
-            dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
+            memset(local_str, 0, DLT_DAEMON_TEXTBUFSIZE);
+            sprintf(local_str,
+                    "%s configuration is invalid.\n"
+                    "Ignoring.\n",
+                    section);
+            dlt_log(LOG_ERR, local_str);
+        }
+        else
+        {
+            ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
+
+            if (ret != 0)
+            {
+                dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
+            }
         }
 
         /* strdup used inside some get_value function */
