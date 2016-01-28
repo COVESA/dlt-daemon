@@ -68,8 +68,10 @@ option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"        
 option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                          ON)
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
-option(WITH_DLT_USER          "Set user for process not run as root"                                            genivi)
-option(SYSTEMD_UNITDIR        "Set directory to install systemd unit files"                                     ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
+
+set( DLT_USER "genivi" CACHE STRING
+    "Set user for process not run as root")
+
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
 option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF)
 option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control application with udev support" OFF)
@@ -157,6 +159,7 @@ add_subdirectory( cmake )
 
 if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
+    string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
 
     if(WITH_SYSTEMD)
         add_definitions( -DDLT_SYSTEMD_ENABLE)
@@ -171,6 +174,9 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     endif(WITH_SYSTEMD_JOURNAL)
 
     set( systemd_SRCS ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
+
+    set(SYSTEMD_UNITDIR "${CMAKE_INSTALL_PREFIX}/lib/systemd/system" CACHE PATH
+        "Set directory to install systemd unit files")
 
     add_subdirectory( systemd )
 endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
@@ -196,8 +202,6 @@ message( STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version 
 message( STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}" )
 message( STATUS "WITH_SYSTEMD_WATCHDOG = ${WITH_SYSTEMD_WATCHDOG}" )
 message( STATUS "WITH_SYSTEMD_JOURNAL = ${WITH_SYSTEMD_JOURNAL}" )
-message( STATUS "SYSTEMD_UNITDIR = ${SYSTEMD_UNITDIR}" )
-message( STATUS "WITH_DLT_USER = ${WITH_DLT_USER}" )
 message( STATUS "WITH_DOC = ${WITH_DOC}" )
 
 message( STATUS "WITH_MAN = ${WITH_MAN}" )
@@ -216,11 +220,13 @@ message( STATUS "WITH_CHECK_CONFIG_FILE = ${WITH_CHECK_CONFIG_FILE}" )
 message( STATUS "WITH_TESTSCRIPTS = ${WITH_TESTSCRIPTS}" )
 message( STATUS "WITH_GPROF = ${WITH_GPROF}" )
 message( STATUS "WITH_DLT_USE_IPv6 = ${WITH_DLT_USE_IPv6}" )
+message( STATUS "DLT_USER = ${DLT_USER}" )
 message( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
 message( STATUS "TARGET_CPU_NAME = ${TARGET_CPU_NAME}" )
-if(WITH_SYSTEMD_JOURNAL)
+if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     message( STATUS "SYSTEMD_VERSION = ${SYSTEMD_VERSION}")
-endif(WITH_SYSTEMD_JOURNAL)
+    message( STATUS "SYSTEMD_UNITDIR = ${SYSTEMD_UNITDIR}" )
+endif(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 message( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
 message( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
 message( STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}" )

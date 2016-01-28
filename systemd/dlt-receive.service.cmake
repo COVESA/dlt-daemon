@@ -22,6 +22,6 @@ Wants=dlt.service
 
 [Service]
 Type=Simple
-User=@WITH_DLT_USER@
+User=@DLT_USER@
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-receive -o /tmp/dlt_receive_log.dlt localhost
 LimitCORE=infinity

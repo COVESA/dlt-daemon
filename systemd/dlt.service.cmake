@@ -21,7 +21,7 @@ Documentation=man:dlt-daemon(1) man:dlt.conf(5)
 
 [Service]
 Type=Simple
-User=@WITH_DLT_USER@
+User=@DLT_USER@
 ExecStart=@CMAKE_INSTALL_PREFIX@/bin/dlt-daemon
 WatchdogSec=@DLT_WatchdogSec@
 NotifyAccess=main
