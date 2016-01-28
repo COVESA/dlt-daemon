@@ -100,14 +100,16 @@ typedef struct {
     int timeout_cnt;            /* connection timeout counter */
     int reconnect_cnt;          /* reconnection counter */
     int control_msgs[DLT_GATEWAY_MAX_STARTUP_CTRL_MSG]; /* msg IDs send on startup */
+    int send_serial;            /* Send serial header with control messages */
     DltClient client;           /* DltClient structure */
 } DltGatewayConnection;
 
 /* DltGateway structure */
 typedef struct
 {
+    int send_serial;     /* Default: Send serial header with control messages */
     DltGatewayConnection *connections; /* pointer to connections */
-    int num_connections;               /* number of connections */
+    int num_connections; /* number of connections */
 } DltGateway;
 
 #endif /* DLT_GATEWAY_TYPES_H_ */

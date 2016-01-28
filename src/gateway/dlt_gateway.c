@@ -48,7 +48,7 @@
 /**
  * Expected entries for a passive node configuration
  * Caution: after changing entries here,
- * dlt_gateway_check_params need to be updated as well
+ * dlt_gateway_check_param needs to be updated as well
  * */
 char *configuration_entries [] =
 {
@@ -57,10 +57,15 @@ char *configuration_entries [] =
     "EcuID",
     "Connect",
     "Timeout",
-    "SendControl"
+    "SendControl",
+    "SendSerialHeader"
 };
 
-#define DLT_GATEWAY_NUM_PROPERTIES_MAX 6
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) sizeof(x)/sizeof(x[0])
+#endif
+
+#define DLT_GATEWAY_NUM_PROPERTIES_MAX ARRAY_SIZE(configuration_entries)
 
 /**
  * Check if given string is a valid IP address
@@ -310,6 +315,28 @@ int dlt_gateway_check_timeout(int *timeout, char *value)
 }
 
 /**
+ * Check the value for SendSerialHeader
+ *
+ * @param send_serial Where the value must be put
+ * @param value string to be tested
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_gateway_check_send_serial(int *send_serial, char *value)
+{
+    if (send_serial == NULL || value == NULL)
+    {
+        return -1;
+    }
+
+    *send_serial = (int) strtol(value, NULL, 10);
+
+    if (*send_serial != 0)
+        *send_serial = 1;
+
+    return 0;
+}
+
+/**
  * Check the specified control messages identifier
  *
  * @param ids   ids of control messages to be send after connection is established
@@ -417,6 +444,10 @@ int dlt_gateway_check_param(DltGateway *gateway,
     {
         return dlt_gateway_check_timeout(&(con->timeout), value);
     }
+    else if (strncmp(key, "SendSerialHeader", sizeof("SendSerialHeader")) == 0)
+    {
+        return dlt_gateway_check_send_serial(&con->send_serial, value);
+    }
     else if (strncmp(key, "SendControl", sizeof("SendControl")) == 0)
     {
         return dlt_gateway_check_control_messages(con->control_msgs, value);
@@ -479,6 +510,7 @@ int dlt_gateway_store_connection(DltGateway *gateway,
     memcpy(gateway->connections[i].control_msgs,
            tmp->control_msgs,
            sizeof(tmp->control_msgs));
+    gateway->connections[i].send_serial = tmp->send_serial;
 
     if (dlt_client_init_port(&gateway->connections[i].client,
                              gateway->connections[i].port,
@@ -532,6 +564,10 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 
     memset(&tmp, 0, sizeof(tmp));
 
+    /* Set default */
+    tmp.send_serial = gateway->send_serial;
+    tmp.port = DLT_DAEMON_TCP_PORT;
+
     /* read configuration file */
     file = dlt_config_file_init(DLT_GATEWAY_CONFIG_PATH);
 
@@ -557,10 +593,9 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 
     for (i = 0; i < gateway->num_connections; i++)
     {
-        int j = 0;
+        unsigned int j = 0;
         char section[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
         char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
-        int is_node_valid = 1; /* 1 - valid, <= 0 invalid */
 
         ret = dlt_config_file_get_section_name(file, i, section);
 
@@ -573,8 +608,14 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 
             if (ret != 0)
             {
-                is_node_valid = -1;
-                break;
+                /* Use default values for this key */
+                char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
+                snprintf(local_str,
+                         DLT_DAEMON_TEXTBUFSIZE,
+                         "Using default for %s.\n",
+                         configuration_entries[j]);
+                dlt_log(LOG_WARNING, local_str);
+                continue;
             }
 
             /* check value and store temporary */
@@ -587,22 +628,18 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
             {
                 char error_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
                 sprintf(error_str,
-                        "Configuration %s = %s is invalid\n",
+                        "Configuration %s = %s is invalid.\n"
+                        "Using default.\n",
                         configuration_entries[j], value);
                 dlt_log(LOG_ERR, error_str);
-                is_node_valid = -1;
-                break;
             }
         }
 
-        if (is_node_valid >= 1)
-        {
-            ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
+        ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
 
-            if (ret != 0)
-            {
-                dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
-            }
+        if (ret != 0)
+        {
+            dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
         }
 
         /* strdup used inside some get_value function */
@@ -627,6 +664,9 @@ int dlt_gateway_init(DltDaemonLocal *daemon_local, int verbose)
 
     if (gateway != NULL)
     {
+        /* Get default value from daemon_local */
+        gateway->send_serial = daemon_local->flags.lflag;
+
         if (dlt_gateway_configure(gateway, verbose) != 0)
         {
             dlt_log(LOG_ERR, "Gateway initialization failed\n");
@@ -1031,7 +1071,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         return -1;
     }
 
-    if (daemon_local->flags.lflag) /* send serial header */
+    if (con->send_serial) /* send serial header */
     {
         ret = send(con->client.sock,
                    (void *)dltSerialHeader,
