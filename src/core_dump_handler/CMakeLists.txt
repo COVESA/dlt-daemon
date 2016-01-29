@@ -36,7 +36,7 @@ set_target_properties(dlt-cdh PROPERTIES LINKER_LANGUAGE C)
 install(TARGETS     dlt-cdh
         RUNTIME DESTINATION bin
         COMPONENT base)
-        
+
 #install(FILES 50-coredump.conf
 #        DESTINATION ${COREDUMP_CONF_DIR}
 #        COMPONENT base)

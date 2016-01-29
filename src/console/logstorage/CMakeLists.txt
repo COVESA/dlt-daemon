@@ -17,9 +17,9 @@
 add_definitions( -Werror )
 
 if(WITH_DLT_LOGSTORAGE_CTRL_UDEV AND WITH_DLT_LOGSTORAGE_CTRL_PROP)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-prop.c dlt-logstorage-udev.c dlt-logstorage-list.c)
+ set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-udev.c dlt-logstorage-list.c)
 elseif(WITH_DLT_LOGSTORAGE_CTRL_PROP)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-prop.c dlt-logstorage-list.c)
+ set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-list.c)
 elseif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
  set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-udev.c dlt-logstorage-list.c)
 else(WITH_DLT_LOGSTORAGE_CTRL_UDEV)

@@ -1,4 +1,4 @@
-To build use cmake with -DWITH_DLT_COREDUMPHANDLER=ON
+To build use cmake with -DWITH_DLT_COREDUMPHANDLER=ON -DTARGET_CPU_NAME={i686|x86_64}
 
 
 Temporary replacement of default crash handler:
