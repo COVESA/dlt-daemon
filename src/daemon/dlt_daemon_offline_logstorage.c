@@ -487,9 +487,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
     DltLogStorageUserConfig file_config;
 
     if (daemon == NULL || (user_config->offlineLogstorageMaxDevices <= 0)
-        || data1 == NULL || data2 == NULL || data3 == NULL
-        || ((unsigned int)size2 < (sizeof(DltStandardHeader) +
-        sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader))))
+        || data1 == NULL || data2 == NULL || data3 == NULL)
     {
         dlt_log(LOG_INFO,
                 "dlt_daemon_logstorage_write: message type is not log. "
