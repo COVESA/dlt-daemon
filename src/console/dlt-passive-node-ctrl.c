@@ -427,7 +427,7 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
 
-    set_ecuid(DLT_CTRL_DEFAULT_ECUID);
+    set_ecuid(NULL);
     set_timeout(DLT_CTRL_TIMEOUT);
 
     /* Get command line arguments */

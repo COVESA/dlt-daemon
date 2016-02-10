@@ -456,7 +456,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     msg.standardheader->mcnt = 0;
 
     /* Set header extra parameters */
-    dlt_set_id(msg.headerextra.ecu,"");
+	dlt_set_id(msg.headerextra.ecu,client->ecuid);
     //msg.headerextra.seid = 0;
     msg.headerextra.tmsp = dlt_uptime();
 

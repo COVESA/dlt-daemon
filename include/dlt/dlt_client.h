@@ -94,6 +94,7 @@ typedef struct
     int port;              /**< Port for TCP connections (optional) */
     char *serialDevice;    /**< serialDevice Devicename of serial device */
     char *socketPath;      /**< socketPath Unix socket path */
+    char ecuid[4];           /**< ECUiD */
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
     DltClientMode mode;    /**< mode DltClientMode */
 } DltClient;

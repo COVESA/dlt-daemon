@@ -68,8 +68,7 @@
 
 #define DLT_CTRL_APID    "DLTC"
 #define DLT_CTRL_CTID    "DLTC"
-#define DLT_CTRL_SOCK "/tmp/dlt-ctrl.sock"
-
+#define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH "/tmp/dlt-ctrl.sock"
 #define DLT_RECEIVE_TEXTBUFSIZE 1024
 
 /** @brief Analyze the daemon answer
@@ -93,6 +92,7 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static long local_timeout;
+static char config_data[DLT_DAEMON_FLAG_MAX]; /* To copy dlt.conf values */
 
 int get_verbosity(void)
 {
@@ -111,11 +111,26 @@ char *get_ecuid(void)
 
 void set_ecuid(char *ecuid)
 {
+    char *ecuid_conf;
+
     if (local_ecuid != ecuid)
     {
-        memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
-        strncpy(local_ecuid, ecuid, DLT_CTRL_ECUID_LEN);
-        local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+        /* If user pass NULL, read ECUId from dlt.conf */
+        if (ecuid == NULL)
+        {
+            ecuid_conf = dlt_parse_config_param("ECUId");
+            memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
+            strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
+            local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+
+        }
+        else
+        {
+            /* Set user passed ECUID */
+            memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
+            strncpy(local_ecuid, ecuid, DLT_CTRL_ECUID_LEN);
+            local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+        }
     }
 }
 
@@ -137,6 +152,80 @@ void set_timeout(long t)
         pr_error("Timeout to small. Set to default: %d",
                  DLT_CTRL_TIMEOUT);
     }
+}
+
+char *dlt_parse_config_param(char *config_id)
+{
+    FILE * pFile = NULL;
+    int value_length = DLT_RECEIVE_TEXTBUFSIZE;
+    char line[DLT_RECEIVE_TEXTBUFSIZE-1] = {0};
+    char token[DLT_RECEIVE_TEXTBUFSIZE] = {0};
+    char value[DLT_RECEIVE_TEXTBUFSIZE] = {0};
+    char *pch = NULL;
+    const char *filename = NULL;
+
+    memset(config_data, 0, DLT_DAEMON_FLAG_MAX);
+    /* open configuration file */
+    filename = CONFIGURATION_FILES_DIR "/dlt.conf";
+    pFile = fopen(filename, "r");
+
+    if (pFile != NULL)
+    {
+        while (1)
+        {
+            /* fetch line from configuration file */
+            if (fgets(line, value_length - 1, pFile) != NULL)
+            {
+                if (strncmp(line, config_id, strlen(config_id)) == 0)
+                {
+                    pch = strtok(line, " =\r\n");
+                    token[0] = 0;
+                    value[0] = 0;
+
+                    while (pch != NULL)
+                    {
+                        if (token[0] == 0)
+                        {
+                            strncpy(token, pch, sizeof(token) - 1);
+                            token[sizeof(token) - 1] = 0;
+                        }
+                        else
+                        {
+                            strncpy(value, pch, sizeof(value) - 1);
+                            value[sizeof(value) - 1] = 0;
+                            break;
+                        }
+                        pch = strtok(NULL, " =\r\n");
+                    }
+
+                    if (token[0] && value[0])
+                    {
+                        if (strcmp(token, config_id) == 0)
+                        {
+                            memset(config_data,
+                                0,
+                                DLT_DAEMON_FLAG_MAX);
+                            strncpy(config_data,
+                                value,
+                                DLT_DAEMON_FLAG_MAX-1);
+                        }
+                    }
+
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        fclose (pFile);
+    }
+    else
+    {
+        fprintf(stderr, "Cannot open configuration file: %s\n", filename);
+    }
+
+    return config_data;
 }
 
 /** @brief Send a message to the daemon through the socket.
@@ -378,7 +467,14 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
 
     dlt_client_register_message_callback(callback);
 
-    client->socketPath = DLT_CTRL_SOCK;
+    client->socketPath = dlt_parse_config_param("ControlSocketPath");
+    if (client->socketPath[0] == 0)
+    {
+        /* Failed to read from conf, copy default */
+        strncpy(client->socketPath,
+                DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
+                DLT_DAEMON_FLAG_MAX - 1);
+    }
     client->mode = DLT_CLIENT_MODE_UNIX;
 
     return dlt_client_connect(client, get_verbosity());

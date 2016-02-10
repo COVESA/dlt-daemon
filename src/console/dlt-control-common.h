@@ -31,6 +31,7 @@
 #define DLT_CTRL_TIMEOUT 10
 
 #define DLT_CTRL_ECUID_LEN 10
+#define DLT_DAEMON_FLAG_MAX 256
 
 #ifndef pr_fmt
 #   define pr_fmt(fmt) fmt
@@ -68,6 +69,9 @@ void set_ecuid(char *);
 
 long get_timeout(void);
 void set_timeout(long);
+
+/*Parse dlt.conf file and return the value of requested configuration*/
+char *dlt_parse_config_param(char *config_id);
 
 /* Initialize the connection to the daemon */
 int dlt_control_init(int (*response_analyser)(char *, void *, int),

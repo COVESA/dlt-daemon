@@ -66,9 +66,6 @@
 
 #define DLT_RECEIVE_TEXTBUFSIZE 10024  /* Size of buffer for text output */
 
-#define DLT_CTRL_SOCK "/tmp/dlt-ctrl.sock"
-
-#define DLT_RECEIVE_ECU_ID "RECV"
 
 #define DLT_GLOGINFO_APID_NUM_MAX   150
 #define DLT_GLOGINFO_DATA_MAX       800
@@ -463,7 +460,7 @@ int main(int argc, char* argv[])
     else if (dltdata.yflag == DLT_CLIENT_MODE_UNIX)
     {
         g_dltclient.mode = DLT_CLIENT_MODE_UNIX;
-        g_dltclient.socketPath = DLT_CTRL_SOCK;
+        g_dltclient.socketPath = dlt_parse_config_param("ControlSocketPath");
     }
     else
     {
@@ -513,11 +510,14 @@ int main(int argc, char* argv[])
     if (dltdata.evalue)
 	{
         dlt_set_id(dltdata.ecuid,dltdata.evalue);
+        dlt_set_id(g_dltclient.ecuid,dltdata.evalue);
     }
-	else
-	{
-        dlt_set_id(dltdata.ecuid,DLT_RECEIVE_ECU_ID);
-	}
+    else
+    {
+        dltdata.evalue = dlt_parse_config_param("ECUId");
+        dlt_set_id(dltdata.ecuid,dltdata.evalue);
+        dlt_set_id(g_dltclient.ecuid,dltdata.evalue);
+    }
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&g_dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
