@@ -147,7 +147,7 @@ typedef struct DltLogStorageFileList
 
 typedef struct DltLogStorageConfigData DltLogStorageConfigData;
 
-typedef struct DltLogStorageConfigData
+struct DltLogStorageConfigData
 {
     /* filter section */
     int log_level;                  /* Log level number configured for filter */
@@ -174,7 +174,7 @@ typedef struct DltLogStorageConfigData
     FILE *log;                      /* current open log file */
     void *cache;                    /* log data cache */
     DltLogStorageFileList *records; /* File name list */
-}DltLogStorageConfigData;
+};
 
 
 typedef struct
