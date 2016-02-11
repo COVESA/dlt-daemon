@@ -263,8 +263,15 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     char *rn = unique_name(src);//new unique filename based on inode
 
+    if(rn == NULL)
+    {
+        // unique name couldn't be generated
+        // (usually because the file could not be found because it has
+        // already been sent by a previous change/move of the same file)
+        return -1;
+    }
+
     MALLOC_ASSERT(fn);
-    MALLOC_ASSERT(rn);
 
     // Compress if needed
     if(opts->Compression[which] > 0)
