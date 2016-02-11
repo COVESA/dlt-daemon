@@ -139,6 +139,9 @@ char *unique_name(char *src)
 
 void send_dumped_file(FiletransferOptions const *opts,char *dst_tosend)
 {
+    // check if a client is connected to the deamon. If not, try again in a second
+    while(dlt_get_log_state() != 1)
+        sleep(1);
 
     char *fn = origin_name(dst_tosend);
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
