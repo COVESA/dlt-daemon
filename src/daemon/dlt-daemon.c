@@ -1927,7 +1927,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
     }
 
     /* look through buffer as long as data is in there */
-    while ((receiver->bytesRcvd > min_size) && run_loop)
+    while ((receiver->bytesRcvd >= min_size) && run_loop)
     {
         dlt_daemon_process_user_message_func func = NULL;
 
@@ -1935,7 +1935,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         userheader = (DltUserHeader*) (receiver->buf + offset);
 
         while (!dlt_user_check_userheader(userheader) &&
-               (offset + min_size < receiver->bytesRcvd))
+               (offset + min_size <= receiver->bytesRcvd))
         /* resync if necessary */
         {
             userheader = (DltUserHeader*) (receiver->buf + offset);
@@ -2510,7 +2510,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     if ((daemon == NULL)  || (daemon_local == NULL) || (rec == NULL))
     {
         dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_log()\n");
-        return -DLT_DAEMON_ERROR_UNKNOWN;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     ret = dlt_message_read(&(daemon_local->msg),
@@ -2531,7 +2531,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                or the headers are corrupted (error case). */
             dlt_log(LOG_DEBUG,"Can't read messages from receiver\n");
         }
-        return -DLT_DAEMON_ERROR_UNKNOWN;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     /* set overwrite ecu id */
@@ -2543,7 +2543,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         if (dlt_message_set_extraparameters(&(daemon_local->msg),0) == DLT_RETURN_ERROR)
         {
             dlt_log(LOG_WARNING,"Can't set message extra parameters in process user message log\n");
-            return -DLT_DAEMON_ERROR_UNKNOWN;
+            return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
         /* Correct value of timestamp, this was changed by dlt_message_set_extraparameters() */
@@ -2556,7 +2556,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon_local->msg.headerextra.ecu) == DLT_RETURN_ERROR)
         {
             dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
-            return -DLT_DAEMON_ERROR_UNKNOWN;
+            return DLT_DAEMON_ERROR_UNKNOWN;
         }
     }
     else
@@ -2564,7 +2564,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         if (dlt_set_storageheader(daemon_local->msg.storageheader,daemon->ecuid) == DLT_RETURN_ERROR)
         {
             dlt_log(LOG_WARNING,"Can't set storage header in process user message log\n");
-            return -DLT_DAEMON_ERROR_UNKNOWN;
+            return DLT_DAEMON_ERROR_UNKNOWN;
         }
     }
 
@@ -2626,7 +2626,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     if (dlt_receiver_remove(rec, bytes_to_be_removed) == -1)
     {
         dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
-        return -DLT_DAEMON_ERROR_UNKNOWN;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     return DLT_DAEMON_ERROR_OK;
