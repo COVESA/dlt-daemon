@@ -70,8 +70,8 @@ void set_ecuid(char *);
 long get_timeout(void);
 void set_timeout(long);
 
-/*Parse dlt.conf file and return the value of requested configuration*/
-char *dlt_parse_config_param(char *config_id);
+/* Parse dlt.conf file and return the value of requested configuration */
+int dlt_parse_config_param(char *config_id, char **config_data);
 
 /* Initialize the connection to the daemon */
 int dlt_control_init(int (*response_analyser)(char *, void *, int),

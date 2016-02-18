@@ -63,6 +63,7 @@
 
 #include "dlt_client.h"
 #include "dlt_user.h"
+#include "dlt-control-common.h"
 
 #define DLT_RECEIVE_TEXTBUFSIZE 10024  /* Size of buffer for text output */
 
@@ -460,7 +461,8 @@ int main(int argc, char* argv[])
     else if (dltdata.yflag == DLT_CLIENT_MODE_UNIX)
     {
         g_dltclient.mode = DLT_CLIENT_MODE_UNIX;
-        g_dltclient.socketPath = dlt_parse_config_param("ControlSocketPath");
+        g_dltclient.socketPath = NULL;
+        dlt_parse_config_param("ControlSocketPath", &g_dltclient.socketPath);
     }
     else
     {
@@ -514,9 +516,17 @@ int main(int argc, char* argv[])
     }
     else
     {
-        dltdata.evalue = dlt_parse_config_param("ECUId");
-        dlt_set_id(dltdata.ecuid,dltdata.evalue);
-        dlt_set_id(g_dltclient.ecuid,dltdata.evalue);
+        dltdata.evalue = NULL;
+        if (dlt_parse_config_param("ECUId", &dltdata.evalue) == 0)
+        {
+            dlt_set_id(dltdata.ecuid,dltdata.evalue);
+            dlt_set_id(g_dltclient.ecuid,dltdata.evalue);
+            free (dltdata.evalue);
+        }
+        else
+        {
+            fprintf(stderr, "ERROR: Failed to read ECUId from dlt.conf \n");
+        }
     }
 
     /* Connect to TCP socket or open serial device */
@@ -683,6 +693,9 @@ int main(int argc, char* argv[])
         /* Dlt Client Cleanup */
         dlt_client_cleanup(&g_dltclient,dltdata.vflag);
     }
+
+    if (g_dltclient.socketPath != NULL)
+        free(g_dltclient.socketPath);
 
     dlt_file_free(&(dltdata.file),dltdata.vflag);
 

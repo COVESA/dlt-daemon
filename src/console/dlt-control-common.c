@@ -92,7 +92,6 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static long local_timeout;
-static char config_data[DLT_DAEMON_FLAG_MAX]; /* To copy dlt.conf values */
 
 int get_verbosity(void)
 {
@@ -111,18 +110,23 @@ char *get_ecuid(void)
 
 void set_ecuid(char *ecuid)
 {
-    char *ecuid_conf;
+    char *ecuid_conf = NULL;
 
     if (local_ecuid != ecuid)
     {
         /* If user pass NULL, read ECUId from dlt.conf */
         if (ecuid == NULL)
         {
-            ecuid_conf = dlt_parse_config_param("ECUId");
-            memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
-            strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
-            local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
-
+            if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0)
+            {
+                memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
+                strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
+                local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+            }
+            else
+            {
+                pr_error("Cannot read ECUid from dlt.conf\n");
+            }
         }
         else
         {
@@ -154,7 +158,7 @@ void set_timeout(long t)
     }
 }
 
-char *dlt_parse_config_param(char *config_id)
+int dlt_parse_config_param(char *config_id, char **config_data)
 {
     FILE * pFile = NULL;
     int value_length = DLT_RECEIVE_TEXTBUFSIZE;
@@ -164,7 +168,9 @@ char *dlt_parse_config_param(char *config_id)
     char *pch = NULL;
     const char *filename = NULL;
 
-    memset(config_data, 0, DLT_DAEMON_FLAG_MAX);
+    if (*config_data != NULL)
+        *config_data = NULL;
+
     /* open configuration file */
     filename = CONFIGURATION_FILES_DIR "/dlt.conf";
     pFile = fopen(filename, "r");
@@ -202,10 +208,9 @@ char *dlt_parse_config_param(char *config_id)
                     {
                         if (strcmp(token, config_id) == 0)
                         {
-                            memset(config_data,
-                                0,
-                                DLT_DAEMON_FLAG_MAX);
-                            strncpy(config_data,
+                            *(config_data) = (char*)
+                                    calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
+                            strncpy(*config_data,
                                 value,
                                 DLT_DAEMON_FLAG_MAX-1);
                         }
@@ -225,7 +230,10 @@ char *dlt_parse_config_param(char *config_id)
         fprintf(stderr, "Cannot open configuration file: %s\n", filename);
     }
 
-    return config_data;
+    if (*config_data == NULL)
+        return -1;
+
+    return 0;
 }
 
 /** @brief Send a message to the daemon through the socket.
@@ -467,13 +475,11 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
 
     dlt_client_register_message_callback(callback);
 
-    client->socketPath = dlt_parse_config_param("ControlSocketPath");
-    if (client->socketPath[0] == 0)
+    client->socketPath = NULL;
+    if (dlt_parse_config_param("ControlSocketPath", &client->socketPath) != 0)
     {
         /* Failed to read from conf, copy default */
-        strncpy(client->socketPath,
-                DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
-                DLT_DAEMON_FLAG_MAX - 1);
+        client->socketPath = strdup(DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH);
     }
     client->mode = DLT_CLIENT_MODE_UNIX;
 
