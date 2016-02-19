@@ -1404,8 +1404,8 @@ DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t 
 
 DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
 {
-    uint16_t arg_size;
-    uint32_t type_info;
+    uint32_t type_info = 0;
+    size_t new_log_size = 0;
 
     // check nullpointer
     if (log == NULL || data == NULL)
@@ -1424,17 +1424,22 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         return DLT_RETURN_ERROR;
     }
 
-    if ((log->size+length+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    new_log_size = log->size + sizeof(uint16_t) + length;
+
+    /* When data is too large for the buffer it will be truncated to fit */
+    if (new_log_size > DLT_USER_BUF_MAX_SIZE)
     {
-        return DLT_RETURN_ERROR;
+        length -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        new_log_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
     }
 
     if (dlt_user.verbose_mode)
     {
-        if ((log->size+length+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
-        {
-            return DLT_RETURN_ERROR;
-        }
+        new_log_size += sizeof(uint32_t);
+
+        /* When data is too large for the buffer it will be truncated to fit */
+        if (new_log_size > DLT_USER_BUF_MAX_SIZE)
+            length -= new_log_size - DLT_USER_BUF_MAX_SIZE;
 
         /* Transmit type information */
         type_info = DLT_TYPE_INFO_RAWD;
@@ -1450,21 +1455,19 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
             type_info += type - DLT_FORMAT_BIN8 + 1;
         }
 
-        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
         log->size += sizeof(uint32_t);
-
     }
 
     /* First transmit length of raw data, then the raw data itself */
-    arg_size = (uint16_t)length;
 
-    memcpy((log->buffer)+log->size,&(arg_size),sizeof(uint16_t));
+    memcpy((log->buffer) + log->size, &(length), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer)+log->size,data,arg_size);
-    log->size += arg_size;
+    memcpy((log->buffer) + log->size, data, length);
+    log->size += length;
 
-    log->args_num ++;
+    log->args_num++;
 
     return DLT_RETURN_OK;
 }
@@ -2220,8 +2223,9 @@ DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
 {
-    uint16_t arg_size;
-    uint32_t type_info;
+    uint16_t text_len = 0;
+    uint32_t type_info = 0;
+    size_t new_log_size = 0;
 
     if (log == NULL || text == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2232,33 +2236,41 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
         return DLT_RETURN_ERROR;
     }
 
-    if ((log->size+(strlen(text)+1)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    text_len = strlen(text);
+    new_log_size = log->size + sizeof(uint16_t) + text_len + 1;
+
+    /* When data is too large for the buffer, text will be truncated to fit */
+    if (new_log_size > DLT_USER_BUF_MAX_SIZE)
     {
-        return DLT_RETURN_ERROR;
+        text_len -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        new_log_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
     }
 
     if (dlt_user.verbose_mode)
     {
-        if ((log->size+(strlen(text)+1)+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
-        {
-            return DLT_RETURN_ERROR;
-        }
+        new_log_size += sizeof(uint32_t);
+
+        /* When data is too large for the buffer, text will be truncated to fit */
+        if (new_log_size > DLT_USER_BUF_MAX_SIZE)
+            text_len -= new_log_size - DLT_USER_BUF_MAX_SIZE;
 
         type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
 
-        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
         log->size += sizeof(uint32_t);
     }
 
-    arg_size = strlen(text) + 1;
-
-    memcpy((log->buffer)+log->size,&(arg_size),sizeof(uint16_t));
+    memcpy((log->buffer) + log->size, &(text_len), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer)+log->size,text,arg_size);
-    log->size += arg_size;
+    memcpy((log->buffer) + log->size, text, text_len);
+    log->size += text_len;
 
-    log->args_num ++;
+    /* Of course, buffer has to be 0-terminated here */
+    log->buffer[log->size] = '\000';
+    log->size += 1;
+
+    log->args_num++;
 
     return DLT_RETURN_OK;
 }
@@ -2271,8 +2283,9 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
 
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
-    uint16_t arg_size;
-    uint32_t type_info;
+    uint16_t text_len = 0;
+    uint32_t type_info = 0;
+    size_t new_log_size = 0;
 
     if (log == NULL || text == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2283,35 +2296,41 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
         return DLT_RETURN_ERROR;
     }
 
-    arg_size = strlen(text)+1;
+    text_len = strlen(text);
+    new_log_size = log->size + sizeof(uint16_t) + text_len + 1;
 
-    if ((log->size+arg_size+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
+    /* When data is too large for the buffer, text will be truncated to fit */
+    if (new_log_size > DLT_USER_BUF_MAX_SIZE)
     {
-        return DLT_RETURN_ERROR;
+        text_len -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        new_log_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
     }
 
     if (dlt_user.verbose_mode)
     {
-        if ((log->size+arg_size+sizeof(uint32_t)+sizeof(uint16_t))>DLT_USER_BUF_MAX_SIZE)
-        {
-            return DLT_RETURN_ERROR;
-        }
+        new_log_size += sizeof(uint32_t);
+
+        /* When data is too large for the buffer, text will be truncated to fit */
+        if (new_log_size > DLT_USER_BUF_MAX_SIZE)
+            text_len -= new_log_size - DLT_USER_BUF_MAX_SIZE;
 
         type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
 
-        memcpy((log->buffer)+log->size,&(type_info),sizeof(uint32_t));
+        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
         log->size += sizeof(uint32_t);
     }
 
-    arg_size = strlen(text) + 1;
-
-    memcpy((log->buffer)+log->size,&(arg_size),sizeof(uint16_t));
+    memcpy((log->buffer) + log->size, &(text_len), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer)+log->size,text,arg_size);
-    log->size += arg_size;
+    memcpy((log->buffer) + log->size, text, text_len);
+    log->size += text_len;
 
-    log->args_num ++;
+    /* Of course, buffer has to be 0-terminated here */
+    log->buffer[log->size] = '\000';
+    log->size += 1;
+
+    log->args_num++;
 
     return DLT_RETURN_OK;
 }
