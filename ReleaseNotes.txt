@@ -10,10 +10,12 @@ Changes
 -------
 
 2.14.1
+
   * MultiNode: Reconnection after connection loss
   * Fix injection message handling
 
 2.14.0
+
   * Fix fork()-handler in libdlt
   * Set default log-levels in dlt.conf
   * Fix register context before application is registered

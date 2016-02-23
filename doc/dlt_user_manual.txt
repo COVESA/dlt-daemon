@@ -21,7 +21,7 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 image::images/genivi_chrome_1_transparent.png[width=128]
 
 == Purpose
-This document specifies the usage of the DLT daemon.
+This document describes the usage of the DLT daemon.
 The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device.
 The DLT daemon component is based on the AUTOSAR 4.0 standard DLT.
 
@@ -37,12 +37,22 @@ The SW components of DLT:
 * dlt-adaptor-udp
 * dlt-convert
 * dlt-receive
+* dlt-dbus
+* dlt-kpi
+* dlt-cdh
+
+The SW components for controlling DLT:
+
+* dlt-control
+* dlt-logstorage-ctrl
+* dlt-passive-node-ctrl
 
 The SW components of DLT for testing:
 
 * dlt-example-user
 * dlt-example-user-func
 * dlt-example-filetransfer
+* dlt-example-user-common-api
 * dlt-test-filetransfer
 * dlt-test-stress-user
 * dlt-test-client
@@ -51,6 +61,8 @@ The SW components of DLT for testing:
 * dlt-test-stress
 * dlt-test-multi-process
 * dlt-test-user
+* dlt-test-fork-handler
+* dlt-test-init-free
 
 == DLT daemon
 

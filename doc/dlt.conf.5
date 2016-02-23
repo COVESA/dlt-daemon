@@ -2,12 +2,12 @@
 .\"     Title: dlt.conf
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/12/2015
+.\"      Date: 02/23/2016
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DLT\&.CONF" "5" "05/12/2015" "\ \&" "\ \&"
+.TH "DLT\&.CONF" "5" "02/23/2016" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,11 +31,11 @@
 dlt.conf \- DLT daemon configuration file
 .SH "DESCRIPTION"
 .sp
-The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device\&.
+The DLT daemon is the central application which gathers logs and traces from different applications, stores them temporarily or permanently and transfers them to a DLT client application, which could run directly on the GENIVI system or more likely on some external tester device\&.
 .sp
-The configuration file dlt\&.conf allows to configure the different runtime behaviour of the dlt\-daemon\&. The configuration file is loaded during startup of dlt\-daemon\&.
+The configuration file dlt\&.conf allows to configure the different runtime behaviour of the dlt\-daemon\&. It is loaded during startup of dlt\-daemon\&.
 .sp
-dlt\-daemon loads by default the configuration file /etc/dlt\&.conf\&. An alternative configuration file can be loaded with the option \-c\&.
+By default dlt\-daemon loads the file /etc/dlt\&.conf\&. An alternative configuration file can be loaded with the option \-c\&.
 .SH "GENERAL OPTIONS"
 .PP
 \fBDaemonize\fR
@@ -113,6 +113,21 @@ Default: ECU1
 .\}
 .RE
 .PP
+\fBGatewayMode\fR
+.RS 4
+If set to 1 gateway mode is enabled which means this ECU serves as gateway to forward messages from others\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
 \fBSharedMemorySize\fR
 .RS 4
 This value sets the size of the shared memory, which is used to exchange DLT messages between applications and daemon\&. This value is defined in bytes\&. If this value is changed the system must be rebooted to take effect\&.
@@ -137,6 +152,182 @@ This is the directory path, where the DLT daemon stores its runtime configuratio
 .\}
 .nf
 Default: /tmp
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBLoggingMode\fR
+.RS 4
+The logging console for internal logging of dlt\-daemon\&.
+
+0 = log to stdout, 1 = log to syslog, 2 = log to file (see LoggingFilename)
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBLoggingLevel\fR
+.RS 4
+The internal log level, up to which logs are written\&.
+
+LOG_EMERG = 0, LOG_ALERT = 1, LOG_CRIT = 2, LOG_ERR = 3, LOG_WARNING = 4, LOG_NOTICE = 5, LOG_INFO = 6, LOG_DEBUG = 7
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 6
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBLoggingFilename\fR
+.RS 4
+If LoggingMode is set to 2 logs are written to the file path given here\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: /tmp/dlt\&.log
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBTimeOutOnSend\fR
+.RS 4
+Socket timeout in seconds for sending to clients\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 4
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBRingbufferMinSize\fR
+.RS 4
+The minimum size of the Ringbuffer, used for storing temporary DLT messages, until client is connected\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 500000
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBRingbufferMaxSize\fR
+.RS 4
+The max size of the Ringbuffer, used for storing temporary DLT messages, until client is connected\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 10000000
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBRingbufferStepSize\fR
+.RS 4
+The step size the Ringbuffer is increased, used for storing temporary DLT messages, until client is connected\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 500000
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBContextLogLevel\fR
+.RS 4
+Initial log\-level that is sent when an application registers\&.
+
+DLT_LOG_OFF = 0, DLT_LOG_FATAL = 1, DLT_LOG_ERROR = 2, DLT_LOG_WARN = 3, DLT_LOG_INFO = 4, DLT_LOG_DEBUG = 5, DLT_LOG_VERBOSE = 6
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 4
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBContextTraceStatus\fR
+.RS 4
+Initial trace\-status that is sent when an application registers\&.
+
+DLT_TRACE_STATUS_OFF = 0, DLT_TRACE_STATUS_ON = 1
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBForceContextLogLevelAndTraceStatus\fR
+.RS 4
+Force log level and trace status of context to not exceed "ContextLogLevel" and "ContextTraceStatus"\&.
+
+If set to 1 (ON) whenever a context registers or changes the log\-level it has to be lower or equal to ContextLogLevel\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "CONTROL APPLICATION OPTIONS"
+.PP
+\fBControlSocketPath\fR
+.RS 4
+Path to control socket\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: /tmp/dlt\-ctrl\&.sock
 .fi
 .if n \{\
 .RE
@@ -183,6 +374,23 @@ This value defines the max offline Trace memory size, if offline trace is enable
 .\}
 .nf
 Default: 4000000
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineTraceFileNameTimestampBased\fR
+.RS 4
+Filename timestamp based or index based\&.
+
+1 = timestamp based, 0 = index based
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 1
 .fi
 .if n \{\
 .RE
@@ -286,11 +494,13 @@ Default: Function is disabled
 .RS 4
 Each received DLT message on a TCP connection is checked to contain a serial header\&. If the DLT message contains no serial header, the message is ignored\&.
 .RE
-.SH "ECU SOFTWARE VERSION INFO"
+.SH "ECU SOFTWARE VERSION OPTIONS"
 .PP
 \fBSendECUSoftwareVersion\fR
 .RS 4
-Send periodic ECU version info\&. 0=disabled, 1=enabled\&.
+Periodically send ECU version info\&.
+
+0 = disabled, 1 = enabled
 .sp
 .if n \{\
 .RS 4
@@ -307,34 +517,117 @@ Default: 0
 .RS 4
 Absolute path to file storing version information \- if disabled the DLT version will be send\&.
 .RE
-
-.SH "Offline Logstorage OPTIONS"
+.SH "TIMEZONE INFO OPTIONS"
 .PP
-\fBOfflineLogstorageMaxDevices\fR
+\fBSendTimezone\fR
 .RS 4
-Maximum devices to be used as offline logstorage devices [1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES]\&.
+Periodically send timezone info\&. 0 = disabled, 1 = enabled
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-Default: Off, zero logstorage devices are supported.
+Default: 0
 .fi
 .if n \{\
 .RE
 .\}
 .RE
-
-.SH "EXAMPLES"
+.SH "OFFLINE LOGSTORAGE OPTIONS"
 .PP
-Start DLT daemon in background mode
+\fBOfflineLogstorageMaxDevices\fR
 .RS 4
-\fBdlt\-daemon \-d\fR
+Maximum devices to be used as offline logstorage devices\&.
+
+0 = disabled, 1 \&.\&. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0 (Functionality is disabled)
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .PP
-Start DLT daemon with own configuration
+\fBOfflineLogstorageDirPath\fR
 .RS 4
-\fBdlt\-daemon \-c ~/my\-dlt\-configuration\&.cfg\fR
+Path to store DLT offline log storage messages\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: off
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineLogstorageTimestamp\fR
+.RS 4
+Appends timestamp in log file name\&.
+
+0 = disabled, 1 = enabled
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineLogstorageDelimiter\fR
+.RS 4
+Appends delimiter in log file name, only punctuation characters allowed\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: _
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineLogstorageMaxCounter\fR
+.RS 4
+Wrap around value for log file count in file name\&.
+
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: UINT_MAX
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBOfflineLogstorageCacheSize\fR
+.RS 4
+Maximal used memory for Logstorage Cache in KB\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 30000 KB
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .SH "AUTHOR"
 .sp
@@ -344,4 +637,4 @@ Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)
 Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
 .SH "SEE ALSO"
 .sp
-dlt\-daemon(1) dlt\-system(1)
+dlt\-daemon(1), dlt\-system(1)

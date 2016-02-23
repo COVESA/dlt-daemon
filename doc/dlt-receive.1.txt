@@ -8,7 +8,7 @@ dlt-receive - Console based client for DLT Logging
 
 SYNOPSIS
 --------
-*dlt-receive* [-h] [-a] [-x] [-m] [-s] [-o filename] [-c limit] [-v] [-y] [-b baudrate] [-e ecuid] hostname/serial_device_name
+*dlt-receive* [-h] [-a] [-x] [-m] [-s] [-o filename] [-c limit] [-v] [-y] [-b baudrate] [-e ecuid] [-f filterfile] hostname/serial_device_name
 
 DESCRIPTION
 -----------
@@ -48,6 +48,9 @@ Serial device baudrate (Default: 115200).
 
 *-e*::
 Set ECU ID (Default: RECV).
+
+*-f*::
+    Enable filtering of messages.
 
 EXAMPLES
 --------

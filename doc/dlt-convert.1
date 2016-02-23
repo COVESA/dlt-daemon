@@ -2,12 +2,12 @@
 .\"     Title: dlt-convert
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/12/2015
+.\"      Date: 02/23/2016
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DLT\-CONVERT" "1" "05/12/2015" "\ \&" "\ \&"
+.TH "DLT\-CONVERT" "1" "02/23/2016" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dlt-convert \- Convert DLT Logging files into ASCII
 .SH "SYNOPSIS"
 .sp
-\fBdlt\-convert\fR [\-h] [\-a] [\-x] [\-m] [\-s][\-o filename] [\-v] [\-c] [\-b number] [\-e number] [\-w] file1 [file2] [file3]
+\fBdlt\-convert\fR [\-h] [\-a] [\-x] [\-m] [\-s] [\-o filename] [\-v] [\-c] [\-f filterfile] [\-b number] [\-e number] [\-w] file1 [file2] [file3]
 .SH "DESCRIPTION"
 .sp
 Read DLT files, print DLT messages as ASCII and store the messages again\&. Use Ranges and Output file to cut DLT files\&. Use two files and Output file to join DLT files\&.
@@ -75,6 +75,11 @@ Verbose mode\&.
 \fB\-c\fR
 .RS 4
 Count number of messages\&.
+.RE
+.PP
+\fB\-f\fR
+.RS 4
+Enable filtering of messages\&.
 .RE
 .PP
 \fB\-b\fR

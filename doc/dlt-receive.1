@@ -2,12 +2,12 @@
 .\"     Title: dlt-receive
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/12/2015
+.\"      Date: 02/23/2016
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DLT\-RECEIVE" "1" "05/12/2015" "\ \&" "\ \&"
+.TH "DLT\-RECEIVE" "1" "02/23/2016" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dlt-receive \- Console based client for DLT Logging
 .SH "SYNOPSIS"
 .sp
-\fBdlt\-receive\fR [\-h] [\-a] [\-x] [\-m] [\-s] [\-o filename] [\-c limit] [\-v] [\-y] [\-b baudrate] [\-e ecuid] hostname/serial_device_name
+\fBdlt\-receive\fR [\-h] [\-a] [\-x] [\-m] [\-s] [\-o filename] [\-c limit] [\-v] [\-y] [\-b baudrate] [\-e ecuid] [\-f filterfile] hostname/serial_device_name
 .SH "DESCRIPTION"
 .sp
 Receive DLT messages from DLT daemon and print or store the messages\&.
@@ -90,6 +90,11 @@ Serial device baudrate (Default: 115200)\&.
 \fB\-e\fR
 .RS 4
 Set ECU ID (Default: RECV)\&.
+.RE
+.PP
+\fB\-f\fR
+.RS 4
+Enable filtering of messages\&.
 .RE
 .SH "EXAMPLES"
 .PP

@@ -4,11 +4,11 @@ DLT-DAEMON(1)
 
 NAME
 ----
-dlt-daemon - DLT daemon for logging and tracing purpose
+dlt-daemon - Diagnostic log and trace daemon
 
 SYNOPSIS
 --------
-*dlt-daemon* [-h] [-d] [-c filename]
+*dlt-daemon* [-h] [-d] [-c filename] [-t directory] [-p port]
 
 DESCRIPTION
 -----------
@@ -29,6 +29,18 @@ OPTIONS
     Load an alternative configuration file. By default the configuration
     file /etc/dlt.conf is loaded.
 
+*-t*::
+    Directory for local fifo and user-pipes (Default: /tmp)
+    (Applications wanting to connect to a daemon using a
+    custom directory need to be started with the environment
+    variable DLT_PIPE_DIR set appropriately)
+
+*-p*::
+    Port to monitor for incoming requests (Default: 3490)
+    (Applications wanting to connect to a daemon using a custom
+    port need to be started with the environment variable
+    DLT_DAEMON_TCP_PORT set appropriately)
+
 EXAMPLES
 --------
 Start DLT daemon in background mode::
@@ -36,6 +48,12 @@ Start DLT daemon in background mode::
 
 Start DLT daemon with own configuration::
 *dlt-daemon -c ~/my-dlt-configuration.cfg*
+
+Start DLT daemon with custom pipes directory::
+*dlt-daemon -t ~/dlt_pipes*
+
+Start DLT daemon listening on custom port 3500::
+*dlt-daemon -p 3500*
 
 EXIT STATUS
 -----------
@@ -47,7 +65,7 @@ Alexander Wenzel (alexander.aw.wenzel (at) bmw.de)
 
 COPYRIGHT
 ---------
-Copyright (C) 2015 BMW AG. License MPL-2.0: Mozilla Public License version 2.0 <http://mozilla.org/MPL/2.0/>.
+Copyright (C) 2016 BMW AG. License MPL-2.0: Mozilla Public License version 2.0 <http://mozilla.org/MPL/2.0/>.
 
 RESOURCES
 ---------
@@ -56,8 +74,5 @@ Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-an
 
 SEE ALSO
 --------
-dlt.conf(5) +
-dlt-system(1)
-
-
+dlt.conf(5), dlt-system(1)
 

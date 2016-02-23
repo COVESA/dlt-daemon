@@ -2,12 +2,12 @@
 .\"     Title: dlt-system
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/12/2015
+.\"      Date: 02/23/2016
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DLT\-SYSTEM" "1" "05/12/2015" "\ \&" "\ \&"
+.TH "DLT\-SYSTEM" "1" "02/23/2016" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dlt-system \- DLT system logging process
 .SH "SYNOPSIS"
 .sp
-\fBdlt\-system\fR [\-h] [\-c filename]
+\fBdlt\-system\fR [\-h] [\-d] [\-c filename]
 .SH "DESCRIPTION"
 .sp
 The DLT system logging process is the central application, which logs system information from the platform\&. It provides the features filetransfer, syslog adapater, logging of any kind of files and procfilesystem logger\&. The individual features can be enabled and disabled in the configuration file\&.
@@ -44,15 +44,20 @@ dlt\-system loads by default the configuration file /etc/dlt\-system\&.conf\&. S
 Display a short help text\&.
 .RE
 .PP
+\fB\-d\fR
+.RS 4
+Daemonize, needed in System V init systems\&.
+.RE
+.PP
 \fB\-c\fR
 .RS 4
 Load an alternative configuration file\&. By default the configuration file /etc/dlt\&.conf is loaded\&.
 .RE
 .SH "EXAMPLES"
 .PP
-Start DLT system with own configuration
+Start DLT system with custom configuration
 .RS 4
-dlt\-system \-c ~/my\-configuration\&.cfg \-v
+\fBdlt\-system \-c ~/my\-configuration\&.cfg\fR
 .RE
 .SH "EXIT STATUS"
 .sp
@@ -68,4 +73,4 @@ Copyright \(co 2015 BMW AG\&. License MPL\-2\&.0: Mozilla Public License version
 Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
 .SH "SEE ALSO"
 .sp
-dlt\-system\&.conf(5) dlt\-daemon(1)
+dlt\-system\&.conf(5), dlt\-daemon(1)

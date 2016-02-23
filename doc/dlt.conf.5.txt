@@ -8,16 +8,15 @@ dlt.conf - DLT daemon configuration file
 
 DESCRIPTION
 -----------
-The DLT daemon is the central place where logs and traces are gathered
-from different applications, stored temporarily or permanently and
-transferred to a DLT client application, which can run directly on the
-GENIVI system or more likely on a external tester device.
+The DLT daemon is the central application which gathers logs and traces
+from different applications, stores them temporarily or permanently and
+transfers them to a DLT client application, which could run directly on the
+GENIVI system or more likely on some external tester device.
 
 The configuration file dlt.conf allows to configure the different
-runtime behaviour of the dlt-daemon. The configuration file is loaded
-during startup of dlt-daemon.
+runtime behaviour of the dlt-daemon. It is loaded during startup of dlt-daemon.
 
-dlt-daemon loads by default the configuration file /etc/dlt.conf. An
+By default dlt-daemon loads the file /etc/dlt.conf. An
 alternative configuration file can be loaded with the option -c.
 
 GENERAL OPTIONS
@@ -54,6 +53,12 @@ GENERAL OPTIONS
 
     Default: ECU1
 
+*GatewayMode*::
+    If set to 1 gateway mode is enabled which means this ECU serves as gateway
+    to forward messages from others.
+
+    Default: 0
+
 *SharedMemorySize*::
     This value sets the size of the shared memory, which is used to exchange
     DLT messages between applications and daemon. This value is defined in
@@ -68,6 +73,69 @@ GENERAL OPTIONS
     status and changed logging mode.
 
     Default: /tmp
+
+*LoggingMode*::
+    The logging console for internal logging of dlt-daemon. +
+    0 = log to stdout, 1 = log to syslog, 2 = log to file (see LoggingFilename)
+
+    Default: 0
+
+*LoggingLevel*::
+    The internal log level, up to which logs are written. +
+    LOG_EMERG = 0, LOG_ALERT = 1, LOG_CRIT = 2, LOG_ERR = 3, LOG_WARNING = 4, LOG_NOTICE = 5, LOG_INFO = 6, LOG_DEBUG = 7
+
+    Default: 6
+
+*LoggingFilename*::
+    If LoggingMode is set to 2 logs are written to the file path given here.
+
+    Default: /tmp/dlt.log
+
+*TimeOutOnSend*::
+    Socket timeout in seconds for sending to clients.
+
+    Default: 4
+
+*RingbufferMinSize*::
+    The minimum size of the Ringbuffer, used for storing temporary DLT messages, until client is connected.
+
+    Default: 500000
+
+*RingbufferMaxSize*::
+    The max size of the Ringbuffer, used for storing temporary DLT messages, until client is connected.
+
+    Default: 10000000
+
+*RingbufferStepSize*::
+    The step size the Ringbuffer is increased, used for storing temporary DLT messages, until client is connected.
+
+    Default: 500000
+
+*ContextLogLevel*::
+    Initial log-level that is sent when an application registers. +
+    DLT_LOG_OFF = 0, DLT_LOG_FATAL = 1, DLT_LOG_ERROR = 2, DLT_LOG_WARN = 3, DLT_LOG_INFO = 4, DLT_LOG_DEBUG = 5, DLT_LOG_VERBOSE = 6
+
+    Default: 4
+
+*ContextTraceStatus*::
+    Initial trace-status that is sent when an application registers. +
+    DLT_TRACE_STATUS_OFF = 0, DLT_TRACE_STATUS_ON = 1
+
+    Default: 0
+
+*ForceContextLogLevelAndTraceStatus*::
+    Force log level and trace status of contexts to not exceed "ContextLogLevel" and "ContextTraceStatus". +
+    If set to 1 (ON) whenever a context registers or changes the log-level it has to be lower or equal to ContextLogLevel.
+
+    Default: 0
+
+CONTROL APPLICATION OPTIONS
+---------------------------
+
+*ControlSocketPath*::
+    Path to control socket.
+
+    Default: /tmp/dlt-ctrl.sock
 
 OFFLINE TRACE OPTIONS
 ---------------------
@@ -93,6 +161,12 @@ OFFLINE TRACE OPTIONS
     file fits the overall offline trace max size.
 
     Default: 4000000
+
+*OfflineTraceFileNameTimestampBased*::
+    Filename timestamp based or index based. +
+    1 = timestamp based, 0 = index based
+
+    Default: 1
 
 LOCAL CONSOLE OUTPUT OPTIONS
 ----------------------------
@@ -148,32 +222,61 @@ TCP CLIENT OPTIONS
     serial header. If the DLT message contains no serial header, the message
     is ignored.
 
-ECU Software version info
--------------------------
+ECU SOFTWARE VERSION OPTIONS
+----------------------------
 
 *SendECUSoftwareVersion*::
-    Send periodic ECU version info. 0=disabled, 1=enabled.
+    Periodically send ECU version info. +
+    0 = disabled, 1 = enabled
 
     Default: 0
 
 *PathToECUSoftwareVersion*::
     Absolute path to file storing version information - if disabled the DLT version will be send.
 
-Offline Logstorage OPTIONS
+TIMEZONE INFO OPTIONS
+---------------------
+
+*SendTimezone*::
+    Periodically send timezone info.
+    0 = disabled, 1 = enabled
+
+    Default: 0
+
+OFFLINE LOGSTORAGE OPTIONS
 --------------------------
 
 *OfflineLogstorageMaxDevices*::
-    Maximum devices to be used as offline logstorage devices (1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES).
+    Maximum devices to be used as offline logstorage devices. +
+    0 = disabled, 1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES
 
-    Default: Off, zero logstorage devices are supported.
+    Default: 0 (Functionality is disabled)
 
-EXAMPLES
---------
-Start DLT daemon in background mode::
-    *dlt-daemon -d*
+*OfflineLogstorageDirPath*::
+    Path to store DLT offline log storage messages.
 
-Start DLT daemon with own configuration::
-    *dlt-daemon -c ~/my-dlt-configuration.cfg*
+    Default: off
+
+*OfflineLogstorageTimestamp*::
+    Appends timestamp in log file name. +
+    0 = disabled, 1 = enabled
+
+    Default: 1
+
+*OfflineLogstorageDelimiter*::
+    Appends delimiter in log file name, only punctuation characters allowed.
+
+    Default: _
+
+*OfflineLogstorageMaxCounter*::
+    Wrap around value for log file count in file name. +
+
+    Default: UINT_MAX
+
+*OfflineLogstorageCacheSize*::
+    Maximal used memory for log storage cache in KB.
+
+    Default: 30000 KB
 
 AUTHOR
 ------
@@ -186,6 +289,5 @@ Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-an
 
 SEE ALSO
 --------
-dlt-daemon(1) +
-dlt-system(1)
+dlt-daemon(1), dlt-system(1)
 

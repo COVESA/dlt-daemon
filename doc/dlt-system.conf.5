@@ -2,12 +2,12 @@
 .\"     Title: dlt-system.conf
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/12/2015
+.\"      Date: 02/23/2016
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DLT\-SYSTEM\&.CONF" "5" "05/12/2015" "\ \&" "\ \&"
+.TH "DLT\-SYSTEM\&.CONF" "5" "02/23/2016" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -52,6 +52,22 @@ Default: SYS
 .RE
 .\}
 .RE
+.SH "SHELL OPTIONS"
+.PP
+\fBShellEnable\fR
+.RS 4
+Enable the Shell for command line injections\&.+ Be careful when you enable this feature\&. The user can send any kind of shell commands\&. The commands are executed with the rights of the dlt\-system process\&. Dlt\-system is started by default as user genivi\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
 .SH "SYSLOG ADAPTER OPTIONS"
 .PP
 \fBSyslogEnable\fR
@@ -62,7 +78,7 @@ If this option is set to 1, the syslog adapter feature is enabled\&.
 .RS 4
 .\}
 .nf
-Default: 0\&.
+Default: 0
 .fi
 .if n \{\
 .RE
@@ -98,17 +114,194 @@ Default: 47111
 .RE
 .\}
 .RE
-.SH "FILETRANSFER OPTIONS"
+.SH "SYSTEMD JOURNAL ADAPTER OPTIONS"
 .PP
-\fBFiletransferEnable\fR
+\fBJournalEnable\fR
 .RS 4
-If this option is set to 1, the filetransfer feature is enabled\&.
+Enable the Systemd Journal Adapter\&.
+
+This feature is only available, when dlt is compiled with the option "WITH_SYSTEMD_JOURNAL"\&.
+
+Dlt\-system is started by default as user genivi, see dlt\-system\&.service file\&. The user genivi must be added to one of the groups
+\fIadm\fR,
+\fIwheel\fR
+or
+\fIsystemd\-journal\fR
+to have access to all journal entries\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-Default: 0\&.
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBJournalContextId\fR
+.RS 4
+The Context Id of the journal adapter\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: JOUR
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBJournalCurrentBoot\fR
+.RS 4
+Show only log entries of current boot and follow\&.
+
+If JournalCurrentBoot and JournalFollow are not set all persistent journal entries will be logged
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBJournalFollow\fR
+.RS 4
+Show only the last 10 entries and follow\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBJournalMapLogLevels\fR
+.RS 4
+Map journal log levels to DLT log levels\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+0 Emergency DLT_LOG_FATAL
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+1 Alert DLT_LOG_FATAL
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+2 Critical DLT_LOG_FATAL
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+3 Error DLT_LOG_ERROR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+4 Warning DLT_LOG_WARN
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+5 Notice DLT_LOG_INFO
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+6 Informational DLT_LOG_INFO
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+7 Debug DLT_LOG_DEBUG
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.RE
+.SH "FILETRANSFER OPTIONS"
+.PP
+\fBFiletransferEnable\fR
+.RS 4
+Enable the Filetransfer feature\&.
+
+0 = disabled, 1 = enabled
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
 .fi
 .if n \{\
 .RE
@@ -123,7 +316,7 @@ The Context Id of the filetransfer\&.
 .RS 4
 .\}
 .nf
-Default: File\&.
+Default: FILE
 .fi
 .if n \{\
 .RE
@@ -138,97 +331,7 @@ Time in seconds after startup of dlt\-system when first file is transfered\&.
 .RS 4
 .\}
 .nf
-Default: 30\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferTimeoutBetweenLogs\fR
-.RS 4
-Time in ms seconds to wait between two file transfer logs of a single file to DLT\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: 10\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferTempDir\fR
-.RS 4
-Temporary directory to use\&. File transfer will move a file to this directory while it is being compressed and sent\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: /tmp\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferDirectory\fR
-.RS 4
-You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: /var/dlt/ft1\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferCompression\fR
-.RS 4
-You can define multiple file transfer directories\&. Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: 0\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferCompressionLevel\fR
-.RS 4
-You can define multiple file transfer directories Define the directory to watch, whether to compress the file with zlib and the zlib compression level For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: 5\&.
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
-\fBFiletransferTimeStartup\fR
-.RS 4
-This value defines the amount of time in seconds after start of dlt\-system, when dlt\-system starts to send the first file\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: 30
+Default: 0
 .fi
 .if n \{\
 .RE
@@ -237,7 +340,7 @@ Default: 30
 .PP
 \fBFiletransferTimeDelay\fR
 .RS 4
-This value defines the amount of time after which a sent file is deleted and the next file is strated to be transmitted\&.
+Time in seconds to wait between deletion of transferred file and start of next file transfer\&.
 .sp
 .if n \{\
 .RS 4
@@ -252,13 +355,48 @@ Default: 10
 .PP
 \fBFiletransferTimeoutBetweenLogs\fR
 .RS 4
-This value defines the amount of time to wait between two file transfer logs of a single file\&.
+Time in seconds to wait between two file transfer logs of a single file to DLT\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
 Default: 10
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferDirectory\fR
+.RS 4
+You can define multiple file transfer directories\&. Define the directory to watch, whether to compress the file with zlib and the zlib compression level\&. For parsing purposes, FiletransferCompressionLevel must be the last one of three values\&.
+.RE
+.PP
+\fBFiletransferCompression\fR
+.RS 4
+See FiletransferDirectory option for explanation\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBFiletransferCompressionLevel\fR
+.RS 4
+See FiletransferDirectory option for explanation\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 5
 .fi
 .if n \{\
 .RE
@@ -274,7 +412,7 @@ If this option is set to 1, the log files feature is enabled\&.
 .RS 4
 .\}
 .nf
-Default: 0\&.
+Default: 0
 .fi
 .if n \{\
 .RE
@@ -288,7 +426,9 @@ This value sets the full filename path to the file, which should be logged\&.
 .PP
 \fBLogFileMode\fR
 .RS 4
-This value the defines in which operation mode this file is logged\&. Possible values are: 0 = off, 1 = startup only, 2 = regular\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+This value defines in which operation mode the file is logged\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+
+0 = off, 1 = startup only, 2 = regular
 .RE
 .PP
 \fBLogFileTimeDelay\fR
@@ -304,13 +444,15 @@ This value defines the context id, which is used for logging the file\&.
 .PP
 \fBLogProcessesEnable\fR
 .RS 4
-If this option is set to 1, the log processes feature is enabled\&.
+Enable the logging of processes\&.
+
+0 = disabled, 1 = enabled
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-Default: 0\&.
+Default: 0
 .fi
 .if n \{\
 .RE
@@ -320,6 +462,16 @@ Default: 0\&.
 \fBLogProcessesContextId\fR
 .RS 4
 This value defines the context id, which is used for logging processes files\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: PROC
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .PP
 \fBLogProcessName\fR
@@ -334,12 +486,34 @@ This value sets the relative filename path to the file, which should be logged\&
 .PP
 \fBLogProcessMode\fR
 .RS 4
-This value the defines in which operation mode this process file is logged\&. Possible values are: 0 = off, 1 = startup only, 2 = regular\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+This value the defines in which operation mode this process file is logged\&. In mode 1 the file is only logged once when dlt\-system is started\&. In mode 2 the file is logged regularly every time LogFileTimeDelay timer elapses\&.
+
+0 = off, 1 = startup only, 2 = regular\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .PP
 \fBLogProcessTimeDelay\fR
 .RS 4
 This value is used in mode 3 and defines the number of seconds, after which the defined procfilesystem file is logged\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .SH "AUTHOR"
 .sp

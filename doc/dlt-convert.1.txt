@@ -8,7 +8,7 @@ dlt-convert - Convert DLT Logging files into ASCII
 
 SYNOPSIS
 --------
-*dlt-convert* [-h] [-a] [-x] [-m] [-s][-o filename] [-v] [-c] [-b number] [-e number] [-w] file1 [file2] [file3]
+*dlt-convert* [-h] [-a] [-x] [-m] [-s] [-o filename] [-v] [-c] [-f filterfile] [-b number] [-e number] [-w] file1 [file2] [file3]
 
 DESCRIPTION
 -----------
@@ -41,6 +41,9 @@ OPTIONS
 
 *-c*::
     Count number of messages.
+
+*-f*::
+    Enable filtering of messages.
 
 *-b*::
     First messages to be handled.

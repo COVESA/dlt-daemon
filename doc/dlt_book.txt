@@ -16,31 +16,53 @@
 DLT Documentation
 =================
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
-0.0.1, 2012/10/12: Initial version
+0.0.2, 2016/02/23: Reworked version
+:toc:
 
 image::images/genivi_chrome_1_transparent.png[width=128]
 
 Purpose
 -------
-This document combines all DLT documents into a single document.
+This document is a compilation of all DLT documents.
 
 Information
 -----------
 
-:leveloffset: 1
+:leveloffset: 2
 
 include::../README[]
 
 include::../INSTALL[]
 
-include::../ReleaseNotes.txt[]
+:leveloffset: 0
+
+Manuals
+-------
+
+:leveloffset: 2
+
+include::dlt_user_manual.txt[]
+
+include::dlt_cheatsheet.txt[]
+
+include::dlt_design_specification.txt[]
+
+include::dlt_filetransfer.txt[]
+
+include::dlt_extended_network_trace.txt[]
+
+include::dlt_offline_logstorage.txt[]
+
+include::dlt_kpi.txt[]
+
+include::dlt_cdh.txt[]
 
 :leveloffset: 0
 
 Manpages
 --------
 
-:leveloffset: 1
+:leveloffset: 2
 
 include::dlt-daemon.1.txt[]
 
@@ -58,19 +80,9 @@ include::dlt-logstorage-ctrl.1.txt[]
 
 :leveloffset: 0
 
-Manuals
--------
+Release Notes
+-------------
 
-:leveloffset: 1
+:leveloffset: 2
 
-include::dlt_user_manual.txt[]
-
-include::dlt_cheatsheet.txt[]
-
-include::dlt_design_specification.txt[]
-
-include::dlt_filetransfer.txt[]
-
-include::dlt_extended_network_trace.txt[]
-
-include::dlt_offline_logstorage.txt[]
+include::../ReleaseNotes.txt[]

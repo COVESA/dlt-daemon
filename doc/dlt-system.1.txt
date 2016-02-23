@@ -8,7 +8,7 @@ dlt-system - DLT system logging process
 
 SYNOPSIS
 --------
-*dlt-system* [-h] [-c filename]
+*dlt-system* [-h] [-d] [-c filename]
 
 DESCRIPTION
 -----------
@@ -26,14 +26,17 @@ OPTIONS
 *-h*::
     Display a short help text.
 
+*-d*::
+    Daemonize, needed in System V init systems.
+
 *-c*::
     Load an alternative configuration file. By default the configuration
     file /etc/dlt.conf is loaded.
 
 EXAMPLES
 --------
-Start DLT system with own configuration::
-    dlt-system -c ~/my-configuration.cfg -v
+Start DLT system with custom configuration::
+*dlt-system -c ~/my-configuration.cfg*
 
 EXIT STATUS
 -----------
@@ -54,7 +57,5 @@ Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-an
 
 SEE ALSO
 --------
-dlt-system.conf(5) +
-dlt-daemon(1)
-
+dlt-system.conf(5), dlt-daemon(1)
 
