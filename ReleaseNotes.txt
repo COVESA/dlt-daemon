@@ -4,10 +4,25 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.14.1 STABLE
+2.15.0 STABLE
 
 Changes
 -------
+
+2.15.0
+
+  * Fixed bug with truncation of string or raw block
+  * Updated man pages and README
+  * Truncate string or raw block if length exceeds maximum message length
+  * Fixed a bug in dlt-system filetransfer
+  * dlt-system filetransfer waits for a client to connect
+  * Fixed compilation for older versions of gcc
+  * Fixed core pattern to use correct dlt-cdh install path
+  * Fixed CMakeLists to build core dump handler
+  * Replaced Type=Simple with Type=simple in cmkake files for .service files
+  * Added systemd install dir parameter
+  * Added option to specify user for non-root processes
+  * Added dlt-kpi component to log various KPI information to dlt-daemon
 
 2.14.1
 
