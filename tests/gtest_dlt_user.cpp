@@ -2188,7 +2188,7 @@ TEST(t_dlt_log_raw, abnormal)
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
-    char data[5] = "test";
+//    char data[5] = "test";
     // TODO: uint16_t length = 4;
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-100, data, length));
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-10, data, length));
