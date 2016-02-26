@@ -959,10 +959,13 @@ int dlt_daemon_setup_filter_properties(DltLogStorage *handle, DltConfigFile *con
         }
         else
         {
-            dlt_log(LOG_INFO,
+            if (tmp_data.sync != DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT)
+            {
+                dlt_log(LOG_INFO,
                     "Sync strategy not given. Use default ON_MSG\n");
-            /* set default sync strategy */
-            tmp_data.sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
+                /* set default sync strategy */
+                tmp_data.sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
+            }
         }
     }
 
