@@ -4400,6 +4400,8 @@ DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size)
     if(total_size == NULL || used_size == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
+    DLT_SEM_LOCK();
+
 #ifdef DLT_SHM_ENABLE
     *total_size = dlt_shm_get_total_size(&(dlt_user.dlt_shm));
     *used_size = dlt_shm_get_used_size(&(dlt_user.dlt_shm));
@@ -4408,6 +4410,7 @@ DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size)
     *used_size = dlt_buffer_get_used_size(&(dlt_user.startup_buffer));
 #endif
 
+    DLT_SEM_FREE();
     return DLT_RETURN_OK; /* ok */
 }
 
