@@ -162,6 +162,7 @@ void send_dumped_file(FiletransferOptions const *opts,char *dst_tosend)
                 t.tv_sec = 0;
                 t.tv_nsec = 1000000ul*opts->TimeoutBetweenLogs;
                 nanosleep(&t, NULL);
+                dlt_user_log_resend_buffer();
                 dlt_user_check_buffer(&total, &used);
             }
             lastpkg++;
