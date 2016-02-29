@@ -690,7 +690,7 @@ int wait_for_files(FiletransferOptions const *opts)
                 {
                     if(ie->wd == ino.fd[j])
                     {
-                        DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, found new file."));
+                        DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, found new file."), DLT_STRING(ie->name));
                         int length = strlen(opts->Directory[j])+ie->len+1;
                         if (length > PATH_MAX)
                         {
