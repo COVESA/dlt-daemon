@@ -231,6 +231,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
 	daemon_local->RingbufferMaxSize = DLT_DAEMON_RINGBUFFER_MAX_SIZE;
 	daemon_local->RingbufferStepSize = DLT_DAEMON_RINGBUFFER_STEP_SIZE;
+	daemon_local->daemonFifoSize = 0;
 	daemon_local->flags.sendECUSoftwareVersion = 0;
 	memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
 	daemon_local->flags.sendTimezone = 0;
@@ -395,6 +396,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                            else if(strcmp(token,"RingbufferStepSize")==0)
                         {
                             sscanf(value,"%lu",&(daemon_local->RingbufferStepSize));
+                        }
+                        else if(strcmp(token,"DaemonFIFOSize")==0)
+                        {
+                            sscanf(value,"%lu",&(daemon_local->daemonFifoSize));
                         }
                         else if(strcmp(token,"SharedMemorySize")==0)
                         {
@@ -972,6 +977,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
     int fd = -1;
+    int fifo_size;
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     /* open named pipe(FIFO) to receive DLT messages from users */
@@ -1004,6 +1010,28 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         dlt_log(LOG_WARNING, local_str);
         return -1;
     } /* if */
+
+    if (daemon_local->daemonFifoSize != 0)
+    {
+        /* Set Daemon FIFO size */
+        if (fcntl(fd, F_SETPIPE_SZ , daemon_local->daemonFifoSize) == -1)
+        {
+            snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"set FIFO size error: %s\n",strerror(errno));
+            dlt_log(LOG_ERR, str);
+        }
+    }
+
+    /* Get Daemon FIFO size */
+    if ((fifo_size = fcntl(fd, F_GETPIPE_SZ , 0)) == -1)
+    {
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"get FIFO size error: %s\n",strerror(errno));
+        dlt_log(LOG_ERR, str);
+    }
+    else
+    {
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO size: %d\n",fifo_size);
+        dlt_log(LOG_INFO, str);
+    }
 
     /* Early init, to be able to catch client (app) connections
      * as soon as possible. This registration is automatically ignored

@@ -148,6 +148,7 @@ typedef struct
     unsigned long RingbufferMinSize;
     unsigned long RingbufferMaxSize;
     unsigned long RingbufferStepSize;
+    unsigned long daemonFifoSize;
 } DltDaemonLocal;
 
 typedef struct
