@@ -61,6 +61,9 @@ filter_func (DBusConnection *con,
 
   DLT_TRACE_NETWORK_SEGMENTED(dbusContext,DLT_NW_TRACE_IPC,0,0,len_p,(void *)*buf);
 
+  free(*buf);
+  *buf = NULL;
+
   if (dbus_message_is_signal (message,
                               DBUS_INTERFACE_LOCAL,
                               "Disconnected"))
