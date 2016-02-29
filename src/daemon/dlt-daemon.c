@@ -249,6 +249,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
 	daemon_local->flags.gatewayMode = 0;
+	daemon_local->flags.autoResponseGetLogInfoOption = 7;
 	daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
 	daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
 	daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
@@ -323,6 +324,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         else if(strcmp(token,"SendContextRegistration")==0)
                         {
                             daemon_local->flags.rflag = atoi(value);
+                            //printf("Option: %s=%s\n",token,value);
+                        }
+                        else if(strcmp(token,"SendContextRegistrationOption")==0)
+                        {
+                            daemon_local->flags.autoResponseGetLogInfoOption = atoi(value);
                             //printf("Option: %s=%s\n",token,value);
                         }
                         else if(strcmp(token,"SendMessageTime")==0)
@@ -2317,7 +2323,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         req = (DltServiceGetLogInfoRequest*) msg.databuffer;
 
         req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-        req->options = 7;
+        req->options = daemon_local->flags.autoResponseGetLogInfoOption;
         dlt_set_id(req->apid, userctxt.apid);
         dlt_set_id(req->ctid, userctxt.ctid);
         dlt_set_id(req->com,"remo");
