@@ -78,7 +78,7 @@ unsigned char buffer[BUFFER_SIZE];
  * @param file Absolute file path
  * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
  */
-unsigned long getFilesize(const char* file, int *ok){
+uint32_t getFilesize(const char* file, int *ok){
     struct stat st;
 
     if ( -1 == stat(file, &st))
@@ -88,7 +88,7 @@ unsigned long getFilesize(const char* file, int *ok){
         return 0;
     }
     *ok = 1;
-    return (unsigned long)st.st_size;
+    return (uint32_t)st.st_size;
 }
 
 /** A simple Hash function for C-strings
@@ -96,7 +96,7 @@ unsigned long getFilesize(const char* file, int *ok){
  * @param hash start and result value for hash computation
  *
  */
-void stringHash(const char* str, unsigned long *hash )
+void stringHash(const char* str, uint32_t *hash )
 {
     if (!str || !hash)
         return;
@@ -121,9 +121,9 @@ void stringHash(const char* str, unsigned long *hash )
  * @param value *ok == 0 -> error; *ok == 1 -> ok
  * @return Returns a unique number associated with each filename
  */
-unsigned long getFileSerialNumber(const char* file, int *ok){
+uint32_t getFileSerialNumber(const char* file, int *ok){
     struct stat st;
-    unsigned long ret;
+    uint32_t ret;
     if ( -1 == stat(file, &st))
     {
         *ok = 0;
@@ -224,10 +224,10 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
     if(errno != ENOENT)
     {
         int ok = 0;
-        unsigned long fserial = getFileSerialNumber(filename,&ok);
+        uint32_t fserial = getFileSerialNumber(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_errorMessage, error in getFileSerialNumber for: "),DLT_STRING(filename));
-        unsigned long fsize = getFilesize(filename,&ok);
+        uint32_t fsize = getFilesize(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),DLT_STRING(filename));
         char *fcreationdate = getFileCreationDate2(filename,&ok);
@@ -273,11 +273,11 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename){
     {
         int ok;
 
-        unsigned long fsize = getFilesize(filename,&ok);
+        uint32_t fsize = getFilesize(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_infoAbout, Error getting size of file:"),DLT_STRING(filename));
 
-        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        uint32_t fserialnumber = getFileSerialNumber(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_infoAbout, Error getting serial number of file:"),DLT_STRING(filename));
 
@@ -351,7 +351,7 @@ int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, in
  */
 int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename){
     int packages;
-    long filesize;
+    uint32_t filesize;
 
     if(isFile(filename))
     {
@@ -401,11 +401,11 @@ int dlt_user_log_file_header_alias(DltContext *fileContext,const char *filename,
     {
         int ok;
 
-        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        uint32_t fserialnumber = getFileSerialNumber(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header_alias, Error getting serial number of file:"),DLT_STRING(filename));
 
-        unsigned long fsize = getFilesize(filename,&ok);
+        uint32_t fsize = getFilesize(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header_alias, Error getting size of file:"),DLT_STRING(filename));
 
@@ -450,11 +450,11 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
     {
         int ok;
 
-        unsigned long fserialnumber = getFileSerialNumber(filename,&ok);
+        uint32_t fserialnumber = getFileSerialNumber(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header, Error getting serial number of file:"),DLT_STRING(filename));
 
-        unsigned long fsize = getFilesize(filename,&ok);
+        uint32_t fsize = getFilesize(filename,&ok);
         if (!ok)
             DLT_LOG(*fileContext,DLT_LOG_ERROR,DLT_STRING("dlt_user_log_file_header, Error getting size of file:"),DLT_STRING(filename));
 
@@ -496,7 +496,7 @@ int dlt_user_log_file_header(DltContext *fileContext,const char *filename){
 int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int packageToTransfer, int timeout){
     FILE *file;
     int pkgNumber;
-    long readBytes;
+    uint32_t readBytes;
 
     if(isFile(filename))
     {
@@ -547,7 +547,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
                 readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
                 int ok;
 
-                unsigned long fserial = getFileSerialNumber(filename,&ok);
+                uint32_t fserial = getFileSerialNumber(filename,&ok);
 
                 if (1 != ok)
                 {
@@ -578,7 +578,7 @@ int dlt_user_log_file_data(DltContext *fileContext,const char *filename, int pac
                     readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
                     int ok;
 
-                    unsigned long fserial = getFileSerialNumber(filename,&ok);
+                    uint32_t fserial = getFileSerialNumber(filename,&ok);
 
                     if (1 != ok)
                     {
@@ -624,7 +624,7 @@ int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int delet
     {
 
         int ok;
-        unsigned long fserial = getFileSerialNumber(filename,&ok);
+        uint32_t fserial = getFileSerialNumber(filename,&ok);
 
         if (1 != ok)
         {
