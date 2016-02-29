@@ -4279,7 +4279,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
             {
                 /* keep message in ringbuffer */
                 DLT_SEM_FREE();
-                return DLT_RETURN_ERROR;
+                return ret;
             }
         }
         DLT_SEM_FREE();
