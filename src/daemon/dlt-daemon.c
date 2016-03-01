@@ -2568,7 +2568,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
     /* set overwrite ecu id */
-    if (daemon_local->flags.evalue!=0)
+    if ((daemon_local->flags.evalue[0]) && (strncmp(daemon_local->msg.headerextra.ecu,DLT_DAEMON_ECU_ID,4)==0))
     {
         /* Set header extra parameters */
         dlt_set_id(daemon_local->msg.headerextra.ecu, daemon->ecuid );
@@ -2734,7 +2734,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
 		}
 
 		/* set overwrite ecu id */
-		if (daemon_local->flags.evalue[0])
+		if ((daemon_local->flags.evalue[0]) && (strncmp(daemon_local->msg.headerextra.ecu,DLT_DAEMON_ECU_ID,4)==0))
 		{
 			/* Set header extra parameters */
 			dlt_set_id(daemon_local->msg.headerextra.ecu, daemon->ecuid );
