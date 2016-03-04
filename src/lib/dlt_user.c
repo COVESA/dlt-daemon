@@ -669,6 +669,24 @@ DltReturnValue dlt_free(void)
     {
         for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
         {
+            if( dlt_user.dlt_ll_ts[i].context_description != NULL)
+            {
+                free (dlt_user.dlt_ll_ts[i].context_description);
+                dlt_user.dlt_ll_ts[i].context_description = NULL;
+            }
+
+            if (dlt_user.dlt_ll_ts[i].log_level_ptr != NULL)
+            {
+                free(dlt_user.dlt_ll_ts[i].log_level_ptr);
+                dlt_user.dlt_ll_ts[i].log_level_ptr = NULL;
+            }
+
+            if (dlt_user.dlt_ll_ts[i].trace_status_ptr != NULL)
+            {
+                free(dlt_user.dlt_ll_ts[i].trace_status_ptr);
+                dlt_user.dlt_ll_ts[i].trace_status_ptr = NULL;
+            }
+
             if (dlt_user.dlt_ll_ts[i].injection_table != NULL)
             {
                 free(dlt_user.dlt_ll_ts[i].injection_table);
