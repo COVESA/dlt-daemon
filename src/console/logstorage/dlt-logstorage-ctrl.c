@@ -61,6 +61,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <getopt.h>
 
 #include <sys/epoll.h>
 
@@ -365,19 +366,24 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
 static int dlt_logstorage_ctrl_single_request()
 {
     int ret = 0;
-    /* Check if a 'CONF_NAME' file is present at the given path */
-    if (!dlt_logstorage_check_config_file(get_default_path()))
-    {
-        pr_error("No '%s' file available at: %s\n",
-                 CONF_NAME,
-                 get_default_path());
-        return -1;
-    }
 
-    if (!dlt_logstorage_check_directory_permission(get_default_path()))
+    /* in case sync all caches, an empty path is given */
+    if (get_default_event_type() != EVENT_SYNC_CACHE)
     {
-        pr_error("'%s' is not writable\n", get_default_path());
-        return -1;
+        /* Check if a 'CONF_NAME' file is present at the given path */
+        if (!dlt_logstorage_check_config_file(get_default_path()))
+        {
+            pr_error("No '%s' file available at: %s\n",
+                     CONF_NAME,
+                     get_default_path());
+            return -1;
+        }
+
+        if (!dlt_logstorage_check_directory_permission(get_default_path()))
+        {
+            pr_error("'%s' is not writable\n", get_default_path());
+            return -1;
+        }
     }
 
     /* Initializing the communication with the daemon */
@@ -410,16 +416,31 @@ static void usage(void)
            "a certain logstorage device\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -c         Connection type: connect = 1, disconnect = 0\n");
-    printf("  -d[prop]   Run as daemon: prop = use proprietary handler\n");
-    printf("             'prop' may be replaced by any meaningful word\n");
-    printf("  -e         Set ECU ID (Default: %s)\n", DLT_CTRL_DEFAULT_ECUID);
-    printf("  -h         Usage\n");
-    printf("  -p         Mount point path\n");
-    printf("  -t         Specify connection timeout (Default: %ds)\n",
+    printf("  -c --command               Connection type: connect = 1, disconnect = 0\n");
+    printf("  -d[prop] --daemonize=prop  Run as daemon: prop = use proprietary handler\n");
+    printf("                             'prop' may be replaced by any meaningful word\n");
+    printf("                             If prop is not specified, udev will be used\n");
+    printf("  -e --ecuid                 Set ECU ID (Default: %s)\n", DLT_CTRL_DEFAULT_ECUID);
+    printf("  -h --help                  Usage\n");
+    printf("  -p --path                  Mount point path\n");
+    printf("  -s[path] --snapshot=path   Sync Logstorage cache\n");
+    printf("                             Don't use -s together with -d and -c\n");
+    printf("  -t                         Specify connection timeout (Default: %ds)\n",
            DLT_CTRL_TIMEOUT);
-    printf("  -v         Set verbose flag (Default:%d)\n", get_verbosity());
+    printf("  -v --verbose               Set verbose flag (Default:%d)\n", get_verbosity());
 }
+
+static struct option long_options[] = {
+    {"command",     required_argument,  0,  'c'},
+    {"daemonize",   optional_argument,  0,  'd'},
+    {"ecuid",       required_argument,  0,  'e'},
+    {"help",        no_argument,        0,  'h'},
+    {"path",        required_argument,  0,  'p'},
+    {"snapshot",    optional_argument,  0,  's'},
+    {"timeout",     required_argument,  0,  't'},
+    {"verbose",     no_argument,        0,  'v'},
+    {0,             0,                  0,  0}
+};
 
 /** @brief Parses the application arguments
  *
@@ -433,11 +454,27 @@ static void usage(void)
 static int parse_args(int argc, char *argv[])
 {
     int c = -1;
+    int long_index = 0;
 
-    while ((c = getopt(argc, argv, ":t:he:p:d::c:v")) != -1)
+    while ((c = getopt_long(argc,
+                            argv,
+                            ":s::t:he:p:d::c:v",
+                            long_options,
+                            &long_index)) != -1)
     {
         switch (c)
         {
+        case 's':
+            set_default_event_type(EVENT_SYNC_CACHE);
+
+            if (optarg != NULL && strlen(optarg) >= DLT_MOUNT_PATH_MAX)
+            {
+                pr_error("Mount path '%s' too long\n", optarg);
+                return -1;
+            }
+
+            set_default_path(optarg);
+            break;
         case 't':
             set_timeout(strtol(optarg, NULL, 10));
             break;
@@ -490,6 +527,13 @@ static int parse_args(int argc, char *argv[])
             pr_error("Try %s -h for more information.\n", argv[0]);
             return -1;
         }
+    }
+
+    if (get_default_event_type() == EVENT_SYNC_CACHE &&
+        get_handler_type() != CTRL_NOHANDLER)
+    {
+        pr_error("Sync caches not available in daemon mode\n");
+        return -1;
     }
 
     return 0;

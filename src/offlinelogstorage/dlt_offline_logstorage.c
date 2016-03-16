@@ -335,20 +335,34 @@ int dlt_logstorage_set_sync_strategy(int *strategy, char *value)
         return -1;
     }
 
-    if (strncasecmp(value, "ON_MSG", strlen(value)) == 0)
+    if (strcasestr(value, "ON_MSG") != NULL)
     {
         *strategy = DLT_LOGSTORAGE_SYNC_ON_MSG;
+        dlt_log(LOG_DEBUG, "ON_MSG found, ignore other if added\n");
     }
-    else if (strncasecmp(value, "ON_DAEMON_EXIT", strlen(value)) == 0)
+    else /* ON_MSG not set, combination of cache based strategies possible */
     {
-        *strategy = DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT;
-    }
-    else
-    {
-        dlt_log(LOG_WARNING, "Unknown sync strategy. Set default ON_MSG\n");
-        *strategy = DLT_LOGSTORAGE_SYNC_ON_MSG;
-    }
+        if (strcasestr(value, "ON_DAEMON_EXIT") != NULL)
+        {
+            *strategy |= DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT;
+        }
 
+        if (strcasestr(value, "ON_DEMAND") != NULL)
+        {
+            *strategy |= DLT_LOGSTORAGE_SYNC_ON_DEMAND;
+        }
+
+        if (strcasestr(value, "ON_DEVICE_DISCONNECT") != NULL)
+        {
+            *strategy |= DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT;
+        }
+
+        if (*strategy == 0)
+        {
+            dlt_log(LOG_WARNING, "Unknown sync strategies. Set default ON_MSG\n");
+            *strategy = DLT_LOGSTORAGE_SYNC_ON_MSG;
+        }
+    }
     return 0;
 }
 
@@ -557,7 +571,9 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
         dlt_log(LOG_ERR, "dlt_logstorage_device_connected Error : Device already connected,  \n");
         dlt_log(LOG_ERR, "Send disconnect, connect request \n");
 
-        dlt_logstorage_device_disconnected(handle);
+        dlt_logstorage_device_disconnected(
+                handle,
+                DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
     }
 
     strncpy(handle->device_mount_point,mount_point,DLT_MOUNT_PATH_MAX);
@@ -578,9 +594,10 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
  * Free all allocated memory used in log storage handle
  *
  * @param handle         DLT Logstorage handle
+ * @param reason         Reason for freeing the device
  *
  */
-void dlt_logstorage_free(DltLogStorage *handle)
+void dlt_logstorage_free(DltLogStorage *handle, int reason)
 {
     int i=0;
 
@@ -592,7 +609,7 @@ void dlt_logstorage_free(DltLogStorage *handle)
         /* ignore return value */
         handle->config_data[i].data.dlt_logstorage_sync(
                 &(handle->config_data[i].data),
-                DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
+                reason);
 
         free(handle->config_data[i].data.file_name);
 
@@ -635,10 +652,11 @@ void dlt_logstorage_free(DltLogStorage *handle)
  * De-Initializes DLT Offline Logstorage with respect to device status
  *
  * @param handle         DLT Logstorage handle
+ * @param reason         Reason for disconnect
  * @return               0 on success, -1 on error
  *
  */
-int dlt_logstorage_device_disconnected(DltLogStorage *handle)
+int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
 {
     if (handle == NULL)
         return -1;
@@ -646,7 +664,7 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle)
     /* If configuration loading was done, free it */
     if (handle->config_status == DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
     {
-        dlt_logstorage_free(handle);
+        dlt_logstorage_free(handle, reason);
     }
 
     /* Reset all device status */
@@ -727,7 +745,7 @@ int dlt_logstorage_prepare_table(DltLogStorage *handle, char *appid, char *ctxid
         {
             dlt_log(LOG_ERR, "Adding to hash table failed, returning failure\n");
 
-            dlt_logstorage_free(handle);
+            dlt_logstorage_free(handle, DLT_LOGSTORAGE_SYNC_ON_ERROR);
 
             free(keys);
             return -1;
@@ -876,18 +894,17 @@ void dlt_logstorage_filter_set_strategy(DltLogStorageConfigData *config,
         return;
     }
 
-    switch(strategy)
+    if (strategy == DLT_LOGSTORAGE_SYNC_ON_MSG) /* file based */
     {
-    case DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT:
-        config->dlt_logstorage_prepare = &dlt_logstorage_prepare_on_daemon_exit;
-        config->dlt_logstorage_write = &dlt_logstorage_write_on_daemon_exit;
-        config->dlt_logstorage_sync = &dlt_logstorage_sync_on_daemon_exit;
-        break;
-    case DLT_LOGSTORAGE_SYNC_ON_MSG: /* ON_MSG is the default strategy */
-    default:
         config->dlt_logstorage_prepare = &dlt_logstorage_prepare_on_msg;
         config->dlt_logstorage_write = &dlt_logstorage_write_on_msg;
         config->dlt_logstorage_sync = &dlt_logstorage_sync_on_msg;
+    }
+    else /* cache based */
+    {
+        config->dlt_logstorage_prepare = &dlt_logstorage_prepare_msg_cache;
+        config->dlt_logstorage_write = &dlt_logstorage_write_msg_cache;
+        config->dlt_logstorage_sync = &dlt_logstorage_sync_msg_cache;
     }
 }
 
@@ -959,7 +976,7 @@ int dlt_daemon_setup_filter_properties(DltLogStorage *handle, DltConfigFile *con
         }
         else
         {
-            if (tmp_data.sync != DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT)
+            if (tmp_data.sync <= DLT_LOGSTORAGE_SYNC_ON_MSG)
             {
                 dlt_log(LOG_INFO,
                     "Sync strategy not given. Use default ON_MSG\n");
@@ -1431,4 +1448,31 @@ int dlt_logstorage_write(DltLogStorage *handle,
     }
 
     return err;
+}
+
+int dlt_logstorage_sync_caches(DltLogStorage *handle)
+{
+    int i = 0;
+
+    if (handle == NULL)
+    {
+        return -1;
+    }
+
+    for (i=0; i<handle->num_filter_keys; i++)
+    {
+        /* sync data if necessary */
+        /* ignore return value */
+        if (handle->config_data[i].data.dlt_logstorage_sync(
+                &(handle->config_data[i].data),
+                DLT_LOGSTORAGE_SYNC_ON_DEMAND) != 0)
+        {
+
+            dlt_log(LOG_ERR,
+                    "dlt_logstorage_sync_caches: Sync failed."
+                    " Continue with next cache.\n");
+        }
+    }
+
+    return 0;
 }

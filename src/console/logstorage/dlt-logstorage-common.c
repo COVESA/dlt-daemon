@@ -108,7 +108,7 @@ int get_default_event_type(void)
 
 void set_default_event_type(long type)
 {
-    g_options.event_type = !!type;
+    g_options.event_type = type;
 }
 
 char *get_default_path(void)
@@ -119,7 +119,11 @@ char *get_default_path(void)
 void set_default_path(char *path)
 {
     memset(g_options.device_path, 0, DLT_MOUNT_PATH_MAX);
-    strncpy(g_options.device_path, path, DLT_MOUNT_PATH_MAX - 1);
+
+    if (path != NULL)
+    {
+        strncpy(g_options.device_path, path, DLT_MOUNT_PATH_MAX - 1);
+    }
 }
 
 /* Used by the handlers */

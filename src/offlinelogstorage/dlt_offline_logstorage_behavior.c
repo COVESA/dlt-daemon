@@ -660,7 +660,7 @@ int dlt_logstorage_sync_on_msg(DltLogStorageConfigData *config, int status)
 }
 
 /**
- * dlt_logstorage_prepare_on_daemon_exit
+ * dlt_logstorage_prepare_msg_cache
  *
  * Prepare the log file for a certain filer. If log file not open or log
  * files max size reached, open a new file.
@@ -672,10 +672,10 @@ int dlt_logstorage_sync_on_msg(DltLogStorageConfigData *config, int status)
  * @param log_msg_size  Size of log message
  * @return 0 on success, -1 on error
  */
-int dlt_logstorage_prepare_on_daemon_exit(DltLogStorageConfigData *config,
-                                          DltLogStorageUserConfig *file_config,
-                                          char *dev_path,
-                                          int log_msg_size)
+int dlt_logstorage_prepare_msg_cache(DltLogStorageConfigData *config,
+                                     DltLogStorageUserConfig *file_config,
+                                     char *dev_path,
+                                     int log_msg_size)
 {
     if (config == NULL || file_config == NULL || dev_path == NULL)
     {
@@ -684,8 +684,8 @@ int dlt_logstorage_prepare_on_daemon_exit(DltLogStorageConfigData *config,
 
     log_msg_size = log_msg_size; /* satisfy compiler */
 
-    /* open log file */
-    if (config->cache == NULL)
+    /* create file to sync cache into later */
+    if (config->log == NULL)
     {
         /* get always a new file */
         if (dlt_logstorage_prepare_on_msg(config,
@@ -697,7 +697,11 @@ int dlt_logstorage_prepare_on_daemon_exit(DltLogStorageConfigData *config,
                     "Cannot prepare log file for ON_DAEMON_EXIT sync\n");
             return -1;
         }
+    }
 
+    /* create cache */
+    if (config->cache == NULL)
+    {
         /* check total logstorage cache size */
         if ((g_logstorage_cache_size +
                 config->file_size +
@@ -727,7 +731,7 @@ int dlt_logstorage_prepare_on_daemon_exit(DltLogStorageConfigData *config,
 }
 
 /**
- * dlt_logstorage_write_on_daemon_exit
+ * dlt_logstorage_write_msg_cache
  *
  * Write the log message.
  *
@@ -740,13 +744,13 @@ int dlt_logstorage_prepare_on_daemon_exit(DltLogStorageConfigData *config,
  * @param size3         payload size
  * @return 0 on success, -1 on error
  */
-int dlt_logstorage_write_on_daemon_exit(DltLogStorageConfigData *config,
-                                        unsigned char *data1,
-                                        int size1,
-                                        unsigned char *data2,
-                                        int size2,
-                                        unsigned char *data3,
-                                        int size3)
+int dlt_logstorage_write_msg_cache(DltLogStorageConfigData *config,
+                                   unsigned char *data1,
+                                   int size1,
+                                   unsigned char *data2,
+                                   int size2,
+                                   unsigned char *data3,
+                                   int size3)
 {
     DltLogStorageCacheFooter *footer = NULL;
     int msg_size;
@@ -805,7 +809,7 @@ int dlt_logstorage_write_on_daemon_exit(DltLogStorageConfigData *config,
 }
 
 /**
- * dlt_logstorage_sync_on_daemon_exit
+ * dlt_logstorage_sync_msg_cache
  *
  * sync data to disk.
  *
@@ -813,8 +817,8 @@ int dlt_logstorage_write_on_daemon_exit(DltLogStorageConfigData *config,
  * @param status        Strategy flag
  * @return 0 on success, -1 on error
  */
-int dlt_logstorage_sync_on_daemon_exit(DltLogStorageConfigData *config,
-                                       int status)
+int dlt_logstorage_sync_msg_cache(DltLogStorageConfigData *config,
+                                  int status)
 {
     int ret = 0;
     DltLogStorageCacheFooter *footer = NULL;
@@ -824,7 +828,8 @@ int dlt_logstorage_sync_on_daemon_exit(DltLogStorageConfigData *config,
         return -1;
     }
 
-    if (status == config->sync) /* only sync on exit */
+    /* sync only, if given strategy is set */
+    if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync, status) > 0)
     {
         if (config->log == NULL || config->cache == NULL)
         {
@@ -863,7 +868,21 @@ int dlt_logstorage_sync_on_daemon_exit(DltLogStorageConfigData *config,
                 dlt_log(LOG_ERR, "Failed to sync log file\n");
             }
         }
+
+        /* do not reinitialize in case of ON_DAEMON_EXIT */
+        if (status != DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT)
+        {
+            /* clean ring buffer and reset footer information */
+            memset(config->cache,
+                   0,
+                   config->file_size + sizeof(DltLogStorageCacheFooter));
+
+            /* close the file, a new one will be created when prepare is
+             * called again */
+            fclose(config->log);
+            config->log = NULL;
+        }
     }
 
-    return ret;
+    return 0;
 }

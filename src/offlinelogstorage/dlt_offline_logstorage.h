@@ -65,6 +65,8 @@
 #define DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED 0
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE         1
 
+#define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES         2  /* sync logstorage caches */
+
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         10  /* Maximum size for key */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   50  /* Maximum file name length of the log file */
 
@@ -114,9 +116,13 @@
 #define DLT_OFFLINE_LOGSTORAGE_GENERAL_CONFIG_SECTION "GENERAL"
 
 /* Offline Logstorage sync strategies */
-#define DLT_LOGSTORAGE_SYNC_ON_MSG           0x00 /* default, on message sync */
-#define DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT   0x01 /* sync on daemon exit */
+#define DLT_LOGSTORAGE_SYNC_ON_ERROR                  -1 /* error case */
+#define DLT_LOGSTORAGE_SYNC_ON_MSG                    1 /* default, on message sync */
+#define DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT            (1<<1) /* sync on daemon exit */
+#define DLT_LOGSTORAGE_SYNC_ON_DEMAND                 (1<<2) /* sync on demand */
+#define DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT      (1<<3) /* sync on device disconnect*/
 
+#define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S) & (s))
 
 /* logstorage max cache */
 unsigned int g_logstorage_cache_max;
@@ -223,9 +229,10 @@ extern int dlt_logstorage_load_config(DltLogStorage *handle);
  * De-Initializes DLT Offline Logstorage with respect to device status
  *
  * @param handle         DLT Logstorage handle
+ * @param reason         Reason for device disconnection
  * @return               0 on success, -1 on error
  */
-extern int dlt_logstorage_device_disconnected(DltLogStorage *handle);
+extern int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason);
 /**
  * dlt_logstorage_get_config
  *
@@ -276,4 +283,15 @@ extern int dlt_logstorage_write(DltLogStorage *handle,
                                 int size2,
                                 unsigned char *data3,
                                 int size3);
+
+/**
+ * dlt_logstorage_sync_caches
+ *
+ * Sync all caches inside the specified logstorage device.
+ *
+ * @param  handle    DltLogStorage handle
+ * @return 0 on success, -1 otherwise
+ */
+extern int dlt_logstorage_sync_caches(DltLogStorage *handle);
+
 #endif /* DLT_OFFLINE_LOGSTORAGE_H */

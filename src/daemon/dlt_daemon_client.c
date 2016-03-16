@@ -2050,9 +2050,36 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
         /* Check if log level of running application needs to be reset */
         dlt_daemon_logstorage_reset_application_loglevel(daemon, device_index, daemon_local->flags.offlineLogstorageMaxDevices, verbose);
 
-        dlt_logstorage_device_disconnected(&(daemon->storage_handle[device_index]));
+        dlt_logstorage_device_disconnected(&(daemon->storage_handle[device_index]),
++                                           DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
 
         dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    /* Check for cache synchronization request from log storage ctrl app */
+    else if(req->connection_type == DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES)
+    {
+        /* trigger logstorage to sync caches */
+        if (dlt_daemon_logstorage_sync_cache(daemon,
+                                             daemon_local,
+                                             req->mount_point,
+                                             verbose) == 0)
+        {
+            dlt_daemon_control_service_response(sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                                DLT_SERVICE_RESPONSE_OK,
+                                                verbose);
+        }
+        else
+        {
+            dlt_daemon_control_service_response(sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                                DLT_SERVICE_RESPONSE_ERROR,
+                                                verbose);
+        }
     }
     else
     {

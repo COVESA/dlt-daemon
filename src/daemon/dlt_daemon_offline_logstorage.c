@@ -521,7 +521,9 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                         "Disable storage device\n");
                 /* DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS happened,
                  * therefore remove logstorage device */
-                dlt_logstorage_device_disconnected(&(daemon->storage_handle[i]));
+                dlt_logstorage_device_disconnected(
+                        &(daemon->storage_handle[i]),
+                        DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
             }
         }
     }
@@ -593,9 +595,98 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
         if (daemon->storage_handle[i].connection_type ==
             DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
         {
-            dlt_logstorage_device_disconnected(&daemon->storage_handle[i]);
+            dlt_logstorage_device_disconnected(
+                    &daemon->storage_handle[i],
+                    DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
         }
     }
 
     return 0;
+}
+
+int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     char *mnt_point,
+                                     int verbose)
+{
+    int i = 0;
+    DltLogStorage *handle = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || mnt_point == NULL)
+    {
+        return -1;
+    }
+
+    if (strlen(mnt_point) > 0) /* mount point is given */
+    {
+        handle = dlt_daemon_logstorage_get_device(daemon,
+                                                  daemon_local,
+                                                  mnt_point,
+                                                  verbose);
+        if (handle == NULL)
+        {
+            return -1;
+        }
+        else
+        {
+            if (dlt_logstorage_sync_caches(handle) != 0)
+            {
+                return -1;
+            }
+        }
+    }
+    else /* sync caches for all connected logstorage devices */
+    {
+        for(i=0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
+        {
+            if (daemon->storage_handle[i].connection_type ==
+                    DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+            {
+                if (dlt_logstorage_sync_caches(&daemon->storage_handle[i]) != 0)
+                {
+                    return -1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
+                                                DltDaemonLocal *daemon_local,
+                                                char *mnt_point,
+                                                int verbose)
+{
+    int i = 0;
+    int len1 = 0;
+    int len2 = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || daemon_local == NULL || mnt_point == NULL)
+    {
+        return NULL;
+    }
+
+    len1 = strlen(mnt_point);
+
+    for(i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
+    {
+        len2 = strlen(daemon->storage_handle[i].device_mount_point);
+
+        /* Check if the requested device path is already used as log storage
+         * device. Check for strlen first, to avoid comparison errors when
+         * final '/' is given or not */
+        if (strncmp(daemon->storage_handle[i].device_mount_point,
+                    mnt_point,
+                    len1 > len2 ? len2 : len1) == 0)
+        {
+            return &daemon->storage_handle[i];
+        }
+    }
+
+    return NULL;
 }

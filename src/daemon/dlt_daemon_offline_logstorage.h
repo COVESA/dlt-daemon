@@ -150,4 +150,34 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
                                   DltDaemonLocal *daemon_local,
                                   int verbose);
 
+/**
+ * Sync logstorage caches
+ *
+ * @param daemon        Pointer to Dlt Daemon structure
+ * @param daemon_local  Pointer to Dlt Daemon Local structure
+ * @param mount_point   Logstorage device mount point
+ * @param verbose       If set to true verbose information is printed out
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     char *mnt_point,
+                                     int verbose);
+
+/**
+ * dlt_logstorage_get_device
+ *
+ * Get a Logstorage device handle for given the mount point.
+ *
+ * @param daemon        Pointer to Dlt Daemon structure
+ * @param daemon_local  Pointer to Dlt Daemon Local structure
+ * @param mount_point   Logstorage device mount point
+ * @param verbose       If set to true verbose information is printed out
+ * @return handle to Logstorage device on success, NULL otherwise
+ */
+DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
+                                                DltDaemonLocal *daemon_local,
+                                                char *mnt_point,
+                                                int verbose);
+
 #endif /* DLT_DAEMON_OFFLINE_LOGSTORAGE_H */
