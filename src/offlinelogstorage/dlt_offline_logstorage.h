@@ -111,6 +111,7 @@
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          8
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
+#define DLT_OFFLINE_LOGSTORAGE_GENERAL_CONFIG_SECTION "GENERAL"
 
 /* Offline Logstorage sync strategies */
 #define DLT_LOGSTORAGE_SYNC_ON_MSG           0x00 /* default, on message sync */

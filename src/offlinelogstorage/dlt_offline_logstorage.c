@@ -35,7 +35,10 @@
 #include "dlt_offline_logstorage_behavior.h"
 #include "dlt_config_file_parser.h"
 
+#define DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR 1
+#define DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR 2
 
+#define GENERAL_BASE_NAME "General"
 /* Hash map functions */
 
 static int dlt_logstorage_hash_create(int num_entries, struct hsearch_data *htab)
@@ -888,36 +891,23 @@ void dlt_logstorage_filter_set_strategy(DltLogStorageConfigData *config,
     }
 }
 
-/**
- * dlt_logstorage_store_filters
- *
- * This function reads the filter keys and values
- * and stores them into the hash map
- *
- * @param handle             DLT Logstorage handle
- * @param config_file_name   Configuration file name
- * @return                   0 on success, -1 on error
- *
- */
-int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
+/*Return :
+DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR - On filter properties or value is not valid
+DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR - On error while storing in hash table
+*/
+
+int dlt_daemon_setup_filter_properties(DltLogStorage *handle, DltConfigFile *config_file, char *sec_name)
 {
     /* Read and store filters */
-    int i = 0;
     int j = 0;
     int ret = -1;
-    /* we have to make sure that this function returns success as soon as one
-     * filter configuration is valid */
-    int valid = -1;
     int is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
     char *appid = NULL;
     char *ctxid = NULL;
     DltLogStorageConfigData tmp_data;
-    DltConfigFile *config_file = NULL;
     int num_filter_keys = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM;
-    int num_filters = 0;
-    char filter_name[DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1] = {'\0'};
-    char filter_value[DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1] = {'\0'};
-    char *filter_key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM] =
+    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1] = {'\0'};
+    char *filter_section_key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM] =
                             {
                             "LogAppName",
                             "ContextName",
@@ -929,127 +919,65 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
                             "EcuID"
                             };
 
-    config_file = dlt_config_file_init(config_file_name);
-    if (config_file == NULL)
-    {
-        dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : File parser init failed\n");
-        return -1;
-    }
-
-    if (dlt_config_file_get_num_sections(config_file, &num_filters) != 0)
-    {
-        dlt_config_file_release(config_file);
-        dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : Get number of sections failed\n");
-        return -1;
-    }
-
     memset(&tmp_data, 0, sizeof(DltLogStorageConfigData));
 
-    for (i = 0; i < num_filters; i++)
+    is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT;
+
+    for (j = 0; j < num_filter_keys; j++)
     {
-        if (tmp_data.file_name != NULL)
-        {
-            free(tmp_data.file_name);
-            tmp_data.file_name = NULL;
-        }
+        /* Get filter value for filter keys */
+        ret = dlt_config_file_get_value(config_file, sec_name, filter_section_key[j], value);
 
-        if (tmp_data.ecuid != NULL)
+        /* only return an error when the failure occurred on a mandatory
+        * value. */
+        if (ret != 0 &&
+            strncmp(filter_section_key[j], "SyncBehavior", strlen(filter_section_key[j]))
+            != 0 &&
+            strncmp(filter_section_key[j], "EcuID", strlen(filter_section_key[j]))
+            != 0)
         {
-            free(tmp_data.ecuid);
-            tmp_data.ecuid = NULL;
-        }
-
-        if (appid != NULL)
-        {
-            free(appid);
-            appid = NULL;
-        }
-
-        if (ctxid != NULL)
-        {
-            free(ctxid);
-            ctxid = NULL;
-        }
-
-        /* Get filter name */
-        ret = dlt_config_file_get_section_name(config_file, i, filter_name);
-        if (ret !=0)
-        {
-            dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : Reading filter name failed\n");
+            is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
+            ret = DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
+            dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : Reading filter value failed\n");
             break;
         }
 
-        /* Validate filter name */
-        ret = dlt_logstorage_validate_filter_name(filter_name);
-        if (ret !=0)
+        /* Validate filter value */
+        if (ret == 0)
         {
-            continue;
+            ret = dlt_logstorage_validate_filter_value(filter_section_key[j], value, &appid, &ctxid, &tmp_data);
+            if ((ret != -1) &&  DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(is_filter_set))
+            {
+                is_filter_set |= ret;
+            }
+            else
+            {
+                is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
+                ret = DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
+                break;
+            }
         }
         else
         {
-            is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT;
+            dlt_log(LOG_INFO,
+                    "Sync strategy not given. Use default ON_MSG\n");
+            /* set default sync strategy */
+            tmp_data.sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
         }
+    }
 
-        for (j = 0; j < num_filter_keys; j++)
+    /* If all items of the filter is populated store them */
+    if (DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(is_filter_set))
+    {
+        /* depending on the specified strategy set function pointers for
+         * prepare, write and sync */
+        dlt_logstorage_filter_set_strategy(&tmp_data, tmp_data.sync);
+
+        ret = dlt_logstorage_prepare_table(handle, appid, ctxid, &tmp_data);
+        if (ret != 0)
         {
-            /* Get filter value for filter keys */
-            ret = dlt_config_file_get_value(config_file, filter_name, filter_key[j], filter_value);
-
-            /* only return an error when the failure occurred on a mandatory
-             * value. */
-            if (ret != 0 &&
-                strncmp(filter_key[j], "SyncBehavior", strlen(filter_key[j]))
-                != 0 &&
-                strncmp(filter_key[j], "EcuID", strlen(filter_key[j]))
-                != 0)
-            {
-                is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
-                dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error : Reading filter value failed\n");
-                break;
-            }
-
-            /* Validate filter value */
-            if (ret == 0)
-            {
-                ret = dlt_logstorage_validate_filter_value(filter_key[j], filter_value, &appid, &ctxid, &tmp_data);
-                if ((ret != -1) &&  DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(is_filter_set))
-                {
-                    is_filter_set |= ret;
-                }
-                else
-                {
-                    is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
-                    break;
-                }
-            }
-            else
-            {
-                dlt_log(LOG_INFO,
-                        "Sync strategy not given. Use default ON_MSG\n");
-                /* set default sync strategy */
-                tmp_data.sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
-            }
-        }
-
-        /* If all items of the filter is populated store them */
-        if (DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(is_filter_set))
-        {
-            /* depending on the specified strategy set function pointers for
-             * prepare, write and sync */
-            dlt_logstorage_filter_set_strategy(&tmp_data, tmp_data.sync);
-
-            ret = dlt_logstorage_prepare_table(handle, appid, ctxid, &tmp_data);
-            if (ret != 0)
-            {
-                dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error :  Storing filter values failed\n");
-                break;
-            }
-            else
-            {
-                /* we successfully stored one filter configuration */
-                valid = 0;
-            }
-            is_filter_set = DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT;
+            dlt_log(LOG_ERR, "dlt_logstorage_store_filters Error :  Storing filter values failed\n");
+            ret = DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR;
         }
     }
 
@@ -1065,7 +993,84 @@ int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
         free(tmp_data.ecuid);
     }
 
-    dlt_config_file_release(config_file);
+    return ret;
+}
+
+/**
+ * dlt_logstorage_store_filters
+ *
+ * This function reads the filter keys and values
+ * and stores them into the hash map
+ *
+ * @param handle             DLT Logstorage handle
+ * @param config_file_name   Configuration file name
+ * @return                   0 on success, -1 on error
+ *
+ */
+int dlt_logstorage_store_filters(DltLogStorage *handle, char *config_file_name)
+{
+    char error_msg[DLT_DAEMON_TEXTBUFSIZE];
+    DltConfigFile *config = NULL;
+    int sec = 0;
+    int num_sec = 0;
+    int ret = 0;
+    /* we have to make sure that this function returns success if atleast one
+     * filter configuration is valid and stored */
+    int valid = -1;
+
+    config = dlt_config_file_init(config_file_name);
+    if (config == NULL)
+    {
+        dlt_log(LOG_CRIT, "Failed to open filter configuration file\n");
+        return -1;
+    }
+
+    dlt_config_file_get_num_sections(config, &num_sec);
+
+    for (sec = 0; sec < num_sec; sec++)
+    {
+        char sec_name[DLT_CONFIG_FILE_ENTRY_MAX_LEN];
+
+        if (dlt_config_file_get_section_name(config, sec, sec_name) == -1)
+        {
+            dlt_log(LOG_CRIT, "Failed to read section name\n");
+            return -1;
+        }
+
+        if (strstr(sec_name, GENERAL_BASE_NAME) != NULL)
+        {
+                dlt_log(LOG_CRIT, "General configuration not supported \n");
+                continue;
+        }
+        else if (dlt_logstorage_validate_filter_name(sec_name) == 0)
+        {
+            ret = dlt_daemon_setup_filter_properties(handle, config, sec_name);
+            if (ret == DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR)
+            {
+                break;
+            }
+            else if (ret == DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR)
+            {
+                /* Continue reading next filter section */
+                continue;
+            }
+            else
+            {
+                /* Filter properties read and stored successfuly */
+                valid = 0;
+            }
+        }
+        else /* unknown section */
+        {
+            snprintf(error_msg,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Unknown section: %s",
+                     sec_name);
+            dlt_log(LOG_WARNING, error_msg);
+        }
+    }
+
+    dlt_config_file_release(config);
 
     return valid;
 }
