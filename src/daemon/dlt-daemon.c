@@ -712,6 +712,8 @@ int main(int argc, char* argv[])
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
+    dlt_daemon_free(&daemon, daemon_local.flags.vflag);
+
     dlt_log(LOG_NOTICE, "Leaving DLT daemon\n");
 
     return 0;
@@ -1165,9 +1167,6 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     /* free shared memory */
     if(daemon_local->flags.offlineTraceDirectory[0])
         dlt_offline_trace_free(&(daemon_local->offlineTrace));
-
-    /* free ringbuffer */
-    dlt_buffer_free_dynamic(&(daemon->client_ringbuffer));
 
     /* Ignore result */
     dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
