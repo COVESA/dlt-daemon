@@ -91,6 +91,7 @@ typedef struct
     DltReceiver receiver;  /**< receiver pointer to dlt receiver structure */
     int sock;              /**< sock Connection handle/socket */
     char *servIP;          /**< servIP IP adress/Hostname of TCP/IP interface */
+    int port;              /**< Port for TCP connections (optional) */
     char *serialDevice;    /**< serialDevice Devicename of serial device */
     char *socketPath;      /**< socketPath Unix socket path */
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
@@ -102,6 +103,15 @@ extern "C" {
 #endif
 
 void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage *message, void *data));
+
+/**
+ * Initialising dlt client structure with a specific port
+ * @param client pointer to dlt client structure
+ * @param port The port for the tcp connection
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_client_init_port(DltClient *client, int port, int verbose);
 
 /**
  * Initialising dlt client structure

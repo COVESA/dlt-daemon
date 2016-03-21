@@ -480,7 +480,9 @@ int dlt_gateway_store_connection(DltGateway *gateway,
            tmp->control_msgs,
            sizeof(tmp->control_msgs));
 
-    if (dlt_client_init(&gateway->connections[i].client, verbose) != 0)
+    if (dlt_client_init_port(&gateway->connections[i].client,
+                             gateway->connections[i].port,
+                             verbose) != 0)
     {
         free(gateway->connections[i].ip_address);
         free(gateway->connections[i].ecuid);
@@ -855,6 +857,15 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
         /* only forward messages if the received ECUid is the expected one */
         if (strncmp(header->ecu, con->ecuid, strlen(con->ecuid)) == 0)
         {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "Received ECUid (%s) similar to configured ECUid(%s). "
+                     "Forwarding message (%s).\n",
+                     header->ecu,
+                     con->ecuid,
+                     msg.databuffer);
+            dlt_log(LOG_DEBUG, local_str);
+
             if (dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,
                                    daemon,
                                    daemon_local,

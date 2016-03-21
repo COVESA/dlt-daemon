@@ -105,23 +105,42 @@ void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage 
     message_callback_function = registerd_callback;
 }
 
+DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
+{
+    if (verbose)
+    {
+        snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
+                 "Init dlt client struct with port %d\n", port);
+        dlt_log(LOG_INFO, str);
+    }
+
+    if (client == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    client->sock=-1;
+    client->servIP=0;
+    client->serialDevice=0;
+    client->baudrate=DLT_CLIENT_INITIAL_BAUDRATE;
+    client->port = port;
+    client->socketPath = 0;
+    client->mode=DLT_CLIENT_MODE_TCP;
+    client->receiver.buffer=0;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_client_init(DltClient *client, int verbose)
 {
     if (verbose)
-        printf("Init dlt client struct\n");
+    {
+        snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
+                 "Init dlt client struct with default port.\n");
+        dlt_log(LOG_INFO, str);
+    }
 
-    if (client == NULL)
-        return DLT_RETURN_ERROR;
-
-    client->sock = -1;
-    client->servIP = 0;
-    client->serialDevice = 0;
-    client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
-    client->socketPath = 0;
-    client->mode=DLT_CLIENT_MODE_TCP;
-    client->receiver.buffer = 0;
-
-    return DLT_RETURN_OK;
+    return dlt_client_init_port(client, DLT_DAEMON_TCP_PORT, verbose);
 }
 
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
@@ -163,12 +182,18 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         for(p = servinfo; p != NULL; p = p->ai_next) {
             if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE, "socket() failed!\n");
+                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
+                         "socket() failed! %s\n",
+                         strerror(errno));
+                dlt_log(LOG_WARNING, str);
                 continue;
             }
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
+                         "connect() failed! %s\n",
+                         strerror(errno));
                 close(client->sock);
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE, "connect() failed!\n");
+                dlt_log(LOG_WARNING, str);
                 continue;
             }
 
@@ -178,7 +203,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         freeaddrinfo(servinfo);
 
         if (p == NULL) {
-            fprintf(stderr, "ERROR: failed to connect - %s\n", str);
+            dlt_log(LOG_ERR, "ERROR: failed to connect.\n");
             return DLT_RETURN_ERROR;
         }
 
