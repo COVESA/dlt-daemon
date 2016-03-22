@@ -313,7 +313,7 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
         return -1;
     }
 
-    if (connection->type == DLT_CONNECTION_CLIENT_MSG_TCP)
+    if ((connection->type == DLT_CONNECTION_CLIENT_MSG_TCP) || (connection->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
     {
         daemon_local->client_connections++;
     }
@@ -358,7 +358,7 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         return -1;
     }
 
-    if (type == DLT_CONNECTION_CLIENT_MSG_TCP)
+    if ((type == DLT_CONNECTION_CLIENT_MSG_TCP) || (type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
     {
         daemon_local->client_connections--;
 
