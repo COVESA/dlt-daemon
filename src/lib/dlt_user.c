@@ -1404,9 +1404,8 @@ DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t 
 
 DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
 {
-    uint16_t arg_size = 0;
-    uint32_t type_info = 0;
     size_t new_log_size = 0;
+    uint32_t type_info  = 0;
 
     // check nullpointer
     if (log == NULL || data == NULL)
@@ -1425,18 +1424,17 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         return DLT_RETURN_ERROR;
     }
 
-    arg_size = (uint16_t)length;
-    new_log_size = log->size + arg_size + sizeof(uint16_t);
+    new_log_size = log->size + length + sizeof(uint16_t);
 
     if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-        arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        return DLT_RETURN_ERROR;
 
     if (dlt_user.verbose_mode)
     {
-        new_log_size = log->size + arg_size + sizeof(uint32_t) + sizeof(uint16_t);
+        new_log_size = log->size + length + sizeof(uint32_t) + sizeof(uint16_t);
 
         if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-            arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+            return DLT_RETURN_ERROR;
 
         /* Transmit type information */
         type_info = DLT_TYPE_INFO_RAWD;
@@ -1457,11 +1455,11 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
     }
 
     /* First transmit length of raw data, then the raw data itself */
-    memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
+    memcpy((log->buffer) + log->size, &(length), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer) + log->size, data, arg_size);
-    log->size += arg_size;
+    memcpy((log->buffer) + log->size, data, length);
+    log->size += length;
 
     log->args_num++;
 
@@ -2237,14 +2235,14 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
     new_log_size = log->size + arg_size + sizeof(uint16_t);
 
     if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-        arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        return DLT_RETURN_ERROR;
 
     if (dlt_user.verbose_mode)
     {
         new_log_size = log->size + arg_size + sizeof(uint32_t) + sizeof(uint16_t);
 
         if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-            arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+            return DLT_RETURN_ERROR;
 
         type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
 
@@ -2255,12 +2253,8 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
     memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer) + log->size, text, arg_size - 1);
-    log->size += arg_size - 1;
-
-    /* Of course, buffer has to be 0-terminated here */
-    log->buffer[log->size] = '\000';
-    log->size++;
+    memcpy((log->buffer) + log->size, text, arg_size);
+    log->size += arg_size;
 
     log->args_num++;
 
@@ -2292,14 +2286,14 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     new_log_size = log->size + arg_size + sizeof(uint16_t);
 
     if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-        arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+        return DLT_RETURN_ERROR;
 
     if (dlt_user.verbose_mode)
     {
         new_log_size = log->size + arg_size + sizeof(uint32_t) + sizeof(uint16_t);
 
         if (new_log_size > DLT_USER_BUF_MAX_SIZE)
-            arg_size -= new_log_size - DLT_USER_BUF_MAX_SIZE;
+            return DLT_RETURN_ERROR;
 
         type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
 
@@ -2310,12 +2304,8 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer) + log->size, text, arg_size - 1);
-    log->size += arg_size - 1;
-
-    /* Of course, buffer has to be 0-terminated here */
-    log->buffer[log->size] = '\000';
-    log->size++;
+    memcpy((log->buffer) + log->size, text, arg_size);
+    log->size += arg_size;
 
     log->args_num++;
 
