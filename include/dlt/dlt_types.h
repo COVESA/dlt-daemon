@@ -85,6 +85,7 @@ typedef unsigned int speed_t;
  */
 typedef enum
 {
+    DLT_RETURN_USER_BUFFER_FULL = -6,
     DLT_RETURN_WRONG_PARAMETER    = -5,
     DLT_RETURN_BUFFER_FULL      = -4,
     DLT_RETURN_PIPE_FULL        = -3,
