@@ -1697,24 +1697,32 @@ TEST(t_dlt_user_log_write_raw_formatted, normal)
 
 TEST(t_dlt_user_log_write_raw_formatted, abnormal)
 {
-//    DltContext context;
-//    DltContextData contextData;
-//
-//
-//
-//    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
-//    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
+    DltContext context;
+    DltContextData contextData;
 
-    // undefined values for DltFormatType
-    // shouldn't it return -1?
+    uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
+
+    char buffer[length];
+    memset(buffer, '\000', length);
+
+    for(int i = 0; i < length; i++)
+        buffer[i] = 'X';
+
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL,dlt_user_log_write_raw_formatted(&contextData, buffer, length, DLT_FORMAT_DEFAULT));
+
+//     undefined values for DltFormatType
+//     shouldn't it return -1?
 //    char text1[6] = "test1";
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-100));
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-10));
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10));
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100));
-//
-//    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
-//    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
@@ -1787,10 +1795,17 @@ TEST(t_dlt_log_string, abnormal)
 {
     DltContext context;
 
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
 
+    uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
+    char buffer[length];
+    memset(buffer, '\000', length);
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
+    for(int i = 0; i < length - 1; i++)
+        buffer[i] = 'X';
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_log_string(&context, DLT_LOG_INFO, buffer));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
@@ -1800,8 +1815,8 @@ TEST(t_dlt_log_string, abnormal)
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)10, text1));
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)100, text1));
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string, nullpointer)
@@ -1870,10 +1885,17 @@ TEST(t_dlt_log_string_int, abnormal)
 {
     DltContext context;
 
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
 
+    uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
+    char buffer[length];
+    memset(buffer, '\000', length);
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
+    for(int i = 0; i < length - 1; i++)
+        buffer[i] = 'X';
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL,dlt_log_string_int(&context, DLT_LOG_INFO, buffer, 1));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
@@ -1884,8 +1906,8 @@ TEST(t_dlt_log_string_int, abnormal)
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)10, text1, data));
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)100, text1, data));
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_int, nullpointer)
@@ -1955,10 +1977,17 @@ TEST(t_dlt_log_string_uint, abnormal)
 {
     DltContext context;
 
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
 
+    uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
+    char buffer[length];
+    memset(buffer, '\000', DLT_USER_BUF_MAX_SIZE+10);
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
+    for(int i = 0; i < length - 1; i++)
+        buffer[i] = 'X';
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL,dlt_log_string_uint(&context, DLT_LOG_INFO, buffer, 1));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
@@ -1969,8 +1998,8 @@ TEST(t_dlt_log_string_uint, abnormal)
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)10, text1, data));
     // TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)100, text1, data));
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_string_uint, nullpointer)
@@ -2183,8 +2212,18 @@ TEST(t_dlt_log_raw, abnormal)
 
 
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw abnormal"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_raw abnormal"));
+
+    uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
+
+    char buffer[length];
+    memset(buffer, '\000', length);
+
+    for(int i = 0; i < length; i++)
+        buffer[i] = 'X';
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_log_raw(&context, DLT_LOG_INFO, buffer, length));
 
     // undefined values for DltLogLevelType
     // shouldn't it return -1?
@@ -2202,8 +2241,8 @@ TEST(t_dlt_log_raw, abnormal)
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1));
 //    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100));
 
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK,dlt_unregister_app());
 }
 
 TEST(t_dlt_log_raw, nullpointer)
