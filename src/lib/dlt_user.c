@@ -592,7 +592,11 @@ int dlt_user_atexit_blow_out_user_buffer(void){
 
                 if(ret == 0)
                 {
-                        return -1;
+                    DLT_SEM_LOCK();
+                    count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+                    DLT_SEM_FREE();
+
+                    return count;
                 }
             }
 
