@@ -832,6 +832,7 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contex
 {
     DltContextData log;
     uint32_t i;
+    int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
 
     //check nullpointer
     if(!handle)
@@ -994,14 +995,17 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contex
 		}
 	}
 
-	if (loglevel!=DLT_USER_LOG_LEVEL_NOT_SET)
+	/* check if the log level is set in the environement */
+	envLogLevel = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, DLT_USER_LOG_LEVEL_NOT_SET);
+	if( envLogLevel!=DLT_USER_LOG_LEVEL_NOT_SET)
     {
-        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, loglevel);
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = envLogLevel;
+        loglevel = envLogLevel;
     }
-    else
-    {
-        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level);
-    }
+	else if( loglevel != DLT_USER_LOG_LEVEL_NOT_SET )
+	{
+		 dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
+	}
 
 	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
 	{
@@ -1021,8 +1025,8 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contex
 	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
 	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
 
-  log.log_level = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
-  log.trace_status = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status;
+	log.log_level = loglevel;
+	log.trace_status =  tracestatus;
 
 	dlt_user.dlt_ll_ts_num_entries++;
 
