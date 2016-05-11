@@ -3008,6 +3008,34 @@ TEST(t_dlt_free, onetime)
 }
 
 /////////////////////////////////////////
+// dlt_user_is_logLevel_enabled
+TEST(t_dlt_user_is_logLevel_enabled, normal)
+{
+    DltContext context;
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,dlt_register_context_ll_ts(&context, "ILLE",
+                               "t_dlt_user_is_logLevel_enabled context",
+                               DLT_LOG_INFO,
+                               -2)); /* DLT_USER_TRACE_STATUS_NOT_SET */
+
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_FATAL));
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_ERROR));
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_WARN));
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_INFO));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_is_logLevel_enabled(&context, DLT_LOG_DEBUG));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_is_logLevel_enabled(&context, DLT_LOG_VERBOSE));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_is_logLevel_enabled(&context, DLT_LOG_OFF));
+
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK,dlt_unregister_app());
+}
+
+TEST(t_dlt_user_is_logLevel_enabled, nullpointer)
+{
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_is_logLevel_enabled(NULL, DLT_LOG_FATAL));
+}
+
+/////////////////////////////////////////
 // main
 int main(int argc, char **argv)
 {

@@ -769,6 +769,29 @@ int dlt_user_atexit_blow_out_user_buffer(void);
  */
 DltReturnValue dlt_user_log_resend_buffer(void);
 
+/**
+ * Checks the log level passed by the log function if enabled for that context or not.
+ * This function can be called by applications before generating their logs.
+ * Also called before writing new log messages.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is enabled
+ */
+static inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle,DltLogLevelType loglevel)
+{
+    if (handle == NULL || handle->log_level_ptr == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (loglevel <= (DltLogLevelType)(*(handle->log_level_ptr)) && loglevel != DLT_LOG_OFF)
+    {
+        return DLT_RETURN_TRUE;
+    }
+
+    return DLT_RETURN_LOGGING_DISABLED;
+}
+
 #ifdef DLT_TEST_ENABLE
     void dlt_user_test_corrupt_user_header(int enable);
     void dlt_user_test_corrupt_message_size(int enable,int16_t size);

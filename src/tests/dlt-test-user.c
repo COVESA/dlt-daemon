@@ -78,6 +78,18 @@
 
 #define DLT_TEST_NUM_CONTEXT 9
 
+/* LogLevel string representation */
+static const char *loglevelstr[DLT_LOG_MAX] =
+{
+        "DLT_LOG_OFF",
+        "DLT_LOG_FATAL",
+        "DLT_LOG_ERROR",
+        "DLT_LOG_WARN",
+        "DLT_LOG_INFO",
+        "DLT_LOG_DEBUG",
+        "DLT_LOG_VERBOSE"
+};
+
 /* Test functions... */
 
 /* for macro interface */
@@ -478,6 +490,7 @@ int test5m(void)
 {
     char buffer[32];
     int num;
+    int i;
 
     void *ptr = malloc(sizeof(int));
 
@@ -510,6 +523,26 @@ int test5m(void)
 
     DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_STRING("Next line: DLT_LOG_PTR"));
     DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_PTR(ptr));
+
+    DLT_LOG(context_macro_test[4],DLT_LOG_INFO,DLT_STRING("Next lines: DLT_IS_LOG_LEVEL_ENABLED"));
+    for (i = DLT_LOG_FATAL; i < DLT_LOG_MAX; i++)
+    {
+        if (DLT_IS_LOG_LEVEL_ENABLED(context_macro_test[4],i))
+        {
+            DLT_LOG(context_info,
+                    DLT_LOG_INFO,
+                    DLT_STRING("Loglevel is enabled: "),
+                    DLT_STRING(loglevelstr[i]));
+        }
+        else
+        {
+            DLT_LOG(context_info,
+                    DLT_LOG_INFO,
+                    DLT_STRING("Loglevel is disabled: "),
+                    DLT_STRING(loglevelstr[i]));
+        }
+    }
+
     /* wait 2 second before next test */
     sleep(2);
     DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test5: (Macro IF) finished"));
@@ -990,6 +1023,8 @@ int test5f(void)
 {
     char buffer[32];
     int num;
+    int i;
+    char log[DLT_USER_BUF_MAX_SIZE];
 
     for(num=0;num<32;num++)
     {
@@ -1017,6 +1052,21 @@ int test5f(void)
 
     dlt_log_string(&(context_function_test[4]),DLT_LOG_INFO,"Next line: dlt_log_string_uint()");
     dlt_log_string_uint(&(context_function_test[4]), DLT_LOG_INFO,"String output: ", 42);
+
+    dlt_log_string(&(context_function_test[4]),DLT_LOG_INFO, "Next lines: dlt_user_is_logLevel_enabled");
+    for (i = DLT_LOG_FATAL; i < DLT_LOG_MAX; i++)
+    {
+        if (dlt_user_is_logLevel_enabled(&(context_function_test[4]),i) == DLT_RETURN_TRUE)
+        {
+            snprintf(log, DLT_USER_BUF_MAX_SIZE, "Loglevel is enabled: %s", loglevelstr[i]);
+            dlt_log_string(&(context_function_test[4]),DLT_LOG_INFO, log);
+        }
+        else
+        {
+            snprintf(log, DLT_USER_BUF_MAX_SIZE, "Loglevel is disabled: %s", loglevelstr[i]);
+            dlt_log_string(&(context_function_test[4]),DLT_LOG_INFO, log);
+        }
+    }
 
     /* wait 2 second before next test */
     sleep(2);

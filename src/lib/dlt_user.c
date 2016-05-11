@@ -1371,7 +1371,7 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle, DltContextData *l
     log->size = 0;
 
     /* check log levels */
-    if (handle->log_level_ptr != NULL && (loglevel <= (int) *(handle->log_level_ptr)) && (loglevel != DLT_LOG_OFF))
+    if (dlt_user_is_logLevel_enabled(handle, loglevel) == DLT_RETURN_TRUE)
     {
         /* In non-verbose mode, insert message id */
         if (dlt_user.verbose_mode == 0)

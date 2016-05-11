@@ -181,7 +181,7 @@
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             DltContextData log_local; \
             int dlt_local; \
@@ -213,7 +213,7 @@
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             DltContextData log_local; \
             int dlt_local; \
@@ -398,7 +398,7 @@
  */
 #define DLT_LOG_STRING(CONTEXT,LOGLEVEL,TEXT) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
         } \
@@ -413,7 +413,7 @@
  */
 #define DLT_LOG_STRING_INT(CONTEXT,LOGLEVEL,TEXT,INT_VAR) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
         } \
@@ -428,7 +428,7 @@
  */
 #define DLT_LOG_STRING_UINT(CONTEXT,LOGLEVEL,TEXT,UINT_VAR) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_string_uint(&(CONTEXT),LOGLEVEL,TEXT,UINT_VAR); \
         } \
@@ -442,7 +442,7 @@
  */
 #define DLT_LOG_UINT(CONTEXT,LOGLEVEL,UINT_VAR) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_uint(&(CONTEXT),LOGLEVEL,UINT_VAR); \
         } \
@@ -456,7 +456,7 @@
  */
 #define DLT_LOG_INT(CONTEXT,LOGLEVEL,INT_VAR) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_int(&(CONTEXT),LOGLEVEL,INT_VAR); \
         } \
@@ -471,7 +471,7 @@
  */
 #define DLT_LOG_RAW(CONTEXT,LOGLEVEL,BUF,LEN) \
     do { \
-        if((CONTEXT).log_level_ptr && ((LOGLEVEL)<=(int)*((CONTEXT).log_level_ptr) ) && ((LOGLEVEL)!=0)) \
+        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_raw(&(CONTEXT),LOGLEVEL,BUF,LEN); \
         } \
@@ -521,6 +521,15 @@
  */
 #define DLT_DISABLE_LOCAL_PRINT() do {\
     (void)dlt_disable_local_print();} while(0)
+
+/**
+ * Check if log level is enabled
+ *
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ */
+#define DLT_IS_LOG_LEVEL_ENABLED(CONTEXT,LOGLEVEL) \
+    (dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL) == DLT_RETURN_TRUE)
 
 /**
   \}
