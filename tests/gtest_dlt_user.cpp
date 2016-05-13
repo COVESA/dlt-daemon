@@ -1651,7 +1651,7 @@ TEST(t_dlt_user_log_write_raw, nullpointer)
     EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(NULL, text1, 6));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(NULL, NULL, 0));
-    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(&contextData, NULL, 0));
+    EXPECT_GE(DLT_RETURN_OK,dlt_user_log_write_raw(&contextData, NULL, 0));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw(&contextData, NULL, 1));
     EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 
@@ -1740,7 +1740,7 @@ TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
     EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(NULL, text1, 6, DLT_FORMAT_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(NULL, NULL, 0, DLT_FORMAT_DEFAULT));
-    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
+    EXPECT_GE(DLT_RETURN_OK,dlt_user_log_write_raw_formatted(&contextData, NULL, 0, DLT_FORMAT_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, NULL, 1, DLT_FORMAT_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK,dlt_user_log_write_finish(&contextData));
 

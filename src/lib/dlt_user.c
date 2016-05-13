@@ -1416,7 +1416,7 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
     uint32_t type_info  = 0;
 
     // check nullpointer
-    if (log == NULL || data == NULL)
+    if (log == NULL || (data == NULL && length!=0))
         return DLT_RETURN_WRONG_PARAMETER;
 
     // Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning
