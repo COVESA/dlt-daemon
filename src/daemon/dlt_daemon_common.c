@@ -1296,7 +1296,7 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
                 {
                     if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
                     {
-                        return;
+                        dlt_vlog(LOG_WARNING, "Cannot update default of %.4s:%.4s\n", context->apid, context->ctid);
                     }
                 }
             }
@@ -1326,7 +1326,7 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_lev
                 context->log_level = log_level;
                 if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
                 {
-                    return;
+                    dlt_vlog(LOG_WARNING, "Cannot send log level %.4s:%.4s -> %i\n", context->apid, context->ctid, context->log_level);
                 }
             }
         }
@@ -1387,7 +1387,7 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
             {
                 if (dlt_daemon_user_send_log_state(daemon, app, verbose)==-1)
                 {
-                    return;
+                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n",app->apid, app->pid);
                 }
             }
         }
