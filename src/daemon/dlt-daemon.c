@@ -1965,14 +1965,14 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         dlt_daemon_process_user_message_func func = NULL;
 
         offset = 0;
-        userheader = (DltUserHeader*) (receiver->buf + offset);
+        userheader = (DltUserHeader *)(receiver->buf + offset);
 
         while (!dlt_user_check_userheader(userheader) &&
                (offset + min_size <= receiver->bytesRcvd))
         /* resync if necessary */
         {
-            userheader = (DltUserHeader*) (receiver->buf + offset);
             offset++;
+            userheader = (DltUserHeader *)(receiver->buf + offset);
         }
 
         /* Check for user header pattern */
@@ -2040,7 +2040,10 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec, &userpayload, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userpayload,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2089,10 +2092,12 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          int verbose)
 {
     uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
+    int to_remove = 0;
     DltDaemonApplication *application = NULL;
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
     DltUserControlMsgRegisterApplication userapp;
+    char *origin;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2107,18 +2112,50 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec, &userapp, len, 1) < 0)
+    memset(&userapp, 0, sizeof(DltUserControlMsgRegisterApplication));
+    origin = rec->buf;
+
+    /* We shall not remove data before checking that everything is there. */
+    to_remove = dlt_receiver_check_and_get(rec,
+                                           &userapp,
+                                           len,
+                                           DLT_RCV_SKIP_HEADER);
+    if (to_remove < 0)
     {
         /* Not enough bytes received */
         return -1;
     }
 
     len = userapp.description_length;
+    if (len > DLT_DAEMON_DESCSIZE)
+    {
+        len = DLT_DAEMON_DESCSIZE;
+        dlt_log(LOG_WARNING, "Application description exceeds limit\n");
+    }
 
-    if ((len > DLT_DAEMON_DESCSIZE) ||
-        (dlt_receiver_check_and_get(rec, description, len, 0) < 0))
+    /* adjust buffer pointer */
+    rec->buf += to_remove + sizeof(DltUserHeader);
+
+    if (dlt_receiver_check_and_get(rec, description, len, DLT_RCV_NONE) < 0)
     {
         dlt_log(LOG_ERR, "Unable to get application description\n");
+        /* in case description was not readable, set dummy description */
+        strncpy(description, "Unknown", sizeof("Unknown"));
+        /* unknown len of original description, set to 0 to not remove in next
+         * step. Because message buffer is re-adjusted the corrupted description
+         * is ignored. */
+        len = 0;
+    }
+
+    /* adjust to_remove */
+    to_remove += sizeof(DltUserHeader) + len;
+    /* point to begin of message */
+    rec->buf = origin;
+
+    /* We can now remove data. */
+    if (dlt_receiver_remove(rec, to_remove) != DLT_RETURN_OK)
+    {
+        dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
         return -1;
     }
 
@@ -2165,12 +2202,14 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                                      int verbose)
 {
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+    int to_remove = 0;
     uint32_t len = sizeof(DltUserControlMsgRegisterContext);
     DltUserControlMsgRegisterContext userctxt;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context = NULL;
     DltServiceGetLogInfoRequest *req = NULL;
+    char *origin;
 
     DltMessage msg;
 
@@ -2187,8 +2226,15 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         return -1;
     }
 
-    memset(&userctxt, 0, len);
-    if (dlt_receiver_check_and_get(rec, &userctxt, len, 1) < 0)
+    memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
+    origin = rec->buf;
+
+    to_remove = dlt_receiver_check_and_get(rec,
+                                           &userctxt,
+                                           len,
+                                           DLT_RCV_SKIP_HEADER);
+
+    if (to_remove < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2196,10 +2242,35 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
     len = userctxt.description_length;
 
-    if ((len > DLT_DAEMON_DESCSIZE) ||
-        (dlt_receiver_check_and_get(rec, description, len, 0) < 0))
+    if (len > DLT_DAEMON_DESCSIZE)
     {
-        dlt_log(LOG_ERR, "Unable to get application description\n");
+        len = DLT_DAEMON_DESCSIZE;
+        dlt_log(LOG_WARNING, "Context description exceeds limit\n");
+    }
+
+    /* adjust buffer pointer */
+    rec->buf += to_remove + sizeof(DltUserHeader);
+
+    if (dlt_receiver_check_and_get(rec, description, len, DLT_RCV_NONE) < 0)
+    {
+        dlt_log(LOG_ERR, "Unable to get context description\n");
+        /* in case description was not readable, set dummy description */
+        strncpy(description, "Unknown", sizeof("Unknown"));
+        /* unknown len of original description, set to 0 to not remove in next
+         * step. Because message buffer is re-adjusted the corrupted description
+         * is ignored. */
+        len = 0;
+    }
+
+    /* adjust to_remove */
+    to_remove += sizeof(DltUserHeader) + len;
+    /* point to begin of message */
+    rec->buf = origin;
+
+    /* We can now remove data. */
+    if (dlt_receiver_remove(rec, to_remove) != DLT_RETURN_OK)
+    {
+        dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
         return -1;
     }
 
@@ -2377,7 +2448,10 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec, &userapp, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userapp,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2473,7 +2547,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec, &userctxt, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userctxt,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2711,7 +2788,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
 
     memset(&userheader, 0, len);
 
-    if (dlt_receiver_check_and_get(rec, &userheader, len, 0) < 0)
+    if (dlt_receiver_check_and_get(rec, &userheader, len, DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2853,7 +2930,10 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
     }
 
     memset(&userctxt, 0, len);
-    if (dlt_receiver_check_and_get(rec, &userctxt, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userctxt,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;
@@ -2916,7 +2996,10 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon,
     }
 
     memset(&userctxt, 0, len);
-    if (dlt_receiver_check_and_get(rec, &userctxt, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userctxt,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;

@@ -321,6 +321,11 @@ enum {
 #define DLT_HEADER_SHOW_NOARG      0x0200
 #define DLT_HEADER_SHOW_ALL        0xFFFF
 
+/* dlt_receiver_check_and_get flags */
+#define DLT_RCV_NONE        0
+#define DLT_RCV_SKIP_HEADER (1 << 0)
+#define DLT_RCV_REMOVE      (1 << 1)
+
 /**
  * Maximal length of mounted path
  */

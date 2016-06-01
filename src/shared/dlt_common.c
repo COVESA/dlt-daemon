@@ -2270,12 +2270,12 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver)
 int dlt_receiver_check_and_get(DltReceiver *receiver,
                                void *dest,
                                unsigned int to_get,
-                               unsigned int skip_header)
+                               unsigned int flags)
 {
     unsigned int min_size = to_get;
     void *src = NULL;
 
-    if (skip_header) {
+    if (flags & DLT_RCV_SKIP_HEADER) {
         min_size += sizeof(DltUserHeader);
     }
 
@@ -2283,23 +2283,23 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
         (receiver->bytesRcvd < (int32_t)min_size) ||
         !receiver->buf ||
         !dest) {
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     src = (void *)receiver->buf;
 
-    if (skip_header) {
+    if (flags & DLT_RCV_SKIP_HEADER) {
         src += sizeof(DltUserHeader);
     }
 
-    memset(dest, 0, to_get);
-
     memcpy(dest, src, to_get);
 
-    if (dlt_receiver_remove(receiver, min_size) == -1)
-    {
-        dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
-        return -1;
+    if (flags & DLT_RCV_REMOVE) {
+        if (dlt_receiver_remove(receiver, min_size) != DLT_RETURN_OK)
+        {
+            dlt_log(LOG_WARNING,"Can't remove bytes from receiver\n");
+            return DLT_RETURN_ERROR;
+        }
     }
 
     return to_get;
