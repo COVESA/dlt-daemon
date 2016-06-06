@@ -427,8 +427,6 @@ int dlt_gateway_store_connection(DltGateway *gateway,
     /* setup DltClient Structure */
     gateway->connections[i].client.servIP =
         strdup(gateway->connections[i].ip_address);
-    // TODO: modify DltClient structure to make port configurable
-    // g->connections[i].client.servPort = g->connections[i].port;
 
     if (ret != 0)
     {

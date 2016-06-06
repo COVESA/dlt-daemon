@@ -92,6 +92,7 @@
 #include <stdlib.h> /* for malloc(), free() */
 #include <string.h> /* for strlen(), memcmp(), memmove() */
 #include <errno.h>
+#include <limits.h>
 
 #include "dlt_types.h"
 #include "dlt_client.h"
@@ -107,11 +108,9 @@ void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage 
 
 DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
 {
-    if (verbose)
+    if (verbose && port != DLT_DAEMON_TCP_PORT)
     {
-        snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                 "Init dlt client struct with port %d\n", port);
-        dlt_log(LOG_INFO, str);
+        dlt_vlog(LOG_INFO, "Init dlt client struct with port %d\n", port);
     }
 
     if (client == NULL)
@@ -133,14 +132,37 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
 
 DltReturnValue dlt_client_init(DltClient *client, int verbose)
 {
-    if (verbose)
+    char *env_daemon_port;
+    int tmp_port;
+    /* the port may be specified by an environment variable, defaults to DLT_DAEMON_TCP_PORT */
+    unsigned short servPort = DLT_DAEMON_TCP_PORT;
+
+    /* the port may be specified by an environment variable */
+    env_daemon_port = getenv(DLT_CLIENT_ENV_DAEMON_TCP_PORT);
+    if (env_daemon_port != NULL)
     {
-        snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                 "Init dlt client struct with default port.\n");
-        dlt_log(LOG_INFO, str);
+        tmp_port = atoi(env_daemon_port);
+        if ((tmp_port < IPPORT_RESERVED) || (tmp_port > USHRT_MAX))
+        {
+            dlt_vlog(LOG_ERR,
+                     "Specified port is out of possible range: %d.\n",
+                     tmp_port);
+            return DLT_RETURN_ERROR;
+        }
+        else
+        {
+            servPort = tmp_port;
+        }
     }
 
-    return dlt_client_init_port(client, DLT_DAEMON_TCP_PORT, verbose);
+    if (verbose)
+    {
+        dlt_vlog(LOG_INFO,
+                 "Init dlt client struct with default port: %hu.\n",
+                 servPort);
+    }
+
+    return dlt_client_init_port(client, servPort, verbose);
 }
 
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
@@ -149,9 +171,6 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
     int rv;
-    char *env_daemon_port;
-   /* the port may be specified by an environment variable, defaults to DLT_DAEMON_TCP_PORT */
-    unsigned short servPort = DLT_DAEMON_TCP_PORT;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
@@ -160,21 +179,10 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         return DLT_RETURN_ERROR;
     }
 
-    /* the port may be specified by an environment variable */
-    env_daemon_port = getenv(DLT_CLIENT_ENV_DAEMON_TCP_PORT);
-    if (env_daemon_port != NULL)
-    {
-      servPort = atoi(env_daemon_port);
-    }
-    if (servPort == 0)
-    {
-      servPort = DLT_DAEMON_TCP_PORT;
-    }
-
     switch (client->mode)
     {
     case DLT_CLIENT_MODE_TCP:
-        snprintf(portnumbuffer, 32, "%d", servPort);
+        snprintf(portnumbuffer, 32, "%d", client->port);
         if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
             return DLT_RETURN_ERROR;
