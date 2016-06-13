@@ -1963,6 +1963,38 @@ DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
+{
+    if (log == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (!dlt_user_initialised)
+    {
+        dlt_vlog(LOG_WARNING, "%user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    switch(sizeof(void *))
+    {
+        case 4:
+            return dlt_user_log_write_uint32_formatted(log,
+                                                       (uintptr_t)data,
+                                                       DLT_FORMAT_HEX32);
+            break;
+        case 8:
+            return dlt_user_log_write_uint64_formatted(log,
+                                                       (uintptr_t)data,
+                                                       DLT_FORMAT_HEX64);
+            break;
+        default:
+            ; /* skip */
+    }
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
 {
     if (log == NULL)

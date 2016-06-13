@@ -331,13 +331,7 @@
  * Architecture independent macro to print pointers
  */
 #define DLT_PTR(PTR_VAR) \
-    do { \
-        if (sizeof(void *) < 8) { \
-            DLT_HEX32((uintptr_t)PTR_VAR); \
-        } else { \
-            DLT_HEX64((uintptr_t)PTR_VAR); \
-        } \
-    } while(0)
+    (void)dlt_user_log_write_ptr(&log_local, PTR_VAR)
 
 /**
  * Trace network message

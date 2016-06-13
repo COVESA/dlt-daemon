@@ -333,6 +333,16 @@ DltReturnValue dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t
 DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type);
 
 /**
+ * Write a pointer value architecture independent.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param data void* parameter written into log message.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data);
+
+/**
  * Write a int parameter into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
