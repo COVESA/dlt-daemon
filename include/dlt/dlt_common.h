@@ -335,6 +335,15 @@ enum {
  * Maximal length of an entry
  */
 #define DLT_ENTRY_MAX 100
+
+/**
+ * Provision to test static function
+ */
+#ifndef DLT_UNIT_TESTS
+#define STATIC static
+#else
+#define STATIC
+#endif
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
