@@ -257,6 +257,13 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     // Prepare all needed file names
     char *fn = basename(src);
+    if (fn == NULL)
+    {
+        DLT_LOG(dltsystem,
+                DLT_LOG_ERROR,
+                DLT_STRING("basename not valid"));
+        return -1;
+    }
 
     char *fdir = strndup(src,PATH_MAX);
     MALLOC_ASSERT(fdir);
@@ -265,15 +272,13 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     char *rn = unique_name(src);//new unique filename based on inode
 
-    if(rn == NULL)
+    if (rn == NULL)
     {
-        // unique name couldn't be generated
-        // (usually because the file could not be found because it has
-        // already been sent by a previous change/move of the same file)
+        DLT_LOG(dltsystem,
+                DLT_LOG_ERROR,
+                DLT_STRING("file information not available, may be file got overwritten"));
         return -1;
     }
-
-    MALLOC_ASSERT(fn);
 
     // Compress if needed
     if(opts->Compression[which] > 0)
