@@ -1,7 +1,5 @@
 # Diagnostic Log and Trace
 
-Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
-
 ## Overview
 ----
 This component provides a log and trace interface, based on the
@@ -61,26 +59,21 @@ See INSTALL regarding doxygen API documentation generation.
 Developed and tested with Fedora Linux 22 64-bit / Intel PC
 
 ## License
--------
 Full information on the license for this software is available in the "LICENSE" file. +
 Full information on the license for the cityhash code is available in "COPYING" file in src/core_dump_handler/cityhash_c.
 
 ## Source Code
------------
 git://git.projects.genivi.org/dlt-daemon.git
 http://git.projects.genivi.org/dlt-daemon.git
 ssh://git-genivi@git.projects.genivi.org/dlt-daemon.git
 
 ## Homepage
---------
-http://projects.genivi.org/diagnostic-log-trace
+https://at.projects.genivi.org/wiki/display/PROJ/Diagnostic+Log+and+Trace
 
-Mailinglist
------------
+## Mailinglist
 https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace
 
-Contact
--------
+## Contact
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 Lutz Helwing <Lutz_Helwing@mentor.com>
 
