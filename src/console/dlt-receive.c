@@ -78,6 +78,7 @@
 #include <glob.h>
 #include <syslog.h>
 #include <linux/limits.h> /* for PATH_MAX */
+#include <inttypes.h>
 
 #include "dlt_client.h"
 
@@ -196,7 +197,7 @@ int64_t convert_arg_to_byte_size(char * arg)
     if (min_size > result)
     {
         char tmp[256];
-        snprintf(tmp, 256, "ERROR: Specified limit: %li is smaller than a the size of a single message: %li !\n", result, min_size);
+        snprintf(tmp, 256, "ERROR: Specified limit: %" PRId64 "is smaller than a the size of a single message: %" PRId64 "!\n", result, min_size);
         dlt_log(LOG_ERR, tmp);
         result = -2;
     }
@@ -494,7 +495,7 @@ int main(int argc, char* argv[])
         if (dltdata.climit > -1)
         {
             char tmp[256];
-            snprintf(tmp, 256, "Using file size limit of %li bytes\n", dltdata.climit);
+            snprintf(tmp, 256, "Using file size limit of %" PRId64 "bytes\n", dltdata.climit);
             dlt_log(LOG_INFO, tmp);
             dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
         }
