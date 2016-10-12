@@ -124,6 +124,7 @@ typedef struct
     unsigned int  port; /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
     int gatewayMode; /**< (Boolean) Gateway Mode */
+    char gatewayConfigFile[DLT_DAEMON_FLAG_MAX]; /**< Gateway config file path */
     int  autoResponseGetLogInfoOption;	/**< (int) The Option of automatic get log info response during context registration. (Default: 7)*/
     int  contextLogLevel; /**< (int) log level sent to context if registered with default log-level or if enforced*/
     int  contextTraceStatus;  /**< (int) trace status sent to context if registered with default trace status  or if enforced*/

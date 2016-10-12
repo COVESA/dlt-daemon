@@ -442,11 +442,12 @@ int dlt_gateway_store_connection(DltGateway *gateway,
 /**
  * Read configuration file and initialize connection data structures
  *
- * @param g DltGateway
- * @param verbose verbose flag
+ * @param gateway       DltGateway
+ * @param config_file   Gateway configuration
+ * @param verbose       verbose flag
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_configure(DltGateway *gateway, int verbose)
+int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 {
     int ret = 0;
     int i = 0;
@@ -454,13 +455,13 @@ int dlt_gateway_configure(DltGateway *gateway, int verbose)
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (gateway == NULL)
+    if (gateway == NULL || config_file == 0 || config_file[0] == '\0')
     {
         return -1;
     }
 
     /* read configuration file */
-    file = dlt_config_file_init(DLT_GATEWAY_CONFIG_PATH);
+    file = dlt_config_file_init(config_file);
 
     /* get number of entries and allocate memory to store information */
     ret = dlt_config_file_get_num_sections(file, &gateway->num_connections);
@@ -584,7 +585,9 @@ int dlt_gateway_init(DltDaemonLocal *daemon_local, int verbose)
         /* Get default value from daemon_local */
         gateway->send_serial = daemon_local->flags.lflag;
 
-        if (dlt_gateway_configure(gateway, verbose) != 0)
+        if (dlt_gateway_configure(gateway,
+                                  daemon_local->flags.gatewayConfigFile,
+                                  verbose) != 0)
         {
             dlt_log(LOG_ERR, "Gateway initialization failed\n");
             return -1;

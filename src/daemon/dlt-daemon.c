@@ -249,6 +249,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
 	daemon_local->flags.gatewayMode = 0;
+    strncpy(daemon_local->flags.gatewayConfigFile,
+            DLT_GATEWAY_CONFIG_PATH,
+            DLT_DAEMON_FLAG_MAX - 1);
 	daemon_local->flags.autoResponseGetLogInfoOption = 7;
 	daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
 	daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
@@ -502,6 +505,17 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         {
                             daemon_local->flags.gatewayMode = atoi(value);
                             //printf("Option: %s=%s\n",token,value);
+                        }
+                        else if(strcmp(token,"GatewayConfigFile")==0)
+                        {
+                            memset(
+                                daemon_local->flags.gatewayConfigFile,
+                                0,
+                                DLT_DAEMON_FLAG_MAX);
+                            strncpy(
+                                daemon_local->flags.gatewayConfigFile,
+                                value,
+                                DLT_DAEMON_FLAG_MAX-1);
                         }
                         else if(strcmp(token,"ContextLogLevel")==0)
                         {
