@@ -62,6 +62,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "dlt-system.h"
 #include "dlt.h"
@@ -129,7 +130,7 @@ char *unique_name(char *src)
     char *ret = malloc(len);
 
     MALLOC_ASSERT(ret);
-    snprintf(ret, len, "%010lu%s", l,basename_f);
+    snprintf(ret, len, "%010" PRIu32 "%s", l,basename_f);
     return ret;
 }
 
