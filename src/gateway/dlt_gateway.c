@@ -50,7 +50,7 @@ typedef struct {
     int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
     int is_opt; /* If the configuration is optional or not */
 } DltGatewayConf;
-
+#ifndef DLT_UNIT_TESTS
 typedef enum {
     GW_CONF_IP_ADDRESS = 0,
     GW_CONF_PORT,
@@ -61,7 +61,7 @@ typedef enum {
     GW_CONF_SEND_SERIAL_HEADER,
     GW_CONF_COUNT
 } DltGatewayConfType;
-
+#endif
 /**
  * Check if given string is a valid IP address
  *
@@ -69,7 +69,7 @@ typedef enum {
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
+STATIC int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
     struct sockaddr_in sa;
     int ret = -1;
@@ -109,7 +109,7 @@ static int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
+STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
 {
     int tmp = -1;
 
@@ -141,7 +141,7 @@ static int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
  * @param value   string to be used as ECU identifier
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
+STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
 {
     if (con == NULL || value == NULL)
     {
@@ -165,7 +165,7 @@ static int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
                                              char *value)
 {
     if (con == NULL || value == NULL)
@@ -198,7 +198,7 @@ static int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
+STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
 {
     if (con == NULL || value == NULL)
     {
@@ -222,7 +222,7 @@ static int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
+STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
 {
     if (con == NULL || value == NULL)
     {
@@ -241,7 +241,7 @@ static int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_control_messages(DltGatewayConnection *con,
+STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
                                               char *value)
 {
     /* list of allowed clients given */
@@ -299,7 +299,7 @@ static int dlt_gateway_check_control_messages(DltGatewayConnection *con,
  * Caution: after changing entries here,
  * dlt_gateway_check_param needs to be updated as well
  * */
-static DltGatewayConf configuration_entries[GW_CONF_COUNT] =
+STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
 {
     [GW_CONF_IP_ADDRESS] = {
         .key = "IPaddress",
@@ -342,7 +342,7 @@ static DltGatewayConf configuration_entries[GW_CONF_COUNT] =
  * @param value specified property value from configuration file
  * @return 0 on success, -1 otherwise
  */
-static int dlt_gateway_check_param(DltGateway *gateway,
+STATIC int dlt_gateway_check_param(DltGateway *gateway,
                                    DltGatewayConnection *con,
                                    DltGatewayConfType ctype,
                                    char *value)

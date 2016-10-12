@@ -31,6 +31,16 @@ install(TARGETS dlt-daemon
 			WORLD_EXECUTE WORLD_READ
 	COMPONENT base)
 
+if (WITH_DLT_UNIT_TESTS)
+    add_library(dlt_daemon ${dlt_daemon_SRCS})
+    target_link_libraries(dlt_daemon rt ${CMAKE_THREAD_LIBS_INIT})
+    install(TARGETS dlt_daemon
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+    COMPONENT base)
+endif(WITH_DLT_UNIT_TESTS)
+
 INSTALL(FILES dlt.conf
 	DESTINATION ${CONFIGURATION_FILES_DIR}
 	COMPONENT base)

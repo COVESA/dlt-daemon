@@ -60,7 +60,6 @@
 
 #include "dlt-daemon.h"
 #include "dlt_gateway_types.h"
-
 /**
  * Initialize the gateway to passive nodes
  *
@@ -178,5 +177,33 @@ void dlt_gateway_send_control_message(DltGatewayConnection *con,
 
 /* _ONLY_ for development purposes */
 void print_gateway_connection_details(const DltGateway *g);
-
+#ifdef DLT_UNIT_TESTS
+typedef enum {
+    GW_CONF_IP_ADDRESS = 0,
+    GW_CONF_PORT,
+    GW_CONF_ECUID,
+    GW_CONF_CONNECT,
+    GW_CONF_TIMEOUT,
+    GW_CONF_SEND_CONTROL,
+    GW_CONF_SEND_SERIAL_HEADER,
+    GW_CONF_COUNT
+} DltGatewayConfType;
+int dlt_gateway_check_ip(DltGatewayConnection *con, char *value);
+int dlt_gateway_check_port(DltGatewayConnection *con, char *value);
+int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value);
+int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+                                             char *value);
+int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value);
+int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value);
+int dlt_gateway_check_control_messages(DltGatewayConnection *con,
+                                              char *value);
+int dlt_gateway_check_param(DltGateway *gateway,
+                                   DltGatewayConnection *con,
+                                   DltGatewayConfType ctype,
+                                   char *value);
+int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose);
+int dlt_gateway_store_connection(DltGateway *gateway,
+                                 DltGatewayConnection *tmp,
+                                 int verbose);
+#endif
 #endif
