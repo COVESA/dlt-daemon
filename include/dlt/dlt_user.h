@@ -151,7 +151,7 @@ typedef struct
     DltUserInjectionCallback *injection_table; /**< Table with pointer to injection functions and service ids */
     uint32_t nrcallbacks;
 
-    // Log Level changed callback
+    /* Log Level changed callback */
     void (*log_level_changed_callback) (char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
 } dlt_ll_ts_type;
@@ -220,10 +220,8 @@ typedef struct
                                                   0 not connected,
                                                  -1 unknown */
 
-    //DltRingBuffer rbuf;
     DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
-
-    // Buffer used for resending, locked by DLT semaphore
+    /* Buffer used for resending, locked by DLT semaphore */
     uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
 
     uint32_t timeout_at_exit_handler; /**< timeout used in dlt_user_atexit_blow_out_user_buffer, in 0.1 milliseconds */

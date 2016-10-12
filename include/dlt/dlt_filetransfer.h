@@ -31,29 +31,29 @@
 #include "errno.h"
 
 
-//! Error code for dlt_user_log_file_complete
+/* ! Error code for dlt_user_log_file_complete */
 #define DLT_FILETRANSFER_ERROR_FILE_COMPLETE -300
-//! Error code for dlt_user_log_file_complete
+/* ! Error code for dlt_user_log_file_complete */
 #define DLT_FILETRANSFER_ERROR_FILE_COMPLETE1 -301
-//! Error code for dlt_user_log_file_complete
+/* ! Error code for dlt_user_log_file_complete */
 #define DLT_FILETRANSFER_ERROR_FILE_COMPLETE2 -302
-//! Error code for dlt_user_log_file_complete
+/* ! Error code for dlt_user_log_file_complete */
 #define DLT_FILETRANSFER_ERROR_FILE_COMPLETE3 -303
-//! Error code for dlt_user_log_file_head
+/* ! Error code for dlt_user_log_file_head */
 #define DLT_FILETRANSFER_ERROR_FILE_HEAD -400
-//! Error code for dlt_user_log_file_data
+/* ! Error code for dlt_user_log_file_data */
 #define DLT_FILETRANSFER_ERROR_FILE_DATA -500
-//! Error code for dlt_user_log_file_data
+/* ! Error code for dlt_user_log_file_data */
 #define DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED -501
-//! Error code for dlt_user_log_file_end
+/* ! Error code for dlt_user_log_file_end */
 #define DLT_FILETRANSFER_ERROR_FILE_END -600
-//! Error code for dlt_user_log_file_infoAbout
+/* ! Error code for dlt_user_log_file_infoAbout */
 #define DLT_FILETRANSFER_ERROR_INFO_ABOUT -700
-//! Error code for dlt_user_log_file_packagesCount
+/* ! Error code for dlt_user_log_file_packagesCount */
 #define DLT_FILETRANSFER_ERROR_PACKAGE_COUNT -800
 
 
-//!Transfer the complete file as several dlt logs.
+/* !Transfer the complete file as several dlt logs. */
 /**This method transfer the complete file as several dlt logs. At first it will be checked that the file exist.
  * In the next step some generic informations about the file will be logged to dlt.
  * Now the header will be logged to dlt. See the method dlt_user_log_file_header for more informations.
@@ -68,7 +68,7 @@
 extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout);
 
 
-//!This method gives information about the number of packages the file have
+/* !This method gives information about the number of packages the file have */
 /**Every file will be divided into several packages. Every package will be logged as a single dlt log.
  * The number of packages depends on the BUFFER_SIZE.
  * At first it will be checked if the file exist. Then the file will be divided into
@@ -80,7 +80,7 @@ extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filen
 extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename);
 
 
-//!Logs specific file inforamtions to dlt
+/* !Logs specific file inforamtions to dlt */
 /**The filename, file size, file serial number and the number of packages will be logged to dlt.
  * @param fileContext Specific context
  * @param filename Absolute file path
@@ -89,7 +89,7 @@ extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *
 extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
 
 
-//!Transfer the head of the file as a dlt logs.
+/* !Transfer the head of the file as a dlt logs. */
 /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
  * the file name, the file size, package number the file have and the buffer size.
  * All these informations are needed from the plugin of the dlt viewer.
@@ -101,7 +101,7 @@ extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *file
  */
 extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
 
-//!Transfer the head of the file as a dlt logs.
+/* !Transfer the head of the file as a dlt logs. */
 /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
  * the file name, the file size, package number the file have and the buffer size.
  * All these informations are needed from the plugin of the dlt viewer.
@@ -113,7 +113,7 @@ extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *f
 extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
 
 
-//!Transfer the content data of a file.
+/* !Transfer the content data of a file. */
 /**See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
@@ -125,7 +125,7 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
 
 
 
-//!Transfer the end of the file as a dlt logs.
+/* !Transfer the end of the file as a dlt logs. */
 /**The end of the file must be logged to dlt because the end contains inforamtion about the file serial number.
  * This informations is needed from the plugin of the dlt viewer.
  * See the Mainpages.c for more informations.
