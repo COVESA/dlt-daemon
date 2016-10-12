@@ -48,4 +48,16 @@ void dlt_connection_destroy(DltConnection *);
 
 void *dlt_connection_get_callback(DltConnection *);
 
+#ifdef DLT_UNIT_TESTS
+int dlt_connection_send(DltConnection *conn,
+                              void *msg,
+                              size_t msg_size);
+
+void dlt_connection_destroy_receiver(DltConnection *con);
+
+DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
+                                                DltConnectionType type,
+                                                int fd);
+#endif
+
 #endif /* DLT_DAEMON_CONNECTION_H */

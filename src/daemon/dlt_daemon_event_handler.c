@@ -61,6 +61,10 @@
  */
 int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
 {
+    if (ev == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
     ev->epfd = epoll_create(DLT_EPOLL_MAX_EVENTS);
 
     if (ev->epfd < 0)
@@ -88,6 +92,10 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                             DltDaemon *daemon,
                             DltDaemonLocal *daemon_local)
 {
+    if ((pEvent == NULL) || (daemon  == NULL) || (daemon_local == NULL))
+    {
+        return DLT_RETURN_ERROR;
+    }
     int nfds = 0;
     int i = 0;
     char str[DLT_DAEMON_TEXTBUFSIZE];
@@ -187,6 +195,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
                                                int fd)
 {
+
     DltConnection *temp = ev->connections;
 
     while ((temp != NULL) && (temp->receiver->fd != fd))
@@ -207,9 +216,13 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
  *
  * @return 0 on success, -1 if the connection is not found.
  */
-static int dlt_daemon_remove_connection(DltEventHandler *ev,
+STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
                                        DltConnection *to_remove)
 {
+    if (ev == NULL || to_remove == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
     DltConnection **curr = &ev->connections;
 
     /* Find the address where to_remove value is registered */
@@ -262,16 +275,16 @@ void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
  * @param ev The event handler structure where the connection list is.
  * @param connection The connection to be added.
  */
-static void dlt_daemon_add_connection(DltEventHandler *ev,
+STATIC void dlt_daemon_add_connection(DltEventHandler *ev,
                                      DltConnection *connection)
 {
+
     DltConnection **temp = &ev->connections;
 
     while (*temp != NULL)
     {
         temp = &(*temp)->next;
     }
-
     *temp = connection;
 }
 
@@ -429,6 +442,11 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
                                            DltDaemonLocal *daemon_local,
                                            int fd)
 {
+    if (evhdl == NULL || daemon_local == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
     /* Look for the pointer in the client list.
      * There shall be only one event handler with the same fd.
      */

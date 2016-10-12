@@ -56,4 +56,11 @@ int dlt_event_handler_unregister_connection(DltEventHandler *,
 int dlt_connection_check_activate(DltEventHandler *,
                                   DltConnection *,
                                   int);
+#ifdef DLT_UNIT_TESTS
+int dlt_daemon_remove_connection(DltEventHandler *ev,
+                                       DltConnection *to_remove);
+
+void dlt_daemon_add_connection(DltEventHandler *ev,
+                                     DltConnection *connection);
+#endif
 #endif /* DLT_DAEMON_EVENT_HANDLER_H */
