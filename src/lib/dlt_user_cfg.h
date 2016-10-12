@@ -80,6 +80,11 @@
 #define DLT_USER_RINGBUFFER_MAX_SIZE  500000
 #define DLT_USER_RINGBUFFER_STEP_SIZE  50000
 
+/* Name of environment variable for ringbuffer configuration */
+#define DLT_USER_ENV_BUFFER_MIN_SIZE  "DLT_USER_BUFFER_MIN"
+#define DLT_USER_ENV_BUFFER_MAX_SIZE  "DLT_USER_BUFFER_MAX"
+#define DLT_USER_ENV_BUFFER_STEP_SIZE "DLT_USER_BUFFER_STEP"
+
 /* Temporary buffer length */
 #define DLT_USER_BUFFER_LENGTH               255
 

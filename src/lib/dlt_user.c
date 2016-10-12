@@ -432,6 +432,12 @@ DltReturnValue dlt_init_common(void)
 {
     char *env_local_print;
     char * env_initial_log_level;
+    char *env_buffer_min;
+    uint32_t buffer_min = DLT_USER_RINGBUFFER_MIN_SIZE;
+    char *env_buffer_max;
+    uint32_t buffer_max = DLT_USER_RINGBUFFER_MAX_SIZE;
+    char *env_buffer_step;
+    uint32_t buffer_step = DLT_USER_RINGBUFFER_STEP_SIZE;
 
     /* Binary semaphore for threads */
     if (sem_init(&dlt_mutex, 0, 1)==-1)
@@ -506,7 +512,51 @@ DltReturnValue dlt_init_common(void)
     dlt_user.dlt_ll_ts_max_num_entries = 0;
     dlt_user.dlt_ll_ts_num_entries = 0;
 
-    if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer), DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE) == DLT_RETURN_ERROR)
+
+    env_buffer_min = getenv(DLT_USER_ENV_BUFFER_MIN_SIZE);
+    env_buffer_max = getenv(DLT_USER_ENV_BUFFER_MAX_SIZE);
+    env_buffer_step = getenv(DLT_USER_ENV_BUFFER_STEP_SIZE);
+
+    if (env_buffer_min != NULL)
+    {
+        buffer_min = (uint32_t) strtol(env_buffer_min, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE)
+        {
+            dlt_vlog(LOG_ERR,
+                     "Wrong value specified for %s. Using default\n",
+                     DLT_USER_ENV_BUFFER_MIN_SIZE);
+            buffer_min = DLT_USER_RINGBUFFER_MIN_SIZE;
+        }
+    }
+
+    if (env_buffer_max != NULL)
+    {
+        buffer_max = (uint32_t) strtol(env_buffer_max, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE)
+        {
+            dlt_vlog(LOG_ERR,
+                     "Wrong value specified for %s. Using default\n",
+                     DLT_USER_ENV_BUFFER_MAX_SIZE);
+            buffer_min = DLT_USER_RINGBUFFER_MAX_SIZE;
+        }
+    }
+
+    if (env_buffer_step != NULL)
+    {
+        buffer_step = (uint32_t) strtol(env_buffer_step, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE)
+        {
+            dlt_vlog(LOG_ERR,
+                     "Wrong value specified for %s. Using default\n",
+                     DLT_USER_ENV_BUFFER_STEP_SIZE);
+            buffer_min = DLT_USER_RINGBUFFER_STEP_SIZE;
+        }
+    }
+
+    if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer),
+                                buffer_min,
+                                buffer_max,
+                                buffer_step) == DLT_RETURN_ERROR)
     {
         dlt_user_initialised = false;
         DLT_SEM_FREE();
