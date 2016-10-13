@@ -3,7 +3,7 @@
 #build and install with SYSTEMD_JOURNAL=ON
 mkdir ../build
 cd ../build/
-cmake -DWITH_SYSTEMD_JOURNAL=ON ..
+cmake -DWITH_SYSTEMD_JOURNAL=ON -DWITH_DLT_UNIT_TESTS=ON ..
 make
 sudo make install
 #enable SYSTEMD_JOURNAL in config file
