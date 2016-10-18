@@ -32,6 +32,7 @@
 #include <time.h>
 
 #include "dlt_offline_logstorage.h"
+#include "dlt_offline_logstorage_internal.h"
 #include "dlt_offline_logstorage_behavior.h"
 #include "dlt_config_file_parser.h"
 
@@ -40,36 +41,6 @@
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE 3
 
 #define GENERAL_BASE_NAME "General"
-
-typedef struct {
-    char *key; /* The configuration key */
-    int (*func)(DltLogStorage *handle, char *value); /* conf handler */
-    int is_opt; /* If configuration is optional or not */
-} DltLogstorageGeneralConf;
-
-typedef enum {
-    DLT_LOGSTORAGE_GENERAL_CONF_COUNT = 0
-} DltLogstorageGeneralConfType;
-
-typedef struct {
-    char *key; /* Configuration key */
-    int (*func)(DltLogStorageFilterConfig *config, char *value); /* conf handler */
-    int is_opt; /* If configuration is optional or not */
-} DltLogstorageFilterConf;
-
-typedef enum {
-    DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME = 0,
-    DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME,
-    DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL,
-    DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL,
-    DLT_LOGSTORAGE_FILTER_CONF_FILE,
-    DLT_LOGSTORAGE_FILTER_CONF_FILESIZE,
-    DLT_LOGSTORAGE_FILTER_CONF_NOFILES,
-    DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR,
-    DLT_LOGSTORAGE_FILTER_CONF_ECUID,
-    DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
-    DLT_LOGSTORAGE_FILTER_CONF_COUNT
-} DltLogstorageFilterConfType;
 
 DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
 {

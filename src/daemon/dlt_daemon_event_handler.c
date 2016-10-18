@@ -473,7 +473,11 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
             dlt_log(LOG_INFO, local_str);
 
             dlt_event_handler_disable_fd(evhdl, con->receiver->fd);
-
+            
+            if (con->type == DLT_CONNECTION_CLIENT_CONNECT)
+            {
+                con->receiver->fd = -1;
+            }
             con->status = INACTIVE;
         }
         break;

@@ -110,10 +110,9 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                int verbose)
 {
     int j, sent = 0;
-    DltConnection* temp = NULL;
+    DltConnection *temp = NULL;
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
     uint8_t *tmp_buffer = NULL;
 
     if ((daemon == NULL) || (daemon_local == NULL))
@@ -144,13 +143,19 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
         DLT_DAEMON_SEM_FREE();
 
         if ((ret != DLT_DAEMON_ERROR_OK) &&
-            DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
+            (DLT_CONNECTION_CLIENT_MSG_TCP == temp->type))
         {
             if (daemon->state != DLT_DAEMON_STATE_BUFFER_FULL)
             {
                 if (temp->receiver->bytes_sent < (size1 + size2))
                 {
                     tmp_buffer = (uint8_t*)calloc(size1 + size2, sizeof(uint8_t));
+
+                    if (tmp_buffer == NULL)
+                    {
+                        dlt_vlog(LOG_ERR, "%s: Memory allocation failed.\n", __func__);
+                        return 0;
+                    }
                     memcpy(tmp_buffer, data1, size1);
                     memcpy(tmp_buffer + size1, data2, size2);
                     DLT_DAEMON_SEM_LOCK();
@@ -158,10 +163,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                     if (dlt_buffer_push3(&(daemon->client_ringbuffer),
                                          tmp_buffer + temp->receiver->bytes_sent,
                                          (size1 + size2 - temp->receiver->bytes_sent),
-                                         0,
-                                         0,
-                                         0,
-                                         0) < DLT_RETURN_OK)
+                                         0, 0, 0, 0) < DLT_RETURN_OK)
                     {
                         dlt_vlog(LOG_DEBUG, "%s: Buffer is full! Message discarded.\n", __func__);
                         dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER_FULL);
@@ -178,11 +180,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
         if (ret != DLT_DAEMON_ERROR_OK)
         {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "%s: send dlt message failed\n",
-                     __func__);
-            dlt_log(LOG_WARNING, local_str);
+            dlt_vlog(LOG_WARNING, "%s: send dlt message failed\n", __func__);
         }
         else
         {

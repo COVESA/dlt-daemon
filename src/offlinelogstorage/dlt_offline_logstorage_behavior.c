@@ -31,6 +31,7 @@
 
 #include "dlt_offline_logstorage.h"
 #include "dlt_offline_logstorage_behavior.h"
+#include "dlt_offline_logstorage_behavior_internal.h"
 
 /**
  * dlt_logstorage_log_file_name

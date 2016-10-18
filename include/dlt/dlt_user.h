@@ -241,6 +241,9 @@ typedef struct
     uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
 } DltUser;
 
+typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);
+typedef int (*dlt_injection_callback)(uint32_t, void *, uint32_t);
+
 /**************************************************************************************************
 * The following API functions define a low level function interface for DLT
 **************************************************************************************************/
@@ -534,6 +537,22 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
 DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);
 
 /**
+ * Register a context in the daemon with log level changed callback fn.
+ * This function is introduced to avoid missing of LL change callback during registration
+ * @param handle pointer to an object containing information about one special logging context
+ * @param contextid four byte long character array with the context id
+ * @param description long name of the context
+ * @param callback fn This is the fn which will be called when log level is changed
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_context_llccb(DltContext *handle,
+                                          const char *contextid,
+                                          const char * description,
+                                          void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],
+                                                                                 uint8_t log_level,
+                                                                                 uint8_t trace_status));
+
+/**
  * Unregister a context in the DLT daemon.
  * This function has to be called when finishing using a context.
  * @param handle pointer to an object containing information about one special logging context
@@ -576,6 +595,16 @@ int dlt_get_log_state();
  */
 DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
         int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length));
+
+/**
+ * Register callback function with private data called when injection message was received
+ * @param handle pointer to an object containing information about one special logging context
+ * @param service_id the service id to be waited for
+ * @param (*dlt_injection_callback) function pointer to callback function
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
+      int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length, void *priv_data), void *priv);
 
 /**
  * Register callback function called when log level of context was changed
@@ -798,7 +827,7 @@ DltReturnValue dlt_user_log_resend_buffer(void);
  */
 static inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle,DltLogLevelType loglevel)
 {
-    if (loglevel < DLT_LOG_OFF || loglevel >= DLT_LOG_MAX)
+    if (loglevel < DLT_LOG_DEFAULT || loglevel >= DLT_LOG_MAX)
     {
         return DLT_RETURN_WRONG_PARAMETER;
     }

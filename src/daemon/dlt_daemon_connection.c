@@ -62,7 +62,8 @@ extern char *app_recv_buffer;
  * @param msg The message buffer to be sent
  * @param msg_size The length of the message to be sent
  *
- * @return The amount of bytes send on success, -1 otherwise.
+ * @return DLT_DAEMON_ERROR_OK on success, DLT_DAEMON_ERROR_SEND_FAILED
+ *         on send failure, DLT_DAEMON_ERROR_UNKNOWN otherwise.
  *         errno is appropriately set.
  */
 DLT_STATIC int dlt_connection_send(DltConnection *conn,

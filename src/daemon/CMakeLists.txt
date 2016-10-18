@@ -45,6 +45,15 @@ install(TARGETS dlt-daemon
 	COMPONENT base)
 
 if (WITH_DLT_UNIT_TESTS)
+  if (WITH_DLT_FILTER_BACKEND_PROP)
+    add_library(dlt_daemon ${dlt_daemon_SRCS} ${dlt_prop_backend_SRCS} ${systemd_SRCS})
+    target_link_libraries(dlt_daemon ald_plugin rt ${CMAKE_THREAD_LIBS_INIT})
+    install(TARGETS dlt_daemon
+            RUNTIME DESTINATION bin
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+            COMPONENT base)
+  else()
     add_library(dlt_daemon ${dlt_daemon_SRCS})
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
     install(TARGETS dlt_daemon
@@ -52,6 +61,7 @@ if (WITH_DLT_UNIT_TESTS)
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
             COMPONENT base)
+  endif(WITH_DLT_FILTER_BACKEND_PROP)
 endif(WITH_DLT_UNIT_TESTS)
 
 INSTALL(FILES dlt.conf

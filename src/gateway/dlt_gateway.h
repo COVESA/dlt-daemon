@@ -190,4 +190,5 @@ DltGatewayConnection *dlt_gateway_get_connection(DltGateway *g,
 
 /* _ONLY_ for development purposes */
 void print_gateway_connection_details(const DltGateway *g);
+
 #endif

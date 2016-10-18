@@ -24,13 +24,24 @@
 #Description     : Smoke testing for multinode feature of DLT
 #
 #Author Name     : Onkar Palkar
+#                  Jeevan Ramakant Nagvekar
 #Email Id        : onkar.palkar@wipro.com
+#                  jeevan.nagvekar1@wipro.com
 #
-#History         : 8/06/2016
+#History         : 31/07/2018
 ################################################################################
 
 ipaddr=127.0.0.1
 
+#
+# Function:    -getOSname()
+#
+# Description  -Retrieves OS name
+#
+getOSname()
+{
+    OS="`uname`"
+}
 #
 # Function:    -cleanup()
 #
@@ -50,38 +61,74 @@ cleanup()
     tmpPassiveDIR=tmpPassive
     tmpLogFile=log_multinode.txt
     tmpLogAsciFile=log_multinode_a.txt
+
+    if [ "$OS" = "QNX" ]
+    then
+        PIDOF()
+        {
+            slay -p $1 > /dev/null
+            if [ $? -eq '0' ]
+            then
+                return 1
+            else
+                return 0
+            fi
+        }
+        KILLALL()
+        {
+            slay -9 -f $1 > /dev/null
+            if [ $? -eq '0' ]
+            then
+                return 1
+            else
+                return 0
+            fi
+        }
+    else
+        PIDOF()
+        {
+            pidof $1 > /dev/null
+            return $?
+        }
+        KILLALL()
+        {
+            killall $1 > /dev/null
+            return $?
+        }
+    fi
+
     cd $tmpPath
-    rm -rf $tmpPath/$tmpFolder
-    pidof dlt-daemon > /dev/null
+    PIDOF "dlt-daemon"
     if [ $? -eq '0' ]
     then
-        killall dlt-daemon
+        KILLALL "dlt-daemon"
         if [ $? -ne '0' ]
         then
             echo "Failed to kill daemons"
             return 1
         fi
     fi
-    pidof dlt-receive > /dev/null
+    PIDOF "dlt-receive"
     if [ $? -eq '0' ]
     then
-        killall dlt-receive
+        KILLALL "dlt-receive"
         if [ $? -ne '0' ]
         then
             echo "Failed to kill dlt-receive"
             return 1
         fi
     fi
-    pidof dlt-convert > /dev/null
+    PIDOF "dlt-convert"
     if [ $? -eq '0' ]
     then
-        killall dlt-convert
+        KILLALL "dlt-convert"
         if [ $? -ne '0' ]
         then
             echo "Failed to kill dlt-convert"
             return 1
         fi
     fi
+    rm -rf $tmpPath/$tmpFolder >/dev/null
     return 0
 }
 #
@@ -96,6 +143,13 @@ cleanup()
 #
 setupTest()
 {
+    if [ "$OS" = "QNX" ]
+    then
+        MESSAGE_FILTER_CONF="/etc/dlt_message_filter.conf"
+    else
+        MESSAGE_FILTER_CONF="/etc/dlt_message_filter_ald.conf"
+    fi
+
     which dlt-daemon > /dev/null
     if [ $? -ne '0' ]
     then
@@ -114,13 +168,13 @@ setupTest()
         echo "dlt-receive is not available"
         return 1
     fi
-    mkdir $tmpPath/$tmpFolder
+    mkdir -p $tmpPath/$tmpFolder
     if [ $? -ne '0' ]
         then
         echo "Error in creating dlt_test folder"
         return 1
     fi
-    mkdir $tmpPath/$tmpFolder/$gatewayFolderName
+    mkdir -p $tmpPath/$tmpFolder/$gatewayFolderName
     if [ $? -ne '0' ]
     then
         echo "Error in creating gateway folder"
@@ -145,6 +199,7 @@ setupTest()
     echo "RingbufferStepSize = 500000" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     echo "ControlSocketPath = /tmp/dlt-ctrl.sock" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     echo "GatewayConfigFile = $tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf" >> $tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
+    echo "MessageFilterConfigFile = $MESSAGE_FILTER_CONF" >> $tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     touch $tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf
     if [ $? -ne '0' ]
     then
@@ -158,7 +213,7 @@ setupTest()
     echo "Connect=OnStartup" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf
     echo "Timeout=10" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf
     echo "NOFiles=1" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf
-    mkdir $tmpPath/$tmpFolder/$passiveFolderName
+    mkdir -p $tmpPath/$tmpFolder/$passiveFolderName
         if [ $? -ne '0' ]
         then
         echo "Error in creating passive folder"
@@ -181,7 +236,8 @@ setupTest()
     echo "RingbufferMaxSize = 10000000" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
     echo "RingbufferStepSize = 500000" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
     echo "ControlSocketPath = /tmp/dlt-ctrl.sock" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
-    mkdir $tmpPath/$tmpFolder/$tmpPassiveDIR
+    echo "MessageFilterConfigFile = $MESSAGE_FILTER_CONF" >> $tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
+    mkdir -p $tmpPath/$tmpFolder/$tmpPassiveDIR
     if [ $? -ne '0' ]
     then
         echo "Error while creating tempPassive folder"
@@ -243,7 +299,8 @@ startReceive()
 verifyTest()
 {
     dlt-convert -a $tmpPath/$tmpFolder/$tmpLogFile > $tmpPath/$tmpFolder/$tmpLogAsciFile
-    cat $tmpPath/$tmpFolder/$tmpLogAsciFile | grep -w "ECU2" > /dev/null
+    cat $tmpPath/$tmpFolder/$tmpLogAsciFile | grep -F "ECU2" > /dev/null
+
     if [ $? -eq '0' ]
     then
         return 0
@@ -253,6 +310,7 @@ verifyTest()
 }
 #main function
 ########################################################################################
+getOSname
 cleanup
 if [ $? -ne '0' ]
 then
@@ -282,7 +340,7 @@ then
     return 1
 fi
 #wait for 1 sec before starting dlt-receive to start dlt-example-user application properly
-sleep 1s
+sleep 1
 startReceive
 if [ $? -ne '0' ]
 then
@@ -291,7 +349,7 @@ then
     return 1
 fi
 #Wait for 1 sec to collect messages sent by application at gateway
-sleep 1s
+sleep 1
 verifyTest
 if [ $? -eq '0' ]
 then

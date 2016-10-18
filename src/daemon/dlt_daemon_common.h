@@ -233,6 +233,7 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
 int dlt_daemon_load_runtime_configuration(DltDaemon *daemon,
                                           const char *runtime_directory,
                                           int verbose);
+
 /**
  * Add (new) application to internal application management
  * @param daemon pointer to dlt daemon structure

@@ -161,7 +161,6 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
     }
 
     /* Send data */
-
     if ((data1 != NULL) && (size1 > 0))
     {
         ret = dlt_daemon_socket_sendreliable(sock, data1, size1, &bytes_sent);
@@ -183,7 +182,7 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
 {
     int n = 0;
     socklen_t m = sizeof(n);
-    getsockopt(sock,SOL_SOCKET,SO_SNDBUF,(void *)&n, &m);
+    getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *)&n, &m);
 
     return n;
 }
@@ -212,5 +211,4 @@ int dlt_daemon_socket_sendreliable(int sock, void* data_buffer, int message_size
     *bytes_sent = data_sent;
     return DLT_DAEMON_ERROR_OK;
 }
-
 

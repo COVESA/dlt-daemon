@@ -85,7 +85,7 @@
 #define DLT_TESTCLIENT_NUM_TESTS       9
 
 static int g_testsFailed = 0;
-
+DltClient  g_dltclient;
 /* Function prototypes */
 int dlt_testclient_message_callback(DltMessage *message, void *data);
 
@@ -151,7 +151,6 @@ void usage()
  */
 int main(int argc, char* argv[])
 {
-    DltClient       dltclient;
     DltTestclientData dltdata;
     int c,i;
     int index;
@@ -271,31 +270,31 @@ int main(int argc, char* argv[])
     }
 
     /* Initialize DLT Client */
-    dlt_client_init(&dltclient, dltdata.vflag);
+    dlt_client_init(&g_dltclient, dltdata.vflag);
 
     /* Register callback to be called when message was received */
     dlt_client_register_message_callback(dlt_testclient_message_callback);
 
     /* Setup DLT Client structure */
-    dltclient.mode = dltdata.yflag;
+    g_dltclient.mode = dltdata.yflag;
 
-    if (dltclient.mode==0)
+    if (g_dltclient.mode==0)
     {
         for (index = optind; index < argc; index++)
         {
-            if(dlt_client_set_server_ip(&dltclient, argv[index]) == -1)
+            if(dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1)
             {
                 fprintf(stderr,"set server ip didn't succeed\n");
                 return -1;
             }
         }
 
-        if (dltclient.servIP == 0)
+        if (g_dltclient.servIP == 0)
         {
             /* no hostname selected, show usage and terminate */
             fprintf(stderr,"ERROR: No hostname selected\n");
             usage();
-            dlt_client_cleanup(&dltclient,dltdata.vflag);
+            dlt_client_cleanup(&g_dltclient,dltdata.vflag);
             return -1;
         }
     }
@@ -303,14 +302,14 @@ int main(int argc, char* argv[])
     {
         for (index = optind; index < argc; index++)
         {
-            if(dlt_client_set_serial_device(&dltclient, argv[index]) == -1)
+            if(dlt_client_set_serial_device(&g_dltclient, argv[index]) == -1)
             {
                 fprintf(stderr,"set serial device didn't succeed\n");
                 return -1;
             }
         }
 
-        if (dltclient.serialDevice == 0)
+        if (g_dltclient.serialDevice == 0)
         {
             /* no serial device name selected, show usage and terminate */
             fprintf(stderr,"ERROR: No serial device name specified\n");
@@ -318,7 +317,7 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        dlt_client_setbaudrate(&dltclient,dltdata.bvalue);
+        dlt_client_setbaudrate(&g_dltclient,dltdata.bvalue);
     }
 
     /* initialise structure to use DLT file */
@@ -361,15 +360,15 @@ int main(int argc, char* argv[])
     }
 
     /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
+    if (dlt_client_connect(&g_dltclient, dltdata.vflag) != DLT_RETURN_ERROR)
     {
-        dltdata.sock = dltclient.sock;
+        dltdata.sock = g_dltclient.sock;
 
         /* Dlt Client Main Loop */
-        dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+        dlt_client_main_loop(&g_dltclient, &dltdata, dltdata.vflag);
 
         /* Dlt Client Cleanup */
-        dlt_client_cleanup(&dltclient,dltdata.vflag);
+        dlt_client_cleanup(&g_dltclient,dltdata.vflag);
     }
 
     /* dlt-receive cleanup */

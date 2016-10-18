@@ -56,50 +56,24 @@
 *******************************************************************************/
 
 #include <gtest/gtest.h>
-#include <limits.h>
-#include <syslog.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
 
 int connectServer(void);
 
 extern "C"
 {
-    #include "dlt-daemon.h"
-    #include "dlt_user.h"
-    #include "dlt_user_shared.h"
-    #include "dlt_user_shared_cfg.h"
-    #include "dlt_user_cfg.h"
-    #include "dlt-daemon_cfg.h"
-    #include "dlt_version.h"
-    #include "dlt_gateway.h"
-    #include "dlt_daemon_common.h"
-    #include "dlt_daemon_connection_types.h"
     #include "dlt_daemon_event_handler.h"
     #include "dlt_daemon_connection.h"
-    #include "dlt_daemon_event_handler_types.h"
-    #include <stdlib.h>
-    #include <stdio.h>
-    #include <string.h>
-    #include <arpa/inet.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
     #include <netdb.h>
-    #include <limits.h>
-    #include <errno.h>
-    #include "dlt_config_file_parser.h"
-    #include "dlt_common.h"
-    #include "dlt_daemon_client.h"
+    #include <netinet/in.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
 }
 
 /* Begin Method: dlt_daemon_event_handler::t_dlt_daemon_prepare_event_handling*/
 TEST(t_dlt_daemon_prepare_event_handling, normal)
 {
     DltEventHandler ev;
+
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev));
 }
 
@@ -165,8 +139,10 @@ TEST(t_dlt_daemon_add_connection, normal)
     connections1->receiver = &receiver;
 
     EXPECT_EQ(DLT_CONNECTION_CLIENT_MSG_SERIAL, ev1.connections->type);
+
     dlt_daemon_add_connection(&ev1, connections1);
     head = (DltConnection*)ev1.connections->next;
+
     EXPECT_EQ(DLT_CONNECTION_GATEWAY, head->type);
 
     free(ev1.connections);
@@ -190,7 +166,6 @@ TEST(t_dlt_daemon_remove_connection, normal)
     memset(connections1, 0, sizeof(DltConnection));
     connections1->next = 0;
     connections1->type = DLT_CONNECTION_GATEWAY;
-
     DltReceiver receiver;
     connections1->receiver = &receiver;
 
@@ -220,24 +195,21 @@ TEST(t_dlt_event_handler_cleanup_connections, normal)
 }
 
 /* Begin Method: dlt_daemon_event_handler::dlt_connection_check_activate*/
-/*
 TEST(t_dlt_connection_check_activate, normal)
 {
     int ret;
     DltEventHandler evhdl = {};
     DltReceiver receiver = {};
     DltConnection con = {};
-    DltFilterConfiguration current = {};
-    DltMessageFilter filter = {};
 
     receiver.fd = 1;
-    filter.current = &current;
     con.receiver = &receiver;
     con.status = INACTIVE;
     con.type = DLT_CONNECTION_CLIENT_MSG_TCP;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&evhdl));
-
+    
+    ret = dlt_connection_check_activate(&evhdl, &con, ACTIVATE);
     EXPECT_EQ(DLT_RETURN_OK, ret);
 
     ret = dlt_connection_check_activate(&evhdl, &con, DEACTIVATE);
@@ -250,7 +222,7 @@ TEST(t_dlt_connection_check_activate, nullpointer)
 {
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_connection_check_activate(NULL, NULL, DEACTIVATE));
 }
-*/
+
 /* Begin Method: dlt_daemon_event_handler::dlt_event_handler_register_connection*/
 TEST(t_dlt_event_handler_register_connection, normal)
 {
@@ -260,7 +232,6 @@ TEST(t_dlt_event_handler_register_connection, normal)
     DltEventHandler ev1 = {};
     DltConnection *connections1 = nullptr;
     DltReceiver receiver = {};
-    DltFilterConfiguration current = {};
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev1));
 
@@ -270,7 +241,6 @@ TEST(t_dlt_event_handler_register_connection, normal)
     connections1->type = DLT_CONNECTION_GATEWAY;
     connections1->receiver = &receiver;
 
-    daemon_local.pFilter.current = &current;
 
     ret = dlt_event_handler_register_connection(&ev1,
                                                 &daemon_local,
@@ -298,7 +268,6 @@ TEST(t_dlt_event_handler_unregister_connection, normal)
     DltEventHandler ev1 = {};
     DltConnection *connections1 = nullptr;
     DltReceiver receiver = {};
-    DltFilterConfiguration current = {};
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev1));
 
@@ -308,10 +277,7 @@ TEST(t_dlt_event_handler_unregister_connection, normal)
     connections1->next = 0;
     connections1->type = DLT_CONNECTION_GATEWAY;
     connections1->receiver = &receiver;
-
-    receiver.fd = 1;
-
-    daemon_local.pFilter.current = &current;
+    receiver.fd = 100;
 
     ret = dlt_event_handler_register_connection(&ev1,
                                                 &daemon_local,
@@ -320,7 +286,7 @@ TEST(t_dlt_event_handler_unregister_connection, normal)
     EXPECT_EQ(DLT_RETURN_OK, ret);
     EXPECT_EQ(DLT_CONNECTION_GATEWAY, ev1.connections->type);
 
-    ret = dlt_event_handler_unregister_connection(&ev1, &daemon_local, 1);
+    ret = dlt_event_handler_unregister_connection(&ev1, &daemon_local, receiver.fd);
     EXPECT_EQ(DLT_RETURN_OK, ret);
 
     free(ev1.pfd);
@@ -329,13 +295,9 @@ TEST(t_dlt_event_handler_unregister_connection, normal)
 /* Begin Method: dlt_daemon_connections::dlt_connection_create*/
 TEST(t_dlt_connection_create, normal)
 {
-    int fd = 1;
+    int fd = 100;
     int ret = 0;
     DltDaemonLocal daemon_local = {};
-    DltFilterConfiguration current = {};
-
-
-    daemon_local.pFilter.current = &current;
 
     EXPECT_EQ(DLT_RETURN_OK,
           dlt_daemon_prepare_event_handling(&daemon_local.pEvent));
@@ -451,7 +413,6 @@ TEST(t_dlt_connection_send, normal_1)
 
     receiver.fd = connectServer();
     EXPECT_NE(-1, receiver.fd);
-
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
 
@@ -470,6 +431,9 @@ TEST(t_dlt_connection_send, normal_1)
     ret = dlt_connection_send(&conn, data1, size1);
 
     EXPECT_EQ(DLT_RETURN_OK, ret);
+
+    close(receiver.fd);
+    free(daemon_local.msg.databuffer);
 }
 
 TEST(t_dlt_connection_send, normal_2)
@@ -481,10 +445,12 @@ TEST(t_dlt_connection_send, normal_2)
     receiver.fd = 1;
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_CLIENT_MSG_SERIAL;
+
     ret = dlt_connection_send(&conn,
                              (void *)dltSerialHeader,
                              sizeof(dltSerialHeader));
-    EXPECT_EQ(sizeof(dltSerialHeader), ret);
+
+    EXPECT_EQ(DLT_RETURN_OK, ret);
 }
 
 TEST(t_dlt_connection_send, abnormal)
@@ -496,6 +462,7 @@ TEST(t_dlt_connection_send, abnormal)
     receiver.fd = -1;
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_TYPE_MAX;
+
     ret = dlt_connection_send(&conn,
                              (void *)dltSerialHeader,
                              sizeof(dltSerialHeader));
@@ -520,17 +487,44 @@ TEST(t_dlt_connection_send_multiple, normal_1)
     size2 = daemon_local.msg.datasize;
 
     receiver.fd = connectServer();
-    EXPECT_NE(-1,receiver.fd);
+    EXPECT_NE(-1, receiver.fd);
+
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
+
+    daemon_local.msg.headersize = sizeof(DltStorageHeader) +
+                                  sizeof(DltStandardHeader) +
+                                  sizeof(DltStandardHeaderExtra) +
+                                  sizeof(DltExtendedHeader);
+
+    memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
+
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+
+    daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
+    if (daemon_local.msg.databuffer == NULL)
+        close(receiver.fd);
+
+    EXPECT_NE((uint8_t *)NULL, daemon_local.msg.databuffer);
+
+    memset(daemon_local.msg.databuffer, 0, sizeof(uint8_t));
+    daemon_local.msg.datasize = sizeof(uint8_t);
+
+    data2 = daemon_local.msg.databuffer;
+    size2 = daemon_local.msg.datasize;
+
     ret = dlt_connection_send_multiple(&conn,
                                       data1,
                                       size1,
                                       data2,
                                       size2,
                                       1);
+
     EXPECT_EQ(DLT_RETURN_OK, ret);
+
     close(receiver.fd);
+    free(daemon_local.msg.databuffer);
 }
 
 TEST(t_dlt_connection_send_multiple, normal_2)
@@ -550,9 +544,32 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     size2 = daemon_local.msg.datasize;
 
     receiver.fd = connectServer();
-    EXPECT_NE(-1,receiver.fd);
+    EXPECT_NE(-1, receiver.fd);
+
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
+
+    daemon_local.msg.headersize = sizeof(DltStorageHeader) +
+                                  sizeof(DltStandardHeader) +
+                                  sizeof(DltStandardHeaderExtra) +
+                                  sizeof(DltExtendedHeader);
+
+    memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
+
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+
+    daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
+    if (daemon_local.msg.databuffer == NULL)
+        close(receiver.fd);
+
+    EXPECT_NE((uint8_t *)NULL, daemon_local.msg.databuffer);
+
+    memset(daemon_local.msg.databuffer, 0, sizeof(uint8_t));
+    daemon_local.msg.datasize = sizeof(uint8_t);
+
+    data2 = daemon_local.msg.databuffer;
+    size2 = daemon_local.msg.datasize;
 
     ret = dlt_connection_send_multiple(&conn,
                                       data1,
@@ -560,8 +577,11 @@ TEST(t_dlt_connection_send_multiple, normal_2)
                                       data2,
                                       size2,
                                       0);
+
     EXPECT_EQ(DLT_RETURN_OK, ret);
+
     close(receiver.fd);
+    free(daemon_local.msg.databuffer);
 }
 
 TEST(t_dlt_connection_send_multiple, nullpointer)
@@ -584,6 +604,7 @@ TEST(t_dlt_connection_send_multiple, nullpointer)
                                       data2,
                                       size2,
                                       0);
+
     EXPECT_EQ(DLT_RETURN_ERROR, ret);
 }
 
@@ -614,6 +635,8 @@ int connectServer(void)
 
     return sockfd;
 }
+
+#define GTEST_SOCKS_ACCEPTED 3
 
 int main(int argc, char **argv)
 {
@@ -662,6 +685,7 @@ int main(int argc, char **argv)
         if(j == -1)
         {
             perror("Bind Error\n");
+            close(sockfd);
             return -1;
         }
 
@@ -682,8 +706,11 @@ int main(int argc, char **argv)
             bzero(buffer, 256);
             (void)(read(newsockfd[i - 1], buffer, 255) + 1); /* just ignore result */
             i--;
-            close(newsockfd);
         }
+
+        for(j = 0; j < GTEST_SOCKS_ACCEPTED; j++)
+            close(newsockfd[i]);
+
         close(sockfd);
     }
     else
@@ -691,7 +718,7 @@ int main(int argc, char **argv)
 
         ::testing::InitGoogleTest(&argc, argv);
         ::testing::FLAGS_gtest_break_on_failure = false;
-        //::testing::FLAGS_gtest_filter = "t_dlt_connection_send_multiple*";
+//        ::testing::FLAGS_gtest_filter = "t_dlt_event_handler_register_connection*";
         return RUN_ALL_TESTS();
     }
     return 0;

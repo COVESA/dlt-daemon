@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <errno.h>
 #include "dlt_gateway.h"
+#include "dlt_gateway_internal.h"
 #include "dlt_config_file_parser.h"
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
@@ -47,23 +48,6 @@
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_client.h"
 #include "dlt_daemon_offline_logstorage.h"
-
-typedef struct {
-    char *key;  /* The configuration key*/
-    int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
-    int is_opt; /* If the configuration is optional or not */
-} DltGatewayConf;
-typedef enum {
-    GW_CONF_IP_ADDRESS = 0,
-    GW_CONF_PORT,
-    GW_CONF_ECUID,
-    GW_CONF_CONNECT,
-    GW_CONF_TIMEOUT,
-    GW_CONF_SEND_CONTROL,
-    GW_CONF_SEND_PERIODIC_CONTROL,
-    GW_CONF_SEND_SERIAL_HEADER,
-    GW_CONF_COUNT
-} DltGatewayConfType;
 
 /**
  * Check if given string is a valid IP address
@@ -631,9 +615,7 @@ int dlt_gateway_store_connection(DltGateway *gateway,
         dlt_log(LOG_CRIT, "dlt_client_init_port() failed for gateway connection\n");
         return DLT_RETURN_ERROR;
     }
-    dlt_receiver_init(&gateway->connections[i].client.receiver,
-                      gateway->connections[i].client.sock,
-                      DLT_DAEMON_RCVBUFSIZESOCK);
+
     /* setup DltClient Structure */
     if(dlt_client_set_server_ip(&gateway->connections[i].client,
                                     gateway->connections[i].ip_address) == -1)
@@ -1280,7 +1262,7 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     int i = 0;
     DltGateway *gateway = NULL;
     DltGatewayConnection *con = NULL;
-    DltMessage msg;
+    DltMessage msg = {0};
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
@@ -1694,6 +1676,7 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
     {
 
         con->status = DLT_GATEWAY_DISCONNECTED;
+        con->trigger = DLT_GATEWAY_ON_DEMAND;
         if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
                                                    daemon_local,
                                                    con->client.sock) != 0)

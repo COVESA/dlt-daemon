@@ -1091,7 +1091,9 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
 
     //check nullpointer
     if (!handle)
+    {
         return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     if ((contextid == NULL) || (contextid[0] == '\0'))
     {
@@ -1154,7 +1156,6 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
 
             dlt_user.dlt_ll_ts[i].context_description = 0;
 
-
             dlt_user.dlt_ll_ts[i].injection_table = 0;
             dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
             dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
@@ -1171,7 +1172,9 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
             old_ll_ts = dlt_user.dlt_ll_ts;
             old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
 
-            dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries / DLT_USER_CONTEXT_ALLOC_SIZE) + 1) * DLT_USER_CONTEXT_ALLOC_SIZE;
+            dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries 
+                                                   / DLT_USER_CONTEXT_ALLOC_SIZE) + 1)
+                                                   * DLT_USER_CONTEXT_ALLOC_SIZE;
             dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
                                  dlt_user.dlt_ll_ts_max_num_entries);
             if (dlt_user.dlt_ll_ts == 0)
@@ -1268,7 +1271,6 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     }
 
     /* Prepare transfer struct */
-    //dlt_set_id(log->appID, dlt_user.appID);
     dlt_set_id(handle->contextID, contextid);
     handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
 
@@ -1291,7 +1293,9 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     return dlt_user_log_send_register_context(&log);
 }
 
-DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus)
+DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid,
+                                          const char * description, int loglevel,
+                                          int tracestatus)
 {
     return dlt_register_context_ll_ts_llccb(handle,
                                             contextid,
@@ -1309,9 +1313,10 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
                                                                                  uint8_t log_level,
                                                                                  uint8_t trace_status))
 {
-    // check nullpointer
-    if(handle == NULL)
+    if ((handle == NULL) || (contextid == NULL) || (contextid[0] == '\0'))
+    {
         return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     if (!dlt_user_initialised)
     {
@@ -1321,16 +1326,6 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
             return DLT_RETURN_ERROR;
         }
     }
-
-    DLT_SEM_LOCK();
-
-    if ((contextid == NULL) || (contextid[0] == '\0'))
-    {
-        DLT_SEM_FREE();
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    DLT_SEM_FREE();
 
     return dlt_register_context_ll_ts_llccb(handle,
                                             contextid,
@@ -1685,14 +1680,20 @@ inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextDat
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, uint32_t messageid)
 {
     DLT_LOG_FATAL_RESET_TRAP(loglevel);
+    DltReturnValue ret = DLT_RETURN_OK;
 
     // check nullpointer
     if (handle == NULL || log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* check log levels */
-    if (dlt_user_is_logLevel_enabled(handle, loglevel) < DLT_RETURN_TRUE)
+    ret = dlt_user_is_logLevel_enabled(handle, loglevel);
+    if (ret == DLT_RETURN_WRONG_PARAMETER)
+        return DLT_RETURN_WRONG_PARAMETER;
+    else if (ret == DLT_RETURN_LOGGING_DISABLED)
         return DLT_RETURN_OK;
+    else
+        /* Do nothing */
 
     /* initialize values */
     if (dlt_user_log_init(handle, log) < DLT_RETURN_OK || dlt_user.dlt_ll_ts == NULL)
@@ -2633,7 +2634,7 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
 }
 
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
-                int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length, void *priv_data), void *priv)
+                dlt_injection_callback_id dlt_injection_cbk, void *priv)
 {
     DltContextData log;
     uint32_t i,j,k;
@@ -2713,14 +2714,14 @@ DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint3
     dlt_user.dlt_ll_ts[i].injection_table[j].service_id = service_id;
     if (priv == NULL)
     {
-        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = dlt_injection_callback;
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = (dlt_injection_callback)dlt_injection_cbk;
         dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback_with_id = NULL;
         dlt_user.dlt_ll_ts[i].injection_table[j].data = NULL;
     }
     else
     {
         dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = NULL;
-        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback_with_id = dlt_injection_callback;
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback_with_id = dlt_injection_cbk;
         dlt_user.dlt_ll_ts[i].injection_table[j].data = priv;
     }
 
@@ -2732,7 +2733,10 @@ DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint3
 DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
                 int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length))
 {
-    return dlt_register_injection_callback_with_id(handle, service_id, dlt_injection_callback, NULL);
+    return dlt_register_injection_callback_with_id(handle,
+                                                   service_id,
+                                                   (dlt_injection_callback_id)dlt_injection_callback,
+                                                   NULL);
 }
 
 DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
@@ -3346,6 +3350,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTr
 
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)
 {
+    DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
     if (dlt_user.verbose_mode==0)
@@ -3360,19 +3365,20 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE)
     {
-        dlt_user_log_write_string(&log, text);
- 
+        ret = dlt_user_log_write_string(&log, text);
+
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
             return DLT_RETURN_ERROR;
         }
     }
 
-    return DLT_RETURN_OK;
+    return ret;
 }
 
 DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data)
 {
+    DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
     if (dlt_user.verbose_mode==0)
@@ -3387,7 +3393,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE)
     {
-        dlt_user_log_write_string(&log, text);
+        ret = dlt_user_log_write_string(&log, text);
         dlt_user_log_write_int(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
@@ -3396,11 +3402,12 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
         }
     }
 
-    return DLT_RETURN_OK;
+    return ret;
 }
 
 DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data)
 {
+    DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
     if (dlt_user.verbose_mode==0)
@@ -3415,7 +3422,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE)
     {
-        dlt_user_log_write_string(&log, text);
+        ret = dlt_user_log_write_string(&log, text);
         dlt_user_log_write_uint(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
@@ -3424,7 +3431,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
         }
     }
 
-    return DLT_RETURN_OK;
+    return ret;
 }
 
 DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data)
@@ -4616,13 +4623,14 @@ DltReturnValue dlt_user_log_check_user_message(void)
                                     delayed_inject_data_length = usercontextinj->data_length_inject;
                                     delayed_inject_buffer = malloc(delayed_inject_data_length);
 
-                                    if(delayed_inject_buffer != NULL)
+                                    if (delayed_inject_buffer != NULL)
                                     {
                                         memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
                                     }
                                     else
                                     {
                                         dlt_log(LOG_WARNING,"malloc failed!\n");
+                                        DLT_SEM_FREE();
                                         return DLT_RETURN_ERROR;
                                     }
                                     break;
@@ -4633,16 +4641,16 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         DLT_SEM_FREE();
 
                         /* Delayed injection callback call */
-                        if(delayed_inject_buffer != NULL &&
-                           delayed_injection_callback.injection_callback != NULL)
+                        if ((delayed_inject_buffer != NULL) &&
+                            (delayed_injection_callback.injection_callback != NULL))
                         {
                             delayed_injection_callback.injection_callback(delayed_injection_callback.service_id,
                                                                           delayed_inject_buffer,
                                                                           delayed_inject_data_length);
                             delayed_injection_callback.injection_callback = NULL;
                         }
-                        else if(delayed_inject_buffer != NULL &&
-                                delayed_injection_callback.injection_callback_with_id != NULL)
+                        else if ((delayed_inject_buffer != NULL) &&
+                                 (delayed_injection_callback.injection_callback_with_id != NULL))
                         {
                             delayed_injection_callback.injection_callback_with_id(delayed_injection_callback.service_id,
                                                                                   delayed_inject_buffer,
@@ -4657,7 +4665,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         if (dlt_receiver_remove(receiver,
                                                 (sizeof(DltUserHeader) +
                                                  sizeof(DltUserControlMsgInjection) +
-                                                 usercontextinj->data_length_inject)) == DLT_RETURN_ERROR)
+                                                 usercontextinj->data_length_inject)) != DLT_RETURN_OK)
                         {
                             return DLT_RETURN_ERROR;
                         }

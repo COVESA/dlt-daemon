@@ -2,7 +2,9 @@
  * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2017 Advanced Driver Information Technology.
+ * This code is developed by Advanced Driver Information Technology.
+ * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
  * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
@@ -16,25 +18,24 @@
  */
 
 /*!
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+ * \author
+ * Aditya Paluri <venkataaditya.paluri@in.bosch.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2017 Advanced Driver Information Technology. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt_daemon_socket.h
+ * \file dlt_gateway_internal.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt_daemon_socket.h                                           **
+**  SRC-MODULE: dlt_gateway_internal.h                                        **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**                                                                            **
+**  AUTHOR    : Aditya Paluri venkataaditya.paluri@in.bosch.com               **
 **  PURPOSE   :                                                               **
 **                                                                            **
 **  REMARKS   :                                                               **
@@ -51,31 +52,48 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
+**  ap          Aditya Paluri              ADIT                               **
 *******************************************************************************/
 
-#ifndef DLT_DAEMON_SOCKET_H
-#define DLT_DAEMON_SOCKET_H
+#ifndef DLT_GATEWAY_INTERNAL_H_
+#define DLT_GATEWAY_INTERNAL_H_
 
-#include <limits.h>
-#include <semaphore.h>
-#include "dlt_common.h"
-#include "dlt_user.h"
+DLT_STATIC int dlt_gateway_check_ip(DltGatewayConnection *con, char *value);
 
-int dlt_daemon_socket_open(int *sock, unsigned int servPort);
-int dlt_daemon_socket_close(int sock);
+DLT_STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value);
 
-int dlt_daemon_socket_get_send_qeue_max_size(int sock);
+DLT_STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value);
 
-int dlt_daemon_socket_send(int sock, void* data1, int size1, void* data2, int size2, char serialheader);
+DLT_STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+                                                 char *value);
 
-/**
- * @brief dlt_daemon_socket_sendreliable - sends data to socket with additional checks and resending functionality - trying to be reliable
- * @param sock
- * @param buffer
- * @param message_size
- * @return on sucess: DLT_DAEMON_ERROR_OK, on error: DLT_DAEMON_ERROR_SEND_FAILED
- */
-int dlt_daemon_socket_sendreliable(int sock, void* data_buffer, int message_size, int* bytes_sent);
+DLT_STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value);
 
-#endif /* DLT_DAEMON_SOCKET_H */
+DLT_STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value);
+
+DLT_STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con);
+
+DLT_STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
+                                                  char *value);
+
+DLT_STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
+                                                           char *value);
+
+DLT_STATIC int dlt_gateway_check_param(DltGateway *gateway,
+                                       DltGatewayConnection *con,
+                                       DltGatewayConfType ctype,
+                                       char *value);
+
+int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose);
+
+int dlt_gateway_store_connection(DltGateway *gateway,
+                                 DltGatewayConnection *tmp,
+                                 int verbose);
+
+DLT_STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
+                                   char *ecu,
+                                   DltMessage *msg,
+                                   int req,
+                                   int verbose);
+
+#endif

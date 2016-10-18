@@ -810,6 +810,8 @@ int main(int argc, char* argv[])
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
+    dlt_gateway_deinit(&daemon_local.pGateway, daemon_local.flags.vflag);
+
     dlt_daemon_free(&daemon, daemon_local.flags.vflag);
 
     dlt_log(LOG_NOTICE, "Leaving DLT daemon\n");
@@ -1488,9 +1490,9 @@ void dlt_daemon_daemonize(int verbose)
    This is a dlt-daemon only function. The libdlt has no equivalent function available. */
 int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose)
 {
-    DltMessage msg;
+    DltMessage msg = {0};
     static uint8_t uiMsgCount = 0;
-    DltStandardHeaderExtra *pStandardExtra;
+    DltStandardHeaderExtra *pStandardExtra = NULL;
     uint32_t uiType;
     uint16_t uiSize;
     uint32_t uiExtraSize;

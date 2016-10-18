@@ -143,4 +143,22 @@ typedef struct
     int num_connections; /* number of connections */
 } DltGateway;
 
+typedef struct {
+    char *key;  /* The configuration key*/
+    int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
+    int is_opt; /* If the configuration is optional or not */
+} DltGatewayConf;
+
+typedef enum {
+    GW_CONF_IP_ADDRESS = 0,
+    GW_CONF_PORT,
+    GW_CONF_ECUID,
+    GW_CONF_CONNECT,
+    GW_CONF_TIMEOUT,
+    GW_CONF_SEND_CONTROL,
+    GW_CONF_SEND_PERIODIC_CONTROL,
+    GW_CONF_SEND_SERIAL_HEADER,
+    GW_CONF_COUNT
+} DltGatewayConfType;
+
 #endif /* DLT_GATEWAY_TYPES_H_ */
