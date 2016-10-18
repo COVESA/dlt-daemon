@@ -208,6 +208,37 @@ typedef struct
     int write_errors;                  /* number of write errors */
 }DltLogStorage;
 
+typedef struct {
+    char *key; /* The configuration key */
+    int (*func)(DltLogStorage *handle, char *value); /* conf handler */
+    int is_opt; /* If configuration is optional or not */
+} DltLogstorageGeneralConf;
+
+typedef enum {
+    DLT_LOGSTORAGE_GENERAL_CONF_BLOCKMODE = 0,
+    DLT_LOGSTORAGE_GENERAL_CONF_COUNT
+} DltLogstorageGeneralConfType;
+
+typedef struct {
+    char *key; /* Configuration key */
+    int (*func)(DltLogStorageFilterConfig *config, char *value); /* conf handler */
+    int is_opt; /* If configuration is optional or not */
+} DltLogstorageFilterConf;
+
+typedef enum {
+    DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME = 0,
+    DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME,
+    DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL,
+    DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL,
+    DLT_LOGSTORAGE_FILTER_CONF_FILE,
+    DLT_LOGSTORAGE_FILTER_CONF_FILESIZE,
+    DLT_LOGSTORAGE_FILTER_CONF_NOFILES,
+    DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR,
+    DLT_LOGSTORAGE_FILTER_CONF_ECUID,
+    DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
+    DLT_LOGSTORAGE_FILTER_CONF_COUNT
+} DltLogstorageFilterConfType;
+
 /**
  * dlt_logstorage_device_connected
  *

@@ -24,9 +24,24 @@
 #Description     : gateway unit test preparation
 #
 #Author Name     : Onkar Palkar
+#                  Jeevan Ramakant Nagvekar
 #Email Id        : onkar.palkar@wipro.com
+#                  jeevan.nagvekar1@wipro.com
 #
-#History         : Last modified date : 29/07/2016
+#History         : Last modified date : 31/07/2018
+
+ipaddr=127.0.0.1
+
+################################################################################
+# Function:    -getOSname()
+#
+# Description  -Retrieves OS name
+#
+getOSname()
+{
+    OS="`uname`"
+}
+
 ################################################################################
 #
 # Function:    -cleanup()
@@ -38,24 +53,60 @@
 # Return    -Zero on success
 #        -Non zero on failure
 #
-ipaddr=127.0.0.1
-
 cleanup()
 {
     tmpPath=/tmp
+
+    if [ "$OS" = "QNX" ]
+    then
+        PIDOF()
+        {
+            slay -p $1 > /dev/null
+            if [ $? -eq '0' ]
+            then
+                return 1
+            else
+                return 0
+            fi
+        }
+        KILLALL()
+        {
+            slay -9 -f $1 > /dev/null
+            if [ $? -eq '0' ]
+            then
+                return 1
+            else
+                return 0
+            fi
+        }
+    else
+        PIDOF()
+        {
+            pidof $1 > /dev/null
+            return $?
+        }
+        KILLALL()
+        {
+            killall $1 > /dev/null
+            return $?
+        }
+    fi
+
     cd $tmpPath
-    pidof dlt-daemon > /dev/null
+
+    PIDOF dlt-daemon
     if [ $? -eq '0' ]
     then
-        killall dlt-daemon
+        KILLALL dlt-daemon
         if [ $? -eq '1' ]
         then
             echo "Failed to kill daemons"
             return 1
         fi
     fi
-    rm $tmpPath/dlt.conf
-    rm $tmpPath/idlt_gateway.conf
+
+    rm -f $tmpPath/dlt.conf
+    rm -f $tmpPath/dlt_gateway.conf
     return 0
 }
 #
@@ -82,7 +133,7 @@ setupTest()
         return 1
     fi
     echo "SendContextRegistration = 1" >>$tmpPath/dlt.conf
-    echo "ECUId = ECU1" >>$tmpPath/dlt.conf
+    echo "ECUId = ECU2" >>$tmpPath/dlt.conf
     echo "GatewayMode = 1" >>$tmpPath/dlt.conf
     echo "SharedMemorySize = 100000" >>$tmpPath/dlt.conf
     echo "LoggingMode = 0" >>$tmpPath/dlt.conf
@@ -93,7 +144,7 @@ setupTest()
     echo "RingbufferMaxSize = 10000000" >>$tmpPath/dlt.conf
     echo "RingbufferStepSize = 500000" >>$tmpPath/dlt.conf
     echo "ControlSocketPath = /tmp/dlt-ctrl.sock" >>$tmpPath/dlt.conf
-    echo "GatewayConfigFile = /tmp/$tmpFolder/dlt_gateway.conf" >>$tmpPath/dlt.conf
+    echo "GatewayConfigFile = /tmp/dlt_gateway.conf" >>$tmpPath/dlt.conf
     touch $tmpPath/dlt_gateway.conf
     if [ $? -eq '1' ]
     then
@@ -102,7 +153,7 @@ setupTest()
     fi
     echo "[PassiveNode1]" >>$tmpPath/dlt_gateway.conf
     echo "IPaddress=$ipaddr">>$tmpPath/dlt_gateway.conf
-    echo "Port=3495" >>$tmpPath/dlt_gateway.conf
+    echo "Port=3490" >>$tmpPath/dlt_gateway.conf
     echo "EcuID=ECU1" >>$tmpPath/dlt_gateway.conf
     echo "Connect=OnStartup" >>$tmpPath/dlt_gateway.conf
     echo "Timeout=10" >>$tmpPath/dlt_gateway.conf
@@ -115,25 +166,76 @@ setupTest()
 # Function:     -startDaemons()
 #
 # Description   -Start dlt-daemon as passive node
+#               -Start dlt-daemon as gateway node
 #
 # Return        -Zero on success
 #               -Non zero on failure
 #
 startDaemons()
 {
-    dlt-daemon -p 3495
+    tmpPath=/tmp
+    dlt-daemon -d
+    dlt-daemon -d -p 3495 -c $tmpPath/dlt.conf
     return 0
 }
+
+#
+# Function:     -checkDaemonStart
+#
+# Description   -Check if dlt-daemon instances started successfully
+#
+checkDaemonStart()
+{
+    if [ "$OS" = "QNX" ]; then
+        slay -p dlt-daemon > /dev/null
+        total=$?
+    else
+        total=`pgrep -c dlt-daemon`
+    fi
+
+    if [ $total -ne '2' ]; then
+        echo "Initialization of dlt-daemon instances failed"
+        exit
+    fi
+}
+
+help()
+{
+    echo "Usage: "
+    echo "sh ./gtest_dlt_daemon_gateway.sh"
+}
+
+executeTests()
+{
+    echo "Execute: gtest_dlt_daemon_gateway unit test"
+}
+
 #main function
 ########################################################################################
+
+getOSname
+
+echo "Cleaning up dlt-daemon instances"
 cleanup
+
 if [ $? -ne '0' ]
 then
-return 1
+  help
+  exit
 fi
+
+echo "Initializing test"
 setupTest
+
 if [ $? -ne '0' ]
 then
-return 1
+  help
+  exit
 fi
+
+echo "Restarting dlt-daemons"
 startDaemons
+
+checkDaemonStart
+
+executeTests

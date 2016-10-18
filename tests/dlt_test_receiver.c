@@ -82,8 +82,6 @@
 #include "dlt_client.h"
 #include <zlib.h>
 
-#define DLT_RECEIVE_TEXTBUFSIZE 10024  /* Size of buffer for text output */
-
 #define DLT_RECEIVE_ECU_ID "RECV"
 
 /* Function prototypes */

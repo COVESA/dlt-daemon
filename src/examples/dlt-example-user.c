@@ -136,7 +136,6 @@ int main(int argc, char* argv[])
     int lvalue = DLT_LOG_WARN;
     char *tvalue = 0;
     int rvalue = -1;
-    int ret = 0;
     int index;
     int c;
 

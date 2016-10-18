@@ -26,6 +26,7 @@
 #include <syslog.h>
 
 #include "dlt_daemon_offline_logstorage.h"
+#include "dlt_daemon_offline_logstorage_internal.h"
 #include "dlt_gateway_types.h"
 #include "dlt_gateway.h"
 

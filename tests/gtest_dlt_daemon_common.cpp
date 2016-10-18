@@ -69,7 +69,7 @@ TEST(t_dlt_daemon_init_user_information, normal_one_list)
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -100,9 +100,9 @@ TEST(t_dlt_daemon_init_user_information, normal_multiple_lists)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 1, 0));
     EXPECT_EQ(3, daemon.num_user_lists);
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
-    EXPECT_STREQ(gateway.connections[0].ecuid, daemon.user_list[1].ecu);
-    EXPECT_STREQ(gateway.connections[1].ecuid, daemon.user_list[2].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(gateway.connections[0].ecuid, daemon.user_list[1].ecu, DLT_ID_SIZE));
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(gateway.connections[1].ecuid, daemon.user_list[2].ecu, DLT_ID_SIZE));
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
     free(gateway.connections);
@@ -138,7 +138,7 @@ TEST(t_dlt_daemon_find_users_list, normal_one_list)
 
     user_list = dlt_daemon_find_users_list(&daemon, &ecu[0], 0);
     EXPECT_NE(user_list, nullptr);
-    EXPECT_STREQ(user_list->ecu, daemon.ecuid);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecu, daemon.ecuid, DLT_ID_SIZE));
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -194,21 +194,21 @@ TEST(t_dlt_daemon_find_users_list, normal_multiple_lists)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 1, 0));
     EXPECT_EQ(3, daemon.num_user_lists);
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
-    EXPECT_STREQ(gateway.connections[0].ecuid, daemon.user_list[1].ecu);
-    EXPECT_STREQ(gateway.connections[1].ecuid, daemon.user_list[2].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(gateway.connections[0].ecuid, daemon.user_list[1].ecu, DLT_ID_SIZE));
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(gateway.connections[1].ecuid, daemon.user_list[2].ecu, DLT_ID_SIZE));
 
     user_list = dlt_daemon_find_users_list(&daemon, &ecu[0], 0);
     EXPECT_NE(user_list, nullptr);
-    EXPECT_STREQ(user_list->ecu, daemon.ecuid);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecu, daemon.ecuid, DLT_ID_SIZE));
 
     user_list = dlt_daemon_find_users_list(&daemon, &ecu2[0], 0);
     EXPECT_NE(user_list, nullptr);
-    EXPECT_STREQ(user_list->ecu, gateway.connections[0].ecuid);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecu, gateway.connections[0].ecuid, DLT_ID_SIZE));
 
     user_list = dlt_daemon_find_users_list(&daemon, &ecu3[0], 0);
     EXPECT_NE(user_list, nullptr);
-    EXPECT_STREQ(user_list->ecu, gateway.connections[1].ecuid);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecu, gateway.connections[1].ecuid, DLT_ID_SIZE));
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
     free(gateway.connections);
@@ -240,7 +240,7 @@ TEST(t_dlt_daemon_application_add, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
 
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, fd, ecu, 0);
     //printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid,app->application_description, app->num_contexts, app->pid, app->user_handle);
@@ -344,7 +344,7 @@ TEST(t_dlt_daemon_application_del, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon,app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
@@ -409,7 +409,7 @@ TEST(t_dlt_daemon_application_find, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, fd, ecu, 0);
     EXPECT_STREQ(apid, app->apid);
     EXPECT_STREQ(desc, app->application_description);
@@ -474,7 +474,7 @@ TEST(t_dlt_daemon_applications_clear, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_LE((DltDaemonApplication *) 0, dlt_daemon_application_add(&daemon, (char *) "TES1", pid, (char *) "Test clear 1", fd, ecu, 0));
     dlt_daemon_application_add(&daemon, (char *) "TES2", pid, (char *) "Test clear 2", fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
@@ -520,7 +520,7 @@ TEST(t_dlt_daemon_applications_invalidate_fd, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_applications_invalidate_fd(&daemon, ecu, app->user_handle, 0));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
@@ -573,7 +573,7 @@ TEST(t_dlt_daemon_applications_save, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon,(char *) apid, pid, (char *) desc, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_applications_save(&daemon, (char *) filename, 0));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
@@ -633,7 +633,7 @@ TEST(t_dlt_daemon_applications_load, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_LE(0, dlt_daemon_applications_load(&daemon,(char *) filename, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -717,7 +717,7 @@ TEST(t_dlt_daemon_context_add, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon, apid, ctid, DLT_LOG_DEFAULT,
                                         DLT_TRACE_STATUS_DEFAULT, 0, 0, desc, ecu, 0);
@@ -749,7 +749,7 @@ TEST(t_dlt_daemon_context_add, abnormal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     DltLogLevelType DLT_LOG_NOT_EXIST = (DltLogLevelType) - 100;
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_NOT_EXIST,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
@@ -856,7 +856,7 @@ TEST(t_dlt_daemon_context_add, nullpointer)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_EQ((DltDaemonContext *) 0, dlt_daemon_context_add(NULL,NULL,NULL,0,0,0,0,NULL,NULL,0));
     EXPECT_EQ((DltDaemonContext *) 0, dlt_daemon_context_add(NULL,NULL,NULL,0,0,0,0,desc,NULL,0));
     EXPECT_EQ((DltDaemonContext *) 0, dlt_daemon_context_add(NULL,NULL,ctid,0,0,0,0,NULL,NULL,0));
@@ -895,7 +895,7 @@ TEST(t_dlt_daemon_context_del, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, ecu, 0));
@@ -973,7 +973,7 @@ TEST(t_dlt_daemon_context_find, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_STREQ(apid, daecontext->apid);
@@ -1003,7 +1003,7 @@ TEST(t_dlt_daemon_context_find, abnormal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_EQ((DltDaemonContext *) 0 ,dlt_daemon_context_find(&daemon, apid, ctid, ecu, 0));
 
     // No apid
@@ -1081,7 +1081,7 @@ TEST(t_dlt_daemon_contexts_clear, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_context_del(&daemon, daecontext, ecu, 0));
@@ -1139,7 +1139,7 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_contexts_invalidate_fd(&daemon, ecu, app->user_handle, 0));
@@ -1200,7 +1200,7 @@ TEST(t_dlt_daemon_contexts_save, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_contexts_save(&daemon, filename, 0));
@@ -1276,7 +1276,7 @@ TEST(t_dlt_daemon_contexts_load, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,0,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_contexts_load(&daemon, filename, 0));
@@ -1354,7 +1354,7 @@ TEST(t_dlt_daemon_user_send_all_log_state, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_all_log_state(&daemon, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -1383,7 +1383,7 @@ TEST(t_dlt_daemon_user_send_default_update, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_default_update(&daemon, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -1417,7 +1417,7 @@ TEST(t_dlt_daemon_user_send_log_level, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,apid,ctid,DLT_LOG_DEFAULT,DLT_TRACE_STATUS_DEFAULT,0,1,desc,ecu,0);
     EXPECT_LE(0, dlt_daemon_user_send_log_level(&daemon, daecontext, 0));
@@ -1493,7 +1493,7 @@ TEST(t_dlt_daemon_user_send_log_state, normal)
     EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY,DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,0,0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_STREQ(daemon.ecuid, daemon.user_list[0].ecu);
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
 //    open(filename, O_RDWR |O_NONBLOCK);
 //    dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE, "",0);
 //    app = dlt_daemon_application_add(&daemon, apid, pid, desc, 0);

@@ -300,14 +300,16 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
 DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
 {
+    int ret = DLT_RETURN_OK;
+
     if (verbose)
     {
         printf("Cleanup dlt client\n");
     }
 
-    if (client==0)
+    if (client == NULL)
     {
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if (client->sock!=-1)
@@ -315,12 +317,20 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
         close(client->sock);
     }
 
-    if (dlt_receiver_free(&(client->receiver)) == DLT_RETURN_ERROR)
+    if (dlt_receiver_free(&(client->receiver)) != DLT_RETURN_OK)
     {
-        return DLT_RETURN_ERROR;
+        dlt_vlog(LOG_WARNING, "Failed to free receiver\n");
+        ret = DLT_RETURN_ERROR;
     }
 
-    return DLT_RETURN_OK;
+    free(client->serialDevice);
+    client->serialDevice = NULL;
+    free(client->servIP);
+    client->servIP = NULL;
+    free(client->socketPath);
+    client->socketPath = NULL;
+
+    return ret;
 }
 
 DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
@@ -578,7 +588,7 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
     DltServiceSetLogLevel *req;
     int ret = DLT_RETURN_ERROR;
 
-    if ((client == NULL) || (apid == NULL) || (ctid == NULL))
+    if (client == NULL)
     {
         return ret;
     }

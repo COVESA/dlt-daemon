@@ -354,7 +354,7 @@ void dlt_env_free_ll_set(dlt_env_ll_set * const ll_set)
     return;
   }
 
-  if (!ll_set->item)
+  if (ll_set->item != NULL)
   {
     free(ll_set->item);
     ll_set->item = NULL;
