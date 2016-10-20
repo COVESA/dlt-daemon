@@ -53,6 +53,8 @@ include::dlt_extended_network_trace.txt[]
 
 include::dlt_offline_logstorage.txt[]
 
+include::dlt_multinode.txt[]
+
 include::dlt_kpi.txt[]
 
 include::dlt_cdh.txt[]

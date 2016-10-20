@@ -1,7 +1,7 @@
 DLT Offline Logstorage
 ======================
 Christoph Lipka <clipka@jp.adit-jv.com>
-0.0.1, 2015/05/26
+0.0.2, 2016/10/19 Updated Version
 
 Overview
 --------
@@ -11,37 +11,43 @@ The goal of DLT is the consolidation of the existing variety of logging and trac
 
 Introduction to DLT Offline Logstorage
 --------------------------------------
-With DLT Offline Logstorage it is possible to store logs on the target system or an external device connected to the target. It can be seen as an improvement of the already available Offline Trace functionality. +
+Logstorage is a mechanism to store DLT logs on the target system or an external device (e.g. USB stick) connected to the target.
+It can be seen as an improvement of the Offline Trace functionality which is already part of DLT.
 
-DLT Offline Logstorage offers the following functionality: +
-
-- store logs in sets of log files defined by configuration files
-- configuration filter options are:
-    * application IDs (single apid, list of apids, .* as wildcard)
-    * context IDs (single ctid, list of ctids, .* as wildcard)
-    * log level
-- configuration file storing options are:
-    * file name
-    * file size
-    * number of files
-- trigger start and stop logging by using the dlt-logstorage-ctrl application
+Logstorage provides the following features:
+    - Store logs in sets of log files defined by configuration files
+    - Log file content is configurable
+        - Configurable options are:
+            - Application identifier (single entry, list, wildcard)
+            - Context identifier (single entry, list, wildcard)
+            - Log level
+            - ECU identifier
+    - Log files are configurable in terms of:
+        - File name and naming scheme
+        - File size
+        - Number of files
+    - Log message synchronization strategy is configurable
+    - Trigger start and stop logging using a control application
+    - Integration into Udev device management
 
 
 Filter configuration
 --------------------
-The default name for the configuration file is dlt_logstorage.conf. This file has to be stored directly in the folder that will contain the log files later. Or in other words, in the folder that is mounted at the mountpoint /tmp/dltlogs/dltlogsdevX
-
-As seen in example configuration file, a filter configuration consists of +
-
-- A *unique name* of the filter (for a certain storage device). The name must be *[FILTERX]* where X is a unique number for that storage device.
-- *LogAppName* Name of application to store logs from. Multiple applications can be separated by "," and ".*" denotes all applications
-- *ContextName* Name or names of contexts to store logs from. Multiple contexts can be separated by "," and ".*" denotes all contexts of the application
-- *LogLevel* Define log level, e.g. DLT_LOG_INFO
-- *File* Base name of the created files that containing the logs, e.g. "example". The first file will have the name example_001_<timestamp>.dlt, the second example_002_<timestamp>.dlt and so on. Timestamp will be printed in form "YYMMDD-hhmmss".
-- *FileSize* File size in bytes
-- *NOFiles* Number of created files before oldest is deleted and a new one is created. The numbering will continue. E.g. If 10 files have to be created and the first is deleted, the next one is <File name>_011_<timestamp>.dlt
-
-*Note*: Not allowed is the combination of wildcards for LogAppName *and* ContextName. +
+For DLT daemon to store logs the configuration file named “dlt_logstorage.conf” should be present in external storage or internal storage device.
+The format is defined as follows:
+----
+[Filter<unique number>]       # filter configration name
+LogAppName=<APID>             # Name of application to store logs from. Multiple applications can be separated by "," and ".*" denotes all applications
+ContextName=<CTID>            # Name or names of contexts to store logs from. Multiple contexts can be separated by "," and ".*" denotes all contexts of the application
+LogLevel=<Log level>          # Define log level, e.g. DLT_LOG_INFO or DLT_LOG_FATAL
+File=<file name>              # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
+FileSize=<file size in bytes> # Maximum file size in bytes
+NOFiles=<number of files>     # Number of created files before oldest is deleted and a new one is created
+SyncBehavior=<strategy>       # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Rinbuffer Implementation below.
+EcuID=<ECUid>                 # Specify ECU identifier
+----
+The Parameter "SyncBehavior" and "EcuID" are optional - all others are mandatory.
+*Note*: Not allowed is the combination of wildcards for LogAppName *and* ContextName. The Parameter "SyncBehavior" and "EcuID" are optional - all others are mandatory. +
 
 An configuration file should look like: +
 
@@ -61,6 +67,8 @@ LogLevel=DLT_LOG_ERROR
 File=Test
 FileSize=250000
 NOFiles=5
+SyncStrategy=ON_DEMAND
+EcuID=ECU1
 ----
 
 Filter algorithm
@@ -85,23 +93,6 @@ When a message arrives at the filter, three checks have to be done. It has to be
 If one or more keys are valid the message is stored in the file of the corresponding filter if the log level is lesser than specified (FATAL < ... < INFO < ...).
 If not, the incoming message will be ignored.
 
-Default search path and folder names for Logstorage devices
------------------------------------------------------------
-Path
-~~~~
-The default search path for logstorage devices is: */tmp/dltlogs/*. This default
-path can be changed in the dlt_offline_logstorage.h header file.
-
-Folder
-~~~~~~
-The default name for Logstorage device folders is *dltlogsdevX*.
-X is a number between 1 and the maximal configured number of Logstorage devices DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES.
-
-A complete Logstorage path looks like: /tmp/dltlogs/dltdevlogs1
-
-This folder can be used directly to store logs or it can be used as mount point for external devices.
-
-
 Using DLT Offline Logstorage
 ----------------------------
 Enable OfflineLogstorage by setting OfflineLogstorageMaxDevices = 1 in dlt.conf.
@@ -110,7 +101,7 @@ Be aware that the performance of DLT may drop if multiple Logstorage devices are
 Create the device folder: +
 
 ----
-mkdir -p /tmp/dltlogs/dltlogsdev1
+mkdir -p /var/dltlogs
 ----
 
 Create the configuration file and store it on into that folder or mount an external device containing a configuration file.
@@ -120,30 +111,33 @@ Start the DLT Daemon. This is not necessary if the DLT Daemon was started alread
 Trigger DLT Daemon to use the new logstorage device: +
 
 ----
-dlt-logstorage-ctrl -c 1 -d 1
+dlt-logstorage-ctrl -c 1 -p /var/dltlogs
 ----
 
 Afterwards, logs that match the filter configuration are stored onto the Logstorage device.
 
 ----
-dlt-logstorage-ctrl -c 0 -d 1
+dlt-logstorage-ctrl -c 0 -p /var/dltlogs
 ----
 
-Afterwards the configured logstorage device 1 is disconnected from the DLT Daemon.
+Afterwards the configured logstorage device is disconnected from the DLT Daemon.
 
 Using dlt-logstorage-ctrl application
 -------------------------------------
 
 ----
 Usage: dlt-logstorage-ctrl [options]
-Send a trigger to DLT daemon to connect/disconnect a certain logstorage device. Logging starts after a succesfful connection automatically.
+Send a trigger to DLT daemon to connect/disconnecta certain logstorage device
 
 Options:
   -c         Connection type: connect = 1, disconnect = 0
-  -d         Device: [1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES]
+  -d[prop]   Run as daemon: prop = use proprietary handler
+             'prop' may be replaced by any meaningful word
   -e         Set ECU ID (Default: ECU1)
   -h         Usage
+  -p         Mount point path
   -t         Specify connection timeout (Default: 10s)
+  -v         Set verbose flag (Default:0)
 ----
 
 Testing DLT Offline Logstorage
@@ -159,7 +153,7 @@ The following procedure can be used to test Offline Logstorage:
 
 . Create the device folder
 
-  $ mkdir -p /tmp/dltlogs/dltlogsdev1
+  $ mkdir -p /var/dltlog
 
 . Create the configuration file "dlt_logstorage.conf" in this folder
   and define filter configuration(s):
@@ -174,13 +168,30 @@ The following procedure can be used to test Offline Logstorage:
 
 . Trigger dlt-daemon to use a new device
 
-  $ dlt-logstorage-ctrl -c 1 -d 1
+  $ dlt-logstorage-ctrl -c 1 -p /var/dltlog
 
 . Start dlt-example-user
 
   $ dlt-example-user Hello123
 
-. After execution, a log file is created in /tmp/dltlogs/dltlogsdev1
+. After execution, a log file is created in /var/dltlogs
   e.g. example_001_20150512_133344.dlt
 
 . To check the content of the file open it with dlt-convert or DLT Viewer.
+
+Logstorage Ring Buffer Implementation
+-------------------------------------
+The DLT Logstorage is mainly used to store a configurable set of logs on an external mass storage device attached to the target.
+In this scenario, writing each incoming log message directly onto the external storage device is appreciate, because the storage device might be un-mounted/suddenly removed at any time.
+Writing each log message immediately avoids the problem of losing too many messages because the file system sync could not be finished before the device has been removed physically from the target.
+On the other hand the DLT Logstorage feature might be used as well to store a configurable set of logs on any internal, nonvolatile memory (e.g. FLASH storage device).
+Due to the reason of limited write cycles of a FLASH device the number of write cycles has to be reduced as much as possible.
+But the drawback of losing log messages in case of an unexpected operating system crash has to be taking into account as well.
+The obvious idea is to cache incoming log messages in memory and write the log data to disk based on a certain strategy.
+Incoming log messages are stored in a data cache with a specific size. Depending on user defined strategy, the data cache is written onto the storage device、without relying on the sync mechanism of the file system.
+
+The following strategies are implemented:
+. ON_MSG - sync every message
+. ON_DAEMON_EXIT - sync on daemon exit
+. ON_DEMAND - sync on demand
+. Combinations (not allowed: combinations with ON_MSG)

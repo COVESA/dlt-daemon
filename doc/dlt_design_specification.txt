@@ -43,7 +43,7 @@ The DLT daemon is the central component between the DLT clients and one or more 
 
 ==== Overview
 The DLT daemon communicates with the DLT clients over TCP/IP connections or over a serial line (the message format is specified in the DLT AUTOSAR Standard), with the applications using the DLT user library over named pipes (FIFOs). More details concerning the exchanged user messages and their content can be found in chapter chapter 6.3.
-The main time, the DLT daemon executes a main loop, in which file and socket descriptors are watched (via select()). If a message is received, the DLT daemon reacts. Additionally, a thread is implemented, which if enabled sends each second a keep-alive message to all connected DLT clients.
+The main time, the DLT daemon executes a main loop, in which file and socket descriptors are watched (via epoll()). If a message is received, the DLT daemon reacts. Additionally, a thread is implemented, which if enabled sends each second a keep-alive message to all connected DLT clients.
 Here is a rough schematic, how the DLT daemon is structured:
 
 .DLT Overview
@@ -77,7 +77,7 @@ During initialization of the DLT daemon, the following steps occur:
 ==== Main loop
 In the main loop, the following things occur:
 
-* Wait for event on the incoming named pipe, the TCP connections (the one connection for new connections, and all TCP connections from clients), and possibly on the serial device, via select() call.
+* Wait for event on the incoming named pipe, the TCP connections (the one connection for new connections, and all TCP connections from clients), and possibly on the serial device, via epoll() call.
 * Distinguish from which socket/file descriptor the connection came, and handle them:
 ** Event from TCP server socket (New DLT client to DLT daemon):
 *** Create new TCP connection

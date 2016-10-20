@@ -46,6 +46,7 @@ if(WITH_DOC)
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_extended_network_trace.html ${CMAKE_SOURCE_DIR}/doc/dlt_extended_network_trace.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_offline_logstorage.html ${CMAKE_SOURCE_DIR}/doc/dlt_offline_logstorage.txt
+        COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_multinode.html ${CMAKE_SOURCE_DIR}/doc/dlt_multinode.txt
 		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-kpi.html ${CMAKE_SOURCE_DIR}/doc/dlt_kpi.txt
 		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-cdh.html ${CMAKE_SOURCE_DIR}/doc/dlt_cdh.txt
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
@@ -60,6 +61,7 @@ if(WITH_DOC)
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-logstorage-ctrl.1.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-passive-node-ctrl.1.txt
 	)
 	
 endif(WITH_DOC)
@@ -86,7 +88,8 @@ if(WITH_MAN)
 				${MAN_SRC_DIR}/dlt-daemon.1
 				${MAN_SRC_DIR}/dlt-receive.1
 				${MAN_SRC_DIR}/dlt-system.1
-				${MAN_SRC_DIR}/dlt-logstorage-ctrl.1)
+				${MAN_SRC_DIR}/dlt-logstorage-ctrl.1
+				${MAN_SRC_DIR}/dlt-passive-node-ctrl.1)
 	set(MAN_BUILD_SRC
 				${MAN_BUILD_DIR}/dlt.conf.5
 				${MAN_BUILD_DIR}/dlt-system.conf.5
@@ -94,7 +97,8 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt-daemon.1
 				${MAN_BUILD_DIR}/dlt-receive.1
 				${MAN_BUILD_DIR}/dlt-system.1
-				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1)
+				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
+				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1)
 	set(MAN_BUILD_GZ
 				${MAN_BUILD_DIR}/dlt.conf.5.gz
 				${MAN_BUILD_DIR}/dlt-system.conf.5.gz
@@ -102,7 +106,8 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt-daemon.1.gz
 				${MAN_BUILD_DIR}/dlt-receive.1.gz
 				${MAN_BUILD_DIR}/dlt-system.1.gz
-				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz)
+				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
 	
 	foreach(MAN ${MAN_SRC})
 		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${MAN} ${MAN_BUILD_DIR})
@@ -115,7 +120,8 @@ if(WITH_MAN)
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz)
+				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
 	
 	# If user has not set the base dir for man pages, use a default location
 	set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
@@ -132,6 +138,7 @@ if(WITH_MAN)
 			${MAN_BUILD_DIR}/dlt-receive.1.gz
 			${MAN_BUILD_DIR}/dlt-system.1.gz
 			${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+			${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
 		DESTINATION ${MAN_INSTALL_DIR}/man1
 	)
 endif(WITH_MAN)

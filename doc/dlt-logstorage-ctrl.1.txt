@@ -8,7 +8,7 @@ dlt-logstorage-ctrl - Trigger DLT Daemon to start/stop using an offline logstora
 
 SYNOPSIS
 --------
-*dlt-logstorage-ctrl* [-h] [-c ctype] [-d dev] [-e ecu] [-t timeout]
+*dlt-logstorage-ctrl* [-h] [-c ctype] [-p path] [-e ecu] [-p<prop>] [-t timeout] [-v]
 
 DESCRIPTION
 -----------
@@ -23,7 +23,10 @@ OPTIONS
     Specify connection type: connect = 1, disconnect = 0.
 
 *-d*::
-    Specify device [1 .. DLT_OFFLINE_LOGSTORAGE_MAX_DEVICES].
+    Run as daemon: prop = use proprietary handler
+
+*-p*::
+    Mount point path.
  
 *-e*::
     Specify the ECU ID. Default is: ECU1.
@@ -33,16 +36,22 @@ OPTIONS
 
 EXAMPLES
 --------
-Activate the offline logstorage device mounted on /tmp/dltlogs/dltlogsdev1
+Activate the offline logstorage device mounted on /mnt/dltlog
 
 ----
-dlt-logstorage-ctrl -c 1 -d 1
+dlt-logstorage-ctrl -c 1 -p /mnt/dltlog
 ----
 
-Deactivate the offline logstorage device mounted on /tmp/dltlogs/dltlogsdev2
+Deactivate the offline logstorage device mounted on /mnt/dltlog
 
 ----
-dlt-logstorage-ctrl -c 0 -d 2
+dlt-logstorage-ctrl -c 0 -p /mnt/dltlog
+----
+
+Run logstorage control application as daemon listen to udev events
+
+----
+dlt-logstorage-ctrl -d
 ----
 
 EXIT STATUS
@@ -56,10 +65,9 @@ Syed Hameed (shameed (at) jp.adit-jv.com)
 
 RESOURCES
 ---------
-Main web site: <http://projects.genivi.org/diagnostic-log-trace> +
+Main web site: <https://at.projects.genivi.org/wiki/display/PROJ/Diagnostic+Log+and+Trace> +
 Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
 
 SEE ALSO
 --------
 dlt-daemon(1)
-

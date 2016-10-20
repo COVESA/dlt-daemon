@@ -113,21 +113,6 @@ Default: ECU1
 .\}
 .RE
 .PP
-\fBGatewayMode\fR
-.RS 4
-If set to 1 gateway mode is enabled which means this ECU serves as gateway to forward messages from others\&.
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Default: 0
-.fi
-.if n \{\
-.RE
-.\}
-.RE
-.PP
 \fBSharedMemorySize\fR
 .RS 4
 This value sets the size of the shared memory, which is used to exchange DLT messages between applications and daemon\&. This value is defined in bytes\&. If this value is changed the system must be rebooted to take effect\&.
@@ -312,6 +297,37 @@ If set to 1 (ON) whenever a context registers or changes the log\-level it has t
 .\}
 .nf
 Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.SH "GATEWAY CONFIGURATION OPTIONS"
+.PP
+\fBGatewayMode\fR
+.RS 4
+If set to 1 gateway mode is enabled which means this ECU serves as gateway to forward messages from others\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: 0
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\fBGatewayConfigFile\fR
+.RS 4
+Read gateway configuration from another location\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Default: /tmp/dlt\-ctrl\&.sock /etc/dlt_gateway\&.conf
 .fi
 .if n \{\
 .RE

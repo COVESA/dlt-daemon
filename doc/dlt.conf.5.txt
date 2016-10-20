@@ -53,12 +53,6 @@ GENERAL OPTIONS
 
     Default: ECU1
 
-*GatewayMode*::
-    If set to 1 gateway mode is enabled which means this ECU serves as gateway
-    to forward messages from others.
-
-    Default: 0
-
 *SharedMemorySize*::
     This value sets the size of the shared memory, which is used to exchange
     DLT messages between applications and daemon. This value is defined in
@@ -128,6 +122,19 @@ GENERAL OPTIONS
     If set to 1 (ON) whenever a context registers or changes the log-level it has to be lower or equal to ContextLogLevel.
 
     Default: 0
+
+GATEWAY CONFIGURATION
+---------------------
+
+*GatewayMode*::
+    Enable Gateway mode
+
+    Default: 0
+
+*GatewayConfigFile*::
+    Read gateway configuration from another location
+
+    Default: /etc/dlt_gateway.conf
 
 CONTROL APPLICATION OPTIONS
 ---------------------------

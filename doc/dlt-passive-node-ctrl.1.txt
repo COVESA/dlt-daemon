@@ -1,0 +1,67 @@
+DLT-PASSIVE-NODE-CTRL(1)
+========================
+:doctype: manpage
+
+NAME
+----
+dlt-passive-node-ctrl - Send a trigger to DLT daemon to (dis)connect a passive node or get current passive node status
+
+SYNOPSIS
+--------
+*dlt-passive-node-ctrl* [-h] [-c] [-n ecu] [-s] [-t timeout] [-v]
+
+DESCRIPTION
+-----------
+Send a trigger to DLT daemon to (dis)connect a passive node or get current passive node status
+
+OPTIONS
+-------
+*-h*::
+    Usage
+*-c*::
+    Connection status (1 - connect, 0 - disconnect)
+*-n*::
+    Passive Node identifier (e.g. ECU2)
+*-s*::
+    Show passive node(s) connection status
+*-t*::
+    Specify connection timeout (Default: 10s)
+*-v*::
+    Set verbose flag (Default:0)
+
+EXAMPLES
+--------
+Get status about connected passives nodes
+
+----
+dlt-passive-node-ctrl -s
+----
+
+Connect to passive node ECU2
+
+----
+dlt-passive-node-ctrl -c 1 -n ECU2
+----
+
+Disconnect to passive node ECU2
+
+----
+dlt-passive-node-ctrl -c 0 -n ECU2
+----
+
+EXIT STATUS
+-----------
+Non zero is returned in case of failure.
+
+AUTHOR
+------
+Christoph Lipka (clipka (at) jp.adit-jv.com)
+
+RESOURCES
+---------
+Main web site: <https://at.projects.genivi.org/wiki/display/PROJ/Diagnostic+Log+and+Trace> +
+Mailinglist: <https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace>
+
+SEE ALSO
+--------
+dlt-daemon(1)
