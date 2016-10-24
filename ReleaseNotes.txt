@@ -4,10 +4,70 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.15.0 STABLE
+2.16.0 STABLE
 
 Changes
 -------
+
+2.16.0
+  * doc: Documenatation update
+  * Systemd-journal-test: Add WITH_DLT_UNIT_TEST flag when building sources
+  * Smoketest: Offline Logstorage
+  * Smoketest: Multinode
+  * Unit Test: Event handling
+  * Provision to test static function
+  * Unit Test: MultiNode
+  * Unit Test: Multinode Unit test preparation script
+  * CMake: Add option to build unit test binaries
+  * dlt-system-filetransfer: fix bug caused by malloc assert
+  * Environment variables for library ringbuffer
+  * DLT_PTR macro: Improve implementation and function API added
+  * MultiNode: Specify config file location in dlt.conf
+  * dlt-client: Use correct port on connect
+  * process user message: Fix bound handling
+  * dlt-system-filetransfer: Fix compiler warnings
+  * Remove C99 style comments in include directory
+  * Dlt-Receive: Use PRIxxx macros for printf variables
+  * Offine logstorage: Remove duplicated source file
+  * Fix: Memory for context description is not freed
+  * Fix: dlt-daemon overwrites ECU ID even if user log message already has the ECU ID that is not default value
+  * Add: Configuration of option of get log info response during context registration
+  * Add: Configuration of daemon FIFO size
+  * Fix: Handle of /tmp/dlt never reset if dlt-daemon is killed during output user buffer
+  * Add: Debug log for file transfer feature of dlt-system.
+  * Fix: Segfault in checking buffer usage
+  * Fix: File Transfer acceleration
+  * Fix: File name is broken when file is transferred on 64 bit OS.
+  * Fix: Memory leak issue in dlt-dbus
+  * Add dlt_user_is_logLevel_enabled API
+  * README.md formatting changes
+  * Adding GitHub flavored markdown for README.
+  * Fixed D-Bus tracing not working anymore
+  * Fixed not working default log level.
+  * Fixed not returning the correct number of lost messages at exit.
+  * dlt-daemon: Free DltDaemon structure on exit
+  * CommonControl: Fix for commands not working with unix socket
+  * CommonControl: Unix socket path and ecuid parsing for control applications
+  * dlt-control: Provision to control entire system log level
+  * DLT_PTR: User macro to print pointers
+  * dlt-daemon: Fix user log handler return value
+  * dlt-daemon: Connection activation rework
+  * dlt-daemon: receiver rework
+  * Fix connection handling of serial interface
+  * Offline trace: Make search more precise
+  * MultiNode: Add support for mandatory configurations
+  * MultiNode: Add support for SerialHeader conf
+  * MultiNode: Add support for port configuration
+  * MultiNode: Send control messages after connection
+  * MultiNode: Send serialheader if specified in dlt.conf
+  * Offline logstorage: On Demand triggering for syncing Logstorage cache and support long options
+  * Offline logstorage: Fix to resetting of Syncbehavior value
+  * Offline logstorage: Refactor filter storage functionality to support general properties
+  * Offline logstorage: Fixed extended header size check condition
+  * Offline logstorage: Fix invalid filter configuration handling
+  * Added abnormal unit tests to check DLT_RETURN_USER_BUFFER_FULL
+  * DLT_RETURN_USER_BUFFER_FULL is returned when user buffer full
+  * Revert truncation of string or raw block
 
 2.15.0
 
