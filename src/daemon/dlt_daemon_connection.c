@@ -171,6 +171,7 @@ STATIC void dlt_connection_destroy_receiver(DltConnection *con)
     default:
         (void) dlt_receiver_free(con->receiver);
         free(con->receiver);
+        con->receiver = NULL;
         break;
     }
 }
@@ -320,6 +321,9 @@ void dlt_connection_destroy(DltConnection *to_destroy)
 {
     close(to_destroy->receiver->fd);
     dlt_connection_destroy_receiver(to_destroy);
+    /* connection pointer might be in epoll queue and used even after destroying
+     * it. To make sure it is not used anymore, connection type is invalidated */
+    to_destroy->type = DLT_CONNECTION_TYPE_MAX;
     free(to_destroy);
 }
 

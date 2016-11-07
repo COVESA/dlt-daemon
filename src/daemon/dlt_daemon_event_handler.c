@@ -137,6 +137,10 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
             type = con->type;
             fd = con->receiver->fd;
         }
+        else /* connection might have been destroyed in the meanwhile */
+        {
+            continue;
+        }
 
         /* First of all handle epoll error events
          * We only expect EPOLLIN or EPOLLOUT
