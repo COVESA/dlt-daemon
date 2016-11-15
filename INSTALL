@@ -4,8 +4,15 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Instructions for installing this software
 -----------------------------------------
-This software uses cmake as its build tool. To build and install the
-DLT daemon, follow these steps:
+The following packages need to be installed in order to be able to build and install DLT daemon:
+- cmake
+- zlib
+- dbus
+
+On Ubuntu those dependencies can be installed with the following command:
+- sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+
+To build and install the DLT daemon, follow these steps:
 
 - mkdir build
 - cd build
