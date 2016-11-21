@@ -1108,7 +1108,7 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (daemon_local == NULL))
+    if ((daemon == NULL) || (daemon_local == NULL) || (daemon->storage_handle == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
