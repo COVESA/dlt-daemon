@@ -68,6 +68,17 @@
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
 
+/* checks if received size is big enough for expected data */
+#define DLT_CHECK_RCV_DATA_SIZE(received, required) \
+    ({ \
+        int _ret = DLT_RETURN_OK; \
+        if (((int)received - (int)required) < 0) { \
+            dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__); \
+            _ret = DLT_RETURN_ERROR; \
+        } \
+        _ret; \
+    })
+
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
@@ -736,11 +747,8 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceGetLogInfoRequest))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceGetLogInfoRequest)\n",
-                 __func__);
         return;
     }
 
@@ -1617,11 +1625,8 @@ void dlt_daemon_control_set_log_level(int sock, DltDaemon *daemon, DltDaemonLoca
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetLogLevel))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetLogLevel)\n",
-                 __func__);
         return;
     }
 
@@ -1680,11 +1685,8 @@ void dlt_daemon_control_set_trace_status(int sock, DltDaemon *daemon, DltDaemonL
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetLogLevel))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetLogLevel)\n",
-                 __func__);
         return;
     }
 
@@ -1732,11 +1734,8 @@ void dlt_daemon_control_set_default_log_level(int sock, DltDaemon *daemon, DltDa
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetDefaultLogLevel))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetDefaultLogLevel)\n",
-                 __func__);
         return;
     }
 
@@ -1772,11 +1771,8 @@ void dlt_daemon_control_set_all_log_level(int sock, DltDaemon *daemon, DltDaemon
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetDefaultLogLevel))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetDefaultLogLevel)\n",
-                 __func__);
         return;
     }
 
@@ -1810,11 +1806,8 @@ void dlt_daemon_control_set_default_trace_status(int sock, DltDaemon *daemon, Dl
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetDefaultLogLevel))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetDefaultLogLevel)\n",
-                 __func__);
         return;
     }
 
@@ -1849,11 +1842,8 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltDaemo
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceSetVerboseMode))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceSetVerboseMode)\n",
-                 __func__);
         return;
     }
 
@@ -2148,11 +2138,8 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServiceOfflineLogstorage))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceOfflineLogstorage)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServiceOfflineLogstorage)\n",
-                 __func__);
         return;
     }
 
@@ -2292,11 +2279,8 @@ void dlt_daemon_control_passive_node_connect(int sock,
         return;
     }
 
-    if ((size_t)msg->datasize < sizeof(DltServicePassiveNodeConnect))
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
     {
-        dlt_vlog(LOG_WARNING,
-                 "%s: Received data < sizeof(DltServicePassiveNodeConnect)\n",
-                 __func__);
         return;
     }
 
