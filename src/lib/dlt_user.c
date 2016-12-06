@@ -331,17 +331,11 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     dlt_user.dlt_log_handle = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK | O_CLOEXEC);
 
     if (dlt_user.dlt_log_handle == -1) {
-
-        if (dlt_user.connection_state != DLT_USER_RETRY_CONNECT) {
-            /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
-             * starts later and some DLT users have already been started before.
-             * Thus it is OK if the FIFO can't be opened. */
-            dlt_vnlog(LOG_INFO, DLT_USER_BUFFER_LENGTH, "FIFO %s cannot be opened. Retrying later...\n",
-                      dlt_daemon_fifo);
-            dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
-        }
-
-        /*return DLT_RETURN_OK; */
+        /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
+         * starts later and some DLT users have already been started before.
+         * Thus it is OK if the FIFO can't be opened. */
+        dlt_vnlog(LOG_INFO, DLT_USER_BUFFER_LENGTH, "FIFO %s cannot be opened. Retrying later...\n",
+                  dlt_daemon_fifo);
     }
 
     return DLT_RETURN_OK;
@@ -381,8 +375,9 @@ DltReturnValue dlt_init(void)
         dlt_log(LOG_WARNING, str);
         /*return 0; */
     }
+#endif
 
-#elif defined DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_USE_UNIX_SOCKET_IPC
 
     if (dlt_initialize_socket_connection() != DLT_RETURN_OK)
         /* We could connect to the pipe, but not to the socket, which is normally */
@@ -394,8 +389,6 @@ DltReturnValue dlt_init(void)
 
     if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
-
-    dlt_user.connection_state = DLT_USER_CONNECTED;
 
     if (dlt_receiver_init(&(dlt_user.receiver), dlt_user.dlt_user_handle,
                           DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR) {
@@ -3793,7 +3786,9 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             /* handle not open or pipe error */
             close(dlt_user.dlt_log_handle);
             dlt_user.dlt_log_handle = -1;
+#ifdef DLT_USE_UNIX_SOCKET_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
+#endif
 
     #ifdef DLT_SHM_ENABLE
             /* free shared memory */

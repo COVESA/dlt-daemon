@@ -178,6 +178,7 @@ typedef enum
 typedef float float32_t;
 typedef double float64_t;
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
 /**
  * Definition Library connection state
  */
@@ -187,5 +188,6 @@ typedef enum
     DLT_USER_CONNECTED,
     DLT_USER_RETRY_CONNECT
 } DltUserConnectionState;
+#endif
 
 #endif  /* DLT_TYPES_H */

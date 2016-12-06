@@ -240,7 +240,9 @@ typedef struct
     int corrupt_message_size;
     int16_t corrupt_message_size_size;
 #   endif
+#   ifdef DLT_USE_UNIX_SOCKET_IPC
     DltUserConnectionState connection_state;
+#   endif
     uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
 } DltUser;
 

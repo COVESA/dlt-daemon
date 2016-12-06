@@ -232,8 +232,10 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
         }
 
         break;
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     case DLT_CONNECTION_APP_CONNECT:
     /* FALL THROUGH */
+#endif
     case DLT_CONNECTION_ONE_S_TIMER:
     /* FALL THROUGH */
     case DLT_CONNECTION_SIXTY_S_TIMER:

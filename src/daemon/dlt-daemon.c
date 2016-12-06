@@ -2763,8 +2763,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
                                             int verbose)
 {
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-    int j, sent, third_value;
-    ssize_t ret;
+    int sent;
     uint8_t *rcv_buffer = NULL;
     int size;
     uint32_t len = sizeof(DltUserHeader);
