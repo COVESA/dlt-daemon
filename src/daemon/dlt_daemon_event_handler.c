@@ -128,7 +128,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
     for (i = 0 ; i < nfds ; i++)
     {
         struct epoll_event *ev = &pEvent->events[i];
-        DltConnection *con = (DltConnection *)ev->data.ptr;
+        DltConnectionId id = (DltConnectionId)ev->data.ptr;
+        DltConnection *con = dlt_event_handler_find_connection_by_id(pEvent,
+                                                                     id);
         int fd = 0;
         DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
 
@@ -203,6 +205,31 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
     DltConnection *temp = ev->connections;
 
     while ((temp != NULL) && (temp->receiver->fd != fd))
+    {
+        temp = temp->next;
+    }
+
+    return temp;
+}
+
+/** @brief Find connection with a specific \a id in the connection list.
+ *
+ * There can be only one event per \a fd. We can then find a specific connection
+ * based on this \a fd. That allows to check if a specific \a fd has already been
+ * registered.
+ *
+ * @param ev The event handler structure where the list of connection is.
+ * @param id The identifier of the connection to be found.
+ *
+ * @return The found connection pointer, NULL otherwise.
+ */
+DltConnection *dlt_event_handler_find_connection_by_id(DltEventHandler *ev,
+                                                       DltConnectionId id)
+{
+
+    DltConnection *temp = ev->connections;
+
+    while ((temp != NULL) && (temp->id != id))
     {
         temp = temp->next;
     }
@@ -351,7 +378,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
         {
             struct epoll_event ev; /* Content will be copied by the kernel */
             ev.events = con->ev_mask;
-            ev.data.ptr = (void *)con;
+            ev.data.ptr = (void *)con->id;
 
             snprintf(local_str,
                      DLT_DAEMON_TEXTBUFSIZE,
