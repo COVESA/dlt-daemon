@@ -111,9 +111,6 @@
 /* Initial trace status */
 #define DLT_USER_INITIAL_TRACE_STATUS DLT_TRACE_STATUS_OFF
 
-/* use extended header for non-verbose mode: 0 - don't use, 1 - use */
-#define DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE 1
-
 /* send always session id: 0 - don't use, 1 - use */
 #define DLT_USER_WITH_SESSION_ID 1
 
@@ -137,6 +134,15 @@
 
 /* Sleeps between resending user buffer at exit in nsec (1000000 nsec = 1ms)*/
 #define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 100000000
+
+/* Name of environment variable to disable extended header in non verbose mode */
+#define DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE "DLT_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE"
+
+typedef enum
+{
+    DLT_USER_NO_USE_EXTENDED_HEADER_FOR_NONVERBOSE = 0,
+    DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE
+} DltExtHeaderNonVer;
 
 /* Retry interval for mq error in usec */
 #define DLT_USER_MQ_ERROR_RETRY_INTERVAL 100000

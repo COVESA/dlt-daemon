@@ -23,6 +23,7 @@ set(dlt-test-stress_SRCS dlt-test-stress.c)
 set(dlt-test-filetransfer_SRCS dlt-test-filetransfer.c)
 set(dlt-test-fork-handler_SRCS dlt-test-fork-handler.c)
 set(dlt-test-init-free_SRCS dlt-test-init-free.c)
+set(dlt-test-non-verbose_SRCS dlt-test-non-verbose.c)
 
 foreach(target
         dlt-test-multi-process
@@ -35,6 +36,7 @@ foreach(target
         dlt-test-filetransfer
         dlt-test-fork-handler
         dlt-test-init-free
+        dlt-test-non-verbose
         )
     add_executable(${target} ${${target}_SRCS})
     target_link_libraries(${target} dlt)
