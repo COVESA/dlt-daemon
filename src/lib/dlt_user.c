@@ -519,6 +519,7 @@ DltReturnValue dlt_init_common(void)
     uint32_t buffer_max = DLT_USER_RINGBUFFER_MAX_SIZE;
     char *env_buffer_step;
     uint32_t buffer_step = DLT_USER_RINGBUFFER_STEP_SIZE;
+    char *env_nonverbose_extended_header;
     char *env_log_buffer_len;
     uint32_t buffer_max_configured = 0;
 
@@ -544,6 +545,16 @@ DltReturnValue dlt_init_common(void)
 
     /* Use extended header for non verbose is enabled by default */
     dlt_user.use_extende_header_for_non_verbose = DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
+
+    /* Use extended header for non verbose is modified as per environment variable */
+    env_nonverbose_extended_header = getenv(DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE);
+    if (env_nonverbose_extended_header)
+    {
+        if (strcmp(env_nonverbose_extended_header, "1") == 0)
+        {
+            dlt_user.use_extende_header_for_non_verbose = DLT_USER_NO_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
+        }
+    }
 
     /* WIth session id is enabled by default */
     dlt_user.with_session_id = DLT_USER_WITH_SESSION_ID;
