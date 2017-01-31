@@ -68,6 +68,17 @@
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
 
+/* checks if received size is big enough for expected data */
+#define DLT_CHECK_RCV_DATA_SIZE(received, required) \
+    ({ \
+        int _ret = DLT_RETURN_OK; \
+        if (((int)received - (int)required) < 0) { \
+            dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__); \
+            _ret = DLT_RETURN_ERROR; \
+        } \
+        _ret; \
+    })
+
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 
@@ -731,7 +742,12 @@ void dlt_daemon_control_get_log_info(int sock, DltDaemon *daemon, DltDaemonLocal
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
     {
         return;
     }
@@ -1421,18 +1437,13 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltDaemon
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
     {
         return;
     }
 
     datalength = msg->datasize;
     ptr = msg->databuffer;
-
-    if (ptr==0)
-    {
-        return;
-    }
 
     DLT_MSG_READ_VALUE(id_tmp,ptr,datalength,uint32_t); /* Get service id */
     id=DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
@@ -1479,7 +1490,7 @@ void dlt_daemon_control_callsw_cinjection(int sock, DltDaemon *daemon, DltDaemon
 
 		usercontext.log_level_pos = context->log_level_pos;
 
-		if(data_length_inject > msg->databuffersize)
+		if (data_length_inject > msg->databuffersize)
 		{
 			dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,  verbose);
 			return;
@@ -1609,7 +1620,12 @@ void dlt_daemon_control_set_log_level(int sock, DltDaemon *daemon, DltDaemonLoca
     int8_t appid_length = 0;
     int8_t ctxtid_length = 0;
 
-    if ((daemon == 0) || (msg == 0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
     {
         return;
     }
@@ -1664,7 +1680,12 @@ void dlt_daemon_control_set_trace_status(int sock, DltDaemon *daemon, DltDaemonL
 
 	int8_t old_trace_status;
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
     {
         return;
     }
@@ -1708,7 +1729,12 @@ void dlt_daemon_control_set_default_log_level(int sock, DltDaemon *daemon, DltDa
     DltServiceSetDefaultLogLevel *req;
     int32_t id=DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
         return;
     }
@@ -1740,7 +1766,12 @@ void dlt_daemon_control_set_all_log_level(int sock, DltDaemon *daemon, DltDaemon
     int32_t id = DLT_SERVICE_ID_SET_ALL_LOG_LEVEL;
     int8_t loglevel = 0;
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
         return;
     }
@@ -1770,7 +1801,12 @@ void dlt_daemon_control_set_default_trace_status(int sock, DltDaemon *daemon, Dl
     DltServiceSetDefaultLogLevel *req;
     int32_t id=DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
     {
         return;
     }
@@ -1801,7 +1837,12 @@ void dlt_daemon_control_set_timing_packets(int sock, DltDaemon *daemon, DltDaemo
     DltServiceSetVerboseMode *req;  /* request uses same struct as set verbose mode */
     int32_t id=DLT_SERVICE_ID_SET_TIMING_PACKETS;
 
-    if ((daemon==0) || (msg==0))
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
     {
         return;
     }
@@ -2084,7 +2125,7 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon==0) ||(msg == 0) ||(daemon_local == 0))
+    if ((daemon == NULL) || (msg == NULL) || (daemon_local == NULL) || (msg->databuffer == NULL))
     {
         dlt_log(LOG_ERR, "Invalid function parameters used for dlt_daemon_control_service_logstorage\n");
         return ;
@@ -2094,6 +2135,11 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
     {
         dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_ERROR, verbose);
         dlt_log(LOG_INFO, "Offline logstorage functionality not enabled or MAX device set is 0\n");
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceOfflineLogstorage)) < 0)
+    {
         return;
     }
 
@@ -2230,6 +2276,11 @@ void dlt_daemon_control_passive_node_connect(int sock,
             DLT_SERVICE_RESPONSE_ERROR,
             verbose);
 
+        return;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
+    {
         return;
     }
 
