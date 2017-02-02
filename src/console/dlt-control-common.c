@@ -479,7 +479,11 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
     if (dlt_parse_config_param("ControlSocketPath", &client->socketPath) != 0)
     {
         /* Failed to read from conf, copy default */
-        client->socketPath = strdup(DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH);
+        if(dlt_client_set_socket_path(client, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1)
+        {
+            pr_error("set socket path didn't succeed\n");
+            return -1;
+        }
     }
     client->mode = DLT_CLIENT_MODE_UNIX;
 

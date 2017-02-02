@@ -249,6 +249,30 @@ DltReturnValue dlt_client_send_reset_to_factory_default(DltClient *client);
  */
 DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate);
 
+/**
+ * Set server ip
+ * @param client pointer to dlt client structure
+ * @param pointer to command line argument
+ * @return negative value if there was an error
+ */
+int dlt_client_set_server_ip(DltClient *client, char *ipaddr);
+
+/**
+ * Set serial device
+ * @client pointer to dlt client structure
+ * @param param pointer to command line argument
+ * @return negative value if there was an error
+ */
+int dlt_client_set_serial_device(DltClient *client, char *serial_device);
+
+/**
+ * Set socket path
+ * @client pointer to dlt client structure
+ * @param param pointer to socket path string
+ * @return negative value if there was an error
+ */
+int dlt_client_set_socket_path(DltClient *client, char *socket_path);
+
 #ifdef __cplusplus
 }
 #endif

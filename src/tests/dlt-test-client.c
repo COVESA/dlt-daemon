@@ -283,7 +283,11 @@ int main(int argc, char* argv[])
     {
         for (index = optind; index < argc; index++)
         {
-            dltclient.servIP = argv[index];
+            if(dlt_client_set_server_ip(&dltclient, argv[index]) == -1)
+            {
+                fprintf(stderr,"set server ip didn't succeed\n");
+                return -1;
+            }
         }
 
         if (dltclient.servIP == 0)
@@ -299,7 +303,11 @@ int main(int argc, char* argv[])
     {
         for (index = optind; index < argc; index++)
         {
-            dltclient.serialDevice = argv[index];
+            if(dlt_client_set_serial_device(&dltclient, argv[index]) == -1)
+            {
+                fprintf(stderr,"set serial device didn't succeed\n");
+                return -1;
+            }
         }
 
         if (dltclient.serialDevice == 0)

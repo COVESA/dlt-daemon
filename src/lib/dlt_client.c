@@ -836,3 +836,35 @@ DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
     return DLT_RETURN_OK;
 }
 
+int dlt_client_set_server_ip(DltClient *client, char *ipaddr)
+{
+    client->servIP = strdup(ipaddr);
+    if (client->servIP == NULL)
+    {
+        dlt_log(LOG_ERR, "ERROR: failed to duplicate server IP\n");
+        return DLT_RETURN_ERROR;
+    }
+    return DLT_RETURN_OK;
+}
+
+int dlt_client_set_serial_device(DltClient *client, char *serial_device)
+{
+    client->serialDevice = strdup(serial_device);
+    if (client->serialDevice == NULL)
+    {
+        dlt_log(LOG_ERR, "ERROR: failed to duplicate serial device\n");
+        return DLT_RETURN_ERROR;
+    }
+    return DLT_RETURN_OK;
+}
+
+int dlt_client_set_socket_path(DltClient *client, char *socket_path)
+{
+    client->socketPath = strdup(socket_path);
+    if (client->socketPath == NULL)
+    {
+        dlt_log(LOG_ERR, "ERROR: failed to duplicate socket path\n");
+        return DLT_RETURN_ERROR;
+    }
+    return DLT_RETURN_OK;
+}

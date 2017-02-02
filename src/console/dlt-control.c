@@ -473,9 +473,12 @@ int main(int argc, char* argv[])
     {
         for (index = optind; index < argc; index++)
         {
-            g_dltclient.servIP = argv[index];
+            if(dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1)
+            {
+                pr_error("set server ip didn't succeed\n");
+                return -1;
+            }
         }
-
         if (g_dltclient.servIP == 0)
         {
             /* no hostname selected, show usage and terminate */
@@ -489,9 +492,12 @@ int main(int argc, char* argv[])
     {
         for (index = optind; index < argc; index++)
         {
-            g_dltclient.serialDevice = argv[index];
+            if(dlt_client_set_serial_device(&g_dltclient, argv[index]) == -1)
+            {
+                pr_error("set serial device didn't succeed\n");
+                return -1;
+            }
         }
-
         if (g_dltclient.serialDevice == 0)
         {
             /* no serial device name selected, show usage and terminate */
