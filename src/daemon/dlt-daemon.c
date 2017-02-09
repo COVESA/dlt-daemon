@@ -1287,8 +1287,13 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     /* Try to delete existing pipe, ignore result of unlink() */
     unlink(daemon_local->flags.daemonFifoName);
+#else
+    /* Try to delete existing pipe, ignore result of unlink() */
+    unlink(daemon_local->flags.appSockPath);
+#endif
 
 #ifdef DLT_SHM_ENABLE
     /* free shared memory */
