@@ -251,6 +251,8 @@ static DltReturnValue dlt_initialize_socket_connection(void)
                      dltSockBaseDir);
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
         }
+
+        close(sockfd);
     }
     else {
         dlt_user.dlt_log_handle = sockfd;
