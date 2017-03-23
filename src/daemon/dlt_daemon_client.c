@@ -133,6 +133,8 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
     {
         int ret = 0;
         DLT_DAEMON_SEM_LOCK();
+        DltConnection *next = dlt_connection_get_next(temp->next, type_mask);
+
         ret = dlt_connection_send_multiple(temp,
                                           data1,
                                           size1,
@@ -166,7 +168,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
             sent = 1;
         }
 
-        temp = dlt_connection_get_next(temp->next, type_mask);
+        temp = next;
     } /* for */
 
     return sent;

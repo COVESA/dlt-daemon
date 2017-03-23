@@ -67,10 +67,13 @@ typedef enum {
 #define DLT_CON_MASK_GATEWAY_TIMER      (1 << DLT_CONNECTION_GATEWAY_TIMER)
 #define DLT_CON_MASK_ALL                (0xffff)
 
+typedef unsigned int DltConnectionId;
+
 /* TODO: squash the DltReceiver structure in there
  * and remove any other duplicates of FDs
  */
 typedef struct DltConnection {
+    DltConnectionId id;
     DltReceiver *receiver; /**< Receiver structure for this connection */
     DltConnectionType type; /**< Represents what type of handle is this (like FIFO, serial, client, server) */
     DltConnectionStatus status; /**< Status of connection */

@@ -47,6 +47,8 @@
 #include "dlt_common.h"
 #include "dlt_gateway.h"
 
+static DltConnectionId connectionId;
+
 /** @brief Generic sending function.
  *
  * We manage different type of connection which have similar send/write
@@ -171,6 +173,7 @@ STATIC void dlt_connection_destroy_receiver(DltConnection *con)
     default:
         (void) dlt_receiver_free(con->receiver);
         free(con->receiver);
+        con->receiver = NULL;
         break;
     }
 }
@@ -318,8 +321,12 @@ void *dlt_connection_get_callback(DltConnection *con)
  */
 void dlt_connection_destroy(DltConnection *to_destroy)
 {
+    to_destroy->id = 0;
     close(to_destroy->receiver->fd);
     dlt_connection_destroy_receiver(to_destroy);
+    /* connection pointer might be in epoll queue and used even after destroying
+     * it. To make sure it is not used anymore, connection type is invalidated */
+    to_destroy->type = DLT_CONNECTION_TYPE_MAX;
     free(to_destroy);
 }
 
@@ -382,6 +389,14 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
         dlt_log(LOG_CRIT, local_str);
         free(temp);
         return -1;
+    }
+
+    /* We are single threaded no need for protection. */
+    temp->id = connectionId++;
+    if (!temp->id)
+    {
+        /* Skipping 0 */
+        temp->id = connectionId++;
     }
 
     temp->type = type;
