@@ -79,6 +79,8 @@ option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage c
 option(WITH_DLT_LOGSTORAGE_CTRL_PROP "PROTOTYPE! Set to ON to build logstorage control application with proprietary support" OFF)
 option(WITH_DLT_USE_IPv6       "Set to ON for IPv6 support"                                                     ON)
 option(WITH_DLT_KPI        	  "Set to ON to build src/kpi binaries"                                             ON)
+option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap (trigger segv inside dlt-user library)"  OFF)
+
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -193,6 +195,10 @@ endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
 if(WITH_DLT_LOGSTORAGE_CTRL_PROP)
 	add_definitions( -DDLT_LOGSTORAGE_CTRL_PROP)
 endif(WITH_DLT_LOGSTORAGE_CTRL_PROP)
+
+if (WITH_DLT_FATAL_LOG_TRAP)
+    add_definitions( -DDLT_FATAL_LOG_RESET_ENABLE)
+endif(WITH_DLT_FATAL_LOG_TRAP)
 
 add_subdirectory( doc )
 add_subdirectory( src )

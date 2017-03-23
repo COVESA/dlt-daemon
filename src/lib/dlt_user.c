@@ -63,6 +63,18 @@
 #include "dlt_user_shared_cfg.h"
 #include "dlt_user_cfg.h"
 
+#ifdef DLT_FATAL_LOG_RESET_ENABLE
+#define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL) \
+    do {                                   \
+        if (LOGLEVEL == DLT_LOG_FATAL) {   \
+            int *p = NULL;                 \
+            *p = 0;                        \
+        }                                  \
+    } while(0)
+#else /* DLT_FATAL_LOG_RESET_ENABLE */
+#define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL)
+#endif /* DLT_FATAL_LOG_RESET_ENABLE */
+
 static DltUser dlt_user;
 static bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
@@ -1420,6 +1432,8 @@ inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextDat
 
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, uint32_t messageid)
 {
+    DLT_LOG_FATAL_RESET_TRAP(loglevel);
+
     // check nullpointer
     if (handle == NULL || log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
