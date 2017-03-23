@@ -425,8 +425,13 @@ int dlt_gateway_store_connection(DltGateway *gateway,
                       gateway->connections[i].client.sock,
                       DLT_DAEMON_RCVBUFSIZESOCK);
     /* setup DltClient Structure */
-    gateway->connections[i].client.servIP =
-        strdup(gateway->connections[i].ip_address);
+    if(dlt_client_set_server_ip(&gateway->connections[i].client,
+                                    gateway->connections[i].ip_address) == -1)
+    {
+        dlt_log(LOG_ERR,
+                "dlt_client_set_server_ip() failed for gateway connection \n");
+        return -1;
+    }
 
     if (ret != 0)
     {

@@ -167,12 +167,20 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
     if(params->serial > 0)
     {
         client->mode = 1;
-        client->serialDevice = argv[argc - 1];
+        if(dlt_client_set_serial_device(client, argv[argc - 1]) == -1)
+        {
+            fprintf(stderr,"set serial device didn't succeed\n");
+            return -1;
+        }
         dlt_client_setbaudrate(client, params->baudrate);
     }
     else
     {
-        client->servIP = argv[argc - 1];
+        if(dlt_client_set_server_ip(client, argv[argc - 1]) == -1)
+        {
+            fprintf(stderr,"set serial ip didn't succeed\n");
+            return -1;
+        }
     }
     dlt_set_id(id, ECUID);
     return 0;
