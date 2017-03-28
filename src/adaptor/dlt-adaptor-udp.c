@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
               break;
           } else
           {
-              printf("Wrong verbosity level, setting default to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
+              printf("Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
               verbosity = DLT_LOG_INFO;
               break;
           }
