@@ -185,6 +185,7 @@ void dlt_process_get_log_info(void)
     if (0 != dlt_client_get_log_info(&g_dltclient))
     {
         fprintf(stderr, "ERROR: Could not get log info\n");
+        dlt_client_cleanup_get_log_info(g_resp);
         return;
     }
 
@@ -197,7 +198,7 @@ void dlt_process_get_log_info(void)
     {
         app = g_resp->log_info_type.app_ids[i];
 
-        dlt_set_id(apid, app.app_id);
+        dlt_print_id(apid, app.app_id);
 
         if (app.app_description != 0)
         {
@@ -212,19 +213,28 @@ void dlt_process_get_log_info(void)
         {
             con = app.context_id_info[j];
 
-            dlt_set_id(ctid, con.context_id);
+            dlt_print_id(ctid, con.context_id);
 
-            printf("%4s %2d %2d %s\n",
+            if (con.context_description != 0)
+            {
+
+            printf("CTID:%4s %2d %2d %s\n",
                    ctid,
                    con.log_level,
                    con.trace_status,
                    con.context_description);
+            }
+            else
+            {
+                printf("CTID:%4s %2d %2d\n",
+                       ctid,
+                       con.log_level,
+                       con.trace_status);
+            }
          }
      }
 
-    dlt_client_free_get_log_info(g_resp);
-    free(g_resp);
-    g_resp = NULL;
+    dlt_client_cleanup_get_log_info(g_resp);
 }
 
 /**
@@ -695,7 +705,6 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
 {
     static char resp_text[DLT_RECEIVE_TEXTBUFSIZE];
     int ret = DLT_RETURN_ERROR;
-    char cb_result;
 
     /* parameter check */
     if (message == NULL)
@@ -740,7 +749,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         return -1;
     }
 
-    ret = dlt_set_loginfo_parse_service_id(resp_text, &g_resp->service_id, &g_resp->status, &cb_result);
+    ret = dlt_set_loginfo_parse_service_id(resp_text, &g_resp->service_id, &g_resp->status);
     if ((ret == 0) && (g_resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO))
     {
         ret = dlt_client_parse_get_log_info_resp_text(g_resp, resp_text);
