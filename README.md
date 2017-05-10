@@ -1,7 +1,6 @@
 # Diagnostic Log and Trace
 
 ## Overview
-----
 This component provides a log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
 This software can be used by GENIVI components and other applications as
@@ -23,7 +22,6 @@ individual log levels of applications and contexts or get the list of
 applications and contexts registered in the DLT daemon.
 
 ## Documentation
-----
 - DLT Release Notes: ReleaseNotes.txt
 - DLT Installation: INSTALL
 - DLT User Manual: doc/dlt_user_manual.txt
@@ -32,11 +30,9 @@ applications and contexts registered in the DLT daemon.
 - DLT Compilation of all documentation: doc/dlt_book.txt
 
 ## API Documentation
-----
 See INSTALL regarding doxygen API documentation generation.
 
 ## Manpages
-----
 - dlt-daemon(1)
 - dlt.conf(5)
 - dlt-system(1)
@@ -50,22 +46,19 @@ See INSTALL regarding doxygen API documentation generation.
 - dlt-kpi (1)       TBD
 
 ## Known issues
-------------
 - DLT library: Usage of dlt_user_log_write_float64() and DLT_FLOAT64() leads to "Illegal instruction (core dumped)" on ARM target.
 - DLT library: Nested calls to DLT_LOG_ ... are not supported, and will lead to a deadlock.
 
 ## Software/Hardware
------------------
 Developed and tested with Fedora Linux 22 64-bit / Intel PC
 
 ## License
-Full information on the license for this software is available in the "LICENSE" file. +
+Full information on the license for this software is available in the "LICENSE" file. 
 Full information on the license for the cityhash code is available in "COPYING" file in src/core_dump_handler/cityhash_c.
 
 ## Source Code
-git://git.projects.genivi.org/dlt-daemon.git
-http://git.projects.genivi.org/dlt-daemon.git
-ssh://git-genivi@git.projects.genivi.org/dlt-daemon.git
+- https://github.com/GENIVI/dlt-daemon
+- Older (deprecated) repo: http://git.projects.genivi.org/dlt-daemon.git
 
 ## Homepage
 https://at.projects.genivi.org/wiki/display/PROJ/Diagnostic+Log+and+Trace
