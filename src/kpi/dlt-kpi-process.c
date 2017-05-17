@@ -189,6 +189,13 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 
 DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int time_dif_ms)
 {
+
+    if(process == NULL)
+    {
+        fprintf(stderr, "dlt_kpi_update_process(): Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
     dlt_kpi_process_update_io_wait(process, time_dif_ms);
     dlt_kpi_process_update_cpu_time(process, time_dif_ms);
     dlt_kpi_process_update_rss(process);
@@ -201,6 +208,12 @@ DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int 
 DltKpiProcess *dlt_kpi_create_process(int pid)
 {
     DltKpiProcess *new_process = malloc(sizeof(DltKpiProcess));
+    if(new_process == NULL)
+    {
+        fprintf(stderr, "Out of memory\n");
+        return NULL;
+    }
+
     memset(new_process, 0, sizeof(DltKpiProcess));
 
     new_process->pid = pid;
@@ -275,8 +288,8 @@ DltReturnValue dlt_kpi_print_process(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "Error: Nullpointer parameter\n");
-        return DLT_RETURN_ERROR;
+        fprintf(stderr, "dlt_kpi_print_process: Nullpointer parameter\n");
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     printf("[PID %d]\n", process->pid);
@@ -429,7 +442,7 @@ DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buff
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_get_msg_process_update(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -442,7 +455,7 @@ DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer,
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_get_msg_process_new(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -455,7 +468,7 @@ DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_get_msg_process_stop(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -468,7 +481,7 @@ DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char 
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+        fprintf(stderr, "dlt_kpi_get_msg_process_commandline(): Nullpointer parameter\n");
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
