@@ -124,6 +124,8 @@ int main(int argc, char **argv)
     dlt_kpi_free_process_lists();
 
     printf("Done.\n");
+    
+    return 0;
 }
 
 void dlt_kpi_init_sigterm_handler()
