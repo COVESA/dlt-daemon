@@ -67,7 +67,7 @@ typedef enum {
 #define DLT_CON_MASK_GATEWAY_TIMER      (1 << DLT_CONNECTION_GATEWAY_TIMER)
 #define DLT_CON_MASK_ALL                (0xffff)
 
-typedef unsigned int DltConnectionId;
+typedef uintptr_t DltConnectionId;
 
 /* TODO: squash the DltReceiver structure in there
  * and remove any other duplicates of FDs
