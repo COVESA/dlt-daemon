@@ -84,7 +84,7 @@ int daemonize()
     for(i = getdtablesize(); i >= 0; i--)
         close(i);
 
-	int fd = open("/dev/null",O_RDWR);
+    int fd = open("/dev/null",O_RDWR);
     if(fd < 0)
     {
         return -1;
