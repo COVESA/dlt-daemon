@@ -30,7 +30,7 @@ if(WITH_DOC)
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
 		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/INSTALL.html ${CMAKE_SOURCE_DIR}/INSTALL
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.md
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/ReleaseNotes.html ${CMAKE_SOURCE_DIR}/ReleaseNotes.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
