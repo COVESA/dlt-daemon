@@ -30,7 +30,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
 {
     if(ctx == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_interrupts(): Nullpointer parameter\n");
+        fprintf(stderr, "%s: Nullpointer parameter (NULL) !\n",__func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -53,7 +53,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
                 cpu_count++;
             else if(cpu_count <= 0)
             {
-                fprintf(stderr, "dlt_kpi_log_interrupts: Could not parse CPU count\n");
+                fprintf(stderr, "%s: Could not parse CPU count !\n",__func__);
                 return DLT_RETURN_ERROR;
             }
             else if(strcmp(token, "\n") == 0)
@@ -83,7 +83,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
                 long int interrupt_count = strtol(token, &check, 10);
                 if(*check != '\0')
                 {
-                    fprintf(stderr, "dlt_kpi_log_interrupts: Could not parse interrupt count for CPU %d\n", column - 1);
+                    fprintf(stderr, "%s: Could not parse interrupt count for CPU !\n",__func__);
                     return DLT_RETURN_ERROR;
                 }
 
@@ -102,13 +102,13 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
     DltContextData ctx_data;
     if((ret = dlt_user_log_write_start(ctx, &ctx_data, log_level)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_start() returned error\n");
+        fprintf(stderr, "%s: dlt_user_log_write_start() returned error\n", __func__);
         return ret;
     }
 
     if((ret = dlt_user_log_write_string(&ctx_data, "IRQ")) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_string() returned error\n");
+        fprintf(stderr, "%s: dlt_user_log_write_string() returned error\n", __func__);
         return ret;
     }
 
@@ -120,19 +120,19 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
             /* message buffer full, start new one */
             if((ret = dlt_user_log_write_finish(&ctx_data)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_finish() returned error\n");
+                fprintf(stderr, "%s: dlt_user_log_write_finish() returned error\n", __func__);
                 return ret;
             }
 
             if((ret = dlt_user_log_write_start(ctx, &ctx_data, log_level)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_start() returned error\n");
+                fprintf(stderr, "%s: dlt_user_log_write_start() returned error\n", __func__);
                 return ret;
             }
 
             if((ret = dlt_user_log_write_string(&ctx_data, "IRQ")) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_string() returned error\n");
+                fprintf(stderr, "%s: dlt_user_log_write_string() returned error\n", __func__);
                 return ret;
             }
         }
@@ -142,7 +142,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
 
     if((ret = dlt_user_log_write_finish(&ctx_data)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_interrupts(): dlt_user_log_write_finish() returned error\n");
+        fprintf(stderr, "%s: dlt_user_log_write_finish() returned error\n", __func__);
         return ret;
     }
 

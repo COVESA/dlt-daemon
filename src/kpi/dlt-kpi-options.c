@@ -63,7 +63,7 @@ DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char 
 {
     if(options == NULL)
     {
-        fprintf(stderr, "dlt_kpi_read_command_line(): Nullpointer parameter\n");
+        fprintf(stderr, "%s: Nullpointer parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
     dlt_kpi_init_cli_options(options);
@@ -122,7 +122,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
 
     if(config == NULL || file_name == NULL)
     {
-        fprintf(stderr, "Nullpointer parameter!\n");
+        fprintf(stderr, "%s: Nullpointer parameter!\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -132,25 +132,25 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
 
     if(file == NULL)
     {
-        fprintf(stderr, "Could not open configuration file!\n");
+        fprintf(stderr, "%s: Could not open configuration file!\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     if((line = malloc(COMMAND_LINE_SIZE)) == 0)
     {
-        fprintf(stderr, "Out of memory!\n");
+        fprintf(stderr, "%s: Out of memory!\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     if((token = malloc(COMMAND_LINE_SIZE)) == 0)
     {
-        fprintf(stderr, "Out of memory!\n");
+        fprintf(stderr, "%s: Out of memory!\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     if((value = malloc(COMMAND_LINE_SIZE)) == 0)
     {
-        fprintf(stderr, "Out of memory!\n");
+        fprintf(stderr, "%s: Out of memory!\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -237,7 +237,7 @@ DltReturnValue dlt_kpi_init(int argc, char **argv, DltKpiConfig *config)
 
     if(config == NULL)
     {
-        fprintf(stderr, "Nullpointer parameter!");
+        fprintf(stderr, "%s: Invalid Parameter!", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
