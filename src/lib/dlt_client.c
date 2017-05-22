@@ -340,16 +340,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
     while (1)
     {
-        if (client->mode==0)
-        {
-            /* wait for data from socket */
-            ret = dlt_receiver_receive_socket(&(client->receiver));
-        }
-        else
-        {
-            /* wait for data from serial connection */
-            ret = dlt_receiver_receive_fd(&(client->receiver));
-        }
+        /* wait for data from socket or serial connection */
+        ret = dlt_receiver_receive(&(client->receiver), client->mode);
 
         if (ret<=0)
         {

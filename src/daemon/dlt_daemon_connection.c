@@ -49,6 +49,7 @@
 #include "dlt_daemon_socket.h"
 
 static DltConnectionId connectionId;
+extern char *app_recv_buffer;
 
 /** @brief Generic sending function.
  *
@@ -168,6 +169,11 @@ DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
     case DLT_CONNECTION_GATEWAY:
         /* We rely on the gateway for clean-up */
         break;
+    case DLT_CONNECTION_APP_MSG:
+        dlt_receiver_free_unix_socket(con->receiver);
+        free(con->receiver);
+        con->receiver = NULL;
+        break;
     default:
         (void) dlt_receiver_free(con->receiver);
         free(con->receiver);
@@ -216,11 +222,18 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
             dlt_receiver_init(ret, fd, DLT_DAEMON_RCVBUFSIZESERIAL);
         }
         break;
-#ifdef DLT_USE_UNIX_SOCKET_IPC
-    case DLT_CONNECTION_APP_CONNECT:
-    /* FALL THROUGH */
-#endif
     case DLT_CONNECTION_APP_MSG:
+        ret = calloc(1, sizeof(DltReceiver));
+        if (ret)
+        {
+            #ifdef DLT_USE_UNIX_SOCKET_IPC
+            dlt_receiver_init_unix_socket(ret, fd, &app_recv_buffer);
+            #else
+            dlt_receiver_init(ret, fd, DLT_APP_RCV_BUF_MAX);
+            #endif
+        }
+        break;
+    case DLT_CONNECTION_APP_CONNECT:
     /* FALL THROUGH */
     case DLT_CONNECTION_ONE_S_TIMER:
     /* FALL THROUGH */

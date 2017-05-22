@@ -103,6 +103,7 @@ void usage()
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
     printf("  -l level      Set log level to <level>, level=-1..6\n");
     printf("  -t timeout    Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
+    printf("  -r size       Send raw data with specified size instead of string\n");
 #ifdef DLT_TEST_ENABLE
     printf("  -c            Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
@@ -130,6 +131,7 @@ int main(int argc, char* argv[])
     char *message = 0;
     int lvalue = DLT_LOG_WARN;
     char *tvalue = 0;
+    int rvalue = -1;
 
     int index;
     int c;
@@ -142,9 +144,9 @@ int main(int argc, char* argv[])
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
-    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:s:l:t:")) != -1)
+    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:r:s:l:t:")) != -1)
 #else
-    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:t:")) != -1)
+    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:r:t:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c)
@@ -211,6 +213,11 @@ int main(int argc, char* argv[])
             tvalue = optarg;
             break;
         }
+        case 'r':
+        {
+            rvalue = atoi(optarg);
+            break;
+        }
         case '?':
         {
             if (optopt == 'd' || optopt == 'f' || optopt == 'n'|| optopt == 'l' || optopt == 't')
@@ -238,9 +245,17 @@ int main(int argc, char* argv[])
         }
     }
 
-    for (index = optind; index < argc; index++)
+    if (rvalue == -1)
     {
-        message = argv[index];
+        for (index = optind; index < argc; index++)
+        {
+            message = argv[index];
+        }
+    }
+    else /* allocate raw buffer */
+    {
+        message = calloc(sizeof(char), rvalue);
+        memset(message, 'X', rvalue-1);
     }
 
     if (message == 0)
@@ -377,8 +392,15 @@ int main(int argc, char* argv[])
         }
         else
         {
-            /* Verbose mode */
-            DLT_LOG(mycontext,lvalue,DLT_INT(num),DLT_STRING(text));
+            if (rvalue == -1)
+            {
+                /* Verbose mode */
+                DLT_LOG(mycontext,lvalue,DLT_INT(num),DLT_STRING(text));
+            }
+            else
+            {
+                DLT_LOG(mycontext,lvalue,DLT_RAW(text, rvalue));
+            }
         }
 
         if (delay>0)

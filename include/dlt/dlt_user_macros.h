@@ -187,16 +187,13 @@
 #else
 #define DLT_LOG(CONTEXT,LOGLEVEL,ARGS...) \
     do { \
-        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT,&log_local,LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            DltContextData log_local; \
-            int dlt_local; \
-            dlt_local = dlt_user_log_write_start(&CONTEXT,&log_local,LOGLEVEL); \
-            if (dlt_local > 0) \
-            { \
-                ARGS; \
-                (void)dlt_user_log_write_finish(&log_local); \
-            } \
+            ARGS; \
+            (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while(0)
 #endif
@@ -219,16 +216,13 @@
 #else
 #define DLT_LOG_ID(CONTEXT,LOGLEVEL,MSGID,ARGS...) \
     do { \
-        if(dlt_user_is_logLevel_enabled(&CONTEXT,LOGLEVEL)==DLT_RETURN_TRUE) \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT,&log_local,LOGLEVEL,MSGID); \
+        if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            DltContextData log_local; \
-            int dlt_local; \
-            dlt_local = dlt_user_log_write_start_id(&CONTEXT,&log_local,LOGLEVEL,MSGID); \
-            if (dlt_local > 0) \
-            { \
-                ARGS; \
-                (void)dlt_user_log_write_finish(&log_local); \
-            } \
+            ARGS; \
+            (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while(0)
 #endif
