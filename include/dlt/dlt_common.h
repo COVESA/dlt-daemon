@@ -381,6 +381,16 @@ enum {
 #else
 #define DLT_STATIC
 #endif
+
+/**
+ * Type to specify whether received data is from socket or file/fifo
+ */
+typedef enum
+{
+    DLT_RECEIVE_SOCKET,
+    DLT_RECEIVE_FD
+} DltReceiverType;
+
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
@@ -753,6 +763,7 @@ typedef struct
     int32_t totalBytesRcvd;   /**< total number of received bytes */
     char *buffer;         /**< pointer to receiver buffer */
     char *buf;            /**< pointer to position within receiver buffer */
+    char *backup_buf;     /** pointer to the buffer with partial messages if any **/
     int fd;               /**< connection handle */
     int32_t buffersize;       /**< size of receiver buffer */
 } DltReceiver;
@@ -1150,24 +1161,26 @@ extern "C"
      */
     DltReturnValue dlt_receiver_free(DltReceiver *receiver);
     /**
-     * Receive data from socket using the dlt receiver structure
+     * Initialising a dlt receiver structure
      * @param receiver pointer to dlt receiver structure
-     * @return number of received bytes or negative value if there was an error
+     * @param fd handle to file/socket/fifo, fram which the data should be received
+     * @param buffer data buffer for storing the received data
+     * @return negative value if there was an error and zero if success
      */
-    int dlt_receiver_receive_socket(DltReceiver *receiver);
+    DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char **buffer);
     /**
-     * Receive data from file/fifo using the dlt receiver structure
+     * De-Initialize a dlt receiver structure
      * @param receiver pointer to dlt receiver structure
-     * @return number of received bytes or negative value if there was an error
+     * @return negative value if there was an error and zero if success
      */
-    int dlt_receiver_receive_fd(DltReceiver *receiver);
+    DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver);
     /**
-     * Receive data from file/fifo/socket, calls corresponding function based on
-     * CMake configuration.
+     * Receive data from socket or file/fifo using the dlt receiver structure
      * @param receiver pointer to dlt receiver structure
+     * @param from_src specify whether received data is from socket or file/fifo
      * @return number of received bytes or negative value if there was an error
      */
-     int dlt_receiver_receive(DltReceiver *receiver);
+     int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src);
     /**
      * Remove a specific size of bytes from the received data
      * @param receiver pointer to dlt receiver structure

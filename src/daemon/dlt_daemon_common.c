@@ -89,7 +89,7 @@
 #include "dlt_daemon_serial.h"
 
 static char str[DLT_DAEMON_COMMON_TEXTBUFSIZE];
-
+char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
 sem_t dlt_daemon_mutex;
 
 static int dlt_daemon_cmp_apid(const void *m1, const void *m2)
@@ -280,7 +280,10 @@ int dlt_daemon_free(DltDaemon *daemon, int verbose)
     }
 
     free(daemon->user_list);
-
+    if (app_recv_buffer)
+    {
+        free(app_recv_buffer);
+    }
     /* free ringbuffer */
     dlt_buffer_free_dynamic(&(daemon->client_ringbuffer));
 

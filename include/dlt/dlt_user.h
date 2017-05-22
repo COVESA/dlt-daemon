@@ -115,7 +115,7 @@ typedef struct
 typedef struct
 {
     DltContext *handle;                           /**< pointer to DltContext */
-    unsigned char buffer[DLT_USER_BUF_MAX_SIZE];  /**< buffer for building log message*/
+    unsigned char *buffer;                        /**< buffer for building log message*/
     int32_t size;                                 /**< payload size */
     int32_t log_level;                            /**< log level */
     int32_t trace_status;                         /**< trace status */
@@ -222,7 +222,7 @@ typedef struct
 
     DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
     /* Buffer used for resending, locked by DLT semaphore */
-    uint8_t resend_buffer[DLT_USER_RESENDBUF_MAX_SIZE];
+    uint8_t *resend_buffer;
 
     uint32_t timeout_at_exit_handler; /**< timeout used in dlt_user_atexit_blow_out_user_buffer, in 0.1 milliseconds */
     dlt_env_ll_set initial_ll_set;
@@ -236,6 +236,7 @@ typedef struct
     int16_t corrupt_message_size_size;
 #endif
     DltUserConnectionState connection_state;
+    uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
 } DltUser;
 
 /**************************************************************************************************
@@ -795,6 +796,11 @@ DltReturnValue dlt_user_log_resend_buffer(void);
  */
 static inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle,DltLogLevelType loglevel)
 {
+    if (loglevel < DLT_LOG_OFF || loglevel >= DLT_LOG_MAX)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
     if (handle == NULL || handle->log_level_ptr == NULL)
     {
         return DLT_RETURN_WRONG_PARAMETER;

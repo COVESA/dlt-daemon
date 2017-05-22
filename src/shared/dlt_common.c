@@ -2137,6 +2137,7 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
     receiver->buffersize = buffersize;
     receiver->fd = fd;
     receiver->buffer = (char*)malloc(receiver->buffersize);
+    receiver->backup_buf = NULL;
 
     if (receiver->buffer == NULL)
     {
@@ -2147,6 +2148,35 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
     {
         receiver->buf = receiver->buffer;
     }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char **buffer)
+{
+    if (receiver == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+    if (*buffer == NULL)
+    {
+        /* allocating the buffer once and using it for all application receivers
+         * by keeping allocated buffer in app_recv_buffer global handle
+         */
+        *buffer = (char*)malloc(DLT_APP_RCV_BUF_MAX);
+        if (*buffer == NULL)
+        {
+            return DLT_RETURN_ERROR;
+        }
+    }
+    receiver->lastBytesRcvd = 0;
+    receiver->bytesRcvd = 0;
+    receiver->totalBytesRcvd = 0;
+    receiver->buffersize = DLT_APP_RCV_BUF_MAX;
+    receiver->fd = fd;
+    receiver->buffer = *buffer;
+    receiver->backup_buf = NULL;
+    receiver->buf = receiver->buffer;
 
     return DLT_RETURN_OK;
 }
@@ -2164,14 +2194,39 @@ DltReturnValue dlt_receiver_free(DltReceiver *receiver)
         free(receiver->buffer);
     }
 
+    if (receiver->backup_buf)
+    {
+        free(receiver->backup_buf);
+    }
+
     receiver->buffer = NULL;
     receiver->buf = NULL;
+    receiver->backup_buf = NULL;
 
     return DLT_RETURN_OK;
 }
 
-#ifndef QT_VIEWER
-int dlt_receiver_receive_socket(DltReceiver *receiver)
+DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver)
+{
+
+    if (receiver == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (receiver->backup_buf)
+    {
+        free(receiver->backup_buf);
+    }
+
+    receiver->buffer = NULL;
+    receiver->buf = NULL;
+    receiver->backup_buf = NULL;
+
+    return DLT_RETURN_OK;
+}
+
+int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src)
 {
     if (receiver == NULL)
     {
@@ -2186,8 +2241,30 @@ int dlt_receiver_receive_socket(DltReceiver *receiver)
     receiver->buf = (char *)receiver->buffer;
     receiver->lastBytesRcvd = receiver->bytesRcvd;
 
-    /* wait for data from socket */
-    if ((receiver->bytesRcvd = recv(receiver->fd, receiver->buf + receiver->lastBytesRcvd, receiver->buffersize - receiver->lastBytesRcvd , 0)) <= 0)
+    if ((receiver->lastBytesRcvd) && (receiver->backup_buf != NULL))
+    {
+        memcpy(receiver->buf, receiver->backup_buf, receiver->lastBytesRcvd);
+        free(receiver->backup_buf);
+        receiver->backup_buf = NULL;
+    }
+
+    if (from_src == DLT_RECEIVE_SOCKET)
+    {
+        /* wait for data from socket */
+        receiver->bytesRcvd = recv(receiver->fd,
+                                   receiver->buf + receiver->lastBytesRcvd,
+                                   receiver->buffersize - receiver->lastBytesRcvd,
+                                   0);
+    }
+    else
+    {
+        /* wait for data from fd */
+        receiver->bytesRcvd = read(receiver->fd,
+                                   receiver->buf + receiver->lastBytesRcvd,
+                                   receiver->buffersize - receiver->lastBytesRcvd);
+    }
+
+    if (receiver->bytesRcvd <= 0)
     {
         receiver->bytesRcvd = 0;
 
@@ -2198,45 +2275,6 @@ int dlt_receiver_receive_socket(DltReceiver *receiver)
     receiver->bytesRcvd += receiver->lastBytesRcvd;
 
     return receiver->bytesRcvd;
-}
-#endif
-
-int dlt_receiver_receive_fd(DltReceiver *receiver)
-{
-    if (receiver == NULL)
-    {
-        return -1;
-    }
-
-    if (receiver->buffer == NULL)
-    {
-        return -1;
-    }
-
-    receiver->buf = (char *)receiver->buffer;
-    receiver->lastBytesRcvd = receiver->bytesRcvd;
-
-    /* wait for data from fd */
-    if ((receiver->bytesRcvd = read(receiver->fd, receiver->buf + receiver->lastBytesRcvd, receiver->buffersize - receiver->lastBytesRcvd)) <= 0)
-    {
-        receiver->bytesRcvd = 0;
-
-        return receiver->bytesRcvd;
-    } /* if */
-
-    receiver->totalBytesRcvd += receiver->bytesRcvd;
-    receiver->bytesRcvd += receiver->lastBytesRcvd;
-
-    return receiver->bytesRcvd;
-}
-
-int dlt_receiver_receive(DltReceiver *receiver)
-{
-#ifdef DLT_USE_UNIX_SOCKET_IPC
-    return dlt_receiver_receive_socket(receiver);
-#else
-    return dlt_receiver_receive_fd(receiver);
-#endif
 }
 
 DltReturnValue dlt_receiver_remove(DltReceiver *receiver, int size)
@@ -2278,7 +2316,18 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver)
 
     if ((receiver->buffer!=receiver->buf) && (receiver->bytesRcvd!=0))
     {
-        memmove(receiver->buffer,receiver->buf,receiver->bytesRcvd);
+        receiver->backup_buf = calloc(receiver->bytesRcvd + 1, sizeof(char));
+
+        if (receiver->backup_buf == NULL)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "Can't allocate memory for backup buf, there will be atleast"
+                     "one corrupted message for fd[%d] \n", receiver->fd);
+        }
+        else
+        {
+            memcpy(receiver->backup_buf, receiver->buf, receiver->bytesRcvd);
+        }
     }
 
     return DLT_RETURN_OK;

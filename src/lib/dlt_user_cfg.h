@@ -144,6 +144,12 @@
 #define DLT_USER_MQ_ERROR_RETRY_INTERVAL 100000
 
 
+/* Name of environment variable to change the dlt log message buffer size */
+#define DLT_USER_ENV_LOG_MSG_BUF_LEN "DLT_LOG_MSG_BUF_LEN"
+
+/* Maximum msg size as per autosar standard */
+#define DLT_LOG_MSG_BUF_MAX_SIZE 65535
+
 /************************/
 /* Don't change please! */
 /************************/

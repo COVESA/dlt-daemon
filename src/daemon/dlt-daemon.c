@@ -1714,7 +1714,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
         return -1;
     }
 
-    must_close_socket = dlt_receiver_receive_socket(receiver);
+    must_close_socket = dlt_receiver_receive(receiver, DLT_RECEIVE_SOCKET);
     if (must_close_socket < 0)
     {
         dlt_daemon_close_socket(receiver->fd,
@@ -1801,7 +1801,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_receive_fd(receiver) <= 0)
+    if (dlt_receiver_receive(receiver, DLT_RECEIVE_FD) <= 0)
     {
         dlt_log(LOG_WARNING,
                 "dlt_receiver_receive_fd() for messages from serial interface "
@@ -1993,7 +1993,7 @@ int dlt_daemon_process_control_messages(
         return -1;
     }
 
-    if (dlt_receiver_receive_socket(receiver) <= 0)
+    if (dlt_receiver_receive(receiver, DLT_RECEIVE_SOCKET) <= 0)
     {
         dlt_daemon_close_socket(receiver->fd,
                                 daemon,
@@ -2127,8 +2127,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    recv = dlt_receiver_receive(receiver);
 #ifdef DLT_USE_UNIX_SOCKET_IPC
+    recv = dlt_receiver_receive(receiver, DLT_RECEIVE_SOCKET);
     if (recv <= 0)
     {
         dlt_daemon_close_socket(receiver->fd,
@@ -2139,6 +2139,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return 0;
     }
 #else
+    recv = dlt_receiver_receive(receiver, DLT_RECEIVE_FD);
     if (recv < 0)
     {
         dlt_log(LOG_WARNING,
