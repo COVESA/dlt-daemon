@@ -32,7 +32,7 @@ install(TARGETS dlt-daemon
 	COMPONENT base)
 
 if (WITH_DLT_UNIT_TESTS)
-    add_library(dlt_daemon ${dlt_daemon_SRCS})
+    add_library(dlt_daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
     target_link_libraries(dlt_daemon rt ${CMAKE_THREAD_LIBS_INIT})
     install(TARGETS dlt_daemon
     RUNTIME DESTINATION bin
