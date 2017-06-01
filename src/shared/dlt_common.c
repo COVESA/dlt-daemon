@@ -1762,7 +1762,7 @@ void dlt_log_init(int mode)
 
     if (logging_mode == DLT_LOG_TO_FILE) {
         /* internal logging to file */
-        logging_handle = fopen(logging_filename, "w");
+        logging_handle = fopen(logging_filename, "a");
 
         if (logging_handle == NULL) {
             printf("Internal log file %s cannot be opened!\n", logging_filename);

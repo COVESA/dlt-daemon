@@ -843,6 +843,11 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if (daemon_local->flags.dflag)
         dlt_daemon_daemonize(daemon_local->flags.vflag);
 
+    /* Re-Initialize internal logging facility after fork */
+    dlt_log_set_filename(daemon_local->flags.loggingFilename);
+    dlt_log_set_level(daemon_local->flags.loggingLevel);
+    dlt_log_init(daemon_local->flags.loggingMode);
+
     /* initialise structure to use DLT file */
     ret = dlt_file_init(&(daemon_local->file), daemon_local->flags.vflag);
 
