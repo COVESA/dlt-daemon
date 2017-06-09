@@ -387,7 +387,12 @@ int dlt_logstorage_open_log_file(DltLogStorageConfigData *config,
         return -1;
     }
 
-    sprintf(storage_path, "%s/", dev_path);
+    if(snprintf(storage_path, DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN,
+          "%s/", dev_path) >= DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN)
+    {
+        dlt_log(LOG_ERR, "Mount point path name too long\n");
+        return -1;
+    }
 
     /* check if there are already files stored */
     if (config->records == NULL)
