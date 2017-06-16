@@ -31,7 +31,7 @@ DltKpiProcessList *dlt_kpi_create_process_list()
     DltKpiProcessList *new_list = malloc(sizeof(DltKpiProcessList));
     if(new_list == NULL)
     {
-        fprintf(stderr, "Cannot create process list, out of memory\n");
+        fprintf(stderr, "%s: Cannot create process list, out of memory\n", __func__);
         return NULL;
     }
 
@@ -45,7 +45,7 @@ DltReturnValue dlt_kpi_free_process_list_soft(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_free_process_list_soft: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -58,7 +58,7 @@ DltReturnValue dlt_kpi_free_process_list(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_free_process_list: Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -79,7 +79,7 @@ DltKpiProcess *dlt_kpi_get_process_at_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_get_process_at_cursor(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return NULL;
     }
 
@@ -90,7 +90,7 @@ DltReturnValue dlt_kpi_reset_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_reset_cursor(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -102,7 +102,7 @@ DltReturnValue dlt_kpi_set_cursor_at_end(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -120,7 +120,7 @@ DltReturnValue dlt_kpi_increment_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -136,7 +136,7 @@ DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
+       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -152,7 +152,7 @@ DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProce
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_add_process_at_start(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -169,7 +169,7 @@ DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpi
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_add_process_before_cursor(): Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -203,7 +203,7 @@ DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiP
 {
     if(list == NULL || process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_add_process_after_cursor: Nullpointer parameter\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -224,13 +224,13 @@ DltReturnValue dlt_kpi_remove_process_at_cursor_soft(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
+       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if(list->cursor == NULL)
     {
-        fprintf(stderr, "Could not remove process from list - cursor is NULL!\n");
+	    fprintf(stderr, "%s: Cursor is Invalid (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -266,13 +266,13 @@ DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list)
 {
     if(list == NULL)
     {
-        fprintf(stderr, "dlt_kpi_set_cursor_at_end(): Nullpointer parameter\n");
+       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if(list->cursor == NULL)
     {
-        fprintf(stderr, "Could not remove process from list - cursor is NULL!\n");
+    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 

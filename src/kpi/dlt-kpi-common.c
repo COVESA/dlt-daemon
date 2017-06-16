@@ -30,7 +30,13 @@ static int dlt_kpi_cpu_count = -1;
 
 DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target)
 {
-    char buffer[BUFFER_SIZE];
+    if(filename == NULL || target == NULL)
+    {
+        fprintf(stderr, "%s: Nullpointer parameter!\n",__func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    char buffer[BUFFER_SIZE];   
     int ret = dlt_kpi_read_file(filename, buffer, BUFFER_SIZE);
     if(ret < DLT_RETURN_OK)
         return ret;
@@ -50,7 +56,7 @@ DltReturnValue dlt_kpi_read_file(char* filename, char* buffer, uint maxLength)
 {
     if(filename == NULL || buffer == NULL)
     {
-        fprintf(stderr, "Nullpointer parameter!\n");
+        fprintf(stderr, "%s: Nullpointer parameter!\n",__func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 

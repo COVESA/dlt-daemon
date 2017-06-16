@@ -37,7 +37,7 @@ DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process, unsigned l
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_process_update_io_wait(): Nullpointer parameter\n");
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -58,7 +58,7 @@ DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process, unsigned 
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_process_update_cpu_time(): Nullpointer parameter\n");
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -87,7 +87,7 @@ DltReturnValue dlt_kpi_process_update_rss(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_process_update_rss(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -100,7 +100,7 @@ DltReturnValue dlt_kpi_process_update_ctx_switches(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_process_update_ctx_switches(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -145,7 +145,7 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_process_update_io_bytes: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -189,6 +189,13 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 
 DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int time_dif_ms)
 {
+
+    if(process == NULL)
+    {
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
     dlt_kpi_process_update_io_wait(process, time_dif_ms);
     dlt_kpi_process_update_cpu_time(process, time_dif_ms);
     dlt_kpi_process_update_rss(process);
@@ -201,6 +208,12 @@ DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int 
 DltKpiProcess *dlt_kpi_create_process(int pid)
 {
     DltKpiProcess *new_process = malloc(sizeof(DltKpiProcess));
+    if(new_process == NULL)
+    {
+	fprintf(stderr, "%s: Out of Memory \n", __func__);
+        return NULL;
+    }
+
     memset(new_process, 0, sizeof(DltKpiProcess));
 
     new_process->pid = pid;
@@ -223,7 +236,7 @@ DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
 {
     if(original == NULL)
     {
-        fprintf(stderr, "dlt_kpi_clone_process: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return NULL;
     }
 
@@ -231,7 +244,7 @@ DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
     DltKpiProcess *new_process = malloc(sizeof(DltKpiProcess));
     if(new_process == NULL)
     {
-        fprintf(stderr, "Out of memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", __func__);
         return NULL;
     }
 
@@ -242,8 +255,8 @@ DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
         new_process->command_line = malloc(strlen(original->command_line) + 1);
         if(new_process->command_line == NULL)
         {
-            fprintf(stderr, "Out of memory\n");
-            return NULL;
+            fprintf(stderr, "%s: Out of Memory\n", __func__);
+	    return NULL;
         }
         strncpy(new_process->command_line, original->command_line, strlen(original->command_line) + 1);
     }
@@ -259,7 +272,7 @@ DltReturnValue dlt_kpi_free_process(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "dlt_kpi_free_process: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -275,8 +288,8 @@ DltReturnValue dlt_kpi_print_process(DltKpiProcess *process)
 {
     if(process == NULL)
     {
-        fprintf(stderr, "Error: Nullpointer parameter\n");
-        return DLT_RETURN_ERROR;
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     printf("[PID %d]\n", process->pid);
@@ -295,7 +308,7 @@ DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, ch
 {
     if(target_str == NULL)
     {
-        fprintf(stderr, "Error: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -303,13 +316,13 @@ DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, ch
 
     if(pid <= 0)
     {
-        fprintf(stderr, "Error: Invalid PID\n");
+	fprintf(stderr, "%s: Invalid Parameter (PID)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     if(subdir == NULL)
     {
-        fprintf(stderr, "Error: Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -323,7 +336,7 @@ unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int ind
 {
     if(pid <= 0)
     {
-        fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Invalid PID\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return 0;
     }
 
@@ -376,13 +389,13 @@ DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
 {
     if(pid <= 0)
     {
-        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): Invalid PID\n");
+	fprintf(stderr, "%s: Invalid Parameter (PID)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if(buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -429,7 +442,7 @@ DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buff
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -442,7 +455,7 @@ DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer,
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -455,7 +468,7 @@ DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -468,7 +481,7 @@ DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char 
 {
     if(process == NULL || buffer == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_process_new(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 

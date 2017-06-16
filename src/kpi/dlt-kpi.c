@@ -124,6 +124,8 @@ int main(int argc, char **argv)
     dlt_kpi_free_process_lists();
 
     printf("Done.\n");
+    
+    return 0;
 }
 
 void dlt_kpi_init_sigterm_handler()
@@ -213,7 +215,7 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list, DltReturnValue(*process
 {
     if(list == NULL || process_callback == NULL || title == NULL)
     {
-        fprintf(stderr, "dlt_kpi_log_list(): Nullpointer parameter\n");
+	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -232,13 +234,13 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list, DltReturnValue(*process
 
     if((ret = dlt_user_log_write_start(&kpi_ctx, &data, config.log_level)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_start() returned error.\n");
+	fprintf(stderr, "%s: dlt_user_log_write_start() returned error.\n", __func__);
         return ret;
     }
 
     if((ret = dlt_user_log_write_string(&data, title)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_string() returned error.\n");
+	fprintf(stderr, "%s: dlt_user_log_write_string() returned error.\n", __func__);
         return ret;
     }
 
@@ -252,19 +254,19 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list, DltReturnValue(*process
             /* Log buffer full => Write log and start new one*/
             if((ret = dlt_user_log_write_finish(&data)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_finish() returned error.\n");
+                fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n",__func__);
                 return ret;
             }
 
             if((ret = dlt_user_log_write_start(&kpi_ctx, &data, config.log_level)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_start() returned error.\n");
+                fprintf(stderr, "%s: dlt_user_log_write_start() returned error.\n",__func__);
                 return ret;
             }
 
             if((ret = dlt_user_log_write_string(&data, title)) < DLT_RETURN_OK)
             {
-                fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_string() returned error.\n");
+                fprintf(stderr, "%s: dlt_user_log_write_string() returned error.\n",__func__);
                 return ret;
             }
         }
@@ -282,7 +284,7 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list, DltReturnValue(*process
 
     if((ret = dlt_user_log_write_finish(&data)) < DLT_RETURN_OK)
     {
-        fprintf(stderr, "dlt_kpi_log_list(): dlt_user_log_write_finish() returned error.\n");
+        fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n",__func__);
         return ret;
     }
 
