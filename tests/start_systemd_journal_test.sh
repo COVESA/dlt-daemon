@@ -12,7 +12,7 @@ sudo vim -esnc '%s/JournalEnable = 0/JournalEnable = 1/g|:wq' /usr/local/etc/dlt
 dlt-daemon &
 sleep 1
 #start dlt_system
-dlt-system &
+sudo dlt-system &
 sleep 1
 #send 10 times "DLT SYSTEM JOURNAL TEST"
 for i in {1..1000}
@@ -27,7 +27,7 @@ wait $pid
 exitcode=$?
 # kill processes, receiver automatically killed with daemon
 pkill dlt-daemon
-pkill dlt-system
+sudo pkill dlt-system
 # if exit code == 159 , test successfull
 tput setaf 1
 if [ $exitcode == 159 ]; then
