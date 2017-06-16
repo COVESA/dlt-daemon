@@ -165,6 +165,16 @@
     (void)dlt_register_injection_callback(&(CONTEXT),SERVICEID, CALLBACK);} while(0)
 
 /**
+ * Register callback function called when injection message was received
+ * @param CONTEXT object containing information about one special logging context
+ * @param SERVICEID service id of the injection message
+ * @param CALLBACK function pointer to callback function
+ * @param PRIV_DATA data specific to context
+ */
+#define DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(CONTEXT, SERVICEID, CALLBACK, PRIV_DATA) do{\
+    (void)dlt_register_injection_callback_with_id(&(CONTEXT),SERVICEID, CALLBACK, PRIV_DATA);} while(0)
+
+/**
  * Register callback function called when log level of context was changed
  * @param CONTEXT object containing information about one special logging context
  * @param CALLBACK function pointer to callback function

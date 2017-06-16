@@ -127,6 +127,8 @@ typedef struct
 {
     uint32_t service_id;
     int (*injection_callback)(uint32_t service_id, void *data, uint32_t length);
+    int (*injection_callback_with_id)(uint32_t service_id, void *data, uint32_t length, void *priv_data);
+    void *data;
 } DltUserInjectionCallback;
 
 typedef struct

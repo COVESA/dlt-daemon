@@ -2545,6 +2545,12 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
 DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
                 int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length))
 {
+    return dlt_register_injection_callback_with_id(handle, service_id, dlt_injection_callback, NULL);
+}
+
+DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
+                int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length, void *priv_data), void *priv)
+{
     DltContextData log;
     uint32_t i,j,k;
     int found = 0;
@@ -2621,7 +2627,18 @@ DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t serv
 
     /* Store service_id and corresponding function pointer for callback function */
     dlt_user.dlt_ll_ts[i].injection_table[j].service_id = service_id;
-    dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = dlt_injection_callback;
+    if (priv == NULL)
+    {
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = dlt_injection_callback;
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback_with_id = NULL;
+        dlt_user.dlt_ll_ts[i].injection_table[j].data = NULL;
+    }
+    else
+    {
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback = NULL;
+        dlt_user.dlt_ll_ts[i].injection_table[j].injection_callback_with_id = dlt_injection_callback;
+        dlt_user.dlt_ll_ts[i].injection_table[j].data = priv;
+    }
 
     DLT_SEM_FREE();
 
@@ -4482,24 +4499,39 @@ DltReturnValue dlt_user_log_check_user_message(void)
 
                         DLT_SEM_LOCK();
 
-                        if ((usercontextinj->data_length_inject>0) && (dlt_user.dlt_ll_ts))
+                        if ((usercontextinj->data_length_inject > 0) && (dlt_user.dlt_ll_ts))
                         {
                             /* Check if injection callback is registered for this context */
-                            for (i=0; i<dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].nrcallbacks;i++)
+                            for (i = 0; i < dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].nrcallbacks; i++)
                             {
                                 if ((dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table) &&
-                                        (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].service_id == usercontextinj->service_id))
+                                    (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].service_id == usercontextinj->service_id))
                                 {
                                     /* Prepare delayed injection callback call */
-                                    if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback!=0)
+                                    if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback != NULL)
                                     {
-                                        delayed_injection_callback.injection_callback = dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback;
-                                        delayed_injection_callback.service_id = usercontextinj->service_id;
-                                        delayed_inject_data_length = usercontextinj->data_length_inject;
-                                        delayed_inject_buffer = malloc(delayed_inject_data_length);
+                                        delayed_injection_callback.injection_callback =
+                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback;
+                                    }
+                                    else if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback_with_id != NULL)
+                                    {
+                                        delayed_injection_callback.injection_callback_with_id =
+                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].injection_callback_with_id;
+                                        delayed_injection_callback.data =
+                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].data;
+                                    }
+                                    delayed_injection_callback.service_id = usercontextinj->service_id;
+                                    delayed_inject_data_length = usercontextinj->data_length_inject;
+                                    delayed_inject_buffer = malloc(delayed_inject_data_length);
 
-                                        if(delayed_inject_buffer != NULL)
-                                            memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
+                                    if(delayed_inject_buffer != NULL)
+                                    {
+                                        memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
+                                    }
+                                    else
+                                    {
+                                        dlt_log(LOG_WARNING,"malloc failed!\n");
+                                        return DLT_RETURN_ERROR;
                                     }
                                     break;
                                 }
@@ -4509,18 +4541,34 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         DLT_SEM_FREE();
 
                         /* Delayed injection callback call */
-                        if(delayed_inject_buffer != NULL && delayed_injection_callback.injection_callback != 0)
+                        if(delayed_inject_buffer != NULL &&
+                           delayed_injection_callback.injection_callback != NULL)
                         {
-                            delayed_injection_callback.injection_callback(delayed_injection_callback.service_id, delayed_inject_buffer, delayed_inject_data_length);
-                                delayed_injection_callback.injection_callback = 0;
-                                free(delayed_inject_buffer);
-                                delayed_inject_buffer = NULL;
-
+                            delayed_injection_callback.injection_callback(delayed_injection_callback.service_id,
+                                                                          delayed_inject_buffer,
+                                                                          delayed_inject_data_length);
+                            delayed_injection_callback.injection_callback = NULL;
                         }
+                        else if(delayed_inject_buffer != NULL &&
+                                delayed_injection_callback.injection_callback_with_id != NULL)
+                        {
+                            delayed_injection_callback.injection_callback_with_id(delayed_injection_callback.service_id,
+                                                                                  delayed_inject_buffer,
+                                                                                  delayed_inject_data_length,
+                                                                                  delayed_injection_callback.data);
+                            delayed_injection_callback.injection_callback_with_id = NULL;
+                        }
+                        free(delayed_inject_buffer);
+                        delayed_inject_buffer = NULL;
 
                         /* keep not read data in buffer */
-                        if (dlt_receiver_remove(receiver,(sizeof(DltUserHeader)+sizeof(DltUserControlMsgInjection)+usercontextinj->data_length_inject)) == DLT_RETURN_ERROR)
+                        if (dlt_receiver_remove(receiver,
+                                                (sizeof(DltUserHeader) +
+                                                 sizeof(DltUserControlMsgInjection) +
+                                                 usercontextinj->data_length_inject)) == DLT_RETURN_ERROR)
+                        {
                             return DLT_RETURN_ERROR;
+                        }
                     }
                 }
                 break;
