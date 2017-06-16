@@ -77,9 +77,13 @@
 #include "dlt_common.h" /* for dlt_get_version() */
 
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
+int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data);
+
 void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
-DLT_DECLARE_CONTEXT(mycontext)
+DLT_DECLARE_CONTEXT(mycontext1)
+DLT_DECLARE_CONTEXT(mycontext2)
+DLT_DECLARE_CONTEXT(mycontext3)
 
 /**
  * Print usage information of tool.
@@ -132,7 +136,7 @@ int main(int argc, char* argv[])
     int lvalue = DLT_LOG_WARN;
     char *tvalue = 0;
     int rvalue = -1;
-
+    int ret = 0;
     int index;
     int c;
 
@@ -281,10 +285,17 @@ int main(int argc, char* argv[])
     dlt_verbose_mode();
 
     DLT_REGISTER_APP("LOG","Test Application for Logging");
-    DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
+    DLT_REGISTER_CONTEXT(mycontext1,"TEST","Test Context for Logging");
+    DLT_REGISTER_CONTEXT(mycontext2, "TS1", "Test Context1 for injection");
+    DLT_REGISTER_CONTEXT(mycontext3, "TS2", "Test Context2 for injection");
 
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, dlt_user_injection_callback);
-    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext, dlt_user_log_level_changed_callback);
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2, 0x1000, dlt_user_injection_callback_with_specific_data, (void*)"TS1 context");
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3, 0x1000, dlt_user_injection_callback_with_specific_data, (void*)"TS2 context");
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
+
+    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
 
     text = message;
 
@@ -336,11 +347,11 @@ int main(int argc, char* argv[])
     if (gflag)
     {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-        DLT_LOG_ID(mycontext,DLT_LOG_INFO,10);
-        DLT_LOG_ID(mycontext,DLT_LOG_INFO,11,DLT_UINT16(1011));
-        DLT_LOG_ID(mycontext,DLT_LOG_INFO,12,DLT_UINT32(1012),DLT_UINT32(1013));
-        DLT_LOG_ID(mycontext,DLT_LOG_INFO,13,DLT_UINT8(123),DLT_FLOAT32(1.12));
-        DLT_LOG_ID(mycontext,DLT_LOG_INFO,14,DLT_STRING("DEAD BEEF"));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
 #ifdef DLT_TEST_ENABLE
@@ -361,14 +372,14 @@ int main(int argc, char* argv[])
             fprintf(stderr,"Cannot allocate buffer memory!\n");
             return -1;
         }
-        DLT_LOG(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
+        DLT_LOG(mycontext1, DLT_LOG_WARN, DLT_STRING(text), DLT_RAW(buffer, atoi(zvalue)));
         free(buffer);
     }
 #endif /* DLT_TEST_ENABLE */
 
     for (num=0;num<maxnum;num++)
     {
-        printf("Send %d %s\n",num,text);
+        printf("Send %d %s\n", num, text);
 
         newstate = dlt_get_log_state();
         if(state!=newstate)
@@ -388,18 +399,18 @@ int main(int argc, char* argv[])
         if (gflag)
         {
             /* Non-verbose mode */
-            DLT_LOG_ID(mycontext,lvalue,num,DLT_INT(num),DLT_STRING(text));
+            DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
         else
         {
             if (rvalue == -1)
             {
                 /* Verbose mode */
-                DLT_LOG(mycontext,lvalue,DLT_INT(num),DLT_STRING(text));
+                DLT_LOG(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
             }
             else
             {
-                DLT_LOG(mycontext,lvalue,DLT_RAW(text, rvalue));
+                DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
             }
         }
 
@@ -411,7 +422,7 @@ int main(int argc, char* argv[])
 
     sleep(1);
 
-    DLT_UNREGISTER_CONTEXT(mycontext);
+    DLT_UNREGISTER_CONTEXT(mycontext1);
 
     DLT_UNREGISTER_APP();
 
@@ -422,12 +433,31 @@ int main(int argc, char* argv[])
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
 {
     char text[1024];
-    DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
-    printf("Injection %d, Length=%d \n",service_id,length);
-    if (length>0)
+
+    DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
+    printf("Injection %d, Length=%d \n", service_id, length);
+
+    if (length > 0)
     {
-        dlt_print_mixed_string(text,1024,data,length,0);
-        DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
+        dlt_print_mixed_string(text, 1024, data, length, 0);
+        DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
+        printf("%s \n", text);
+    }
+
+    return 0;
+}
+
+int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data)
+{
+    char text[1024];
+
+    DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
+    printf("Injection %d, Length=%d \n", service_id, length);
+
+    if (length > 0)
+    {
+        dlt_print_mixed_string(text, 1024, data, length, 0);
+        DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text), DLT_STRING(priv_data));
         printf("%s \n", text);
     }
 
