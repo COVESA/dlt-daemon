@@ -642,13 +642,13 @@ int main(int argc, char* argv[])
                 fprintf (stderr, "ERROR: Could not send default log level\n");
             }
     	}
-    	else if(dltdata.rvalue!=-1)
+    	else if(dltdata.fvalue!=-1)
     	{
     		/* default trace status */
     		printf("Set default trace status:\n");
-    		printf("TraceStatus: %d\n",dltdata.rvalue);
+    		printf("TraceStatus: %d\n",dltdata.fvalue);
     		/* send control message in*/
-            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.rvalue) != DLT_RETURN_OK)
+            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.fvalue) != DLT_RETURN_OK)
             {
                 fprintf (stderr, "ERROR: Could not send default trace status\n");
             }
