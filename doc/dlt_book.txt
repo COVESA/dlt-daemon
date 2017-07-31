@@ -45,6 +45,8 @@ include::dlt_user_manual.txt[]
 
 include::dlt_cheatsheet.txt[]
 
+include::dlt_loglevel_explained.txt[]
+
 include::dlt_design_specification.txt[]
 
 include::dlt_filetransfer.txt[]
