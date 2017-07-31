@@ -2423,14 +2423,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         /* This call also replaces the default values with the values defined for default */
         if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
         {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Can't send current log level as response to %s for (%.4s;%.4s)\n",
+            dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n",
                      __func__,
                      context->apid,
                      context->ctid);
-            dlt_log(LOG_WARNING, local_str);
-            return -1;
         }
     }
 

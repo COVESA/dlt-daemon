@@ -7,6 +7,6 @@ config.h
 include/dlt/dlt_version.h
 .project
 .cproject
-
-
 .settings
+.idea/
+cmake-build-debug/
