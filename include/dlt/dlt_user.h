@@ -242,7 +242,7 @@ typedef struct
 **************************************************************************************************/
 
 /**
- * Initialize the generation of a DLT log message (intended for usage in non-verbose mode)
+ * Initialize the generation of a DLT log message (intended for usage in verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
  * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
  * when return value is bigger than zero.
@@ -254,7 +254,7 @@ typedef struct
 DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
 
 /**
- * Initialize the generation of a DLT log message (intended for usage in verbose mode)
+ * Initialize the generation of a DLT log message (intended for usage in non-verbose mode)
  * This function has to be called first, when an application wants to send a new log messages.
  * Following functions like dlt_user_log_write_string and dlt_user_log_write_finish must only be called,
  * when return value is bigger than zero.
