@@ -81,6 +81,8 @@ option(WITH_DLT_USE_IPv6       "Set to ON for IPv6 support"                     
 option(WITH_DLT_KPI        	  "Set to ON to build src/kpi binaries"                                             ON)
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap (trigger segv inside dlt-user library)"  OFF)
 
+option(WITH_DLT_CXX_WRAPPER   "Set to ON to build src/cxx_wrapper binaries"                                    OFF)
+
 # RPM settings
 set( GENIVI_RPM_RELEASE "1")#${DLT_REVISION}")
 set( LICENSE "Mozilla Public License Version 2.0" )
@@ -200,6 +202,12 @@ if (WITH_DLT_FATAL_LOG_TRAP)
     add_definitions( -DDLT_FATAL_LOG_RESET_ENABLE)
 endif(WITH_DLT_FATAL_LOG_TRAP)
 
+if(${WITH_DLT_CXX_WRAPPER})
+    configure_file(${CMAKE_SOURCE_DIR}/${PROJECT_NAME}-cxx.pc.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-cxx.pc @ONLY)
+    install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-cxx.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT devel)
+endif()
+
+
 add_subdirectory( doc )
 add_subdirectory( src )
 add_subdirectory( include )
@@ -247,6 +255,7 @@ message( STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}" )
 message( STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}" )
 message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_UDEV = ${WITH_DLT_LOGSTORAGE_CTRL_UDEV}" )
 message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_PROP = ${WITH_DLT_LOGSTORAGE_CTRL_PROP}" )
+message( STATUS "WITH_DLT_CXX_WRAPPER = ${WITH_DLT_CXX_WRAPPER}" )
 message( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 message( STATUS "-------------------------------------------------------------------------------" )
 message( STATUS )

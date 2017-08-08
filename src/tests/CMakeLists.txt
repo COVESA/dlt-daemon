@@ -65,6 +65,14 @@ add_executable(dlt-test-init-free ${dlt_test_init_free_SRCS})
 target_link_libraries(dlt-test-init-free dlt)
 set_target_properties(dlt-test-init-free PROPERTIES LINKER_LANGUAGE C)
 
+if(${WITH_DLT_CXX_WRAPPER})
+       set(dlt_test_cxx_wrapper_SRCS dlt-test-cxx-wrapper.cpp)
+       add_executable(dlt-test-cxx-wrapper ${dlt_test_cxx_wrapper_SRCS})
+       target_link_libraries(dlt-test-cxx-wrapper dltcxx)
+       set_target_properties(dlt-test-cxx-wrapper PROPERTIES LINKER_LANGUAGE CXX)
+       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif( )
+
 install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-filetransfer dlt-test-fork-handler dlt-test-init-free
 	RUNTIME DESTINATION bin
 	COMPONENT base)
@@ -72,3 +80,10 @@ install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-us
 INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
 	DESTINATION share/dlt-filetransfer
 )
+
+if(${WITH_DLT_CXX_WRAPPER})
+       install(TARGETS dlt-test-cxx-wrapper
+               RUNTIME DESTINATION bin
+               COMPONENT base)
+endif( )
+

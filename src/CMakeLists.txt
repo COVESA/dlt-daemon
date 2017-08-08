@@ -50,3 +50,8 @@ endif( WITH_DLT_COREDUMPHANDLER )
 if( WITH_DLT_KPI )
     add_subdirectory( kpi )
 endif( WITH_DLT_KPI )
+
+if( WITH_DLT_CXX_WRAPPER )
+    add_subdirectory( cxx_wrapper )
+endif( WITH_DLT_CXX_WRAPPER )
+
