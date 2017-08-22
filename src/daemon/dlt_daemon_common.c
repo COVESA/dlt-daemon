@@ -1119,10 +1119,16 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (context == NULL))
+    {
+        dlt_vlog(LOG_ERR, "NULL parameter in %s", __func__);
         return -1;
+    }
 
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_LEVEL) < DLT_RETURN_OK)
+    {
+        dlt_vlog(LOG_ERR, "Failed to set userheader in %s", __func__);
         return -1;
+    }
 
     if(context->storage_log_level != DLT_LOG_DEFAULT)
     {
@@ -1137,22 +1143,31 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
 
     usercontext.log_level_pos = context->log_level_pos;
 
-    snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Send log-level to context: %.4s:%.4s [%i -> %i] [%i -> %i]\n",
-             context->apid, context->ctid, context->log_level, usercontext.log_level, context->trace_status, usercontext.trace_status);
-    dlt_log(LOG_NOTICE, str);
+    dlt_vlog(LOG_NOTICE, "Send log-level to context: %.4s:%.4s [%i -> %i] [%i -> %i]\n",
+             context->apid,
+             context->ctid,
+             context->log_level,
+             usercontext.log_level,
+             context->trace_status,
+             usercontext.trace_status);
 
     /* log to FIFO */
+    errno = 0;
     ret = dlt_user_log_out2(context->user_handle,
                     &(userheader), sizeof(DltUserHeader),
                     &(usercontext), sizeof(DltUserControlMsgLogLevel));
 
     if (ret < DLT_RETURN_OK)
     {
-        if (errno==EPIPE)
+        dlt_vlog(LOG_ERR, "Failed to send data to application in %s: %s",
+                 __func__,
+                 errno != 0 ? strerror(errno) : "Unknown error");
+
+        if (errno == EPIPE)
         {
             /* Close connection */
             close(context->user_handle);
-            context->user_handle=DLT_FD_INIT;
+            context->user_handle = DLT_FD_INIT;
         }
     }
 
