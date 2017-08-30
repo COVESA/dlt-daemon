@@ -549,7 +549,7 @@ DltReturnValue dlt_init_common(void)
             dlt_vlog(LOG_ERR,
                      "Wrong value specified for %s. Using default\n",
                      DLT_USER_ENV_BUFFER_MAX_SIZE);
-            buffer_min = DLT_USER_RINGBUFFER_MAX_SIZE;
+            buffer_max = DLT_USER_RINGBUFFER_MAX_SIZE;
         }
     }
 
@@ -561,7 +561,7 @@ DltReturnValue dlt_init_common(void)
             dlt_vlog(LOG_ERR,
                      "Wrong value specified for %s. Using default\n",
                      DLT_USER_ENV_BUFFER_STEP_SIZE);
-            buffer_min = DLT_USER_RINGBUFFER_STEP_SIZE;
+            buffer_step = DLT_USER_RINGBUFFER_STEP_SIZE;
         }
     }
 
