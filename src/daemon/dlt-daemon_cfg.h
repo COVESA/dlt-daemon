@@ -108,6 +108,9 @@
 /* Default baudrate for serial interface */
 #define DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE 115200
 
+/* configuration of resending attempts when sending to socket was not complete */
+#define DLT_DAEMON_SOCKET_MAXRESEND_ATTEMPTS 5
+
 /************************/
 /* Don't change please! */
 /************************/

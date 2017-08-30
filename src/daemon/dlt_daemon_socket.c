@@ -145,27 +145,81 @@ int dlt_daemon_socket_close(int sock)
 int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader)
 {
     /* Optional: Send serial header, if requested */
+    int ret = DLT_RETURN_OK;
     if (serialheader)
     {
-        if ( 0 > send(sock, dltSerialHeader,sizeof(dltSerialHeader),0) )
-            return DLT_DAEMON_ERROR_SEND_FAILED;
-
+         ret = dlt_daemon_socket_sendreliable(sock, (void *) dltSerialHeader, sizeof(dltSerialHeader));
+         if(ret != DLT_RETURN_OK)
+             return ret;
     }
 
     /* Send data */
-    if(data1 && size1>0)
+    if(data1 != NULL && size1 > 0)
     {
-        if (0 > send(sock, data1,size1,0))
-            return DLT_DAEMON_ERROR_SEND_FAILED;
+        ret = dlt_daemon_socket_sendreliable(sock, data1, size1);
+        if(ret != DLT_RETURN_OK)
+            return ret;
     }
 
-    if(data2 && size2>0)
+    if(data2 != NULL && size2 > 0)
     {
-        if (0 > send(sock, data2,size2,0))
-        return DLT_DAEMON_ERROR_SEND_FAILED;
+        ret = dlt_daemon_socket_sendreliable(sock, data2, size2);
+        if(ret != DLT_RETURN_OK)
+            return ret;
     }
 
-    return DLT_DAEMON_ERROR_OK;
+    return ret;
+}
+
+int dlt_daemon_socket_sendreliable(int sock, void* buffer,int  message_size)
+{        
+   int remaining_size = message_size;
+   int data_sent = 0;
+   int errno_send = 0;
+   int resend_ou = 1;
+
+   //try to resend data, if it was not sent for the first time (max retries: DLT_DAEMON_SOCKET_MAXRESEND_ATTEMPTS)
+   //this implementation prevents occasional corrupted messages, when there is e.g. system send buffer full, high system utilization, etc.
+   while (remaining_size > 0 && resend_ou <= DLT_DAEMON_SOCKET_MAXRESEND_ATTEMPTS)
+   {
+       int resend_in = 0;
+       ssize_t ret = 0;
+
+       //repeat due to some temporal issues
+       do
+       {
+            ret = send(sock, buffer + data_sent, remaining_size, 0);
+            if((ret < 0) && (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK))
+            {
+               snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_sendreliable: socket send failed, but it is repeated again [errno: %d]!\n", errno);
+               dlt_log(LOG_WARNING,str);
+            }
+            errno_send  = errno;
+            ++resend_in;
+       } while ((resend_in < DLT_DAEMON_SOCKET_MAXRESEND_ATTEMPTS) && (ret < 0) && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK));
+
+       if (ret < 0)
+       {
+           snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"dlt_daemon_socket_sendreliable: socket send failed [errno: %d]!\n", errno_send);
+           dlt_log(LOG_WARNING,str);
+           return DLT_DAEMON_ERROR_SEND_FAILED;
+       }
+
+       remaining_size -= ret;
+       data_sent += ret;
+
+       //there is data remaining, which should be resent, because corrupted messages may occur
+       if( remaining_size > 0 )
+       {
+           snprintf(str,
+                    DLT_DAEMON_TEXTBUFSIZE,
+                    "dlt_daemon_socket_sendreliable: In RESENDING: attempt number: %d, remaining bytes: %d, errno from send: %d.\n",
+                    resend_ou,remaining_size,errno_send);
+           dlt_log(LOG_INFO,str);
+       }
+       ++resend_ou;
+   }
+   return DLT_DAEMON_ERROR_OK;
 }
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock)

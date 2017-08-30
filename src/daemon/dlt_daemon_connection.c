@@ -46,6 +46,7 @@
 #include "dlt_daemon_common.h"
 #include "dlt_common.h"
 #include "dlt_gateway.h"
+#include "dlt_daemon_socket.h"
 
 static DltConnectionId connectionId;
 
@@ -76,12 +77,14 @@ STATIC int dlt_connection_send(DltConnection *conn,
 
     switch (type)
     {
-    case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-        return write(conn->receiver->fd, msg, msg_size);
+    case DLT_CONNECTION_CLIENT_MSG_SERIAL:        
+        if(write(conn->receiver->fd, msg, msg_size) > 0)
+            return DLT_DAEMON_ERROR_OK;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     case DLT_CONNECTION_CLIENT_MSG_TCP:
-        return send(conn->receiver->fd, msg, msg_size, 0);
+        return dlt_daemon_socket_sendreliable(conn->receiver->fd, msg, msg_size);
     default:
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 }
 
@@ -110,7 +113,7 @@ int dlt_connection_send_multiple(DltConnection *con,
 
     if (con == NULL)
     {
-        return -1;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     if (sendserialheader)
@@ -120,19 +123,14 @@ int dlt_connection_send_multiple(DltConnection *con,
                                  sizeof(dltSerialHeader));
     }
 
-    if ((data1 != NULL) && (ret >= 0))
+    if ((data1 != NULL) && (ret == DLT_RETURN_OK ))
     {
         ret = dlt_connection_send(con, data1, size1);
     }
 
-    if ((data2 != NULL) && (ret >= 0))
+    if ((data2 != NULL) && (ret == DLT_RETURN_OK))
     {
         ret = dlt_connection_send(con, data2, size2);
-    }
-
-    if (ret >=0)
-    {
-        ret = DLT_DAEMON_ERROR_OK;
     }
 
     return ret;
