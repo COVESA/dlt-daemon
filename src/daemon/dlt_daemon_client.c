@@ -246,7 +246,7 @@ int dlt_daemon_client_send_all(DltDaemon *daemon,
 
 int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_local,void* storage_header,int storage_header_size,void* data1,int size1,void* data2,int size2,int verbose)
 {
-	int sent,ret;
+    int sent = DLT_RETURN_OK,ret;
 
     if (sock!=DLT_DAEMON_SEND_TO_ALL && sock!=DLT_DAEMON_SEND_FORCE)
     {
@@ -329,11 +329,17 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
                                                        size2,
                                                        verbose);
 
-			if((sock==DLT_DAEMON_SEND_FORCE) && !sent)
+            if((sock == DLT_DAEMON_SEND_FORCE) && sent != DLT_RETURN_OK)
 			{
 				return DLT_DAEMON_ERROR_SEND_FAILED;
 			}
-		}
+            //this handles some unawaited errors
+            if (sent == DLT_DAEMON_ERROR_UNKNOWN && sock != DLT_DAEMON_SEND_FORCE && daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)
+            {
+                return DLT_DAEMON_ERROR_SEND_FAILED;
+            }
+        }
+        
     }
 
     /* Message was not sent to client, so store it in client ringbuffer */
