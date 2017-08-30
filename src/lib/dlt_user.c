@@ -535,6 +535,8 @@ DltReturnValue dlt_init_common(void)
 
     dlt_set_id(dlt_user.ecuID, DLT_USER_DEFAULT_ECU_ID);
     dlt_set_id(dlt_user.appID, "");
+    dlt_set_id(dlt_user.appID_atexit, "");
+
 
     dlt_user.application_description = NULL;
 
@@ -717,11 +719,20 @@ void dlt_user_atexit_handler(void)
         return;
     }
 
+    /* Set appID by appID_atexit for sending remaining messages when appID was already unregistered */
+    if(dlt_user.appID[0] == '\0')
+    {
+        dlt_set_id(dlt_user.appID, dlt_user.appID_atexit);
+    }
+
     /* Try to resend potential log messages in the user buffer */
     int count = dlt_user_atexit_blow_out_user_buffer();
 
     if (count != 0)
         dlt_vnlog(LOG_WARNING, 128, "Lost log messages in user buffer when exiting: %i\n", count);
+
+    /* Clear appID_atexit after send remaining messages */
+    dlt_set_id(dlt_user.appID_atexit, "");
 
     /* Unregister app (this also unregisters all contexts in daemon) */
     /* Ignore return value */
@@ -1005,6 +1016,7 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
 
     /* Store locally application id and application description */
     dlt_set_id(dlt_user.appID, apid);
+    dlt_set_id(dlt_user.appID_atexit, apid);
 
     if (dlt_user.application_description != NULL)
         free(dlt_user.application_description);

@@ -190,6 +190,7 @@ typedef struct
 {
     char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
     char appID[DLT_ID_SIZE];                   /**< Application ID */
+    char appID_atexit[DLT_ID_SIZE];            /**< Application ID for atexit */
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
     mqd_t dlt_segmented_queue_read_handle;     /**< Handle message queue */
