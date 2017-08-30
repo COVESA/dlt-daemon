@@ -27,9 +27,9 @@ if( WITH_DLT_EXAMPLES )
     add_subdirectory( examples )
 endif( WITH_DLT_EXAMPLES )
 
-if( WTIH_DLT_ADAPTOR )
+if( WITH_DLT_ADAPTOR )
     add_subdirectory( adaptor )
-endif( WTIH_DLT_ADAPTOR )
+endif( WITH_DLT_ADAPTOR )
 
 if( WITH_DLT_TESTS )
     add_subdirectory( tests )

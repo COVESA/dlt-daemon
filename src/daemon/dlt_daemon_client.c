@@ -2210,7 +2210,7 @@ void dlt_daemon_control_service_logstorage(int sock, DltDaemon *daemon, DltDaemo
         dlt_daemon_logstorage_reset_application_loglevel(daemon, device_index, daemon_local->flags.offlineLogstorageMaxDevices, verbose);
 
         dlt_logstorage_device_disconnected(&(daemon->storage_handle[device_index]),
-+                                           DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
+                                           DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
 
         dlt_daemon_control_service_response(sock, daemon, daemon_local, DLT_SERVICE_ID_OFFLINE_LOGSTORAGE, DLT_SERVICE_RESPONSE_OK, verbose);
     }
