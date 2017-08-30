@@ -3226,7 +3226,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     if((daemon_local == NULL)|| (daemon == NULL))
     {
         dlt_log(LOG_ERR, "dlt_daemon_close_socket: Invalid input parmeters\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* Closure is done while unregistering has for any connection */
@@ -3246,6 +3246,9 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         // In the offline trace AND in the socket stream.
         if(daemon_local->flags.yvalue[0] == 0)
             dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER);
+
+        //send connection info to buffer, if there are not any clients available
+        dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
     }
 
     if (daemon_local->flags.vflag)
@@ -3254,9 +3257,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         dlt_log(LOG_INFO, str);
     }
 
-    dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
-
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 /**

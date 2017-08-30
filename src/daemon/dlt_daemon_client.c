@@ -106,7 +106,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                int size2,
                                                int verbose)
 {
-    int j, sent = 0;
+    int j;
     DltConnection* temp = NULL;
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
@@ -119,21 +119,30 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                  "%s: Invalid parameters\n",
                  __func__);
         dlt_log(LOG_ERR, local_str);
-        return 0;
+        return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     temp = daemon_local->pEvent.connections;
-    temp = dlt_connection_get_next(temp, type_mask);
 
-    /* FIXME: the lock shall include the for loop as data
-     * can be affect between each iteration, but
-     * dlt_daemon_close_socket may call us too ...
-     */
-    for (j = 0; ((j < daemon_local->client_connections) && (temp != NULL)); j++)
+    //consider if the first connection is not requested type
+    if(!((1 << temp->type) & type_mask))
     {
-        int ret = 0;
+        temp = dlt_connection_get_next(temp, type_mask);
+    } 
+
+    int sent_to_clients = 0;
+    int connum = daemon_local->client_connections;
+    for (j = 0; ((j < connum) && (temp != NULL)); j++)
+    {
+        int ret = DLT_DAEMON_ERROR_OK;
+        DltConnection* next = NULL;
+
         DLT_DAEMON_SEM_LOCK();
-        DltConnection *next = dlt_connection_get_next(temp->next, type_mask);
+        //take next connection
+        if(daemon_local->client_connections > 0)
+        {
+            next = dlt_connection_get_next(temp->next, type_mask);
+        }        
 
         ret = dlt_connection_send_multiple(temp,
                                           data1,
@@ -141,37 +150,50 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                           data2,
                                           size2,
                                           daemon->sendserialheader);
+
         DLT_DAEMON_SEM_FREE();
 
-        if((ret != DLT_DAEMON_ERROR_OK) &&
-           DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
-        {
-            dlt_daemon_close_socket(temp->receiver->fd,
-                                    daemon,
-                                    daemon_local,
-                                    verbose);
-        }
-
-        if (ret != DLT_DAEMON_ERROR_OK)
+        if(ret != DLT_DAEMON_ERROR_OK)
         {
             snprintf(local_str,
                      DLT_DAEMON_TEXTBUFSIZE,
-                     "%s: send dlt message failed\n",
+                     "%s: send dlt message failed!\n",
                      __func__);
             dlt_log(LOG_WARNING, local_str);
+
+            if(DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
+            {
+                if(dlt_daemon_close_socket(temp->receiver->fd,
+                                           daemon,
+                                           daemon_local,
+                                           verbose) != DLT_DAEMON_ERROR_OK)
+                {
+                    snprintf(local_str,
+                             DLT_DAEMON_TEXTBUFSIZE,
+                             "%s: socket was not closed succesfully (fd: %d)!\n",
+                             __func__, temp->receiver->fd);
+                    dlt_log(LOG_WARNING, local_str);
+                }
+            }
         }
         else
         {
             /* If sent to at  least one client,
              * then do not store in ring buffer
              */
-            sent = 1;
+            ++sent_to_clients;
         }
 
         temp = next;
-    } /* for */
+    } /* for */ 
 
-    return sent;
+    //at least one client should receive message
+    if (sent_to_clients > 0)
+    {
+        return DLT_DAEMON_ERROR_OK;
+    }
+
+    return DLT_DAEMON_ERROR_SEND_FAILED;
 }
 
 /** @brief Send out message to all the clients.
