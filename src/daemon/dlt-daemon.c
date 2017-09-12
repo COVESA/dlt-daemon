@@ -43,6 +43,7 @@
 
 #ifdef linux
 #   include <sys/timerfd.h>
+#   include <sys/eventfd.h>
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -83,6 +84,10 @@ static int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_loc
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
 #endif
+
+int create_event_fd(DltDaemonLocal *daemon_local, DltEvents event_id);
+inline static void dlt_daemon_write_eventfd(DltEvents event_id);
+inline static void dlt_daemon_read_eventfd(DltEvents event_id);
 
 /* used in main event loop and signal handler */
 int g_exit = 0;
@@ -878,6 +883,11 @@ int main(int argc, char *argv[])
                         DLT_GATEWAY_TIMER_INTERVAL,
                         DLT_GATEWAY_TIMER_INTERVAL,
                         DLT_TIMER_GATEWAY);
+    }
+
+    if (create_event_fd(&daemon_local, DLT_EVENT_RING_BUFFER) != DLT_DAEMON_ERROR_OK)
+    {
+        return -1;
     }
 
     /* For offline tracing we still can use the same states */
@@ -3023,7 +3033,15 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
+    /* Sending ring buffer is possible in SEND BUFFER or BUFFER FULL state with client connection */
+    if (daemon_local->client_connections == 0) {
+        /* No need to continue sending ring buffer */
+        dlt_daemon_read_eventfd(DLT_EVENT_RING_BUFFER);
+        return DLT_DAEMON_ERROR_OK;
+    }
+
     if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
+        dlt_daemon_read_eventfd(DLT_EVENT_RING_BUFFER);
         dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
         return DLT_DAEMON_ERROR_OK;
     }
@@ -3036,7 +3054,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     curr_time = dlt_uptime();
 #endif
 
-    while ((length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data))) > 0) {
+    if ((length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data))) > 0) {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 
         if ((dlt_uptime() - curr_time) / 10000 >= watchdog_trigger_interval) {
@@ -3050,8 +3068,11 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
         if ((ret =
                  dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
-                                        verbose)))
+                                        verbose))) {
+            /* Next send will be done by 1 sec timer */
+            dlt_daemon_read_eventfd(DLT_EVENT_RING_BUFFER);
             return ret;
+        }
 
         dlt_buffer_remove(&(daemon->client_ringbuffer));
 
@@ -3059,9 +3080,13 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
 
         if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
+            /* No need to keep event anymore because of no data in ring buffer */
+            dlt_daemon_read_eventfd(DLT_EVENT_RING_BUFFER);
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
             return DLT_DAEMON_ERROR_OK;
         }
+
+        dlt_daemon_write_eventfd(DLT_EVENT_RING_BUFFER);
     }
 
     return DLT_DAEMON_ERROR_OK;
@@ -3149,6 +3174,108 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
                                  dlt_timer_conn_types[timer_id]);
 }
 
+static char dlt_event_conn_types[DLT_EVENT_UNKNOWN + 1] = {
+    [DLT_EVENT_RING_BUFFER]  = DLT_CONNECTION_RING_BUFFER_EVENT,
+    [DLT_EVENT_UNKNOWN]      = DLT_CONNECTION_TYPE_MAX
+};
+
+/* For each event type,
+ * 1st item contains eventfd    (Default: 0)
+ * 2nd item contains write flag (Default: 0)
+ * This flag is used for reducing unnecessary write() / read() call
+ */
+static int dlt_event_fds[DLT_EVENT_UNKNOWN + 1][2] = {0};
+
+int create_event_fd(DltDaemonLocal *daemon_local, DltEvents event_id)
+{
+    int ev_fd;
+
+    if( daemon_local == NULL) {
+        dlt_log(LOG_ERR, "Failed to create eventfd: Invalid parameter");
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* Create eventfd as Non-Blocking to avoid blocking on write/read against eventfd for sure
+     * Default counter is set to 0
+     */
+    ev_fd = eventfd(0, EFD_NONBLOCK);
+    if( ev_fd < 0) {
+        dlt_vlog(LOG_WARNING, "Failed to create eventfd: Type: %d: %s\n", event_id, strerror(errno));
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* Register eventfd to poll
+     * When any value is written to this eventfd, poll will detect the event
+     */
+    if (dlt_connection_create(daemon_local,
+                              &daemon_local->pEvent,
+                              ev_fd,
+                              POLLIN,
+                              dlt_event_conn_types[event_id]))
+    {
+        dlt_log(LOG_ERR, "Failed to register eventfd\n");
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* Keep fd to global variable to be used for write/read eventfd */
+    dlt_event_fds[event_id][0] = ev_fd;
+    return DLT_DAEMON_ERROR_OK;
+}
+
+inline static void dlt_daemon_write_eventfd(DltEvents event_id)
+{
+    static const uint64_t event = 1;
+    const int target_fd = dlt_event_fds[event_id][0];
+
+    if (target_fd <= 0) {
+        dlt_vlog(LOG_INFO, "Failed to write eventfd: Type: %d has not been created\n", event_id);
+        return;
+    }
+
+
+    /* Avoid to call write() again if event is already written to eventfd */
+    if (dlt_event_fds[event_id][1] != 0) {
+        return;
+    }
+
+    if (write(target_fd, &event, sizeof(event)) < 0) {
+        dlt_vlog(LOG_WARNING,
+                 "Failed to write eventfd: Type: %d: %s\n", event_id, strerror(errno));
+        return;
+    }
+
+    dlt_event_fds[event_id][1] = 1;
+    dlt_vlog(LOG_DEBUG, "Success to write eventfd: Type: %d\n", event_id);
+    return;
+}
+
+inline static void dlt_daemon_read_eventfd(DltEvents event_id)
+{
+    uint64_t ev_count = 0;
+    int target_fd = dlt_event_fds[event_id][0];
+
+    if (target_fd <= 0) {
+        dlt_vlog(LOG_INFO, "Failed to read eventfd: Type: %d has not been created\n", event_id);
+        return;
+    }
+
+    /* Avoid to call read() again if eventfd is empty */
+    if (dlt_event_fds[event_id][1] == 0) {
+        return;
+    }
+
+    if (read(target_fd, &ev_count, sizeof(ev_count)) < 0) {
+        dlt_vlog(LOG_WARNING,
+                 "Failed to read eventfd: Type: %d: %s\n", event_id, strerror(errno));
+        return;
+    }
+
+    dlt_event_fds[event_id][1] = 0;
+    dlt_vlog(LOG_DEBUG, "Success to read eventfd: Type: %d: Event Count: %d\n", event_id, ev_count);
+    return;
+}
+
+
 /* Close connection function */
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
@@ -3174,8 +3301,11 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         /* For offline tracing we still can use the same states */
         /* as for socket sending. Using this trick we see the traces */
         /* In the offline trace AND in the socket stream. */
-        if (daemon_local->flags.yvalue[0] == 0)
+        if (daemon_local->flags.yvalue[0] == 0) {
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER);
+            /* Stop sending ring buffer if it was started */
+            dlt_daemon_read_eventfd(DLT_EVENT_RING_BUFFER);
+        }
     }
 
     dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
@@ -3195,6 +3325,54 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     return 0;
 }
 
-/**
- \}
- */
+/* Open TCP socket to receive TCP connection request or UDP socket for connectionless */
+int dlt_daemon_open_client_connect_socket(DltDaemonLocal *daemon_local) {
+    int sockFd=-1;
+
+    /* create and open socket to receive incoming connections from client */
+    daemon_local->client_connections = 0;
+
+    if (!daemon_local->flags.enableUdpTransmission)
+    { // for TCP,connection oriented.
+        if (dlt_daemon_socket_open(&sockFd, daemon_local->flags.port)
+                || dlt_connection_create(daemon_local, &daemon_local->pEvent, sockFd,
+                POLLIN, DLT_CONNECTION_CLIENT_CONNECT))
+        {
+            dlt_log(LOG_ERR, "Could not initialize main socket for TCP.\n");
+            return -1;
+        }
+
+    } else
+      { // for UDP, connnectionless
+        if (dlt_daemon_socket_udp_open(&sockFd, daemon_local->flags.port)
+                || dlt_connection_create(daemon_local, &daemon_local->pEvent, sockFd,
+                POLLIN, DLT_CONNECTION_CLIENT_MSG_UDP))
+        {
+            dlt_log(LOG_ERR, "Could not initialize main socket for UDP.\n");
+            return -1;
+        }
+      }
+    return 0;
+}
+
+int dlt_daemon_process_ringbuffer(DltDaemon *daemon,
+                                  DltDaemonLocal *daemon_local,
+                                  DltReceiver *receiver,
+                                  int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: invalid parameters\n", __func__);
+        return -1;
+    }
+
+    if (dlt_daemon_send_ringbuffer_to_client(daemon,
+                                             daemon_local,
+                                             daemon_local->flags.vflag)) {
+        dlt_log(LOG_DEBUG,
+                "Can't send contents of ring buffer to clients\n");
+    }
+
+    return 0;
+}

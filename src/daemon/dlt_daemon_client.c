@@ -2274,13 +2274,12 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
          * let's go on sending notification */
     }
 
-    if ((daemon->state == DLT_DAEMON_STATE_SEND_BUFFER) ||
-        (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL)) {
-        if (dlt_daemon_send_ringbuffer_to_client(daemon,
-                                                 daemon_local,
-                                                 daemon_local->flags.vflag))
-            dlt_log(LOG_DEBUG,
-                    "Can't send contents of ring buffer to clients\n");
+    if (dlt_daemon_send_ringbuffer_to_client(daemon,
+                                             daemon_local,
+                                             daemon_local->flags.vflag))
+    {
+        dlt_log(LOG_DEBUG,
+                "Can't send contents of ring buffer to clients\n");
     }
 
     if ((daemon->timingpackets) &&

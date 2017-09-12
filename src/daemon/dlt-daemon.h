@@ -206,6 +206,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_one_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+int dlt_daemon_process_ringbuffer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 #ifdef DLT_USE_UNIX_SOCKET_IPC

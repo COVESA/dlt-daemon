@@ -240,6 +240,10 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
 #endif
     /* FALL THROUGH */
     case DLT_CONNECTION_GATEWAY_TIMER:
+    /* FALL THROUGH */
+    case DLT_CONNECTION_ENABLE_UDP:
+    /* FALL THROUGH */
+    case DLT_CONNECTION_RING_BUFFER_EVENT:
         ret = calloc(1, sizeof(DltReceiver));
 
         if (ret)
@@ -316,6 +320,9 @@ void *dlt_connection_get_callback(DltConnection *con)
         break;
     case DLT_CONNECTION_GATEWAY_TIMER:
         ret = dlt_gateway_process_gateway_timer;
+        break;
+    case DLT_CONNECTION_RING_BUFFER_EVENT:
+        ret = dlt_daemon_process_ringbuffer;
         break;
     default:
         ret = NULL;

@@ -48,6 +48,11 @@ typedef enum {
     DLT_TIMER_UNKNOWN
 } DltTimers;
 
+typedef enum {
+    DLT_EVENT_RING_BUFFER = 0,
+    DLT_EVENT_UNKNOWN
+} DltEvents;
+
 typedef struct {
     struct pollfd *pfd;
     nfds_t nfds;
