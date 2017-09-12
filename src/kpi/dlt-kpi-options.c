@@ -117,7 +117,10 @@ void dlt_kpi_init_configuration(DltKpiConfig *config)
 DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name)
 {
     FILE *file;
-    char *line, *token, *value, *pch, *strchk;
+    char *line = NULL;
+    char *token = NULL;
+    char *value = NULL;
+    char *pch, *strchk;
     int tmp;
 
     if(config == NULL || file_name == NULL)
@@ -136,20 +139,16 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
         return DLT_RETURN_ERROR;
     }
 
-    if((line = malloc(COMMAND_LINE_SIZE)) == 0)
-    {
-        fprintf(stderr, "%s: Out of memory!\n", __func__);
-        return DLT_RETURN_ERROR;
-    }
+    if(((line = malloc(COMMAND_LINE_SIZE)) == 0) ||
+       ((token = malloc(COMMAND_LINE_SIZE)) == 0) ||
+       ((value = malloc(COMMAND_LINE_SIZE)) == 0))
 
-    if((token = malloc(COMMAND_LINE_SIZE)) == 0)
     {
-        fprintf(stderr, "%s: Out of memory!\n", __func__);
-        return DLT_RETURN_ERROR;
-    }
+        fclose(file);
+        free(line);
+        free(token);
+        free(value);
 
-    if((value = malloc(COMMAND_LINE_SIZE)) == 0)
-    {
         fprintf(stderr, "%s: Out of memory!\n", __func__);
         return DLT_RETURN_ERROR;
     }

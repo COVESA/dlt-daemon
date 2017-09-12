@@ -477,7 +477,6 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
         {
             snprintf(str,DLT_COMMON_BUFFER_LENGTH, "Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n", DLT_FILTER_MAX);
             dlt_log(LOG_WARNING, str);
-            return DLT_RETURN_OK;
         }
     }
 

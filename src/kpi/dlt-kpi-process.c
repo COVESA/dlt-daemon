@@ -256,7 +256,8 @@ DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
         if(new_process->command_line == NULL)
         {
             fprintf(stderr, "%s: Out of Memory\n", __func__);
-	    return NULL;
+            free(new_process);
+            return NULL;
         }
         strncpy(new_process->command_line, original->command_line, strlen(original->command_line) + 1);
     }
