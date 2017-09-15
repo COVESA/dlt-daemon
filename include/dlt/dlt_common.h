@@ -76,7 +76,7 @@
 */
 
 #include <stdio.h>
-#include <linux/limits.h>
+#include <limits.h>
 
 #if !defined(_MSC_VER)
 #include <unistd.h>
