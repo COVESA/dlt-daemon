@@ -4,10 +4,41 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
 -------
-2.16.0 STABLE
+2.17.0 STABLE
 
 Changes
 -------
+
+2.17.0
+  * Fix for initialization of buffer settings in DLT user library.
+  * fix various memory leaks 
+  * some-minor-fixes
+  * Minor fixes: corrected typo in CMakeLists.txt - WTIH_DLT_ADAPTOR, removed character from merge 
+  * Data stuck in receiver buffer when dlt_daemon_user_send_log_level() fails
+  * Update dlt_user.h
+  * Add short explanation for DLT log level
+  * Prevent buffer overflow for mount point path in dlt_logstorage_open_log_file
+  * journald adaptor: test with sudo privileges
+  * cmake: fix unit tests compilation with systemd
+  * Input parameter check & Error message modification
+  * Tell cmake to use README.md instead of README to fix doc generation
+  * dlt-system-process-handling: fix warning
+  * dlt_daemon_connection_types: fix build warnings
+  * Updated README
+  * dlt-adaptor-udp, dlt-adaptor-stdin: implement get of verbosity level from input
+  * Added Description in dlt-system.conf
+  * dlt-client: fix dlt_client_cleanup memory handling 
+  * CMake Option: Trigger segmentation fault in case of FATAL log
+  * Daemon connection handling fixes
+  * Added Description in dlt-system.conf
+  * dlt-client: fix dlt_client_cleanup memory handling
+  * CMake Option: Trigger segmentation fault in case of FATAL log
+  * dlt-daemon: Fix use after free potential issue
+  * Event handling: Fix connection destroy bug
+  * Remove duplicate README
+  * daemon: check payload length before cast to struct
+  * Added missing build steps to INSTALL
+  * pkg-config: fix library directory.
 
 2.16.0
   * doc: Documenatation update
