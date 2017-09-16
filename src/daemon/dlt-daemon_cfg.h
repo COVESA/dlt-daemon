@@ -105,8 +105,10 @@
 /* Default ECU ID, used in storage header and transmitted to client*/
 #define DLT_DAEMON_ECU_ID "ECU1"
 
+#if defined (DLT_SERIAL)
 /* Default baudrate for serial interface */
 #define DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE 115200
+#endif
 
 /************************/
 /* Don't change please! */

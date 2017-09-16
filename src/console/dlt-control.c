@@ -488,6 +488,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
+#if defined (DLT_SERIAL)
     else if (g_dltclient.mode == DLT_CLIENT_MODE_SERIAL)
     {
         for (index = optind; index < argc; index++)
@@ -508,7 +509,7 @@ int main(int argc, char* argv[])
 
 		dlt_client_setbaudrate(&g_dltclient,dltdata.bvalue);
     }
-
+#endif
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file),dltdata.vflag);
 

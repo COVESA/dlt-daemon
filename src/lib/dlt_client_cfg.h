@@ -86,10 +86,8 @@
 #define DLT_CLIENT_RCVBUFSIZE         10024
 
 /* Initial baudrate */
-#if !defined (__WIN32__) && !defined(_MSC_VER)
+#if defined (DLT_SERIAL)
 #define DLT_CLIENT_INITIAL_BAUDRATE B115200
-#else
-#define DLT_CLIENT_INITIAL_BAUDRATE 0
 #endif
 
 /* Name of environment variable for specifying the daemon port */

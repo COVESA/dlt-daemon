@@ -120,8 +120,10 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
 
     client->sock=-1;
     client->servIP=0;
+#if defined (DLT_SERIAL)
     client->serialDevice=0;
     client->baudrate=DLT_CLIENT_INITIAL_BAUDRATE;
+#endif
     client->port = port;
     client->socketPath = 0;
     client->mode=DLT_CLIENT_MODE_TCP;
@@ -220,6 +222,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             printf("Connected to DLT daemon (%s)\n",client->servIP);
         }
         break;
+#if defined (DLT_SERIAL)
     case DLT_CLIENT_MODE_SERIAL:
         /* open serial connection */
         client->sock=open(client->serialDevice,O_RDWR);
@@ -255,6 +258,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             printf("Connected to %s\n", client->serialDevice);
         }
         break;
+#endif
     case DLT_CLIENT_MODE_UNIX:
         if ((client->sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
         {
@@ -824,6 +828,7 @@ DltReturnValue dlt_client_send_reset_to_factory_default(DltClient *client)
     return DLT_RETURN_OK;
 }
 
+#if defined (DLT_SERIAL)
 DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
 {
     if (client==0)
@@ -835,7 +840,7 @@ DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
 
     return DLT_RETURN_OK;
 }
-
+#endif
 int dlt_client_set_server_ip(DltClient *client, char *ipaddr)
 {
     client->servIP = strdup(ipaddr);
@@ -846,7 +851,7 @@ int dlt_client_set_server_ip(DltClient *client, char *ipaddr)
     }
     return DLT_RETURN_OK;
 }
-
+#if defined (DLT_SERIAL)
 int dlt_client_set_serial_device(DltClient *client, char *serial_device)
 {
     client->serialDevice = strdup(serial_device);
@@ -857,7 +862,7 @@ int dlt_client_set_serial_device(DltClient *client, char *serial_device)
     }
     return DLT_RETURN_OK;
 }
-
+#endif
 int dlt_client_set_socket_path(DltClient *client, char *socket_path)
 {
     client->socketPath = strdup(socket_path);

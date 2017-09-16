@@ -83,7 +83,7 @@
 #include <time.h>
 #endif
 
-#if !defined (__WIN32__) && !defined(_MSC_VER)
+#if defined (DLT_SERIAL)
 #include <termios.h>
 #endif
 
@@ -1260,7 +1260,7 @@ extern "C"
      */
     int dlt_buffer_get_message_count(DltBuffer *buf);
 
-#if !defined (__WIN32__)
+#if defined (DLT_SERIAL)
 
     /**
      * Helper function: Setup serial connection
@@ -1276,6 +1276,7 @@ extern "C"
      * @return Serial line speed, as defined in termios.h
      */
     speed_t dlt_convert_serial_speed(int baudrate);
+#endif
 
     /**
      * Print dlt version and dlt svn version to buffer
@@ -1298,7 +1299,6 @@ extern "C"
      */
     void dlt_get_minor_version(char *buf, size_t size);
 
-#endif
 
     /* Function prototypes which should be used only internally */
     /*                                                          */

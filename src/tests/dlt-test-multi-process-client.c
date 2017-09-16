@@ -65,8 +65,10 @@
 typedef struct {
     int max_messages;
     int verbose;
+#if defined (DLT_SERIAL)
     int serial;
     int baudrate;
+#endif
     char *output;
     int output_handle;
     int messages_left;
@@ -96,8 +98,10 @@ void usage(char *name) {
     printf("%s", version);
     printf("Options:\n");
     printf(" -m             Total messages to receive. (Default: 10000)\n");
+#if defined (DLT_SERIAL)
     printf(" -y             Serial device mode.\n");
     printf(" -b baudrate    Serial device baudrate. (Default: 115200)\n");
+#endif
     printf(" -v             Verbose. Increases the verbosity level of dlt client library.\n");
     printf(" -o filename    Output messages in new DLT file.\n");
 }
@@ -108,10 +112,12 @@ void usage(char *name) {
 void init_params(s_parameters *params) {
     params->max_messages = 10000;
     params->verbose = 0;
+#if defined (DLT_SERIAL)
     params->serial = 0;
+    params->baudrate = 115200;
+#endif
     params->output = NULL;
     params->output_handle = -1;
-    params->baudrate = 115200;
 }
 
 /**
@@ -126,12 +132,14 @@ int read_params(s_parameters *params, int argc, char *argv[]) {
         case 'm':
             params->max_messages = atoi(optarg);
             break;
+#if defined (DLT_SERIAL)
         case 'y':
             params->serial = 1;
             break;
         case 'b':
             params->baudrate = atoi(optarg);
             break;
+#endif
         case 'v':
             params->verbose = 1;
             break;
@@ -164,6 +172,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
     char id[4];
     if (argc < 2)
         return -1;
+#if defined (DLT_SERIAL)
     if(params->serial > 0)
     {
         client->mode = 1;
@@ -175,6 +184,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
         dlt_client_setbaudrate(client, params->baudrate);
     }
     else
+#endif
     {
         if(dlt_client_set_server_ip(client, argv[argc - 1]) == -1)
         {
@@ -211,7 +221,11 @@ int main(int argc, char *argv[]) {
 
     err = dlt_client_connect(&client, params.verbose);
     if (err != DLT_RETURN_OK) {
+#if defined (DLT_SERIAL)
             printf("Failed to connect %s.\n", client.mode > 0 ? client.serialDevice : client.servIP);
+#else
+            printf("Failed to connect %s.\n", client.servIP);
+#endif
         return err;
     }
 

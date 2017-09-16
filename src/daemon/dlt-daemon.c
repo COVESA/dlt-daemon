@@ -921,6 +921,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     return 0;
 }
 
+#if defined (DLT_SERIAL)
 static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
 {
     /* create and open serial connection from/to client */
@@ -992,7 +993,7 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
                                  EPOLLIN,
                                  DLT_CONNECTION_CLIENT_MSG_SERIAL);
 }
-
+#endif
 static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
@@ -1114,14 +1115,14 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_log(LOG_ERR, "Could not initialize control socket.\n");
         return -1;
     }
-
+#if defined (DLT_SERIAL)
     /* Init serial */
     if (dlt_daemon_init_serial(daemon_local) < 0)
     {
         dlt_log(LOG_ERR,"Could not initialize daemon data\n");
         return -1;
     }
-
+#endif
     return 0;
 }
 

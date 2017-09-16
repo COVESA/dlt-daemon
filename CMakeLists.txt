@@ -69,6 +69,7 @@ option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"          
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                            ON)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                          OFF)
+option(WITH_DLT_SERIAL        "Set to ON to use serial connection in dlt-daemon"                                ON)
 
 set( DLT_USER "genivi" CACHE STRING
     "Set user for process not run as root")
@@ -126,6 +127,10 @@ endif(WITH_DLT_SHM_ENABLE)
 if(WITH_DLT_USE_IPv6)
     add_definitions( -DDLT_USE_IPv6)
 endif(WITH_DLT_USE_IPv6)
+
+if(WITH_DLT_SERIAL)
+    add_definitions( -DDLT_SERIAL)
+endif(WITH_DLT_SERIAL)
 
 if(WITH_GPROF)
   SET(CMAKE_C_FLAGS "-pg")
@@ -225,6 +230,7 @@ message( STATUS "WITH_DLT_SYSTEM = ${WITH_DLT_SYSTEM}")
 message( STATUS "WITH_DLT_DBUS = ${WITH_DLT_DBUS}")
 message( STATUS "WITH_DLT_TESTS = ${WITH_DLT_TESTS}")
 message( STATUS "WITH_DLT_UNIT_TESTS = ${WITH_DLT_UNIT_TESTS}" )
+message( STATUS "WITH_DLT_SERIAL = ${WITH_DLT_SERIAL}" )
 message( STATUS "WITH_DLT_SHM_ENABLE = ${WITH_DLT_SHM_ENABLE}" )
 message( STATUS "WITH_DLTTEST = ${WITH_DLTTEST}" )
 message( STATUS "WITH_DLT_CXX11_EXT = ${WITH_DLT_CXX11_EXT}" )

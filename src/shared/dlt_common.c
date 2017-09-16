@@ -2979,11 +2979,10 @@ int dlt_buffer_get_message_count(DltBuffer *buf)
     return ((int*)(buf->shm))[2];
 }
 
-#if !defined (__WIN32__)
+#if defined (DLT_SERIAL)
 
 DltReturnValue dlt_setup_serial(int fd, speed_t speed)
 {
-#if !defined (__WIN32__) && !defined(_MSC_VER)
     struct termios config;
 
     if (isatty(fd)==0)
@@ -3051,14 +3050,10 @@ DltReturnValue dlt_setup_serial(int fd, speed_t speed)
     }
 
     return DLT_RETURN_OK;
-#else
-    return DLT_RETURN_ERROR;
-#endif
 }
 
 speed_t dlt_convert_serial_speed(int baudrate)
 {
-#if !defined (__WIN32__) && !defined(_MSC_VER) && !defined(__CYGWIN__)
     speed_t ret;
 
     switch (baudrate)
@@ -3221,9 +3216,6 @@ speed_t dlt_convert_serial_speed(int baudrate)
     }
 
     return ret;
-#else
-    return 0;
-#endif
 }
 
 #endif

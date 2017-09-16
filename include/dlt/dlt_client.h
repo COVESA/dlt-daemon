@@ -92,10 +92,12 @@ typedef struct
     int sock;              /**< sock Connection handle/socket */
     char *servIP;          /**< servIP IP adress/Hostname of TCP/IP interface */
     int port;              /**< Port for TCP connections (optional) */
+#if defined (DLT_SERIAL)
     char *serialDevice;    /**< serialDevice Devicename of serial device */
+    speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
+#endif
     char *socketPath;      /**< socketPath Unix socket path */
     char ecuid[4];           /**< ECUiD */
-    speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
     DltClientMode mode;    /**< mode DltClientMode */
 } DltClient;
 

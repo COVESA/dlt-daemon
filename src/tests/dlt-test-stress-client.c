@@ -94,12 +94,12 @@ typedef struct
     int mflag;
     int vflag;
     int yflag;
+    int bvalue;
     char *ovalue;
     char *fvalue;
     char *tvalue;
     char *evalue;
     int nvalue;
-    int bvalue;
 
     char ecuid[4];
     int ohandle;
@@ -145,8 +145,10 @@ void usage()
     printf("  -s            Print DLT messages; only headers\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
+#if defined (DLT_SERIAL)
     printf("  -y            Serial device mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
+#endif
     printf("  -e ecuid      Set ECU ID (Default: ECU1)\n");
     printf("  -o filename   Output messages in new DLT file\n");
     printf("  -f filename   Enable filtering of messages\n");
@@ -169,11 +171,13 @@ int main(int argc, char* argv[])
     dltdata.xflag = 0;
     dltdata.mflag = 0;
     dltdata.vflag = 0;
+#if defined (DLT_SERIAL)
     dltdata.yflag = 0;
+    dltdata.bvalue = 0;
+#endif
     dltdata.ovalue = 0;
     dltdata.fvalue = 0;
     dltdata.evalue = 0;
-    dltdata.bvalue = 0;
     dltdata.nvalue = 10000;
     dltdata.ohandle= -1;
 
@@ -235,11 +239,18 @@ int main(int argc, char* argv[])
             usage();
             return -1;
         }
+#if defined (DLT_SERIAL)
         case 'y':
         {
             dltdata.yflag = 1;
             break;
         }
+        case 'b':
+        {
+            dltdata.bvalue = atoi(optarg);
+            break;
+        }
+#endif
         case 'f':
         {
             dltdata.fvalue = optarg;
@@ -253,11 +264,6 @@ int main(int argc, char* argv[])
         case 'e':
         {
             dltdata.evalue = optarg;
-            break;
-        }
-        case 'b':
-        {
-            dltdata.bvalue = atoi(optarg);
             break;
         }
         case 'n':
@@ -298,8 +304,11 @@ int main(int argc, char* argv[])
     dlt_client_register_message_callback(dlt_testclient_message_callback);
 
     /* Setup DLT Client structure */
+#if defined (DLT_SERIAL)
     dltclient.mode = dltdata.yflag;
-
+#else
+    dltclient.mode = 0;
+#endif
     if (dltclient.mode==0)
     {
         for (index = optind; index < argc; index++)
@@ -320,6 +329,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
+#if defined (DLT_SERIAL)
     else
     {
         for (index = optind; index < argc; index++)
@@ -341,7 +351,7 @@ int main(int argc, char* argv[])
 
         dlt_client_setbaudrate(&dltclient,dltdata.bvalue);
     }
-
+#endif
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file),dltdata.vflag);
 
