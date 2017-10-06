@@ -27,7 +27,7 @@
  * \file dlt_daemon_event_handler_types.h
  */
 
-#include <sys/epoll.h>
+#include <sys/poll.h>
 
 #include "dlt_daemon_connection_types.h"
 
@@ -50,10 +50,10 @@ typedef enum {
     DLT_TIMER_UNKNOWN
 } DltTimers;
 
-#define DLT_EPOLL_MAX_EVENTS 10
 typedef struct {
-    int epfd;
-    struct epoll_event events[DLT_EPOLL_MAX_EVENTS];
+    struct pollfd *pfd;
+    nfds_t nfds;
+    nfds_t max_nfds;
     DltConnection *connections;
 } DltEventHandler;
 

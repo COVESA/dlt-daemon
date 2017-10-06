@@ -500,6 +500,13 @@ DltReturnValue dlt_register_app(const char *appid, const char * description);
 DltReturnValue dlt_unregister_app(void);
 
 /**
+ * Unregister an application in the daemon and also flushes the buffered logs.
+ * This function has to be called when finishing using an application.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
+
+/**
  * Register a context in the daemon.
  * This function has to be called before first usage of the context.
  * @param handle pointer to an object containing information about one special logging context

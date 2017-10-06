@@ -868,11 +868,11 @@ STATIC int dlt_gateway_add_to_event_loop(DltDaemonLocal *daemon_local,
     con->timeout_cnt = 0;
     con->sendtime_cnt = 0;
 
-    /* setup dlt connection and add to epoll event loop here */
+    /* setup dlt connection and add to poll event loop here */
     if (dlt_connection_create(daemon_local,
                               &daemon_local->pEvent,
                               con->client.sock,
-                              EPOLLIN,
+                              POLLIN,
                               DLT_CONNECTION_GATEWAY) != 0)
     {
         dlt_log(LOG_ERR, "Gateway connection creation failed\n");
@@ -947,7 +947,7 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
 
             if (ret == 0)
             {
-                /* setup dlt connection and add to epoll event loop here */
+                /* setup dlt connection and add to poll event loop here */
                 if (dlt_gateway_add_to_event_loop(daemon_local, con, verbose) != DLT_RETURN_OK)
                 {
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");
@@ -972,11 +972,11 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
         else if ((con->status == DLT_GATEWAY_CONNECTED) &&
                  (con->trigger != DLT_GATEWAY_DISABLED))
         {
-            /* setup dlt connection and add to epoll event loop here */
+            /* setup dlt connection and add to poll event loop here */
             if (dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,
                                  con->client.sock,
-                                 EPOLLIN,
+                                 POLLIN,
                                  DLT_CONNECTION_GATEWAY) != 0)
             {
                 dlt_log(LOG_ERR, "Gateway connection creation failed\n");
@@ -1672,7 +1672,7 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
         {
             if (dlt_client_connect(&con->client, verbose) == 0)
             {
-                /* setup dlt connection and add to epoll event loop here */
+                /* setup dlt connection and add to poll event loop here */
                 if (dlt_gateway_add_to_event_loop(daemon_local, con, verbose) != DLT_RETURN_OK)
                 {
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");

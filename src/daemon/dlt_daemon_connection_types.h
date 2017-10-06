@@ -33,8 +33,8 @@
 
 typedef enum {
     UNDEFINED, /* Undefined status */
-    INACTIVE,  /* Connection is inactive, excluded from epoll handling */
-    ACTIVE,    /* Connection is actively handled by epoll */
+    INACTIVE,  /* Connection is inactive, excluded from poll handling */
+    ACTIVE,    /* Connection is actively handled by poll */
     DEACTIVATE,/* Request for deactivation of the connection */
     ACTIVATE   /* Request for activation of the connection */
 } DltConnectionStatus;

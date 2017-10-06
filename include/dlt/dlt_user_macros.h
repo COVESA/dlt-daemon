@@ -121,6 +121,12 @@
     (void)dlt_unregister_app();} while(0)
 
 /**
+ * Unregister application and flush the logs buffered in startup buffer if any.
+ */
+#define DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS() do{\
+    (void)dlt_unregister_app_flush_buffered_logs();} while(0)
+
+/**
  * Register context (with default log level and default trace status)
  * @param CONTEXT object containing information about one special logging context
  * @param CONTEXTID context id with maximal four characters

@@ -16,23 +16,25 @@
 #######
 add_definitions( -Werror )
 
-if(WITH_DLT_LOGSTORAGE_CTRL_UDEV AND WITH_DLT_LOGSTORAGE_CTRL_PROP)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-prop.c dlt-logstorage-udev.c dlt-logstorage-list.c)
-elseif(WITH_DLT_LOGSTORAGE_CTRL_PROP)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-prop.c dlt-logstorage-list.c)
-elseif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-udev.c dlt-logstorage-list.c)
-else(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-list.c)
-endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV AND WITH_DLT_LOGSTORAGE_CTRL_PROP)
-
-add_executable(dlt-logstorage-ctrl ${dlt_logstorage_ctrl_SRCS} ${dlt_control_common_SRCS} ${dlt_most_SRCS} ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c )
+set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-list.c)
 
 if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- target_link_libraries(dlt-logstorage-ctrl dlt udev ${EXPAT_LIBRARIES})
-else(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- target_link_libraries(dlt-logstorage-ctrl dlt ${EXPAT_LIBRARIES})
+ set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} dlt-logstorage-udev.c)
 endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+
+if(WITH_SYSTEMD)
+ set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
+endif(WITH_SYSTEMD)
+
+add_executable(dlt-logstorage-ctrl ${dlt_logstorage_ctrl_SRCS} ${dlt_control_common_SRCS} ${dlt_most_SRCS})
+
+set(DLT_LOGSTORAGE_LIBRARIES dlt-logstorage-ctrl dlt ${EXPAT_LIBRARIES})
+
+if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+ set(DLT_LOGSTORAGE_LIBRARIES ${DLT_LOGSTORAGE_LIBRARIES} udev)
+endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+
+target_link_libraries(${DLT_LOGSTORAGE_LIBRARIES})
 
 set_target_properties(dlt-logstorage-ctrl PROPERTIES LINKER_LANGUAGE C)
 

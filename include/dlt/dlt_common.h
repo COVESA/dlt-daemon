@@ -76,7 +76,11 @@
 */
 
 #include <stdio.h>
+#ifdef __linux__
 #include <linux/limits.h>
+#else
+#include <limits.h>
+#endif
 
 #if !defined(_MSC_VER)
 #include <unistd.h>

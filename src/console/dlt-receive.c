@@ -77,7 +77,11 @@
 #include <string.h>
 #include <glob.h>
 #include <syslog.h>
-#include <linux/limits.h> /* for PATH_MAX */
+#ifdef __linux__
+#include <linux/limits.h>
+#else
+#include <limits.h>
+#endif
 #include <inttypes.h>
 
 #include "dlt_client.h"
@@ -211,7 +215,7 @@ int dlt_receive_open_output_file(DltReceiveData * dltdata)
 {
     /* if (file_already_exists) */
     glob_t outer;
-    if (glob(dltdata->ovalue, GLOB_TILDE_CHECK | GLOB_NOSORT, NULL, &outer) == 0)
+    if (glob(dltdata->ovalue, GLOB_TILDE | GLOB_NOSORT, NULL, &outer) == 0)
     {
         if (dltdata->vflag)
         {
@@ -234,7 +238,7 @@ int dlt_receive_open_output_file(DltReceiveData * dltdata)
              * foo.1000.dlt
              * foo.11.dlt
              */
-            if (glob(pattern, GLOB_TILDE_CHECK | GLOB_NOSORT, NULL, &inner) == 0)
+            if (glob(pattern, GLOB_TILDE | GLOB_NOSORT, NULL, &inner) == 0)
             {
               /* search for the highest number used */
               size_t i;
@@ -376,7 +380,16 @@ int main(int argc, char* argv[])
             	  to_copy = to_copy - 4;
             	}
 
-            	dltdata.ovaluebase = strndup(dltdata.ovalue, to_copy);
+                dltdata.ovaluebase = (char *)calloc(1, to_copy + 1);
+
+                if (dltdata.ovaluebase == NULL)
+                {
+                    fprintf (stderr, "Memory allocation failed.\n");
+                    return -1;
+                }
+
+                dltdata.ovaluebase[to_copy] = '\0';
+                memcpy(dltdata.ovaluebase, dltdata.ovalue, to_copy);
             	break;
 			}
         case 'e':

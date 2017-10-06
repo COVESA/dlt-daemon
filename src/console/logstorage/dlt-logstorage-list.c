@@ -143,6 +143,7 @@ static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
 int logstorage_store_dev_info(const char *node, const char *path)
 {
     struct LogstorageDeviceInfo *ptr = NULL;
+    size_t path_len = 0;
 
     if ((node == NULL) || (path == NULL))
     {
@@ -166,7 +167,21 @@ int logstorage_store_dev_info(const char *node, const char *path)
     }
 
     ptr->dev_node = strdup(node);
-    ptr->mnt_point = strndup(path, DLT_MOUNT_PATH_MAX);
+    path_len = strlen(path);
+    if (path_len >DLT_MOUNT_PATH_MAX)
+    {
+        path_len = (size_t)DLT_MOUNT_PATH_MAX;
+    }
+    ptr->mnt_point = (char *)calloc(1, path_len + 1);
+
+    if (ptr->mnt_point == NULL)
+    {
+        pr_error("memory allocation failed for mnt_point\n");
+        return -1;
+    }
+
+    ptr->mnt_point[path_len] = '\0';
+    memcpy(ptr->mnt_point, path, path_len);
 
     /* Put it on head */
     ptr->next = g_info;

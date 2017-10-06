@@ -84,7 +84,7 @@ void dlt_gateway_deinit(DltGateway *g, int verbose);
  * on daemon startup and add this connections to the main event loop.
  *
  * TODO: This function is called during gateway initialization and in main loop
- *       whenever the epoll returns. This may need to be improved.
+ *       whenever the poll returns. This may need to be improved.
  *
  * @param g             DltGateway
  * @param daemon_local  DltDaemonLocal

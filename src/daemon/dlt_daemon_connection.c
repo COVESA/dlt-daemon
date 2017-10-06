@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 #include <sys/socket.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 #include <sys/types.h>
 
 #include "dlt_daemon_connection_types.h"
@@ -331,7 +331,7 @@ void dlt_connection_destroy(DltConnection *to_destroy)
     to_destroy->id = 0;
     close(to_destroy->receiver->fd);
     dlt_connection_destroy_receiver(to_destroy);
-    /* connection pointer might be in epoll queue and used even after destroying
+    /* connection pointer might be in poll queue and used even after destroying
      * it. To make sure it is not used anymore, connection type is invalidated */
     to_destroy->type = DLT_CONNECTION_TYPE_MAX;
     free(to_destroy);
@@ -370,7 +370,7 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
         /* No need for the same client to be registered twice
          * for the same event.
          * TODO: If another mask can be expected,
-         * we need it to update the epoll event here.
+         * we need it to update the poll event here.
          */
         return 0;
     }
