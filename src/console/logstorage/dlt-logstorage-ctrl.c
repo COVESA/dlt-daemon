@@ -63,9 +63,11 @@
 #include <string.h>
 #include <getopt.h>
 
-#include <sys/epoll.h>
+#include <sys/poll.h>
 
+#if defined(__linux__)
 #include "sd-daemon.h"
+#endif
 
 #include "dlt_protocol.h"
 #include "dlt_client.h"
@@ -73,16 +75,19 @@
 #include "dlt-logstorage-common.h"
 #include "dlt-logstorage-ctrl.h"
 
-#define EPOLL_MAX_EVENTS 10
-#define EPOLL_TIME_OUT   500
+#define POLL_TIME_OUT   500
+#define EV_MASK_REJECTED (POLLERR | POLLHUP | POLLNVAL)
 
 #define DLT_LOGSTORAGE_CTRL_EXIT 1
 static int must_exit;
-static int efd;
+struct dlt_event {
+    struct pollfd pfd;
+    void *func;
+};
 
 /** @brief Triggers the application exit
  *
- * The application will exit on next epoll timeout.
+ * The application will exit on next poll timeout.
  */
 void dlt_logstorage_exit(void)
 {
@@ -91,7 +96,7 @@ void dlt_logstorage_exit(void)
 
 /** @brief Check if the application must exit
  *
- * The application will exit on next epoll timeout.
+ * The application will exit on next poll timeout.
  */
 int dlt_logstorage_must_exit(void)
 {
@@ -203,22 +208,22 @@ static int analyze_response(char *data, void *payload, int len)
     return ret;
 }
 
-/** @brief Add a new event to watch to the epoll instance
+/** @brief Add a new event to watch
  *
  * This function could be exported to be used by udev/prop so that they can
  * register several events.
- * There is no remove function as the removal is done on efd closure.
  *
+ * @param ev_hdl The structure containing the file descriptors
  * @param fd The file descriptor to watch
  * @param cb The callback to be called on event.
  *
- * @return epoll_ctrl return value, or -1 on earlier failure.
+ * @return 0 on success, -1 if the parameters are invalid.
  */
-static int dlt_logstorage_ctrl_add_event(int fd, void *cb)
+static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl,
+                                         int fd,
+                                         void *cb)
 {
-    struct epoll_event event;
-
-    if ((fd < 0) || !cb)
+    if ((fd < 0) || !cb || !ev_hdl)
     {
         pr_error("Wrong parameter to add event (%d %p)\n", fd, cb);
         return -1;
@@ -226,96 +231,82 @@ static int dlt_logstorage_ctrl_add_event(int fd, void *cb)
 
     pr_verbose("Setting up the event handler with (%d, %p).\n", fd, cb);
 
-    event.data.ptr = cb;
-    event.events = EPOLLIN | EPOLLET;
+    ev_hdl->func = cb;
+    ev_hdl->pfd.fd = fd;
 
-    return epoll_ctl(efd, EPOLL_CTL_ADD, fd, &event);
+    return 0;
 }
 
 /** @brief Main execution loop
  *
- * Waits on events from the epoll fd, and executes the callbacks retrieved
+ * Waits on events, and executes the callbacks retrieved
  * back from the event structure.
  *
  * @return 0 on success, -1 otherwise.
  */
-static int dlt_logstorage_ctrl_execute_event_loop(int efd)
+static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
 {
-    struct epoll_event *events;
-    int i;
     int ret = 0;
-    int n = 0;
+    int (*callback)() = ev->func;
 
-    events = calloc(10, sizeof(struct epoll_event));
+    ret = poll(&ev->pfd, 1, POLL_TIME_OUT);
 
-    if (!events)
+    if (ret <= 0)
     {
-        pr_error("No memory available for events.\n");
-        return -1;
-    }
-
-    n = epoll_wait(efd, events, EPOLL_MAX_EVENTS, EPOLL_TIME_OUT);
-
-    if (n < 0)
-    {
-        pr_error("epoll_wait error: %s\n", strerror(errno));
-
         if (errno == EINTR)
         {
-            /* Only exit if the daemon has received QUIT/INT/TERM */
-            free(events);
-            return 0;
+            ret = 0;
         }
 
-        free(events);
+        if (ret < 0)
+        {
+            pr_error("poll error: %s\n", strerror(errno));
+        }
+
+        return ret;
+    }
+
+    if (ev->pfd.revents == 0)
+    {
+        return 0;
+    }
+
+    if (ev->pfd.events & EV_MASK_REJECTED)
+    {
+        pr_error("Error while polling. Event received: 0x%x\n", ev->pfd.events);
+        /* We only support one event producer.
+         * Error means that this producer died.
+         */
+        pr_error("Now closing fd and exiting.\n");
+        close(ev->pfd.fd);
+        ev->pfd.fd = -1;
+        dlt_logstorage_exit();
         return -1;
     }
 
-    for (i = 0 ; i < n ; i++)
+    if (!callback)
     {
-        int (*callback)() = events[i].data.ptr;
-
-        if (!(events[i].events & (EPOLLIN | EPOLLET)))
-        {
-            pr_error("Error while polling. Event received: 0x%x\n",
-                     events[i].events);
-            /* We only support one event producer.
-             * Error means that this producer died.
-             */
-            pr_error("Now closing fd and exiting.\n");
-            close(events[i].data.fd);
-            dlt_logstorage_exit();
-            ret = -1;
-            break;
-        }
-
-        if (!callback)
-        {
-            pr_error("Callback not found, exiting.\n");
-            dlt_logstorage_exit();
-            ret = -1;
-            break;
-        }
-
-        pr_verbose("Got new event, calling %p.\n", callback);
-
-        if (callback() < 0)
-        {
-            pr_error("Error while calling the callback, exiting.\n");
-            dlt_logstorage_exit();
-            ret = -1;
-            break;
-        }
+        pr_error("Callback not found, exiting.\n");
+        dlt_logstorage_exit();
+        return -1;
     }
 
-    free(events);
-    return ret;
+    pr_verbose("Got new event, calling %p.\n", callback);
+
+    if (callback() < 0)
+    {
+        pr_error("Error while calling the callback, exiting.\n");
+        dlt_logstorage_exit();
+        return -1;
+    }
+
+    return 0;
 }
 
 /** @brief Start event loop and receive messages from DLT.
  *
  * The function will first install the signal handler,
- * then create the epoll instance, initialize the communication controller,
+ * then create the poll instance, initialize the communication controller,
  * initialize the event handler and finally start the polling.
  *
  * @return 0 on success, -1 on error
@@ -323,18 +314,16 @@ static int dlt_logstorage_ctrl_execute_event_loop(int efd)
 static int dlt_logstorage_ctrl_setup_event_loop(void)
 {
     int ret = 0;
+    struct dlt_event ev_hdl = {
+        .pfd = {
+            .fd = -1,
+            .events = POLLIN
+        }
+    };
 
     install_signal_handler();
 
-    pr_verbose("Creating epoll instance.\n");
-    efd = epoll_create1(0);
-
-    if (efd == -1)
-    {
-        pr_error("epoll_create error: %s\n", strerror(errno));
-        dlt_logstorage_exit();
-        return -errno;
-    }
+    pr_verbose("Creating poll instance.\n");
 
     /* Initializing the communication with the daemon */
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
@@ -360,21 +349,20 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
         return -1;
     }
 
-    if (dlt_logstorage_ctrl_add_event(dlt_logstorage_get_handler_fd(),
+    if (dlt_logstorage_ctrl_add_event(&ev_hdl,
+                                      dlt_logstorage_get_handler_fd(),
                                       dlt_logstorage_get_handler_cb()) < 0)
     {
-        pr_error("epoll_ctl error: %s\n", strerror(errno));
+        pr_error("add_event error: %s\n", strerror(errno));
         dlt_logstorage_exit();
     }
 
     while (!dlt_logstorage_must_exit() && (ret == 0))
     {
-        ret = dlt_logstorage_ctrl_execute_event_loop(efd);
+        ret = dlt_logstorage_ctrl_execute_event_loop(&ev_hdl);
     }
 
     /* Clean up */
-    close(efd);
-
     dlt_logstorage_deinit_handler();
     dlt_control_deinit();
 
@@ -560,6 +548,16 @@ static int parse_args(int argc, char *argv[])
 
     return 0;
 }
+
+#if !defined(DLT_SYSTEMD_ENABLE)
+int sd_notify(int unset_environment, const char *state)
+{
+    /* Satisfy Compiler for warnings */
+    (void) unset_environment;
+    (void) state;
+    return 0;
+}
+#endif
 
 /** @brief Entry point
  *

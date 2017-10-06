@@ -92,11 +92,12 @@ int main(int argc, char* argv[])
     char version[255];
     int timeout = -1;
     int verbosity = DLT_LOG_INFO;
+    int bflag = 0;
 
     dlt_set_id(apid, PS_DLT_APP);
     dlt_set_id(ctid, PS_DLT_CONTEXT);
 
-    while ((opt = getopt(argc, argv, "a:c:ht:v:")) != -1)
+    while ((opt = getopt(argc, argv, "a:c:bht:v:")) != -1)
     {
         switch (opt)
         {
@@ -108,6 +109,11 @@ int main(int argc, char* argv[])
         case 'c':
         {
             dlt_set_id(ctid,optarg);
+            break;
+        }
+        case 'b':
+        {
+            bflag = 1;
             break;
         }
         case 't':
@@ -125,6 +131,7 @@ int main(int argc, char* argv[])
             printf("Options:\n");
             printf("  -a apid      - Set application id to apid (default: SINA)\n");
             printf("  -c ctid      - Set context id to ctid (default: SINC)\n");
+            printf("  -b           - Flush buffered logs before unregistering app\n");
             printf("  -t timeout   - Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
             printf("  -v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
             printf("  -h           - This help\n");
@@ -194,7 +201,15 @@ int main(int argc, char* argv[])
     }
 
     DLT_UNREGISTER_CONTEXT(mycontext);
-    DLT_UNREGISTER_APP();
+
+    if (bflag == 1)
+    {
+        DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
+    }
+    else
+    {
+        DLT_UNREGISTER_APP();
+    }
 
     return 0;
 }

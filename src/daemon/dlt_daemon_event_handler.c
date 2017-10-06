@@ -28,11 +28,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#include <sys/epoll.h>
-#include <sys/syslog.h>
+#include <sys/poll.h>
+#include <syslog.h>
 
 #include "dlt_common.h"
 
@@ -45,15 +46,31 @@
 #include "dlt_daemon_event_handler_types.h"
 
 /**
- * \def DLT_EPOLL_TIMEOUT_MSEC
- * The maximum amount of time to wait for an epoll event.
+ * \def DLT_EV_TIMEOUT_MSEC
+ * The maximum amount of time to wait for a poll event.
  * Set to 1 second to avoid unnecessary wake ups.
  */
-#define DLT_EPOLL_TIMEOUT_MSEC 1000
+#define DLT_EV_TIMEOUT_MSEC 1000
+#define DLT_EV_BASE_FD      16
+
+#define DLT_EV_MASK_REJECTED (POLLERR | POLLNVAL)
+
+/** @brief Initialize a pollfd structure
+ *
+ * That ensures that no event will be mis-watched.
+ *
+ * @param pfd: The element to initialize
+ */
+static void init_poll_fd(struct pollfd *pfd)
+{
+    pfd->fd = -1;
+    pfd->events = 0;
+    pfd->revents = 0;
+}
 
 /** @brief Prepare the event handler
  *
- * This will create the epoll file descriptor.
+ * This will create the base poll file descriptor list.
  *
  * @param ev The event handler to prepare.
  *
@@ -61,19 +78,110 @@
  */
 int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
 {
+    int i = 0;
+
     if (ev == NULL)
     {
         return DLT_RETURN_ERROR;
     }
-    ev->epfd = epoll_create(DLT_EPOLL_MAX_EVENTS);
 
-    if (ev->epfd < 0)
+    ev->pfd = calloc(DLT_EV_BASE_FD, sizeof(struct pollfd));
+
+    if (ev->pfd == NULL)
     {
-        dlt_log(LOG_CRIT, "Creation of epoll instance failed!\n");
+        dlt_log(LOG_CRIT, "Creation of poll instance failed!\n");
         return -1;
     }
 
+    for (i = 0; i < DLT_EV_BASE_FD; i++)
+    {
+        init_poll_fd(&ev->pfd[i]);
+    }
+
+    ev->nfds = 0;
+    ev->max_nfds = DLT_EV_BASE_FD;
+
     return 0;
+}
+
+/** @brief Enable a file descriptor to be watched
+ *
+ * Adds a file descriptor to the descriptor list. If the list is to small,
+ * increase its size.
+ *
+ * @param ev: The event handler structure, containing the list
+ * @param fd: The file descriptor to add
+ * @param mask: The mask of event to be watched
+ */
+static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
+{
+    if (ev->max_nfds <= ev->nfds)
+    {
+        int i = ev->nfds;
+        int max = 2 * ev->max_nfds;
+        struct pollfd *tmp = realloc(ev->pfd, max * sizeof(*ev->pfd));
+
+        if (!tmp)
+        {
+            dlt_log(LOG_CRIT,
+                    "Unable to register new fd for the event handler.\n");
+            return;
+        }
+
+        ev->pfd = tmp;
+        ev->max_nfds = max;
+
+        for (; i < max; i++)
+        {
+            init_poll_fd(&ev->pfd[i]);
+        }
+    }
+
+    ev->pfd[ev->nfds].fd = fd;
+    ev->pfd[ev->nfds].events = mask;
+    ev->nfds++;
+}
+
+/** @brief Disable a file descriptor for watching
+ *
+ * The file descriptor is removed from the descriptor list, the list is
+ * compressed during the process.
+ *
+ * @param ev: The event handler structure containing the list
+ * @param fd: The file descriptor to be removed
+ */
+static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
+{
+    unsigned int i = 0;
+    unsigned int j = 0;
+    unsigned int nfds = ev->nfds;
+
+    for (; i < nfds; i++, j++)
+    {
+        if (ev->pfd[i].fd == fd)
+        {
+            init_poll_fd(&ev->pfd[i]);
+            j++;
+            ev->nfds--;
+        }
+
+        if (i == j)
+        {
+            continue;
+        }
+
+        /* Compressing the table */
+        if (i < ev->nfds)
+        {
+            ev->pfd[i].fd = ev->pfd[j].fd;
+            ev->pfd[i].events = ev->pfd[j].events;
+            ev->pfd[i].revents = ev->pfd[j].revents;
+        }
+        else
+        {
+            init_poll_fd(&ev->pfd[i]);
+        }
+    }
 }
 
 /** @brief Catch and process incoming events.
@@ -92,47 +200,48 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                             DltDaemon *daemon,
                             DltDaemonLocal *daemon_local)
 {
+    int ret = 0;
+    unsigned int i = 0;
+    char str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+    int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
+
     if ((pEvent == NULL) || (daemon  == NULL) || (daemon_local == NULL))
     {
         return DLT_RETURN_ERROR;
     }
-    int nfds = 0;
-    int i = 0;
-    char str[DLT_DAEMON_TEXTBUFSIZE];
-    int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
 
-    /*CM Change begin*/
-    nfds = epoll_wait(pEvent->epfd,
-                      pEvent->events,
-                      DLT_EPOLL_MAX_EVENTS,
-                      DLT_EPOLL_TIMEOUT_MSEC);
+    ret = poll(pEvent->pfd, pEvent->nfds, DLT_EV_TIMEOUT_MSEC);
 
-    if (nfds < 0)
+    if (ret <= 0)
     {
         /* We are not interested in EINTR has it comes
          * either from timeout or signal.
          */
-        if (errno != EINTR)
+        if (errno == EINTR)
         {
-            snprintf(str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "epoll_wait() failed: %s\n",
-                     strerror(errno));
-            dlt_log(LOG_CRIT, str);
-            return -1;
+            ret = 0;
         }
 
-        return 0;
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_CRIT, "poll() failed: %s\n", strerror(errno));
+        }
+
+        return ret;
     }
 
-    for (i = 0 ; i < nfds ; i++)
+    for (i = 0 ; i < pEvent->nfds ; i++)
     {
-        struct epoll_event *ev = &pEvent->events[i];
-        DltConnectionId id = (DltConnectionId)ev->data.ptr;
-        DltConnection *con = dlt_event_handler_find_connection_by_id(pEvent,
-                                                                     id);
         int fd = 0;
+        DltConnection *con = NULL;
         DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
+
+        if (pEvent->pfd[i].revents == 0)
+        {
+            continue;
+        }
+
+        con = dlt_event_handler_find_connection(pEvent, pEvent->pfd[i].fd);
 
         if (con && con->receiver)
         {
@@ -141,17 +250,15 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         }
         else /* connection might have been destroyed in the meanwhile */
         {
+            dlt_event_handler_disable_fd(pEvent, pEvent->pfd[i].fd);
             continue;
         }
 
-        /* First of all handle epoll error events
-         * We only expect EPOLLIN or EPOLLOUT
-         */
-        if ((ev->events != EPOLLIN) && (ev->events != EPOLLOUT))
+        /* First of all handle error events */
+        if (pEvent->pfd[i].revents & DLT_EV_MASK_REJECTED)
         {
-            /* epoll reports an error, we need to clean-up the concerned event
+            /* An error occurred, we need to clean-up the concerned event
              */
-
             if (type == DLT_CONNECTION_CLIENT_MSG_TCP)
             {
                 /* To transition to BUFFER state if this is final TCP client connection,
@@ -224,31 +331,6 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
     return temp;
 }
 
-/** @brief Find connection with a specific \a id in the connection list.
- *
- * There can be only one event per \a fd. We can then find a specific connection
- * based on this \a fd. That allows to check if a specific \a fd has already been
- * registered.
- *
- * @param ev The event handler structure where the list of connection is.
- * @param id The identifier of the connection to be found.
- *
- * @return The found connection pointer, NULL otherwise.
- */
-DltConnection *dlt_event_handler_find_connection_by_id(DltEventHandler *ev,
-                                                       DltConnectionId id)
-{
-
-    DltConnection *temp = ev->connections;
-
-    while ((temp != NULL) && (temp->id != id))
-    {
-        temp = temp->next;
-    }
-
-    return temp;
-}
-
 /** @brief Remove a connection from the list and destroy it.
  *
  * This function will first look for the connection in the event handler list,
@@ -306,6 +388,8 @@ STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
  */
 void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
 {
+    unsigned int i = 0;
+
     if (ev == NULL)
     {
         /* Nothing to do. */
@@ -317,6 +401,13 @@ void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
         /* We don really care on failure */
         (void)dlt_daemon_remove_connection(ev, ev->connections);
     }
+
+    for (i = 0; i < ev->nfds; i++)
+    {
+        init_poll_fd(&ev->pfd[i]);
+    }
+
+    free(ev->pfd);
 }
 
 /** @brief Add a new connection to the list.
@@ -381,14 +472,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
                      con->type);
             dlt_log(LOG_INFO, local_str);
 
-            if (epoll_ctl(evhdl->epfd,
-                          EPOLL_CTL_DEL,
-                          con->receiver->fd,
-                          NULL) == -1)
-            {
-                dlt_log(LOG_ERR, "epoll_ctl() in deactivate failed!\n");
-                return -1;
-            }
+            dlt_event_handler_disable_fd(evhdl, con->receiver->fd);
 
             con->status = INACTIVE;
         }
@@ -396,25 +480,16 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case INACTIVE:
         if (activation_type == ACTIVATE)
         {
-            struct epoll_event ev; /* Content will be copied by the kernel */
-            ev.events = con->ev_mask;
-            ev.data.ptr = (void *)con->id;
-
             snprintf(local_str,
                      DLT_DAEMON_TEXTBUFSIZE,
                      "Activate connection type: %d\n",
                      con->type);
             dlt_log(LOG_INFO, local_str);
 
+            dlt_event_handler_enable_fd(evhdl,
+                                        con->receiver->fd,
+                                        con->ev_mask);
 
-            if (epoll_ctl(evhdl->epfd,
-                          EPOLL_CTL_ADD,
-                          con->receiver->fd,
-                          &ev) == -1)
-            {
-                dlt_log(LOG_ERR, "epoll_ctl() in activate failed!\n");
-                return -1;
-            }
             con->status = ACTIVE;
         }
         break;
@@ -447,11 +522,12 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
  * @return 0 on success, -1 otherwise.
  */
 int dlt_event_handler_register_connection(DltEventHandler *evhdl,
-                                         DltDaemonLocal *daemon_local,
-                                         DltConnection *connection,
-                                         int mask)
+                                          DltDaemonLocal *daemon_local,
+                                          DltConnection *connection,
+                                          int mask)
 {
-    if (!evhdl || !connection || !connection->receiver) {
+    if (!evhdl || !connection || !connection->receiver)
+    {
         dlt_log(LOG_ERR, "Wrong parameters when registering connection.\n");
         return -1;
     }
@@ -490,8 +566,8 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
  * @return 0 on success, -1 otherwise.
  */
 int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
-                                           DltDaemonLocal *daemon_local,
-                                           int fd)
+                                            DltDaemonLocal *daemon_local,
+                                            int fd)
 {
     if (evhdl == NULL || daemon_local == NULL)
     {

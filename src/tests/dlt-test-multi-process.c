@@ -62,6 +62,10 @@
 #define MAX_PROCS 100
 #define MAX_THREADS 100
 
+#ifndef WAIT_ANY
+#define WAIT_ANY -1
+#endif
+
 // Structs
 typedef struct {
     int nmsgs;            // Number of messages to send

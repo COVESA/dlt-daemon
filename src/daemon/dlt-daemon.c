@@ -1049,7 +1049,7 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
     return dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,
                                  fd,
-                                 EPOLLIN,
+                                 POLLIN,
                                  DLT_CONNECTION_CLIENT_MSG_SERIAL);
 }
 
@@ -1121,7 +1121,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     return dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,
                                  fd,
-                                 EPOLLIN,
+                                 POLLIN,
                                  DLT_CONNECTION_APP_MSG);
 }
 #endif
@@ -1159,7 +1159,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         if (dlt_connection_create(daemon_local,
                                   &daemon_local->pEvent,
                                   fd,
-                                  EPOLLIN,
+                                  POLLIN,
                                   DLT_CONNECTION_APP_CONNECT))
         {
             dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
@@ -1186,7 +1186,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         if (dlt_connection_create(daemon_local,
                                   &daemon_local->pEvent,
                                   fd,
-                                  EPOLLIN,
+                                  POLLIN,
                                   DLT_CONNECTION_CLIENT_CONNECT))
         {
             dlt_log(LOG_ERR,"Could not initialize main socket.\n");
@@ -1211,7 +1211,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         if (dlt_connection_create(daemon_local,
                                   &daemon_local->pEvent,
                                   fd,
-                                  EPOLLIN,
+                                  POLLIN,
                                   DLT_CONNECTION_CONTROL_CONNECT))
         {
             dlt_log(LOG_ERR, "Could not initialize control socket.\n");
@@ -1630,7 +1630,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
                              in_sock,
-                             EPOLLIN,
+                             POLLIN,
                              DLT_CONNECTION_CLIENT_MSG_TCP))
     {
         dlt_log(LOG_ERR, "Failed to register new client. \n");
@@ -1901,7 +1901,7 @@ int dlt_daemon_process_control_connect(
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
                              in_sock,
-                             EPOLLIN,
+                             POLLIN,
                              DLT_CONNECTION_CONTROL_MSG))
     {
         dlt_log(LOG_ERR, "Failed to register new client. \n");
@@ -1956,7 +1956,7 @@ int dlt_daemon_process_app_connect(
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
                              in_sock,
-                             EPOLLIN,
+                             POLLIN,
                              DLT_CONNECTION_APP_MSG))
     {
         dlt_log(LOG_ERR, "Failed to register new application. \n");
@@ -2003,7 +2003,7 @@ int dlt_daemon_process_control_messages(
         /* FIXME: Why the hell do we need to close the socket
          * on control message reception ??
          */
-        //return 0;
+        return 0;
     }
 
     /* Process all received messages */
@@ -3422,7 +3422,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
     return dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,
                                  local_fd,
-                                 EPOLLIN,
+                                 POLLIN,
                                  dlt_timer_conn_types[timer_id]);
 }
 

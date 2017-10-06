@@ -196,6 +196,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     struct sockaddr_un remote;
     int status = 0;
     char dltSockBaseDir[DLT_IPC_PATH_MAX];
+    struct linger l_opt;
 
     DLT_SEM_LOCK();
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -214,6 +215,15 @@ static DltReturnValue dlt_initialize_socket_connection(void)
                 "Socket %s/dlt cannot be changed to NON BLOCK\n",
                 DLT_USER_IPC_PATH);
         return DLT_RETURN_ERROR;
+    }
+
+    /* Set SO_LINGER opt for the new client socket. */
+    l_opt.l_onoff = 1;
+    l_opt.l_linger = 10;
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_LINGER, &l_opt, sizeof l_opt) < 0)
+    {
+        dlt_log(LOG_WARNING, "Failed to set linger option\n");
     }
 
     remote.sun_family = AF_UNIX;
@@ -1223,6 +1233,27 @@ DltReturnValue dlt_unregister_app(void)
     DLT_SEM_FREE();
 
     return ret;
+}
+
+DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
+{
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    if (!dlt_user_initialised)
+    {
+        dlt_vlog(LOG_ERR, "%s dlt_user_initialised false\n", __func__);
+        return DLT_RETURN_ERROR;
+    }
+
+    if (dlt_user.dlt_log_handle != -1)
+    {
+        do
+        {
+            ret = dlt_user_log_resend_buffer();
+        }while ((ret != DLT_RETURN_OK) && (dlt_user.dlt_log_handle != -1));
+    }
+
+    return dlt_unregister_app();
 }
 
 DltReturnValue dlt_unregister_context(DltContext *handle)
@@ -2714,7 +2745,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id, DltContext 
     }
 
     /* Allow other threads to log between chunks */
-    pthread_yield();
+    sched_yield();
     return DLT_RETURN_OK;
 }
 
@@ -4430,12 +4461,12 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 {
     int num,count;
     int size;
-	DltReturnValue ret;
-	
-	if (dlt_user.appID[0]=='\0')
-	{
-	    return 0;
-	}
+    DltReturnValue ret;
+
+    if (dlt_user.appID[0]=='\0')
+    {
+        return 0;
+    }
 
     /* Send content of ringbuffer */
     DLT_SEM_LOCK();
@@ -4511,7 +4542,6 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 void dlt_user_log_reattach_to_daemon(void)
 {
     uint32_t num, reregistered = 0;
-
     DltContext handle;
     DltContextData log_new;
 

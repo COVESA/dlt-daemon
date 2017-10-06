@@ -3166,6 +3166,7 @@ speed_t dlt_convert_serial_speed(int baudrate)
         ret = B115200;
         break;
     }
+#ifdef __linux__
     case 230400:
     {
         ret = B230400;
@@ -3231,6 +3232,7 @@ speed_t dlt_convert_serial_speed(int baudrate)
         ret = B4000000;
         break;
     }
+#endif /* __linux__ */
     default:
     {
         ret = B115200;
