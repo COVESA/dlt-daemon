@@ -67,6 +67,7 @@ https://at.projects.genivi.org/wiki/display/PROJ/Diagnostic+Log+and+Trace
 https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace
 
 ## Contact
+Christoph Lipka <clipka@de.adit-jv.com>
+Manikandan Chockalingam <Manikandan.Chockalingam@in.bosch.com>
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
-Lutz Helwing <Lutz_Helwing@mentor.com>
 

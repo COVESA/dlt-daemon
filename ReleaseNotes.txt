@@ -1,5 +1,7 @@
 Diagnostic Log and Trace  - Release Notes
 =========================================
+Christoph Lipka <clipka@de.adit-jv.com>
+Manikandan Chockalingam <Manikandan.Chockalingam@in.bosch.com>
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 
 Version
