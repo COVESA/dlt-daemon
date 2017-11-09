@@ -596,7 +596,7 @@ int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int ve
                 dlt_set_id(apid,daemon->applications[i].apid);
 
                 if ((daemon->applications[i].application_description) &&
-                        (daemon->applications[i].application_description!='\0'))
+                        (daemon->applications[i].application_description[0] != '\0'))
                 {
                     fprintf(fd,"%s:%s:\n",apid, daemon->applications[i].application_description);
                 }
