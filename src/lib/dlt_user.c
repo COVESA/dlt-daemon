@@ -345,9 +345,11 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 DltReturnValue dlt_init(void)
 {
     /* process is exiting. Do not allocate new resources. */
-    if (dlt_user_freeing != 0)
+    if (dlt_user_freeing != 0) {
+        dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting", __func__);
         /* return negative value, to stop the current log */
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_LOGGING_DISABLED;
+    }
 
     /* WARNING: multithread unsafe ! */
     /* Another thread will check that dlt_user_initialised != 0, but the lib is not initialised ! */
@@ -1088,7 +1090,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (dlt_user_log_init(handle, &log) == -1)
+    if (dlt_user_log_init(handle, &log) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     /* Reset message counter */
@@ -3507,20 +3509,26 @@ void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
 
 DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log)
 {
+    int ret = DLT_RETURN_OK;
+
     if ((handle == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (!dlt_user_initialised) {
-        if (dlt_init() < DLT_RETURN_OK) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
-            return DLT_RETURN_ERROR;
+        ret = dlt_init();
+        if (ret < DLT_RETURN_OK)
+        {
+            if (ret != DLT_RETURN_LOGGING_DISABLED)
+            {
+                dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            }
+            return ret;
         }
     }
 
     log->handle = handle;
     log->buffer = NULL;
-
-    return DLT_RETURN_OK;
+    return ret;
 }
 
 DltReturnValue dlt_user_queue_resend(void)
