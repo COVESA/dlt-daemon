@@ -25,3 +25,10 @@ if(${WITH_DLT_CXX11_EXT})
           DESTINATION include/dlt
           COMPONENT devel)
 endif()
+
+if(${WITH_DLT_CXX_WRAPPER})
+  install(FILES CDltWrapper.h
+          DESTINATION include/dlt
+          COMPONENT devel)
+endif()
+

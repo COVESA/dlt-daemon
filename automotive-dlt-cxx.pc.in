@@ -1,0 +1,10 @@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${exec_prefix}/include
+
+Name: DLT C++ Wrapper
+Description: Diagnostic Log and Trace C++ Wrapper
+Version: @DLTCPP_VERSION@
+Requires: automotive-dlt
+Cflags: -std=gnu++0x
+Libs: -L${libdir} -ldltcxx
