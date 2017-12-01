@@ -106,19 +106,17 @@ static int g_dlt_is_child = 0;
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
 #define DLT_DELAYED_RESEND_INDICATOR_PATTERN 0xFFFF
 
+#define DLT_UNUSED(x) (void)(x)
+
 /* Mutex to wait on while message queue is not initialized */
-pthread_mutex_t mq_mutex;
+pthread_mutex_t mq_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t mq_init_condition;
 
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
     int32_t lock_mutex_result = pthread_mutex_lock(mutex);
 
-    if (lock_mutex_result == EOWNERDEAD) {
-        pthread_mutex_consistent(mutex);
-        lock_mutex_result = 0;
-    }
-    else if (lock_mutex_result != 0)
+    if ( lock_mutex_result != 0 )
     {
         snprintf(str,
                  DLT_USER_BUFFER_LENGTH,
@@ -173,7 +171,7 @@ static DltReturnValue dlt_user_log_out_error_handling(void *ptr1,
                                                       size_t len2,
                                                       void *ptr3,
                                                       size_t len3);
-
+static void dlt_user_cleanup_handler(void *arg);
 static int dlt_start_threads();
 static void dlt_stop_threads();
 static void dlt_fork_child_fork_handler();
@@ -404,22 +402,6 @@ DltReturnValue dlt_init(void)
     dlt_user.dlt_segmented_queue_read_handle = -1;
     dlt_user.dlt_segmented_queue_write_handle = -1;
 
-    /* Wait mutext for segmented thread */
-    pthread_mutexattr_t attr;
-
-    if (pthread_mutexattr_init(&attr) != 0) {
-        dlt_user_initialised = false;
-        return DLT_RETURN_ERROR;
-    }
-
-    /* make mutex robust to prevent from deadlock when the segmented thread was cancelled, but held the mutex */
-    if (pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST) != 0) {
-        dlt_user_initialised = false;
-        return DLT_RETURN_ERROR;
-    }
-
-    pthread_mutex_init(&mq_mutex, &attr);
-    pthread_mutexattr_destroy(&attr);
     pthread_cond_init(&mq_init_condition, NULL);
 
     if (dlt_start_threads() < 0) {
@@ -939,7 +921,6 @@ DltReturnValue dlt_free(void)
     dlt_user.dlt_segmented_queue_read_handle = DLT_FD_INIT;
 
     pthread_cond_destroy(&mq_init_condition);
-    pthread_mutex_destroy(&mq_mutex);
     sem_destroy(&dlt_mutex);
 
     /* allow the user app to do dlt_init() again. */
@@ -2930,6 +2911,7 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 #ifdef linux
     prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
 #endif
+    pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
     s_segmented_data *data;
 
@@ -2992,6 +2974,8 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         free(data->payload);
         free(data);
     }
+
+    pthread_cleanup_pop(1);
 }
 
 void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data)
@@ -3485,12 +3469,24 @@ DltReturnValue dlt_disable_local_print(void)
     return DLT_RETURN_OK;
 }
 
+/* Cleanup on thread cancellation, thread may hold lock release it here */
+static void dlt_user_cleanup_handler(void *arg)
+{
+    DLT_UNUSED(arg); /* Satisfy compiler */
+    /* unlock the message queue */
+    dlt_unlock_mutex(&mq_mutex);
+    /* unlock DLT (dlt_mutex) */
+    DLT_SEM_FREE();
+}
+
 void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
 {
     struct timespec ts;
 #ifdef linux
     prctl(PR_SET_NAME, "dlt_receiver", 0, 0, 0);
 #endif
+
+    pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
     while (1) {
         /* Check for new messages from DLT daemon */
@@ -3503,6 +3499,8 @@ void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
         ts.tv_nsec = DLT_USER_RECEIVE_NDELAY;
         nanosleep(&ts, NULL);
     }
+
+    pthread_cleanup_pop(1);
 }
 
 /* Private functions of user library */
@@ -4718,6 +4716,10 @@ void dlt_stop_threads()
     }
 
     if (dlt_user.dlt_segmented_nwt_handle) {
+        dlt_lock_mutex(&mq_mutex);
+        pthread_cond_signal(&mq_init_condition);
+        dlt_unlock_mutex(&mq_mutex);
+
         dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
 
         if (dlt_segmented_nwt_result != 0) {
@@ -4760,6 +4762,7 @@ static void dlt_fork_child_fork_handler()
 {
     g_dlt_is_child = 1;
     dlt_user_initialised = false;
+    dlt_user.dlt_log_handle = -1;
 }
 
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
