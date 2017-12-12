@@ -162,15 +162,6 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
         return -1;
     }
 
-    /* create hsearch table for data inside the section */
-    if (hcreate_r(DLT_CONFIG_FILE_KEYS_MAX, &s->data) == 0)
-    {
-        dlt_log(LOG_ERR, "Cannot create hash table object\n");
-        free(s->name);
-        free(s->keys);
-        return -1;
-    }
-
     strncpy(file->sections[section].name, name, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
     file->num_sections += 1;
     return 0;
@@ -188,8 +179,7 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
  */
 static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, char *str2)
 {
-    ENTRY item;
-    ENTRY *ret;
+    DltConfigKeyData **tmp = NULL;
 
     if (file == NULL || str1 == NULL || str2 == NULL)
         return -1;
@@ -206,28 +196,35 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
     /* copy data into structure */
     strncpy(&s->keys[key_number * DLT_CONFIG_FILE_ENTRY_MAX_LEN], str1, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
 
-    item.key = strdup(str1);
-    item.data = strdup(str2);
-
-    /* check if already stored */
-    if (hsearch_r(item, FIND, &ret, &s->data) == 0)
+    if (s->list == NULL)
     {
-        if (hsearch_r(item, ENTER, &ret, &s->data) == 0)
+        s->list = malloc(sizeof(DltConfigKeyData));
+        if (s->list == NULL)
         {
-            free(item.key);
-            free(item.data);
+            dlt_log(LOG_WARNING, "Could not allocate initial memory to list \n");
+            return -1;
+        }
+        tmp = &s->list;
+    }
+    else
+    {
+        tmp = &s->list;
 
-            dlt_log(LOG_ERR, "Cannot add data to hash table\n");
+        while (*(tmp) != NULL)
+        {
+            tmp = &(*tmp)->next;
+        }
+
+        *tmp = malloc(sizeof(DltConfigKeyData));
+        if (*tmp == NULL)
+        {
+            dlt_log(LOG_WARNING, "Could not allocate memory to list \n");
             return -1;
         }
     }
-    else /* already exist, ignore */
-    {
-        char error_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
-        snprintf(error_str, DLT_DAEMON_TEXTBUFSIZE, "Key \"%s\" already exists! New data will be ignored\n", item.key);
-        dlt_log(LOG_WARNING, error_str);
-        return -1;
-    }
+    (*tmp)->key = strdup(str1);
+    (*tmp)->data = strdup(str2);
+    (*tmp)->next = NULL;
 
     s->num_entries += 1;
 
@@ -477,30 +474,28 @@ DltConfigFile *dlt_config_file_init(char *file_name)
 void dlt_config_file_release(DltConfigFile *file)
 {
     int i = 0;
-    int j = 0;
-    ENTRY entry;
-    ENTRY *found;
 
-    if(file != NULL){
+    if(file != NULL)
+    {
         int max = file->num_sections;
         for (i = 0; i < max; i++)
         {
             DltConfigFileSection *s = &file->sections[i];
+            DltConfigKeyData *node = file->sections[i].list;
             free(s->name);
 
             /* free data in hashtable */
-            if (s->keys != NULL || &s->data != NULL)
+            if (s->keys != NULL)
             {
-                for (j = 0; j < s->num_entries; j++)
-                {
-                    entry.key = (s->keys + j * DLT_CONFIG_FILE_ENTRY_MAX_LEN);
-                    hsearch_r (entry, FIND, &found, &s->data);
-                    free(found->key);
-                    free(found->data);
-                }
-
-                hdestroy_r(&s->data);
                 free(s->keys);
+            }
+            while (node)
+            {
+                DltConfigKeyData *tmp = node;
+                node = node->next;
+                free(tmp->key);
+                free(tmp->data);
+                free(tmp);
             }
         }
 
@@ -536,9 +531,8 @@ int dlt_config_file_get_value(const DltConfigFile *file,
                               const char *key, char *value)
 {
     DltConfigFileSection *s = NULL;
+    DltConfigKeyData **tmp = NULL;
     int num_section = 0;
-    ENTRY entry;
-    ENTRY *found;
 
     if (file == NULL || section == NULL || key == NULL || value == NULL)
         return -1;
@@ -552,24 +546,21 @@ int dlt_config_file_get_value(const DltConfigFile *file,
 
     s = (file->sections + num_section);
 
-    /* check if available */
-    entry.key = strdup(key);
-    if (entry.key == NULL)
+    tmp = &s->list;
+
+    while (*(tmp) != NULL)
     {
-        dlt_log(LOG_CRIT, "Not enougth memory to duplicate key string\n");
-        return -1;
+        if (strncmp((*tmp)->key, key, DLT_CONFIG_FILE_ENTRY_MAX_LEN) == 0)
+        {
+            strncpy(value, (*tmp)->data, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
+            return 0;
+        }
+        else /* not found yet see list for more */
+        {
+            tmp = &(*tmp)->next;
+        }
     }
 
-    if (hsearch_r(entry, FIND, &found, &s->data) == 0) /* not found */
-    {
-        dlt_log(LOG_WARNING, "Entry does not exist in section\n");
-        free(entry.key);
-        return -1;
-    }
-    else /* found */
-    {
-        strncpy(value, (char *)found->data, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
-        free(entry.key);
-        return 0;
-    }
+    dlt_log(LOG_WARNING, "Entry does not exist in section \n");
+    return -1;
 }
