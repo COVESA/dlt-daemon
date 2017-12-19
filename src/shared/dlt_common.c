@@ -87,7 +87,7 @@ static char *service_id[] = {"","set_log_level","set_trace_status","get_log_info
                              "get_local_time","use_ecu_id","use_session_id","use_timestamp","use_extended_header","set_default_log_level","set_default_trace_status",
                              "get_software_version","message_buffer_overflow"
                             };
-static char *return_type[] = {"ok","not_supported","error","","","","","","no_matching_context_id"};
+static char *return_type[] = {"ok","not_supported","error","perm_denied","warning","","","","no_matching_context_id"};
 
 /* internal function definitions */
 int dlt_buffer_get(DltBuffer *buf,unsigned char *data, int max_size,int delete);

@@ -155,6 +155,8 @@ static int analyze_response(char *data, void *payload, int len)
 {
     int ret = -1;
     char resp_ok[MAX_RESPONSE_LENGTH] = { 0 };
+    char resp_warning[MAX_RESPONSE_LENGTH] = { 0 };
+    char resp_perm_denied[MAX_RESPONSE_LENGTH] = { 0 };
 
     if (data == NULL || payload == NULL)
     {
@@ -170,8 +172,28 @@ static int analyze_response(char *data, void *payload, int len)
              "service(%u), ok",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
+    snprintf(resp_warning,
+             MAX_RESPONSE_LENGTH,
+             "service(%u), warning",
+             DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
+
+    snprintf(resp_perm_denied,
+             MAX_RESPONSE_LENGTH,
+             "service(%u), perm_denied",
+             DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
+
     if (strncmp(data, resp_ok, strlen(resp_ok)) == 0)
     {
+        ret = 0;
+    }
+    if (strncmp(data, resp_warning, strlen(resp_warning)) == 0)
+    {
+        pr_error("Warning:Some filter configurations are ignored due to configuration issues \n");
+        ret = 0;
+    }
+    if (strncmp(data, resp_perm_denied, strlen(resp_perm_denied)) == 0)
+    {
+        pr_error("Warning: Permission denied.\n");
         ret = 0;
     }
 

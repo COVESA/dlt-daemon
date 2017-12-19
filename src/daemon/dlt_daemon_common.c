@@ -973,9 +973,8 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,
     /* Store log level and trace status,
        if this is a new context, or
        if this is an old context and the runtime cfg was not loaded */
-    if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) &&
-        ((new_context == 1) || ((new_context == 0) &&
-         (daemon->runtime_context_cfg_loaded == 0))))
+    if ((new_context == 1) ||
+        ((new_context == 0) && (daemon->runtime_context_cfg_loaded == 0)))
     {
         context->log_level = log_level;
         context->trace_status = trace_status;
@@ -1785,6 +1784,3 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
     }
 
 }
-
-
-

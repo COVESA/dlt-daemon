@@ -108,6 +108,12 @@ static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
         {
             mnt_point = strdup(ent->mnt_dir);
 
+            if (mnt_point == NULL)
+            {
+                pr_error("Cannot duplicate string.\n");
+                return NULL;
+            }
+
             /* Remounting rw */
             if (strlen(mnt_point))
             {
@@ -162,6 +168,11 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
     }
 
     dev_node = strdup(udev_device_get_devnode(part));
+    if (dev_node == NULL)
+    {
+        pr_error("Cannot allocate memory for to store string\n");
+        return -1;
+    }
 
     if (event == EVENT_MOUNTED)
     {
@@ -174,6 +185,7 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
         }
         else
         {
+            free(mnt_point);
             mnt_point = NULL;
         }
     }
@@ -222,7 +234,7 @@ static int logstorage_udev_udevd_callback(void)
 
     prvt = (LogstorageCtrlUdev *)lctrl->prvt;
 
-    if (!prvt || !prvt->mon)
+    if ((!prvt) || (!prvt->mon))
     {
         pr_error("Not able to get private data.\n");
         return -1;
@@ -282,6 +294,12 @@ static int logstorage_udev_udevd_callback(void)
  */
 static int dlt_logstorage_udev_check_mounted(struct udev *udev)
 {
+    if (udev == NULL)
+    {
+        pr_error("%s: udev structure is NULL\n", __func__);
+        return -1;
+    }
+
     /* Create a list of the devices in the 'partition' subsystem. */
     struct udev_enumerate *enumerate = udev_enumerate_new(udev);
     struct udev_list_entry *devices = NULL;
@@ -300,7 +318,8 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
     devices = udev_enumerate_get_list_entry(enumerate);
 
     /* For each list entry, get the corresponding device */
-    udev_list_entry_foreach(dev_list_entry, devices) {
+    udev_list_entry_foreach(dev_list_entry, devices)
+    {
         const char *path;
         struct udev_device *partition = NULL;
 
@@ -348,6 +367,11 @@ int dlt_logstorage_udev_deinit(void)
     }
 
     prvt = (LogstorageCtrlUdev *)lctrl->prvt;
+
+    if (prvt == NULL)
+    {
+        return -1;
+    }
 
     if (prvt->mon)
     {
