@@ -109,37 +109,28 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
     int j;
     DltConnection* temp = NULL;
     int type_mask =
-        (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+        (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);    
 
     if ((daemon == NULL) || (daemon_local == NULL))
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Invalid parameters\n",
+        dlt_vlog(LOG_ERR,  "%s: Invalid parameters\n",
                  __func__);
-        dlt_log(LOG_ERR, local_str);
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
     temp = daemon_local->pEvent.connections;
-
-    //consider if the first connection is not requested type
-    if(!((1 << temp->type) & type_mask))
-    {
-        temp = dlt_connection_get_next(temp, type_mask);
-    } 
+    temp = dlt_connection_get_next(temp, type_mask);
 
     int sent_to_clients = 0;
     int connum = daemon_local->client_connections;
-    for (j = 0; ((j < connum) && (temp != NULL)); j++)
+    for (j = 0; ((j < connum) && (temp != NULL)); ++j)
     {
         int ret = DLT_DAEMON_ERROR_OK;
         DltConnection* next = NULL;
 
         DLT_DAEMON_SEM_LOCK();
         //take next connection
-        if(daemon_local->client_connections > 0)
+        if (daemon_local->client_connections > 0)
         {
             next = dlt_connection_get_next(temp->next, type_mask);
         }        
@@ -153,26 +144,21 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
         DLT_DAEMON_SEM_FREE();
 
-        if(ret != DLT_DAEMON_ERROR_OK)
-        {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "%s: send dlt message failed!\n",
-                     __func__);
-            dlt_log(LOG_WARNING, local_str);
+        if (ret != DLT_DAEMON_ERROR_OK)
+        {                    
+            dlt_vlog(LOG_WARNING, "%s: send dlt message failed!\n",
+                    __func__);
 
-            if(DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
+            if (DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)
             {
-                if(dlt_daemon_close_socket(temp->receiver->fd,
+                if (dlt_daemon_close_socket(temp->receiver->fd,
                                            daemon,
                                            daemon_local,
                                            verbose) != DLT_DAEMON_ERROR_OK)
-                {
-                    snprintf(local_str,
-                             DLT_DAEMON_TEXTBUFSIZE,
-                             "%s: socket was not closed succesfully (fd: %d)!\n",
-                             __func__, temp->receiver->fd);
-                    dlt_log(LOG_WARNING, local_str);
+                {                             
+                    dlt_vlog(LOG_WARNING, "%s: socket was not closed succesfully (fd: %d)!\n",
+                            __func__,
+                            temp->receiver->fd);
                 }
             }
         }
@@ -248,14 +234,14 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 {
     int sent = DLT_RETURN_OK,ret;
 
-    if (sock!=DLT_DAEMON_SEND_TO_ALL && sock!=DLT_DAEMON_SEND_FORCE)
+    if (sock != DLT_DAEMON_SEND_TO_ALL && sock != DLT_DAEMON_SEND_FORCE)
     {
         /* Send message to specific socket */
         if (isatty(sock))
         {
             DLT_DAEMON_SEM_LOCK();
 
-            if((ret=dlt_daemon_serial_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
+            if ((ret=dlt_daemon_serial_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
             {
                 DLT_DAEMON_SEM_FREE();
                 dlt_log(LOG_WARNING,"dlt_daemon_client_send: serial send dlt message failed\n");
@@ -268,7 +254,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
         {
             DLT_DAEMON_SEM_LOCK();
 
-            if((ret=dlt_daemon_socket_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
+            if ((ret=dlt_daemon_socket_send(sock,data1,size1,data2,size2,daemon->sendserialheader)))
             {
                 DLT_DAEMON_SEM_FREE();
                 dlt_log(LOG_WARNING,"dlt_daemon_client_send: socket send dlt message failed\n");
@@ -284,15 +270,15 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 	// In the SEND_BUFFER state we must skip offline tracing because the offline traces
 	// are going without buffering directly to the offline trace. Thus we have to filter out
 	// the traces that are coming from the buffer.
-	if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER))
+    if ((sock != DLT_DAEMON_SEND_FORCE) && (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER))
 	{
-		if(((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+        if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 							&& daemon_local->flags.offlineTraceDirectory[0])
 		{
-			if(dlt_offline_trace_write(&(daemon_local->offlineTrace),storage_header,storage_header_size,data1,size1,data2,size2))
+            if (dlt_offline_trace_write(&(daemon_local->offlineTrace),storage_header,storage_header_size,data1,size1,data2,size2))
 			{
 				static int error_dlt_offline_trace_write_failed = 0;
-                if(!error_dlt_offline_trace_write_failed)
+                if (!error_dlt_offline_trace_write_failed)
                 {
                 	dlt_log(LOG_ERR,"dlt_daemon_client_send: dlt_offline_trace_write failed!\n");
                 	error_dlt_offline_trace_write_failed = 1;
@@ -303,7 +289,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
         /* write messages to offline logstorage only if there is an extended header set
          * this need to be checked because the function is dlt_daemon_client_send is called by
          * newly introduced dlt_daemon_log_internal */
-        if(daemon_local->flags.offlineLogstorageMaxDevices > 0)
+        if (daemon_local->flags.offlineLogstorageMaxDevices > 0)
         {
             dlt_daemon_logstorage_write(daemon,
                                         &daemon_local->flags,
@@ -317,9 +303,9 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 	}
 
 	/* send messages to daemon socket */
-	if((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+    if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 	{
-		if ((sock==DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
+        if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
 		{
             sent = dlt_daemon_client_send_all_multiple(daemon,
                                                        daemon_local,
@@ -329,12 +315,12 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
                                                        size2,
                                                        verbose);
 
-            if((sock == DLT_DAEMON_SEND_FORCE) && sent != DLT_RETURN_OK)
+            if ((sock == DLT_DAEMON_SEND_FORCE) && sent != DLT_DAEMON_ERROR_OK)
 			{
 				return DLT_DAEMON_ERROR_SEND_FAILED;
 			}
-            //this handles some unawaited errors
-            if (sent == DLT_DAEMON_ERROR_UNKNOWN && sock != DLT_DAEMON_SEND_FORCE && daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)
+            //this handles some unexpected errors
+            if (sock != DLT_DAEMON_SEND_FORCE && sent == DLT_DAEMON_ERROR_UNKNOWN && daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)
             {
                 return DLT_DAEMON_ERROR_SEND_FAILED;
             }
@@ -343,9 +329,9 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
     }
 
     /* Message was not sent to client, so store it in client ringbuffer */
-    if ((sock!=DLT_DAEMON_SEND_FORCE) && (daemon->state == DLT_DAEMON_STATE_BUFFER || daemon->state == DLT_DAEMON_STATE_SEND_BUFFER || daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))
+    if ((sock != DLT_DAEMON_SEND_FORCE) && (daemon->state == DLT_DAEMON_STATE_BUFFER || daemon->state == DLT_DAEMON_STATE_SEND_BUFFER || daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))
     {
-    	if(daemon->state == DLT_DAEMON_STATE_BUFFER_FULL)
+        if (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL)
     		return DLT_DAEMON_ERROR_BUFFER_FULL;
 
         DLT_DAEMON_SEM_LOCK();
