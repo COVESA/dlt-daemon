@@ -64,6 +64,11 @@
 #include <dirent.h>
 
 #include <dlt_offline_trace.h>
+#include <syslog.h>
+#include "dlt_common.h"
+
+/* Size of buffer */
+#define DLT_DAEMON_TEXTBUFSIZE        512
 
 unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, char *newest, char *oldest)
 {
@@ -339,6 +344,31 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 
 DltReturnValue dlt_offline_trace_check_size(DltOfflineTrace *trace) {
 
+    struct stat status;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+
+    /* check for existence of offline trace directory */
+    if(stat(trace->directory, &status) == -1)
+    {
+	    snprintf(local_str,DLT_DAEMON_TEXTBUFSIZE,
+	             "Offline trace directory: %s doesn't exist \n",
+	              trace->directory);
+	    dlt_log(LOG_ERR,local_str);	
+        
+	    return -1;
+    }
+    
+    /* check for accesibilty of offline trace directory */
+    else if(access(trace->directory,  W_OK) != 0)
+    {
+	    snprintf(local_str,DLT_DAEMON_TEXTBUFSIZE,
+		  		 "Offline trace directory: %s doesn't have the write access \n",
+				  trace->directory);
+	    dlt_log(LOG_ERR,local_str);	
+        
+	    return -1;
+    }
+    
     /* check size of complete offline trace */
     while((int)dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
     {
