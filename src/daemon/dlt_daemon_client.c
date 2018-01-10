@@ -274,7 +274,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
 	{
         if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 							&& daemon_local->flags.offlineTraceDirectory[0])
-		{
+        {
             if (dlt_offline_trace_write(&(daemon_local->offlineTrace),storage_header,storage_header_size,data1,size1,data2,size2))
 			{
 				static int error_dlt_offline_trace_write_failed = 0;
@@ -306,7 +306,7 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
     if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 	{
         if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT))
-		{
+        {
             sent = dlt_daemon_client_send_all_multiple(daemon,
                                                        daemon_local,
                                                        data1,
@@ -316,9 +316,9 @@ int dlt_daemon_client_send(int sock,DltDaemon *daemon,DltDaemonLocal *daemon_loc
                                                        verbose);
 
             if ((sock == DLT_DAEMON_SEND_FORCE) && sent != DLT_DAEMON_ERROR_OK)
-			{
-				return DLT_DAEMON_ERROR_SEND_FAILED;
-			}
+            {
+                return DLT_DAEMON_ERROR_SEND_FAILED;
+            }
             //this handles some unexpected errors
             if (sock != DLT_DAEMON_SEND_FORCE && sent == DLT_DAEMON_ERROR_UNKNOWN && daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)
             {
