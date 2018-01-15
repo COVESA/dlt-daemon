@@ -191,8 +191,12 @@ int dlt_daemon_socket_sendreliable(int sock, void* buffer,int  message_size)
                 return DLT_DAEMON_ERROR_SEND_FAILED;
             }
         }
-        data_sent += ret;
+        else
+        {
+            data_sent += ret;
+        }
     }
+
     return DLT_DAEMON_ERROR_OK;
 }
 
