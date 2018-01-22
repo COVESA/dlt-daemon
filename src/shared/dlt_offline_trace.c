@@ -62,8 +62,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <syslog.h>
 
 #include <dlt_offline_trace.h>
+#include "dlt_common.h"
 
 unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, char *newest, char *oldest)
 {
@@ -339,6 +341,22 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 
 DltReturnValue dlt_offline_trace_check_size(DltOfflineTrace *trace) {
 
+    struct stat status;
+
+    /* check for existence of offline trace directory */
+    if (stat(trace->directory, &status) == -1)
+    {
+	    dlt_vlog(LOG_ERR, "Offline trace directory: %s doesn't exist \n", trace->directory);
+	    return DLT_RETURN_ERROR;
+    }
+    
+    /* check for accesibilty of offline trace directory */
+    else if(access(trace->directory,  W_OK) != 0)
+    {
+	    dlt_vlog(LOG_ERR, "Offline trace directory: %s doesn't have the write access \n", trace->directory);
+	    return DLT_RETURN_ERROR;
+    }
+    
     /* check size of complete offline trace */
     while((int)dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
     {
