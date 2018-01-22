@@ -249,7 +249,7 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
     return DLT_RETURN_OK; /* OK */
 }
 
-unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
+int dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
     struct dirent *dp;
     char filename[256];
     unsigned long size = 0;
@@ -257,6 +257,12 @@ unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace) {
 
     /* go through all dlt files in directory */
     DIR *dir = opendir(trace->directory);
+
+    if(dir == NULL) {
+        printf("Could not open directory %s\n",trace->directory);
+        return -1; /* ERROR */
+    }
+
     while ((dp=readdir(dir)) != NULL) {
         if(strstr(dp->d_name,DLT_OFFLINETRACE_FILENAME_BASE))
         {
@@ -299,6 +305,12 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace) {
 
     /* go through all dlt files in directory */
     DIR *dir = opendir(trace->directory);
+
+    if(dir == NULL) {
+        printf("Could not open directory %s\n",trace->directory);
+        return -1; /* ERROR */
+    }
+
     while ((dp=readdir(dir)) != NULL) {
         if(strstr(dp->d_name,DLT_OFFLINETRACE_FILENAME_TO_COMPARE)) {
             int res = snprintf(filename, sizeof(filename), "%s/%s",trace->directory,dp->d_name);
@@ -358,7 +370,7 @@ DltReturnValue dlt_offline_trace_check_size(DltOfflineTrace *trace) {
     }
     
     /* check size of complete offline trace */
-    while((int)dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
+    while(dlt_offline_trace_get_total_size(trace) > (trace->maxSize-trace->fileSize))
     {
         /* remove oldest files as long as new file will not fit in completely into complete offline trace */
         if(dlt_offline_trace_delete_oldest_file(trace) < 0) {
