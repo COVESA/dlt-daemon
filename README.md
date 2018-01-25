@@ -1,5 +1,7 @@
 # Diagnostic Log and Trace
 
+Build and Test status: ![build and test status](https://travis-ci.org/jardous/dlt-daemon.svg?branch=master)
+
 ## Overview
 This component provides a log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.  
