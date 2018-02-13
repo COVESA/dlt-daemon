@@ -88,7 +88,9 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            dlt_log(LOG_WARNING, "socket() error\n");
+            const int lastErrno=errno;
+            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+            dlt_log(LOG_WARNING, str);
             continue;
         }
 
@@ -105,7 +107,9 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
         if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
             close(*sock);
-            dlt_log(LOG_WARNING, "bind() error\n");
+            const int lastErrno=errno;
+            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
+            dlt_log(LOG_WARNING, str);
             continue;
         }
 
@@ -128,7 +132,9 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     if (listen(*sock, 3) < 0)
     {
-        dlt_log(LOG_WARNING, "dlt_daemon_socket_open: listen() failed!\n");
+        const int lastErrno=errno;
+        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_log(LOG_WARNING, str);
         return -1;
     }
 
