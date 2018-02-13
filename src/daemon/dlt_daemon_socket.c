@@ -81,16 +81,14 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     snprintf(portnumbuffer, 32, "%d", servPort);
     if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "getaddrinfo: %s\n", gai_strerror(rv));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "getaddrinfo error %d: %s\n", rv, gai_strerror(rv));
         return -1;
     }
 
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            const int lastErrno=errno;
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
-            dlt_log(LOG_WARNING, str);
+            const int lastErrno = errno;
+            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
             continue;
         }
 
@@ -100,16 +98,15 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
         if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: Setsockopt error in dlt_daemon_local_connection_init: %s\n", strerror(errno));
-            dlt_log(LOG_WARNING, str);
+            const int lastErrno = errno;
+            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n", lastErrno, strerror(lastErrno));
             continue;
         }
 
         if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
+            const int lastErrno = errno; //close() may set errno too
             close(*sock);
-            const int lastErrno=errno;
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
-            dlt_log(LOG_WARNING, str);
+            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
             continue;
         }
 
@@ -132,9 +129,8 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     if (listen(*sock, 3) < 0)
     {
-        const int lastErrno=errno;
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno, strerror(lastErrno));
-        dlt_log(LOG_WARNING, str);
+        const int lastErrno = errno;
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno, strerror(lastErrno));
         return -1;
     }
 
@@ -154,9 +150,9 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
     int ret = DLT_RETURN_OK;
     if (serialheader)
     {
-         ret = dlt_daemon_socket_sendreliable(sock, (void *) dltSerialHeader, sizeof(dltSerialHeader));
-         if(ret != DLT_RETURN_OK)
-             return ret;
+        ret = dlt_daemon_socket_sendreliable(sock, (void *) dltSerialHeader, sizeof(dltSerialHeader));
+        if(ret != DLT_RETURN_OK)
+            return ret;
     }
 
     /* Send data */
@@ -177,7 +173,7 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
     return ret;
 }
 
-int dlt_daemon_socket_sendreliable(int sock, void* buffer,int  message_size)
+int dlt_daemon_socket_sendreliable(int sock, void* buffer, int message_size)
 {
     int data_sent = 0;
 
@@ -186,14 +182,15 @@ int dlt_daemon_socket_sendreliable(int sock, void* buffer,int  message_size)
         ssize_t ret = send(sock, buffer + data_sent, message_size - data_sent, 0);
         if (ret < 0)
         {
-            if (errno==EINTR || errno==EAGAIN || errno==EWOULDBLOCK)
+            const int lastErrno=errno;
+            if (lastErrno==EINTR || lastErrno==EAGAIN || lastErrno==EWOULDBLOCK)
             {
                 // Temporary error.
-                dlt_vlog(LOG_INFO,"dlt_daemon_socket_sendreliable: socket sending failed [errno: %d], trying again.\n", errno);
+                dlt_vlog(LOG_INFO,"dlt_daemon_socket_sendreliable: socket send() error %d: %s, trying again.\n", lastErrno, strerror(lastErrno));
             }
             else
             {
-                dlt_vlog(LOG_WARNING,"dlt_daemon_socket_sendreliable: socket send failed [errno: %d]!\n", errno);
+                dlt_vlog(LOG_WARNING,"dlt_daemon_socket_sendreliable: socket send() error %d: %s\n", lastErrno, strerror(lastErrno));
                 return DLT_DAEMON_ERROR_SEND_FAILED;
             }
         }
