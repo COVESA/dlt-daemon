@@ -55,7 +55,10 @@
 #include <unistd.h>
 
 #include <stdbool.h>
-
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+#include <sys/un.h>
+#include <sys/socket.h>
+#endif
 
 #include "dlt_user.h"
 #include "dlt_common.h"
@@ -79,8 +82,10 @@ static DltUser dlt_user;
 static bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
 static char dlt_user_dir[NAME_MAX + 1];
 static char dlt_daemon_fifo[NAME_MAX + 1];
+#endif
 
 static char str[DLT_USER_BUFFER_LENGTH];
 
@@ -185,50 +190,70 @@ DltReturnValue dlt_user_check_library_version(const char *user_major_version,con
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_init(void)
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+static DltReturnValue dlt_initialize_socket_connection(void)
+{
+    struct sockaddr_un remote;
+    int status = 0;
+
+    DLT_SEM_LOCK();
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+    if (sockfd == DLT_FD_INIT)
+    {
+        dlt_log(LOG_CRIT, "Failed to create socket\n");
+	DLT_SEM_FREE();
+        return DLT_RETURN_ERROR;
+    }
+
+    status = fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+    if (status == -1)
+    {
+        dlt_vlog(LOG_INFO,
+                "Socket %s cannot be changed to NON BLOCK\n",
+                DLT_USER_SOCKET_PATH);
+        return DLT_RETURN_ERROR;
+    }
+
+    remote.sun_family = AF_UNIX;
+    strncpy(remote.sun_path, DLT_USER_SOCKET_PATH, sizeof(DLT_USER_SOCKET_PATH));
+
+    if (connect(sockfd, (struct sockaddr*) &remote, sizeof(remote)) == -1)
+    {
+        if (dlt_user.connection_state != DLT_USER_RETRY_CONNECT)
+        {
+            dlt_vlog(LOG_INFO,
+                     "Socket %s cannot be opened. Retrying later...\n",
+                     DLT_USER_SOCKET_PATH);
+            dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
+        }
+    }
+    else
+    {
+        dlt_user.dlt_log_handle = sockfd;
+        dlt_user.connection_state = DLT_USER_CONNECTED;
+
+        if (dlt_receiver_init(&(dlt_user.receiver),
+                              sockfd,
+                              DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR)
+        {
+            dlt_user_initialised = false;
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+    DLT_SEM_FREE();
+
+    return DLT_RETURN_OK;
+}
+#else /* setup fifo*/
+static DltReturnValue dlt_initialize_fifo_connection(void)
 {
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
     int ret;
 
-    // process is exiting. Do not allocate new resources.
-    if (dlt_user_freeing != 0)
-    {
-        // return negative value, to stop the current log
-        return DLT_RETURN_ERROR;
-    }
-
-    // WARNING: multithread unsafe !
-    // Another thread will check that dlt_user_initialised != 0, but the lib is not initialised !
-    dlt_user_initialised = true;
-
-    /* Initialize common part of dlt_init()/dlt_init_file() */
-    if (dlt_init_common() == DLT_RETURN_ERROR)
-    {
-        dlt_user_initialised = false;
-        return DLT_RETURN_ERROR;
-    }
-
-    /* check environment variables */
-    dlt_check_envvar();
-
     snprintf(dlt_user_dir, NAME_MAX, "%s/dltpipes", dltFifoBaseDir);
     snprintf(dlt_daemon_fifo, NAME_MAX, "%s/dlt", dltFifoBaseDir);
-
-    dlt_user.dlt_is_file = 0;
-    dlt_user.overflow = 0;
-    dlt_user.overflow_counter = 0;
-#ifdef DLT_SHM_ENABLE
-    memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
-#endif
-
-    /* create dlt pipes directory */
-    /* Make sure the parent user directory is created */
-    if (dlt_mkdir_recursive(dltFifoBaseDir) != 0)
-    {
-      dlt_vnlog(LOG_ERR,DLT_USER_BUFFER_LENGTH, "Base dir %s cannot be created!\n", dltFifoBaseDir);
-      return DLT_RETURN_ERROR;
-    }
-
     ret=mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
     if (ret==-1 && errno != EEXIST)
     {
@@ -250,7 +275,7 @@ DltReturnValue dlt_init(void)
 
     /* create and open DLT user FIFO */
     snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
-     
+
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
 
@@ -281,33 +306,77 @@ DltReturnValue dlt_init(void)
     dlt_user.dlt_log_handle = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK | O_CLOEXEC );
     if (dlt_user.dlt_log_handle==-1)
     {
-        /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
-           starts later and some DLT users have already been started before.
-           Thus it is OK if the FIFO can't be opened. */
-        dlt_vnlog(LOG_INFO, DLT_USER_BUFFER_LENGTH, "FIFO %s cannot be opened. Retrying later...\n",dlt_daemon_fifo);
-        //return DLT_RETURN_OK;
-    }
-    else
-    {
-#ifdef DLT_SHM_ENABLE
-        /* init shared memory */
-        if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
+    
+        if (dlt_user.connection_state != DLT_USER_RETRY_CONNECT)
         {
             /* This is a normal usecase. It is OK that the daemon (and thus the FIFO /tmp/dlt)
                starts later and some DLT users have already been started before.
                Thus it is OK if the FIFO can't be opened. */
-            dlt_vnlog(LOG_INFO, DLT_USER_BUFFER_LENGTH, "Shared memory %d cannot be created. Retrying later...\n", DLT_SHM_KEY);
-            //return DLT_RETURN_OK;
+            dlt_vnlog(LOG_INFO, DLT_USER_BUFFER_LENGTH, "FIFO %s cannot be opened. Retrying later...\n",dlt_daemon_fifo);
+            dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
         }
-#endif
+        //return DLT_RETURN_OK;
     }
 
+    return DLT_RETURN_OK;
+}
+#endif
 
+DltReturnValue dlt_init(void)
+{
+    // process is exiting. Do not allocate new resources.
+    if (dlt_user_freeing != 0)
+    {
+        // return negative value, to stop the current log
+        return DLT_RETURN_ERROR;
+    }
+
+    // WARNING: multithread unsafe !
+    // Another thread will check that dlt_user_initialised != 0, but the lib is not initialised !
+    dlt_user_initialised = true;
+
+    /* Initialize common part of dlt_init()/dlt_init_file() */
+    if (dlt_init_common() == DLT_RETURN_ERROR)
+    {
+        dlt_user_initialised = false;
+        return DLT_RETURN_ERROR;
+    }
+
+    /* check environment variables */
+    dlt_check_envvar();
+
+    dlt_user.dlt_is_file = 0;
+    dlt_user.overflow = 0;
+    dlt_user.overflow_counter = 0;
+#ifdef DLT_SHM_ENABLE
+    memset(&(dlt_user.dlt_shm),0,sizeof(DltShm));
+    /* init shared memory */
+    if (dlt_shm_init_client(&(dlt_user.dlt_shm),DLT_SHM_KEY) < 0)
+    {
+        snprintf(str,DLT_USER_BUFFER_LENGTH,"Logging disabled, Shared memory %d cannot be created!\n",DLT_SHM_KEY);
+        dlt_log(LOG_WARNING, str);
+        //return 0;
+    }
+#elif defined DLT_USE_UNIX_SOCKET_IPC
+    if (dlt_initialize_socket_connection() != DLT_RETURN_OK)
+    {
+        // We could connect to the pipe, but not to the socket, which is normally
+        // open before by the DLT daemon => bad failure => return error code
+        // in case application is started before daemon, it is expected behaviour
+        return DLT_RETURN_ERROR;
+    }
+#else /* FIFO connection */
+    if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
+    {
+        return DLT_RETURN_ERROR;
+    }
+    dlt_user.connection_state = DLT_USER_CONNECTED;
     if (dlt_receiver_init(&(dlt_user.receiver),dlt_user.dlt_user_handle, DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR)
     {
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
     }
+#endif
 
     /* These will be lazy initialized only when needed */
     dlt_user.dlt_segmented_queue_read_handle = -1;
@@ -676,7 +745,9 @@ int dlt_user_atexit_blow_out_user_buffer(void){
 DltReturnValue dlt_free(void)
 {
     uint32_t i;
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
+#endif
 
     if( dlt_user_freeing != 0 )
         // resources are already being freed. Do nothing and return.
@@ -694,15 +765,15 @@ DltReturnValue dlt_free(void)
 
     dlt_stop_threads();
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
     {
-        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
-
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle=DLT_FD_INIT;
-
+        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
         unlink(filename);
     }
+#endif
 
 #ifdef DLT_SHM_ENABLE
     /* free shared memory */
@@ -1347,7 +1418,6 @@ DltReturnValue dlt_forward_msg(void *msgdata,size_t size)
             }
         }
 
-        /* log to FIFO */
         ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                 &(userheader), sizeof(DltUserHeader),
                                 msgdata, size, 0, 0);
@@ -3599,13 +3669,11 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
                 dlt_shm_push(&dlt_user.dlt_shm,msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
                                             log->buffer, log->size, 0, 0);
 
-            /* log to FIFO */
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     0, 0,
                                     0, 0);
 #else
-            /* log to FIFO */
 #ifdef DLT_TEST_ENABLE
             if(dlt_user.corrupt_user_header) {
                 userheader.pattern[0]=0xff;
@@ -3669,6 +3737,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
                 /* handle not open or pipe error */
                 close(dlt_user.dlt_log_handle);
                 dlt_user.dlt_log_handle = -1;
+                dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 
     #ifdef DLT_SHM_ENABLE
                 /* free shared memory */
@@ -3738,7 +3807,6 @@ DltReturnValue dlt_user_log_send_register_application(void)
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                     &(userheader), sizeof(DltUserHeader),
                     &(usercontext), sizeof(DltUserControlMsgRegisterApplication),
@@ -3795,10 +3863,10 @@ DltReturnValue dlt_user_log_send_unregister_application(void)
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     return dlt_user_log_out2(dlt_user.dlt_log_handle,
-                    &(userheader), sizeof(DltUserHeader),
-                    &(usercontext), sizeof(DltUserControlMsgUnregisterApplication));
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgUnregisterApplication));
+
 }
 
 DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
@@ -3851,7 +3919,6 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     if (dlt_user.appID[0]!='\0')
     {
         ret = dlt_user_log_out3(dlt_user.dlt_log_handle, &(userheader), sizeof(DltUserHeader), &(usercontext), sizeof(DltUserControlMsgRegisterContext),log->context_description,usercontext.description_length);
@@ -3921,10 +3988,11 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     return dlt_user_log_out2(dlt_user.dlt_log_handle,
-                    &(userheader), sizeof(DltUserHeader),
-                    &(usercontext), sizeof(DltUserControlMsgUnregisterContext));
+                            &(userheader),
+                            sizeof(DltUserHeader),
+                            &(usercontext),
+                            sizeof(DltUserControlMsgUnregisterContext));
 }
 
 DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTraceStatusType tracestatus)
@@ -3979,10 +4047,10 @@ DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType logle
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     return dlt_user_log_out2(dlt_user.dlt_log_handle,
-                    &(userheader), sizeof(DltUserHeader),
-                    &(usercontext), sizeof(DltUserControlMsgAppLogLevelTraceStatus));
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgAppLogLevelTraceStatus));
+
 }
 
 DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
@@ -4010,7 +4078,6 @@ DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
         return DLT_RETURN_OK;
     }
 
-    /* log to FIFO */
     return dlt_user_log_out2(dlt_user.dlt_log_handle,
                     &(userheader), sizeof(DltUserHeader),
                     &(logmode), sizeof(DltUserControlMsgLogMode));
@@ -4083,6 +4150,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
     int leave_while=0;
 
     uint32_t i;
+    int fd;
 
     DltUserHeader *userheader;
     DltReceiver *receiver = &(dlt_user.receiver);
@@ -4103,7 +4171,13 @@ DltReturnValue dlt_user_log_check_user_message(void)
     delayed_injection_callback.service_id = 0;
     delayed_log_level_changed_callback.log_level_changed_callback = 0;
 
-    if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    fd = dlt_user.dlt_log_handle;
+#else
+    fd = dlt_user.dlt_user_handle;
+#endif
+
+    if (fd != DLT_FD_INIT)
     {
         while (1)
         {
@@ -4377,10 +4451,8 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 #ifdef DLT_SHM_ENABLE
             dlt_shm_push(&dlt_user.dlt_shm, dlt_user.resend_buffer+sizeof(DltUserHeader), size-sizeof(DltUserHeader), 0, 0, 0, 0);
 
-            /* log to FIFO */
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer,sizeof(DltUserHeader), 0, 0, 0, 0);
 #else
-            /* log to FIFO */
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer,size, 0, 0, 0, 0);
 #endif
 
@@ -4413,72 +4485,87 @@ void dlt_user_log_reattach_to_daemon(void)
     {
         dlt_user.dlt_log_handle=-1;
 
-        /* try to open pipe to dlt daemon */
-        dlt_user.dlt_log_handle = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK);
-        if (dlt_user.dlt_log_handle > 0)
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+        /* try to open connection to dlt daemon */
+        dlt_initialize_socket_connection();
+        if (dlt_user.connection_state != DLT_USER_CONNECTED)
         {
-            if (dlt_user_log_init(&handle,&log_new) < DLT_RETURN_OK)
-            {
-                return;
-            }
+            /* return if not connected */
+            return;
+        }
+
+#else
+        /* try to open pipe to dlt daemon */
+        int fd = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK);
+
+        if (fd < 0)
+        {
+            return;
+        }
+
+        dlt_user.dlt_log_handle = fd;
+#endif
+        if (dlt_user_log_init(&handle,&log_new) < DLT_RETURN_OK)
+        {
+            return;
+        }
 
 #ifdef DLT_SHM_ENABLE
-            /* init shared memory */
-            if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
-            {
-                dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Loging disabled, Shared memory %d cannot be created!\n", DLT_SHM_KEY);
-                //return DLT_RETURN_OK;
-            }
+        /* init shared memory */
+        if (dlt_shm_init_client(&dlt_user.dlt_shm,DLT_SHM_KEY) < 0)
+        {
+            dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Loging disabled, Shared memory %d cannot be created!\n", DLT_SHM_KEY);
+            //return DLT_RETURN_OK;
+        }
 #endif
 
-            dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
+        dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
 
-            /* Re-register application */
-            if (dlt_user_log_send_register_application() < DLT_RETURN_ERROR)
+        /* Re-register application */
+        if (dlt_user_log_send_register_application() < DLT_RETURN_ERROR)
+        {
+            return;
+        }
+
+        DLT_SEM_LOCK();
+
+        /* Re-register all stored contexts */
+        for (num=0; num<dlt_user.dlt_ll_ts_num_entries; num++)
+        {
+            /* Re-register stored context */
+            if ((dlt_user.appID[0]!='\0') && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID[0]!='\0'))
             {
-                return;
-            }
+                //dlt_set_id(log_new.appID, dlt_user.appID);
+                dlt_set_id(handle.contextID, dlt_user.dlt_ll_ts[num].contextID);
+                handle.log_level_pos = num;
+                log_new.context_description = dlt_user.dlt_ll_ts[num].context_description;
 
-            DLT_SEM_LOCK();
+                // Release the mutex for sending context registration:
+                // function  dlt_user_log_send_register_context() can take the mutex to write to the DLT buffer. => dead lock
+                DLT_SEM_FREE();
 
-            /* Re-register all stored contexts */
-            for (num=0; num<dlt_user.dlt_ll_ts_num_entries; num++)
-            {
-                /* Re-register stored context */
-                if ((dlt_user.appID[0]!='\0') && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID[0]!='\0'))
+                log_new.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
+                log_new.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
+
+                if (dlt_user_log_send_register_context(&log_new) < DLT_RETURN_ERROR)
                 {
-                    //dlt_set_id(log_new.appID, dlt_user.appID);
-                    dlt_set_id(handle.contextID, dlt_user.dlt_ll_ts[num].contextID);
-                    handle.log_level_pos = num;
-                    log_new.context_description = dlt_user.dlt_ll_ts[num].context_description;
-
-                    // Release the mutex for sending context registration:
-                    // function  dlt_user_log_send_register_context() can take the mutex to write to the DLT buffer. => dead lock
-                    DLT_SEM_FREE();
-
-                    log_new.log_level = DLT_USER_LOG_LEVEL_NOT_SET;
-                    log_new.trace_status = DLT_USER_TRACE_STATUS_NOT_SET;
-
-                    if (dlt_user_log_send_register_context(&log_new) < DLT_RETURN_ERROR)
-                    {
-                        return;
-                    }
-
-                    reregistered=1;
-
-                    // Lock again the mutex
-                    // it is necessary in the for(;;) test, in order to have coherent dlt_user data all over the critical section.
-                    DLT_SEM_LOCK();
-
+                    return;
                 }
-            }
 
-            DLT_SEM_FREE();
+                reregistered=1;
 
-            if (reregistered==1)
-            {
-                dlt_user_log_resend_buffer();
+                // Lock again the mutex
+                // it is necessary in the for(;;) test, in order to have coherent dlt_user data all over the critical section.
+                DLT_SEM_LOCK();
+
             }
+        }
+
+        DLT_SEM_FREE();
+
+        if (reregistered==1)
+        {
+            dlt_user_log_resend_buffer();
         }
     }
 }
@@ -4503,7 +4590,6 @@ DltReturnValue dlt_user_log_send_overflow(void)
     userpayload.overflow_counter = dlt_user.overflow_counter;
     dlt_set_id(userpayload.apid,dlt_user.appID);
 
-    /* log to FIFO */
     return dlt_user_log_out2(dlt_user.dlt_log_handle,
                     &(userheader), sizeof(DltUserHeader),
                     &(userpayload), sizeof(DltUserControlMsgBufferOverflow));

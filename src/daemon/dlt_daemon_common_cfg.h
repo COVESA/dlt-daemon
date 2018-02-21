@@ -88,6 +88,11 @@
 #define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
                                           "/dlt-ctrl.sock"
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+#define DLT_DAEMON_DEFAULT_APP_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
+                                          "/dlt-app.sock"
+#endif
+
 /* Size of text buffer */
 #define DLT_DAEMON_COMMON_TEXTBUFSIZE          255
 

@@ -1085,6 +1085,13 @@ extern "C"
      */
     int dlt_receiver_receive_fd(DltReceiver *receiver);
     /**
+     * Reiceve data from file/fifo/socket, calls corresponding function based on
+     * CMake configuration.
+     * @param receiver pointer to dlt receiver structure
+     * @return number of received bytes or negative value if there was an error
+     */
+     int dlt_receiver_receive(DltReceiver *receiver);
+    /**
      * Remove a specific size of bytes from the received data
      * @param receiver pointer to dlt receiver structure
      * @param size amount of bytes to be removed
@@ -1384,11 +1391,13 @@ extern "C"
      */
     void dlt_check_envvar();
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     /**
      * Create the specified path, recursive if necessary
      * behaves like calling mkdir -p <dir> on the console
      */
     int dlt_mkdir_recursive(const char *dir);
+#endif
 
 #ifdef __cplusplus
 }

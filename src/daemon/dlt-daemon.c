@@ -196,7 +196,9 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
         } /* switch() */
     }
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     snprintf(daemon_local->flags.userPipesDir, NAME_MAX + 1, "%s/dltpipes", dltFifoBaseDir);
+#endif
     snprintf(daemon_local->flags.daemonFifoName, NAME_MAX + 1, "%s/dlt", dltFifoBaseDir);
 
     return 0;
@@ -248,6 +250,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 	strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    strncpy(daemon_local->flags.appSockPath,
+            DLT_USER_SOCKET_PATH,
+            sizeof(daemon_local->flags.appSockPath) - 1);
+#endif
 	daemon_local->flags.gatewayMode = 0;
     strncpy(daemon_local->flags.gatewayConfigFile,
             DLT_GATEWAY_CONFIG_PATH,
@@ -577,6 +584,49 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     return 0;
 }
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
+static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
+{
+    int ret = DLT_RETURN_OK;
+
+    if (dir == NULL)
+    {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    /* create dlt pipes directory */
+    ret = mkdir(dir,
+                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH|S_ISVTX);
+
+    if ((ret == -1) && (errno != EEXIST))
+    {
+        dlt_vlog(LOG_ERR,
+                 "FIFO user dir %s cannot be created (%s)!\n",
+                 dir,
+                 strerror(errno));
+
+        return DLT_RETURN_ERROR;
+    }
+
+    // S_ISGID cannot be set by mkdir, let's reassign right bits
+    ret = chmod(dir,
+                S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH|S_ISGID|S_ISVTX);
+
+    if (ret == -1)
+    {
+        dlt_vlog(LOG_ERR,
+                 "FIFO user dir %s cannot be chmoded (%s)!\n",
+                 dir,
+                 strerror(errno));
+
+        return DLT_RETURN_ERROR;
+    }
+
+    return ret;
+}
+#endif
+
 /**
  * Main function of tool.
  */
@@ -621,6 +671,7 @@ int main(int argc, char* argv[])
 
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     /* Make sure the parent user directory is created */
     if (dlt_mkdir_recursive(dltFifoBaseDir) != 0)
     {
@@ -628,6 +679,7 @@ int main(int argc, char* argv[])
       dlt_log(LOG_ERR, str);
       return -1;
     }
+#endif
 
     /* --- Daemon init phase 1 begin --- */
     if (dlt_daemon_local_init_p1(&daemon, &daemon_local, daemon_local.flags.vflag)==-1)
@@ -747,9 +799,8 @@ int main(int argc, char* argv[])
 
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    int ret;
-
     PRINT_FUNCTION_VERBOSE(verbose);
+    int ret = DLT_RETURN_OK;
 
     if ((daemon==0)  || (daemon_local==0))
     {
@@ -760,9 +811,9 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
     ret = sd_booted();
 
-    if(ret == 0){
+    if (ret == 0)
+    {
         dlt_log(LOG_CRIT, "System not booted with systemd!\n");
-//        return -1;
     }
     else if(ret < 0)
     {
@@ -775,25 +826,12 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 #endif
 
-    const char *tmpFifo = daemon_local->flags.userPipesDir;
-
-    /* create dlt pipes directory */
-    ret=mkdir(tmpFifo, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH | S_ISVTX );
-    if (ret==-1 && errno != EEXIST)
+#ifndef DLT_USE_UNIX_SOCKET_IPC
+    if (dlt_daemon_create_pipes_dir(daemon_local->flags.userPipesDir) == DLT_RETURN_ERROR)
     {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be created (%s)!\n", tmpFifo, strerror(errno));
-        dlt_log(LOG_WARNING, str);
-        return -1;
+        return DLT_RETURN_ERROR;
     }
-
-    // S_ISGID cannot be set by mkdir, let's reassign right bits
-    ret=chmod(tmpFifo, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH  | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX );
-    if (ret==-1)
-    {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"FIFO user dir %s cannot be chmoded (%s)!\n", tmpFifo, strerror(errno));
-        dlt_log(LOG_WARNING, str);
-        return -1;
-    }
+#endif
 
     /* Check for daemon mode */
     if (daemon_local->flags.dflag)
@@ -802,12 +840,13 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* initialise structure to use DLT file */
-    if (dlt_file_init(&(daemon_local->file),daemon_local->flags.vflag) == DLT_RETURN_ERROR)
+    ret = dlt_file_init(&(daemon_local->file),daemon_local->flags.vflag);
+    if (ret == DLT_RETURN_ERROR)
     {
         dlt_log(LOG_ERR,"Could not initialize file structure\n");
         /* Return value ignored, dlt daemon will exit */
         dlt_file_free(&(daemon_local->file),daemon_local->flags.vflag);
-        return -1;
+        return ret;
     }
 
     signal(SIGPIPE,SIG_IGN);
@@ -817,7 +856,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT,  dlt_daemon_signal_handler);
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
@@ -993,6 +1032,7 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
                                  DLT_CONNECTION_CLIENT_MSG_SERIAL);
 }
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
 static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
@@ -1063,6 +1103,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                                  EPOLLIN,
                                  DLT_CONNECTION_APP_MSG);
 }
+#endif
 
 int dlt_daemon_local_connection_init(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
@@ -1070,6 +1111,8 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 {
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
     int fd = -1;
+    int mask = 0;
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL))
@@ -1083,43 +1126,88 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         return -1;
     }
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    /* create and open socket to receive incoming connections from user application
+     * socket access permission set to srw-rw-rw- (666) */
+    mask = S_IXUSR | S_IXGRP | S_IXOTH;
+    if (dlt_daemon_unix_socket_open(&fd,
+                                    daemon_local->flags.appSockPath,
+                                    SOCK_STREAM,
+                                    mask) == DLT_RETURN_OK)
+    {
+        if (dlt_connection_create(daemon_local,
+                                  &daemon_local->pEvent,
+                                  fd,
+                                  EPOLLIN,
+                                  DLT_CONNECTION_APP_CONNECT))
+        {
+            dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+    else
+    {
+        dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
+        return DLT_RETURN_ERROR;
+    }
+#else
     if (dlt_daemon_init_fifo(daemon_local))
     {
         dlt_log(LOG_ERR, "Unable to initialize fifo.\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
+#endif
 
     /* create and open socket to receive incoming connections from client */
     daemon_local->client_connections = 0;
-    if(dlt_daemon_socket_open(&fd, daemon_local->flags.port) ||
-       dlt_connection_create(daemon_local,
-                             &daemon_local->pEvent,
-                             fd,
-                             EPOLLIN,
-                             DLT_CONNECTION_CLIENT_CONNECT))
+    if (dlt_daemon_socket_open(&fd, daemon_local->flags.port) == DLT_RETURN_OK)
+    {
+        if (dlt_connection_create(daemon_local,
+                                  &daemon_local->pEvent,
+                                  fd,
+                                  EPOLLIN,
+                                  DLT_CONNECTION_CLIENT_CONNECT))
+        {
+            dlt_log(LOG_ERR,"Could not initialize main socket.\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+    else
     {
         dlt_log(LOG_ERR,"Could not initialize main socket.\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* create and open unix socket to receive incoming connections from
-     * control application */
-    if (dlt_daemon_unix_socket_open(&fd, daemon_local->flags.ctrlSockPath) ||
-        dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              fd,
-                              EPOLLIN,
-                              DLT_CONNECTION_CONTROL_CONNECT))
+     * control application
+     * socket access permission set to srw-rw---- (660)  */
+    mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
+    if (dlt_daemon_unix_socket_open(&fd,
+                                    daemon_local->flags.ctrlSockPath,
+                                    SOCK_STREAM,
+                                    mask) == DLT_RETURN_OK)
+    {
+        if (dlt_connection_create(daemon_local,
+                                  &daemon_local->pEvent,
+                                  fd,
+                                  EPOLLIN,
+                                  DLT_CONNECTION_CONTROL_CONNECT))
+        {
+            dlt_log(LOG_ERR, "Could not initialize control socket.\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+    else
     {
         dlt_log(LOG_ERR, "Could not initialize control socket.\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* Init serial */
     if (dlt_daemon_init_serial(daemon_local) < 0)
     {
         dlt_log(LOG_ERR,"Could not initialize daemon data\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     return 0;
@@ -1813,7 +1901,62 @@ int dlt_daemon_process_control_connect(
     return 0;
 }
 
-// FIXME: More or less copy of dlt_daemon_process_control_messages
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+int dlt_daemon_process_app_connect(
+        DltDaemon *daemon,
+        DltDaemonLocal *daemon_local,
+        DltReceiver *receiver,
+        int verbose)
+{
+    socklen_t app_size;
+    struct sockaddr_un app;
+    int in_sock = -1;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
+    {
+        dlt_vlog(LOG_ERR,
+                "%s: Invalid parameters\n",
+                __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    /* event from UNIX server socket, new connection */
+    app_size = sizeof(app);
+    if ((in_sock = accept(receiver->fd, &app, &app_size)) < 0)
+    {
+        dlt_log(LOG_ERR, "accept() on UNIX socket failed!\n");
+        return -1 ;
+    }
+
+    /* check if file file descriptor was already used, and make it invalid if it
+     *  is reused. This prevents sending messages to wrong file descriptor */
+    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
+
+    if (dlt_connection_create(daemon_local,
+                             &daemon_local->pEvent,
+                             in_sock,
+                             EPOLLIN,
+                             DLT_CONNECTION_APP_MSG))
+    {
+        dlt_log(LOG_ERR, "Failed to register new application. \n");
+        close(in_sock);
+        return -1;
+    }
+
+    if (verbose)
+    {
+        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,
+                 "New connection to application established\n");
+        dlt_log(LOG_INFO, str);
+    }
+
+    return 0;
+}
+#endif
+
 int dlt_daemon_process_control_messages(
         DltDaemon *daemon,
         DltDaemonLocal *daemon_local,
@@ -1954,6 +2097,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
     int run_loop = 1;
     int32_t min_size = (int32_t)sizeof(DltUserHeader);
     DltUserHeader *userheader;
+    int recv;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1965,13 +2109,25 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    /* read data from FIFO */
-    if (dlt_receiver_receive_fd(receiver) < 0)
+    recv = dlt_receiver_receive(receiver);
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    if (recv <= 0)
+    {
+        dlt_daemon_close_socket(receiver->fd,
+                                daemon,
+                                daemon_local,
+                                verbose);
+        receiver->fd = -1;
+        return 0;
+    }
+#else
+    if (recv < 0)
     {
         dlt_log(LOG_WARNING,
                 "dlt_receiver_receive_fd() for user messages failed!\n");
         return -1;
     }
+#endif
 
     /* look through buffer as long as data is in there */
     while ((receiver->bytesRcvd >= min_size) && run_loop)
@@ -2177,6 +2333,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                              userapp.apid,
                                              userapp.pid,
                                              description,
+                                             rec->fd,
                                              verbose);
 
     /* send log state to new application */
@@ -2258,8 +2415,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
     if (len > DLT_DAEMON_DESCSIZE)
     {
+        dlt_vlog(LOG_WARNING, "Context description exceeds limit: %d\n", len);
         len = DLT_DAEMON_DESCSIZE;
-        dlt_log(LOG_WARNING, "Context description exceeds limit\n");
     }
 
     /* adjust buffer pointer */
