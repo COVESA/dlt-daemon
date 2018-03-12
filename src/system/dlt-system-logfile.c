@@ -154,6 +154,7 @@ void start_logfile(DltSystemConfiguration *conf)
 	DLT_LOG(dltsystem,DLT_LOG_DEBUG,DLT_STRING("Starting thread for logfile"));
 	static pthread_attr_t t_attr;
 	static pthread_t pt;
+	pthread_attr_init(&t_attr);
 	pthread_create(&pt, &t_attr, (void *)logfile_thread, conf);
 	threads.threads[threads.count++] = pt;
 }
