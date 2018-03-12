@@ -181,6 +181,8 @@ void start_systemd_watchdog(DltSystemConfiguration *conf)
 
 	static pthread_attr_t t_attr;
 	static pthread_t pt;
+	
+	pthread_attr_init(&t_attr);
 
 	if (pthread_create(&pt, &t_attr, (void *)watchdog_thread, conf) == 0)
 	{
