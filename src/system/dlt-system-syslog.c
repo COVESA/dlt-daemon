@@ -165,6 +165,7 @@ void start_syslog(DltSystemConfiguration *conf)
 			DLT_STRING("dlt-system-syslog, start syslog"));
 	static pthread_attr_t t_attr;
 	static pthread_t pt;
+	pthread_attr_init(&t_attr);
 	pthread_create(&pt, &t_attr, (void *)syslog_thread, conf);
 	threads.threads[threads.count++] = pt;
 }
