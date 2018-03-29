@@ -3817,7 +3817,7 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
         return DLT_RETURN_ERROR;
     }
 
-    if (log->handle->contextID=='\0')
+    if (log->handle->contextID[0] == '\0')
     {
         return DLT_RETURN_ERROR;
     }
@@ -3900,7 +3900,7 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (log->handle->contextID=='\0')
+    if (log->handle->contextID[0] == '\0')
     {
     	return DLT_RETURN_ERROR;
     }

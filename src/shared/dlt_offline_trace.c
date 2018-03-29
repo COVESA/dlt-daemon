@@ -216,6 +216,7 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
     /* set filename */
     if(trace->filenameTimestampBased)
     {
+        int ret = 0;
         t = time(NULL);
         tmp = localtime(&t);
         if (NULL == tmp) {
@@ -224,16 +225,27 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace) {
         }
         if (strftime(outstr, sizeof(outstr),"%Y%m%d_%H%M%S", tmp) == 0) {
         }
-        snprintf(trace->filename, NAME_MAX + 1, "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
+        ret = snprintf(trace->filename, NAME_MAX , "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
+        if ((ret < 0) || (ret >= NAME_MAX))
+        {
+            printf("dlt_offlinetrace filename cannot be concatenated\n");
+            return DLT_RETURN_ERROR;
+        }
     }
     else
     {
+        int ret = 0;
         /* targeting newest file, ignoring number of files in dir returned */
         dlt_offline_trace_storage_dir_info(trace->directory, DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
         idx = dlt_offline_trace_get_idx_of_log_file(newest) + 1;
 
         dlt_offline_trace_file_name(outstr, DLT_OFFLINETRACE_FILENAME_BASE, idx);
-        snprintf(trace->filename, NAME_MAX + 1, "%s/%s", trace->directory, outstr);
+        ret = snprintf(trace->filename, NAME_MAX, "%s/%s", trace->directory, outstr);
+        if ((ret < 0) || (ret >= NAME_MAX))
+        {
+            printf("filename cannot be concatenated\n");
+            return DLT_RETURN_ERROR;
+        }
     }
 
 
