@@ -1633,6 +1633,8 @@ void dlt_daemon_control_set_log_level(int sock, DltDaemon *daemon, DltDaemonLoca
     }
 
     req = (DltServiceSetLogLevel*) (msg->databuffer);
+    if (daemon_local->flags.enforceContextLLAndTS)
+        req->log_level = req->log_level <= daemon_local->flags.contextLogLevel ? req->log_level:daemon_local->flags.contextLogLevel;
 
     dlt_set_id(apid, req->apid);
     dlt_set_id(ctid, req->ctid);
@@ -1703,7 +1705,10 @@ void dlt_daemon_control_set_trace_status(int sock, DltDaemon *daemon, DltDaemonL
     if (context!=0)
     {
         old_trace_status = context->trace_status;
-        context->trace_status = req->log_level;   /* No endianess conversion necessary */
+	if (daemon_local->flags.enforceContextLLAndTS)
+	    context->trace_status = req->log_level <= daemon_local->flags.contextTraceStatus ? req->log_level:daemon_local->flags.contextTraceStatus;
+	else
+            context->trace_status = req->log_level;   /* No endianess conversion necessary */
 
         if ((context->user_handle >= DLT_FD_MINIMUM ) &&
                 (dlt_daemon_user_send_log_level(daemon, context, verbose)==0))
@@ -1747,10 +1752,10 @@ void dlt_daemon_control_set_default_log_level(int sock, DltDaemon *daemon, DltDa
     if (/*(req->log_level>=0) &&*/
             (req->log_level<=DLT_LOG_VERBOSE))
     {
-        if(daemon_local->flags.enforceContextLLAndTS)
-    		daemon->default_log_level = req->log_level <= daemon_local->flags.contextLogLevel ? req->log_level:daemon_local->flags.contextLogLevel;
-    	else
-        	daemon->default_log_level = req->log_level; /* No endianess conversion necessary */
+        if (daemon_local->flags.enforceContextLLAndTS)
+            daemon->default_log_level = req->log_level <= daemon_local->flags.contextLogLevel ? req->log_level:daemon_local->flags.contextLogLevel;
+	else
+            daemon->default_log_level = req->log_level; /* No endianess conversion necessary */
 
         /* Send Update to all contexts using the default log level */
         dlt_daemon_user_send_default_update(daemon, verbose);
@@ -1786,7 +1791,11 @@ void dlt_daemon_control_set_all_log_level(int sock, DltDaemon *daemon, DltDaemon
     /* No endianess conversion necessary */
     if ((req != NULL) && (req->log_level <= DLT_LOG_VERBOSE))
     {
-        loglevel = req->log_level; /* No endianess conversion necessary */
+	if (daemon_local->flags.enforceContextLLAndTS)
+            loglevel = req->log_level <= daemon_local->flags.contextLogLevel ? req->log_level:daemon_local->flags.contextLogLevel;
+	else
+    	    loglevel = req->log_level; /* No endianess conversion necessary */
+	    
         /* Send Update to all contexts using the new log level */
         dlt_daemon_user_send_all_update(daemon, loglevel, verbose);
 
@@ -1822,10 +1831,10 @@ void dlt_daemon_control_set_default_trace_status(int sock, DltDaemon *daemon, Dl
     if ((req->log_level==DLT_TRACE_STATUS_OFF) ||
             (req->log_level==DLT_TRACE_STATUS_ON))
     {
-        if(daemon_local->flags.enforceContextLLAndTS)
-    		daemon->default_trace_status = req->log_level <= daemon_local->flags.contextTraceStatus ? req->log_level:daemon_local->flags.contextTraceStatus;
+        if (daemon_local->flags.enforceContextLLAndTS)
+    	    daemon->default_trace_status = req->log_level <= daemon_local->flags.contextTraceStatus ? req->log_level:daemon_local->flags.contextTraceStatus;
     	else
-    		daemon->default_trace_status = req->log_level; /* No endianess conversion necessary*/
+    	    daemon->default_trace_status = req->log_level; /* No endianess conversion necessary*/
 
         /* Send Update to all contexts using the default trace status */
         dlt_daemon_user_send_default_update(daemon, verbose);
