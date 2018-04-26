@@ -1085,7 +1085,7 @@ extern "C"
      */
     int dlt_receiver_receive_fd(DltReceiver *receiver);
     /**
-     * Reiceve data from file/fifo/socket, calls corresponding function based on
+     * Receive data from file/fifo/socket, calls corresponding function based on
      * CMake configuration.
      * @param receiver pointer to dlt receiver structure
      * @return number of received bytes or negative value if there was an error

@@ -295,12 +295,7 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, int verbose)
     return 0;
 }
 
-DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,
-                                                 char *apid,
-                                                 pid_t pid,
-                                                 char *description,
-                                                 int fd,
-                                                 int verbose)
+DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, pid_t pid, char *description, int fd, int verbose)
 {
     DltDaemonApplication *application;
     DltDaemonApplication *old;
