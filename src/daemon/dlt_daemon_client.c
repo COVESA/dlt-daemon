@@ -1584,7 +1584,7 @@ void dlt_daemon_find_multiple_context_and_send(int sock, DltDaemon *daemon, DltD
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    int8_t count = 0;
+    int count = 0;
     DltDaemonContext *context = NULL;
     char src_str[DLT_ID_SIZE +1] = {0};
     int8_t ret = 0;
