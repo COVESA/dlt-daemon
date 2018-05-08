@@ -1290,7 +1290,7 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
     }
 }
 
-void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int verbose)
+void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_level, int verbose)
 {
     int32_t count = 0;
     DltDaemonContext *context = NULL;
@@ -1313,6 +1313,39 @@ void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int ve
                 if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
                 {
                     return;
+                }
+            }
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose)
+{
+    int32_t count = 0;
+    DltDaemonContext *context = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL)
+    {
+        return;
+    }
+
+    dlt_vlog(LOG_NOTICE, "All trace status is updated -> %i\n", trace_status);
+
+    for (count = 0; count < daemon->num_contexts; count++)
+    {
+        context = &(daemon->contexts[count]);
+        if (context)
+        {
+            if (context->user_handle >= DLT_FD_MINIMUM)
+            {
+                context->trace_status = trace_status;
+                if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
+                {
+                    snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                             "Cannot send trace status %.4s:%.4s -> %i\n", context->apid, context->ctid, context->trace_status);
+                    dlt_log(LOG_WARNING, str);
                 }
             }
         }

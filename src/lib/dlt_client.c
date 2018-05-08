@@ -765,6 +765,36 @@ DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t d
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t traceStatus)
+{
+    DltServiceSetDefaultLogLevel *req;
+    uint8_t *payload;
+
+    payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
+
+    if (payload == 0)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    req = (DltServiceSetDefaultLogLevel *) payload;
+
+    req->service_id = DLT_SERVICE_ID_SET_ALL_TRACE_STATUS;
+    req->log_level = traceStatus;
+    dlt_set_id(req->com, "remo");
+
+    /* free message */
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload, sizeof(DltServiceSetDefaultLogLevel)) == -1)
+    {
+        free(payload);
+        return DLT_RETURN_ERROR;
+    }
+
+    free(payload);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets)
 {
     DltServiceSetVerboseMode *req;

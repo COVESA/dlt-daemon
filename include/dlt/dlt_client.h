@@ -211,9 +211,9 @@ DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defa
  * Send the log level to all contexts registered with dlt daemon
  * @param client pointer to dlt client structure
  * @param LogLevel Log Level to be set
- * @return negative value if there was an error
+ * @return Value from DltReturnValue enum
  */
-int dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel);
+DltReturnValue dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel);
 /**
  * Send the default trace status to the dlt daemon
  * @param client pointer to dlt client structure
@@ -221,6 +221,13 @@ int dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus);
+/**
+ * Send the trace status to all contexts registered with dlt daemon
+ * @param client pointer to dlt client structure
+ * @param traceStatus trace status to be set
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t traceStatus);
 /**
  * Send the timing pakets status to the dlt daemon
  * @param client pointer to dlt client structure
