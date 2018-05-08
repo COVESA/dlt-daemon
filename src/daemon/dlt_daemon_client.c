@@ -1903,7 +1903,7 @@ void dlt_daemon_control_set_all_log_level(int sock, DltDaemon *daemon, DltDaemon
     req = (DltServiceSetDefaultLogLevel*) (msg->databuffer);
 
     /* No endianess conversion necessary */
-    if ((req != NULL) && (req->log_level <= DLT_LOG_VERBOSE))
+    if ((req != NULL) && ((req->log_level <= DLT_LOG_VERBOSE) || (req->log_level == (uint8_t)DLT_LOG_DEFAULT)))
     {
 	if (daemon_local->flags.enforceContextLLAndTS)
             loglevel = getStatus(req->log_level, daemon_local->flags.contextLogLevel);
@@ -1982,7 +1982,7 @@ void dlt_daemon_control_set_all_trace_status(int sock, DltDaemon *daemon, DltDae
     req = (DltServiceSetDefaultLogLevel*) (msg->databuffer);
 
     /* No endianess conversion necessary */
-    if ((req != NULL) && (req->log_level <= DLT_TRACE_STATUS_ON))
+    if ((req != NULL) && ((req->log_level <= DLT_TRACE_STATUS_ON) || (req->log_level == (uint8_t)DLT_TRACE_STATUS_DEFAULT)))
     {
         if (daemon_local->flags.enforceContextLLAndTS)
             tracestatus = getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
