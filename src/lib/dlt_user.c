@@ -2692,10 +2692,22 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
                 ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
                                         sizeof(s_segmented_data * ), NULL);
+                if (read < 0)
+                {
+                    if (errno != EINTR)
+                    {
+                        dlt_vlog(LOG_WARNING, "NWTSegmented: Error while reading queue: %s\n", strerror(errno));
+                        usleep(DLT_USER_MQ_ERROR_RETRY_INTERVAL);
+                    }
+                    continue;
+                }
 
                 if(read != sizeof(s_segmented_data *))
                 {
-                    dlt_log(LOG_WARNING,"NWTSegmented: Could not send end segment.\n");
+                    // This case will not happen.
+                    // When this thread is interrupted by signal, mq_receive() will not return
+                    // partial read length and will return -1. And also no data is removed from mq.
+                    dlt_vlog(LOG_WARNING, "NWTSegmented: Could not read data fully from queue: %d\n", read);
                     continue;
                 }
 
