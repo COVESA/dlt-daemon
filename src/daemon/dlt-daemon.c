@@ -1574,6 +1574,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     struct sockaddr cli;
 
     int in_sock = -1;
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1623,15 +1624,6 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         return -1;
     }
 
-    if (daemon_local->flags.vflag)
-    {
-        snprintf(str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "New connection to client established, #connections: %d\n",
-                 daemon_local->client_connections);
-        dlt_log(LOG_INFO, str);
-    }
-
     // send connection info about connected
     dlt_daemon_control_message_connection_info(in_sock,
                                                daemon,
@@ -1659,6 +1651,14 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                                 daemon_local->flags.vflag);
         }
     }
+
+    snprintf(local_str,
+             DLT_DAEMON_TEXTBUFSIZE,
+             "New client connection #%d established, Total Clients : %d\n",
+             in_sock,
+             daemon_local->client_connections);
+    dlt_log(LOG_DEBUG, local_str);
+    dlt_daemon_log_internal(daemon, daemon_local, local_str, daemon_local->flags.vflag);
 
     if (daemon_local->client_connections == 1)
     {
@@ -3419,6 +3419,8 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
 /* Close connection function */
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if((daemon_local == NULL)|| (daemon == NULL))
@@ -3446,13 +3448,14 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
             dlt_daemon_change_state(daemon,DLT_DAEMON_STATE_BUFFER);
     }
 
-    if (daemon_local->flags.vflag)
-    {
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE, "Connection to client lost, #connections: %d\n",daemon_local->client_connections);
-        dlt_log(LOG_INFO, str);
-    }
-
     dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,daemon,daemon_local,DLT_CONNECTION_STATUS_DISCONNECTED,"",verbose);
+
+    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+             "Client connection #%d closed. Total Clients : %d\n",
+             sock,
+             daemon_local->client_connections);
+    dlt_log(LOG_DEBUG, local_str);
+    dlt_daemon_log_internal(daemon, daemon_local, local_str, daemon_local->flags.vflag);
 
     return 0;
 }
