@@ -3356,7 +3356,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
     {
         dlt_user_log_write_string(&log, text);
         dlt_user_log_write_int(&log, data);
-        
+
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
             return DLT_RETURN_ERROR;
@@ -3411,7 +3411,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE)
     {
         dlt_user_log_write_int(&log, data);
-        
+
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
             return DLT_RETURN_ERROR;
