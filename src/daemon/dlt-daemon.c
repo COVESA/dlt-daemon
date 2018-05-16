@@ -2612,13 +2612,17 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
     if (context->user_handle >= DLT_FD_MINIMUM)
     {
-        /* This call also replaces the default values with the values defined for default */
-        if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
+        if ((userctxt.log_level == DLT_LOG_DEFAULT) || (userctxt.trace_status == DLT_TRACE_STATUS_DEFAULT))
         {
-            dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n",
-                     __func__,
-                     context->apid,
-                     context->ctid);
+            /* This call also replaces the default values with the values defined for default */
+            if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
+            {
+                dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n",
+                         __func__,
+                         context->apid,
+                         context->ctid);
+                return -1;
+            }
         }
     }
 
