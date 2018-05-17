@@ -770,10 +770,17 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
     DltServiceSetDefaultLogLevel *req;
     uint8_t *payload;
 
+    if (client == NULL)
+    {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return DLT_RETURN_ERROR;
+    }
+
     payload = (uint8_t *) malloc(sizeof(DltServiceSetDefaultLogLevel));
 
     if (payload == 0)
     {
+        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %d\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
         return DLT_RETURN_ERROR;
     }
 

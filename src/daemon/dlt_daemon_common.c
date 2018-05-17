@@ -1343,9 +1343,7 @@ void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trac
                 context->trace_status = trace_status;
                 if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
                 {
-                    snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                             "Cannot send trace status %.4s:%.4s -> %i\n", context->apid, context->ctid, context->trace_status);
-                    dlt_log(LOG_WARNING, str);
+                    dlt_vlog(LOG_WARNING, "Cannot send trace status %.4s:%.4s -> %i\n", context->apid, context->ctid, context->trace_status);
                 }
             }
         }
