@@ -337,6 +337,11 @@ enum {
 #define DLT_ENTRY_MAX 100
 
 /**
+ * Maximal IPC path len
+ */
+#define DLT_IPC_PATH_MAX 100
+
+/**
  * Provision to test static function
  */
 #ifndef DLT_UNIT_TESTS

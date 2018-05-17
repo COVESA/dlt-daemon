@@ -132,7 +132,7 @@ int option_handling(DltDaemonLocal *daemon_local,int argc, char* argv[])
 
     /* default values */
     daemon_local->flags.port = DLT_DAEMON_TCP_PORT;
-    strncpy(dltFifoBaseDir, "/tmp", NAME_MAX);
+    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, sizeof(DLT_USER_IPC_PATH));
 
     opterr = 0;
 
@@ -251,9 +251,12 @@ int option_file_parser(DltDaemonLocal *daemon_local)
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath) - 1);
 #ifdef DLT_USE_UNIX_SOCKET_IPC
-    strncpy(daemon_local->flags.appSockPath,
-            DLT_USER_SOCKET_PATH,
-            sizeof(daemon_local->flags.appSockPath) - 1);
+	snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+	if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
+	{
+		fprintf(stderr,"Provided path too long...trimming it to path[%s]\n",
+			daemon_local->flags.appSockPath);
+	}
 #endif
 	daemon_local->flags.gatewayMode = 0;
     strncpy(daemon_local->flags.gatewayConfigFile,

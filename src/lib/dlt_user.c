@@ -195,6 +195,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 {
     struct sockaddr_un remote;
     int status = 0;
+    char dltSockBaseDir[DLT_IPC_PATH_MAX];
 
     DLT_SEM_LOCK();
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -210,13 +211,21 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     if (status == -1)
     {
         dlt_vlog(LOG_INFO,
-                "Socket %s cannot be changed to NON BLOCK\n",
-                DLT_USER_SOCKET_PATH);
+                "Socket %s/dlt cannot be changed to NON BLOCK\n",
+                DLT_USER_IPC_PATH);
         return DLT_RETURN_ERROR;
     }
 
     remote.sun_family = AF_UNIX;
-    strncpy(remote.sun_path, DLT_USER_SOCKET_PATH, sizeof(DLT_USER_SOCKET_PATH));
+    snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+    strncpy(remote.sun_path, dltSockBaseDir, sizeof(dltSockBaseDir));
+
+    if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
+    {
+        dlt_vlog(LOG_INFO,
+                 "Provided path too long...trimming it to path[%s]\n",
+                 dltSockBaseDir);
+    }
 
     if (connect(sockfd, (struct sockaddr*) &remote, sizeof(remote)) == -1)
     {
@@ -224,7 +233,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
         {
             dlt_vlog(LOG_INFO,
                      "Socket %s cannot be opened. Retrying later...\n",
-                     DLT_USER_SOCKET_PATH);
+                     dltSockBaseDir);
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
         }
     }
@@ -341,7 +350,7 @@ DltReturnValue dlt_init(void)
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
     }
-
+    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, sizeof(DLT_USER_IPC_PATH));
     /* check environment variables */
     dlt_check_envvar();
 
