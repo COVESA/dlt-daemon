@@ -70,14 +70,14 @@
 #define DLT_DAEMON_H
 
 #include <limits.h> /* for NAME_MAX */
+#include <sys/time.h>
 
 #include "dlt_daemon_common.h"
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 #include "dlt_daemon_event_handler_types.h"
 #include "dlt_gateway_types.h"
-#include <dlt_offline_trace.h>
-#include <sys/time.h>
+#include "dlt_offline_trace.h"
 
 #define DLT_DAEMON_FLAG_MAX 256
 
@@ -119,7 +119,11 @@ typedef struct
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
     unsigned int offlineLogstorageCacheSize; /**< Max cache size offline logstorage cache */
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
+#else
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
+#endif
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     unsigned int  port; /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
@@ -191,6 +195,9 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+int dlt_daemon_process_app_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+#endif
 int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 typedef int (*dlt_daemon_process_user_message_func)(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);

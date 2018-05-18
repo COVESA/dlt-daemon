@@ -39,7 +39,7 @@ if( DLT_REVISION MATCHES "^$")
 	set( PRINT_REVISION "Git revision unavailable")
 else( DLT_REVISION MATCHES "")
 	string(REPLACE "-" "_" DLT_REVISION ${DLT_REVISION})
-	set( PRINT_REVISION ${DLT_REVISION})	
+	set( PRINT_REVISION ${DLT_REVISION})
 endif( DLT_REVISION MATCHES "^$")
 
 # set default build type, if not defined by user
@@ -70,6 +70,7 @@ option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"            
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                            ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                          OFF)
 
+set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set( DLT_USER "genivi" CACHE STRING
     "Set user for process not run as root")
 
@@ -110,6 +111,15 @@ include_directories(
 )
 
 add_definitions( -D_GNU_SOURCE )
+
+IF(${DLT_IPC} STREQUAL "UNIX_SOCKET")
+    add_definitions( -DDLT_USE_UNIX_SOCKET_IPC )
+ENDIF(${DLT_IPC} STREQUAL "UNIX_SOCKET")
+
+if(NOT DLT_USER_IPC_PATH)
+    set(DLT_USER_IPC_PATH "/tmp")
+endif()
+add_definitions( -DDLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}" )
 
 if(WITH_DLTTEST)
 	add_definitions( -DDLT_TEST_ENABLE)
@@ -247,6 +257,7 @@ message( STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}" )
 message( STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}" )
 message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_UDEV = ${WITH_DLT_LOGSTORAGE_CTRL_UDEV}" )
 message( STATUS "WITH_DLT_LOGSTORAGE_CTRL_PROP = ${WITH_DLT_LOGSTORAGE_CTRL_PROP}" )
+message( STATUS "DLT_IPC = ${DLT_IPC} (Path: ${DLT_USER_IPC_PATH})" )
 message( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
 message( STATUS "-------------------------------------------------------------------------------" )
 message( STATUS )

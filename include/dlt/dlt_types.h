@@ -178,4 +178,14 @@ typedef enum
 typedef float  float32_t;
 typedef double float64_t;
 
+/**
+ * Definition Library connection state
+ */
+typedef enum
+{
+    DLT_USER_NOT_CONNECTED = 0,
+    DLT_USER_CONNECTED,
+    DLT_USER_RETRY_CONNECT
+} DltUserConnectionState;
+
 #endif  /* DLT_TYPES_H */

@@ -58,10 +58,7 @@
 #ifndef DLT_DAEMON_UNIX_SOCKET_H
 #define DLT_DAEMON_UNIX_SOCKET_H
 
-int dlt_daemon_unix_socket_open(int *sock, char *socket_path);
+int dlt_daemon_unix_socket_open(int *sock, char *socket_path, int type, int mask);
 int dlt_daemon_unix_socket_close(int sock);
-
-int dlt_daemon_unix_socket_send(int sock,void* data1,int size1,void* data2,
-        int size2,char serialheader);
 
 #endif /* DLT_DAEMON_UNIX_SOCKET_H */

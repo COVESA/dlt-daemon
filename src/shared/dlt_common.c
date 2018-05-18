@@ -2229,6 +2229,15 @@ int dlt_receiver_receive_fd(DltReceiver *receiver)
     return receiver->bytesRcvd;
 }
 
+int dlt_receiver_receive(DltReceiver *receiver)
+{
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    return dlt_receiver_receive_socket(receiver);
+#else
+    return dlt_receiver_receive_fd(receiver);
+#endif
+}
+
 DltReturnValue dlt_receiver_remove(DltReceiver *receiver, int size)
 {
     if (receiver == NULL)
@@ -3902,6 +3911,7 @@ void dlt_check_envvar()
     }
 }
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
 int dlt_mkdir_recursive(const char *dir)
 {
   int ret = 0;
@@ -3940,3 +3950,4 @@ int dlt_mkdir_recursive(const char *dir)
 
   return ret;
 }
+#endif

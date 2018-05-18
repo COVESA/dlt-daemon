@@ -216,6 +216,10 @@ STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
             dlt_receiver_init(ret, fd, DLT_DAEMON_RCVBUFSIZESERIAL);
         }
         break;
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    case DLT_CONNECTION_APP_CONNECT:
+    /* FALL THROUGH */
+#endif
     case DLT_CONNECTION_APP_MSG:
     /* FALL THROUGH */
     case DLT_CONNECTION_ONE_S_TIMER:
@@ -275,6 +279,11 @@ void *dlt_connection_get_callback(DltConnection *con)
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
         ret = dlt_daemon_process_client_messages_serial;
         break;
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    case DLT_CONNECTION_APP_CONNECT:
+        ret = dlt_daemon_process_app_connect;
+        break;
+#endif
     case DLT_CONNECTION_APP_MSG:
         ret = dlt_daemon_process_user_messages;
         break;

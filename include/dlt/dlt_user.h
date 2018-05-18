@@ -235,6 +235,7 @@ typedef struct
     int corrupt_message_size;
     int16_t corrupt_message_size_size;
 #endif
+    DltUserConnectionState connection_state;
 } DltUser;
 
 /**************************************************************************************************

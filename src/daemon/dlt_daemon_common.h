@@ -196,10 +196,11 @@ int dlt_daemon_free(DltDaemon *daemon,int verbose);
  * @param apid pointer to application id
  * @param pid process id of user application
  * @param description description of application
+ * @param fd file descriptor of application
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to added context, null pointer on error
  */
-DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,char *apid,pid_t pid,char *description, int verbose);
+DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, pid_t pid, char *description, int fd, int verbose);
 /**
  * Delete application from internal application management
  * @param daemon pointer to dlt daemon structure
