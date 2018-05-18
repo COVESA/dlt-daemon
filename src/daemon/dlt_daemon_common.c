@@ -401,8 +401,8 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if ( dlt_user_handle < 0 )
         {
-            snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "open() failed to %s, errno=%d (%s)!\n",filename,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
-            dlt_log(LOG_WARNING, str);
+            int prio = (errno == ENOENT) ? LOG_INFO : LOG_WARNING;
+            dlt_vlog(prio, "open() failed to %s, errno=%d (%s)!\n", filename, errno, strerror(errno));
         } /* if */
 
         /* check if file file descriptor was already used, and make it invalid if it is reused */
@@ -507,8 +507,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
 
     if (fd == NULL)
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
 
         return -1;
     }
@@ -883,8 +882,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
 
     if (fd == NULL)
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
 
         return -1;
     }
@@ -1103,8 +1101,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon, const char *filename, int v
     }
     else
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Cannot open configuration file: %s\n",filename);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "Cannot open configuration file: %s\n",filename);
     }
 
     return 0;
