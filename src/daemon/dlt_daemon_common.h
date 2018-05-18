@@ -356,13 +356,20 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon,DltDaemonApplication *app,i
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
 
 /**
- * Send user messages to all user applications context, or trace status
- * to update with the new log level
+ * Send user messages to all user applications context to update with the new log level
  * @param daemon pointer to dlt daemon structure
- * @param log level to be set
+ * @param log_level new log level to be set
  * @param verbose if set to true verbose information is printed out.
  */
-void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int verbose);
+void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_level, int verbose);
+
+/**
+ * Send user messages to all user applications context to update with the new trace status
+ * @param daemon pointer to dlt daemon structure
+ * @param trace_status new trace status to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose);
 
 /**
  * Send user messages to all user applications the log status

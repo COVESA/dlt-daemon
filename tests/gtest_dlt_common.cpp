@@ -261,7 +261,7 @@ TEST(t_dlt_buffer_reset, normal)
     // Normal Use-Case. expect 0
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_LE(0, dlt_buffer_reset(&buf));
-
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 TEST(t_dlt_buffer_reset, abnormal)
 {
@@ -1238,6 +1238,7 @@ TEST(t_dlt_buffer_info, normal)
     // Normal Use-Case
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_NO_THROW(dlt_buffer_info(&buf));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 TEST(t_dlt_buffer_info, abnormal)
 {
@@ -1262,6 +1263,7 @@ TEST(t_dlt_buffer_status, normal)
     // Normal Use-Case
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_NO_THROW(dlt_buffer_status(&buf));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 TEST(t_dlt_buffer_status, abnormal)
 {
@@ -3092,7 +3094,8 @@ TEST(t_dlt_message_read, normal)
         EXPECT_LE(DLT_RETURN_ERROR, dlt_message_read(&file.msg,(unsigned char*) buffer,255,0,1));
     }
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_close(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
@@ -3103,6 +3106,8 @@ TEST(t_dlt_message_read, normal)
         EXPECT_LE(DLT_RETURN_ERROR, dlt_message_read(&file.msg,(unsigned char *) buffer,255,1,1));
     }
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_close(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
 }
 TEST(t_dlt_message_read, abnormal)
 {
@@ -3335,11 +3340,16 @@ TEST(t_dlt_log_init, normal)
 
     // Normal Use-Case, exptect 0-3
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_CONSOLE));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_SYSLOG));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_set_filename("/tmp/dlt.log"));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_FILE));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_FILE));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_DROPPED));
+    EXPECT_NO_THROW(dlt_log_free());
 }
 TEST(t_dlt_log_init, abnormal)
 {
@@ -3367,8 +3377,11 @@ TEST(t_dlt_log_free, normal)
 
     // Normal Use-Case, expected 0
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_CONSOLE));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_SYSLOG));
+    EXPECT_NO_THROW(dlt_log_free());
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_DROPPED));
+    EXPECT_NO_THROW(dlt_log_free());
 }
 TEST(t_dlt_log_free, abnormal)
 {

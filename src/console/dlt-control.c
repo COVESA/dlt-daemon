@@ -72,6 +72,7 @@
 #define DLT_GLOGINFO_DATA_MAX       800
 #define DLT_GET_LOG_INFO_HEADER     18      /*Get log info header size in response text */
 #define DLT_INVALID_LOG_LEVEL       0xF
+#define DLT_INVALID_TRACE_STATUS    0xF
 /* Option of GET_LOG_INFO */
 #define DLT_SERVICE_GET_LOG_INFO_OPT7    7    /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
 
@@ -217,7 +218,14 @@ void usage()
     printf("       -l level -c xyz* (set level for all ctxts whose name starts with xyz)\n");
     printf("       -l level -c ctxid (set level for the particular ctxt)\n");
     printf("       -l level (set level for all the registered contexts)\n");
-    printf("  -r tracestatus  Set the trace status (0=off - 1=on,255=default)\n");
+    printf("  -r tracestatus   Set the trace status (0=off - 1=on,255=default)\n");
+    printf("      supported options:\n");
+    printf("       -r tracestatus -a appid -c ctid\n");
+    printf("       -r tracestatus -a abc* (set status for all ctxts of apps name starts with abc)\n");
+    printf("       -r tracestatus -a appid (set status for all ctxts of this app)\n");
+    printf("       -r tracestatus -c xyz* (set status for all ctxts whose name starts with xyz)\n");
+    printf("       -r tracestatus -c ctxid (set status for the particular ctxt)\n");
+    printf("       -r tracestatus (set status for all the registered contexts)\n");
     printf("  -d loglevel	  Set the default log level (0=off - 5=verbose)\n");
     printf("  -f tracestatus  Set the default trace status (0=off - 1=on)\n");
     printf("  -i enable  	  Enable timing packets (0=off - 1=on)\n");
@@ -293,7 +301,7 @@ int main(int argc, char* argv[])
     dltdata.xvalue = 0;
     dltdata.tvalue = 1000;
     dltdata.lvalue = DLT_INVALID_LOG_LEVEL;
-    dltdata.rvalue = -1;
+    dltdata.rvalue = DLT_INVALID_TRACE_STATUS;
     dltdata.dvalue = -1;
     dltdata.fvalue = -1;
     dltdata.ivalue = -1;
@@ -384,8 +392,13 @@ int main(int argc, char* argv[])
             }
         case 'r':
 			{
-            	dltdata.rvalue = atoi(optarg);;
-            	break;
+                dltdata.rvalue = strtol(optarg, &endptr, 10);
+                if ((dltdata.rvalue < DLT_TRACE_STATUS_DEFAULT) || (dltdata.rvalue > DLT_TRACE_STATUS_ON))
+                {
+                    fprintf (stderr, "invalid trace status, supported trace status -1, 0, 1\n");
+                    return -1;
+                }
+                break;
 			}
         case 'd':
 			{
@@ -615,22 +628,41 @@ int main(int argc, char* argv[])
                 }
             }
         }
-    	else if(dltdata.rvalue!=-1 && dltdata.avalue && dltdata.cvalue)
-    	{
-    		/* trace status */
-    		printf("Set trace status:\n");
-    		printf("AppId: %s\n",dltdata.avalue);
-    		printf("ConId: %s\n",dltdata.cvalue);
-    		printf("TraceStatus: %d\n",dltdata.rvalue);
-    		/* send control message in*/
-            if (dlt_client_send_trace_status(&g_dltclient,
-                                                  dltdata.avalue,
-                                                  dltdata.cvalue,
-                                                  dltdata.rvalue) != DLT_RETURN_OK)
+        else if (dltdata.rvalue != DLT_INVALID_TRACE_STATUS)
+        {
+            if ((dltdata.avalue == 0) && (dltdata.cvalue == 0))
             {
-                fprintf(stderr, "ERROR: Could not send trace status\n");
+                if (dltdata.vflag)
+                {
+                    printf("Set all trace status:\n");
+                    printf("Tracestatus: %d\n", dltdata.rvalue);
+                }
+                if (0 != dlt_client_send_all_trace_status(&g_dltclient,
+                                                          dltdata.rvalue))
+                {
+                    fprintf(stderr, "ERROR: Could not send trace status\n");
+                }
             }
-    	}
+            else
+            {
+                /* trace status */
+                if (dltdata.vflag)
+                {
+                    printf("Set trace status:\n");
+                    printf("AppId: %s\n", dltdata.avalue);
+                    printf("ConId: %s\n", dltdata.cvalue);
+                    printf("Tracestatus: %d\n", dltdata.rvalue);
+                }
+                /* send control message*/
+                if (0 != dlt_client_send_trace_status(&g_dltclient,
+                                                      dltdata.avalue,
+                                                      dltdata.cvalue,
+                                                      dltdata.rvalue))
+                {
+                    fprintf(stderr, "ERROR: Could not send trace status\n");
+                }
+            }
+        }
     	else if(dltdata.dvalue!=-1)
     	{
     		/* default log level */
@@ -642,13 +674,13 @@ int main(int argc, char* argv[])
                 fprintf (stderr, "ERROR: Could not send default log level\n");
             }
     	}
-    	else if(dltdata.rvalue!=-1)
+    	else if(dltdata.fvalue!=-1)
     	{
     		/* default trace status */
     		printf("Set default trace status:\n");
-    		printf("TraceStatus: %d\n",dltdata.rvalue);
+    		printf("TraceStatus: %d\n",dltdata.fvalue);
     		/* send control message in*/
-            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.rvalue) != DLT_RETURN_OK)
+            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.fvalue) != DLT_RETURN_OK)
             {
                 fprintf (stderr, "ERROR: Could not send default trace status\n");
             }

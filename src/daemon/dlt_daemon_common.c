@@ -412,11 +412,8 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
         dlt_user_handle = open(filename, O_WRONLY|O_NONBLOCK);
         if (dlt_user_handle < 0)
         {
-            dlt_vlog(LOG_WARNING,
-                     "open() failed to %s, errno=%d (%s)!\n",
-                     filename,
-                     errno,
-                     strerror(errno));
+            int prio = (errno == ENOENT) ? LOG_INFO : LOG_WARNING;
+            dlt_vlog(prio, "open() failed to %s, errno=%d (%s)!\n", filename, errno, strerror(errno));
         } /* if */
 #endif
         /* check if file descriptor was already used, and make it invalid if it
@@ -523,8 +520,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
 
     if (fd == NULL)
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
 
         return -1;
     }
@@ -612,7 +608,7 @@ int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int ve
                 dlt_set_id(apid,daemon->applications[i].apid);
 
                 if ((daemon->applications[i].application_description) &&
-                        (daemon->applications[i].application_description!='\0'))
+                        (daemon->applications[i].application_description[0] != '\0'))
                 {
                     fprintf(fd,"%s:%s:\n",apid, daemon->applications[i].application_description);
                 }
@@ -899,8 +895,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
 
     if (fd == NULL)
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
 
         return -1;
     }
@@ -1119,8 +1114,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon, const char *filename, int v
     }
     else
     {
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE,"Cannot open configuration file: %s\n",filename);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_INFO, "Cannot open configuration file: %s\n",filename);
     }
 
     return 0;
@@ -1310,7 +1304,7 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
     }
 }
 
-void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int verbose)
+void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_level, int verbose)
 {
     int32_t count = 0;
     DltDaemonContext *context = NULL;
@@ -1333,6 +1327,37 @@ void dlt_daemon_user_send_all_update(DltDaemon *daemon, int8_t log_level, int ve
                 if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
                 {
                     return;
+                }
+            }
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose)
+{
+    int32_t count = 0;
+    DltDaemonContext *context = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL)
+    {
+        return;
+    }
+
+    dlt_vlog(LOG_NOTICE, "All trace status is updated -> %i\n", trace_status);
+
+    for (count = 0; count < daemon->num_contexts; count++)
+    {
+        context = &(daemon->contexts[count]);
+        if (context)
+        {
+            if (context->user_handle >= DLT_FD_MINIMUM)
+            {
+                context->trace_status = trace_status;
+                if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
+                {
+                    dlt_vlog(LOG_WARNING, "Cannot send trace status %.4s:%.4s -> %i\n", context->apid, context->ctid, context->trace_status);
                 }
             }
         }

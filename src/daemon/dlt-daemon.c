@@ -3206,7 +3206,10 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
     }
 
     memset(&userctxt, 0, len);
-    if (dlt_receiver_check_and_get(rec, &userctxt, len, 1) < 0)
+    if (dlt_receiver_check_and_get(rec,
+                                   &userctxt,
+                                   len,
+                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
         return -1;

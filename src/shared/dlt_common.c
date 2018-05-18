@@ -186,8 +186,11 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength ,uint8_t *ptr, 
     /* print full lines */
     for (lines=0; lines< (size / DLT_COMMON_HEX_CHARS); lines++)
     {
+        int ret = 0;
         /* Line number */
-        snprintf(text,DLT_COMMON_HEX_LINELEN+1,"%.6x: ",lines * DLT_COMMON_HEX_CHARS);
+        ret = snprintf(text,DLT_COMMON_HEX_LINELEN+1,"%.6x: ",lines * DLT_COMMON_HEX_CHARS);
+        if ((ret < 0 ) || (ret >= (DLT_COMMON_HEX_LINELEN + 1)))
+            dlt_log(LOG_WARNING, "line was truncated\n");
         text+=DLT_COMMON_HEX_LINELEN; /* 'XXXXXX: ' */
 
         /* Hex-Output */
@@ -222,7 +225,12 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength ,uint8_t *ptr, 
     if (rest>0)
     {
         /* Line number */
-        snprintf(text,9,"%.6x: ", (size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS);
+        int ret = 0;
+        ret = snprintf(text,9,"%.6x: ", (size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS);
+        if ((ret < 0) || (ret >= 9))
+        {
+            dlt_log(LOG_WARNING, "line number was truncated");
+        }
         text+=DLT_COMMON_HEX_LINELEN; /* 'XXXXXX: ' */
 
         /* Hex-Output */
