@@ -2522,7 +2522,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                  context->ctid,
                  context->apid,
                  context->context_description);
-        dlt_daemon_log_internal(daemon, daemon_local, local_str, verbose);
+        if (verbose)
+        {
+            dlt_daemon_log_internal(daemon, daemon_local, local_str, verbose);
+        }
         dlt_log(LOG_DEBUG, local_str);
     }
 
@@ -2752,10 +2755,13 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                      "Unregistered CtID '%.4s' for ApID '%.4s'\n",
                      userctxt.ctid,
                      userctxt.apid);
-            dlt_daemon_log_internal(daemon,
-                                    daemon_local,
-                                    local_str,
-                                    verbose);
+            if (verbose)
+            {
+                dlt_daemon_log_internal(daemon,
+                                        daemon_local,
+                                        local_str,
+                                        verbose);
+            }
             dlt_log(LOG_DEBUG, local_str);
         }
     }
