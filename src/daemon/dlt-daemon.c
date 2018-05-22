@@ -2267,6 +2267,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
     int to_remove = 0;
     DltDaemonApplication *application = NULL;
+    DltDaemonApplication *old_application = NULL;
+    pid_t old_pid = 0;
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
     DltUserControlMsgRegisterApplication userapp;
@@ -2332,6 +2334,11 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         return -1;
     }
 
+    old_application = dlt_daemon_application_find(daemon, userapp.apid, verbose);
+    if (old_application != NULL)
+    {
+        old_pid = old_application->pid;
+    }
     application = dlt_daemon_application_add(daemon,
                                              userapp.apid,
                                              userapp.pid,
@@ -2354,17 +2361,20 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     }
     else
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "ApplicationID '%.4s' registered for PID %d, Description=%s\n",
-                 application->apid,
-                 application->pid,
-                 application->application_description);
-        dlt_daemon_log_internal(daemon,
-                                daemon_local,
-                                local_str,
-                                daemon_local->flags.vflag);
-        dlt_log(LOG_DEBUG, local_str);
+        if (old_pid != application->pid)
+        {
+            snprintf(local_str,
+                     DLT_DAEMON_TEXTBUFSIZE,
+                     "ApplicationID '%.4s' registered for PID %d, Description=%s\n",
+                     application->apid,
+                     application->pid,
+                     application->application_description);
+            dlt_daemon_log_internal(daemon,
+                                    daemon_local,
+                                    local_str,
+                                    daemon_local->flags.vflag);
+            dlt_log(LOG_DEBUG, local_str);
+        }
     }
 
     return 0;
