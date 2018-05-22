@@ -2446,7 +2446,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
     buf->step_size = 0;
 
     // Init pointers
-     head = (DltBufferHead*)buf->shm;
+    head = (DltBufferHead*)buf->shm;
     head->read = 0;
     head->write = 0;
     head->count = 0;
@@ -2459,6 +2459,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
     dlt_vlog(LOG_DEBUG,
              "%s: Buffer: Size %d, Start address %lX\n",
              __func__, buf->size, (unsigned long)buf->mem);
+
     return DLT_RETURN_OK; /* OK */
 }
 
@@ -2542,7 +2543,7 @@ DltReturnValue dlt_buffer_free_static(DltBuffer *buf)
 
     if(buf->mem == NULL) {
         // buffer not initialized
-        dlt_log(LOG_WARNING,"Buffer: Buffer not initialized\n");
+        dlt_vlog(LOG_WARNING, "%s: Buffer: Buffer not initialized\n", __func__);
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -2557,7 +2558,7 @@ DltReturnValue dlt_buffer_free_dynamic(DltBuffer *buf)
 
     if(buf->shm == NULL) {
         // buffer not initialized
-        dlt_log(LOG_WARNING,"Buffer: Buffer not initialized\n");
+        dlt_vlog(LOG_WARNING, "%s: Buffer: Buffer not initialized\n", __func__);
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -2586,7 +2587,7 @@ void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *dat
     }
     else
     {
-        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
     }
 }
 
@@ -2608,38 +2609,40 @@ void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsig
     }
     else
     {
-        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
     }
 }
 
 int dlt_buffer_increase_size(DltBuffer *buf)
 {
-    // catch null pointer
-    if(buf == NULL) {
-        return -1;
-    }
-
     DltBufferHead *head,*new_head;
     unsigned char *new_ptr;
+
+    // catch null pointer
+    if(buf == NULL) {
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     /* check size */
     if(buf->step_size==0) {
         /* cannot increase size */
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* check size */
     if((buf->size + sizeof(DltBufferHead) + buf->step_size) > buf->max_size) {
         /* max size reached, do not increase */
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* allocate new buffer */
     new_ptr = malloc(buf->size + sizeof(DltBufferHead) + buf->step_size);
     if(new_ptr == NULL) {
-        snprintf(str,sizeof(str),"Buffer: Cannot increase size because allocate %d bytes failed\n",buf->min_size);
-        dlt_log(LOG_WARNING, str);
-        return -1;
+        dlt_vlog(LOG_WARNING,
+                "%s: Buffer: Cannot increase size because allocate %d bytes failed\n",
+                __func__, buf->min_size);
+        return DLT_RETURN_ERROR;
     }
 
     /* copy data */
@@ -2673,7 +2676,7 @@ int dlt_buffer_increase_size(DltBuffer *buf)
              buf->size+(int32_t)sizeof(DltBufferHead),
              (unsigned long)buf->mem);
 
-    return 0; // OK
+    return DLT_RETURN_OK; // OK
 }
 
 int dlt_buffer_minimize_size(DltBuffer *buf)
@@ -2683,22 +2686,23 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
     // catch null pointer
     if(buf == NULL)
     {
-        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
-        return -1;
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if((buf->size + sizeof(DltBufferHead)) == buf->min_size)
     {
         /* already minimized */
-        return 0;
+        return DLT_RETURN_OK;
     }
 
     /* allocate new buffer */
     new_ptr = malloc(buf->min_size);
     if(new_ptr == NULL) {
-        snprintf(str,sizeof(str),"Buffer: Cannot set to min size of %d bytes\n",buf->min_size);
-        dlt_log(LOG_WARNING, str);
-        return -1;
+        dlt_vlog(LOG_WARNING,
+                 "%s: Buffer: Cannot set to min size of %d bytes\n",
+                 __func__, buf->min_size);
+        return DLT_RETURN_ERROR;
     }
 
     /* free old data */
@@ -2721,7 +2725,7 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
     // clear memory
     memset(buf->mem, 0, buf->size);
 
-    return 0; /* OK */
+    return DLT_RETURN_OK; /* OK */
 }
 
 int dlt_buffer_reset(DltBuffer *buf)
@@ -2729,8 +2733,8 @@ int dlt_buffer_reset(DltBuffer *buf)
     // catch null pointer
     if(buf == NULL)
     {
-        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
-        return -1;
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     dlt_vlog(LOG_WARNING,
@@ -2745,7 +2749,7 @@ int dlt_buffer_reset(DltBuffer *buf)
     // clear memory
     memset(buf->mem, 0, buf->size);
 
-    return 0; /* OK */
+    return DLT_RETURN_OK; /* OK */
 }
 
 DltReturnValue dlt_buffer_push(DltBuffer *buf,const unsigned char *data,unsigned int size)
@@ -2761,12 +2765,12 @@ int dlt_buffer_push3(DltBuffer *buf, const unsigned char *data1, unsigned int si
 
     // catch null pointer
     if (buf == NULL)
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_WRONG_PARAMETER;
 
     if (buf->shm == NULL)
     {
         // buffer not initialised
-        dlt_log(LOG_ERR, "Buffer: Buffer not initialised\n");
+        dlt_vlog(LOG_ERR, "%s: Buffer: Buffer not initialized\n", __func__);
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -2800,7 +2804,7 @@ int dlt_buffer_push3(DltBuffer *buf, const unsigned char *data1, unsigned int si
         if (dlt_buffer_increase_size(buf))
         {
             /* increase size is not possible */
-            //dlt_log(LOG_ERR,"Buffer: Buffer is full\n");
+            //dlt_log(LOG_ERR, "Buffer: Buffer is full\n");
             return DLT_RETURN_ERROR; // ERROR
         }
 
@@ -2841,12 +2845,12 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
 
     // catch null pointer
     if(buf == NULL)
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
 
     if(buf->shm == NULL) {
         // shm not initialised
-        dlt_log(LOG_ERR,"Buffer: SHM not initialised\n");
-        return -1; /* ERROR */
+        dlt_vlog(LOG_ERR, "%s: Buffer: SHM not initialized\n", __func__);
+        return DLT_RETURN_ERROR; /* ERROR */
     }
 
     // get current write pointer
@@ -2861,7 +2865,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
                  "%s: Buffer: Pointer out of range. Read: %d, Write: %d, Count: %d, Size: %d\n",
                  __func__, read, write, count, buf->size);
         dlt_buffer_reset(buf);
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
 
     // check if data is in there
@@ -2873,7 +2877,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
                      __func__, read, write);
             dlt_buffer_reset(buf);
         }
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
 
     // calculate used size
@@ -2888,7 +2892,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
                  "%s: Buffer: Used size is smaller than buffer block header size. Used size: %d\n",
                  __func__, used_size);
         dlt_buffer_reset(buf);
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
 
     // read header
@@ -2897,15 +2901,15 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
     // check header
     if(memcmp((unsigned char*)(head.head),head_compare,sizeof(head_compare))!=0)
     {
-        dlt_log(LOG_ERR,"Buffer: Header head check failed\n");
+        dlt_vlog(LOG_ERR, "%s: Buffer: Header head check failed\n", __func__);
         dlt_buffer_reset(buf);
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
     if(head.status != 2)
     {
-        dlt_log(LOG_ERR,"Buffer: Header status check failed\n");
+        dlt_vlog(LOG_ERR, "%s: Buffer: Header status check failed\n", __func__);
         dlt_buffer_reset(buf);
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
 
     // second check size
@@ -2914,7 +2918,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
                  "%s: Buffer: Used size is smaller than buffer block header size And read header size. Used size: %d\n",
                  __func__, used_size);
         dlt_buffer_reset(buf);
-        return -1; // ERROR
+        return DLT_RETURN_ERROR; // ERROR
     }
 
     // third check size
@@ -2976,8 +2980,11 @@ int dlt_buffer_remove(DltBuffer *buf)
 void dlt_buffer_info(DltBuffer *buf)
 {
     // check nullpointer
-    if(buf == NULL)
+    if (buf == NULL)
+    {
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
         return;
+    }
 
     dlt_vlog(LOG_DEBUG,
              "Buffer: Available size: %d, Buffer: Buffer full start address: %lX, Buffer: Buffer start address: %lX\n",
@@ -2989,8 +2996,9 @@ void dlt_buffer_status(DltBuffer *buf)
     int write, read, count;
 
     // check nullpointer
-    if(buf == NULL) {
-        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+    if (buf == NULL)
+    {
+        dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
         return;
     }
 
@@ -3011,7 +3019,7 @@ uint32_t dlt_buffer_get_total_size(DltBuffer *buf)
 {
     // catch null pointer
     if(buf == NULL)
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
 
     return buf->max_size;
 }
@@ -3022,18 +3030,18 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
 
     // catch null pointer
     if(buf == NULL)
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
 
     /* check if buffer available */
     if(buf->shm == NULL)
-        return 0;
+        return DLT_RETURN_OK;
 
     write = ((int*)(buf->shm))[0];
     read = ((int*)(buf->shm))[1];
     count = ((int*)(buf->shm))[2];
 
     if(count == 0)
-        return 0;
+        return DLT_RETURN_OK;
 
     if(write>read)
         return (write - read);
@@ -3045,11 +3053,11 @@ int dlt_buffer_get_message_count(DltBuffer *buf)
 {
     // catch null pointer
     if(buf == NULL)
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
 
     /* check if buffer available */
     if(buf->shm == NULL)
-        return 0;
+        return DLT_RETURN_OK;
 
     return ((int*)(buf->shm))[2];
 }
