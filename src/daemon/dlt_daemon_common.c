@@ -357,7 +357,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
 
         new_application = 1;
 
-    } else if (pid != application->pid) {
+    } else if ((pid != application->pid) && (application->pid != 0)) {
 
         snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Duplicate registration of ApplicationID: '%.4s'; registering from PID %d, existing from PID %d\n",apid, pid, application->pid);
         dlt_log(LOG_WARNING, str);
