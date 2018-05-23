@@ -151,9 +151,21 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         {
             /* epoll reports an error, we need to clean-up the concerned event
              */
-            dlt_event_handler_unregister_connection(pEvent,
-                                                   daemon_local,
-                                                   fd);
+
+            if (type == DLT_CONNECTION_CLIENT_MSG_TCP)
+            {
+                /* To transition to BUFFER state if this is final TCP client connection,
+                 * call dedicated function. this function also calls
+                 * dlt_event_handler_unregister_connection() insize the function.
+                 */
+                dlt_daemon_close_socket(fd, daemon, daemon_local, 0);
+            }
+            else
+            {
+                dlt_event_handler_unregister_connection(pEvent,
+                                                        daemon_local,
+                                                        fd);
+            }
             continue;
         }
 
