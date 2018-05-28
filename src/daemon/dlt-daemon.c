@@ -1589,7 +1589,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     cli_size = sizeof(cli);
     if ((in_sock  = accept(receiver->fd,&cli, &cli_size)) < 0)
     {
-        dlt_log(LOG_ERR, "accept() failed!\n");
+        dlt_vlog(LOG_ERR, "accept() for socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1 ;
     }
 
@@ -1873,7 +1873,7 @@ int dlt_daemon_process_control_connect(
     ctrl_size = sizeof(ctrl);
     if ((in_sock = accept(receiver->fd, &ctrl, &ctrl_size)) < 0)
     {
-        dlt_log(LOG_ERR, "accept() on UNIX socket failed!\n");
+        dlt_vlog(LOG_ERR, "accept() on UNIX control socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1 ;
     }
 
@@ -1929,7 +1929,7 @@ int dlt_daemon_process_app_connect(
     app_size = sizeof(app);
     if ((in_sock = accept(receiver->fd, &app, &app_size)) < 0)
     {
-        dlt_log(LOG_ERR, "accept() on UNIX socket failed!\n");
+        dlt_vlog(LOG_ERR, "accept() on UNIX socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1 ;
     }
 
