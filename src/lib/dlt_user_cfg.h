@@ -140,6 +140,9 @@
 /* Sleeps between resending user buffer at exit in usec (1000 usec = 1ms)*/
 #define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 100000
 
+/* Retry interval for mq error in usec */
+#define DLT_USER_MQ_ERROR_RETRY_INTERVAL 100000
+
 
 /************************/
 /* Don't change please! */
