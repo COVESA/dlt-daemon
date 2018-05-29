@@ -88,6 +88,8 @@ static uint32_t watchdog_trigger_interval;  // watchdog trigger interval in [s]
 /* used in main event loop and signal handler */
 int g_exit = 0;
 
+int g_signo = 0;
+
 /**
  * Print usage information of tool.
  */
@@ -788,7 +790,9 @@ int main(int argc, char* argv[])
                                        &daemon_local);
     }
 
-    dlt_daemon_log_internal(&daemon, &daemon_local, "Exiting Daemon...", daemon_local.flags.vflag);
+    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Exiting DLT daemon... [%d]", g_signo);
+    dlt_daemon_log_internal(&daemon, &daemon_local, str, daemon_local.flags.vflag);
+    dlt_log(LOG_NOTICE, str);
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
@@ -1342,6 +1346,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 void dlt_daemon_signal_handler(int sig)
 {
+    g_signo = sig;
     switch (sig)
     {
     case SIGHUP:
@@ -1349,10 +1354,6 @@ void dlt_daemon_signal_handler(int sig)
     case SIGINT:
     case SIGQUIT:
     {
-        /* finalize the server */
-        snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"Exiting DLT daemon due to signal: %s\n", strsignal(sig) );
-        dlt_log(LOG_NOTICE, str);
-
         /* Try to delete existing pipe, ignore result of unlink() */
         char tmp[PATH_MAX + 1];
         snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
@@ -1370,8 +1371,8 @@ void dlt_daemon_signal_handler(int sig)
     }
     default:
     {
-        dlt_log(LOG_CRIT, "This case should never happen!");
-    break;
+        /* This case should never happen! */
+        break;
     }
     } /* switch */
 } /* dlt_daemon_signal_handler() */
