@@ -808,6 +808,7 @@ static void dlt_user_free_buffer(unsigned char **buffer)
 DltReturnValue dlt_free(void)
 {
     uint32_t i;
+    int ret = 0;
 #ifndef DLT_USE_UNIX_SOCKET_IPC
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
 #endif
@@ -846,7 +847,39 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_log_handle!=-1)
     {
         /* close log file/output fifo to daemon */
-        close(dlt_user.dlt_log_handle);
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+        ret = shutdown(dlt_user.dlt_log_handle, SHUT_WR);
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_WARNING, "%s: shutdown failed: %s\n", __func__, strerror(errno));
+        }
+        else
+        {
+            while (1)
+            {
+                ssize_t bytes_read;
+
+                bytes_read = read(dlt_user.dlt_log_handle, dlt_user.resend_buffer, dlt_user.log_buf_len);
+                if (bytes_read < 0)
+                {
+                    dlt_vlog(LOG_DEBUG, "%s - %d: Reading...\n", __func__, __LINE__);
+                    break;
+                }
+                else
+                {
+                    dlt_vlog(LOG_DEBUG, "%s - %d: %d bytes read from resend buffer\n", __func__, __LINE__);
+                    if (!bytes_read)
+                        break;
+                }
+            }
+        }
+#endif
+        ret = close(dlt_user.dlt_log_handle);
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_WARNING, "%s: close failed: %s\n", __func__, strerror(errno));
+        }
+
         dlt_user.dlt_log_handle = -1;
     }
 
@@ -5019,6 +5052,7 @@ static void dlt_fork_child_fork_handler()
   if (dlt_user_initialised)
   {
     /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
+    dlt_user.dlt_log_handle = -1;
     dlt_log_free();
     dlt_free();
     /* the only thing that remains is the atexit-handler */

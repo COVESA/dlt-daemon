@@ -354,8 +354,11 @@ void dlt_env_free_ll_set(dlt_env_ll_set * const ll_set)
     return;
   }
 
-  free(ll_set->item);
-  ll_set->item = NULL;
+  if (!ll_set->item)
+  {
+    free(ll_set->item);
+    ll_set->item = NULL;
+  }
   ll_set->array_size = 0u;
   ll_set->num_elem = 0u;
 }
