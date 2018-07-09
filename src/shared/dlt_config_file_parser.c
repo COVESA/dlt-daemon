@@ -198,6 +198,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
 
     if (s->list == NULL)
     {
+        /* creating a list if it doesnt exists */
         s->list = malloc(sizeof(DltConfigKeyData));
         if (s->list == NULL)
         {
@@ -214,7 +215,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
         {
             tmp = &(*tmp)->next;
         }
-
+        /* Adding new entry to the list */
         *tmp = malloc(sizeof(DltConfigKeyData));
         if (*tmp == NULL)
         {
@@ -484,7 +485,6 @@ void dlt_config_file_release(DltConfigFile *file)
             DltConfigKeyData *node = file->sections[i].list;
             free(s->name);
 
-            /* free data in hashtable */
             if (s->keys != NULL)
             {
                 free(s->keys);
