@@ -59,7 +59,6 @@
 #ifndef _DLT_CONFIG_FILE_PARSER_H_
 #define _DLT_CONFIG_FILE_PARSER_H_
 
-#include <search.h>
 
 /* definitions */
 #define DLT_CONFIG_FILE_PATH_MAX_LEN       100 /* absolute path including filename */
@@ -68,13 +67,20 @@
 #define DLT_CONFIG_FILE_SECTIONS_MAX       100
 #define DLT_CONFIG_FILE_KEYS_MAX            25 /* Maximal keys per section */
 
+typedef struct DltConfigKeyData
+{
+    char *key;
+    char *data;
+    struct DltConfigKeyData *next;
+} DltConfigKeyData;
+
 /* Config file section structure */
 typedef struct
 {
     int num_entries;          /* number of entries */
     char *name;               /* name of section */
     char *keys;               /* keys */
-    struct hsearch_data data; /* hash table object used by hsearch_r */
+    DltConfigKeyData *list;
 } DltConfigFileSection;
 
 typedef struct
