@@ -531,7 +531,7 @@ As this document has the focus on the DLT Daemon and the DLT user library, only 
 | src | | Source Code
 | src | shared | Shared source code (between DLT daemon and DLT user library)
 | src | adaptor | Adaptors to DLT daemon:dlt-adaptor-stdin (for connection over stdin) dlt-adaptor-udp (for connection over UDP)
-| src | console | Console utilities: dlt-receive and dlt-convert
+| src | console | Console utilities: dlt-receive, dlt-convert, and dlt-sortbytimestamp
 | src | daemon | DLT Daemon
 | src | example | Examples for usage of the DLT user library:dlt-example-user (Macro IF) anddlt-example-user-func (Function IF) andwintestclient (MS Windows based test client)
 | src | lib | DLT library functions

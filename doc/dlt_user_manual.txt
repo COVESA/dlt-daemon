@@ -36,6 +36,7 @@ The SW components of DLT:
 * dlt-adaptor-stdin
 * dlt-adaptor-udp
 * dlt-convert
+* dlt-sortbytimestamp
 * dlt-receive
 * dlt-dbus
 * dlt-kpi
@@ -137,12 +138,13 @@ See Manpage dlt-system(1).
 See Manpage dlt-system.conf(5).
 
 == DLT command line tools
-Three command line tools are provided together with DLT daemon implementation.
+Four command line tools are provided together with DLT daemon implementation.
 
 These tools are:
 
 * Data logger: dlt-receive
 * Converter: dlt-convert
+* Sorter: dlt-sortbytimestamp
 * Configuration: dlt-control (planned)
 
 
@@ -161,6 +163,20 @@ The dlt-convert console utility is used to read DLT files, print DLT messages in
 
 ==== Command line interface
 See Manpage dlt-convert(1).
+
+=== dlt-sortbytimestamp
+
+==== Overview
+By default messages in DLT files are ordered according to the time the logger received them. This can unhelpful when tracing a sequence of events on a busy multi-threaded/multi-core system, because thread pre-emption combined with multiple processes attempting to log messages simultaneously means that the order in which the messages are received may vary significantly from the order in which they were created.
+
+The dlt-sortbytimestamp console utility is used to re-order the messages in DLT files, sorting them according to when the messages were created.
+
+Filters can be used to filter messages OR a range of messages to be processed can specified.
+
+Ranges are essential when processing a DLT file covering more than a single reboot cycle. This is because message timestamps are recorded relative to boot time and thus timestamping is reset to zero at each boot. Events from different boot cycles will have differing receive times, but may have identical boot relative timestamps. Using *dlt-sortbytimestamp* to sort such a DLT file will result in a tangled mess. Use ranges to avoid this. Use *dlt-viewer* to ascertain the start and end message indices of the desired range.
+
+==== Command line interface
+See Manpage dlt-sortbytimestamp(1).
 
 == DLT adaptors
 The DLT adaptors are used to interface legacy linux applications with the DLT daemon. Therefore, there are two adaptors:

@@ -15,6 +15,11 @@
 # @licence end@
 #######
 
+set(dlt_sortbytimestamp_SRCS dlt-sortbytimestamp.c)
+add_executable(dlt-sortbytimestamp ${dlt_sortbytimestamp_SRCS} ${dlt_most_SRCS})
+target_link_libraries(dlt-sortbytimestamp dlt ${EXPAT_LIBRARIES})
+set_target_properties(dlt-sortbytimestamp PROPERTIES LINKER_LANGUAGE C)
+
 set(dlt_convert_SRCS dlt-convert.c)
 add_executable(dlt-convert ${dlt_convert_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-convert dlt ${EXPAT_LIBRARIES})
@@ -37,6 +42,6 @@ set(dlt_passive_node_ctrl_SRCS dlt-passive-node-ctrl.c dlt-control-common.c)
 add_executable(dlt-passive-node-ctrl ${dlt_passive_node_ctrl_SRCS} ${dlt_most_SRCS})
 target_link_libraries(dlt-passive-node-ctrl dlt ${EXPAT_LIBRARIES})
 
-install(TARGETS dlt-convert dlt-receive dlt-control dlt-passive-node-ctrl
+install(TARGETS dlt-sortbytimestamp dlt-convert dlt-receive dlt-control dlt-passive-node-ctrl
 	RUNTIME DESTINATION bin
 	COMPONENT base)

@@ -78,6 +78,8 @@ include::dlt-system.conf.5.txt[]
 
 include::dlt-convert.1.txt[]
 
+include::dlt-sortbytimestamp.1.txt[]
+
 include::dlt-receive.1.txt[]
 
 include::dlt-logstorage-ctrl.1.txt[]

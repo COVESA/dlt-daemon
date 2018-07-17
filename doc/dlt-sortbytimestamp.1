@@ -1,0 +1,103 @@
+'\" t
+.\"     Title: dlt-sortbytimestamp
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 07/17/2018
+.\"    Manual: \ \&
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "DLT\-SORTBYTIMESTAMP" "1" "07/17/2018" "\ \&" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+dlt-sortbytimestamp \- Re\-order DLT Logging files according to message creation time
+.SH "SYNOPSIS"
+.sp
+\fBdlt\-sortbytimestamp\fR [\-h] [\-v] [\-c] [\-f filterfile] [\-b number] [\-e number] dltfile_in dltfile_out
+.SH "DESCRIPTION"
+.sp
+By default messages in DLT files are ordered according to the time the logger received them\&. This can unhelpful when tracing a sequence of events on a busy multi\-threaded/multi\-core system, because thread pre\-emption combined with multiple processes attempting to log messages simultaneously means that the order in which the messages are received may vary significantly from the order in which they were created\&.
+.sp
+\fBdlt\-sortbytimestamp\fR re\-orders a DLT input file\(cqs messages according their creation timestamp, and writes them to an output DLT file\&.
+.SH "IMPORTANT NOTE"
+.sp
+Message timestamps are recorded relative to boot time\&. DLT files can contain messages from more than one reboot cycle\&. Because timestamping is reset to zero at each boot, simply running \fBdlt\-sortbytimestamp\fR against a multi\-boot\-cycle DLT input file will produce a tangled mess\&.
+.sp
+Use the \fB\-b\fR and/or \fB\-e\fR options to specify a range of messages within a single reboot cycle and all will be well\&.
+.sp
+Hint: use \fBdlt\-viewer\fR to ascertain the endpoints of the range in question\&.
+.SH "OPTIONS"
+.PP
+\fB\-h\fR
+.RS 4
+Display a short help text\&.
+.RE
+.PP
+\fB\-v\fR
+.RS 4
+Verbose mode\&. Repeat to give more information\&.
+.RE
+.PP
+\fB\-c\fR
+.RS 4
+Count number of messages\&.
+.RE
+.PP
+\fB\-f\fR
+.RS 4
+Enable filtering of messages\&. Incompatible with range options\&.
+.RE
+.PP
+\fB\-b\fR
+.RS 4
+First message to be handled\&. Zero based index\&.
+.RE
+.PP
+\fB\-e\fR
+.RS 4
+Last message to be handled\&. Zero based index\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Sort an entire file by message timestamp
+.RS 4
+\fBdlt\-sortbytimestamp input\&.dlt output\&.dlt\fR
+.RE
+.PP
+Sort a specific range, e\&.g\&. from message 1,000,000 to message 1,500,000 from a file called input\&.dlt and store the result in a file called output\&.dlt
+.RS 4
+\fBdlt\-sortbytimestamp \-b 1000000 \-e 1500000 input\&.dlt output\&.dlt\fR
+.RE
+.SH "EXIT STATUS"
+.sp
+Non zero is returned in case of failure\&.
+.SH "AUTHOR"
+.sp
+Jonathan Sambrook (jonathan\&.sambrook (at) codethink\&.co\&.uk) Alexander Wenzel (alexander\&.aw\&.wenzel (at) bmw\&.de)
+.SH "COPYRIGHT"
+.sp
+Copyright \(co 2018 Codethink Ltd\&. Copyright \(co 2015 BMW AG\&. License MPL\-2\&.0: Mozilla Public License version 2\&.0 http://mozilla\&.org/MPL/2\&.0/\&.
+.SH "RESOURCES"
+.sp
+Main web site: http://projects\&.genivi\&.org/diagnostic\-log\-trace Mailinglist: https://lists\&.genivi\&.org/mailman/listinfo/genivi\-diagnostic\-log\-and\-trace
+.SH "SEE ALSO"
+.sp
+dlt\-convert(1) dlt\-daemon(1)
