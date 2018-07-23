@@ -2949,7 +2949,9 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 {
     /* Unused on purpose. */
     (void)unused;
-#ifdef linux
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented");
+#elif linux
     prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
 #endif
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
@@ -3542,7 +3544,9 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
     }
 #endif
 
-#ifdef linux
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper");
+#elif linux
     prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
 #endif
 
