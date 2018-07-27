@@ -1338,9 +1338,6 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     dlt_shm_free_server(&(daemon_local->dlt_shm));
 #endif
 
-    /* Try to delete lock file, ignore result of unlink() */
-    unlink(DLT_DAEMON_LOCK_FILE);
-
     if (daemon_local->flags.offlineLogstorageMaxDevices > 0)
     {
         /* disconnect all logstorage devices */
@@ -1365,9 +1362,6 @@ void dlt_daemon_exit_trigger()
     char tmp[PATH_MAX + 1] = {0};
 
     snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
-    (void)unlink(tmp);
-
-    snprintf(tmp, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
     (void)unlink(tmp);
 
     /* stop event loop */
@@ -1400,8 +1394,7 @@ void dlt_daemon_signal_handler(int sig)
 
 void dlt_daemon_daemonize(int verbose)
 {
-    int i,lfp;
-    ssize_t pid_len;
+    int i;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1455,29 +1448,6 @@ void dlt_daemon_daemonize(int verbose)
         snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Failed to chdir to fifo-dir %s\n", dltFifoBaseDir);
         dlt_log(LOG_WARNING, str);
     }
-
-    /* Ensure single copy of daemon; if started with same directory
-       run only one instance at a time */
-    char dlt_daemon_lock_file[PATH_MAX + 1];
-    snprintf(dlt_daemon_lock_file, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
-    dlt_daemon_lock_file[PATH_MAX] = 0;
-    lfp=open(dlt_daemon_lock_file,O_RDWR|O_CREAT,DLT_DAEMON_LOCK_FILE_PERM);
-    if (lfp<0)
-    {
-        dlt_log(LOG_CRIT, "Can't open lock file, exiting DLT daemon\n");
-        exit(-1); /* can not open */
-    }
-    if (lockf(lfp,F_TLOCK,0)<0)
-    {
-        dlt_log(LOG_CRIT, "Can't lock lock file, exiting DLT daemon\n");
-        exit(-1); /* can not lock */
-    }
-    /* only first instance continues */
-
-    snprintf(str,DLT_DAEMON_TEXTBUFSIZE,"%d\n",getpid());
-    pid_len = strlen(str);
-    if(write(lfp,str,pid_len) != pid_len) /* record pid to lockfile */
-        dlt_log(LOG_WARNING, "Could not write pid to file in dlt_daemon_daemonize.\n");
 
     /* Catch signals */
     signal(SIGCHLD,SIG_IGN); /* ignore child */
