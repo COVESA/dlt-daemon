@@ -1395,6 +1395,7 @@ void dlt_daemon_signal_handler(int sig)
 void dlt_daemon_daemonize(int verbose)
 {
     int i;
+    int fd;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1423,30 +1424,32 @@ void dlt_daemon_daemonize(int verbose)
         exit(-1); /* fork error */
     }
 
-    /* Close descriptors */
-    for (i=getdtablesize();i>=0;--i)
-    {
-        close(i); /* close all descriptors */
-    }
-
     /* Open standard descriptors stdin, stdout, stderr */
-    i=open("/dev/null",O_RDWR); /* open stdin */
-    if (-1 < i)
+    fd = open("/dev/null", O_RDWR);
+    if (fd != -1)
     {
-        if(dup(i) < 0)
-            dlt_log(LOG_WARNING, "Failed to direct stdout to /dev/null.\n");/* stdout */
-        if(dup(i) < 0)
-            dlt_log(LOG_WARNING, "Failed to direct stderr to /dev/null.\n"); /* stderr */
+        /* Redirect STDOUT to /dev/null */
+        if (dup2(fd, STDOUT_FILENO) < 0)
+        {
+            dlt_vlog(LOG_WARNING, "Failed to direct stdout to /dev/null. Error: %s\n", strerror(errno));
+        }
+
+        /* Redirect STDERR to /dev/null */
+        if (dup2(fd, STDERR_FILENO) < 0)
+        {
+            dlt_vlog(LOG_WARNING, "Failed to direct stderr to /dev/null. Error: %s\n", strerror(errno));
+        }
+
+        close(fd);
     }
 
     /* Set umask */
     umask(DLT_DAEMON_UMASK);
 
-    /* Change to known directory */
-    if(chdir(dltFifoBaseDir) < 0)
+    /* Change to root directory */
+    if (chdir("/") < 0)
     {
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "Failed to chdir to fifo-dir %s\n", dltFifoBaseDir);
-        dlt_log(LOG_WARNING, str);
+        dlt_log(LOG_WARNING, "Failed to chdir to root\n");
     }
 
     /* Catch signals */
