@@ -94,13 +94,8 @@
 /* Maximum length of a description */
 #define DLT_DAEMON_DESCSIZE           256
 
-/* Name of daemon lock file, contain process id of dlt daemon instance */
-#define DLT_DAEMON_LOCK_FILE  "dltd.lock"
-
 /* Umask of daemon, creates files with permission 750 */
 #define DLT_DAEMON_UMASK              027
-/* Permissions of daemon lock file */
-#define DLT_DAEMON_LOCK_FILE_PERM    0640
 
 /* Default ECU ID, used in storage header and transmitted to client*/
 #define DLT_DAEMON_ECU_ID "ECU1"
