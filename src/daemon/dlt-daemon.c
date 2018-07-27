@@ -1442,6 +1442,11 @@ void dlt_daemon_daemonize(int verbose)
 
         close(fd);
     }
+    else
+    {
+        dlt_log(LOG_CRIT, "Error opening /dev/null, exiting DLT daemon\n");
+        exit(-1); /* fork error */
+    }
 
     /* Set umask */
     umask(DLT_DAEMON_UMASK);
