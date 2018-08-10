@@ -49,9 +49,6 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifdef linux
-#include <linux/stat.h>
-#endif
 
 #include "dlt_types.h"
 #include "dlt-daemon.h"
