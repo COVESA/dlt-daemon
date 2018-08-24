@@ -266,23 +266,31 @@ STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
     {
         return DLT_RETURN_ERROR;
     }
-    DltConnection **curr = &ev->connections;
+
+    DltConnection *curr = ev->connections;
+    DltConnection *prev = curr;
 
     /* Find the address where to_remove value is registered */
-    while (*curr && (*curr != to_remove))
+    while (curr && (curr != to_remove))
     {
-        curr = &(*curr)->next;
+        prev = curr;
+        curr = curr->next;
     }
 
-    if (!*curr)
+    if (!curr)
     {
         /* Must not be possible as we check for existence before */
         dlt_log(LOG_CRIT, "Connection not found for removal.\n");
         return -1;
     }
-
-    /* Replace the content of the address by the next value */
-    *curr = (*curr)->next;
+    else if (curr == ev->connections)
+    {
+        ev->connections = curr->next;
+    }
+    else
+    {
+        prev->next = curr->next;
+    }
 
     /* Now we can destroy our pointer */
     dlt_connection_destroy(to_remove);
