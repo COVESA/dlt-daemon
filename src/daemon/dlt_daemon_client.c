@@ -46,9 +46,6 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifdef linux
-#include <linux/stat.h>
-#endif
 
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 #include <systemd/sd-daemon.h>
