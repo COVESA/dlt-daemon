@@ -47,7 +47,7 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
-#ifdef linux
+#ifdef defined(linux) && defined(__NR_statx)
 #include <linux/stat.h>
 #endif
 
