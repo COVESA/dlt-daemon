@@ -371,12 +371,12 @@ int main(int argc, char* argv[])
         end = file.counter-1;
     }
 
-    if (begin<0 || begin>=file.counter)
+    if (begin<0 || begin>=file.counter || begin>end)
     {
         fprintf(stderr,"ERROR: Selected first message %d is out of range!\n",begin);
         return -1;
     }
-    if (end<0 || end>=file.counter || end<begin)
+    if (end<0 || end<begin || end>=file.counter)
     {
         fprintf(stderr,"ERROR: Selected end message %d is out of range!\n",end);
         return -1;
@@ -386,14 +386,7 @@ int main(int argc, char* argv[])
 
     verbose(1, "Allocating memory\n");
 
-    if (fvalue)
-    {
-        message_count = file.counter;
-    }
-    else
-    {
-        message_count = end - begin;
-    }
+    message_count = 1 + end - begin;
 
     timestamp_index = (TimestampIndex*)malloc(sizeof(TimestampIndex) * message_count);
 
