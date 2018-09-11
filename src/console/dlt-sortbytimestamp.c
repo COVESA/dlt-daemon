@@ -2,8 +2,8 @@
  * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
  * Copyright (C) 2018, Codethink Ltd.
+ * Copyright (C) 2011-2015, BMW AG
  *
  * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
  *
@@ -20,6 +20,7 @@
  * \author Jonathan Sambrook <jonathan.sambrook@codethink.co.uk>
  *
  * \copyright Copyright © 2018 Codethink Ltd. \n
+ * Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-sortbytimestamp.cpp
@@ -33,9 +34,9 @@
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
+**  AUTHOR    : Jonathan Sambrook jonathasambrook@codethink.co.uk             **
+**              Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
 **              Markus Klein                                                  **
-**              jonathasambrook@codethink.co.uk                               **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -54,30 +55,10 @@
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
 **  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
 **  js          Jonathan Sambrook          Codethink                          **
+**  mk          Markus Klein               Fraunhofer ESK                     **
 *******************************************************************************/
 
-/*******************************************************************************
-**                      Author Identity                                       **
-********************************************************************************
-**                                                                            **
-** Initials     Name                       Company                            **
-** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
-*******************************************************************************/
-
-/*******************************************************************************
-**                      Revision Control History                              **
-*******************************************************************************/
-
-/*
- * $LastChangedRevision: 1670 $
- * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
- * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -134,7 +115,7 @@ void verbose(int level, char * msg, ...)
 }
 
 /**
- * Comparison function for use with qsort 
+ * Comparison function for use with qsort
  */
 int compare_index_timestamps(const void* a, const void *b)
 {
