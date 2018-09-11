@@ -144,7 +144,7 @@ void write_messages(int ohandle, DltFile *file, TimestampIndex *timestamps, int 
     {
         if (0 == i % 1001 || i == message_count - 1)
         {
-            verbose(2, "Writing message %d\r", i + 1);
+            verbose(2, "Writing message %d\r", i);
         }
         dlt_file_message(file,timestamps[i].num,0);
         iov[0].iov_base = file->msg.headerbuffer;
