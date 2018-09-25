@@ -310,7 +310,7 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
     /* mount_point is DLT_MOUNT_PATH_MAX + 1 long,
      * and the memory is already zeroed.
      */
-    strncpy(serv->mount_point, path, DLT_MOUNT_PATH_MAX);
+    strncpy(serv->mount_point, path, DLT_MOUNT_PATH_MAX-1);
 
     pr_verbose("Body is now ready.\n");
 

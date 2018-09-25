@@ -210,7 +210,7 @@ int dlt_parse_config_param(char *config_id, char **config_data)
                         {
                             *(config_data) = (char*)
                                     calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
-                            strncpy(*config_data,
+                            memcpy(*config_data,
                                 value,
                                 DLT_DAEMON_FLAG_MAX-1);
                         }
