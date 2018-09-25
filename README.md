@@ -38,6 +38,7 @@ See INSTALL regarding doxygen API documentation generation.
 - dlt-system(1)
 - dlt-system.conf(5)
 - dlt-convert(1)
+- dlt-sortbytimestamp(1)
 - dlt-receive(1)
 - dlt-logstorage-ctrl(1)
 - dlt-dbus (1)      TBD

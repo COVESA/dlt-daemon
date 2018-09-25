@@ -19,12 +19,12 @@ if(WITH_DOC)
     find_package(Doxygen)
 
     configure_file(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/doxygen.cfg @ONLY)
-	
+
 	add_custom_target (doc ALL
   		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
-	
+
 	add_custom_target (doc-manuals ALL
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
@@ -40,6 +40,7 @@ if(WITH_DOC)
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-receive.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-convert.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
+  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-sortbytimestamp.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
@@ -58,12 +59,13 @@ if(WITH_DOC)
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
+		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-logstorage-ctrl.1.txt
 		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-passive-node-ctrl.1.txt
 	)
-	
+
 endif(WITH_DOC)
 
 if(WITH_MAN)
@@ -73,18 +75,19 @@ if(WITH_MAN)
 	             PATHS /bin
 	                   /usr/bin
 	                   /usr/local/bin)
-	
+
 	if(NOT GZIP_TOOL)
 	  MESSAGE(FATAL_ERROR "Could not find gzip for man page compression.")
 	endif(NOT GZIP_TOOL)
-	
+
 	set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 	set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
-	
+
 	set(MAN_SRC
 				${MAN_SRC_DIR}/dlt.conf.5
 				${MAN_SRC_DIR}/dlt-system.conf.5
 				${MAN_SRC_DIR}/dlt-convert.1
+				${MAN_SRC_DIR}/dlt-sortbytimestamp.1
 				${MAN_SRC_DIR}/dlt-daemon.1
 				${MAN_SRC_DIR}/dlt-receive.1
 				${MAN_SRC_DIR}/dlt-system.1
@@ -94,6 +97,7 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt.conf.5
 				${MAN_BUILD_DIR}/dlt-system.conf.5
 				${MAN_BUILD_DIR}/dlt-convert.1
+				${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
 				${MAN_BUILD_DIR}/dlt-daemon.1
 				${MAN_BUILD_DIR}/dlt-receive.1
 				${MAN_BUILD_DIR}/dlt-system.1
@@ -103,37 +107,40 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt.conf.5.gz
 				${MAN_BUILD_DIR}/dlt-system.conf.5.gz
 				${MAN_BUILD_DIR}/dlt-convert.1.gz
+				${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
 				${MAN_BUILD_DIR}/dlt-daemon.1.gz
 				${MAN_BUILD_DIR}/dlt-receive.1.gz
 				${MAN_BUILD_DIR}/dlt-system.1.gz
 				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
 				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
-	
+
 	foreach(MAN ${MAN_SRC})
 		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${MAN} ${MAN_BUILD_DIR})
 	endforeach(MAN)
-	
+
 	add_custom_target(compress_man ALL
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-convert.1  > ${MAN_BUILD_DIR}/dlt-convert.1.gz
+				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1  > ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
-	
+
 	# If user has not set the base dir for man pages, use a default location
 	set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
-	
+
 	install(FILES
 			${MAN_BUILD_DIR}/dlt.conf.5.gz
 			${MAN_BUILD_DIR}/dlt-system.conf.5.gz
 		DESTINATION ${MAN_INSTALL_DIR}/man5
 	)
-	
+
 	install(FILES
 			${MAN_BUILD_DIR}/dlt-convert.1.gz
+			${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
 			${MAN_BUILD_DIR}/dlt-daemon.1.gz
 			${MAN_BUILD_DIR}/dlt-receive.1.gz
 			${MAN_BUILD_DIR}/dlt-system.1.gz

@@ -115,6 +115,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libdlt.so
 %{_bindir}/dlt-system
 %{_bindir}/dlt-convert
+%{_bindir}/dlt-sortbytimestamp
 %{_bindir}/dlt-receive
 %{_bindir}/dlt-adaptor-stdin
 %{_bindir}/dlt-adaptor-udp
@@ -137,6 +138,7 @@ rm -rf $RPM_BUILD_ROOT
 %files doc
 
 @PACKAGE_DOC@%{_mandir}/man1/dlt-convert.1.gz
+@PACKAGE_DOC@%{_mandir}/man1/dlt-sortbytimestamp.1.gz
 @PACKAGE_DOC@%{_mandir}/man1/dlt-daemon.1.gz
 @PACKAGE_DOC@%{_mandir}/man1/dlt-receive.1.gz
 @PACKAGE_DOC@%{_mandir}/man1/dlt-system.1.gz
