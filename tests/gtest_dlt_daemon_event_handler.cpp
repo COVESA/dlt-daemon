@@ -663,7 +663,7 @@ int main(int argc, char **argv)
             return -1;
         }
 
-        bzero((char *)&serv_addr, sizeof(serv_addr));
+        memset((char *) &serv_addr, 0, sizeof(serv_addr));
         portno = 8080;
 
         serv_addr.sin_family = AF_INET;

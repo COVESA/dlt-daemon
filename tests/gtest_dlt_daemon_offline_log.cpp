@@ -1690,7 +1690,7 @@ int connectServer(void)
     portno = 8080;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server = gethostbyname("127.0.0.1");
-    bzero((char *)&serv_addr, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     memcpy((char *)&serv_addr.sin_addr.s_addr,
            (char *)server->h_addr,
@@ -1732,7 +1732,7 @@ int main(int argc, char **argv)
             return -1;
         }
 
-        bzero((char *)&serv_addr, sizeof(serv_addr));
+        memset((char *) &serv_addr, 0, sizeof(serv_addr));
         portno = 8080;
 
         serv_addr.sin_family = AF_INET;

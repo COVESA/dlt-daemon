@@ -96,18 +96,25 @@ DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *
 DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
                                                  char *value)
 {
-    int tmp = -1;
+    long int tmp = -1;
 
     if ((con == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    tmp = (int)strtol(value, NULL, 10);
+    errno = 0;
+    tmp = strtol(value, NULL, 10);
+    if ((errno == ERANGE && (tmp == LONG_MAX || tmp == LONG_MIN))
+         || (errno != 0 && tmp == 0)) {
+        dlt_vlog(LOG_ERR, "%s: cannot convert port number\n", __func__);
+        return DLT_RETURN_ERROR;
+    }
 
     /* port ranges for unprivileged applications */
-    if ((tmp > IPPORT_RESERVED) && (tmp <= USHRT_MAX)) {
-        con->port = tmp;
+    if ((tmp > IPPORT_RESERVED) && ((unsigned)tmp <= USHRT_MAX))
+    {
+        con->port = (int)tmp;
         return DLT_RETURN_OK;
     }
     else {

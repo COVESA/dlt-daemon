@@ -140,14 +140,14 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
     if (env_daemon_port != NULL) {
         tmp_port = atoi(env_daemon_port);
 
-        if ((tmp_port < IPPORT_RESERVED) || (tmp_port > USHRT_MAX)) {
+        if ((tmp_port < IPPORT_RESERVED) || ((unsigned)tmp_port > USHRT_MAX)) {
             dlt_vlog(LOG_ERR,
                      "Specified port is out of possible range: %d.\n",
                      tmp_port);
             return DLT_RETURN_ERROR;
         }
         else {
-            servPort = tmp_port;
+            servPort = (unsigned short)tmp_port;
         }
     }
 
@@ -260,7 +260,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         memcpy(addr.sun_path, client->socketPath, sizeof(addr.sun_path) - 1);
 
         if (connect(client->sock,
-                    (struct sockaddr_un *)&addr,
+                    (struct sockaddr *) &addr,
                     sizeof(addr)) == -1) {
             fprintf(stderr, "ERROR: (unix) connect error: %s\n", strerror(errno));
             return DLT_RETURN_ERROR;

@@ -1525,7 +1525,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                       int verbose)
 {
     socklen_t cli_size;
-    struct sockaddr cli;
+    struct sockaddr_un cli;
 
     int in_sock = -1;
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
@@ -1542,7 +1542,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     /* event from TCP server socket, new connection */
     cli_size = sizeof(cli);
 
-    if ((in_sock = accept(receiver->fd, &cli, &cli_size)) < 0) {
+    if ((in_sock = accept(receiver->fd, (struct sockaddr *)&cli, &cli_size)) < 0) {
         dlt_vlog(LOG_ERR, "accept() for socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
     }
@@ -1794,7 +1794,7 @@ int dlt_daemon_process_control_connect(
     /* event from UNIX server socket, new connection */
     ctrl_size = sizeof(ctrl);
 
-    if ((in_sock = accept(receiver->fd, &ctrl, &ctrl_size)) < 0) {
+    if ((in_sock = accept(receiver->fd, (struct sockaddr *)&ctrl, &ctrl_size)) < 0) {
         dlt_vlog(LOG_ERR, "accept() on UNIX control socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
     }
@@ -1847,7 +1847,7 @@ int dlt_daemon_process_app_connect(
     /* event from UNIX server socket, new connection */
     app_size = sizeof(app);
 
-    if ((in_sock = accept(receiver->fd, &app, &app_size)) < 0) {
+    if ((in_sock = accept(receiver->fd, (struct sockaddr *)&app, &app_size)) < 0) {
         dlt_vlog(LOG_ERR, "accept() on UNIX socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
     }
@@ -3130,7 +3130,6 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
                     DltTimers timer_id)
 {
     int local_fd = -1;
-    struct itimerspec l_timer_spec;
     char *timer_name = NULL;
 
     if (timer_id >= DLT_TIMER_UNKNOWN) {
@@ -3145,8 +3144,15 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         return -1;
     }
 
-    if (period_sec > 0) {
+    if (period_sec <= 0 || starts_in <= 0 ) {
+        /* timer not activated via the service file */
+        dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
+        local_fd = -1;
+    }
 #ifdef linux
+    else
+    {
+        struct itimerspec l_timer_spec;
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
         if (local_fd < 0) {
@@ -3172,15 +3178,8 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
             dlt_log(LOG_WARNING, str);
             local_fd = -1;
         }
-
+    }
 #endif
-    }
-    else {
-        /* timer not activated via the service file */
-        snprintf(str, sizeof(str), "<%s> not set: period=0\n", timer_name);
-        dlt_log(LOG_INFO, str);
-        local_fd = -1;
-    }
 
     /* If fully initialized we are done.
      * Event handling registration is done later on with other connections.

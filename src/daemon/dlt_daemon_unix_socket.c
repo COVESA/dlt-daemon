@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -39,8 +40,6 @@
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_unix_socket.h"
-
-char err_string[DLT_DAEMON_TEXTBUFSIZE];
 
 int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
 {
@@ -87,8 +86,7 @@ int dlt_daemon_unix_socket_close(int sock)
     int ret = close(sock);
 
     if (ret != 0) {
-        sprintf(err_string, "unix socket close failed: %s", strerror(errno));
-        dlt_log(LOG_WARNING, err_string);
+        dlt_vlog(LOG_WARNING, "unix socket close failed: %s", strerror(errno));
     }
 
     return ret;

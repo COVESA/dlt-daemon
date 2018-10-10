@@ -188,7 +188,7 @@ static int dlt_passive_node_analyze_response(char *answer,
         if (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS) {
             if ((int)sizeof(DltServicePassiveNodeConnectionInfo) > len) {
                 pr_error("Received payload is smaller than expected\n");
-                pr_verbose("Expected: %lu,\nreceived: %d",
+                pr_verbose("Expected: %zu,\nreceived: %d",
                            sizeof(DltServicePassiveNodeConnectionInfo),
                            len);
                 ret = -1;
