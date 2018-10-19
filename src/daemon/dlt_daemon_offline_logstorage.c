@@ -123,6 +123,7 @@ int dlt_logstorage_update_all_contexts(DltDaemon *daemon, char *id, int curr_log
     int i = 0;
     char tmp_id[DLT_ID_SIZE+1];
     int old_log_level = -1;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     if((daemon == 0) || (id == NULL))
         return -1;
@@ -132,24 +133,39 @@ int dlt_logstorage_update_all_contexts(DltDaemon *daemon, char *id, int curr_log
 
     memset(tmp_id, 0, sizeof(tmp_id));
 
-    for(i = 0; i < daemon->num_contexts; i++)
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
     {
-        if(cmp_flag == 1)
-            dlt_set_id(tmp_id, daemon->contexts[i].apid);
+        return -1;
+    }
+
+    for (i = 0 ; i < user_list->num_contexts ; i++)
+    {
+        if (cmp_flag == 1)
+        {
+            dlt_set_id(tmp_id, user_list->contexts[i].apid);
+        }
         else
-            dlt_set_id(tmp_id, daemon->contexts[i].ctid);
+        {
+            dlt_set_id(tmp_id, user_list->contexts[i].ctid);
+        }
 
         if(strcmp(id, tmp_id) == 0)
         {
             if(curr_log_level > 0)
             {
-                old_log_level = daemon->contexts[i].storage_log_level;
+                old_log_level = user_list->contexts[i].storage_log_level;
 
-                daemon->contexts[i].storage_log_level = DLT_OFFLINE_LOGSTORAGE_MAX(curr_log_level, daemon->contexts[i].storage_log_level);
+                user_list->contexts[i].storage_log_level =
+                    DLT_OFFLINE_LOGSTORAGE_MAX(
+                        curr_log_level,
+                        user_list->contexts[i].storage_log_level);
 
-                if(daemon->contexts[i].storage_log_level > old_log_level)
+                if (user_list->contexts[i].storage_log_level > old_log_level)
                 {
-                    if(dlt_daemon_user_send_log_level(daemon, &daemon->contexts[i], verbose) == -1)
+                    if (dlt_daemon_user_send_log_level(daemon,
+                                                       &user_list->contexts[i],
+                                                       verbose) == -1)
                     {
                         dlt_log(LOG_ERR, "Unable to update loglevel\n");
                         return -1;
@@ -159,11 +175,13 @@ int dlt_logstorage_update_all_contexts(DltDaemon *daemon, char *id, int curr_log
             else    /* The request is to reset log levels */
             {
                 /* Set storage level to -1, to clear log levels */
-                daemon->contexts[i].storage_log_level = -1;
+                user_list->contexts[i].storage_log_level = -1;
 
                 if(curr_log_level == DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL)
                 {
-                    if(dlt_daemon_user_send_log_level(daemon, &daemon->contexts[i], verbose) == -1)
+                    if (dlt_daemon_user_send_log_level(daemon,
+                                                       &user_list->contexts[i],
+                                                       verbose) == -1)
                     {
                         dlt_log(LOG_ERR, "Unable to reset loglevel\n");
                         return -1;
@@ -198,8 +216,9 @@ int dlt_logstorage_update_context(DltDaemon *daemon, char *apid, char *ctxid, in
     if((daemon == 0) || (apid == NULL) || (ctxid == NULL))
         return -1;
 
-    context = dlt_daemon_context_find(daemon, apid, ctxid, verbose);
-    if(context != NULL)
+    context = dlt_daemon_context_find(daemon, apid, ctxid, daemon->ecuid, verbose);
+
+    if (context != NULL)
     {
         if(curr_log_level > 0)
         {
