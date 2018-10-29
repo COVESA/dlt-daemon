@@ -2051,6 +2051,7 @@ DltReturnValue dlt_log(int prio, char *s)
         case DLT_LOG_TO_CONSOLE:
             /* log to stdout */
             printf(sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec/1000), getpid(), asSeverity[prio], s);
+            fflush(stdout);
             break;
         case DLT_LOG_TO_SYSLOG:
             /* log to syslog */
