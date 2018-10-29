@@ -58,6 +58,7 @@
 #ifndef DLT_GATEWAY_TYPES_H_
 #define DLT_GATEWAY_TYPES_H_
 
+#include "dlt_protocol.h"
 #include "dlt_client.h"
 
 #define DLT_GATEWAY_CONFIG_PATH CONFIGURATION_FILES_DIR "/dlt_gateway.conf"
@@ -85,6 +86,32 @@ typedef enum
     DLT_GATEWAY_DISABLED       /* disable this connection due to problems */
 } connection_trigger;
 
+typedef enum
+{
+    CONTROL_MESSAGE_UNDEFINED = -1,
+    CONTROL_MESSAGE_ON_STARTUP,     /* send on startup */
+    CONTROL_MESSAGE_PERIODIC,       /* send periodically */
+    CONTROL_MESSAGE_BOTH,           /* send on startup and periodically */
+    CONTROL_MESSAGE_ON_DEMAND       /* send on demand only */
+} control_msg_trigger;
+
+typedef enum
+{
+    CONTROL_MESSAGE_REQUEST_UNDEFINED = -1,
+    CONTROL_MESSAGE_NOT_REQUESTED,  /* control msg not requested (default) */
+    CONTROL_MESSAGE_REQUESTED       /* control msg requested */
+} control_msg_request;
+
+/* Passive control message */
+typedef struct DltPassiveControlMessage {
+    uint32_t id;                /* msg ID */
+    uint32_t user_id;
+    control_msg_trigger type;   /* on startup or periodic or both */
+    control_msg_request req;    /* whether it is requested from gateway or not */
+    int interval;               /* interval for periodic sending. if on startup, -1 */
+    struct DltPassiveControlMessage *next; /* for multiple passive control message */
+} DltPassiveControlMessage;
+
 /* DLT Gateway connection structure */
 typedef struct {
     int handle;                 /* connection handle */
@@ -99,9 +126,13 @@ typedef struct {
     int timeout;                /* connection timeout */
     int timeout_cnt;            /* connection timeout counter */
     int reconnect_cnt;          /* reconnection counter */
-    int control_msgs[DLT_GATEWAY_MAX_STARTUP_CTRL_MSG]; /* msg IDs send on startup */
+    int sendtime;               /* periodic sending max time */
+    int sendtime_cnt;           /* periodic sending counter */
+    DltPassiveControlMessage *p_control_msgs; /* passive control msgs */
+    DltPassiveControlMessage *head; /* to go back to the head pointer of p_control_msgs */
     int send_serial;            /* Send serial header with control messages */
     DltClient client;           /* DltClient structure */
+    int default_log_level;      /* Default Log Level on passive node */
 } DltGatewayConnection;
 
 /* DltGateway structure */

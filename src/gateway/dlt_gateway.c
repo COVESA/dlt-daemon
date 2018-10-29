@@ -20,8 +20,9 @@
 /*!
  * \author
  * Christoph Lipka <clipka@jp.adit-jv.com>
+ * Saya Sugiura <ssugiura@jp.adit-jv.com>
  *
- * \copyright Copyright © 2015 Advanced Driver Information Technology. \n
+ * \copyright Copyright © 2015-2017 Advanced Driver Information Technology. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_gateway.c
@@ -41,16 +42,17 @@
 #include "dlt_config_file_parser.h"
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
+#include "dlt_daemon_common_cfg.h"
 #include "dlt_daemon_event_handler.h"
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_client.h"
+#include "dlt_daemon_offline_logstorage.h"
 
 typedef struct {
     char *key;  /* The configuration key*/
     int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
     int is_opt; /* If the configuration is optional or not */
 } DltGatewayConf;
-#ifndef DLT_UNIT_TESTS
 typedef enum {
     GW_CONF_IP_ADDRESS = 0,
     GW_CONF_PORT,
@@ -58,10 +60,11 @@ typedef enum {
     GW_CONF_CONNECT,
     GW_CONF_TIMEOUT,
     GW_CONF_SEND_CONTROL,
+    GW_CONF_SEND_PERIODIC_CONTROL,
     GW_CONF_SEND_SERIAL_HEADER,
     GW_CONF_COUNT
 } DltGatewayConfType;
-#endif
+
 /**
  * Check if given string is a valid IP address
  *
@@ -72,11 +75,12 @@ typedef enum {
 STATIC int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
     struct sockaddr_in sa;
-    int ret = -1;
+    int ret = DLT_RETURN_ERROR;
 
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     ret = inet_pton(AF_INET, value, &(sa.sin_addr));
@@ -89,17 +93,17 @@ STATIC int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
         if (con->ip_address == NULL)
         {
             dlt_log(LOG_ERR, "Cannot copy passive node IP address string\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
-        return 0;
+        return DLT_RETURN_OK;
     }
     else
     {
         dlt_log(LOG_ERR, "IP address is not valid\n");
     }
 
-    return -1;
+    return DLT_RETURN_ERROR;
 }
 
 /**
@@ -113,25 +117,26 @@ STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
 {
     int tmp = -1;
 
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     tmp = (int) strtol(value, NULL, 10);
 
     /* port ranges for unprivileged applications */
-    if (tmp > IPPORT_RESERVED && tmp <= USHRT_MAX)
+    if ((tmp > IPPORT_RESERVED) && (tmp <= USHRT_MAX))
     {
         con->port = tmp;
-        return 0;
+        return DLT_RETURN_OK;
     }
     else
     {
         dlt_log(LOG_ERR, "Port number is invalid\n");
     }
 
-    return -1;
+    return DLT_RETURN_ERROR;
 }
 
 /**
@@ -143,19 +148,20 @@ STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
  */
 STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
 {
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     con->ecuid = strdup(value);
 
     if (con->ecuid == NULL)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 /**
@@ -168,9 +174,10 @@ STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
 STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
                                              char *value)
 {
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if (strncasecmp(value, "OnStartup", strlen("OnStartup")) == 0)
@@ -185,10 +192,10 @@ STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
     {
         dlt_log(LOG_ERR, "Wrong connection trigger state given.\n");
         con->trigger = DLT_GATEWAY_UNDEFINED;
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 /**
@@ -200,19 +207,20 @@ STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
  */
 STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
 {
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     con->timeout = (int) strtol(value, NULL, 10);
 
     if (con->timeout > 0)
     {
-        return 0;
+        return DLT_RETURN_OK;
     }
 
-    return -1;
+    return DLT_RETURN_ERROR;
 }
 
 /**
@@ -224,14 +232,57 @@ STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
  */
 STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
 {
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     con->send_serial = !!((int) strtol(value, NULL, 10));
 
-    return 0;
+    return DLT_RETURN_OK;
+}
+
+/**
+ * Allocate passive control messages
+ *
+ * @param con   DltGatewayConnection to be updated
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
+{
+    if (con == NULL)
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (con->p_control_msgs == NULL)
+    {
+        con->p_control_msgs = calloc(1, sizeof(DltPassiveControlMessage));
+
+        if (!con->p_control_msgs)
+        {
+            dlt_log(LOG_ERR,
+                    "Passive Control Message could not be allocated\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+    else
+    {
+        con->p_control_msgs->next = calloc(1, sizeof(DltPassiveControlMessage));
+
+        if (!con->p_control_msgs->next)
+        {
+            dlt_log(LOG_ERR,
+                    "Passive Control Message could not be allocated\n");
+            return DLT_RETURN_ERROR;
+        }
+
+        con->p_control_msgs = con->p_control_msgs->next;
+    }
+
+    return DLT_RETURN_OK;
 }
 
 /**
@@ -247,51 +298,202 @@ STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
     /* list of allowed clients given */
     char *token = NULL;
     char *rest = NULL;
-    int i = 0;
-    char error_msg[DLT_DAEMON_TEXTBUFSIZE];
+    DltPassiveControlMessage *head = NULL;
 
-    if (con == NULL || value == NULL)
+    if ((con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if (strlen(value) == 0)
     {
-        memset(con->control_msgs,
-               0,
-               sizeof(int) * DLT_GATEWAY_MAX_STARTUP_CTRL_MSG);
-        return 0;
+        return DLT_RETURN_OK;
     }
 
+    /* set on startup control msg id and interval*/
     token = strtok_r(value, ",", &rest);
-    while (token != NULL && i < DLT_GATEWAY_MAX_STARTUP_CTRL_MSG)
+
+    while (token != NULL)
     {
-
-        con->control_msgs[i] = strtol(token, NULL, 16);
-
-        if (errno == EINVAL || errno == ERANGE)
+        if (dlt_gateway_allocate_control_messages(con) == -1)
         {
-            snprintf(error_msg,
-                     DLT_DAEMON_TEXTBUFSIZE-1,
-                     "Control message ID is not an integer: %s\n", token);
-            dlt_log(LOG_ERR, error_msg);
-            return -1;
+            dlt_log(LOG_ERR,
+                    "Passive Control Message could not be allocated\n");
+            return DLT_RETURN_ERROR;
         }
-        else if (con->control_msgs[i] < DLT_SERVICE_ID_SET_LOG_LEVEL ||
-                 con->control_msgs[i] >= DLT_SERVICE_ID_LAST_ENTRY)
+
+        con->p_control_msgs->id = strtol(token, NULL, 16);
+        con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+        con->p_control_msgs->type = CONTROL_MESSAGE_ON_STARTUP;
+        con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
+        con->p_control_msgs->interval = -1;
+
+        if (head == NULL)
         {
-            snprintf(error_msg,
-                     DLT_DAEMON_TEXTBUFSIZE-1,
-                     "Control message ID is not valid: %s\n", token);
-            dlt_log(LOG_ERR, error_msg);
-            return -1;
+            head = con->p_control_msgs;
+        }
+
+        if ((errno == EINVAL) || (errno == ERANGE))
+        {
+            dlt_vlog(LOG_ERR,
+                     "Control message ID is not an integer: %s\n",
+                     token);
+            return DLT_RETURN_ERROR;
+        }
+        else if ((con->p_control_msgs->id < DLT_SERVICE_ID_SET_LOG_LEVEL) ||
+                 (con->p_control_msgs->id >= DLT_SERVICE_ID_LAST_ENTRY))
+        {
+            dlt_vlog(LOG_ERR,
+                     "Control message ID is not valid: %s\n",
+                     token);
+            return DLT_RETURN_ERROR;
         }
 
         token = strtok_r(NULL, ",", &rest);
-        i++;
     }
 
-    return 0;
+    /* get back to head */
+    con->p_control_msgs = head;
+    con->head = head;
+
+    return DLT_RETURN_OK;
+}
+
+/**
+ * Check the specified periodic control messages identifier
+ *
+ * @param con   DltGatewayConnection to be updated
+ * @param value string to be tested
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
+                                              char *value)
+{
+    char *token = NULL;
+    char *rest = NULL;
+    DltPassiveControlMessage *head = NULL;
+
+    if ((con == NULL) || (value == NULL))
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (strlen(value) == 0)
+    {
+        return DLT_RETURN_OK;
+    }
+
+    /* store head address */
+    head = con->p_control_msgs;
+
+    /* set periodic control msg id and interval*/
+    token = strtok_r(value, ",", &rest);
+
+    while (token != NULL)
+    {
+        char *p_token = NULL;
+        char *p_rest = NULL;
+        uint32_t id = 0;
+
+        p_token = strtok_r(token, ":", &p_rest);
+
+        if ((p_token != NULL) && (strlen(p_token) != 0))
+        {
+            id = strtol(p_token, NULL, 16);
+
+            /* get back to head */
+            con->p_control_msgs = head;
+
+            /* check if there is already id set in p_control_msgs */
+            while (con->p_control_msgs != NULL)
+            {
+                if (con->p_control_msgs->id == id)
+                {
+                    con->p_control_msgs->type = CONTROL_MESSAGE_BOTH;
+                    con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
+                    if (con->p_control_msgs->interval <= 0)
+                    {
+                        dlt_vlog(LOG_WARNING,
+                                 "%s interval is %d. It won't be send periodically.\n",
+                                 dlt_get_service_name(con->p_control_msgs->id),
+                                 con->p_control_msgs->interval);
+                    }
+                    break;
+                }
+
+                con->p_control_msgs = con->p_control_msgs->next;
+            }
+
+            /* if the id is not added yet, p_control_msgs supposed to be NULL */
+            if (con->p_control_msgs == NULL)
+            {
+                /* get back to head */
+                con->p_control_msgs = head;
+
+                /* go to last pointer */
+                while (con->p_control_msgs != NULL)
+                {
+                    if (con->p_control_msgs->next == NULL)
+                    {
+                        break;
+                    }
+
+                    con->p_control_msgs = con->p_control_msgs->next;
+                }
+
+                if (dlt_gateway_allocate_control_messages(con) == -1)
+                {
+                    dlt_log(LOG_ERR,
+                            "Passive Control Message could not be allocated\n");
+                    return DLT_RETURN_ERROR;
+                }
+
+                con->p_control_msgs->id = id;
+                con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+                con->p_control_msgs->type = CONTROL_MESSAGE_PERIODIC;
+                con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
+                con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
+                if (con->p_control_msgs->interval <= 0)
+                {
+                    dlt_vlog(LOG_WARNING,
+                             "%s interval is %d. It won't be send periodically.\n",
+                             dlt_get_service_name(con->p_control_msgs->id),
+                             con->p_control_msgs->interval);
+                }
+
+                if (head == NULL)
+                {
+                    head = con->p_control_msgs;
+                }
+            }
+        }
+
+        if ((errno == EINVAL) || (errno == ERANGE))
+        {
+            dlt_vlog(LOG_ERR,
+                     "Control message ID is not an integer: %s\n",
+                     p_token);
+            return DLT_RETURN_ERROR;
+        }
+        else if ((con->p_control_msgs->id < DLT_SERVICE_ID_SET_LOG_LEVEL) ||
+                 (con->p_control_msgs->id >= DLT_SERVICE_ID_LAST_ENTRY))
+        {
+            dlt_vlog(LOG_ERR,
+                     "Control message ID is not valid: %s\n",
+                     p_token);
+            return DLT_RETURN_ERROR;
+        }
+
+        token = strtok_r(NULL, ",", &rest);
+    }
+
+    /* get back to head */
+    con->p_control_msgs = head;
+    con->head = head;
+
+    return DLT_RETURN_OK;
 }
 
 /**
@@ -325,6 +527,10 @@ STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
         .key = "SendControl",
         .func = dlt_gateway_check_control_messages,
         .is_opt = 1 },
+    [GW_CONF_SEND_PERIODIC_CONTROL] = {
+        .key = "SendPeriodicControl",
+        .func = dlt_gateway_check_periodic_control_messages,
+        .is_opt = 1 },
     [GW_CONF_SEND_SERIAL_HEADER] = {
         .key = "SendSerialHeader",
         .func = dlt_gateway_check_send_serial,
@@ -347,15 +553,16 @@ STATIC int dlt_gateway_check_param(DltGateway *gateway,
                                    DltGatewayConfType ctype,
                                    char *value)
 {
-    if (gateway == NULL || con == NULL || value == NULL)
+    if ((gateway == NULL) || (con == NULL) || (value == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     if (ctype < GW_CONF_COUNT)
         return configuration_entries[ctype].func(con, value);
 
-    return -1;
+    return DLT_RETURN_ERROR;
 }
 
 /**
@@ -371,13 +578,13 @@ int dlt_gateway_store_connection(DltGateway *gateway,
                                  int verbose)
 {
     int i = 0;
-    int ret = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (gateway == NULL || tmp == NULL)
+    if ((gateway == NULL) || (tmp == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     /* find next free entry in connection array */
@@ -391,9 +598,9 @@ int dlt_gateway_store_connection(DltGateway *gateway,
         i++;
     }
 
-    if (&gateway->connections[i] == NULL)
+    if (&(gateway->connections[i]) == NULL)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* store values */
@@ -407,9 +614,8 @@ int dlt_gateway_store_connection(DltGateway *gateway,
     gateway->connections[i].timeout = tmp->timeout;
     gateway->connections[i].handle = 0;
     gateway->connections[i].status = DLT_GATEWAY_INITIALIZED;
-    memcpy(gateway->connections[i].control_msgs,
-           tmp->control_msgs,
-           sizeof(tmp->control_msgs));
+    gateway->connections[i].p_control_msgs = tmp->p_control_msgs;
+    gateway->connections[i].head = tmp->head;
     gateway->connections[i].send_serial = tmp->send_serial;
 
     if (dlt_client_init_port(&gateway->connections[i].client,
@@ -417,9 +623,13 @@ int dlt_gateway_store_connection(DltGateway *gateway,
                              verbose) != 0)
     {
         free(gateway->connections[i].ip_address);
+        gateway->connections[i].ip_address = NULL;
         free(gateway->connections[i].ecuid);
-        dlt_log(LOG_CRIT, "dlt_client_init() failed for gateway connection\n");
-        return -1;
+        gateway->connections[i].ecuid = NULL;
+        free(gateway->connections[i].p_control_msgs);
+        gateway->connections[i].p_control_msgs = NULL;
+        dlt_log(LOG_CRIT, "dlt_client_init_port() failed for gateway connection\n");
+        return DLT_RETURN_ERROR;
     }
     dlt_receiver_init(&gateway->connections[i].client.receiver,
                       gateway->connections[i].client.sock,
@@ -430,18 +640,10 @@ int dlt_gateway_store_connection(DltGateway *gateway,
     {
         dlt_log(LOG_ERR,
                 "dlt_client_set_server_ip() failed for gateway connection \n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    if (ret != 0)
-    {
-        free(gateway->connections[i].ip_address);
-        free(gateway->connections[i].ecuid);
-        dlt_log(LOG_ERR, "Gateway: DltClient initialization failed\n");
-        return -1;
-    }
-
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 /**
@@ -460,9 +662,10 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (gateway == NULL || config_file == 0 || config_file[0] == '\0')
+    if ((gateway == NULL) || (config_file == 0) || (config_file[0] == '\0'))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     /* read configuration file */
@@ -475,7 +678,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
     {
         dlt_config_file_release(file);
         dlt_log(LOG_ERR, "Invalid number of sections in configuration file\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     gateway->connections = calloc(sizeof(DltGatewayConnection),
@@ -485,12 +688,11 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
     {
         dlt_config_file_release(file);
         dlt_log(LOG_CRIT, "Memory allocation for gateway connections failed\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     for (i = 0; i < gateway->num_connections; i++)
     {
-        char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
         DltGatewayConnection tmp;
         int invalid = 0;
         DltGatewayConfType j = 0;
@@ -515,20 +717,16 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
             if ((ret != 0) && configuration_entries[j].is_opt)
             {
                 /* Use default values for this key */
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
+                dlt_vlog(LOG_WARNING,
                          "Using default for %s.\n",
                          configuration_entries[j].key);
-                dlt_log(LOG_WARNING, local_str);
                 continue;
             }
             else if (ret != 0)
             {
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
+                dlt_vlog(LOG_WARNING,
                          "Missing configuration for %s.\n",
                          configuration_entries[j].key);
-                dlt_log(LOG_WARNING, local_str);
                 invalid = 1;
                 break;
             }
@@ -538,22 +736,19 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
             if (ret != 0)
             {
-                sprintf(local_str,
-                        "Configuration %s = %s is invalid.\n"
-                        "Using default.\n",
-                        configuration_entries[j].key, value);
-                dlt_log(LOG_ERR, local_str);
+                dlt_vlog(LOG_ERR,
+                         "Configuration %s = %s is invalid.\n"
+                         "Using default.\n",
+                         configuration_entries[j].key, value);
             }
         }
 
         if (invalid)
         {
-            memset(local_str, 0, DLT_DAEMON_TEXTBUFSIZE);
-            sprintf(local_str,
-                    "%s configuration is invalid.\n"
-                    "Ignoring.\n",
-                    section);
-            dlt_log(LOG_ERR, local_str);
+            dlt_vlog(LOG_ERR,
+                     "%s configuration is invalid.\n"
+                     "Ignoring.\n",
+                     section);
         }
         else
         {
@@ -567,7 +762,9 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
         /* strdup used inside some get_value function */
         free(tmp.ecuid);
+        tmp.ecuid = NULL;
         free(tmp.ip_address);
+        tmp.ip_address = NULL;
     }
 
     dlt_config_file_release(file);
@@ -580,7 +777,8 @@ int dlt_gateway_init(DltDaemonLocal *daemon_local, int verbose)
 
     if (daemon_local == NULL)
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     DltGateway *gateway = &daemon_local->pGateway;
@@ -595,27 +793,29 @@ int dlt_gateway_init(DltDaemonLocal *daemon_local, int verbose)
                                   verbose) != 0)
         {
             dlt_log(LOG_ERR, "Gateway initialization failed\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
     }
     else
     {
         dlt_log(LOG_CRIT, "Pointer to Gateway structure is NULL\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* ignore return value */
     dlt_gateway_establish_connections(gateway, daemon_local, verbose);
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 void dlt_gateway_deinit(DltGateway *gateway, int verbose)
 {
+    DltPassiveControlMessage *msg;
     int i = 0;
 
     if (gateway == NULL)
     {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
         return;
     }
 
@@ -626,11 +826,91 @@ void dlt_gateway_deinit(DltGateway *gateway, int verbose)
         DltGatewayConnection *c = &gateway->connections[i];
         dlt_client_cleanup(&c->client, verbose);
         free(c->ip_address);
+        c->ip_address = NULL;
         free(c->ecuid);
+        c->ecuid = NULL;
+        while (c->p_control_msgs != NULL)
+        {
+            msg = c->p_control_msgs->next;
+            free(c->p_control_msgs);
+            c->p_control_msgs = msg;
+        }
     }
 
     free(gateway->connections);
-    free(gateway);
+    gateway->connections = NULL;
+}
+
+/**
+ * If connection to passive node established, add to event loop
+ *
+ * @param daemon_local  DltDaemonLocal
+ * @param con           DltGatewayConnection
+ * @param verbose       verbose flag
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_add_to_event_loop(DltDaemonLocal *daemon_local,
+                                         DltGatewayConnection *con,
+                                         int verbose)
+{
+    DltPassiveControlMessage *control_msg = NULL;
+    int sendtime = 1;
+
+    if ((daemon_local == NULL) || (con == NULL))
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    /* connection to passive node established, add to event loop */
+    con->status = DLT_GATEWAY_CONNECTED;
+    con->reconnect_cnt = 0;
+    con->timeout_cnt = 0;
+    con->sendtime_cnt = 0;
+
+    /* setup dlt connection and add to epoll event loop here */
+    if (dlt_connection_create(daemon_local,
+                              &daemon_local->pEvent,
+                              con->client.sock,
+                              EPOLLIN,
+                              DLT_CONNECTION_GATEWAY) != 0)
+    {
+        dlt_log(LOG_ERR, "Gateway connection creation failed\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    /* immediately send configured control messages */
+    control_msg = con->p_control_msgs;
+
+    while (control_msg != NULL)
+    {
+        if ((control_msg->type == CONTROL_MESSAGE_ON_STARTUP) ||
+            (control_msg->type == CONTROL_MESSAGE_BOTH))
+        {
+            if (dlt_gateway_send_control_message(con,
+                                                 control_msg,
+                                                 NULL,
+                                                 verbose) == DLT_RETURN_OK)
+            {
+                control_msg->req = CONTROL_MESSAGE_REQUESTED;
+            }
+        }
+
+        /* multiply periodic sending time */
+        if (((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
+             (control_msg->type == CONTROL_MESSAGE_BOTH)) &&
+            (control_msg->interval > 0))
+        {
+            sendtime *= control_msg->interval;
+        }
+        control_msg = control_msg->next;
+    }
+
+    /* set periodic sending time */
+    con->sendtime = sendtime;
+    con->sendtime_cnt = con->sendtime;
+
+    return DLT_RETURN_OK;
 }
 
 int dlt_gateway_establish_connections(DltGateway *gateway,
@@ -642,50 +922,37 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (gateway == NULL || daemon_local == NULL)
+    if ((gateway == NULL) || (daemon_local == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     for (i = 0; i < gateway->num_connections; i++)
     {
         DltGatewayConnection *con = &(gateway->connections[i]);
+        DltPassiveControlMessage *control_msg = NULL;
+
         if (con == NULL)
         {
             dlt_log(LOG_CRIT, "Cannot retrieve gateway connection details\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
-        if (con->status != DLT_GATEWAY_CONNECTED &&
-            con->trigger != DLT_GATEWAY_ON_DEMAND &&
-            con->trigger != DLT_GATEWAY_DISABLED)
+        if ((con->status != DLT_GATEWAY_CONNECTED) &&
+            (con->trigger != DLT_GATEWAY_ON_DEMAND) &&
+            (con->trigger != DLT_GATEWAY_DISABLED))
         {
             ret = dlt_client_connect(&con->client, verbose);
 
             if (ret == 0)
             {
-                /* connection to passive node established, add to event loop */
-                con->status = DLT_GATEWAY_CONNECTED;
-                con->reconnect_cnt = 0;
-                con->timeout_cnt = 0;
-
                 /* setup dlt connection and add to epoll event loop here */
-                if (dlt_connection_create(daemon_local,
-                                     &daemon_local->pEvent,
-                                     con->client.sock,
-                                     EPOLLIN,
-                                     DLT_CONNECTION_GATEWAY) != 0)
+                if (dlt_gateway_add_to_event_loop(daemon_local, con, verbose) != DLT_RETURN_OK)
                 {
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");
-                    return -1;
+                    return DLT_RETURN_ERROR;
                 }
-
-                /* immediately send configured control messages */
-                dlt_gateway_send_control_message(con,
-                                                 gateway,
-                                                 daemon_local,
-                                                 verbose);
-
             }
             else
             {
@@ -702,9 +969,53 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
                 }
             }
         }
+        else if ((con->status == DLT_GATEWAY_CONNECTED) &&
+                 (con->trigger != DLT_GATEWAY_DISABLED))
+        {
+            /* setup dlt connection and add to epoll event loop here */
+            if (dlt_connection_create(daemon_local,
+                                 &daemon_local->pEvent,
+                                 con->client.sock,
+                                 EPOLLIN,
+                                 DLT_CONNECTION_GATEWAY) != 0)
+            {
+                dlt_log(LOG_ERR, "Gateway connection creation failed\n");
+                return DLT_RETURN_ERROR;
+            }
+
+            /* immediately send periodic configured control messages */
+            control_msg = con->p_control_msgs;
+
+            while (control_msg != NULL)
+            {
+                if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
+                    (control_msg->type == CONTROL_MESSAGE_BOTH))
+                {
+                    if (dlt_gateway_send_control_message(con,
+                                                         control_msg,
+                                                         NULL,
+                                                         verbose) == DLT_RETURN_OK)
+                    {
+                        control_msg->req = CONTROL_MESSAGE_REQUESTED;
+                    }
+                }
+                control_msg = control_msg->next;
+            }
+
+            /* check sendtime counter */
+            if (con->sendtime_cnt > 0)
+            {
+                con->sendtime_cnt--;
+            }
+
+            if (con->sendtime_cnt == 0)
+            {
+                con->sendtime_cnt = con->sendtime;
+            }
+        }
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
@@ -713,6 +1024,7 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
 
     if (gateway == NULL)
     {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
         return NULL;
     }
 
@@ -728,6 +1040,238 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
     return NULL;
 }
 
+/**
+ * Parse GET_LOG_INFO
+ *
+ * @param daemon          DltDaemon
+ * @param daemon_local    DltDaemonLocal
+ * @param msg             DltMessage
+ * @param req             1 if requested from gateway, 0 otherwise
+ * @param verbose verbose flag
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
+                                          char *ecu,
+                                          DltMessage *msg,
+                                          int req,
+                                          int verbose)
+{
+    char resp_text[DLT_RECEIVE_TEXTBUFSIZE] = {'\0'};
+    DltServiceGetLogInfoResponse *resp = NULL;
+    AppIDsType app;
+    ContextIDsInfoType con;
+    int i = 0;
+    int j = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((msg == NULL) || (msg->databuffer == NULL))
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceGetLogInfoResponse)) < 0)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    /* if the request was send from gateway, clear all application and context list */
+    if (req == CONTROL_MESSAGE_REQUESTED)
+    {
+        /* clear application list */
+        if (dlt_daemon_applications_clear(daemon, ecu, verbose) == DLT_RETURN_ERROR)
+        {
+            dlt_log(LOG_ERR, "Cannot clear applications list\n");
+            return DLT_RETURN_ERROR;
+        }
+
+        /* clear context list */
+        if (dlt_daemon_contexts_clear(daemon, ecu, verbose) == DLT_RETURN_ERROR)
+        {
+            dlt_log(LOG_ERR, "Cannot clear contexts list\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    /* check response */
+    if (dlt_message_payload(msg,
+                            resp_text,
+                            DLT_RECEIVE_TEXTBUFSIZE,
+                            DLT_OUTPUT_ASCII, 0) != DLT_RETURN_OK)
+    {
+        dlt_log(LOG_ERR, "GET_LOG_INFO payload failed\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    /* prepare pointer to message request */
+    resp = (DltServiceGetLogInfoResponse*) calloc(1, sizeof(DltServiceGetLogInfoResponse));
+
+    if (resp == NULL)
+    {
+        dlt_log(LOG_ERR,
+                "Get Log Info Response could not be allocated\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if (dlt_set_loginfo_parse_service_id(resp_text, &resp->service_id, &resp->status) != DLT_RETURN_OK)
+    {
+        dlt_log(LOG_ERR, "Parsing GET_LOG_INFO failed\n");
+        dlt_client_cleanup_get_log_info(resp);
+        return DLT_RETURN_ERROR;
+    }
+
+    if (dlt_client_parse_get_log_info_resp_text(resp, resp_text) != DLT_RETURN_OK)
+    {
+        dlt_log(LOG_ERR, "Parsing GET_LOG_INFO failed\n");
+        dlt_client_cleanup_get_log_info(resp);
+        return DLT_RETURN_ERROR;
+    }
+
+    for (i = 0; i < resp->log_info_type.count_app_ids; i++)
+    {
+        app = resp->log_info_type.app_ids[i];
+
+        /* add application */
+        if (dlt_daemon_application_add(daemon,
+                                   app.app_id,
+                                   0,
+                                   app.app_description,
+                                   -1,
+                                   ecu,
+                                   verbose) == 0)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "%s: dlt_daemon_application_add failed\n",
+                     __func__);
+            dlt_client_cleanup_get_log_info(resp);
+            return DLT_RETURN_ERROR;
+        }
+
+        for (j = 0; j < app.count_context_ids; j++)
+        {
+            con = app.context_id_info[j];
+
+            /* add context */
+            if (dlt_daemon_context_add(daemon,
+                                   app.app_id,
+                                   con.context_id,
+                                   con.log_level,
+                                   con.trace_status,
+                                   0,
+                                   -1,
+                                   con.context_description,
+                                   ecu,
+                                   verbose) == 0)
+            {
+                dlt_vlog(LOG_WARNING,
+                         "%s: dlt_daemon_context_add failed for %4s\n",
+                         __func__,
+                         app.app_id);
+                dlt_client_cleanup_get_log_info(resp);
+                return DLT_RETURN_ERROR;
+            }
+        }
+    }
+
+    /* free response */
+    dlt_client_cleanup_get_log_info(resp);
+
+    return DLT_RETURN_OK;
+}
+
+/**
+ * Parse GET_DEFAULT_LOG_LEVEL
+ *
+ * @param daemon          DltDaemon
+ * @param daemon_local    DltDaemonLocal
+ * @param msg             DltMessage
+ * @param verbose verbose flag
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_parse_get_default_log_level(DltDaemon *daemon,
+                                                   DltDaemonLocal *daemon_local,
+                                                   char *ecu,
+                                                   DltMessage *msg,
+                                                   int verbose)
+{
+    DltServiceGetDefaultLogLevelResponse *resp = NULL;
+    DltGatewayConnection *con = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize,
+                                sizeof(DltServiceGetDefaultLogLevelResponse)) < 0)
+    {
+        dlt_log(LOG_ERR, "Received data incomplete.\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    /* prepare pointer to message request */
+    resp = (DltServiceGetDefaultLogLevelResponse *) (msg->databuffer);
+
+    con = dlt_gateway_get_connection(&daemon_local->pGateway,
+                                     ecu,
+                                     verbose);
+
+    if (con == NULL)
+    {
+        dlt_vlog(LOG_ERR, "No information about passive ECU: %s\n",
+                 ecu);
+
+        return DLT_RETURN_ERROR;
+    }
+
+    con->default_log_level = resp->log_level;
+
+    return DLT_RETURN_OK;
+}
+
+/**
+ * Service offline logstorage
+ *
+ * @param daemon       DltDaemon
+ * @param daemon_local DltDaemonLocal
+ * @param verbose      int
+ * @return 0 on success, -1 otherwise
+ */
+STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  int verbose)
+{
+    unsigned int connection_type = 0;
+    int i = 0;
+
+    if (daemon_local->flags.offlineLogstorageMaxDevices <= 0)
+    {
+        dlt_log(LOG_INFO,
+                "Logstorage functionality not enabled or MAX device set is 0\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
+    {
+        connection_type = daemon->storage_handle[i].connection_type;
+
+        if (connection_type == DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+        {
+            /* Check if log level of running application needs an update */
+            dlt_daemon_logstorage_update_application_loglevel(daemon,
+                                                              daemon_local,
+                                                              i,
+                                                              verbose);
+        }
+    }
+
+    return DLT_RETURN_OK;
+}
+
 int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                               DltDaemonLocal *daemon_local,
                                               DltReceiver *receiver,
@@ -739,9 +1283,10 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     DltMessage msg;
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
-    if (daemon == NULL || daemon_local == NULL || receiver == NULL)
+    if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -750,7 +1295,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     if (gateway == NULL)
     {
         dlt_log(LOG_ERR, "Gateway structure is NULL\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     for (i = 0; i < gateway->num_connections; i++)
@@ -765,7 +1310,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     if (con == NULL)
     {
         dlt_log(LOG_ERR, "Cannot associate fd to passive Node connection\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* now the corresponding passive node connection is available */
@@ -773,7 +1318,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     {
         dlt_log(LOG_ERR,
                 "Cannot initialize DLT message for passive node forwarding\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     /* nearly copy and paste of dlt_client_main_loop function */
@@ -783,7 +1328,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
         if (dlt_message_free(&msg, verbose) < 0)
         {
             dlt_log(LOG_ERR, "Cannot free DLT message\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
 
         dlt_log(LOG_WARNING, "Connection to passive node lost\n");
@@ -804,7 +1349,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                 dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
             }
         }
-        return 0;
+        return DLT_RETURN_OK;
     }
 
     while (dlt_message_read(&msg,
@@ -821,14 +1366,69 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
         /* only forward messages if the received ECUid is the expected one */
         if (strncmp(header->ecu, con->ecuid, strlen(con->ecuid)) == 0)
         {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
+            uint32_t id;
+            uint32_t id_tmp;
+            DltPassiveControlMessage *control_msg = con->p_control_msgs;
+
+            dlt_vlog(LOG_DEBUG,
                      "Received ECUid (%s) similar to configured ECUid(%s). "
                      "Forwarding message (%s).\n",
                      header->ecu,
                      con->ecuid,
                      msg.databuffer);
-            dlt_log(LOG_DEBUG, local_str);
+
+            id_tmp = *((uint32_t*)(msg.databuffer));
+            id = DLT_ENDIAN_GET_32(msg.standardheader->htyp, id_tmp);
+
+            /* if ID is GET_LOG_INFO, parse msg */
+            if (id == DLT_SERVICE_ID_GET_LOG_INFO)
+            {
+                while (control_msg)
+                {
+                    if (control_msg->id == id)
+                    {
+                        if (dlt_gateway_parse_get_log_info(daemon,
+                                                           header->ecu,
+                                                           &msg,
+                                                           control_msg->req,
+                                                           verbose) == DLT_RETURN_ERROR)
+                        {
+                            dlt_log(LOG_WARNING, "Parsing GET_LOG_INFO message failed!\n");
+                        }
+
+                        /* Check for logstorage */
+                        dlt_gateway_control_service_logstorage(daemon,
+                                                               daemon_local,
+                                                               verbose);
+
+                        /* initialize the flag */
+                        control_msg->req = CONTROL_MESSAGE_NOT_REQUESTED;
+                        break;
+                    }
+                    control_msg = control_msg->next;
+                }
+            }
+            else if (id == DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL)
+            {
+                if (dlt_gateway_parse_get_default_log_level(
+                        daemon,
+                        daemon_local,
+                        header->ecu,
+                        &msg,
+                        verbose) == DLT_RETURN_ERROR)
+                {
+                    dlt_log(LOG_WARNING,
+                            "Parsing GET_DEFAULT_LOG_LEVEL message failed!\n");
+                }
+            }
+
+            /* prepare storage header */
+            if (dlt_set_storageheader(msg.storageheader,
+                                      msg.headerextra.ecu) == DLT_RETURN_ERROR)
+            {
+                dlt_vlog(LOG_ERR, "%s: Can't set storage header\n", __func__);
+                return DLT_DAEMON_ERROR_UNKNOWN;
+            }
 
             if (dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,
                                    daemon,
@@ -846,27 +1446,25 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
         }
         else /* otherwise remove this connection and do not connect again */
         {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
+            dlt_vlog(LOG_WARNING,
                      "Received ECUid (%s) differs to configured ECUid(%s). "
                      "Discard this message.\n",
                      header->ecu,
                      con->ecuid);
-                     dlt_log(LOG_WARNING, local_str);
 
              /* disconnect from passive node */
-             con->status = DLT_GATEWAY_DISCONNECTED;
-             con->trigger = DLT_GATEWAY_DISABLED;
-             if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
-                                                        daemon_local,
-                                                        receiver->fd)
-                 != 0)
-             {
-                 dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
-             }
+            con->status = DLT_GATEWAY_DISCONNECTED;
+            con->trigger = DLT_GATEWAY_DISABLED;
+            if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
+                                                       daemon_local,
+                                                       receiver->fd)
+                != 0)
+            {
+                dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
+            }
 
-             dlt_log(LOG_WARNING,
-                     "Disconnect from passive node due to invalid ECUid\n");
+            dlt_log(LOG_WARNING,
+                    "Disconnect from passive node due to invalid ECUid\n");
         }
 
         if (msg.found_serialheader)
@@ -879,7 +1477,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             {
                 /* Return value ignored */
                 dlt_message_free(&msg,verbose);
-                return -1;
+                return DLT_RETURN_ERROR;
              }
         }
         else
@@ -891,7 +1489,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             {
                 /* Return value ignored */
                 dlt_message_free(&msg,verbose);
-                return -1;
+                return DLT_RETURN_ERROR;
             }
         }
     }
@@ -900,15 +1498,15 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     {
         /* Return value ignored */
         dlt_message_free(&msg, verbose);
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (dlt_message_free(&msg, verbose) == -1)
     {
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_gateway_process_gateway_timer(DltDaemon *daemon,
@@ -918,28 +1516,25 @@ int dlt_gateway_process_gateway_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL))
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
+        dlt_vlog(LOG_ERR,
+                 "%s: invalid parameters\n",
                  __func__);
-        dlt_log(LOG_ERR, local_str);
-        return -1;
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if(res < 0)
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        dlt_log(LOG_WARNING, local_str);
+        dlt_vlog(LOG_WARNING,
+                 "%s: Fail to read timer (%s)\n",
+                 __func__,
+                 strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
            let's go on sending notification */
     }
@@ -951,7 +1546,7 @@ int dlt_gateway_process_gateway_timer(DltDaemon *daemon,
 
     dlt_log(LOG_DEBUG, "Gateway Timer\n");
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_gateway_forward_control_message(DltGateway *gateway,
@@ -963,12 +1558,15 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     int i = 0;
     int ret = 0;
     DltGatewayConnection *con = NULL;
+    uint32_t id_tmp;
+    uint32_t id;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if (gateway == NULL || daemon_local == NULL || msg == NULL || ecu == NULL)
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     for (i = 0; i < gateway->num_connections; i++)
@@ -985,13 +1583,13 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     if (con == NULL)
     {
         dlt_log(LOG_WARNING, "Unknown passive node identifier\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (con->status != DLT_GATEWAY_CONNECTED)
     {
         dlt_log(LOG_INFO, "Passive node is not connected\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (con->send_serial) /* send serial header */
@@ -1004,7 +1602,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         if (ret == -1)
         {
             dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
     }
 
@@ -1015,7 +1613,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     if (ret == -1)
     {
         dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
     else
     {
@@ -1023,12 +1621,17 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         if (ret == -1)
         {
             dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
-            return -1;
+            return DLT_RETURN_ERROR;
         }
     }
 
-    dlt_log(LOG_INFO, "Control message forwarded\n");
-    return 0;
+    id_tmp = *((uint32_t*)(msg->databuffer));
+    id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
+
+    dlt_vlog(LOG_INFO,
+             "Control message forwarded : %s\n",
+             dlt_get_service_name(id));
+    return DLT_RETURN_OK;
 }
 
 int dlt_gateway_process_on_demand_request(DltGateway *gateway,
@@ -1042,9 +1645,10 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (gateway == NULL || daemon_local == NULL || node_id == NULL)
+    if ((gateway == NULL) || (daemon_local == NULL) || (node_id == NULL))
     {
-        return -1;
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     /* find connection by ECU id */
@@ -1060,7 +1664,7 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
     if (con == NULL)
     {
         dlt_log(LOG_WARNING, "Specified ECUid not found\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
     if (connection_status == 1) /* try to connect */
@@ -1069,23 +1673,17 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
         {
             if (dlt_client_connect(&con->client, verbose) == 0)
             {
-                con->status = DLT_GATEWAY_CONNECTED;
-
                 /* setup dlt connection and add to epoll event loop here */
-                if (dlt_connection_create(daemon_local,
-                                     &daemon_local->pEvent,
-                                     con->client.sock,
-                                     EPOLLIN,
-                                     DLT_CONNECTION_GATEWAY) != 0)
+                if (dlt_gateway_add_to_event_loop(daemon_local, con, verbose) != DLT_RETURN_OK)
                 {
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");
-                    return -1;
+                    return DLT_RETURN_ERROR;
                 }
             }
             else
             {
                 dlt_log(LOG_ERR, "Could not connect to passive node\n");
-                return -1;
+                return DLT_RETURN_ERROR;
             }
         }
         else
@@ -1104,194 +1702,105 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
             dlt_log(LOG_ERR,
                     "Remove passive node event handler connection failed\n");
         }
-
-        if (dlt_client_cleanup(&con->client, verbose) != 0)
-        {
-            dlt_log(LOG_ERR, "Could not cleanup DltClient structure\n");
-            return -1;
-        }
     }
     else
     {
         dlt_log(LOG_ERR, "Unknown command (connection_status)\n");
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
-void dlt_gateway_send_control_message(DltGatewayConnection *con,
-                                      DltGateway *gateway,
-                                      DltDaemonLocal *daemon_local,
-                                      int verbose)
+int dlt_gateway_send_control_message(DltGatewayConnection *con,
+                                     DltPassiveControlMessage *control_msg,
+                                     void *data,
+                                     int verbose)
 {
-    int i = 0;
-    uint32_t len = 0;
-    DltMessage msg;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
+    int ret = DLT_RETURN_OK;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (con == NULL || gateway == NULL || daemon_local == NULL)
+    if (con == NULL)
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Invalid parameter given\n", __func__);
-        dlt_log(LOG_WARNING, local_str);
-        return;
+        dlt_vlog(LOG_WARNING,
+                 "%s: Invalid parameter given\n",
+                 __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    for (i = 0; i < DLT_GATEWAY_MAX_STARTUP_CTRL_MSG; i++)
+    /* no (more) control message to be send */
+    if (control_msg->id == 0)
     {
-        if (con->control_msgs[i] == 0)
-        {
-            break; /* no (more) control message to be send */
-        }
-
-        memset(&msg, 0, sizeof(msg));
-
-        if (dlt_message_init(&msg, verbose) == -1)
-        {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Initialization of message failed\n");
-            dlt_log(LOG_WARNING, local_str);
-            return;
-        }
-
-        if (con->control_msgs[i] == DLT_SERVICE_ID_GET_LOG_INFO)
-        {
-            DltServiceGetLogInfoRequest *req;
-            msg.databuffer = (uint8_t *)
-                             malloc(sizeof(DltServiceGetLogInfoRequest));
-            if (msg.databuffer == NULL)
-            {
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
-                         "Initialization of 'GetLogInfo' failed\n");
-                dlt_log(LOG_WARNING, local_str);
-                dlt_message_free(&msg, verbose);
-                return;
-            }
-
-            req = (DltServiceGetLogInfoRequest *)msg.databuffer;
-            req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-            req->options = 7;
-            dlt_set_id(req->apid, "");
-            dlt_set_id(req->ctid, "");
-            dlt_set_id(req->com, "remo");
-
-            msg.databuffersize = sizeof(DltServiceGetLogInfoRequest);
-            msg.datasize = msg.databuffersize;
-        }
-        else if (con->control_msgs[i] == DLT_SERVICE_ID_GET_SOFTWARE_VERSION)
-        {
-            DltServiceGetSoftwareVersion *req;
-
-            msg.databuffer = (uint8_t *)
-                             malloc(sizeof(DltServiceGetSoftwareVersion));
-            if (msg.databuffer == NULL)
-            {
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
-                         "Initialization of 'GetSoftwareVersion' failed\n");
-                dlt_log(LOG_WARNING, local_str);
-                dlt_message_free(&msg, verbose);
-                return;
-            }
-
-            req = (DltServiceGetSoftwareVersion *)msg.databuffer;
-            req->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
-
-            msg.databuffersize = sizeof(DLT_SERVICE_ID_GET_SOFTWARE_VERSION);
-            msg.datasize = msg.databuffersize;
-        }
-        else
-        {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Unknown control message. Skip.\n");
-            dlt_log(LOG_WARNING, local_str);
-            dlt_message_free(&msg, verbose);
-            return;
-        }
-
-        /* prepare storage header */
-        msg.storageheader = (DltStorageHeader*)msg.headerbuffer;
-
-        if (dlt_set_storageheader(msg.storageheader,"") == DLT_RETURN_ERROR)
-        {
-            dlt_message_free(&msg,0);
-            return;
-        }
-
-        /* prepare standard header */
-        msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
-        msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1 ;
-
-        #if (BYTE_ORDER==BIG_ENDIAN)
-            msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
-        #endif
-
-        msg.standardheader->mcnt = 0;
-
-        /* Set header extra parameters */
-        dlt_set_id(msg.headerextra.ecu,"");
-        //msg.headerextra.seid = 0;
-        msg.headerextra.tmsp = dlt_uptime();
-
-        /* Copy header extra parameters to headerbuffer */
-        if (dlt_message_set_extraparameters(&msg,0) == DLT_RETURN_ERROR)
-        {
-            dlt_message_free(&msg,0);
-            return;
-        }
-
-        /* prepare extended header */
-        msg.extendedheader = (DltExtendedHeader*)(msg.headerbuffer +
-                             sizeof(DltStorageHeader) +
-                             sizeof(DltStandardHeader) +
-                             DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) );
-
-        msg.extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
-
-        msg.extendedheader->noar = 1; /* number of arguments */
-
-        dlt_set_id(msg.extendedheader->apid, "APP");
-        dlt_set_id(msg.extendedheader->ctid, "CON");
-
-        /* prepare length information */
-        msg.headersize = sizeof(DltStorageHeader) +
-                         sizeof(DltStandardHeader) +
-                         sizeof(DltExtendedHeader) +
-                         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
-
-        len=msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
-        if (len>UINT16_MAX)
-        {
-            fprintf(stderr,"Critical: Huge injection message discarded!\n");
-            dlt_message_free(&msg,0);
-
-            return;
-        }
-
-        msg.standardheader->len = DLT_HTOBE_16(len);
-
-        /* forward message to passive node */
-        if (dlt_gateway_forward_control_message(gateway,
-                                                daemon_local,
-                                                &msg,
-                                                con->ecuid,
-                                                verbose) != 0)
-        {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Failed to forward message to passive node.\n");
-            dlt_log(LOG_WARNING, local_str);
-        }
-
-        dlt_message_free(&msg, verbose);
+        return DLT_RETURN_ERROR;
     }
+
+    /* check sendtime counter and message interval */
+    /* sendtime counter is 0 on startup, otherwise positive value */
+    if ((control_msg->type != CONTROL_MESSAGE_ON_DEMAND) && (con->sendtime_cnt > 0))
+    {
+        if (control_msg->interval <= 0)
+        {
+            return DLT_RETURN_ERROR;
+        }
+
+        if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
+            (control_msg->type == CONTROL_MESSAGE_BOTH))
+        {
+            if ((con->sendtime_cnt - 1) % control_msg->interval != 0)
+            {
+                return DLT_RETURN_ERROR;
+            }
+        }
+    }
+
+    if (con->send_serial) /* send serial header */
+    {
+        ret = send(con->client.sock,
+                   (void *)dltSerialHeader,
+                   sizeof(dltSerialHeader),
+                   0);
+
+        if (ret == -1)
+        {
+            dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    switch(control_msg->id)
+    {
+    case DLT_SERVICE_ID_GET_LOG_INFO:
+        return dlt_client_get_log_info(&con->client);
+        break;
+    case DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL:
+        return dlt_client_get_default_log_level(&con->client);
+        break;
+    case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
+        return dlt_client_get_software_version(&con->client);
+        break;
+    case DLT_SERVICE_ID_SET_LOG_LEVEL:
+        if (data == NULL)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "Insufficient data for %s received. Send control request failed.\n",
+                     dlt_get_service_name(control_msg->id));
+            return DLT_RETURN_ERROR;
+        }
+
+        DltServiceSetLogLevel *req = (DltServiceSetLogLevel *) data;
+        return dlt_client_send_log_level(&con->client,
+                                         req->apid,
+                                         req->ctid,
+                                         req->log_level);
+        break;
+    default:
+        dlt_vlog(LOG_WARNING,
+                 "Cannot forward request: %s.\n",
+                 dlt_get_service_name(control_msg->id));
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltGatewayConnection *dlt_gateway_get_connection(DltGateway *gateway,

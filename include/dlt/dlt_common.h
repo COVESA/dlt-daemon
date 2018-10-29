@@ -208,6 +208,25 @@ enum {
 #define DLT_SIZE_WTMS (sizeof(uint32_t))
 
 /**
+ * Definitions for GET_LOG_INFO
+ */
+#define DLT_RECEIVE_TEXTBUFSIZE 1024  /* Size of buffer for text output */
+#define DLT_GET_LOG_INFO_HEADER 18     /*Get log info header size in response text */
+#define GET_LOG_INFO_LENGTH 13
+#define SERVICE_OPT_LENGTH 3
+
+/* checks if received size is big enough for expected data */
+#define DLT_CHECK_RCV_DATA_SIZE(received, required) \
+    ({ \
+        int _ret = DLT_RETURN_OK; \
+        if (((int)received - (int)required) < 0) { \
+            dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__); \
+            _ret = DLT_RETURN_ERROR; \
+        } \
+        _ret; \
+    })
+
+/**
  * Get the size of extra header parameters, depends on htyp.
  */
 #define DLT_STANDARD_HEADER_EXTRA_SIZE(htyp) ( (DLT_IS_HTYP_WEID(htyp) ? DLT_SIZE_WEID : 0) + (DLT_IS_HTYP_WSID(htyp) ? DLT_SIZE_WSID : 0) + (DLT_IS_HTYP_WTMS(htyp) ? DLT_SIZE_WTMS : 0) )
@@ -451,6 +470,46 @@ typedef struct
     char ctid[DLT_ID_SIZE];         /**< context id */
     char com[DLT_ID_SIZE];          /**< communication interface */
 } PACKED DltServiceGetLogInfoRequest;
+
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+} PACKED DltServiceGetDefaultLogLevelRequest;
+
+/**
+ * The structure of the DLT Service Get Log Info response.
+ */
+typedef struct
+{
+    char context_id[DLT_ID_SIZE];
+    int16_t log_level;
+    int16_t trace_status;
+    uint16_t len_context_description;
+    char *context_description;
+} ContextIDsInfoType;
+
+typedef struct
+{
+    char app_id[DLT_ID_SIZE];
+    uint16_t count_context_ids;
+    ContextIDsInfoType *context_id_info; /**< holds info about a specific con id */
+    uint16_t len_app_description;
+    char *app_description;
+} AppIDsType;
+
+typedef struct
+{
+    uint16_t count_app_ids;
+    AppIDsType *app_ids;            /**< holds info about a specific app id */
+} LogInfoType;
+
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t status;                 /**< type of request */
+    LogInfoType log_info_type;      /**< log info type */
+    char com[DLT_ID_SIZE];      /**< communication interface */
+} DltServiceGetLogInfoResponse;
 
 /**
  * The structure of the DLT Service Set Log Level.
@@ -1395,6 +1454,50 @@ extern "C"
      * Check environment variables.
      */
     void dlt_check_envvar();
+
+    /**
+     * Parse the response text and identifying service id and its options.
+     *
+     * @param resp_text   char *
+     * @param service_id  int *
+     * @param service_opt int *
+     * @return pointer to resp_text
+     */
+    int dlt_set_loginfo_parse_service_id(char *resp_text, uint32_t *service_id, uint8_t *service_opt);
+
+    /**
+     * Convert get log info from ASCII to uint16
+     *
+     * @param rp        char
+     * @param rp_count  int
+     * @return length
+     */
+    int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
+
+    /**
+     * Convert get log info from ASCII to int16
+     *
+     * @param rp        char
+     * @param rp_count  int
+     * @return length
+     */
+    int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
+
+    /**
+     * Convert get log info from ASCII to ID
+     *
+     * @param rp        char
+     * @param rp_count  int
+     */
+    void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
+
+    /**
+     * Convert from hex ASCII to binary
+     * @param ptr    const char
+     * @param binary uint8_t
+     * @param size   int
+     */
+    void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
 
 #ifndef DLT_USE_UNIX_SOCKET_IPC
     /**

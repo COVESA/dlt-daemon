@@ -221,6 +221,15 @@
 #define DLT_CONNECTION_STATUS_DISCONNECTED 0x01 /**< Client is disconnected */
 #define DLT_CONNECTION_STATUS_CONNECTED    0x02 /**< Client is connected */
 
+/*
+ * Definitions of DLT GET_LOG_INFO status
+ */
+#define GET_LOG_INFO_STATUS_MIN 3
+#define GET_LOG_INFO_STATUS_MAX 7
+#define GET_LOG_INFO_STATUS_NO_MATCHING_CTX 8
+#define GET_LOG_INFO_STATUS_RESP_DATA_OVERFLOW 9
+
+
 /**
   \}
 */

@@ -412,6 +412,8 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     int ret;
 
     int32_t len;
+    uint32_t id_tmp;
+    uint32_t id;
 
     if ((client==0) || (client->sock<0) || (apid==0) || (ctid==0))
     {
@@ -510,15 +512,26 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     {
         /* via FileDescriptor */
         ret=write(client->sock, msg.headerbuffer+sizeof(DltStorageHeader),msg.headersize-sizeof(DltStorageHeader));
-                if (0 > ret){
-                        dlt_message_free(&msg,0);
-                        return DLT_RETURN_ERROR;
-                }
+        if (0 > ret)
+        {
+            dlt_log(LOG_ERR, "Sending message failed\n");
+            dlt_message_free(&msg,0);
+            return DLT_RETURN_ERROR;
+        }
+
         ret=write(client->sock, msg.databuffer,msg.datasize);
-                if (0 > ret){
-                        dlt_message_free(&msg,0);
-                        return DLT_RETURN_ERROR;
-                }
+        if (0 > ret){
+            dlt_log(LOG_ERR, "Sending message failed\n");
+            dlt_message_free(&msg,0);
+            return DLT_RETURN_ERROR;
+        }
+
+        id_tmp = *((uint32_t*)(msg.databuffer));
+        id = DLT_ENDIAN_GET_32(msg.standardheader->htyp, id_tmp);
+
+        dlt_vlog(LOG_INFO,
+                 "Control message forwarded : %s\n",
+                 dlt_get_service_name(id));
     }
     else
     {
@@ -571,16 +584,19 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client, char *apid, char *c
 DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel)
 {
     DltServiceSetLogLevel *req;
-    uint8_t *payload;
+    int ret = DLT_RETURN_ERROR;
 
-    payload = (uint8_t *) malloc(sizeof(DltServiceSetLogLevel));
-
-    if(payload==0)
+    if ((client == NULL) || (apid == NULL) || (ctid == NULL))
     {
-        return DLT_RETURN_ERROR;
+        return ret;
     }
 
-    req = (DltServiceSetLogLevel *) payload;
+
+    req = (DltServiceSetLogLevel *) malloc(sizeof(DltServiceSetLogLevel));
+    if (req == NULL)
+    {
+        return ret;
+    }
     memset(req, 0, sizeof(DltServiceSetLogLevel));
     req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
     dlt_set_id(req->apid,apid);
@@ -589,36 +605,34 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
     dlt_set_id(req->com,"remo");
 
         /* free message */
-    if (dlt_client_send_ctrl_msg(client,"APP","CON",payload,sizeof(DltServiceSetLogLevel)) == DLT_RETURN_ERROR)
-    {
-        free(payload);
-        return DLT_RETURN_ERROR;
-    }
+    ret = dlt_client_send_ctrl_msg(client,
+                                   "APP",
+                                   "CON",
+                                   (uint8_t*) req,
+                                   sizeof(DltServiceSetLogLevel));
 
-    free(payload);
 
-    return DLT_RETURN_OK;
+    free(req);
+
+    return ret;
 }
 
-int dlt_client_get_log_info(DltClient *client)
+DltReturnValue dlt_client_get_log_info(DltClient *client)
 {
     DltServiceGetLogInfoRequest *req;
-    uint8_t *payload;
-    int ret_main_loop = 0;
-    int ret = -1;
+    int ret = DLT_RETURN_ERROR;
 
     if (client == NULL)
     {
         return ret;
     }
-    payload = (uint8_t *) malloc(sizeof(DltServiceGetLogInfoRequest));
 
-    if (payload == 0)
+    req = (DltServiceGetLogInfoRequest *) malloc(sizeof(DltServiceGetLogInfoRequest));
+
+    if (req == NULL)
     {
         return ret;
     }
-
-    req = (DltServiceGetLogInfoRequest *) payload;
 
     req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
     req->options = 7;
@@ -627,20 +641,73 @@ int dlt_client_get_log_info(DltClient *client)
     dlt_set_id(req->com, "remo");
 
     /* send control message to daemon*/
-    ret = dlt_client_send_ctrl_msg(client, "", "", payload, sizeof(DltServiceGetLogInfoRequest));
-    free(payload);
-    if (ret == -1)
+    ret = dlt_client_send_ctrl_msg(client,
+                                   "",
+                                   "",
+                                   (uint8_t *) req,
+                                   sizeof(DltServiceGetLogInfoRequest));
+
+    free(req);
+
+    return ret;
+}
+
+DltReturnValue dlt_client_get_default_log_level(DltClient *client)
+{
+    DltServiceGetDefaultLogLevelRequest *req;
+    int ret = DLT_RETURN_ERROR;
+
+    if (client == NULL)
     {
-        return -1;
+        return ret;
     }
 
-    ret_main_loop = dlt_client_main_loop(client, NULL, 0);
-    if (ret_main_loop == 1)
+    req = (DltServiceGetDefaultLogLevelRequest *)
+                   malloc(sizeof(DltServiceGetDefaultLogLevelRequest));
+
+    if (req == NULL)
     {
-        printf("DLT-daemon's response is invalid.\n");
+        return ret;
     }
 
-    return 0;
+    req->service_id = DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL;
+
+    /* send control message to daemon*/
+    ret = dlt_client_send_ctrl_msg(client,
+                                   "",
+                                   "",
+                                   (uint8_t *) req,
+                                   sizeof(DltServiceGetDefaultLogLevelRequest));
+
+    free(req);
+
+    return ret;
+}
+
+DltReturnValue dlt_client_get_software_version(DltClient *client)
+{
+    DltServiceGetSoftwareVersion *req;
+    int ret = DLT_RETURN_ERROR;
+
+    if (client == NULL)
+    {
+        return ret;
+    }
+
+    req = (DltServiceGetSoftwareVersion *) malloc(sizeof(DltServiceGetSoftwareVersion));
+
+    req->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+
+    /* send control message to daemon*/
+    ret = dlt_client_send_ctrl_msg(client,
+                                   "",
+                                   "",
+                                   (uint8_t *) req,
+                                   sizeof(DltServiceGetSoftwareVersion));
+
+    free(req);
+
+    return ret;
 }
 
 DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
@@ -903,5 +970,243 @@ int dlt_client_set_socket_path(DltClient *client, char *socket_path)
         dlt_log(LOG_ERR, "ERROR: failed to duplicate socket path\n");
         return DLT_RETURN_ERROR;
     }
+    return DLT_RETURN_OK;
+}
+/**
+ * free allocation when calloc failed
+ *
+ * @param resp          DltServiceGetLogInfoResponse
+ * @param count_app_ids number of app_ids which needs to be freed
+ */
+STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoResponse *resp,
+                                                      int count_app_ids)
+{
+    AppIDsType *app = NULL;
+    ContextIDsInfoType *con = NULL;
+    int i = 0;
+    int j = 0;
+
+    for (i = 0; i < count_app_ids; i++)
+    {
+        app = &(resp->log_info_type.app_ids[i]);
+
+        for (j = 0; j < app->count_context_ids; j++)
+        {
+            con = &(app->context_id_info[j]);
+
+            free(con->context_description);
+            con->context_description = NULL;
+        }
+
+        free(app->app_description);
+        app->app_description = NULL;
+
+        free(app->context_id_info);
+        app->context_id_info = NULL;
+    }
+
+    free(resp->log_info_type.app_ids);
+    resp->log_info_type.app_ids = NULL;
+
+    return;
+}
+
+int dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
+                                             char *resp_text)
+{
+    AppIDsType *app = NULL;
+    ContextIDsInfoType *con = NULL;
+    int i = 0;
+    int j = 0;
+    char *rp = NULL;
+    int rp_count = 0;
+
+    if ((resp == NULL) || (resp_text == NULL))
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    /* ------------------------------------------------------
+       get_log_info data structure(all data is ascii)
+
+       get_log_info, aa, bb bb cc cc cc cc dd dd ee ee ee ee ff gg hh hh ii ii ii .. ..
+                     ~~  ~~~~~ ~~~~~~~~~~~ ~~~~~ ~~~~~~~~~~~~~~
+                               cc cc cc cc dd dd ee ee ee ee ff gg hh hh ii ii ii .. ..
+                         jj jj kk kk kk .. ..
+                               ~~~~~~~~~~~ ~~~~~ ~~~~~~~~~~~~~~
+       aa         : get mode (fix value at 0x07)
+       bb bb      : list num of apid (little endian)
+       cc cc cc cc: apid
+       dd dd      : list num of ctid (little endian)
+       ee ee ee ee: ctid
+       ff         : log level
+       gg         : trace status
+       hh hh      : description length of ctid
+       ii ii ..   : description text of ctid
+       jj jj      : description length of apid
+       kk kk ..   : description text of apid
+      ------------------------------------------------------ */
+
+    rp = resp_text + DLT_GET_LOG_INFO_HEADER;
+    rp_count = 0;
+
+    /* check if status is acceptable */
+    if ((resp->status < GET_LOG_INFO_STATUS_MIN) ||
+        (resp->status > GET_LOG_INFO_STATUS_MAX))
+    {
+        if (resp->status == GET_LOG_INFO_STATUS_NO_MATCHING_CTX)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "The status(%d) is invalid: NO matching Context IDs\n",
+                     resp->status);
+        }
+        else if (resp->status == GET_LOG_INFO_STATUS_RESP_DATA_OVERFLOW)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "The status(%d) is invalid: Response data over flow\n",
+                     resp->status);
+        }
+        else
+        {
+            dlt_vlog(LOG_WARNING,
+                     "The status(%d) is invalid\n",
+                     resp->status);
+        }
+        return DLT_RETURN_ERROR;
+    }
+
+    /* count_app_ids */
+    resp->log_info_type.count_app_ids = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                              &rp_count);
+
+    resp->log_info_type.app_ids = (AppIDsType *)calloc
+                                  (resp->log_info_type.count_app_ids, sizeof(AppIDsType));
+
+    if (resp->log_info_type.app_ids == NULL)
+    {
+        dlt_vlog(LOG_ERR, "calloc failed for app_ids\n");
+        dlt_client_free_calloc_failed_get_log_info(resp, 0);
+        return DLT_RETURN_ERROR;
+    }
+
+    for (i = 0; i < resp->log_info_type.count_app_ids; i++)
+    {
+        app = &(resp->log_info_type.app_ids[i]);
+        /* get app id */
+        dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, app->app_id, DLT_ID_SIZE);
+
+        /* count_con_ids */
+        app->count_context_ids = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                       &rp_count);
+
+        app->context_id_info = (ContextIDsInfoType *)calloc
+                               (app->count_context_ids, sizeof(ContextIDsInfoType));
+
+        if (app->context_id_info == NULL)
+        {
+            dlt_vlog(LOG_ERR,
+                     "calloc failed for context_id_info\n");
+            dlt_client_free_calloc_failed_get_log_info(resp, i);
+            return DLT_RETURN_ERROR;
+        }
+
+        for (j = 0; j < app->count_context_ids; j++)
+        {
+            con = &(app->context_id_info[j]);
+            /* get con id */
+            dlt_getloginfo_conv_ascii_to_id(rp,
+                                            &rp_count,
+                                            con->context_id,
+                                            DLT_ID_SIZE);
+
+            /* log_level */
+            if ((resp->status == 4) || (resp->status == 6) || (resp->status == 7))
+            {
+                con->log_level = dlt_getloginfo_conv_ascii_to_int16_t(rp,
+                                                                      &rp_count);
+            }
+
+            /* trace status */
+            if ((resp->status == 5) || (resp->status == 6) || (resp->status == 7))
+            {
+                con->trace_status = dlt_getloginfo_conv_ascii_to_int16_t(rp,
+                                                                         &rp_count);
+            }
+
+            /* context desc */
+            if (resp->status == 7){
+                con->len_context_description = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                                     &rp_count);
+                con->context_description = (char *)calloc
+                                           (con->len_context_description + 1, sizeof(char));
+                if (con->context_description == 0)
+                {
+                    dlt_log(LOG_ERR, "calloc failed for context description\n");
+                    dlt_client_free_calloc_failed_get_log_info(resp, i);
+                    return DLT_RETURN_ERROR;
+                }
+                dlt_getloginfo_conv_ascii_to_id(rp,
+                                                &rp_count,
+                                                con->context_description,
+                                                con->len_context_description);
+            }
+        }
+
+        /* application desc */
+        if (resp->status == 7)
+        {
+            app->len_app_description = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                             &rp_count);
+            app->app_description = (char *)calloc
+                                   (app->len_app_description + 1, sizeof(char));
+            if (app->app_description == 0)
+            {
+                dlt_log(LOG_ERR, "calloc failed for application description\n");
+                dlt_client_free_calloc_failed_get_log_info(resp, i);
+                return DLT_RETURN_ERROR;
+            }
+            dlt_getloginfo_conv_ascii_to_id(rp,
+                                            &rp_count,
+                                            app->app_description,
+                                            app->len_app_description);
+        }
+    }
+
+    return DLT_RETURN_OK;
+}
+
+int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp)
+{
+    AppIDsType app;
+    int i = 0;
+    int j = 0;
+
+    if (resp == NULL)
+    {
+        return DLT_RETURN_OK;
+    }
+
+    for (i = 0; i < resp->log_info_type.count_app_ids; i++)
+    {
+        app = resp->log_info_type.app_ids[i];
+
+        for (j = 0; j < app.count_context_ids; j++)
+        {
+            free(app.context_id_info[j].context_description);
+            app.context_id_info[j].context_description = NULL;
+        }
+
+        free(app.context_id_info);
+        app.context_id_info = NULL;
+        free(app.app_description);
+        app.app_description = NULL;
+    }
+
+    free(resp->log_info_type.app_ids);
+    resp->log_info_type.app_ids = NULL;
+
+    free(resp);
+    resp = NULL;
+
     return DLT_RETURN_OK;
 }

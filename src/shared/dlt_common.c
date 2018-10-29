@@ -3912,6 +3912,151 @@ void dlt_check_envvar()
     }
 }
 
+int dlt_set_loginfo_parse_service_id(char *resp_text,
+                                     uint32_t *service_id,
+                                     uint8_t *service_opt)
+{
+    int ret = -1;
+    char get_log_info_tag[GET_LOG_INFO_LENGTH];
+    char service_opt_str[SERVICE_OPT_LENGTH];
+
+    if ((resp_text == NULL) || (service_id == NULL) || (service_opt == NULL))
+    {
+        return DLT_RETURN_ERROR;
+    }
+    /* ascii type, syntax is 'get_log_info, ..' */
+    /* check target id */
+    strncpy(get_log_info_tag, "get_log_info", strlen("get_log_info"));
+    ret = memcmp((void *)resp_text, (void *)get_log_info_tag, sizeof(get_log_info_tag)-1);
+    if (ret == 0)
+    {
+        *service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+        /* reading the response mode from the resp_text. eg. option 7*/
+        service_opt_str[0] = *(resp_text + GET_LOG_INFO_LENGTH + 1);
+        service_opt_str[1] = *(resp_text + GET_LOG_INFO_LENGTH + 2);
+        service_opt_str[2] = 0;
+        *service_opt = atoi(service_opt_str);
+    }
+
+    return ret;
+}
+
+int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count)
+{
+    char num_work[5] = {0};
+    char *endptr;
+
+    if ((rp == NULL) || (rp_count == NULL))
+    {
+        return DLT_RETURN_ERROR;
+    }
+    /* ------------------------------------------------------
+       from: [89 13 ] -> to: ['+0x'1389\0] -> to num
+       ------------------------------------------------------ */
+    num_work[0] = *(rp + *rp_count + 3);
+    num_work[1] = *(rp + *rp_count + 4);
+    num_work[2] = *(rp + *rp_count + 0);
+    num_work[3] = *(rp + *rp_count + 1);
+    num_work[4] = 0;
+    *rp_count += 6;
+
+    return (unsigned char)strtol(num_work, &endptr, 16);
+}
+
+int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
+{
+    char num_work[3] = {0};
+    char *endptr;
+
+    if ((rp == NULL) || (rp_count == NULL))
+    {
+        return DLT_RETURN_ERROR;
+    }
+    /* ------------------------------------------------------
+       from: [89 ] -> to: ['0x'89\0] -> to num
+       ------------------------------------------------------ */
+    num_work[0] = *(rp + *rp_count + 0);
+    num_work[1] = *(rp + *rp_count + 1);
+    num_work[2] = 0;
+    *rp_count += 3;
+
+    return (signed char)strtol(num_work, &endptr, 16);
+}
+
+void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
+{
+    char number16[2] = {0};
+    char *endptr;
+    int count;
+
+    if ((rp == NULL) || (rp_count == NULL) || (wp == NULL))
+    {
+        return;
+    }
+        /* ------------------------------------------------------
+           from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
+           ------------------------------------------------------ */
+        for (count = 0; count < len; count++)
+        {
+            number16[0] = *(rp + *rp_count + 0);
+            number16[1] = *(rp + *rp_count + 1);
+            *(wp + count) = strtol(number16, &endptr, 16);
+            *rp_count += 3;
+        }
+        *(wp + count) = 0;
+    return;
+}
+
+void dlt_hex_ascii_to_binary(const char *ptr,uint8_t *binary,int *size)
+{
+    char ch = *ptr;
+    int pos = 0;
+    binary[pos] = 0;
+    int first = 1;
+    int found;
+
+    for(;;)
+    {
+        if(ch == 0)
+        {
+            *size = pos;
+            return;
+        }
+
+        found = 0;
+        if (ch >= '0' && ch <= '9')
+        {
+            binary[pos] = (binary[pos] << 4) + (ch - '0');
+            found = 1;
+        }
+        else if (ch >= 'A' && ch <= 'F')
+        {
+            binary[pos] = (binary[pos] << 4) + (ch - 'A' + 10);
+            found = 1;
+        }
+        else if (ch >= 'a' && ch <= 'f')
+        {
+            binary[pos] = (binary[pos] << 4) + (ch - 'a' + 10);
+            found = 1;
+        }
+        if(found)
+        {
+            if(first)
+                first = 0;
+            else
+            {
+                first = 1;
+                pos++;
+                if(pos>=*size)
+                    return;
+                binary[pos]=0;
+            }
+        }
+
+        ch = *(++ptr);
+    }
+}
+
 #ifndef DLT_USE_UNIX_SOCKET_IPC
 int dlt_mkdir_recursive(const char *dir)
 {
