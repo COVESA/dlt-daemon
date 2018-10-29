@@ -69,7 +69,6 @@
 #define DLT_CTRL_APID    "DLTC"
 #define DLT_CTRL_CTID    "DLTC"
 #define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH "/tmp/dlt-ctrl.sock"
-#define DLT_RECEIVE_TEXTBUFSIZE 1024
 
 /** @brief Analyze the daemon answer
  *

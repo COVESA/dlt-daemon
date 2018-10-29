@@ -216,6 +216,7 @@ TEST(t_dlt_event_handler_cleanup_connections, normal)
 }
 
 /* Begin Method: dlt_daemon_event_handler::dlt_connection_check_activate*/
+/*
 TEST(t_dlt_connection_check_activate, normal)
 {
     int ret;
@@ -240,7 +241,7 @@ TEST(t_dlt_connection_check_activate, nullpointer)
 {
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_connection_check_activate(NULL, NULL, DEACTIVATE));
 }
-
+*/
 /* Begin Method: dlt_daemon_event_handler::dlt_event_handler_register_connection*/
 TEST(t_dlt_event_handler_register_connection, normal)
 {

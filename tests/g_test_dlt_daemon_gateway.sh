@@ -54,9 +54,9 @@ cleanup()
             return 1
         fi
     fi
-    return 0
-
     rm $tmpPath/dlt.conf
+    rm $tmpPath/idlt_gateway.conf
+    return 0
 }
 #
 # Function:     -setupTest()
@@ -106,6 +106,8 @@ setupTest()
     echo "EcuID=ECU1" >>$tmpPath/dlt_gateway.conf
     echo "Connect=OnStartup" >>$tmpPath/dlt_gateway.conf
     echo "Timeout=10" >>$tmpPath/dlt_gateway.conf
+    echo "SendControl=0x03,0x13" >>$tmpPath/dlt_gateway.conf
+    echo "SendSerialHeader=0" >>$tmpPath/dlt_gateway.conf
     echo "NOFiles=1" >>$tmpPath/dlt_gateway.conf
     return 0
 }

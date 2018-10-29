@@ -347,15 +347,47 @@ STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
         int loglevel,
         int verbose)
 {
-    // Need to be updated
-    // To avoid compiler warning
-    (void) daemon_local;
-    (void) apid;
-    (void) ctid;
-    (void) ecuid;
-    (void) loglevel;
-    (void) verbose;
+    DltServiceSetLogLevel req = {0};
+    DltPassiveControlMessage ctrl = {0};
+    DltGatewayConnection *con = NULL;
 
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon_local == NULL) || (apid == NULL) || (ctid == NULL) || (ecuid == NULL) ||
+        (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT))
+    {
+        dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    con = dlt_gateway_get_connection(&daemon_local->pGateway, ecuid, verbose);
+
+    if (con == NULL)
+    {
+        dlt_vlog(LOG_ERR,
+                 "Failed to fond connection to passive node %s\n",
+                 ecuid);
+        return DLT_RETURN_ERROR;
+    }
+
+    ctrl.id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+    ctrl.type = CONTROL_MESSAGE_ON_DEMAND;
+
+    dlt_set_id(req.apid, apid);
+    dlt_set_id(req.ctid, ctid);
+
+    req.log_level = loglevel;
+
+    if (dlt_gateway_send_control_message(con, &ctrl, (void *) &req, verbose) != 0)
+    {
+        dlt_vlog(LOG_ERR,
+                 "Failed to forward SET_LOG_LEVEL message to passive node %s\n",
+                 ecuid);
+
+        return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
     return DLT_RETURN_OK;
 }
 

@@ -68,17 +68,6 @@
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
 
-/* checks if received size is big enough for expected data */
-#define DLT_CHECK_RCV_DATA_SIZE(received, required) \
-    ({ \
-        int _ret = DLT_RETURN_OK; \
-        if (((int)received - (int)required) < 0) { \
-            dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__); \
-            _ret = DLT_RETURN_ERROR; \
-        } \
-        _ret; \
-    })
-
 /** Global text output buffer, mainly used for creation of error/warning strings */
 static char str[DLT_DAEMON_TEXTBUFSIZE];
 

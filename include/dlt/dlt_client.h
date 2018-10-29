@@ -180,6 +180,18 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
  */
 int dlt_client_get_log_info(DltClient *client);
 /**
+ * Send an request to get default log level to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_client_get_default_log_level(DltClient *client);
+/**
+ * Send an request to get software version to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_get_software_version(DltClient *client);
+/**
  * Initialise get log info structure
  * @param void
  * @return void
@@ -280,6 +292,21 @@ int dlt_client_set_serial_device(DltClient *client, char *serial_device);
  */
 int dlt_client_set_socket_path(DltClient *client, char *socket_path);
 
+/**
+ * Parse GET_LOG_INFO response text
+ * @param resp      GET_LOG_INFO response
+ * @param resp_text response text represented by ASCII
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
+                                            char *resp_text);
+
+/**
+ * Free memory allocated for get log info message
+ * @param resp response
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp);
 #ifdef __cplusplus
 }
 #endif

@@ -65,7 +65,6 @@
 #include "dlt_user.h"
 #include "dlt-control-common.h"
 
-#define DLT_RECEIVE_TEXTBUFSIZE 10024  /* Size of buffer for text output */
 
 
 #define DLT_GLOGINFO_APID_NUM_MAX   150
@@ -78,29 +77,11 @@
 
 typedef struct
 {
-    char apid[DLT_ID_SIZE + 1]; /**< application id */
-    char ctid[DLT_ID_SIZE + 1]; /**< context id */
-    char *apid_desc;            /**< apid description */
-    char *ctid_desc;            /**< ctxt description */
-    int  log_level;             /**< log level */
-    int  trace_status;          /**< trace_status */
-    int  disp;                  /**< display flag */
-} DltLoginfoDetail;
-
-typedef struct
-{
-    DltLoginfoDetail info[DLT_GLOGINFO_DATA_MAX]; /**< structure for each ctxt/app entry*/
-    int              count;                       /**< Number of app and ctxt entries */
-} DltLoginfo;
-
-
-typedef struct
-{
     uint32_t service_id;            /**< service ID */
 } PACKED DltServiceGetDefaultLogLevel;
 
 DltClient  g_dltclient;
-DltLoginfo g_get_loginfo;
+DltServiceGetLogInfoResponse *g_resp = NULL;
 
 /* Function prototypes */
 int dlt_receive_message_callback(DltMessage *message, void *data);
@@ -130,60 +111,6 @@ typedef struct {
     DltFilter filter;
 } DltReceiveData;
 
-
-void hexAsciiToBinary (const char *ptr,uint8_t *binary,int *size)
-{
-
-	char ch = *ptr;
-	int pos = 0;
-	binary[pos] = 0;
-	int first = 1;
-	int found;
-
-	for(;;)
-	{
-
-		if(ch == 0)
-		{
-			*size = pos;
-			return;
-		}
-
-
-		found = 0;
-		if (ch >= '0' && ch <= '9')
-		{
-			binary[pos] = (binary[pos] << 4) + (ch - '0');
-			found = 1;
-		}
-		else if (ch >= 'A' && ch <= 'F')
-		{
-			binary[pos] = (binary[pos] << 4) + (ch - 'A' + 10);
-			found = 1;
-		}
-		else if (ch >= 'a' && ch <= 'f')
-		{
-			binary[pos] = (binary[pos] << 4) + (ch - 'a' + 10);
-			found = 1;
-		}
-		if(found)
-		{
-			if(first)
-				first = 0;
-			else
-			{
-				first = 1;
-				pos++;
-				if(pos>=*size)
-					return;
-				binary[pos]=0;
-			}
-		}
-
-		ch = *(++ptr);
-	}
-
-}
 
 /**
  * Print usage information of tool.
@@ -240,9 +167,19 @@ void usage()
 void dlt_process_get_log_info(void)
 {
     char apid[DLT_ID_SIZE+1] = {0};
-    int cnt;
+    char ctid[DLT_ID_SIZE+1] = {0};
+    AppIDsType app;
+    ContextIDsInfoType con;
+    int i = 0;
+    int j = 0;
 
-    dlt_getloginfo_init();
+    g_resp = (DltServiceGetLogInfoResponse*) calloc(1, sizeof(DltServiceGetLogInfoResponse));
+
+    if (g_resp == NULL)
+    {
+        fprintf(stderr, "%s: Calloc failed for resp..\n", __func__);
+        return;
+    }
 
     /* send control message*/
     if (0 != dlt_client_get_log_info(&g_dltclient))
@@ -251,31 +188,43 @@ void dlt_process_get_log_info(void)
         return;
     }
 
-    for (cnt = 0; cnt < g_get_loginfo.count; cnt++)
+    if (dlt_client_main_loop(&g_dltclient, NULL, 0) == DLT_RETURN_TRUE)
     {
-        if (strncmp(apid, g_get_loginfo.info[cnt].apid, DLT_ID_SIZE) != 0)
-        {
-            printf("APID:%4s ", g_get_loginfo.info[cnt].apid);
-            apid[DLT_ID_SIZE] = 0;
-            dlt_set_id(apid, g_get_loginfo.info[cnt].apid);
-
-            if (g_get_loginfo.info[cnt].apid_desc != 0)
-            {
-                printf("%s\n", g_get_loginfo.info[cnt].apid_desc);
-            }
-            else
-            {
-                printf("\n");
-            }
-        }
-
-        if (strncmp(apid, g_get_loginfo.info[cnt].apid, DLT_ID_SIZE) == 0)
-        {
-            printf("%4s %2d %2d %s\n", g_get_loginfo.info[cnt].ctid, g_get_loginfo.info[cnt].log_level,
-            g_get_loginfo.info[cnt].trace_status, g_get_loginfo.info[cnt].ctid_desc);
-        }
+        fprintf(stdout, "DLT-daemon's response is invalid.\n");
     }
-    dlt_getloginfo_free();
+
+    for (i = 0; i < g_resp->log_info_type.count_app_ids; i++)
+    {
+        app = g_resp->log_info_type.app_ids[i];
+
+        dlt_set_id(apid, app.app_id);
+
+        if (app.app_description != 0)
+        {
+            printf("APID:%4s %s\n", apid, app.app_description);
+        }
+        else
+        {
+            printf("APID:%4s \n", apid);
+         }
+
+        for (j = 0; j < app.count_context_ids; j++)
+        {
+            con = app.context_id_info[j];
+
+            dlt_set_id(ctid, con.context_id);
+
+            printf("%4s %2d %2d %s\n",
+                   ctid,
+                   con.log_level,
+                   con.trace_status,
+                   con.context_description);
+         }
+     }
+
+    dlt_client_free_get_log_info(g_resp);
+    free(g_resp);
+    g_resp = NULL;
 }
 
 /**
@@ -437,7 +386,7 @@ int main(int argc, char* argv[])
             }
         case '?':
 			{
-		        if (optopt == 'o' || optopt == 'f')
+               if ((optopt == 'o') || (optopt == 'f'))
 				{
 		            fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 		        }
@@ -581,7 +530,7 @@ int main(int argc, char* argv[])
     		printf("ConId: %s\n",dltdata.cvalue);
     		printf("ServiceId: %d\n",dltdata.svalue);
     		printf("Message: %s\n",dltdata.xvalue);
-    		hexAsciiToBinary(dltdata.xvalue,buffer,&size);
+           dlt_hex_ascii_to_binary(dltdata.xvalue,buffer,&size);
     		printf("Size: %d\n",size);
             /* send control message in hex */
             if (dlt_client_send_inject_msg(&g_dltclient,
@@ -727,10 +676,10 @@ int main(int argc, char* argv[])
 
     	/* Wait timeout */
     	usleep(dltdata.tvalue*1000);
-
-        /* Dlt Client Cleanup */
-        dlt_client_cleanup(&g_dltclient,dltdata.vflag);
     }
+
+    /* Dlt Client Cleanup */
+    dlt_client_cleanup(&g_dltclient,dltdata.vflag);
 
     if (g_dltclient.socketPath != NULL)
         free(g_dltclient.socketPath);
@@ -742,266 +691,10 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
-{
-    char number16[6]={0};
-    char *endptr;
-    int count;
-
-    if ((rp == NULL) || (rp_count == NULL) || (wp == NULL))
-    {
-        return;
-    }
-        /* ------------------------------------------------------
-           from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
-           ------------------------------------------------------ */
-        number16[0] = '+';
-        number16[1] = '0';
-        number16[2] = 'x';
-        for (count = 0; count < (len - 1); count++)
-        {
-            number16[3] = *(rp + *rp_count + 0);
-            number16[4] = *(rp + *rp_count + 1);
-            *(wp + count) = strtol(number16, &endptr, 16);
-            *rp_count += 3;
-        }
-        *(wp + count) = 0;
-    return;
-}
-
-uint16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count)
-{
-    char num_work[8];
-    char *endptr;
-
-    if ((rp == NULL) || (rp_count == NULL))
-    {
-        return -1;
-    }
-    /* ------------------------------------------------------
-       from: [89 13 ] -> to: ['+0x'1389\0] -> to num
-       ------------------------------------------------------ */
-    num_work[0] = '+';
-    num_work[1] = '0';
-    num_work[2] = 'x';
-    num_work[3] = *(rp + *rp_count + 3);
-    num_work[4] = *(rp + *rp_count + 4);
-    num_work[5] = *(rp + *rp_count + 0);
-    num_work[6] = *(rp + *rp_count + 1);
-    num_work[7] = 0;
-    *rp_count += 6;
-
-    return strtol(num_work, &endptr, 16);
-}
-int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
-{
-    char num_work[6];
-    char *endptr;
-
-    if ((rp == NULL) || (rp_count == NULL))
-    {
-        return -1;
-    }
-    /* ------------------------------------------------------
-       from: [89 ] -> to: ['0x'89\0] -> to num
-       ------------------------------------------------------ */
-    num_work[0] = '0';
-    num_work[1] = 'x';
-    num_work[2] = *(rp + *rp_count + 0);
-    num_work[3] = *(rp + *rp_count + 1);
-    num_work[4] = 0;
-    *rp_count += 3;
-
-    return (signed char)strtol(num_work, &endptr, 16);
-}
-
-void dlt_getloginfo_init(void)
-{
-    int cnt;
-
-    g_get_loginfo.count = 0;
-    for (cnt = 0; cnt < DLT_GLOGINFO_DATA_MAX; cnt++)
-    {
-        g_get_loginfo.info[cnt].apid_desc = NULL;
-        g_get_loginfo.info[cnt].ctid_desc = NULL;
-    }
-}
-
-void dlt_getloginfo_free(void)
-{
-    int cnt;
-
-    for (cnt = 0; cnt < DLT_GLOGINFO_DATA_MAX; cnt++)
-    {
-        if (g_get_loginfo.info[cnt].apid_desc != 0)
-        {
-            free(g_get_loginfo.info[cnt].apid_desc);
-        }
-        if (g_get_loginfo.info[cnt].ctid_desc != 0)
-        {
-            free(g_get_loginfo.info[cnt].ctid_desc);
-        }
-    }
-}
-
-/**
- * Function to parse the response text and identifying service id and its options.
- */
-int dlt_set_loginfo_parse_service_id(char *resp_text, int *service_id, int *service_opt,  char *cb_result)
-{
-    int ret;
-    char get_log_info_tag[13];
-    char service_opt_str[3];
-
-    if ((resp_text == NULL) || (service_id == NULL) || (service_opt == NULL) || (cb_result == NULL))
-    {
-        return -1;
-    }
-    /* ascii type, syntax is 'get_log_info, ..' */
-    /* check target id */
-    strncpy(get_log_info_tag, "get_log_info", strlen("get_log_info"));
-    ret = memcmp((void *)resp_text, (void *)get_log_info_tag, sizeof(get_log_info_tag)-1);
-    if (ret == 0)
-    {
-        *service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-        *cb_result = 0;
-        /* reading the response mode from the resp_text. eg. option 7*/
-        service_opt_str[0] = *(resp_text+14);
-        service_opt_str[1] = *(resp_text+15);
-        service_opt_str[2] = 0;
-        *service_opt = atoi( service_opt_str );
-    }
-
-    return ret;
-}
-
-/**
- * Main function to convert the response text in to proper get log info data and
- * filling it in the DltLoginfo structure.
- */
-int dlt_getloginfo_make_loginfo(char *resp_text, int service_opt)
-{
-    char *rp;
-    int rp_count;
-    int loginfo_count;
-    uint16_t reg_apid_count;
-    uint16_t reg_ctid_count;
-    uint16_t reg_apid_num;
-    uint16_t reg_ctid_num;
-    uint16_t reg_apid_dsc_len;
-    uint16_t reg_ctid_dsc_len;
-    char reg_apid[DLT_ID_SIZE+1];
-    char reg_ctid[DLT_ID_SIZE+1];
-    char *reg_apid_dsc;
-    char *reg_ctid_dsc;
-
-    if (resp_text == NULL)
-    {
-        return -1;
-    }
-    /* ------------------------------------------------------
-       get_log_info data structure(all data is ascii)
-
-       get_log_info, aa, bb bb cc cc cc cc dd dd ee ee ee ee ff gg hh hh ii ii ii .. ..
-                     ~~  ~~~~~ ~~~~~~~~~~~ ~~~~~ ~~~~~~~~~~~~~~
-                               cc cc cc cc dd dd ee ee ee ee ff gg hh hh ii ii ii .. ..
-                         jj jj kk kk kk .. ..
-                               ~~~~~~~~~~~ ~~~~~ ~~~~~~~~~~~~~~
-       aa         : get mode (fix value at 0x07)
-       bb bb      : list num of apid (little endian)
-       cc cc cc cc: apid
-       dd dd      : list num of ctid (little endian)
-       ee ee ee ee: ctid
-       ff         : log level
-       gg         : trase status
-       hh hh      : description length of ctid
-       ii ii ..   : description text of ctid
-       jj jj      : description length of apid
-       kk kk ..   : description text of apid
-      ------------------------------------------------------ */
-
-    /* create all target convert list */
-
-    /* rp set header */
-    rp = (resp_text + DLT_GET_LOG_INFO_HEADER);
-    rp_count = 0;
-    /* get reg_apid_num */
-    reg_apid_num = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-    loginfo_count = g_get_loginfo.count;
-
-    if (reg_apid_num > DLT_GLOGINFO_APID_NUM_MAX)
-    {
-        fprintf(stderr, "GET_LOG_INFO ERROR: APID MAX Over\n");
-        g_get_loginfo.count = 0;
-        return -1;
-    }
-
-    /* search for target apid */
-    for (reg_apid_count = 0; reg_apid_count < reg_apid_num; reg_apid_count++)
-    {
-        /* get reg_apid */
-        dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, reg_apid, DLT_ID_SIZE+1);
-
-        /* get reg_ctid_num of current reg_apid */
-        reg_ctid_num = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-        if (loginfo_count + reg_ctid_num > DLT_GLOGINFO_DATA_MAX)
-        {
-            fprintf(stderr, "GET_LOG_INFO ERROR: LOG DATA MAX Over\n");
-            g_get_loginfo.count = 0;
-            return -1;
-        }
-        for (reg_ctid_count = 0; reg_ctid_count < reg_ctid_num; reg_ctid_count++)
-        {
-            /* get reg_ctid */
-            dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, reg_ctid, DLT_ID_SIZE+1);
-
-            g_get_loginfo.info[ loginfo_count ].apid[DLT_ID_SIZE] = 0;
-            dlt_set_id(g_get_loginfo.info[ loginfo_count ].apid, reg_apid);
-            g_get_loginfo.info[ loginfo_count ].ctid[DLT_ID_SIZE] = 0;
-            dlt_set_id(g_get_loginfo.info[ loginfo_count ].ctid, reg_ctid);
-            g_get_loginfo.info[ loginfo_count ].log_level = dlt_getloginfo_conv_ascii_to_int16_t(rp, &rp_count);
-            g_get_loginfo.info[ loginfo_count ].trace_status = dlt_getloginfo_conv_ascii_to_int16_t(rp, &rp_count);
-
-            /* Description Information */
-            if (service_opt == DLT_SERVICE_GET_LOG_INFO_OPT7)
-            {
-                reg_ctid_dsc_len = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-                reg_ctid_dsc = (char *)malloc(sizeof(char) * reg_ctid_dsc_len + 1);
-                if (reg_ctid_dsc == 0)
-                {
-                    fprintf(stderr, "malloc failed for ctxt desc\n");
-                    return -1;
-                }
-                dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, reg_ctid_dsc, reg_ctid_dsc_len+1);
-                g_get_loginfo.info[ loginfo_count ].ctid_desc = reg_ctid_dsc;
-            }
-            loginfo_count++;
-        }
-        /* Description Information */
-        if (service_opt == DLT_SERVICE_GET_LOG_INFO_OPT7)
-        {
-            reg_apid_dsc_len = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-            reg_apid_dsc = (char *)malloc(sizeof(char) * reg_apid_dsc_len + 1);
-            if (reg_apid_dsc == 0)
-            {
-                fprintf(stderr, "malloc failed for apid desc\n");
-                return -1;
-            }
-            dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, reg_apid_dsc, reg_apid_dsc_len+1);
-            g_get_loginfo.info[ loginfo_count - reg_ctid_num ].apid_desc = reg_apid_dsc;
-        }
-    }
-    g_get_loginfo.count = loginfo_count;
-
-    return 0;
-}
-
 int dlt_receive_message_callback(DltMessage *message, void *data)
 {
     static char resp_text[DLT_RECEIVE_TEXTBUFSIZE];
-    int ret;
-    int service_id;
-    int service_opt;
+    int ret = DLT_RETURN_ERROR;
     char cb_result;
 
     /* parameter check */
@@ -1040,10 +733,17 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
     }
 
     /* check service id */
-    ret = dlt_set_loginfo_parse_service_id(resp_text, &service_id, &service_opt, &cb_result);
-    if ((ret == 0) && (service_id == DLT_SERVICE_ID_GET_LOG_INFO ))
+    if (g_resp == NULL)
     {
-        ret = dlt_getloginfo_make_loginfo(resp_text, service_opt);
+        fprintf(stderr, "%s: g_resp isn't allocated.\n", __func__);
+        dlt_client_cleanup(&g_dltclient, 0);
+        return -1;
+    }
+
+    ret = dlt_set_loginfo_parse_service_id(resp_text, &g_resp->service_id, &g_resp->status, &cb_result);
+    if ((ret == 0) && (g_resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO))
+    {
+        ret = dlt_client_parse_get_log_info_resp_text(g_resp, resp_text);
 
         if (ret != 0)
         {
