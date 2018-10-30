@@ -780,6 +780,17 @@ int main(int argc, char* argv[])
     else
         dlt_daemon_change_state(&daemon,DLT_DAEMON_STATE_BUFFER);
 
+    dlt_daemon_init_user_information(&daemon,
+                                     &daemon_local.pGateway,
+                                     daemon_local.flags.gatewayMode,
+                                     daemon_local.flags.vflag);
+
+    if (dlt_daemon_load_runtime_configuration(&daemon, daemon_local.flags.ivalue,daemon_local.flags.vflag)==-1)
+    {
+        dlt_log(LOG_ERR,"Could not load runtime config\n");
+        return -1;
+    }
+
     dlt_daemon_log_internal(&daemon, &daemon_local, "Daemon launched. Starting to output traces...", daemon_local.flags.vflag);
 
     /* Even handling loop. */
@@ -1597,8 +1608,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     /* check if file file descriptor was already used, and make it invalid if it
      * is reused. */
     /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
     /* Set socket timeout in reception */
     struct timeval timeout_send;
@@ -1881,8 +1892,8 @@ int dlt_daemon_process_control_connect(
     /* check if file file descriptor was already used, and make it invalid if it
      *  is reused */
     /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
@@ -1936,8 +1947,8 @@ int dlt_daemon_process_app_connect(
 
     /* check if file file descriptor was already used, and make it invalid if it
      *  is reused. This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon, in_sock, verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon, in_sock, verbose);
+    dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+    dlt_daemon_contexts_invalidate_fd(daemon,daemon->ecuid, in_sock, verbose);
 
     if (dlt_connection_create(daemon_local,
                              &daemon_local->pEvent,
@@ -2335,7 +2346,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         return -1;
     }
 
-    old_application = dlt_daemon_application_find(daemon, userapp.apid, verbose);
+    old_application = dlt_daemon_application_find(daemon, userapp.apid, daemon->ecuid, verbose);
     if (old_application != NULL)
     {
         old_pid = old_application->pid;
@@ -2345,6 +2356,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                              userapp.pid,
                                              description,
                                              rec->fd,
+                                             daemon->ecuid,
                                              verbose);
 
     /* send log state to new application */
@@ -2459,17 +2471,18 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         return -1;
     }
 
-    application = dlt_daemon_application_find(daemon, userctxt.apid, verbose);
+    application = dlt_daemon_application_find(daemon,
+                                              userctxt.apid,
+                                              daemon->ecuid,
+                                              verbose);
 
     if (application == 0)
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
+        dlt_vlog(LOG_WARNING,
                  "ApID '%.4s' not found for new ContextID '%.4s' in %s\n",
                  userctxt.apid,
                  userctxt.ctid,
                  __func__);
-        dlt_log(LOG_WARNING, local_str);
 
         return 0;
     }
@@ -2512,6 +2525,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                      userctxt.log_level_pos,
                                      application->user_handle,
                                      description,
+                                     daemon->ecuid,
                                      verbose);
 
     if (context==0)
@@ -2618,17 +2632,15 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context;
     int i, offset_base;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL)  || (daemon_local == NULL) || (rec == NULL))
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
+        dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
-
-        dlt_log(LOG_ERR, local_str);
         return -1;
     }
 
@@ -2641,53 +2653,62 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
         return -1;
     }
 
-    if (daemon->num_applications > 0)
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
+    {
+        return -1;
+    }
+
+    if (user_list->num_applications > 0)
     {
         /* Delete this application and all corresponding contexts
          * for this application from internal table.
          */
         application = dlt_daemon_application_find(daemon,
                                                   userapp.apid,
+                                                  daemon->ecuid,
                                                   verbose);
 
         if (application)
         {
             /* Calculate start offset within contexts[] */
             offset_base=0;
-            for (i=0; i<(application-(daemon->applications)); i++)
+            for (i = 0; i < (application - (user_list->applications)); i++)
             {
-                offset_base+=daemon->applications[i].num_contexts;
+                offset_base += user_list->applications[i].num_contexts;
             }
 
-            for (i=application->num_contexts-1; i>=0; i--)
+            for (i = (application->num_contexts) - 1; i >= 0; i--)
             {
-                context = &(daemon->contexts[offset_base+i]);
+                context = &(user_list->contexts[offset_base + i]);
                 if (context)
                 {
                     /* Delete context */
-                    if (dlt_daemon_context_del(daemon, context, verbose) == -1)
+                    if (dlt_daemon_context_del(daemon,
+                                               context,
+                                               daemon->ecuid,
+                                               verbose) == -1)
                     {
-                        snprintf(local_str,
-                                 DLT_DAEMON_TEXTBUFSIZE,
+                        dlt_vlog(LOG_WARNING,
                                  "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
                                  context->ctid,
                                  context->apid,
                                  __func__);
-                        dlt_log(LOG_WARNING, local_str);
                         return -1;
                     }
                 }
             }
 
             /* Delete this application entry from internal table*/
-            if (dlt_daemon_application_del(daemon, application, verbose)==-1)
+            if (dlt_daemon_application_del(daemon,
+                                           application,
+                                           daemon->ecuid,
+                                           verbose) == -1)
             {
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
+                dlt_vlog(LOG_WARNING,
                          "Can't delete ApID '%.4s' in %s\n",
                          application->apid,
                          __func__);
-                dlt_log(LOG_WARNING, local_str);
                 return -1;
             }
             else
@@ -2722,12 +2743,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
     if ((daemon == NULL)  || (daemon_local == NULL) || (rec == NULL))
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
+        dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
 
-        dlt_log(LOG_ERR, local_str);
         return -1;
     }
 
@@ -2743,20 +2762,19 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
     context = dlt_daemon_context_find(daemon,
                                       userctxt.apid,
                                       userctxt.ctid,
+                                      daemon->ecuid,
                                       verbose);
 
     if (context)
     {
         /* Delete this connection entry from internal table*/
-        if (dlt_daemon_context_del(daemon, context, verbose)==-1)
+        if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1)
         {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
+            dlt_vlog(LOG_WARNING,
                      "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
                      userctxt.ctid,
                      userctxt.apid,
                      __func__);
-            dlt_log(LOG_WARNING, local_str);
             return -1;
         }
         else
@@ -3095,25 +3113,28 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltReceiver *rec,
                                                   int verbose)
 {
-    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     uint32_t len = sizeof(DltUserControlMsgAppLogLevelTraceStatus);
     DltUserControlMsgAppLogLevelTraceStatus userctxt;
     DltDaemonApplication *application;
     DltDaemonContext *context;
     int i, offset_base;
     int8_t old_log_level, old_trace_status;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL)  || (daemon_local == NULL) || (rec == NULL))
     {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
+        dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
+        return DLT_RETURN_ERROR;
+    }
 
-        dlt_log(LOG_ERR, local_str);
-        return -1;
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
+    {
+        return DLT_RETURN_ERROR;
     }
 
     memset(&userctxt, 0, len);
@@ -3123,27 +3144,28 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                    DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
     {
         /* Not enough bytes received */
-        return -1;
+        return DLT_RETURN_ERROR;
     }
 
-    if (daemon->num_applications>0)
+    if (user_list->num_applications > 0)
     {
         /* Get all contexts with application id matching the received application id */
         application = dlt_daemon_application_find(daemon,
                                                   userctxt.apid,
+                                                  daemon->ecuid,
                                                   verbose);
         if (application)
         {
             /* Calculate start offset within contexts[] */
             offset_base=0;
-            for (i=0; i<(application-(daemon->applications)); i++)
+            for (i = 0; i < (application - (user_list->applications)); i++)
             {
-                offset_base+=daemon->applications[i].num_contexts;
+                offset_base += user_list->applications[i].num_contexts;
             }
 
-            for (i=0; i < application->num_contexts; i++)
+            for (i = 0; i < application->num_contexts; i++)
             {
-                context = &(daemon->contexts[offset_base+i]);
+                context = &(user_list->contexts[offset_base + i]);
                 if (context)
                 {
                     old_log_level = context->log_level;
@@ -3152,8 +3174,11 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                     old_trace_status = context->trace_status;
                     context->trace_status = userctxt.trace_status;   /* No endianess conversion necessary */
 
-                    /* The folowing function sends also the trace status */
-                    if (context->user_handle >= DLT_FD_MINIMUM && dlt_daemon_user_send_log_level(daemon, context, verbose)!=0)
+                    /* The following function sends also the trace status */
+                    if ((context->user_handle >= DLT_FD_MINIMUM) &&
+                        (dlt_daemon_user_send_log_level(daemon,
+                                                        context,
+                                                        verbose) != 0))
                     {
                         context->log_level = old_log_level;
                         context->trace_status = old_trace_status;
@@ -3163,7 +3188,7 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
         }
     }
 
-    return 0;
+    return DLT_RETURN_OK;
 }
 
 int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon,

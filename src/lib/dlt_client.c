@@ -581,7 +581,7 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
     }
 
     req = (DltServiceSetLogLevel *) payload;
-
+    memset(req, 0, sizeof(DltServiceSetLogLevel));
     req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
     dlt_set_id(req->apid,apid);
     dlt_set_id(req->ctid,ctid);
@@ -656,7 +656,7 @@ DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char 
     }
 
     req = (DltServiceSetLogLevel *) payload;
-
+    memset(req, 0, sizeof(DltServiceSetLogLevel));
     req->service_id = DLT_SERVICE_ID_SET_TRACE_STATUS;
     dlt_set_id(req->apid,apid);
     dlt_set_id(req->ctid,ctid);

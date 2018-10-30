@@ -129,36 +129,41 @@ static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
     return ret;
 }
 
-int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int InitialContextLogLevel, int InitialContextTraceStatus, int ForceLLTS, int verbose)
+DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
+                                                     char *ecu,
+                                                     int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (daemon == NULL || runtime_directory == NULL)
-        return -1;
+    int i = 0;
 
+    if (daemon == NULL || ecu == NULL)
+    {
+        dlt_vlog(LOG_ERR, "%s: Wrong parameters", __func__);
+        return (DltDaemonRegisteredUsers *) NULL;
+    }
+
+    for (i = 0; i < daemon->num_user_lists; i++)
+    {
+        if (strncmp(ecu, daemon->user_list[i].ecu, DLT_ID_SIZE) == 0)
+        {
+            return &daemon->user_list[i];
+        }
+    }
+
+    dlt_vlog(LOG_ERR, "Cannot find user list for ECU: %4s\n", ecu);
+    return (DltDaemonRegisteredUsers *) NULL;
+}
+int dlt_daemon_load_runtime_configuration(DltDaemon *daemon,const char *runtime_directory, int verbose)
+{
     int append_length = 0;
-    daemon->num_contexts = 0;
-    daemon->contexts = NULL;
 
-    daemon->num_applications = 0;
-    daemon->applications = NULL;
-
-    daemon->default_log_level = InitialContextLogLevel;
-    daemon->default_trace_status = InitialContextTraceStatus;
-    daemon->force_ll_ts = ForceLLTS;
-
-    daemon->overflow_counter = 0;
-
-    daemon->runtime_context_cfg_loaded = 0;
-
-    daemon->mode = DLT_USER_MODE_EXTERNAL;
-
-    daemon->connectionState = 0; /* no logger connected */
-
-    daemon->state = DLT_DAEMON_STATE_INIT; /* initial logging state */
+    if (daemon == NULL || runtime_directory == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
 
     /* prepare filenames for configuration */
-
     append_length = PATH_MAX - sizeof(DLT_RUNTIME_APPLICATION_CFG);
     if(runtime_directory[0])
     {
@@ -208,6 +213,33 @@ int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned l
     /* load configuration if available */
     dlt_daemon_configuration_load(daemon,daemon->runtime_configuration, verbose);
 
+    return DLT_RETURN_OK;
+}
+
+int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int InitialContextLogLevel, int InitialContextTraceStatus, int ForceLLTS, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || runtime_directory == NULL)
+        return -1;
+
+    daemon->user_list = NULL;
+    daemon->num_user_lists = 0;
+
+    daemon->default_log_level = InitialContextLogLevel;
+    daemon->default_trace_status = InitialContextTraceStatus;
+    daemon->force_ll_ts = ForceLLTS;
+
+    daemon->overflow_counter = 0;
+
+    daemon->runtime_context_cfg_loaded = 0;
+
+    daemon->mode = DLT_USER_MODE_EXTERNAL;
+
+    daemon->connectionState = 0; /* no logger connected */
+
+    daemon->state = DLT_DAEMON_STATE_INIT; /* initial logging state */
+
     daemon->sendserialheader = 0;
     daemon->timingpackets = 0;
 
@@ -227,18 +259,27 @@ int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned l
 
 int dlt_daemon_free(DltDaemon *daemon, int verbose)
 {
+    int i = 0;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (daemon == NULL)
+    if (daemon == NULL || daemon->user_list == NULL)
         return -1;
 
-    /* Free contexts */
-    if (dlt_daemon_contexts_clear(daemon, verbose)==-1)
-        return -1;
+    /* free all registered user information */
+    for (i = 0; i < daemon->num_user_lists; i++)
+    {
+        user_list = &daemon->user_list[i];
+        if (user_list != NULL)
+        {
+            /* ignore return values */
+            dlt_daemon_contexts_clear(daemon, user_list->ecu, verbose);
+            dlt_daemon_applications_clear(daemon, user_list->ecu, verbose);
+        }
+    }
 
-    /* Free applications */
-    if (dlt_daemon_applications_clear(daemon, verbose)==-1)
-        return -1;
+    free(daemon->user_list);
 
     /* free ringbuffer */
     dlt_buffer_free_dynamic(&(daemon->client_ringbuffer));
@@ -246,75 +287,162 @@ int dlt_daemon_free(DltDaemon *daemon, int verbose)
     return 0;
 }
 
-int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon, int fd, int verbose)
+int dlt_daemon_init_user_information(DltDaemon *daemon,
+                                     DltGateway *gateway,
+                                     int gateway_mode,
+                                     int verbose)
 {
-    int i;
+    int nodes = 1;
+    int i = 1;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (daemon == NULL)
-        return -1;
-
-    for (i=0; i<daemon->num_applications; i++)
+    if ((daemon == NULL) || ((gateway_mode == 1) && (gateway == NULL)))
     {
-        if (daemon->applications[i].user_handle==fd)
+        return DLT_RETURN_ERROR;
+    }
+
+    if (gateway_mode == 0)
+    {
+        /* initialize application list */
+        daemon->user_list = calloc(nodes, sizeof(DltDaemonRegisteredUsers));
+        if (daemon->user_list == NULL)
         {
-            daemon->applications[i].user_handle = DLT_FD_INIT;
+            dlt_log(LOG_ERR, "Allocating memory for user information");
+            return DLT_RETURN_ERROR;
+        }
+
+        dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
+        daemon->num_user_lists = 1;
+    }
+    else /* gateway is active */
+    {
+        nodes += gateway->num_connections;
+
+        /* initialize application list */
+        daemon->user_list = calloc(nodes, sizeof(DltDaemonRegisteredUsers));
+        if (daemon->user_list == NULL)
+        {
+            dlt_log(LOG_ERR, "Allocating memory for user information");
+            return DLT_RETURN_ERROR;
+        }
+
+        dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
+        daemon->num_user_lists = nodes;
+
+        for (i = 1; i < nodes; i++)
+        {
+            dlt_set_id(daemon->user_list[i].ecu, gateway->connections[i-1].ecuid);
         }
     }
+
+    return DLT_RETURN_OK;
+}
+
+int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
+                                          char *ecu,
+                                          int fd,
+                                          int verbose)
+{
+    int i;
+    DltDaemonRegisteredUsers* user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL || ecu == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list != NULL)
+    {
+        for (i=0; i<user_list->num_applications; i++)
+        {
+            if (user_list->applications[i].user_handle == fd)
+            {
+                user_list->applications[i].user_handle = DLT_FD_INIT;
+            }
+        }
+
+        return DLT_RETURN_OK;
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
+int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
+{
+    int i;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon->user_list == NULL) || (ecu == NULL))
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    for (i=0; i < user_list->num_applications; i++)
+    {
+        if (user_list->applications[i].application_description != NULL)
+        {
+            free(user_list->applications[i].application_description);
+            user_list->applications[i].application_description = NULL;
+        }
+    }
+
+    if (user_list->applications != NULL)
+    {
+        free(user_list->applications);
+    }
+
+    user_list->applications = NULL;
+    user_list->num_applications = 0;
 
     return 0;
 }
 
-int dlt_daemon_applications_clear(DltDaemon *daemon, int verbose)
-{
-    int i;
-
-    PRINT_FUNCTION_VERBOSE(verbose);
-
-    if (daemon == NULL)
-        return -1;
-
-    for (i=0; i<daemon->num_applications; i++)
-    {
-        if (daemon->applications[i].application_description != NULL)
-        {
-            free(daemon->applications[i].application_description);
-            daemon->applications[i].application_description = NULL;
-        }
-    }
-
-    if (daemon->applications != NULL)
-    {
-        free(daemon->applications);
-    }
-
-    daemon->applications = NULL;
-    daemon->num_applications = 0;
-
-    return 0;
-}
-
-DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, pid_t pid, char *description, int fd, int verbose)
+DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,
+                                                 char *apid,
+                                                 pid_t pid,
+                                                 char *description,
+                                                 int fd,
+                                                 char *ecu,
+                                                 int verbose)
 {
     DltDaemonApplication *application;
     DltDaemonApplication *old;
     int new_application;
     int dlt_user_handle;
+    DltDaemonRegisteredUsers *user_list = NULL;
 #ifndef DLT_USE_UNIX_SOCKET_IPC
     (void) fd; /* To avoid compiler warning : unused variable */
     char filename[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 #endif
 
-    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0'))
+    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') || (ecu == NULL))
     {
         return (DltDaemonApplication*) NULL;
     }
 
-    if (daemon->applications == NULL)
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL)
     {
-        daemon->applications = (DltDaemonApplication*) malloc(sizeof(DltDaemonApplication)*DLT_DAEMON_APPL_ALLOC_SIZE);
-        if (daemon->applications == NULL)
+        return (DltDaemonApplication*) NULL;
+    }
+
+    if (user_list->applications == NULL)
+    {
+        user_list->applications = (DltDaemonApplication*)
+                malloc(sizeof(DltDaemonApplication) * DLT_DAEMON_APPL_ALLOC_SIZE);
+        if (user_list->applications == NULL)
         {
             return (DltDaemonApplication*) NULL;
         }
@@ -323,31 +451,36 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
     new_application=0;
 
     /* Check if application [apid] is already available */
-    application = dlt_daemon_application_find(daemon, apid, verbose);
+    application = dlt_daemon_application_find(daemon, apid, ecu, verbose);
     if (application == NULL)
     {
-        daemon->num_applications += 1;
+        user_list->num_applications += 1;
 
-        if (daemon->num_applications!=0)
+        if (user_list->num_applications != 0)
         {
-            if ((daemon->num_applications%DLT_DAEMON_APPL_ALLOC_SIZE)==0)
+            if ((user_list->num_applications % DLT_DAEMON_APPL_ALLOC_SIZE) == 0)
             {
                 /* allocate memory in steps of DLT_DAEMON_APPL_ALLOC_SIZE, e.g. 100 */
-                old = daemon->applications;
-                daemon->applications = (DltDaemonApplication*) malloc(sizeof(DltDaemonApplication)*
-                                       ((daemon->num_applications/DLT_DAEMON_APPL_ALLOC_SIZE)+1)*DLT_DAEMON_APPL_ALLOC_SIZE);
-                if (daemon->applications == NULL)
+                old = user_list->applications;
+                user_list->applications = (DltDaemonApplication*)
+                        malloc(sizeof(DltDaemonApplication) *
+                              ((user_list->num_applications / DLT_DAEMON_APPL_ALLOC_SIZE) + 1) *
+                              DLT_DAEMON_APPL_ALLOC_SIZE);
+
+                if (user_list->applications == NULL)
                 {
-                    daemon->applications = old;
-                    daemon->num_applications -= 1;
+                    user_list->applications = old;
+                    user_list->num_applications -= 1;
                     return (DltDaemonApplication*) NULL;
                 }
-                memcpy(daemon->applications,old,sizeof(DltDaemonApplication)*daemon->num_applications);
+                memcpy(user_list->applications,
+                       old,
+                       sizeof(DltDaemonApplication) * user_list->num_applications);
                 free(old);
             }
         }
 
-        application = &(daemon->applications[daemon->num_applications-1]);
+        application = &(user_list->applications[user_list->num_applications - 1]);
 
         dlt_set_id(application->apid,apid);
         application->pid = 0;
@@ -359,9 +492,11 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
 
     } else if ((pid != application->pid) && (application->pid != 0)) {
 
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Duplicate registration of ApplicationID: '%.4s'; registering from PID %d, existing from PID %d\n",apid, pid, application->pid);
-        dlt_log(LOG_WARNING, str);
-
+        dlt_vlog(LOG_WARNING,
+                 "Duplicate registration of ApplicationID: '%.4s'; registering from PID %d, existing from PID %d\n",
+                 apid,
+                 pid,
+                 application->pid);
     }
 
     /* Store application description and pid of application */
@@ -373,23 +508,35 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
 
     if (description != NULL)
     {
-        application->application_description = malloc(strlen(description)+1);
+        application->application_description = malloc(strlen(description) + 1);
         if (application->application_description)
         {
-            strncpy(application->application_description,description,strlen(description));
-            application->application_description[strlen(description)]='\0';
+            strncpy(application->application_description,
+                    description,
+                    strlen(description));
+            application->application_description[strlen(description)] = '\0';
+        }
+        else
+        {
+            dlt_log(LOG_ERR, "Cannot allocate memory to store application description\n");
+            free(application);
+            return (DltDaemonApplication*) NULL;
         }
     }
 
-    if( application->user_handle != DLT_FD_INIT )
+    if (application->user_handle != DLT_FD_INIT)
     {
-        if( application->pid != pid )
+        if (application->pid != pid)
         {
 #ifndef DLT_USE_UNIX_SOCKET_IPC
-    		if ( close(application->user_handle) < 0 )
+    		if (close(application->user_handle) < 0)
     		{
-    			snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "close() failed to %s/dltpipes/dlt%d, errno=%d (%s)!\n",dltFifoBaseDir,pid,errno,strerror(errno)); /* errno 2: ENOENT - No such file or directory */
-    		    dlt_log(LOG_WARNING, str);
+    		    dlt_vlog(LOG_WARNING,
+    		             "close() failed to %s/dltpipes/dlt%d, errno=%d (%s)!\n",
+    		             dltFifoBaseDir,
+    		             pid,
+    		             errno,
+    		             strerror(errno)); /* errno 2: ENOENT - No such file or directory */
     		}
 #endif
     		application->user_handle = DLT_FD_INIT;
@@ -398,7 +545,7 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
     }
 
     /* open user pipe only if it is not yet opened */
-    if (application->user_handle == DLT_FD_INIT && pid != 0)
+    if ((application->user_handle == DLT_FD_INIT) && (pid != 0))
     {
 #ifdef DLT_USE_UNIX_SOCKET_IPC
         dlt_user_handle = fd;
@@ -418,8 +565,8 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
 #endif
         /* check if file descriptor was already used, and make it invalid if it
          * is reused. This prevents sending messages to wrong file descriptor */
-        dlt_daemon_applications_invalidate_fd(daemon,dlt_user_handle,verbose);
-        dlt_daemon_contexts_invalidate_fd(daemon,dlt_user_handle,verbose);
+        dlt_daemon_applications_invalidate_fd(daemon, ecu, dlt_user_handle, verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon, ecu, dlt_user_handle, verbose);
 
         application->user_handle = dlt_user_handle;
         application->pid = pid;
@@ -428,27 +575,40 @@ DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon, char *apid, 
     /* Sort */
     if (new_application)
     {
-        qsort(daemon->applications,daemon->num_applications,sizeof(DltDaemonApplication),dlt_daemon_cmp_apid);
+        qsort(user_list->applications,
+              user_list->num_applications,
+              sizeof(DltDaemonApplication),
+              dlt_daemon_cmp_apid);
 
         /* Find new position of application with apid*/
-        application = dlt_daemon_application_find(daemon, apid, verbose);
+        application = dlt_daemon_application_find(daemon, apid, ecu, verbose);
     }
 
     return application;
 }
 
-int dlt_daemon_application_del(DltDaemon *daemon, DltDaemonApplication *application, int verbose)
+int dlt_daemon_application_del(DltDaemon *daemon,
+                               DltDaemonApplication *application,
+                               char *ecu,
+                               int verbose)
 {
     int pos;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (application == NULL))
+    if ((daemon == NULL) || (application == NULL) || (ecu == NULL))
     {
         return -1;
     }
 
-    if (daemon->num_applications > 0)
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL)
+    {
+        return -1;
+    }
+
+    if (user_list->num_applications > 0)
     {
         /* Check if user handle is open; if yes, close it */
         if (application->user_handle >= DLT_FD_MINIMUM)
@@ -466,41 +626,61 @@ int dlt_daemon_application_del(DltDaemon *daemon, DltDaemonApplication *applicat
             application->application_description = NULL;
         }
 
-        pos = application-(daemon->applications);
+        pos = application - (user_list->applications);
 
         /* move all applications above pos to pos */
-        memmove(&(daemon->applications[pos]),&(daemon->applications[pos+1]), sizeof(DltDaemonApplication)*((daemon->num_applications-1)-pos));
+        memmove(&(user_list->applications[pos]),
+                &(user_list->applications[pos+1]),
+                sizeof(DltDaemonApplication) * ((user_list->num_applications - 1) - pos));
 
         /* Clear last application */
-        memset(&(daemon->applications[daemon->num_applications-1]), 0, sizeof(DltDaemonApplication));
+        memset(&(user_list->applications[user_list->num_applications-1]),
+               0,
+               sizeof(DltDaemonApplication));
 
-        daemon->num_applications--;
-
+        user_list->num_applications--;
     }
 
     return 0;
 }
 
-DltDaemonApplication* dlt_daemon_application_find(DltDaemon *daemon, char *apid, int verbose)
+DltDaemonApplication* dlt_daemon_application_find(DltDaemon *daemon,
+                                                  char *apid,
+                                                  char *ecu,
+                                                  int verbose)
 {
     DltDaemonApplication application;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') || (daemon->num_applications==0))
+    if ((daemon == NULL) || (daemon->user_list == NULL) || (apid == NULL) ||
+        (apid[0]=='\0') || (ecu == NULL))
+    {
+        return (DltDaemonApplication*) NULL;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL || (user_list->num_applications == 0))
     {
         return (DltDaemonApplication*) NULL;
     }
 
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
-    if ((memcmp(apid,daemon->applications[0].apid, DLT_ID_SIZE) < 0) ||
-            (memcmp(apid,daemon->applications[daemon->num_applications-1].apid, DLT_ID_SIZE) > 0))
+    if ((memcmp(apid, user_list->applications[0].apid, DLT_ID_SIZE) < 0) ||
+        (memcmp(apid,
+                user_list->applications[user_list->num_applications - 1].apid,
+                DLT_ID_SIZE) > 0))
     {
         return (DltDaemonApplication*) NULL;
     }
 
     dlt_set_id(application.apid, apid);
-    return (DltDaemonApplication*)bsearch(&application, daemon->applications, daemon->num_applications, sizeof(DltDaemonApplication), dlt_daemon_cmp_apid);
+    return (DltDaemonApplication*)bsearch(&application,
+                                          user_list->applications,
+                                          user_list->num_applications,
+                                          sizeof(DltDaemonApplication),
+                                          dlt_daemon_cmp_apid);
 }
 
 int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int verbose)
@@ -520,7 +700,11 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
 
     if (fd == NULL)
     {
-        dlt_vlog(LOG_INFO, "DLT runtime-application load, cannot open file %s: %s\n", filename, strerror(errno));
+        dlt_vlog(LOG_WARNING,
+                 "%s: cannot open file %s: %s\n",
+                 __func__,
+                 filename,
+                 strerror(errno));
 
         return -1;
     }
@@ -531,16 +715,17 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
         memset(buf, 0, sizeof(buf));
 
         /* Get line */
-        ret=fgets(buf,sizeof(buf),fd);
+        ret = fgets(buf, sizeof(buf), fd);
         if (NULL == ret)
         {
             /* fgets always null pointer if the last byte of the file is a new line
              * We need to check here if there was an error or was it feof.*/
-            if(ferror(fd))
+            if (ferror(fd))
             {
-                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
+                dlt_vlog(LOG_WARNING,
+                         "%s: fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
+                         __func__,
                          strerror(errno));
-                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -549,29 +734,40 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
                 fclose(fd);
                 return 0;
             }
-            else {
-                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_applications_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
-                dlt_log(LOG_WARNING, str);
+            else
+            {
+                dlt_vlog(LOG_WARNING,
+                        "%s: fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n",
+                        __func__);
                 fclose(fd);
                 return -1;
             }
         }
 
-        if (strcmp(buf,"") != 0)
+        if (strcmp(buf, "") != 0)
         {
             /* Split line */
-            pb=strtok(buf,":");
-            if(pb != NULL)
+            pb = strtok(buf, ":");
+            if (pb != NULL)
             {
                 dlt_set_id(apid,pb);
-                pb=strtok(NULL,":");
-                if(pb != NULL)
+                pb = strtok(NULL,":");
+                if (pb != NULL)
                 {
                     /* pb contains now the description */
                     /* pid is unknown at loading time */
-                    if (dlt_daemon_application_add(daemon, apid, 0, pb, -1, verbose) == 0)
+                    if (dlt_daemon_application_add(daemon,
+                                                   apid,
+                                                   0,
+                                                   pb,
+                                                   -1,
+                                                   daemon->ecuid,
+                                                   verbose) == 0)
                     {
-                        dlt_log(LOG_WARNING, "dlt_daemon_applications_load dlt_daemon_application_add failed\n");
+                        dlt_vlog(LOG_WARNING,
+                                 "%s: dlt_daemon_application_add failed for %4s\n",
+                                 __func__,
+                                 apid);
                         fclose(fd);
                         return -1;
                     }
@@ -590,50 +786,79 @@ int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int ve
     int i;
 
     char apid[DLT_ID_SIZE+1]; /* DLT_ID_SIZE+1, because the 0-termination is required here */
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (filename == NULL) || (filename[0]=='\0'))
+    {
         return -1;
+    }
 
     memset(apid, 0, sizeof(apid));
 
-    if ((daemon->applications != NULL) && (daemon->num_applications > 0))
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
     {
-        fd=fopen(filename, "w");
+        return -1;
+    }
+
+    if ((user_list->applications != NULL) && (user_list->num_applications > 0))
+    {
+        fd = fopen(filename, "w");
         if (fd != NULL)
         {
-            for (i=0; i<daemon->num_applications; i++)
+            for (i = 0; i < user_list->num_applications; i++)
             {
-                dlt_set_id(apid,daemon->applications[i].apid);
+                dlt_set_id(apid, user_list->applications[i].apid);
 
-                if ((daemon->applications[i].application_description) &&
-                        (daemon->applications[i].application_description[0] != '\0'))
+                if ((user_list->applications[i].application_description) &&
+                    (user_list->applications[i].application_description[0] != '\0'))
                 {
-                    fprintf(fd,"%s:%s:\n",apid, daemon->applications[i].application_description);
+                    fprintf(fd,
+                            "%s:%s:\n",
+                            apid,
+                            user_list->applications[i].application_description);
                 }
                 else
                 {
-                    fprintf(fd,"%s::\n",apid);
+                    fprintf(fd, "%s::\n", apid);
                 }
             }
             fclose(fd);
+        }
+        else
+        {
+            dlt_vlog(LOG_ERR, "%s: open %s failed! No application information stored.\n",
+                     __func__,
+                     filename);
         }
     }
 
     return 0;
 }
 
-DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ctid,int8_t log_level, int8_t trace_status, int log_level_pos, int user_handle, char *description, int verbose)
+DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,
+                                         char *apid,
+                                         char *ctid,
+                                         int8_t log_level,
+                                         int8_t trace_status,
+                                         int log_level_pos,
+                                         int user_handle,
+                                         char *description,
+                                         char *ecu,
+                                         int verbose)
 {
     DltDaemonApplication *application;
     DltDaemonContext *context;
     DltDaemonContext *old;
     int new_context=0;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') || (ctid == NULL) || (ctid[0]=='\0'))
+    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') ||
+        (ctid == NULL) || (ctid[0]=='\0') || (ecu == NULL))
     {
         return (DltDaemonContext*) NULL;
     }
@@ -648,48 +873,57 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ct
         return (DltDaemonContext*) NULL;
     }
 
-    if (daemon->contexts == NULL)
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL)
     {
-        daemon->contexts = (DltDaemonContext*) malloc(sizeof(DltDaemonContext)*DLT_DAEMON_CONTEXT_ALLOC_SIZE);
-        if (daemon->contexts == NULL)
+        return (DltDaemonContext*) NULL;
+    }
+
+    if (user_list->contexts == NULL)
+    {
+        user_list->contexts = (DltDaemonContext*) malloc(sizeof(DltDaemonContext)*DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+        if (user_list->contexts == NULL)
         {
             return (DltDaemonContext*) NULL;
         }
     }
 
     /* Check if application [apid] is available */
-    application = dlt_daemon_application_find(daemon, apid, verbose);
+    application = dlt_daemon_application_find(daemon, apid, ecu, verbose);
     if (application == NULL)
     {
         return (DltDaemonContext*) NULL;
     }
 
     /* Check if context [apid, ctid] is already available */
-    context = dlt_daemon_context_find(daemon, apid, ctid, verbose);
+    context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
     if (context == NULL)
     {
-        daemon->num_contexts += 1;
+        user_list->num_contexts += 1;
 
-        if (daemon->num_contexts!=0)
+        if (user_list->num_contexts != 0)
         {
-            if ((daemon->num_contexts%DLT_DAEMON_CONTEXT_ALLOC_SIZE)==0)
+            if ((user_list->num_contexts % DLT_DAEMON_CONTEXT_ALLOC_SIZE) == 0)
             {
                 /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
-                old = daemon->contexts;
-                daemon->contexts = (DltDaemonContext*) malloc(sizeof(DltDaemonContext)*
-                                   ((daemon->num_contexts/DLT_DAEMON_CONTEXT_ALLOC_SIZE)+1)*DLT_DAEMON_CONTEXT_ALLOC_SIZE);
-                if (daemon->contexts == NULL)
+                old = user_list->contexts;
+                user_list->contexts = (DltDaemonContext*) malloc(sizeof(DltDaemonContext) *
+                    ((user_list->num_contexts / DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) * DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+
+                if (user_list->contexts == NULL)
                 {
-                    daemon->contexts = old;
-                    daemon->num_contexts -= 1;
+                    user_list->contexts = old;
+                    user_list->num_contexts -= 1;
                     return (DltDaemonContext*) NULL;
                 }
-                memcpy(daemon->contexts,old,sizeof(DltDaemonContext)*daemon->num_contexts);
+                memcpy(user_list->contexts,
+                       old,
+                       sizeof(DltDaemonContext) * user_list->num_contexts);
                 free(old);
             }
         }
 
-        context = &(daemon->contexts[daemon->num_contexts-1]);
+        context = &(user_list->contexts[user_list->num_contexts - 1]);
 
         dlt_set_id(context->apid,apid);
         dlt_set_id(context->ctid,ctid);
@@ -717,7 +951,7 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ct
         }
     }
 
-    if (daemon->force_ll_ts)
+    if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) && (daemon->force_ll_ts))
     {
         if (log_level > daemon->default_log_level)
         {
@@ -727,16 +961,21 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ct
         {
             trace_status = daemon->default_trace_status;
         }
-        snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "Adapting ll_ts for context: %.4s:%.4s with %i %i\n", apid, ctid, log_level, trace_status);
-        dlt_log(LOG_NOTICE, str);
+
+        dlt_vlog(LOG_NOTICE,
+                 "Adapting ll_ts for context: %.4s:%.4s with %i %i\n",
+                 apid,
+                 ctid,
+                 log_level,
+                 trace_status);
     }
 
     /* Store log level and trace status,
        if this is a new context, or
        if this is an old context and the runtime cfg was not loaded */
-
-    if ((new_context == 1) ||
-            ((new_context == 0) && (daemon->runtime_context_cfg_loaded == 0)))
+    if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) &&
+        ((new_context == 1) || ((new_context == 0) &&
+         (daemon->runtime_context_cfg_loaded == 0))))
     {
         context->log_level = log_level;
         context->trace_status = trace_status;
@@ -748,28 +987,43 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon, char *apid, char *ct
     /* Sort */
     if (new_context)
     {
-        qsort(daemon->contexts,daemon->num_contexts, sizeof(DltDaemonContext),dlt_daemon_cmp_apid_ctid);
+        qsort(user_list->contexts,
+              user_list->num_contexts,
+              sizeof(DltDaemonContext),
+              dlt_daemon_cmp_apid_ctid);
 
         /* Find new position of context with apid, ctid */
-        context = dlt_daemon_context_find(daemon, apid, ctid, verbose);
+        context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
     }
 
     return context;
 }
 
-int dlt_daemon_context_del(DltDaemon *daemon, DltDaemonContext* context, int verbose)
+int dlt_daemon_context_del(DltDaemon *daemon,
+                           DltDaemonContext* context,
+                           char *ecu,
+                           int verbose)
 {
     int pos;
     DltDaemonApplication *application;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (context == NULL))
-        return -1;
-
-    if (daemon->num_contexts>0)
+    if ((daemon == NULL) || (context == NULL) || (ecu == NULL))
     {
-        application = dlt_daemon_application_find(daemon, context->apid, verbose);
+        return -1;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list == NULL)
+    {
+        return -1;
+    }
+
+    if (user_list->num_contexts > 0)
+    {
+        application = dlt_daemon_application_find(daemon, context->apid, ecu, verbose);
 
         /* Free description of context to be deleted */
         if (context->context_description)
@@ -778,15 +1032,19 @@ int dlt_daemon_context_del(DltDaemon *daemon, DltDaemonContext* context, int ver
             context->context_description = NULL;
         }
 
-        pos = context-(daemon->contexts);
+        pos = context-(user_list->contexts);
 
         /* move all contexts above pos to pos */
-        memmove(&(daemon->contexts[pos]), &(daemon->contexts[pos+1]), sizeof(DltDaemonContext)*((daemon->num_contexts-1)-pos));
+        memmove(&(user_list->contexts[pos]),
+                &(user_list->contexts[pos + 1]),
+                sizeof(DltDaemonContext) * ((user_list->num_contexts - 1) - pos));
 
         /* Clear last context */
-        memset(&(daemon->contexts[daemon->num_contexts-1]), 0, sizeof(DltDaemonContext));
+        memset(&(user_list->contexts[user_list->num_contexts-1]),
+               0,
+               sizeof(DltDaemonContext));
 
-        daemon->num_contexts--;
+        user_list->num_contexts--;
 
         /* Check if application [apid] is available */
         if (application != NULL)
@@ -798,20 +1056,34 @@ int dlt_daemon_context_del(DltDaemon *daemon, DltDaemonContext* context, int ver
     return 0;
 }
 
-DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon, char *apid, char *ctid, int verbose)
+DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon,
+                                          char *apid,
+                                          char *ctid,
+                                          char *ecu,
+                                          int verbose)
 {
     DltDaemonContext context;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') || (ctid == NULL) || (ctid[0]=='\0') || (daemon->num_contexts==0))
+    if ((daemon == NULL) || (apid == NULL) || (apid[0]=='\0') ||
+        (ctid == NULL) || (ctid[0]=='\0') || (ecu == NULL))
+    {
+        return (DltDaemonContext*) NULL;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if ((user_list == NULL) || (user_list->num_contexts == 0))
     {
         return (DltDaemonContext*) NULL;
     }
 
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
-    if ((memcmp(apid,daemon->contexts[0].apid,DLT_ID_SIZE)<0) ||
-            (memcmp(apid,daemon->contexts[daemon->num_contexts-1].apid,DLT_ID_SIZE)>0))
+    if ((memcmp(apid, user_list->contexts[0].apid, DLT_ID_SIZE) < 0) ||
+        (memcmp(apid,
+                user_list->contexts[user_list->num_contexts-1].apid,
+                DLT_ID_SIZE) > 0))
     {
         return (DltDaemonContext*) NULL;
     }
@@ -819,60 +1091,84 @@ DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon, char *apid, char *c
     dlt_set_id(context.apid,apid);
     dlt_set_id(context.ctid,ctid);
 
-    return (DltDaemonContext*)bsearch(&context,daemon->contexts,daemon->num_contexts,sizeof(DltDaemonContext),dlt_daemon_cmp_apid_ctid);
+    return (DltDaemonContext*)bsearch(&context,
+                                      user_list->contexts,
+                                      user_list->num_contexts,
+                                      sizeof(DltDaemonContext),
+                                      dlt_daemon_cmp_apid_ctid);
 }
 
-int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon, int fd, int verbose)
+int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,
+                                      char *ecu,
+                                      int fd,
+                                      int verbose)
 {
     int i;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (daemon == NULL)
-        return -1;
-
-    for (i=0; i<daemon->num_contexts; i++)
+    if ((daemon == NULL) || (ecu == NULL))
     {
-        if (daemon->contexts[i].user_handle == fd)
-        {
-            daemon->contexts[i].user_handle = DLT_FD_INIT;
-        }
+        return -1;
     }
 
-    return 0;
+    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (user_list != NULL)
+    {
+        for (i=0; i<user_list->num_contexts; i++)
+        {
+            if (user_list->contexts[i].user_handle == fd)
+            {
+                user_list->contexts[i].user_handle = DLT_FD_INIT;
+            }
+        }
+
+        return 0;
+    }
+
+    return -1;
 }
 
-int dlt_daemon_contexts_clear(DltDaemon *daemon, int verbose)
+int dlt_daemon_contexts_clear(DltDaemon *daemon, char *ecu, int verbose)
 {
     int i;
+    DltDaemonRegisteredUsers *users = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if (daemon == NULL)
-        return -1;
-
-    for (i=0; i<daemon->num_contexts; i++)
+    if (daemon == NULL || ecu == NULL)
     {
-        if (daemon->contexts[i].context_description != NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    users = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    if (users == NULL)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    for (i = 0; i < users->num_contexts; i++)
+    {
+        if (users->contexts[i].context_description != NULL)
         {
-            free(daemon->contexts[i].context_description);
-            daemon->contexts[i].context_description = NULL;
+            free(users->contexts[i].context_description);
+            users->contexts[i].context_description = NULL;
         }
     }
 
-    if (daemon->contexts)
+    if (users->contexts)
     {
-        free(daemon->contexts);
+        free(users->contexts);
+        users->contexts = NULL;
     }
 
-    daemon->contexts = NULL;
-
-    for (i=0; i<daemon->num_applications; i++)
+    for (i = 0; i < users->num_applications; i++)
     {
-        daemon->applications[i].num_contexts = 0;
+        users->applications[i].num_contexts = 0;
     }
 
-    daemon->num_contexts = 0;
+    users->num_contexts = 0;
 
     return 0;
 }
@@ -889,13 +1185,18 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (filename == NULL) ||( filename[0]=='\0'))
+    {
         return -1;
+    }
 
-    fd=fopen(filename, "r");
+    fd = fopen(filename, "r");
 
     if (fd == NULL)
     {
-        dlt_vlog(LOG_INFO, "DLT runtime-context load, cannot open file %s: %s\n", filename, strerror(errno));
+        dlt_vlog(LOG_WARNING,
+                 "DLT runtime-context load, cannot open file %s: %s\n",
+                 filename,
+                 strerror(errno));
 
         return -1;
     }
@@ -906,16 +1207,18 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
         memset(buf, 0, sizeof(buf));
 
         /* Get line */
-        ret=fgets(buf,sizeof(buf),fd);
+        ret = fgets(buf,sizeof(buf),fd);
         if (NULL == ret)
         {
             /* fgets always returns null pointer if the last byte of the file is a new line.
              * We need to check here if there was an error or was it feof.*/
-            if(ferror(fd))
+            if (ferror(fd))
             {
-                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
+                dlt_vlog(LOG_WARNING,
+                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. %s\n",
+                         __func__,
+                         fd,
                          strerror(errno));
-                dlt_log(LOG_WARNING, str);
                 fclose(fd);
                 return -1;
             }
@@ -924,42 +1227,56 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
                 fclose(fd);
                 return 0;
             }
-            else {
-                snprintf(str,DLT_DAEMON_COMMON_TEXTBUFSIZE, "dlt_daemon_contexts_load fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n");
-                dlt_log(LOG_WARNING, str);
+            else
+            {
+                dlt_vlog(LOG_WARNING,
+                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. Unknown error.\n",
+                         __func__,
+                         fd);
                 fclose(fd);
                 return -1;
             }
         }
 
-        if (strcmp(buf,"")!=0)
+        if (strcmp(buf ,"") != 0)
         {
             /* Split line */
-            pb=strtok(buf,":");
-            if(pb != NULL)
+            pb = strtok(buf, ":");
+            if (pb != NULL)
             {
-                dlt_set_id(apid,pb);
-                pb=strtok(NULL,":");
-                if(pb != NULL)
+                dlt_set_id(apid, pb);
+                pb = strtok(NULL, ":");
+                if (pb != NULL)
                 {
-                    dlt_set_id(ctid,pb);
-                    pb=strtok(NULL,":");
-                    if(pb != NULL)
+                    dlt_set_id(ctid, pb);
+                    pb = strtok(NULL, ":");
+                    if (pb != NULL)
                     {
-                        sscanf(pb,"%d",&ll);
-                        pb=strtok(NULL,":");
-                        if(pb != NULL)
+                        sscanf(pb, "%d", &ll);
+                        pb = strtok(NULL, ":");
+                        if (pb != NULL)
                         {
-                            sscanf(pb,"%d",&ts);
-                            pb=strtok(NULL,":");
-                            if(pb != NULL)
+                            sscanf(pb, "%d", &ts);
+                            pb = strtok(NULL,":");
+                            if (pb != NULL)
                             {
                                 /* pb contains now the description */
 
                                 /* log_level_pos, and user_handle are unknown at loading time */
-                                if (dlt_daemon_context_add(daemon, apid, ctid, (int8_t)ll, (int8_t)ts, 0, 0, pb, verbose) == NULL)
+                                if (dlt_daemon_context_add(daemon,
+                                                           apid,
+                                                           ctid,
+                                                           (int8_t)ll,
+                                                           (int8_t)ts,
+                                                           0,
+                                                           0,
+                                                           pb,
+                                                           daemon->ecuid,
+                                                           verbose) == NULL)
                                 {
-                                    dlt_log(LOG_WARNING, "dlt_daemon_contexts_load dlt_daemon_context_add failed\n");
+                                    dlt_vlog(LOG_WARNING,
+                                             "%s dlt_daemon_context_add failed\n",
+                                             __func__);
                                     fclose(fd);
                                     return -1;
                                 }
@@ -981,41 +1298,57 @@ int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose
     int i;
 
     char apid[DLT_ID_SIZE+1], ctid[DLT_ID_SIZE+1]; /* DLT_ID_SIZE+1, because the 0-termination is required here */
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (filename == NULL) || (filename[0]=='\0'))
+    {
         return -1;
+    }
+
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
+    {
+        return -1;
+    }
 
     memset(apid, 0, sizeof(apid));
     memset(ctid, 0, sizeof(ctid));
 
-    if ((daemon->contexts) && (daemon->num_contexts > 0))
+    if ((user_list->contexts) && (user_list->num_contexts > 0))
     {
-        fd=fopen(filename, "w");
+        fd = fopen(filename, "w");
         if (fd != NULL)
         {
-            for (i=0; i<daemon->num_contexts; i++)
+            for (i = 0; i < user_list->num_contexts; i++)
             {
-                dlt_set_id(apid,daemon->contexts[i].apid);
-                dlt_set_id(ctid,daemon->contexts[i].ctid);
+                dlt_set_id(apid, user_list->contexts[i].apid);
+                dlt_set_id(ctid, user_list->contexts[i].ctid);
 
-                if ((daemon->contexts[i].context_description) &&
-                        (daemon->contexts[i].context_description[0]!='\0'))
+                if ((user_list->contexts[i].context_description) &&
+                    (user_list->contexts[i].context_description[0] != '\0'))
                 {
                     fprintf(fd,"%s:%s:%d:%d:%s:\n",apid,ctid,
-                            (int)(daemon->contexts[i].log_level),
-                            (int)(daemon->contexts[i].trace_status),
-                            daemon->contexts[i].context_description);
+                            (int)(user_list->contexts[i].log_level),
+                            (int)(user_list->contexts[i].trace_status),
+                            user_list->contexts[i].context_description);
                 }
                 else
                 {
                     fprintf(fd,"%s:%s:%d:%d::\n",apid,ctid,
-                            (int)(daemon->contexts[i].log_level),
-                            (int)(daemon->contexts[i].trace_status));
+                            (int)(user_list->contexts[i].log_level),
+                            (int)(user_list->contexts[i].trace_status));
                 }
             }
             fclose(fd);
+        }
+        else
+        {
+            dlt_vlog(LOG_ERR,
+                     "%s: Cannot open %s. No context information stored\n",
+                     __func__,
+                     filename);
         }
     }
 
@@ -1274,6 +1607,7 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
 {
     int32_t count;
     DltDaemonContext *context;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1283,9 +1617,15 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
         return;
     }
 
-    for (count=0; count<daemon->num_contexts; count ++)
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
     {
-        context = &(daemon->contexts[count]);
+        return;
+    }
+
+    for (count = 0; count < user_list->num_contexts; count ++)
+    {
+        context = &(user_list->contexts[count]);
 
         if (context != NULL)
         {
@@ -1294,7 +1634,9 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
             {
                 if (context->user_handle >= DLT_FD_MINIMUM)
                 {
-                    if (dlt_daemon_user_send_log_level(daemon, context, verbose)==-1)
+                    if (dlt_daemon_user_send_log_level(daemon,
+                                                       context,
+                                                       verbose) == -1)
                     {
                         dlt_vlog(LOG_WARNING, "Cannot update default of %.4s:%.4s\n", context->apid, context->ctid);
                     }
@@ -1308,6 +1650,7 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_lev
 {
     int32_t count = 0;
     DltDaemonContext *context = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1316,15 +1659,23 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_lev
         return;
     }
 
-    for (count = 0; count < daemon->num_contexts; count++)
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
     {
-        context = &(daemon->contexts[count]);
+        return;
+    }
+
+    for (count = 0; count < user_list->num_contexts; count++)
+    {
+        context = &(user_list->contexts[count]);
         if (context)
         {
             if (context->user_handle >= DLT_FD_MINIMUM)
             {
                 context->log_level = log_level;
-                if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
+                if (dlt_daemon_user_send_log_level(daemon,
+                                                   context,
+                                                   verbose) == -1)
                 {
                     dlt_vlog(LOG_WARNING, "Cannot send log level %.4s:%.4s -> %i\n", context->apid, context->ctid, context->log_level);
                 }
@@ -1337,6 +1688,7 @@ void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trac
 {
     int32_t count = 0;
     DltDaemonContext *context = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1345,11 +1697,16 @@ void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trac
         return;
     }
 
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
+    {
+        return;
+    }
     dlt_vlog(LOG_NOTICE, "All trace status is updated -> %i\n", trace_status);
 
-    for (count = 0; count < daemon->num_contexts; count++)
+    for (count = 0; count < user_list->num_contexts; count++)
     {
-        context = &(daemon->contexts[count]);
+        context = &(user_list->contexts[count]);
         if (context)
         {
             if (context->user_handle >= DLT_FD_MINIMUM)
@@ -1368,6 +1725,7 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
 {
     int32_t count;
     DltDaemonApplication *app;
+    DltDaemonRegisteredUsers *user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1377,15 +1735,21 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
         return;
     }
 
-    for (count=0; count<daemon->num_applications; count ++)
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list == NULL)
     {
-        app = &(daemon->applications[count]);
+        return;
+    }
+
+    for (count = 0; count < user_list->num_applications; count ++)
+    {
+        app = &(user_list->applications[count]);
 
         if (app != NULL)
         {
             if (app->user_handle >= DLT_FD_MINIMUM)
             {
-                if (dlt_daemon_user_send_log_state(daemon, app, verbose)==-1)
+                if (dlt_daemon_user_send_log_state(daemon, app, verbose) == -1)
                 {
                     dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n",app->apid, app->pid);
                 }

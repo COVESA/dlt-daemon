@@ -402,16 +402,12 @@ TEST(t_dlt_gateway_process_gateway_timer, normal)
     DltGatewayConnection connections;
     DltConnection connections1;
     daemon_local.pGateway.connections = &connections;
-    DltDaemonContext contexts;
-    DltDaemonApplication applications;
     daemon_local.pGateway.num_connections = 1;
     DltLogStorage storage_handle;
     daemon_local.pGateway.connections->status = DLT_GATEWAY_CONNECTED;
 
     daemon_local.pEvent.connections = &connections1;
     daemon_local.pEvent.connections->receiver = &receiver;
-    daemon.contexts = &contexts;
-    daemon.applications = &applications;
     daemon.ECUVersionString = ECUVersionString;
     daemon.storage_handle = &storage_handle;
 
