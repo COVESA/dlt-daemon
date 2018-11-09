@@ -15,7 +15,7 @@
 # @licence end@
 #######
 
-set(dlt_LIB_SRCS dlt_user dlt_client dlt_filetransfer dlt_env_ll ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
+set(dlt_LIB_SRCS dlt_user dlt_client dlt_filetransfer dlt_env_ll ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_protocol.c)
 
 add_library(dlt ${dlt_LIB_SRCS})
 target_link_libraries(dlt rt ${CMAKE_THREAD_LIBS_INIT})
