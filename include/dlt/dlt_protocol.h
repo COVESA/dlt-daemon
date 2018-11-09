@@ -173,37 +173,54 @@
 /*
  * Definitions of DLT services.
  */
-#define DLT_SERVICE_ID_SET_LOG_LEVEL                   0x01 /**< Service ID: Set log level */
-#define DLT_SERVICE_ID_SET_TRACE_STATUS                0x02 /**< Service ID: Set trace status */
-#define DLT_SERVICE_ID_GET_LOG_INFO                    0x03 /**< Service ID: Get log info */
-#define DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL           0x04 /**< Service ID: Get dafault log level */
-#define DLT_SERVICE_ID_STORE_CONFIG                    0x05 /**< Service ID: Store configuration */
-#define DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT        0x06 /**< Service ID: Reset to factory defaults */
-#define DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS        0x07 /**< Service ID: Set communication interface status */
-#define DLT_SERVICE_ID_SET_COM_INTERFACE_MAX_BANDWIDTH 0x08 /**< Service ID: Set communication interface maximum bandwidth */
-#define DLT_SERVICE_ID_SET_VERBOSE_MODE                0x09 /**< Service ID: Set verbose mode */
-#define DLT_SERVICE_ID_SET_MESSAGE_FILTERING           0x0A /**< Service ID: Set message filtering */
-#define DLT_SERVICE_ID_SET_TIMING_PACKETS              0x0B /**< Service ID: Set timing packets */
-#define DLT_SERVICE_ID_GET_LOCAL_TIME                  0x0C /**< Service ID: Get local time */
-#define DLT_SERVICE_ID_USE_ECU_ID                      0x0D /**< Service ID: Use ECU id */
-#define DLT_SERVICE_ID_USE_SESSION_ID                  0x0E /**< Service ID: Use session id */
-#define DLT_SERVICE_ID_USE_TIMESTAMP                   0x0F /**< Service ID: Use timestamp */
-#define DLT_SERVICE_ID_USE_EXTENDED_HEADER             0x10 /**< Service ID: Use extended header */
-#define DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL           0x11 /**< Service ID: Set default log level */
-#define DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS        0x12 /**< Service ID: Set default trace status */
-#define DLT_SERVICE_ID_GET_SOFTWARE_VERSION            0x13 /**< Service ID: Get software version */
-#define DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW         0x14 /**< Service ID: Message buffer overflow */
-#define DLT_SERVICE_ID_LAST_ENTRY                      0x15 /**< Service ID: Last entry to avoid any further modifications in dependent code */
-#define DLT_SERVICE_ID_UNREGISTER_CONTEXT             0xf01 /**< Service ID: Message unregister context */
-#define DLT_SERVICE_ID_CONNECTION_INFO                0xf02 /**< Service ID: Message connection info */
-#define DLT_SERVICE_ID_TIMEZONE                       0xf03 /**< Service ID: Timezone */
-#define DLT_SERVICE_ID_MARKER                         0xf04 /**< Service ID: Marker */
-#define DLT_SERVICE_ID_OFFLINE_LOGSTORAGE             0xf05 /**< Service ID: Offline log storage */
-#define DLT_SERVICE_ID_PASSIVE_NODE_CONNECT           0xf0E /**< Service ID: (Dis)Connect passive Node */
-#define DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS 0xf0F /**< Service ID: Passive Node status information */
-#define DLT_SERVICE_ID_SET_ALL_LOG_LEVEL              0xf10 /**< Service ID: set all log level */
-#define DLT_SERVICE_ID_SET_ALL_TRACE_STATUS           0xf11 /**< Service ID: Set all trace status */
-#define DLT_SERVICE_ID_CALLSW_CINJECTION              0xFFF /**< Service ID: Message Injection (minimal ID) */
+#define DLT_SERVICE_ID_CALLSW_CINJECTION 0xFFF
+
+enum dlt_services {
+    DLT_SERVICE_ID = 0x00,
+    DLT_SERVICE_ID_SET_LOG_LEVEL = 0x01,
+    DLT_SERVICE_ID_SET_TRACE_STATUS = 0x02,
+    DLT_SERVICE_ID_GET_LOG_INFO = 0x03,
+    DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL = 0x04,
+    DLT_SERVICE_ID_STORE_CONFIG = 0x05,
+    DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT = 0x06,
+    DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS = 0x07,
+    DLT_SERVICE_ID_SET_COM_INTERFACE_MAX_BANDWIDTH = 0x08,
+    DLT_SERVICE_ID_SET_VERBOSE_MODE = 0x09,
+    DLT_SERVICE_ID_SET_MESSAGE_FILTERING = 0x0A,
+    DLT_SERVICE_ID_SET_TIMING_PACKETS = 0x0B,
+    DLT_SERVICE_ID_GET_LOCAL_TIME = 0x0C,
+    DLT_SERVICE_ID_USE_ECU_ID = 0x0D,
+    DLT_SERVICE_ID_USE_SESSION_ID = 0x0E,
+    DLT_SERVICE_ID_USE_TIMESTAMP = 0x0F,
+    DLT_SERVICE_ID_USE_EXTENDED_HEADER = 0x10,
+    DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL = 0x11,
+    DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS = 0x12,
+    DLT_SERVICE_ID_GET_SOFTWARE_VERSION = 0x13,
+    DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW = 0x14,
+    DLT_SERVICE_ID_LAST_ENTRY
+};
+
+enum dlt_user_services {
+    DLT_USER_SERVICE_ID = 0xF00,
+    DLT_SERVICE_ID_UNREGISTER_CONTEXT = 0xF01,
+    DLT_SERVICE_ID_CONNECTION_INFO = 0xF02,
+    DLT_SERVICE_ID_TIMEZONE = 0xF03,
+    DLT_SERVICE_ID_MARKER = 0xF04,
+    DLT_SERVICE_ID_OFFLINE_LOGSTORAGE = 0xF05,
+    DLT_SERVICE_ID_SET_FILTER_LEVEL = 0xF06,
+    DLT_SERVICE_ID_GET_FILTER_STATUS = 0xF07,
+    DLT_SERVICE_ID_PASSIVE_NODE_CONNECT = 0xF08,
+    DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS = 0xF09,
+    DLT_SERVICE_ID_SET_ALL_LOG_LEVEL = 0xF0A,
+    DLT_SERVICE_ID_SET_ALL_TRACE_STATUS = 0xF0B,
+    DLT_USER_SERVICE_ID_LAST_ENTRY
+};
+
+/* Need to be adapted if another service is added */
+extern const char *const dlt_service_names[];
+extern const char *const dlt_user_service_names[];
+
+extern const char *dlt_get_service_name(unsigned int id);
 
 /*
  * Definitions of DLT service response status
