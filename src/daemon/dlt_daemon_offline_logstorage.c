@@ -388,7 +388,6 @@ STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
     }
 
     return DLT_RETURN_OK;
-    return DLT_RETURN_OK;
 }
 
 /**

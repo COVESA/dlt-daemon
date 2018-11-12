@@ -289,7 +289,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         return DLT_RETURN_ERROR;
     }
 
-    if (dlt_receiver_init(&(client->receiver),client->sock,DLT_CLIENT_RCVBUFSIZE) != DLT_RETURN_OK)
+    if (dlt_receiver_init(&(client->receiver), client->sock, DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK)
     {
         fprintf(stderr, "ERROR initializing receiver\n");
         return DLT_RETURN_ERROR;
@@ -1011,7 +1011,7 @@ STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoRespo
     return;
 }
 
-int dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
+DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
                                              char *resp_text)
 {
     AppIDsType *app = NULL;
@@ -1023,7 +1023,7 @@ int dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
 
     if ((resp == NULL) || (resp_text == NULL))
     {
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     /* ------------------------------------------------------

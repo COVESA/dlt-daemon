@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
 int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 {
     DltReceiveData *dltdata;
-    static char text[DLT_RECEIVE_TEXTBUFSIZE];
+    static char text[DLT_RECEIVE_BUFSIZE];
     char filename[255];
     struct iovec iov[2];
     int bytes_written;
@@ -340,7 +340,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
     if(dltdata->filetransfervalue)
     {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
         // 1st find starting point of tranfering data packages
         if( strncmp(text, "FLST", 4) == 0)
@@ -373,11 +373,11 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         {
             // truncate beginning of data stream ( FLDA, File identifier and package number)
             char *position = strchr(text, 32); // search for space
-            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
+            strncpy(text, position+1, DLT_RECEIVE_BUFSIZE);
             position = strchr(text, 32);
-            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
+            strncpy(text, position+1, DLT_RECEIVE_BUFSIZE);
             position = strchr(text, 32);
-            strncpy(text, position+1, DLT_RECEIVE_TEXTBUFSIZE);
+            strncpy(text, position+1, DLT_RECEIVE_BUFSIZE);
 
             // truncate ending of data stream ( FLDA )
             int len = strlen(text);
@@ -398,7 +398,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
     if(dltdata->systemjournalvalue)
     {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         // 1st find the relevant packages
         char * tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
@@ -415,7 +415,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
     if(dltdata->systemloggervalue)
     {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_TEXTBUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         // 1st find the relevant packages
         char * tmp = message->extendedheader->ctid;
         tmp[4] = '\0';

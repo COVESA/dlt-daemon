@@ -703,7 +703,7 @@ int main(int argc, char* argv[])
 
 int dlt_receive_message_callback(DltMessage *message, void *data)
 {
-    static char resp_text[DLT_RECEIVE_TEXTBUFSIZE];
+    static char resp_text[DLT_RECEIVE_BUFSIZE];
     int ret = DLT_RETURN_ERROR;
 
     /* parameter check */
@@ -725,7 +725,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
     }
 
     /* get response data */
-    ret = dlt_message_header(message, resp_text, DLT_RECEIVE_TEXTBUFSIZE, 0);
+    ret = dlt_message_header(message, resp_text, DLT_RECEIVE_BUFSIZE, 0);
     if (ret < 0)
     {
         fprintf(stderr, "GET_LOG_INFO message_header result failed..\n");
@@ -733,7 +733,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         return -1;
     }
 
-    ret = dlt_message_payload(message, resp_text, DLT_RECEIVE_TEXTBUFSIZE, DLT_OUTPUT_ASCII, 0);
+    ret = dlt_message_payload(message, resp_text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, 0);
     if (ret < 0)
     {
         fprintf(stderr, "GET_LOG_INFO message_payload result failed..\n");

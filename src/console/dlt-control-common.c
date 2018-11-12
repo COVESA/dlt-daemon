@@ -160,10 +160,10 @@ void set_timeout(long t)
 int dlt_parse_config_param(char *config_id, char **config_data)
 {
     FILE * pFile = NULL;
-    int value_length = DLT_RECEIVE_TEXTBUFSIZE;
-    char line[DLT_RECEIVE_TEXTBUFSIZE-1] = {0};
-    char token[DLT_RECEIVE_TEXTBUFSIZE] = {0};
-    char value[DLT_RECEIVE_TEXTBUFSIZE] = {0};
+    int value_length = DLT_LINE_LEN;
+    char line[DLT_LINE_LEN-1] = {0};
+    char token[DLT_LINE_LEN] = {0};
+    char value[DLT_LINE_LEN] = {0};
     char *pch = NULL;
     const char *filename = NULL;
 
@@ -524,7 +524,7 @@ static void *dlt_control_listen_to_daemon(void *data)
  */
 static int dlt_control_callback(DltMessage *message, void *data)
 {
-    char text[DLT_RECEIVE_TEXTBUFSIZE] = { 0 };
+    char text[DLT_RECEIVE_BUFSIZE] = { 0 };
     (void) data;
 
     if (message == NULL)
@@ -543,11 +543,11 @@ static int dlt_control_callback(DltMessage *message, void *data)
         dlt_set_storageheader(message->storageheader, "LCTL");
     }
 
-    dlt_message_header(message, text, DLT_RECEIVE_TEXTBUFSIZE, get_verbosity());
+    dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, get_verbosity());
 
     /* Extracting payload */
     dlt_message_payload(message, text,
-                        DLT_RECEIVE_TEXTBUFSIZE,
+                        DLT_RECEIVE_BUFSIZE,
                         DLT_OUTPUT_ASCII,
                         get_verbosity());
 

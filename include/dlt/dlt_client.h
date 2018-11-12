@@ -296,9 +296,9 @@ int dlt_client_set_socket_path(DltClient *client, char *socket_path);
  * Parse GET_LOG_INFO response text
  * @param resp      GET_LOG_INFO response
  * @param resp_text response text represented by ASCII
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-int dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
+DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
                                             char *resp_text);
 
 /**
