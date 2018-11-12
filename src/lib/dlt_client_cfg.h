@@ -82,9 +82,6 @@
 /* Size of buffer */
 #define DLT_CLIENT_TEXTBUFSIZE          512
 
-/* Size of receive buffer */
-#define DLT_CLIENT_RCVBUFSIZE         10024
-
 /* Initial baudrate */
 #if !defined (__WIN32__) && !defined(_MSC_VER)
 #define DLT_CLIENT_INITIAL_BAUDRATE B115200

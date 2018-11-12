@@ -3948,7 +3948,7 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count)
 
     if ((rp == NULL) || (rp_count == NULL))
     {
-        return DLT_RETURN_ERROR;
+        return -1;
     }
     /* ------------------------------------------------------
        from: [89 13 ] -> to: ['+0x'1389\0] -> to num
@@ -3970,7 +3970,7 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
 
     if ((rp == NULL) || (rp_count == NULL))
     {
-        return DLT_RETURN_ERROR;
+        return -1;
     }
     /* ------------------------------------------------------
        from: [89 ] -> to: ['0x'89\0] -> to num

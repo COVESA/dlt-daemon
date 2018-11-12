@@ -22,7 +22,7 @@
  * Christoph Lipka <clipka@jp.adit-jv.com>
  * Saya Sugiura <ssugiura@jp.adit-jv.com>
  *
- * \copyright Copyright © 2015-2017 Advanced Driver Information Technology. \n
+ * \copyright Copyright © 2015-2018 Advanced Driver Information Technology. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_gateway.c
@@ -72,7 +72,7 @@ typedef enum {
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
+STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
     struct sockaddr_in sa;
     int ret = DLT_RETURN_ERROR;
@@ -316,7 +316,7 @@ STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
 
     while (token != NULL)
     {
-        if (dlt_gateway_allocate_control_messages(con) == -1)
+        if (dlt_gateway_allocate_control_messages(con) != DLT_RETURN_OK)
         {
             dlt_log(LOG_ERR,
                     "Passive Control Message could not be allocated\n");
@@ -443,7 +443,7 @@ STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con
                     con->p_control_msgs = con->p_control_msgs->next;
                 }
 
-                if (dlt_gateway_allocate_control_messages(con) == -1)
+                if (dlt_gateway_allocate_control_messages(con) != DLT_RETURN_OK)
                 {
                     dlt_log(LOG_ERR,
                             "Passive Control Message could not be allocated\n");
@@ -1056,7 +1056,7 @@ STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
                                           int req,
                                           int verbose)
 {
-    char resp_text[DLT_RECEIVE_TEXTBUFSIZE] = {'\0'};
+    char resp_text[DLT_RECEIVE_BUFSIZE] = {'\0'};
     DltServiceGetLogInfoResponse *resp = NULL;
     AppIDsType app;
     ContextIDsInfoType con;
@@ -1097,7 +1097,7 @@ STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
     /* check response */
     if (dlt_message_payload(msg,
                             resp_text,
-                            DLT_RECEIVE_TEXTBUFSIZE,
+                            DLT_RECEIVE_BUFSIZE,
                             DLT_OUTPUT_ASCII, 0) != DLT_RETURN_OK)
     {
         dlt_log(LOG_ERR, "GET_LOG_INFO payload failed\n");
@@ -1272,16 +1272,15 @@ STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
     return DLT_RETURN_OK;
 }
 
-int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
-                                              DltDaemonLocal *daemon_local,
-                                              DltReceiver *receiver,
-                                              int verbose)
+DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltReceiver *receiver,
+                                             int verbose)
 {
     int i = 0;
     DltGateway *gateway = NULL;
     DltGatewayConnection *con = NULL;
     DltMessage msg;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL))
     {
@@ -1427,7 +1426,7 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                       msg.headerextra.ecu) == DLT_RETURN_ERROR)
             {
                 dlt_vlog(LOG_ERR, "%s: Can't set storage header\n", __func__);
-                return DLT_DAEMON_ERROR_UNKNOWN;
+                return DLT_RETURN_ERROR;
             }
 
             if (dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,

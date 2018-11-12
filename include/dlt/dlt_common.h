@@ -210,7 +210,6 @@ enum {
 /**
  * Definitions for GET_LOG_INFO
  */
-#define DLT_RECEIVE_TEXTBUFSIZE 1024  /* Size of buffer for text output */
 #define DLT_GET_LOG_INFO_HEADER 18     /*Get log info header size in response text */
 #define GET_LOG_INFO_LENGTH 13
 #define SERVICE_OPT_LENGTH 3
@@ -359,6 +358,16 @@ enum {
  * Maximal IPC path len
  */
 #define DLT_IPC_PATH_MAX 100
+
+/**
+ * Maximal receiver buffer size for application messages
+ */
+#define DLT_RECEIVE_BUFSIZE 65535
+
+/**
+ * Maximal line length
+ */
+#define DLT_LINE_LEN 1024
 
 /**
  * Provision to test static function
@@ -1488,6 +1497,8 @@ extern "C"
      *
      * @param rp        char
      * @param rp_count  int
+     * @param wp        char
+     * @param length        int
      */
     void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
 

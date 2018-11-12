@@ -556,7 +556,7 @@ int main(int argc, char* argv[])
 int dlt_receive_message_callback(DltMessage *message, void *data)
 {
 	DltReceiveData *dltdata;
-    static char text[DLT_RECEIVE_TEXTBUFSIZE];
+    static char text[DLT_RECEIVE_BUFSIZE];
 
 	struct iovec iov[2];
     int bytes_written;
@@ -584,27 +584,27 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag)
         {
-            dlt_message_print_hex(message,text,DLT_RECEIVE_TEXTBUFSIZE,dltdata->vflag);
+            dlt_message_print_hex(message,text,DLT_RECEIVE_BUFSIZE,dltdata->vflag);
         }
         else if (dltdata->aflag)
         {
 
-            dlt_message_header(message,text,DLT_RECEIVE_TEXTBUFSIZE,dltdata->vflag);
+            dlt_message_header(message,text,DLT_RECEIVE_BUFSIZE,dltdata->vflag);
 
             printf("%s ",text);
 
-            dlt_message_payload(message,text,DLT_RECEIVE_TEXTBUFSIZE,DLT_OUTPUT_ASCII,dltdata->vflag);
+            dlt_message_payload(message,text,DLT_RECEIVE_BUFSIZE,DLT_OUTPUT_ASCII,dltdata->vflag);
 
             printf("[%s]\n",text);
         }
         else if (dltdata->mflag)
         {
-            dlt_message_print_mixed_plain(message,text,DLT_RECEIVE_TEXTBUFSIZE,dltdata->vflag);
+            dlt_message_print_mixed_plain(message,text,DLT_RECEIVE_BUFSIZE,dltdata->vflag);
         }
         else if (dltdata->sflag)
         {
 
-            dlt_message_header(message,text,DLT_RECEIVE_TEXTBUFSIZE,dltdata->vflag);
+            dlt_message_header(message,text,DLT_RECEIVE_BUFSIZE,dltdata->vflag);
 
             printf("%s \n",text);
         }
