@@ -978,7 +978,7 @@ int dlt_client_set_socket_path(DltClient *client, char *socket_path)
  * @param resp          DltServiceGetLogInfoResponse
  * @param count_app_ids number of app_ids which needs to be freed
  */
-STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoResponse *resp,
+DLT_STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoResponse *resp,
                                                       int count_app_ids)
 {
     AppIDsType *app = NULL;

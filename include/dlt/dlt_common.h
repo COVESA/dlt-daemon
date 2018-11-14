@@ -377,9 +377,9 @@ enum {
  * Provision to test static function
  */
 #ifndef DLT_UNIT_TESTS
-#define STATIC static
+#define DLT_STATIC static
 #else
-#define STATIC
+#define DLT_STATIC
 #endif
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.

@@ -341,7 +341,7 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
  *
  * @return 0 on success, -1 if the connection is not found.
  */
-STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
+DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
                                        DltConnection *to_remove)
 {
     if (ev == NULL || to_remove == NULL)
@@ -417,7 +417,7 @@ void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
  * @param ev The event handler structure where the connection list is.
  * @param connection The connection to be added.
  */
-STATIC void dlt_daemon_add_connection(DltEventHandler *ev,
+DLT_STATIC void dlt_daemon_add_connection(DltEventHandler *ev,
                                      DltConnection *connection)
 {
 
