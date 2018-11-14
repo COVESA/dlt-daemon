@@ -72,7 +72,7 @@ typedef enum {
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
     struct sockaddr_in sa;
     int ret = DLT_RETURN_ERROR;
@@ -113,7 +113,7 @@ STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *valu
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
+DLT_STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
 {
     int tmp = -1;
 
@@ -146,7 +146,7 @@ STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
  * @param value   string to be used as ECU identifier
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
+DLT_STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -171,7 +171,7 @@ STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+DLT_STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
                                              char *value)
 {
     if ((con == NULL) || (value == NULL))
@@ -205,7 +205,7 @@ STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
  * @param value   string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
+DLT_STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -230,7 +230,7 @@ STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
+DLT_STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -249,7 +249,7 @@ STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
  * @param con   DltGatewayConnection to be updated
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
+DLT_STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
 {
     if (con == NULL)
     {
@@ -292,7 +292,7 @@ STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
+DLT_STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
                                               char *value)
 {
     /* list of allowed clients given */
@@ -367,7 +367,7 @@ STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
  * @param value string to be tested
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
+DLT_STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
                                               char *value)
 {
     char *token = NULL;
@@ -501,7 +501,7 @@ STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con
  * Caution: after changing entries here,
  * dlt_gateway_check_param needs to be updated as well
  * */
-STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
+DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
 {
     [GW_CONF_IP_ADDRESS] = {
         .key = "IPaddress",
@@ -548,7 +548,7 @@ STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
  * @param value specified property value from configuration file
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_check_param(DltGateway *gateway,
+DLT_STATIC int dlt_gateway_check_param(DltGateway *gateway,
                                    DltGatewayConnection *con,
                                    DltGatewayConfType ctype,
                                    char *value)
@@ -849,7 +849,7 @@ void dlt_gateway_deinit(DltGateway *gateway, int verbose)
  * @param verbose       verbose flag
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_add_to_event_loop(DltDaemonLocal *daemon_local,
+DLT_STATIC int dlt_gateway_add_to_event_loop(DltDaemonLocal *daemon_local,
                                          DltGatewayConnection *con,
                                          int verbose)
 {
@@ -1050,7 +1050,7 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
+DLT_STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
                                           char *ecu,
                                           DltMessage *msg,
                                           int req,
@@ -1189,7 +1189,7 @@ STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_parse_get_default_log_level(DltDaemon *daemon,
+DLT_STATIC int dlt_gateway_parse_get_default_log_level(DltDaemon *daemon,
                                                    DltDaemonLocal *daemon_local,
                                                    char *ecu,
                                                    DltMessage *msg,
@@ -1241,7 +1241,7 @@ STATIC int dlt_gateway_parse_get_default_log_level(DltDaemon *daemon,
  * @param verbose      int
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
+DLT_STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   int verbose)
 {

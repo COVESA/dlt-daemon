@@ -41,7 +41,7 @@
  * @param ctxid          Context id as .* stored here
  * @return               0 on success -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
                                                int len,
                                                char *ecuid,
                                                char *appid,
@@ -70,7 +70,7 @@ STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
  * @param ctxid          Context id from key stored here
  * @return               0 on success -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
                                               int len,
                                               char *appid,
                                               char *ctxid)
@@ -97,7 +97,7 @@ STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
  * @param ctxid          Context id as .* stored here
  * @return               0 on success -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
                                               int len,
                                               char *appid,
                                               char *ctxid)
@@ -124,7 +124,7 @@ STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
  * @param ctxid          CContext id from key is stored here
  * @return               0 on success -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
                                               int len,
                                               char *appid,
                                               char *ctxid)
@@ -172,7 +172,7 @@ STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
  * @param ctxid          CContext id as .* stored here
  * @return               0 on success -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
                                                int len,
                                                char *ecuid,
                                                char *appid,
@@ -222,7 +222,7 @@ STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
  * @param key            Prepared key stored here
  * @return               None
  */
-STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
+DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
                                            int len,
                                            char *ecuid,
                                            char *appid,
@@ -278,7 +278,7 @@ STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
  * @param ctxid    Context id
  * @return         0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctxid, char *ecuid)
+DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctxid, char *ecuid)
 {
     int len = 0;
     char *sep = NULL;
@@ -339,7 +339,7 @@ STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctx
  * @param loglevel      requested log level
  * @param verbose       verbosity flag
  */
-STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
+DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
         DltDaemonLocal *daemon_local,
         char *apid,
         char *ctid,
@@ -404,7 +404,7 @@ STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
  * @param verbose           If set to true verbose information is printed out
  * @return                  0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon,
+DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon,
                                                 DltDaemonLocal *daemon_local,
                                                 DltDaemonContext *context,
                                                 char *ecuid,
@@ -474,7 +474,7 @@ STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon,
  * @param verbose           If set to true verbose information is printed out
  * @return                  0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemon,
+DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemon,
                                                  DltDaemonLocal *daemon_local,
                                                  DltDaemonContext *context,
                                                  char *ecuid,
@@ -529,7 +529,7 @@ STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemon,
  * @param verbose           If set to true verbose information is printed out
  * @return                  0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *daemon,
+DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *daemon,
                                                    DltDaemonLocal *daemon_local,
                                                    char *apid,
                                                    char *ctxid,

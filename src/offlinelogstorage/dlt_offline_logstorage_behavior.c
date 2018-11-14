@@ -564,9 +564,9 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
  * @param cnt         count
  * @return index on success, -1 on error
  */
-STATIC int dlt_logstorage_find_dlt_header(void *ptr,
-                                          unsigned int offset,
-                                          unsigned int cnt)
+DLT_STATIC int dlt_logstorage_find_dlt_header(void *ptr,
+                                              unsigned int offset,
+                                              unsigned int cnt)
 {
     int index = 0;
     char substring[] = {'D', 'L', 'T', 0x01};
@@ -593,8 +593,8 @@ STATIC int dlt_logstorage_find_dlt_header(void *ptr,
  * @param config      DltLogStorageFilterConfig
  * @param ret         return value of fwrite call
  */
-STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
-                                           int ret)
+DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
+                                               int ret)
 {
     if (config == NULL)
     {
@@ -632,11 +632,11 @@ STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
  * @param remain_file_size  log file remaining size
  * @return 0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path,
-    unsigned int remain_file_size)
+DLT_STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
+        DltLogStorageFilterConfig *config,
+        DltLogStorageUserConfig *file_config,
+        char *dev_path,
+        unsigned int remain_file_size)
 {
     int index = 0;
     int ret;
@@ -750,10 +750,10 @@ STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
  * @param dev_path      Storage device mount point path
  * @return 0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_sync_to_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path)
+DLT_STATIC DltReturnValue dlt_logstorage_sync_to_file(
+        DltLogStorageFilterConfig *config,
+        DltLogStorageUserConfig *file_config,
+        char *dev_path)
 {
     int ret = 0;
     unsigned int remain_file_size = 0;
@@ -816,9 +816,9 @@ STATIC DltReturnValue dlt_logstorage_sync_to_file(
  * @param index_status  check for index is required or not
  * @return 0 on success, -1 on error
  */
-STATIC DltReturnValue dlt_logstorage_sync_capable_data_to_file(
-    DltLogStorageFilterConfig *config,
-    int index_status)
+DLT_STATIC DltReturnValue dlt_logstorage_sync_capable_data_to_file(
+        DltLogStorageFilterConfig *config,
+        int index_status)
 {
     int ret = 0;
     int index = 0;

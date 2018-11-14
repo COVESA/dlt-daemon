@@ -71,7 +71,7 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_COUNT
 } DltLogstorageFilterConfType;
 
-STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
+DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
 {
     DltLogStorageFileList *n = NULL;
     DltLogStorageFileList *n1 = NULL;
@@ -113,7 +113,7 @@ STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
     }
 }
 
-STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
+DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
                                            int reason)
 {
     DltLogStorageFilterList *tmp = NULL;
@@ -150,7 +150,7 @@ STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
     return 0;
 }
 
-STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
+DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
                                               DltLogStorageFilterConfig **listdata)
 {
     if (*(listdata) == NULL)
@@ -192,7 +192,7 @@ STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
     return 0;
 }
 
-STATIC int dlt_logstorage_list_add(char *key,
+DLT_STATIC int dlt_logstorage_list_add(char *key,
                                        DltLogStorageFilterConfig *data,
                                        DltLogStorageFilterList **list)
 {
@@ -245,7 +245,7 @@ STATIC int dlt_logstorage_list_add(char *key,
     return 0;
 }
 
-STATIC void *dlt_logstorage_list_find(char *key,
+DLT_STATIC void *dlt_logstorage_list_find(char *key,
                                           DltLogStorageFilterList **list)
 {
     while (*(list) != NULL)
@@ -265,7 +265,7 @@ STATIC void *dlt_logstorage_list_find(char *key,
 
 /* Configuration file parsing helper functions */
 
-STATIC int dlt_logstorage_count_ids(const char *str)
+DLT_STATIC int dlt_logstorage_count_ids(const char *str)
 {
 
     if (str == NULL)
@@ -327,7 +327,7 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
+DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
 {
     int i = 0;
     int y = 0;
@@ -402,7 +402,7 @@ STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
+DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 {
     int i = 0;
     int len = 0;
@@ -451,7 +451,7 @@ STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
  * @param numids         Number of keys in the list is stored here
  * @return: 0 on success, error on failure*
  */
-STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
+DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
                                         int *numids)
 {
     char *token = NULL;
@@ -510,7 +510,7 @@ STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
  * @param key            Prepared key stored here
  * @return               None
  */
-STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
+DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
                                                  char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
@@ -543,7 +543,7 @@ STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
  * @param key            Prepared key stored here
  * @return               None
  */
-STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
+DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
                                                  char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
@@ -578,7 +578,7 @@ STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
  * @param key            Prepared key stored here
  * @return               None
  */
-STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
+DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
                                              char *ctid, char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
@@ -613,7 +613,7 @@ STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
  * @param key            Prepared key stored here
  * @return               None
  */
-STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
+DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
 
@@ -650,7 +650,7 @@ STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
  * @param[out]: num_keys: number of keys
  * @return: 0 on success, error on failure*
  */
-STATIC int dlt_logstorage_create_keys(char *apids,
+DLT_STATIC int dlt_logstorage_create_keys(char *apids,
                                       char *ctids,
                                       char *ecuid,
                                       char **keys,
@@ -753,7 +753,7 @@ STATIC int dlt_logstorage_create_keys(char *apids,
  * @param tmp_data       Holds all other configuration values
  * @return               0 on success, -1 on error
  */
-STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
+DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
                                         DltLogStorageFilterConfig *data)
 {
     int ret = 0;
@@ -812,7 +812,7 @@ STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
  * @return               0 on success, -1 on error
  *
  */
-STATIC int dlt_logstorage_validate_filter_name(char *name)
+DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
 {
     int len = 0;
     int idx = 0;
@@ -875,7 +875,7 @@ STATIC int dlt_logstorage_validate_filter_name(char *name)
     }
 }
 
-STATIC void dlt_logstorage_filter_set_strategy(DltLogStorageFilterConfig *config,
+DLT_STATIC void dlt_logstorage_filter_set_strategy(DltLogStorageFilterConfig *config,
                                                int strategy)
 {
     if (config == NULL)
@@ -899,7 +899,7 @@ STATIC void dlt_logstorage_filter_set_strategy(DltLogStorageFilterConfig *config
     }
 }
 
-STATIC int dlt_logstorage_check_apids(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_apids(DltLogStorageFilterConfig *config,
                                       char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -911,7 +911,7 @@ STATIC int dlt_logstorage_check_apids(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_list_of_names(&config->apids, value);
 }
 
-STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
                                       char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -922,7 +922,7 @@ STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_list_of_names(&config->ctids, value);
 }
 
-STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
                                          char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -970,7 +970,7 @@ STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
     return 0;
 }
 
-STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config,
                                                char *value)
 {
     if (config == NULL)
@@ -1022,7 +1022,7 @@ STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config
     return 0;
 }
 
-STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
                                          char *value)
 {
     int len;
@@ -1062,7 +1062,7 @@ STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
     return 0;
 }
 
-STATIC int dlt_logstorage_check_filesize(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_filesize(DltLogStorageFilterConfig *config,
                                          char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -1073,7 +1073,7 @@ STATIC int dlt_logstorage_check_filesize(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_number(&config->file_size, value);
 }
 
-STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
                                         char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -1084,7 +1084,7 @@ STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_number(&config->num_files, value);
 }
 
-STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
                                              char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -1106,7 +1106,7 @@ STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config,
                                               char *value)
 {
     if ((config == NULL) || (value == NULL))
@@ -1167,7 +1167,7 @@ STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config,
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
                                       char *value)
 {
     int len;
@@ -1194,7 +1194,7 @@ STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
     return 0;
 }
 
-STATIC DltLogstorageFilterConf
+DLT_STATIC DltLogstorageFilterConf
     filter_cfg_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
     [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
         .key = "LogAppName",
@@ -1249,7 +1249,7 @@ STATIC DltLogstorageFilterConf
 };
 
 /* */
-STATIC DltLogstorageFilterConf
+DLT_STATIC DltLogstorageFilterConf
     filter_nonverbose_storage_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
     [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
         .key = NULL,
@@ -1303,7 +1303,7 @@ STATIC DltLogstorageFilterConf
     }
 };
 
-STATIC DltLogstorageFilterConf
+DLT_STATIC DltLogstorageFilterConf
 filter_nonverbose_control_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
     [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
         .key = "LogAppName",
@@ -1364,7 +1364,7 @@ filter_nonverbose_control_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
  * @param value specified property value from configuration file
  * @return 0 on success, -1 otherwise
  */
-STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
+DLT_STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
                                       DltLogstorageFilterConfType ctype,
                                       char *value)
 {
@@ -1381,8 +1381,7 @@ STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
     return -1;
 }
 
-
-STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
+DLT_STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
                                            char *sec_name,
                                            int index,
                                            char *value)
@@ -1479,8 +1478,8 @@ STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
     return 0;
 }
 
-STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
-                                      DltLogStorageFilterConfig *tmp_data)
+DLT_STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
+                                          DltLogStorageFilterConfig *tmp_data)
 {
     int ret = 0;
 
@@ -1503,7 +1502,7 @@ STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
    DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR - On error while storing in hash table
  */
 
-STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
+DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
                                               DltConfigFile *config_file,
                                               char *sec_name)
 {
@@ -1602,7 +1601,7 @@ STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
  * @return                   0 on success, -1 on error, 1 on warning
  *
  */
-STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
+DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
                                         char *config_file_name)
 {
     DltConfigFile *config = NULL;
@@ -1696,7 +1695,7 @@ STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
  * @param input_file    pointer to configuration file stored on device
  * @return              0 on success, -1 on error, 1 on warning
  */
-STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
+DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
 {
     char config_file_name[PATH_MAX + 1] = {'\0'};
     int ret = 0;
@@ -2009,7 +2008,7 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
  * @param ecuid     EcuID given in the message
  * @return          number of found configurations
  */
-STATIC int dlt_logstorage_filter(DltLogStorage *handle,
+DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
                                  DltLogStorageFilterConfig **config,
                                  char *apid,
                                  char *ctid,

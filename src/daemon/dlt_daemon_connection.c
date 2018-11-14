@@ -64,7 +64,7 @@ static DltConnectionId connectionId;
  * @return The amount of bytes send on success, -1 otherwise.
  *         errno is appropriately set.
  */
-STATIC int dlt_connection_send(DltConnection *conn,
+DLT_STATIC int dlt_connection_send(DltConnection *conn,
                               void *msg,
                               size_t msg_size)
 {
@@ -158,7 +158,7 @@ DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
     return current;
 }
 
-STATIC void dlt_connection_destroy_receiver(DltConnection *con)
+DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
 {
     if (!con)
         return;
@@ -190,7 +190,7 @@ STATIC void dlt_connection_destroy_receiver(DltConnection *con)
  *
  * @return DltReceiver structure or NULL if none corresponds to the type.
  */
-STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
+DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
                                                 DltConnectionType type,
                                                 int fd)
 {
