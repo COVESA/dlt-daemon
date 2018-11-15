@@ -1293,3 +1293,32 @@ void dlt_gateway_send_control_message(DltGatewayConnection *con,
         dlt_message_free(&msg, verbose);
     }
 }
+
+DltGatewayConnection *dlt_gateway_get_connection(DltGateway *gateway,
+                                                 char *ecu,
+                                                 int verbose)
+{
+    DltGatewayConnection *con = NULL;
+    int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((gateway == NULL) || (ecu == NULL))
+    {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return con;
+    }
+
+    for (i = 0; i < gateway->num_connections; i++)
+    {
+        con = &gateway->connections[i];
+        if (strncmp(con->ecuid, ecu, DLT_ID_SIZE) == 0)
+        {
+            return con;
+        }
+    }
+
+    dlt_vlog(LOG_ERR, "%s: No connection found\n", ecu);
+
+    return con;
+}

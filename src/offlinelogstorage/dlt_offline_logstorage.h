@@ -54,10 +54,13 @@
 #define DLT_OFFLINE_LOGSTORAGE_H
 
 #include <search.h>
+#include <stdbool.h>
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
+#include "dlt_config_file_parser.h"
 
-#define DLT_OFFLINE_LOGSTORAGE_MAXFILTERS          100  /* Maximum entries in hashmap */
+#define DLT_OFFLINE_LOGSTORAGE_MAXIDS               100 /* Maximum entries for each apids and ctids */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS 7 /* max number of possible filters when searching for */
 
 #define DLT_OFFLINE_LOGSTORAGE_INIT_DONE           1  /* For device configuration status */
 #define DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED    1
@@ -67,7 +70,7 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES         2  /* sync logstorage caches */
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         10  /* Maximum size for key */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   50  /* Maximum file name length of the log file */
 
 #define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN   4
@@ -81,23 +84,6 @@
                                                     DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_INDEX_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
-
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_UNINIT       0
-#define DLT_OFFLINE_LOGSTORAGE_ECUID               (1<<8)
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT      (1<<7)
-#define DLT_OFFLINE_LOGSTORAGE_APP_INIT            (1<<6)
-#define DLT_OFFLINE_LOGSTORAGE_CTX_INIT            (1<<5)
-#define DLT_OFFLINE_LOGSTORAGE_LOG_LVL_INIT        (1<<4)
-#define DLT_OFFLINE_LOGSTORAGE_NAME_INIT           (1<<3)
-#define DLT_OFFLINE_LOGSTORAGE_SIZE_INIT           (1<<2)
-#define DLT_OFFLINE_LOGSTORAGE_SYNC_BEHAVIOR       (1<<1)
-#define DLT_OFFLINE_LOGSTORAGE_NUM_INIT            1
-/* Sync behavior and ECUid are optional */
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_INIT         0xFD
-
-#define DLT_OFFLINE_LOGSTORAGE_FILTER_INITIALIZED(A) ((A) >= DLT_OFFLINE_LOGSTORAGE_FILTER_INIT)
-
-#define DLT_OFFLINE_LOGSTORAGE_IS_FILTER_PRESENT(A) ((A) & DLT_OFFLINE_LOGSTORAGE_FILTER_PRESENT)
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN 50
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME    "dlt_logstorage.conf"
@@ -114,15 +100,20 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
 #define DLT_OFFLINE_LOGSTORAGE_GENERAL_CONFIG_SECTION "GENERAL"
+#define DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION "NON-VERBOSE-STORAGE-FILTER"
+#define DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION "NON-VERBOSE-LOGLEVEL-CTRL"
 
 /* Offline Logstorage sync strategies */
 #define DLT_LOGSTORAGE_SYNC_ON_ERROR                  -1 /* error case */
+#define DLT_LOGSTORAGE_SYNC_UNSET                     0  /* strategy not set */
 #define DLT_LOGSTORAGE_SYNC_ON_MSG                    1 /* default, on message sync */
-#define DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT            (1<<1) /* sync on daemon exit */
-#define DLT_LOGSTORAGE_SYNC_ON_DEMAND                 (1<<2) /* sync on demand */
-#define DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT      (1<<3) /* sync on device disconnect*/
+#define DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT            (1 << 1) /* sync on daemon exit */
+#define DLT_LOGSTORAGE_SYNC_ON_DEMAND                 (1 << 2) /* sync on demand */
+#define DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT      (1 << 3) /* sync on device disconnect*/
+#define DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE          (1 << 4) /* sync on after specific size */
+#define DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE              (1 << 5) /* sync on file size reached */
 
-#define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S) & (s))
+#define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S) &(s))
 
 /* logstorage max cache */
 unsigned int g_logstorage_cache_max;
@@ -131,9 +122,10 @@ unsigned int g_logstorage_cache_size;
 
 typedef struct
 {
-    int offset;                   /* current write offset */
+    unsigned int offset;          /* current write offset */
     unsigned int wrap_around_cnt; /* wrap around counter */
-}DltLogStorageCacheFooter;
+    unsigned int last_sync_offset; /* last sync position */
+} DltLogStorageCacheFooter;
 
 typedef struct
 {
@@ -142,7 +134,7 @@ typedef struct
     char logfile_delimiter;             /* Choice of delimiter */
     unsigned int logfile_maxcounter;    /* Maximum file index counter */
     unsigned int logfile_counteridxlen; /* File index counter length */
-}DltLogStorageUserConfig;
+} DltLogStorageUserConfig;
 
 typedef struct DltLogStorageFileList
 {
@@ -150,25 +142,28 @@ typedef struct DltLogStorageFileList
     char *name;                         /* Filename */
     unsigned int idx;                   /* File index */
     struct DltLogStorageFileList *next;
-}DltLogStorageFileList;
+} DltLogStorageFileList;
 
-typedef struct DltLogStorageConfigData DltLogStorageConfigData;
+typedef struct DltLogStorageFilterConfig DltLogStorageFilterConfig;
 
-struct DltLogStorageConfigData
+struct DltLogStorageFilterConfig
 {
     /* filter section */
+    char *apids;                    /* Application IDs configured for filter */
+    char *ctids;                    /* Context IDs configured for filter */
     int log_level;                  /* Log level number configured for filter */
+    int reset_log_level;            /* reset Log level to be sent on disconnect */
     char *file_name;                /* File name for log storage configured for filter */
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
     char *ecuid;                    /* ECU identifier */
     /* callback function for filter configurations */
-    int (*dlt_logstorage_prepare)(DltLogStorageConfigData *config,
+    int (*dlt_logstorage_prepare)(DltLogStorageFilterConfig *config,
                                   DltLogStorageUserConfig *file_config,
                                   char *dev_path,
                                   int log_msg_size);
-    int (*dlt_logstorage_write)(DltLogStorageConfigData *config,
+    int (*dlt_logstorage_write)(DltLogStorageFilterConfig *config,
                                 unsigned char *data1,
                                 int size1,
                                 unsigned char *data2,
@@ -177,27 +172,37 @@ struct DltLogStorageConfigData
                                 int size3);
     /* status is strategy, e.g. DLT_LOGSTORAGE_SYNC_ON_MSG is used when callback
      * is called on message received */
-    int (*dlt_logstorage_sync)(DltLogStorageConfigData *config, int status);
+    int (*dlt_logstorage_sync)(DltLogStorageFilterConfig *config,
+                               DltLogStorageUserConfig *uconfig,
+                               char *dev_path,
+                               int status);
     FILE *log;                      /* current open log file */
     void *cache;                    /* log data cache */
+    unsigned int specific_size;     /* cache size used for specific_size sync strategy */
+    unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
+    unsigned int total_write_count; /* total count of data need to sync to file */
+    bool pre_cache_sync;            /* sync done in previous wrap around */
+    bool cur_cache_sync;            /* sync done in present cache */
+    bool sync_from_start;           /* sync done from start of cache */
     DltLogStorageFileList *records; /* File name list */
 };
 
+typedef struct DltLogStorageFilterList DltLogStorageFilterList;
+
+struct DltLogStorageFilterList
+{
+    char *key;                        /* Key to find data */
+    DltLogStorageFilterConfig *data;  /* Filter data */
+    DltLogStorageFilterList *next;    /* Pointer to next */
+};
 
 typedef struct
 {
-    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN]; /* Keys stored in hash table */
-    DltLogStorageConfigData data;               /* Data stored in hash table */
-}DltLogStorageConfig;
-
-
-typedef struct
-{
-    struct hsearch_data config_htab;    /* Hash table object declaration used by hsearch_r()*/
-    DltLogStorageConfig *config_data; /* Configuration data  */
-    char *filter_keys;                 /* List of all keys stored in config_htab */
+    DltLogStorageFilterList *config_list; /* List of all filters */
+    DltLogStorageUserConfig uconfig;  /* User configurations for file name*/
+    int num_configs;                  /* Number of configs */
     int num_filter_keys;                /* Number of keys */
-    char device_mount_point[DLT_MOUNT_PATH_MAX]; /* Device mount path */
+    char device_mount_point[DLT_MOUNT_PATH_MAX + 1]; /* Device mount path */
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
     int write_errors;                  /* number of write errors */
@@ -213,17 +218,9 @@ typedef struct
  * @param mount_point    Device mount path
  * @return               0 on success, -1 on error
  */
-extern int dlt_logstorage_device_connected(DltLogStorage *handle, char  *mount_point);
+int dlt_logstorage_device_connected(DltLogStorage *handle,
+                                           char *mount_point);
 
-/**
-  * dlt_logstorage_load_config
-  *
-  * Parse dlt_logstorage.conf file in the device and setup internal info table
-  *
-  * @param handle    DltLogStorage handle
-  * @return          0 on success, -1 on error
-  */
-extern int dlt_logstorage_load_config(DltLogStorage *handle);
 /**
  * dlt_logstorage_device_disconnected
  * De-Initializes DLT Offline Logstorage with respect to device status
@@ -232,7 +229,8 @@ extern int dlt_logstorage_load_config(DltLogStorage *handle);
  * @param reason         Reason for device disconnection
  * @return               0 on success, -1 on error
  */
-extern int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason);
+int dlt_logstorage_device_disconnected(DltLogStorage *handle,
+                                              int reason);
 /**
  * dlt_logstorage_get_config
  *
@@ -241,25 +239,30 @@ extern int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
  * data available in the Hash map, this function will return the address
  * of configuration data for all these 3 combinations
  *
- * @param handle        DltLogStorage handle
- * @param appid         application id
- * @param ctxid         context id
- * @param num_config    (o/p) contains the number of filter configration data obtained
- * @return              on success: address of configuration data, NULL on failure or no configuration data found
+ * @param handle    DltLogStorage handle
+ * @param config    Pointer to array of filter configurations
+ * @param appid     application id
+ * @param ctxid     context id
+ * @return          number of found configurations
  */
-extern DltLogStorageConfigData **dlt_logstorage_get_config(DltLogStorage *handle, char *apid, char *ctid, int *num_config);
+int dlt_logstorage_get_config(DltLogStorage *handle,
+                              DltLogStorageFilterConfig **config,
+                              char *apid,
+                              char *ctid,
+                              char *ecuid);
+
 /**
  * dlt_logstorage_get_loglevel_by_key
  *
  * Obtain the log level for the provided key
  * This function can be used to obtain log level when the actual
- * key stored in the Hash map is availble with the caller
+ * key stored in the Hash map is available with the caller
  *
  * @param handle    DltLogstorage handle
  * @param key       key to search for in Hash MAP
  * @return          log level on success:, -1 on error
  */
-extern int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
+int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
 
 /**
  * dlt_logstorage_write
@@ -275,14 +278,14 @@ extern int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param size2     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
-extern int dlt_logstorage_write(DltLogStorage *handle,
-                                DltLogStorageUserConfig *uconfig,
-                                unsigned char *data1,
-                                int size1,
-                                unsigned char *data2,
-                                int size2,
-                                unsigned char *data3,
-                                int size3);
+int dlt_logstorage_write(DltLogStorage *handle,
+                         DltLogStorageUserConfig *uconfig,
+                         unsigned char *data1,
+                         int size1,
+                         unsigned char *data2,
+                         int size2,
+                         unsigned char *data3,
+                         int size3);
 
 /**
  * dlt_logstorage_sync_caches
@@ -292,6 +295,6 @@ extern int dlt_logstorage_write(DltLogStorage *handle,
  * @param  handle    DltLogStorage handle
  * @return 0 on success, -1 otherwise
  */
-extern int dlt_logstorage_sync_caches(DltLogStorage *handle);
+int dlt_logstorage_sync_caches(DltLogStorage *handle);
 
 #endif /* DLT_OFFLINE_LOGSTORAGE_H */

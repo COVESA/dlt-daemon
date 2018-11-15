@@ -36,18 +36,20 @@ Filter configuration
 For DLT daemon to store logs the configuration file named “dlt_logstorage.conf” should be present in external storage or internal storage device.
 The format is defined as follows:
 ----
-[Filter<unique number>]       # filter configration name
-LogAppName=<APID>             # Name of application to store logs from. Multiple applications can be separated by "," and ".*" denotes all applications
-ContextName=<CTID>            # Name or names of contexts to store logs from. Multiple contexts can be separated by "," and ".*" denotes all contexts of the application
-LogLevel=<Log level>          # Define log level, e.g. DLT_LOG_INFO or DLT_LOG_FATAL
-File=<file name>              # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
-FileSize=<file size in bytes> # Maximum file size in bytes
-NOFiles=<number of files>     # Number of created files before oldest is deleted and a new one is created
-SyncBehavior=<strategy>       # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Rinbuffer Implementation below.
-EcuID=<ECUid>                 # Specify ECU identifier
+[Filter<unique number>]           # filter configration name
+LogAppName=<APID>                 # Name of application to store logs from. Multiple applications can be separated by "," and ".*" denotes all applications
+ContextName=<CTID>                # Name or names of contexts to store logs from. Multiple contexts can be separated by "," and ".*" denotes all contexts of the application
+LogLevel=<Log level>              # Define log level, e.g. DLT_LOG_INFO or DLT_LOG_FATAL
+File=<file name>                  # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
+FileSize=<file size in bytes>     # Maximum file size in bytes
+NOFiles=<number of files>         # Number of created files before oldest is deleted and a new one is created
+SyncBehavior=<strategy>           # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Rinbuffer Implementation below.
+EcuID=<ECUid>                     # Specify ECU identifier
+SpecificSize=<spec size in bytes> # Store logs in storage devices after specific size is reached.
+
 ----
-The Parameter "SyncBehavior" and "EcuID" are optional - all others are mandatory.
-*Note*: Not allowed is the combination of wildcards for LogAppName *and* ContextName. The Parameter "SyncBehavior" and "EcuID" are optional - all others are mandatory. +
+The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all others are mandatory.
+*Note*: Not allowed is the combination of wildcards for LogAppName *and* ContextName. The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all others are mandatory. +
 
 An configuration file should look like: +
 
@@ -67,8 +69,20 @@ LogLevel=DLT_LOG_ERROR
 File=Test
 FileSize=250000
 NOFiles=5
-SyncStrategy=ON_DEMAND
 EcuID=ECU1
+SyncBehavior=ON_SPECIFIC_SIZE
+SpecificSize=5000
+
+[FILTER3]
+LogAppName=TEST
+ContextName=.*
+LogLevel=DLT_LOG_ERROR
+File=Test
+FileSize=250000
+NOFiles=5
+SyncBehavior=ON_FILE_SIZE,ON_DEMAND
+EcuID=ECU1
+
 ----
 
 Filter algorithm
@@ -127,7 +141,7 @@ Using dlt-logstorage-ctrl application
 
 ----
 Usage: dlt-logstorage-ctrl [options]
-Send a trigger to DLT daemon to connect/disconnecta certain logstorage device
+Send a trigger to DLT daemon to connect/disconnect a certain logstorage device
 
 Options:
   -c         Connection type: connect = 1, disconnect = 0
@@ -191,7 +205,10 @@ The obvious idea is to cache incoming log messages in memory and write the log d
 Incoming log messages are stored in a data cache with a specific size. Depending on user defined strategy, the data cache is written onto the storage device、without relying on the sync mechanism of the file system.
 
 The following strategies are implemented:
-. ON_MSG - sync every message
+. ON_MSG - sync every message(Default)
 . ON_DAEMON_EXIT - sync on daemon exit
 . ON_DEMAND - sync on demand
-. Combinations (not allowed: combinations with ON_MSG)
+. ON_FILE_SIZE - sync on file size reached
+. ON_SPECIFIC_SIZE - sync after specific size is reached
+  Note : 1.Combinations (not allowed: combinations with ON_MSG,combination of ON_FILE_SIZE with ON_SPECIFIC_SIZE)
+         2.If on_demand sync strategy alone is specified, it is advised to concatenate the log files in sequential order before viewing it on viewer.

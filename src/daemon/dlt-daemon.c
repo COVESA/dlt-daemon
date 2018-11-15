@@ -719,11 +719,14 @@ int main(int argc, char* argv[])
 
     if(daemon_local.flags.offlineLogstorageDirPath[0])
     {
-        if(dlt_daemon_logstorage_setup_internal_storage(&daemon,
-                                                        daemon_local.flags.offlineLogstorageDirPath,
-                                                        daemon_local.flags.vflag)==-1)
+        if (dlt_daemon_logstorage_setup_internal_storage(
+                &daemon,
+                &daemon_local,
+                daemon_local.flags.offlineLogstorageDirPath,
+                daemon_local.flags.vflag) == -1)
         {
-            dlt_log(LOG_INFO,"Setting up internal offline log storage failed!\n");
+            dlt_log(LOG_INFO,
+                    "Setting up internal offline log storage failed!\n");
         }
     }
 

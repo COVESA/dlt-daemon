@@ -211,6 +211,9 @@
 #define DLT_SERVICE_RESPONSE_OK            0x00 /**< Control message response: OK */
 #define DLT_SERVICE_RESPONSE_NOT_SUPPORTED 0x01 /**< Control message response: Not supported */
 #define DLT_SERVICE_RESPONSE_ERROR         0x02 /**< Control message response: Error */
+#define DLT_SERVICE_RESPONSE_PERM_DENIED   0x03 /**< Control message response: Permission denied */
+#define DLT_SERVICE_RESPONSE_WARNING       0x04 /**< Control message response: warning */
+#define DLT_SERVICE_RESPONSE_LAST          0x05 /**< Used as max value */
 
 /*
  * Definitions of DLT service connection state

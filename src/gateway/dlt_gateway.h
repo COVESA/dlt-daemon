@@ -175,6 +175,18 @@ void dlt_gateway_send_control_message(DltGatewayConnection *con,
                                       DltDaemonLocal *daemon_local,
                                       int verbose);
 
+/**
+ * Gets the connection handle of passive node with specified ECU
+ *
+ * @param g             DltGateway
+ * @param ecu           Identifier string
+ * @param verbose       verbose flag
+ * @returns Gateway connection handle on success, NULL otherwise
+ */
+DltGatewayConnection *dlt_gateway_get_connection(DltGateway *g,
+                                                 char *ecu,
+                                                 int verbose);
+
 /* _ONLY_ for development purposes */
 void print_gateway_connection_details(const DltGateway *g);
 #ifdef DLT_UNIT_TESTS

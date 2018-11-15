@@ -53,29 +53,32 @@
 #define DLT_OFFLINELOGSTORAGE_DLT_OFFLINE_LOGSTORAGE_BEHAVIOR_H_
 
 /* ON_MSG behavior */
-int dlt_logstorage_prepare_on_msg(DltLogStorageConfigData *config,
+int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                   DltLogStorageUserConfig *file_config,
                                   char *dev_path,
                                   int log_msg_size);
-int dlt_logstorage_write_on_msg(DltLogStorageConfigData *config,
-                         unsigned char *data1,
-                         int size1,
-                         unsigned char *data2,
-                         int size2,
-                         unsigned char *data3,
-                         int size3);
+int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
+                                unsigned char *data1,
+                                int size1,
+                                unsigned char *data2,
+                                int size2,
+                                unsigned char *data3,
+                                int size3);
 
 /* status is strategy, e.g. DLT_LOGSTORAGE_SYNC_ON_MSG is used when callback
  * is called on message received */
-int dlt_logstorage_sync_on_msg(DltLogStorageConfigData *config, int status);
+int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
+                               DltLogStorageUserConfig *file_config,
+                               char *dev_path,
+                               int status);
 
 /* Logstorage cache functionality */
-int dlt_logstorage_prepare_msg_cache(DltLogStorageConfigData *config,
+int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
                                      DltLogStorageUserConfig *file_config,
                                      char *dev_path,
                                      int log_msg_size);
 
-int dlt_logstorage_write_msg_cache(DltLogStorageConfigData *config,
+int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
                                    unsigned char *data1,
                                    int size1,
                                    unsigned char *data2,
@@ -83,7 +86,9 @@ int dlt_logstorage_write_msg_cache(DltLogStorageConfigData *config,
                                    unsigned char *data3,
                                    int size3);
 
-int dlt_logstorage_sync_msg_cache(DltLogStorageConfigData *config,
+int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
+                                  DltLogStorageUserConfig *file_config,
+                                  char *dev_path,
                                   int status);
 
 #endif /* DLT_OFFLINELOGSTORAGE_DLT_OFFLINE_LOGSTORAGE_BEHAVIOR_H_ */
