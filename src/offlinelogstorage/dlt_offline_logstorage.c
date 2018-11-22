@@ -220,25 +220,8 @@ STATIC int dlt_logstorage_list_add(char *key,
     }
 
     tmp->key = strdup(key);
+    tmp->data = data;
     tmp->next = NULL;
-    tmp->data = calloc(1, sizeof(DltLogStorageFilterConfig));
-
-    if (tmp->data == NULL)
-    {
-        free(tmp->key);
-        free(tmp);
-        tmp = NULL;
-        return -1;
-    }
-
-    if (dlt_logstorage_list_add_config(data, &(tmp->data)) != 0)
-    {
-        free(tmp->key);
-        free(tmp->data);
-        free(tmp);
-        tmp = NULL;
-        return -1;
-    }
 
     *list = tmp;
 
@@ -747,7 +730,7 @@ STATIC int dlt_logstorage_create_keys(char *apids,
 /**
  * dlt_logstorage_prepare_table
  *
- * Prepares hash table with keys and data
+ * Prepares table with keys and data
  *
  * @param handle         DLT Logstorage handle
  * @param tmp_data       Holds all other configuration values
@@ -760,6 +743,7 @@ STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
     int num_keys = 0;
     char *keys = NULL;
     int idx = 0;
+    DltLogStorageFilterList *tmp = NULL;
 
     if ((handle == NULL) || (data == NULL))
     {
@@ -779,18 +763,42 @@ STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         return -1;
     }
 
-    /* hash_add */
+    tmp = calloc(1, sizeof(DltLogStorageFilterList));
+
+    if (tmp == NULL)
+    {
+        return -1;
+    }
+    tmp->data = calloc(1, sizeof(DltLogStorageFilterConfig));
+
+    if (tmp->data == NULL)
+    {
+        free(tmp);
+        tmp = NULL;
+        return -1;
+    }
+
+    if (dlt_logstorage_list_add_config(data, &(tmp->data)) != 0)
+    {
+        free(tmp->data);
+        free(tmp);
+        tmp = NULL;
+        return -1;
+    }
+
     for (idx = 0 ; idx < num_keys ; idx++)
     {
         if (dlt_logstorage_list_add(keys + (idx * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN),
-                                    data,
+                                    tmp->data,
                                     &(handle->config_list)) != 0)
         {
             dlt_log(LOG_ERR,
-                    "Adding to hash table failed, returning failure\n");
+                    "Adding to table failed, returning failure\n");
 
             dlt_logstorage_free(handle, DLT_LOGSTORAGE_SYNC_ON_ERROR);
-
+            free(tmp->data);
+            free(tmp);
+            tmp = NULL;
             free(keys);
             return -1;
         }
@@ -798,8 +806,10 @@ STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         /* update filter keys and number of keys */
         handle->num_filter_keys += 1;
     }
-
+    free(tmp);
+    tmp = NULL;
     free(keys);
+
     return 0;
 }
 
