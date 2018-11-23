@@ -88,7 +88,10 @@ set( LICENSE "Mozilla Public License Version 2.0" )
 # Build, project and include settings
 find_package(Threads REQUIRED)
 if(WITH_DLT_SYSTEM)
+  set(ZLIB_LIBRARY "-lz")
   find_package(ZLIB REQUIRED)
+else(WITH_DLT_SYSTEM)
+  set(ZLIB_LIBRARY "")
 endif(WITH_DLT_SYSTEM)
 
 find_package(PkgConfig)

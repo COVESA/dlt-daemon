@@ -24,6 +24,6 @@ Name: DLT
 Description: Diagnostic Log and Trace
 Version: @DLT_VERSION@
 Requires:
-Libs: -L${libdir} -ldlt -lrt -lpthread -lz
+Libs: -L${libdir} -ldlt -lrt -lpthread @ZLIB_LIBRARY@
 Cflags: -I${includedir}/dlt -DDLT_@DLT_MAJOR_VERSION@_@DLT_MINOR_VERSION@
 
