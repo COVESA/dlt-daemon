@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 
 #ifdef linux
 #   include <sys/timerfd.h>
