@@ -765,6 +765,7 @@ typedef struct
     char *buf;            /**< pointer to position within receiver buffer */
     char *backup_buf;     /** pointer to the buffer with partial messages if any **/
     int fd;               /**< connection handle */
+    int32_t bytes_sent;       /**< total bytes sent in a single msg */
     int32_t buffersize;       /**< size of receiver buffer */
 } DltReceiver;
 

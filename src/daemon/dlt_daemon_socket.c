@@ -146,61 +146,37 @@ int dlt_daemon_socket_close(int sock)
 
 int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader)
 {
-    /* Optional: Send serial header, if requested */
     int ret = DLT_RETURN_OK;
+    int bytes_sent = 0;
+    
+    /* Optional: Send serial header, if requested */
     if (serialheader)
     {
-        ret = dlt_daemon_socket_sendreliable(sock, (void *) dltSerialHeader, sizeof(dltSerialHeader));
-        if(ret != DLT_RETURN_OK)
+        ret = dlt_daemon_socket_sendreliable(sock,
+                                             (void *) dltSerialHeader,
+                                             sizeof(dltSerialHeader),
+                                             &bytes_sent);
+        if (ret != DLT_RETURN_OK)
             return ret;
     }
 
     /* Send data */
-    if(data1 != NULL && size1 > 0)
+
+    if ((data1 != NULL) && (size1 > 0))
     {
-        ret = dlt_daemon_socket_sendreliable(sock, data1, size1);
-        if(ret != DLT_RETURN_OK)
+        ret = dlt_daemon_socket_sendreliable(sock, data1, size1, &bytes_sent);
+        if (ret != DLT_RETURN_OK)
+        {
             return ret;
+        }
     }
 
-    if(data2 != NULL && size2 > 0)
+    if ((data2 != NULL) && (size2 > 0))
     {
-        ret = dlt_daemon_socket_sendreliable(sock, data2, size2);
-        if(ret != DLT_RETURN_OK)
-            return ret;
+        ret = dlt_daemon_socket_sendreliable(sock, data2, size2, &bytes_sent);
     }
 
     return ret;
-}
-
-int dlt_daemon_socket_sendreliable(int sock, void* buffer, int message_size)
-{
-    int data_sent = 0;
-
-    while (data_sent < message_size)
-    {
-        ssize_t ret = send(sock, buffer + data_sent, message_size - data_sent, 0);
-        if (ret < 0)
-        {
-            const int lastErrno=errno;
-            if (lastErrno==EINTR || lastErrno==EAGAIN || lastErrno==EWOULDBLOCK)
-            {
-                // Temporary error.
-                dlt_vlog(LOG_INFO,"dlt_daemon_socket_sendreliable: socket send() error %d: %s, trying again.\n", lastErrno, strerror(lastErrno));
-            }
-            else
-            {
-                dlt_vlog(LOG_WARNING,"dlt_daemon_socket_sendreliable: socket send() error %d: %s\n", lastErrno, strerror(lastErrno));
-                return DLT_DAEMON_ERROR_SEND_FAILED;
-            }
-        }
-        else
-        {
-            data_sent += ret;
-        }
-    }
-
-    return DLT_DAEMON_ERROR_OK;
 }
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock)
@@ -211,4 +187,30 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
 
     return n;
 }
+
+int dlt_daemon_socket_sendreliable(int sock, void* data_buffer, int message_size, int* bytes_sent)
+{
+    int data_sent = 0;
+
+    while (data_sent < message_size)
+    {
+        ssize_t ret = send(sock, data_buffer + data_sent, message_size - data_sent, 0);
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_WARNING,
+                     "dlt_daemon_socket_sendreliable: socket send failed [errno: %d]!\n",
+                     errno);
+            *bytes_sent = data_sent;
+            return DLT_DAEMON_ERROR_SEND_FAILED;
+        }
+        else
+        {
+            data_sent += ret;
+        }
+    }
+
+    *bytes_sent = data_sent;
+    return DLT_DAEMON_ERROR_OK;
+}
+
 
