@@ -76,6 +76,6 @@ int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,
  * @param message_size
  * @return on sucess: DLT_DAEMON_ERROR_OK, on error: DLT_DAEMON_ERROR_SEND_FAILED
  */
-int dlt_daemon_socket_sendreliable(int sock, void* buffer,int  message_size);
+int dlt_daemon_socket_sendreliable(int sock, void* data_buffer, int message_size, int* bytes_sent);
 
 #endif /* DLT_DAEMON_SOCKET_H */

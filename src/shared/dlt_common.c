@@ -2134,6 +2134,7 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
     receiver->lastBytesRcvd = 0;
     receiver->bytesRcvd = 0;
     receiver->totalBytesRcvd = 0;
+    receiver->bytes_sent = 0;
     receiver->buffersize = buffersize;
     receiver->fd = fd;
     receiver->buffer = (char*)malloc(receiver->buffersize);
