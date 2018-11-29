@@ -1,0 +1,14 @@
+{
+  "SRCN": {
+    "name": "screen",
+    "description": ""
+  },
+  "SLM ": {
+    "name": "slm",
+    "description": ""
+  },
+  "SYSL": {
+    "name": "syslogd",
+    "description": ""
+  }
+}
