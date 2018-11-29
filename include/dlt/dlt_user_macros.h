@@ -149,6 +149,16 @@
     (void)dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS);} while(0)
 
 /**
+ * Register context (with default log level and default trace status and log level change callback)
+ * @param CONTEXT object containing information about one special logging context
+ * @param CONTEXTID context id with maximal four characters
+ * @param DESCRIPTION ASCII string containing description
+ * @param CBK log level change callback to be registered
+ */
+#define DLT_REGISTER_CONTEXT_LLCCB(CONTEXT, CONTEXTID, DESCRIPTION, CBK) do{\
+    (void)dlt_register_context_llccb(&(CONTEXT), CONTEXTID, DESCRIPTION, CBK);} while(0)
+
+/**
  * Unregister context.
  * @param CONTEXT object containing information about one special logging context
  */
