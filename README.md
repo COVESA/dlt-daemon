@@ -164,6 +164,7 @@ make doc
 - [dlt-passive-node-ctrl(1)](doc/dlt-passive-node-ctrl.1.md)
 - [dlt-adaptor-stdin(1)](doc/dlt-adaptor-stdin.1.md)
 - [dlt-adaptor-udp(1)](doc/dlt-adaptor-udp.1.md)
+- [dlt-qnx-system(1)](doc/dlt-qnx-system.md)
 
 The man pages are generated with *pandoc*.
 

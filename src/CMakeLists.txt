@@ -48,3 +48,7 @@ endif( WITH_DLT_COREDUMPHANDLER )
 if( WITH_DLT_KPI )
     add_subdirectory( kpi )
 endif( WITH_DLT_KPI )
+
+if( WITH_DLT_QNX_SYSTEM )
+    add_subdirectory( dlt-qnx-system )
+endif( WITH_DLT_QNX_SYSTEM )
