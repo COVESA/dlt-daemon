@@ -1043,17 +1043,24 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
     return dlt_register_context_ll_ts(handle, contextid, description, DLT_USER_LOG_LEVEL_NOT_SET, DLT_USER_TRACE_STATUS_NOT_SET);
 }
 
-DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus)
+DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
+                                                const char *contextid,
+                                                const char * description,
+                                                int loglevel,
+                                                int tracestatus,
+                                                void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],
+                                                                                       uint8_t log_level,
+                                                                                       uint8_t trace_status))
 {
     DltContextData log;
     uint32_t i;
     int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
 
     //check nullpointer
-    if(!handle)
+    if (!handle)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if ((contextid == NULL) || (contextid[0]=='\0'))
+    if ((contextid == NULL) || (contextid[0] == '\0'))
     {
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -1071,7 +1078,7 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contex
     }
 
 
-    if (dlt_user_log_init(handle, &log)==-1)
+    if (dlt_user_log_init(handle, &log) == -1)
     {
         return DLT_RETURN_ERROR;
     }
@@ -1087,167 +1094,217 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contex
     /* Check of double context registration removed */
     /* Double registration is already checked by daemon */
 
-	/* Allocate or expand context array */
-	if (dlt_user.dlt_ll_ts == 0)
-	{
-		dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*DLT_USER_CONTEXT_ALLOC_SIZE);
-		if (dlt_user.dlt_ll_ts==0)
-		{
-			DLT_SEM_FREE();
-			return DLT_RETURN_ERROR;
-		}
+    /* Allocate or expand context array */
+    if (dlt_user.dlt_ll_ts == 0)
+    {
+        dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type) * DLT_USER_CONTEXT_ALLOC_SIZE);
+        if (dlt_user.dlt_ll_ts == 0)
+        {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
 
-		dlt_user.dlt_ll_ts_max_num_entries = DLT_USER_CONTEXT_ALLOC_SIZE;
+        dlt_user.dlt_ll_ts_max_num_entries = DLT_USER_CONTEXT_ALLOC_SIZE;
 
-		/* Initialize new entries */
-		for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
-		{
-			dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
+        /* Initialize new entries */
+        for (i = 0; i < dlt_user.dlt_ll_ts_max_num_entries; i++)
+        {
+            dlt_set_id(dlt_user.dlt_ll_ts[i].contextID, "");
 
-			/* At startup, logging and tracing is locally enabled */
-			/* the correct log level/status is set after received from daemon */
-			dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
-			dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+            /* At startup, logging and tracing is locally enabled */
+            /* the correct log level/status is set after received from daemon */
+            dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
+            dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
-			dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
-			dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+            dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+            dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
 
-			dlt_user.dlt_ll_ts[i].context_description = 0;
+            dlt_user.dlt_ll_ts[i].context_description = 0;
 
-			dlt_user.dlt_ll_ts[i].injection_table = 0;
-			dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
-			dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
 
-		}
-	}
-	else
-	{
-		if ((dlt_user.dlt_ll_ts_num_entries%DLT_USER_CONTEXT_ALLOC_SIZE)==0)
-		{
-			/* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
-			dlt_ll_ts_type *old_ll_ts;
-			uint32_t old_max_entries;
+            dlt_user.dlt_ll_ts[i].injection_table = 0;
+            dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+            dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
+        }
+    }
+    else
+    {
+        if ((dlt_user.dlt_ll_ts_num_entries % DLT_USER_CONTEXT_ALLOC_SIZE) == 0)
+        {
+            /* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
+            dlt_ll_ts_type *old_ll_ts;
+            uint32_t old_max_entries;
 
-			old_ll_ts = dlt_user.dlt_ll_ts;
-			old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
+            old_ll_ts = dlt_user.dlt_ll_ts;
+            old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
 
-			dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries/DLT_USER_CONTEXT_ALLOC_SIZE)+1)*DLT_USER_CONTEXT_ALLOC_SIZE;
-			dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
-								 dlt_user.dlt_ll_ts_max_num_entries);
-			if (dlt_user.dlt_ll_ts==0)
-			{
-				dlt_user.dlt_ll_ts = old_ll_ts;
-				dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
-				DLT_SEM_FREE();
-				return DLT_RETURN_ERROR;
-			}
+            dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries / DLT_USER_CONTEXT_ALLOC_SIZE) + 1) * DLT_USER_CONTEXT_ALLOC_SIZE;
+            dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
+                                 dlt_user.dlt_ll_ts_max_num_entries);
+            if (dlt_user.dlt_ll_ts == 0)
+            {
+                dlt_user.dlt_ll_ts = old_ll_ts;
+                dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
+                DLT_SEM_FREE();
+                return DLT_RETURN_ERROR;
+            }
 
-			memcpy(dlt_user.dlt_ll_ts,old_ll_ts,sizeof(dlt_ll_ts_type)*dlt_user.dlt_ll_ts_num_entries);
-			free(old_ll_ts);
+            memcpy(dlt_user.dlt_ll_ts, old_ll_ts, sizeof(dlt_ll_ts_type) * dlt_user.dlt_ll_ts_num_entries);
+            free(old_ll_ts);
 
-			/* Initialize new entries */
-			for (i=dlt_user.dlt_ll_ts_num_entries;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
-			{
-				dlt_set_id(dlt_user.dlt_ll_ts[i].contextID,"");
+            /* Initialize new entries */
+            for (i = dlt_user.dlt_ll_ts_num_entries; i < dlt_user.dlt_ll_ts_max_num_entries; i++)
+            {
+                dlt_set_id(dlt_user.dlt_ll_ts[i].contextID, "");
 
-				/* At startup, logging and tracing is locally enabled */
-				/* the correct log level/status is set after received from daemon */
-				dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
-				dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+                /* At startup, logging and tracing is locally enabled */
+                /* the correct log level/status is set after received from daemon */
+                dlt_user.dlt_ll_ts[i].log_level    = DLT_USER_INITIAL_LOG_LEVEL;
+                dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
-				dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
-				dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+                dlt_user.dlt_ll_ts[i].log_level_ptr    = 0;
+                dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
 
-				dlt_user.dlt_ll_ts[i].context_description = 0;
+                dlt_user.dlt_ll_ts[i].context_description = 0;
 
-				dlt_user.dlt_ll_ts[i].injection_table = 0;
-				dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
-				dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
-			}
-		}
-	}
+                dlt_user.dlt_ll_ts[i].injection_table = 0;
+                dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+                dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
+            }
+        }
+    }
 
-	/* Store locally context id and context description */
-	dlt_set_id(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].contextID, contextid);
+    /* Store locally context id and context description */
+    dlt_set_id(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].contextID, contextid);
 
-	if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description!=0)
-	{
-		free(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description);
-	}
+    if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description != 0)
+    {
+        free(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description);
+    }
 
-	dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = 0;
+    dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = 0;
 
-	if (description!=0)
-	{
-		size_t desc_len = strlen(description);
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len+1);
-		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description == 0)
-		{
-			DLT_SEM_FREE();
-			return DLT_RETURN_ERROR;
-		}
+    if (description != 0)
+    {
+        size_t desc_len = strlen(description);
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description = malloc(desc_len + 1);
+        if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description == 0)
+        {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
 
-		strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len]='\0';
-	}
+        strncpy(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description, description, desc_len);
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description[desc_len] = '\0';
+    }
 
-	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
-	{
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr = malloc(sizeof(int8_t));
-		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
-		{
-			DLT_SEM_FREE();
-			return DLT_RETURN_ERROR;
-		}
-	}
-	if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
-	{
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr = malloc(sizeof(int8_t));
-		if(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
-		{
-			DLT_SEM_FREE();
-			return DLT_RETURN_ERROR;
-		}
-	}
+    if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+    {
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr = malloc(sizeof(int8_t));
+        if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr == 0)
+        {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+    if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+    {
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr = malloc(sizeof(int8_t));
+        if (dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr == 0)
+        {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
 
-	/* check if the log level is set in the environement */
-	envLogLevel = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, DLT_USER_LOG_LEVEL_NOT_SET);
-	if( envLogLevel!=DLT_USER_LOG_LEVEL_NOT_SET)
+    /* check if the log level is set in the environement */
+    envLogLevel = dlt_env_adjust_ll_from_env(&dlt_user.initial_ll_set, dlt_user.appID, contextid, DLT_USER_LOG_LEVEL_NOT_SET);
+    if (envLogLevel != DLT_USER_LOG_LEVEL_NOT_SET)
     {
         dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = envLogLevel;
         loglevel = envLogLevel;
     }
-	else if( loglevel != DLT_USER_LOG_LEVEL_NOT_SET )
-	{
-		 dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
-	}
+    else if (loglevel != DLT_USER_LOG_LEVEL_NOT_SET)
+    {
+         dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level = loglevel;
+    }
 
-	if (tracestatus!=DLT_USER_TRACE_STATUS_NOT_SET)
-	{
-		dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
-	}
+    if (tracestatus != DLT_USER_TRACE_STATUS_NOT_SET)
+    {
+        dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
+    }
 
-	/* Prepare transfer struct */
-	//dlt_set_id(log->appID, dlt_user.appID);
-	dlt_set_id(handle->contextID, contextid);
-	handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
+    /* Prepare transfer struct */
+    //dlt_set_id(log->appID, dlt_user.appID);
+    dlt_set_id(handle->contextID, contextid);
+    handle->log_level_pos = dlt_user.dlt_ll_ts_num_entries;
 
-	handle->log_level_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr;
-	handle->trace_status_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr;
+    handle->log_level_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr;
+    handle->trace_status_ptr = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr;
 
-	log.context_description = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description;
+    log.context_description = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].context_description;
 
-	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
-	*(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
+    *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level;
+    *(dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status_ptr) = dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].trace_status = tracestatus;
+    dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries].log_level_changed_callback = dlt_log_level_changed_callback;
 
-	log.log_level = loglevel;
-	log.trace_status =  tracestatus;
+    log.log_level = loglevel;
+    log.trace_status =  tracestatus;
 
-	dlt_user.dlt_ll_ts_num_entries++;
+    dlt_user.dlt_ll_ts_num_entries++;
 
-	DLT_SEM_FREE();
+    DLT_SEM_FREE();
 
-	return dlt_user_log_send_register_context(&log);
+    return dlt_user_log_send_register_context(&log);
+}
+
+DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus)
+{
+    return dlt_register_context_ll_ts_llccb(handle,
+                                            contextid,
+                                            description,
+                                            loglevel,
+                                            tracestatus,
+                                            NULL);
+
+}
+
+DltReturnValue dlt_register_context_llccb(DltContext *handle,
+                                          const char *contextid,
+                                          const char * description,
+                                          void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],
+                                                                                 uint8_t log_level,
+                                                                                 uint8_t trace_status))
+{
+    // check nullpointer
+    if(handle == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (!dlt_user_initialised)
+    {
+        if (dlt_init() < 0)
+        {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    DLT_SEM_LOCK();
+
+    if ((contextid == NULL) || (contextid[0] == '\0'))
+    {
+        DLT_SEM_FREE();
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    DLT_SEM_FREE();
+
+    return dlt_register_context_ll_ts_llccb(handle,
+                                            contextid,
+                                            description,
+                                            DLT_USER_LOG_LEVEL_NOT_SET,
+                                            DLT_USER_TRACE_STATUS_NOT_SET,
+                                            dlt_log_level_changed_callback);
 }
 
 DltReturnValue dlt_unregister_app(void)
@@ -2542,12 +2599,6 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
-                int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length))
-{
-    return dlt_register_injection_callback_with_id(handle, service_id, dlt_injection_callback, NULL);
-}
-
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
                 int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length, void *priv_data), void *priv)
 {
@@ -2645,8 +2696,16 @@ DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint3
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
+                int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length))
+{
+    return dlt_register_injection_callback_with_id(handle, service_id, dlt_injection_callback, NULL);
+}
+
 DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
-            void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status))
+            void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],
+                                                   uint8_t log_level,
+                                                   uint8_t trace_status))
 {
     DltContextData log;
     uint32_t i;
@@ -3297,7 +3356,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
     {
         dlt_user_log_write_string(&log, text);
         dlt_user_log_write_int(&log, data);
- 
+        
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
             return DLT_RETURN_ERROR;
