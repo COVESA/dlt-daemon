@@ -71,8 +71,7 @@ option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"            
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                          OFF)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
-set( DLT_USER "genivi" CACHE STRING
-    "Set user for process not run as root")
+set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
 
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                             OFF)
 option(WITH_DLT_COREDUMPHANDLER     "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"                   OFF)
