@@ -2163,7 +2163,7 @@ DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char
         /* allocating the buffer once and using it for all application receivers
          * by keeping allocated buffer in app_recv_buffer global handle
          */
-        *buffer = (char*)malloc(DLT_APP_RCV_BUF_MAX);
+        *buffer = (char*)malloc(DLT_RECEIVE_BUFSIZE);
         if (*buffer == NULL)
         {
             return DLT_RETURN_ERROR;
@@ -2172,7 +2172,7 @@ DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char
     receiver->lastBytesRcvd = 0;
     receiver->bytesRcvd = 0;
     receiver->totalBytesRcvd = 0;
-    receiver->buffersize = DLT_APP_RCV_BUF_MAX;
+    receiver->buffersize = DLT_RECEIVE_BUFSIZE;
     receiver->fd = fd;
     receiver->buffer = *buffer;
     receiver->backup_buf = NULL;

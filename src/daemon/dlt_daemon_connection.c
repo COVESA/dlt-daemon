@@ -229,7 +229,7 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
             #ifdef DLT_USE_UNIX_SOCKET_IPC
             dlt_receiver_init_unix_socket(ret, fd, &app_recv_buffer);
             #else
-            dlt_receiver_init(ret, fd, DLT_APP_RCV_BUF_MAX);
+            dlt_receiver_init(ret, fd, DLT_RECEIVE_BUFSIZE);
             #endif
         }
         break;
