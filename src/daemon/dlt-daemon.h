@@ -185,6 +185,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 void dlt_daemon_daemonize(int verbose);
+void dlt_daemon_exit_trigger();
 void dlt_daemon_signal_handler(int sig);
 int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *revc, int verbose);
