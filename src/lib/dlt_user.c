@@ -159,6 +159,7 @@ static DltReturnValue dlt_user_log_send_overflow(void);
 static void dlt_user_trace_network_segmented_thread(void *unused);
 static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
 static DltReturnValue dlt_user_queue_resend(void);
+static DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void* ptr2, size_t len2, void *ptr3, size_t len3);
 
 static int dlt_start_threads();
 static void dlt_stop_threads();
@@ -3984,34 +3985,12 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         /* store message in ringbuffer, if an error has occured */
         if ((ret!=DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
         {
-            DLT_SEM_LOCK();
-            if (ret == DLT_RETURN_PIPE_ERROR)
-            {
-                /* handle not open or pipe error */
-                   close(dlt_user.dlt_log_handle);
-                   dlt_user.dlt_log_handle = -1;
-            }
-
-            if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                                (unsigned char *)&(userheader), sizeof(DltUserHeader),
-                                msg.headerbuffer+sizeof(DltStorageHeader), msg.headersize-sizeof(DltStorageHeader),
-                                log->buffer, log->size) == DLT_RETURN_ERROR)
-            {
-                if(dlt_user.overflow_counter == 0)
-                {
-
-                    dlt_log(LOG_WARNING,"Buffer full! Messages will be discarded.\n");
-                }
-                ret = DLT_RETURN_BUFFER_FULL;
-            }
-
-            DLT_SEM_FREE();
-
-        	// Fail silenty if FIFO is not open
-            if((dlt_user.appID[0] != '\0') &&(dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
-            {
-                ;//dlt_log(LOG_WARNING, "dlt_user_log_send_log: Failed to queue resending.\n");
-            }
+            ret = dlt_user_log_out_error_handling(&(userheader),
+                                                  sizeof(DltUserHeader),
+                                                  msg.headerbuffer+sizeof(DltStorageHeader),
+                                                  msg.headersize-sizeof(DltStorageHeader),
+                                                  log->buffer,
+                                                  log->size);
         }
 
         switch (ret)
@@ -4110,24 +4089,12 @@ DltReturnValue dlt_user_log_send_register_application(void)
     /* store message in ringbuffer, if an error has occured */
     if (ret < DLT_RETURN_OK)
     {
-        DLT_SEM_LOCK();
-
-        if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                            (unsigned char *)&(userheader), sizeof(DltUserHeader),
-                            (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterApplication),
-                            (const unsigned char*)dlt_user.application_description, usercontext.description_length) == DLT_RETURN_ERROR)
-             {
-                    dlt_log(LOG_WARNING,"Storing message to history buffer failed! Message discarded.\n");
-                    DLT_SEM_FREE();
-                    return DLT_RETURN_ERROR;
-             }
-
-        DLT_SEM_FREE();
-
-        if(dlt_user_queue_resend() < DLT_RETURN_OK && dlt_user.dlt_log_handle >= 0)
-        {
-            ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_application: Failed to queue resending.\n");
-        }
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgRegisterApplication),
+                                               dlt_user.application_description,
+                                               usercontext.description_length);
     }
 
     return DLT_RETURN_OK;
@@ -4137,6 +4104,7 @@ DltReturnValue dlt_user_log_send_unregister_application(void)
 {
     DltUserHeader userheader;
     DltUserControlMsgUnregisterApplication usercontext;
+    DltReturnValue ret = DLT_RETURN_OK;
 
     if (dlt_user.appID[0]=='\0')
     {
@@ -4158,10 +4126,22 @@ DltReturnValue dlt_user_log_send_unregister_application(void)
         return DLT_RETURN_OK;
     }
 
-    return dlt_user_log_out2(dlt_user.dlt_log_handle,
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(usercontext), sizeof(DltUserControlMsgUnregisterApplication));
 
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+    {
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgUnregisterApplication),
+                                               NULL,
+                                               0);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
@@ -4223,24 +4203,12 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
     /* store message in ringbuffer, if an error has occured */
     if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
     {
-        DLT_SEM_LOCK();
-
-        if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                            (unsigned char *)&(userheader), sizeof(DltUserHeader),
-                            (const unsigned char*)&(usercontext), sizeof(DltUserControlMsgRegisterContext),
-                            (const unsigned char*)log->context_description, usercontext.description_length) == DLT_RETURN_ERROR)
-             {
-                    dlt_log(LOG_WARNING,"Storing message to history buffer failed! Message discarded.\n");
-                    DLT_SEM_FREE();
-                    return DLT_RETURN_ERROR;
-             }
-
-        DLT_SEM_FREE();
-
-        if ((dlt_user.appID[0] != '\0') && (dlt_user_queue_resend() < 0) && (dlt_user.dlt_log_handle >= 0))
-        {
-            ;//dlt_log(LOG_WARNING, "dlt_user_log_send_register_context: Failed to queue resending.\n");
-        }
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgRegisterContext),
+                                               log->context_description,
+                                               usercontext.description_length);
     }
 
     return DLT_RETURN_OK;
@@ -4251,6 +4219,7 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
 {
     DltUserHeader userheader;
     DltUserControlMsgUnregisterContext usercontext;
+    DltReturnValue ret;
 
     if (log == NULL)
     {
@@ -4283,17 +4252,31 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
         return DLT_RETURN_OK;
     }
 
-    return dlt_user_log_out2(dlt_user.dlt_log_handle,
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader),
                             sizeof(DltUserHeader),
                             &(usercontext),
                             sizeof(DltUserControlMsgUnregisterContext));
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+    {
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgUnregisterContext),
+                                               NULL,
+                                               0);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTraceStatusType tracestatus)
 {
     DltUserHeader userheader;
     DltUserControlMsgAppLogLevelTraceStatus usercontext;
+    DltReturnValue ret;
 
     if (loglevel < DLT_USER_LOG_LEVEL_NOT_SET || loglevel >= DLT_LOG_MAX)
     {
@@ -4342,16 +4325,29 @@ DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType logle
         return DLT_RETURN_OK;
     }
 
-    return dlt_user_log_out2(dlt_user.dlt_log_handle,
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(usercontext), sizeof(DltUserControlMsgAppLogLevelTraceStatus));
 
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+    {
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgAppLogLevelTraceStatus),
+                                               NULL,
+                                               0);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
 {
     DltUserHeader userheader;
     DltUserControlMsgLogMode logmode;
+    DltReturnValue ret;
 
     if (mode < DLT_USER_MODE_UNDEFINED || mode >= DLT_USER_MODE_MAX)
     {
@@ -4373,14 +4369,28 @@ DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
         return DLT_RETURN_OK;
     }
 
-    return dlt_user_log_out2(dlt_user.dlt_log_handle,
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                     &(userheader), sizeof(DltUserHeader),
                     &(logmode), sizeof(DltUserControlMsgLogMode));
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+    {
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(logmode),
+                                               sizeof(DltUserControlMsgLogMode),
+                                               NULL,
+                                               0);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_send_marker()
 {
     DltUserHeader userheader;
+    DltReturnValue ret;
 
     /* set userheader */
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
@@ -4394,8 +4404,21 @@ DltReturnValue dlt_user_log_send_marker()
     }
 
     /* log to FIFO */
-    return dlt_user_log_out2(dlt_user.dlt_log_handle,
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                     &(userheader), sizeof(DltUserHeader), 0, 0);
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+    {
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               NULL,
+                                               0,
+                                               NULL,
+                                               0);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log)
@@ -4725,13 +4748,14 @@ DltReturnValue dlt_user_log_resend_buffer(void)
     int size;
     DltReturnValue ret;
 
+    DLT_SEM_LOCK();
     if (dlt_user.appID[0]=='\0')
     {
+        DLT_SEM_FREE();
         return 0;
     }
 
     /* Send content of ringbuffer */
-    DLT_SEM_LOCK();
     count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
     DLT_SEM_FREE();
 
@@ -4790,6 +4814,12 @@ DltReturnValue dlt_user_log_resend_buffer(void)
             }
             else
             {
+                if (ret == DLT_RETURN_PIPE_ERROR)
+                {
+                    /* handle not open or pipe error */
+                    close(dlt_user.dlt_log_handle);
+                    dlt_user.dlt_log_handle = -1;
+                }
                 /* keep message in ringbuffer */
                 DLT_SEM_FREE();
                 return ret;
@@ -5065,4 +5095,30 @@ static void dlt_fork_child_fork_handler()
     dlt_free();
     /* the only thing that remains is the atexit-handler */
   }
+}
+
+DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void* ptr2, size_t len2, void *ptr3, size_t len3)
+{
+    int ret = DLT_RETURN_ERROR;
+    int msg_size = len1 + len2 + len3;
+
+    DLT_SEM_LOCK();
+    ret = dlt_buffer_check_size(&(dlt_user.startup_buffer), msg_size);
+    DLT_SEM_FREE();
+
+    DLT_SEM_LOCK();
+    if (dlt_buffer_push3(&(dlt_user.startup_buffer),
+                         ptr1, len1,
+                         ptr2, len2,
+                         ptr3, len3) == DLT_RETURN_ERROR)
+    {
+        if(dlt_user.overflow_counter == 0)
+        {
+            dlt_log(LOG_WARNING,"Buffer full! Messages will be discarded.\n");
+        }
+        ret = DLT_RETURN_BUFFER_FULL;
+    }
+    DLT_SEM_FREE();
+
+    return ret;
 }
