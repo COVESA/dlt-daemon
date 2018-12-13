@@ -2614,6 +2614,21 @@ void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsig
     }
 }
 
+int dlt_buffer_check_size(DltBuffer *buf, int needed)
+{
+    if (buf == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if ((buf->size + sizeof(DltBufferHead) + needed) > buf->max_size)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
 int dlt_buffer_increase_size(DltBuffer *buf)
 {
     DltBufferHead *head,*new_head;

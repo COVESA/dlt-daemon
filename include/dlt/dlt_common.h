@@ -1275,6 +1275,13 @@ extern "C"
     DltReturnValue dlt_buffer_free_dynamic(DltBuffer *buf);
 
     /**
+     * Check if message fits into buffer.
+     * @param buf Pointer to buffer structure
+     * @return DLT_RETURN_OK if enough space, DLT_RETURN_ERROR otherwise
+     */
+    DltReturnValue dlt_buffer_check_size(DltBuffer *buf, int needed);
+
+    /**
      * Write one entry to ringbuffer
      * @param buf Pointer to ringbuffer structure
      * @param data Pointer to data to be written to ringbuffer
