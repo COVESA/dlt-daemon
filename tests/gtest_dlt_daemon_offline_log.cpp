@@ -32,8 +32,8 @@ extern "C"
 #define DLT_DAEMON_BLOCKING_TEST 1
 #endif
 
-/* Begin Method: dlt_logstorage::t_dlt_logstorage_hash_add*/
-TEST(t_dlt_logstorage_hash_add, normal)
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
+TEST(t_dlt_logstorage_list_add, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
@@ -67,8 +67,8 @@ TEST(t_dlt_logstorage_list_add_config, normal)
     }
 }
 
-/* Begin Method: dlt_logstorage::t_dlt_logstorage_hash_destroy*/
-TEST(t_dlt_logstorage_hash_destroy, normal)
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_list_destroy*/
+TEST(t_dlt_logstorage_list_destroy, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
@@ -85,8 +85,8 @@ TEST(t_dlt_logstorage_hash_destroy, normal)
     }
 }
 
-/* Begin Method: dlt_logstorage::t_dlt_logstorage_hash_find*/
-TEST(t_dlt_logstorage_hash_find, normal)
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_list_find*/
+TEST(t_dlt_logstorage_list_find, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
@@ -1196,6 +1196,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     char ecu[] = "ECU1";
     char apid[] = "1234";
     char ctid[] = "5678";
+    char file_name[] = "file_name";
     char key[] = "ECU1:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
@@ -1208,6 +1209,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecu;
+    value.file_name = file_name;
     DltLogStorage storage_handle;
 
     daemon_local.RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -1246,6 +1248,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     char ecu[] = "key";
     char apid[] = "1234";
     char ctid[] = "5678";
+    char file_name[] = "file_name";
     char key[] = "key:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
@@ -1258,6 +1261,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecu;
+    value.file_name = file_name;
     DltLogStorage storage_handle;
 
     daemon_local.RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -1310,6 +1314,7 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     char apid[] = "1234";
     char ctid[] = "5678";
     char ecuid[] = "12";
+    char file_name[] = "file_name";
     DltDaemonFlags uconfig;
     uconfig.offlineLogstorageTimestamp = 1;
     uconfig.offlineLogstorageDelimiter = '/';
@@ -1327,6 +1332,7 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
+    value.file_name = file_name;
     char key0[] = "1234:\000\000\000\000";
     char key1[] = ":5678\000\000\000\000";
     char key2[] = "1234:5678";
