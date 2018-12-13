@@ -1360,6 +1360,20 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 }
 
+void dlt_daemon_exit_trigger()
+{
+    char tmp[PATH_MAX + 1] = {0};
+
+    snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    (void)unlink(tmp);
+
+    snprintf(tmp, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
+    (void)unlink(tmp);
+
+    /* stop event loop */
+    g_exit = -1;
+}
+
 void dlt_daemon_signal_handler(int sig)
 {
     g_signo = sig;
@@ -1370,19 +1384,10 @@ void dlt_daemon_signal_handler(int sig)
     case SIGINT:
     case SIGQUIT:
     {
-        /* Try to delete existing pipe, ignore result of unlink() */
-        char tmp[PATH_MAX + 1];
-        snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
-        tmp[PATH_MAX] = 0;
-        unlink(tmp);
-
-        /* Try to delete lock file, ignore result of unlink() */
-        snprintf(tmp, PATH_MAX, "%s/%s", dltFifoBaseDir, DLT_DAEMON_LOCK_FILE);
-        tmp[PATH_MAX] = 0;
-        unlink(tmp);
-
-        /* stop event loop */
-        g_exit = -1;
+        /* finalize the server */
+        dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
+                 strsignal(sig));
+        dlt_daemon_exit_trigger();
         break;
     }
     default:
