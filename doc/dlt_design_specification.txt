@@ -42,8 +42,8 @@ The DLT client can send control messages to the daemon, e.g. to set individual l
 The DLT daemon is the central component between the DLT clients and one or more applications using the DLT user library.
 
 ==== Overview
-The DLT daemon communicates with the DLT clients over TCP/IP connections or over a serial line (the message format is specified in the DLT AUTOSAR Standard), with the applications using the DLT user library over named pipes (FIFOs). More details concerning the exchanged user messages and their content can be found in chapter chapter 6.3.
-The main time, the DLT daemon executes a main loop, in which file and socket descriptors are watched (via epoll()). If a message is received, the DLT daemon reacts. Additionally, a thread is implemented, which if enabled sends each second a keep-alive message to all connected DLT clients.
+The DLT daemon communicates with the DLT clients over TCP/IP connections or over a serial line (the message format is specified in the DLT AUTOSAR Standard), with the applications using the DLT user library over named pipes (FIFOs) or UNIX_SOCKET based on compile time configuration. More details concerning the exchanged user messages and their content can be found in chapter chapter 6.3.
+The main time, the DLT daemon executes a main loop, in which file and socket descriptors are watched (via poll()). If a message is received, the DLT daemon reacts. Additionally, a thread is implemented, which if enabled sends each second a keep-alive message to all connected DLT clients.
 Here is a rough schematic, how the DLT daemon is structured:
 
 .DLT Overview
@@ -61,7 +61,7 @@ During initialization of the DLT daemon, the following steps occur:
 ** Setup signal handler
 ** Open DLT output file, if specified
 * After phase 1, the daemon initializes the connection handling:
-** Delete, create and open its own named FIFO /tmp/dlt
+** Delete, create and open its own named FIFO /tmp/dlt or UNIX_SOCKET
 ** Open, bind and listen to TCP socket for incoming connections
 ** Setup and open serial device, if specified
 * Then the daemon enters initialization phase 2:
@@ -77,12 +77,12 @@ During initialization of the DLT daemon, the following steps occur:
 ==== Main loop
 In the main loop, the following things occur:
 
-* Wait for event on the incoming named pipe, the TCP connections (the one connection for new connections, and all TCP connections from clients), and possibly on the serial device, via epoll() call.
+* Wait for event on the incoming named pipe or socket, the TCP connections (the one connection for new connections, and all TCP connections from clients), and possibly on the serial device, via poll() call.
 * Distinguish from which socket/file descriptor the connection came, and handle them:
 ** Event from TCP server socket (New DLT client to DLT daemon):
 *** Create new TCP connection
 *** If the newly created connection is the first TCP connection, send all log messages already stored in ring buffer to DLT client.
-** Event from incoming named pipe (DLT user library to DLT daemon):
+** Event from incoming named pipe or unix socket(DLT user library to DLT daemon):
 *** Use dlt receiver to read data
 *** As long as there are DLT messages available in received data:
 **** Handle user message:
@@ -184,7 +184,7 @@ During receiver thread within the DLT user library checks for newly received mes
 
 ==== Overflow handling
 
-If the named pipe of the DLT daemon is full, an overflow flag is set and the message stored in a ring buffer. The next time, a message could be send to the DLT daemon, an overflow message is send first, then the contents of the ring buffer. If sending of this message was possible, the overflow flag is reset.
+If the named pipe/socket of the DLT daemon is full, an overflow flag is set and the message stored in a ring buffer. The next time, a message could be send to the DLT daemon, an overflow message is send first, then the contents of the ring buffer. If sending of this message was possible, the overflow flag is reset.
 
 ==== Send log message
 
@@ -209,7 +209,7 @@ During sending of a log message, the following things occur:
 ** Check for overflow flag and try to send overflow message.
 ** Try to send message to DLT daemon, and check for return values. This can be:
 *** data could not be written
-*** handle not open or pipe error
+*** handle not open or pipe/socket error
 *** other error condition
 *** no error, all right
 ** If sending failed, put this message in the ring buffer for later sending.
@@ -245,9 +245,9 @@ During registration of a callback function for a injection message, the followin
 
 === Communication between DLT daemon and DLT user library
 
-The communication mechanism used between DLT daemon and DLT user library are named pipes (FIFOs).
-During startup of the DLT daemon, the DLT daemon creates and opens one named pipe called /tmp/dlt. If a DLT user application using the DLT user library wants to send something to the DLT daemon this pipe is used.
-During startup of the DLT user application using the DLT user library, it creates and opens a named pipe called /tmp/dlt<PID>, where <PID> is the process id of the DLT user application. If the DLT daemon wants to send something to the DLT user application, this specific named pipe is used.
+The communication mechanism(IPC) used between DLT daemon and DLT user library are named pipes (FIFOs) or UNIX_SOCKETS (based on compile time configuration).
+During startup of the DLT daemon, the DLT daemon creates and opens the IPC on configured path. If a DLT user application using the DLT user library wants to send something to the DLT daemon this IPC is used.
+During startup of the DLT user application using the DLT user library, it creates and opens the same IPC (a named pipe called /tmp/dlt<PID>, where <PID> is the process id of the DLT user application or an UNIX_SOCKET). If the DLT daemon wants to send something to the DLT user application, this IPC is used.
 The exchanged messages are described in the chapter 7.1.
 
 === Place of message creation
@@ -516,8 +516,8 @@ The following table shows a top level view of the available Git repositories:
 [options="header"]
 |==============================================================================================
 | Directory | Description
-| dlt | | DLT Daemon and Library implementation; command line utilities, examples and test programs
-| dlt_viewer | | DLT Client GUI (DLT Viewer): QT based implementation
+| dlt | DLT Daemon and Library implementation; command line utilities, examples and test programs
+| dlt_viewer | DLT Client GUI (DLT Viewer): QT based implementation
 |==============================================================================================
 
 As this document has the focus on the DLT Daemon and the DLT user library, only the "dlt" directory is introduced in more detail:
@@ -525,19 +525,19 @@ As this document has the focus on the DLT Daemon and the DLT user library, only 
 [options="header"]
 |==============================================================================================
 | Directory | Description
-| doc | | Documentation
-| include | | Include files, installed on target
-| package | | Packaging support files
-| src | | Source Code
-| src | shared | Shared source code (between DLT daemon and DLT user library)
-| src | adaptor | Adaptors to DLT daemon:dlt-adaptor-stdin (for connection over stdin) dlt-adaptor-udp (for connection over UDP)
-| src | console | Console utilities: dlt-receive, dlt-convert, and dlt-sortbytimestamp
-| src | daemon | DLT Daemon
-| src | example | Examples for usage of the DLT user library:dlt-example-user (Macro IF) anddlt-example-user-func (Function IF) andwintestclient (MS Windows based test client)
-| src | lib | DLT library functions
-| src | tests | Test programs:dlt-test-client and dlt-test-user for automatic tests, dlt-test-stress for stress tests, dlt-test-internal for internal tests
-| src | winclientlib | MS Windows implementation of a client library
-| testscripts | | Several supporting scripts
+| doc | Documentation
+| include | Include files, installed on target
+| package | Packaging support files
+| src | Source Code
+| src/shared | Shared source code (between DLT daemon and DLT user library)
+| src/adaptor | Adaptors to DLT daemon:dlt-adaptor-stdin (for connection over stdin) dlt-adaptor-udp (for connection over UDP)
+| src/console | Console utilities: dlt-receive, dlt-convert, and dlt-sortbytimestamp
+| src/daemon | DLT Daemon
+| src/example | Examples for usage of the DLT user library:dlt-example-user (Macro IF) anddlt-example-user-func (Function IF) andwintestclient (MS Windows based test client)
+| src/lib | DLT library functions
+| src/tests | Test programs:dlt-test-client and dlt-test-user for automatic tests, dlt-test-stress for stress tests, dlt-test-internal for internal tests
+| src/winclientlib | MS Windows implementation of a client library
+| testscripts | Several supporting scripts
 |==============================================================================================
 
 The DLT daemon implementation uses the following files, besides DLT functions from files from the shared directory:
@@ -636,7 +636,7 @@ The following important structures are used in the DLT Daemon and DLT User Libra
 ** C-only implementation for the DLT daemon and the DLT user library
 ** Implementation of common functions, which can be used in a command line utility as well as in an Graphical UI
 ** Implementation of C+\+ like classes in C, see dlt_common.c and dlt_common.h
-* The current implementation of the DLT daemon and DLT user library is only tested with gcc under Ubuntu 9.10/10.04 on Intel HW.
+* The current implementation of the DLT daemon and DLT user library is only tested with gcc under Ubuntu 16.04 on Intel HW.
 * It is assumed that packed structs are always stored in memory in the order specified within the packed struct.
 * The implementation is multithread safe.
 * Initialize DLT application and contexts, then forking and using the forked process, will lead to unclear behavior (or in worst case to a crash), as the forked process uses another process id as the parent process. Instead, initialize the DLT application and contexts in the forked process.

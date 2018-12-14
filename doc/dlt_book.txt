@@ -53,10 +53,6 @@ include::dlt_filetransfer.txt[]
 
 include::dlt_extended_network_trace.txt[]
 
-include::dlt_offline_logstorage.txt[]
-
-include::dlt_multinode.txt[]
-
 include::dlt_kpi.txt[]
 
 include::dlt_cdh.txt[]
@@ -85,10 +81,3 @@ include::dlt-receive.1.txt[]
 include::dlt-logstorage-ctrl.1.txt[]
 
 :leveloffset: 0
-
-Release Notes
--------------
-
-:leveloffset: 2
-
-include::../ReleaseNotes.txt[]

@@ -1,21 +1,18 @@
-Diagnostic Log and Trace  - Release Notes
-=========================================
-Christoph Lipka <clipka@de.adit-jv.com>
-Manikandan Chockalingam <Manikandan.Chockalingam@in.bosch.com>
-Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
+# Diagnostic Log and Trace  - Release Notes
 
-Version
--------
+Back to [README.md](../README.md)
+
+## Version
+
 2.17.0 STABLE
 
-Changes
--------
+## Changes
 
-2.17.0
+### 2.17.0
   * Fix for initialization of buffer settings in DLT user library.
-  * fix various memory leaks 
+  * fix various memory leaks
   * some-minor-fixes
-  * Minor fixes: corrected typo in CMakeLists.txt - WTIH_DLT_ADAPTOR, removed character from merge 
+  * Minor fixes: corrected typo in CMakeLists.txt - WTIH_DLT_ADAPTOR, removed character from merge
   * Data stuck in receiver buffer when dlt_daemon_user_send_log_level() fails
   * Update dlt_user.h
   * Add short explanation for DLT log level
@@ -23,13 +20,13 @@ Changes
   * journald adaptor: test with sudo privileges
   * cmake: fix unit tests compilation with systemd
   * Input parameter check & Error message modification
-  * Tell cmake to use README.md instead of README to fix doc generation
+  * Tell cmake to use [README.md](README.md) instead of README to fix doc generation
   * dlt-system-process-handling: fix warning
   * dlt_daemon_connection_types: fix build warnings
   * Updated README
   * dlt-adaptor-udp, dlt-adaptor-stdin: implement get of verbosity level from input
   * Added Description in dlt-system.conf
-  * dlt-client: fix dlt_client_cleanup memory handling 
+  * dlt-client: fix dlt_client_cleanup memory handling
   * CMake Option: Trigger segmentation fault in case of FATAL log
   * Daemon connection handling fixes
   * Added Description in dlt-system.conf
@@ -42,7 +39,7 @@ Changes
   * Added missing build steps to INSTALL
   * pkg-config: fix library directory.
 
-2.16.0
+### 2.16.0
   * doc: Documenatation update
   * Systemd-journal-test: Add WITH_DLT_UNIT_TEST flag when building sources
   * Smoketest: Offline Logstorage
@@ -73,7 +70,7 @@ Changes
   * Fix: File name is broken when file is transferred on 64 bit OS.
   * Fix: Memory leak issue in dlt-dbus
   * Add dlt_user_is_logLevel_enabled API
-  * README.md formatting changes
+  * [README.md](README.md) formatting changes
   * Adding GitHub flavored markdown for README.
   * Fixed D-Bus tracing not working anymore
   * Fixed not working default log level.
@@ -102,7 +99,7 @@ Changes
   * DLT_RETURN_USER_BUFFER_FULL is returned when user buffer full
   * Revert truncation of string or raw block
 
-2.15.0
+### 2.15.0
 
   * Fixed bug with truncation of string or raw block
   * Updated man pages and README
@@ -117,12 +114,12 @@ Changes
   * Added option to specify user for non-root processes
   * Added dlt-kpi component to log various KPI information to dlt-daemon
 
-2.14.1
+### 2.14.1
 
   * MultiNode: Reconnection after connection loss
   * Fix injection message handling
 
-2.14.0
+### 2.14.0
 
   * Fix fork()-handler in libdlt
   * Set default log-levels in dlt.conf
@@ -140,7 +137,7 @@ Changes
   * Event handling has been reworked in order to use epoll and restructure the code
   * Fixed include paths in dlt_user_manual.txt and dlt_cheatsheet.txt
 
-2.13.0
+### 2.13.0
 
   * Added core dump handler code
   * Purged all warnings for -Wall -Wextra with gcc 4.9.1
@@ -165,7 +162,7 @@ Changes
   * Fixed file permissions
   * Added offline logstorage implementation which can be used instead of the already available offline trace functionality
 
-2.12.1
+### 2.12.1
 
   * Removed all trailing whitespaces
   * Replaced all tabs with spaces in all files in include folder
@@ -175,7 +172,7 @@ Changes
   * Rework of unit tests
   * Fix installation paths on x86_64 (lib64 instead of lib)
 
-2.12.0
+### 2.12.0
 
    * Added unit and functional tests
    * Fixed copyright doxygen comments
@@ -212,8 +209,7 @@ Changes
    * Added new API to send marker message from application.
    * New Callback function in DLT library, called when log level of context is changed
 
-
-2.11.0
+### 2.11.0
 
    * New macros for Format of Hex and Binary.
    * Enable dbus trace when adaptor starts up.
@@ -228,7 +224,7 @@ Changes
    * Send extended header in non verbose mode by default and add new API to change setting.
    * Make daemon buffer size configurable
 
-2.10.0
+### 2.10.0
 
    * Bug 184 - /tmp/dltpipes directory does not exist before dlt-daemon is started, logging disabled
    * Updated authors information.
@@ -271,7 +267,7 @@ Changes
    * Fix: Systemd Journal Adapter provides corrupted output.
    * Fix: Install Example service file only when example enabled
 
-2.9.1
+### 2.9.1
 
    * Implementation of command line tool dlt-control.
    * Fix file transfer bug.
@@ -297,7 +293,7 @@ Changes
    * Added creation date and a simple hash on the file name for to improve the uniqueness of getFileSerialNumber
    * File Transfer: improved robustness in case of restarted ECU/dlt-system with interrupted transfers
 
-2.9.0
+### 2.9.0
 
    * Changed documentation and man pages into asciidoc format.
    * Increased buffer sizes for DLT user library and DLT daemon
@@ -305,7 +301,7 @@ Changes
    * [GDLT-137]: Automatically try resending of user buffer after FIFO full
    * [GSWD-85]:  Added authors file
 
-2.8.0
+### 2.8.0
 
    * [GDLT-115]: Encapsulate user macros
    * Fix register app and register context was not stored in buffer when FIFO is full. Other controll messages still not saved in buffer.
@@ -313,7 +309,7 @@ Changes
    * Do not register appliction again, if already registered.
    * Fixed filetransfer not checking buffer fill level.
 
-2.7.0
+### 2.7.0
 
    * [GDLT-24] Fixing compiler warnings
    * [GDLT-94] Optional sending periodic software version messages. See man pages for more informations
@@ -323,12 +319,12 @@ Changes
    * [GDLT-90] Optional: systemd watchdog concept in dlt-system and dlt-daemon
    * [GDLT-67] Re-implemented dlt-system. Read full commit message for more information
 
-2.6.2
+### 2.6.2
 
    * [GDLT-89] Fixed daemon doesn't sent the persistent log level
    * [GDLT-88] Fixed wrong initalization order using offline trace function
 
-2.6.1
+### 2.6.1
 
    * Add _GNU_SOURCE Definition to be able to use O_CLOEXEC
    * Added important SEM_FREE in the daemon and closing fd in the filetransfer
@@ -342,7 +338,7 @@ Changes
    * [GDLT-47] Avoid discarding old contexts if no new memory can be allocate
    * [GDLT-69] Fixed bug in dlt-test-multi-process shares context between threads
 
-2.6.0
+### 2.6.0
 
    * [GDLT-75] Use old style directory check on startup
    * [GENDLT-21] Move mcnt from DltContextData to DltContext
@@ -372,11 +368,11 @@ Changes
    * [GDLT-2] zlib based compression for dlt-system
    * Cleaned some warnings generated from removing stale old code
 
-2.5.2
+### 2.5.2
 
    * Change to Mozilla Public License Version 2.0
 
-2.5.1
+### 2.5.1
 
    * Fixed bug with comparinson between signed and unsigned integer and protection for a buffer overflow.
    * Modified library for new test cases to corrupt data - related to the bug fix for testing signed and unsigned integer
@@ -384,7 +380,7 @@ Changes
    * Replaced dlt-test-filetransfer-image.png with an own created image
    * [GENDLT-21] Fixed bug: Message Counter (MCNT) should be increased but is always 0
 
-2.5.0
+### 2.5.0
 
    * [GDLT-53] Man pages installation included
    * .cproject and .project file for Eclipse included
@@ -398,7 +394,7 @@ Changes
    * [GDLT-35] Compile warnings fixed
    * [GSW-137] Wrong include gives error on compailing against dlt fixed
 
-2.4.2
+### 2.4.2
 
    * Added dynamic increasable ringbuffers to user lib and daemon.
    * dlt-system filetransfer now recovers when file is deleted during filetransfer.
@@ -408,60 +404,60 @@ Changes
    * Fixed buffer overflow problem in buffer library.
    * Disabled share memory by default - disabled completely shared memory if not enabled.
 
-2.4.1
+### 2.4.1
 
-    * Added dynamic increasable ringbuffers to user lib and dlt-daemon.
+   * Added dynamic increasable ringbuffers to user lib and dlt-daemon.
     * Created abstraction of shm buffer management.
     * dlt-system filetransfer now recovers when file is deleted during filetransfer.
     * Added check of file size when starting and deleting files during filetransfer.
     * Added check of shm buffer availability when push to shm.
 
-2.4.1
+### 2.4.1
 
-    * Added internal logging facility to stdout, syslog or local file, configurable in configuration file.
-    * Added deamonise and signal handlers to dlt-system.
-    * Added manual pages.
-    * Added new API dlt_check_library_version() function.
-    * Fifo or SHM mode can be changed by compiler switch.
-    * Replaced SHM implementation.
-    * Fixed shared memory problem in DLT library during startup, if application is started before daemon.
-    * Fixed syslog adapter in dlt-system.
-    * Reverted API changes in dlt_register_app() function.
-    * DLT user library does not set the stack size of the receiver thread anymore.
+   * Added internal logging facility to stdout, syslog or local file, configurable in configuration file.
+  * Added deamonise and signal handlers to dlt-system.
+  * Added manual pages.
+  * Added new API dlt_check_library_version() function.
+  * Fifo or SHM mode can be changed by compiler switch.
+  * Replaced SHM implementation.
+  * Fixed shared memory problem in DLT library during startup, if application is started before daemon.
+  * Fixed syslog adapter in dlt-system.
+  * Reverted API changes in dlt_register_app() function.
+  * DLT user library does not set the stack size of the receiver thread anymore.
 
-2.4.0
+### 2.4.0
 
-    * New config files /etc/dlt.conf and /etc/dlt-system.conf must be adapted to the needs
-    * New DLT user lib API dlt_get_log_state() to get DLT client state
-    * New DLT user lib API to manage flow control (needed for bulk data logging)
-    * New DLT user lib API dlt_set_log_mode() to enable/disable internal/external trace
-    * New application dlt-system (filtransfer, proc file system logger,syslog udp adapter included)
-    * [GSW-66] File transfer over DLT.
-    * [GSW-43] Performance improvement for bulk data over DLT.
-    * [GSW-61] Replace command line parameter by configuration file
-    * [GSW-13] Support for keep-alive messages as configuration parameter
-    * [GSW-60] Extended offline DLT Trace memory handling.
-    * Removed filter implementation
-	
-2.3.0
+  * New config files /etc/dlt.conf and /etc/dlt-system.conf must be adapted to the needs
+  * New DLT user lib API dlt_get_log_state() to get DLT client state
+  * New DLT user lib API to manage flow control (needed for bulk data logging)
+  * New DLT user lib API dlt_set_log_mode() to enable/disable internal/external trace
+  * New application dlt-system (filtransfer, proc file system logger,syslog udp adapter included)
+  * [GSW-66] File transfer over DLT.
+  * [GSW-43] Performance improvement for bulk data over DLT.
+  * [GSW-61] Replace command line parameter by configuration file
+  * [GSW-13] Support for keep-alive messages as configuration parameter
+  * [GSW-60] Extended offline DLT Trace memory handling.
+  * Removed filter implementation
 
-    * [GSW-16] Systemd configuration for syslog to DLT dapater
-    * [GSW-62] DLT Library version check
-    * [GSW-28] Directory where persistent data is stored is not configurable
-    * [GSW-59] Statically allocated large array
-    * Added init script for Ubuntu
-    * Optional adding of gprof compile flags
-    * sprintf with float64 fails on ARM platform; disabled this function on QRM platform.
+### 2.3.0
 
-2.2.0
+  * [GSW-16] Systemd configuration for syslog to DLT dapater
+  * [GSW-62] DLT Library version check
+  * [GSW-28] Directory where persistent data is stored is not configurable
+  * [GSW-59] Statically allocated large array
+  * Added init script for Ubuntu
+  * Optional adding of gprof compile flags
+  * sprintf with float64 fails on ARM platform; disabled this function on QRM platform.
 
-    * Moved build process completely to cmake
-    * Added commandline parameter -u to set ring buffer size
-    * Reduced cpu consumption needed by applications using DLT library
-    * Increased default ringbuffer size to 10024 bytes
-    * Changed delay in receiver routine to 100ms
+### 2.2.0
 
-2.1.0
+  * Moved build process completely to cmake
+  * Added commandline parameter -u to set ring buffer size
+  * Reduced cpu consumption needed by applications using DLT library
+  * Increased default ringbuffer size to 10024 bytes
+  * Changed delay in receiver routine to 100ms
+
+### 2.1.0
 
  * DLT Viewer (QT)
     * New dlt viewer (QT-based) implementated
@@ -497,7 +493,7 @@ Changes
     * DLT test programs: Fixed minor bug in dlt-test-user, test3f: Wrong counter was used
     * Removed DLT_LOG calls in injection functions due to problems (application hangs)
 
-2.0.5
+### 2.0.5
 
  * DLT viewer:
 	* The default log level is now shown, if already known
@@ -521,7 +517,7 @@ Changes
 		* Unnecessary functions removed
  * General:
 	* Moved definition of struct DltUser from dlt_user_private.h to dlt_user.h
-	* dlt.h includes now dlt_common.h	
+	* dlt.h includes now dlt_common.h
 	* Extended dlt-test-user and dlt-test-client applications
  * DLT daemon/DLT library: Fixed bug in Filter Delete
  * DLT daemon: Fixed bug in dlt daemon which leads to a crash, when starting/stoping application, then sending
@@ -531,7 +527,7 @@ Changes
  * DLT library: Fixed bug in send function
  * DLT viewer: Fixed bug in set default log level
 
-2.0.4
+### 2.0.4
 
  * License has changed from ADRLPD to ADRLRM
  * DLT viewer:
@@ -563,7 +559,7 @@ Changes
  * Added -lrt to package config file
  * Resolved dependency from dlt_client.h to dlt_common.h -> dlt_common.h is now public
 
-2.0.3
+### 2.0.3
 
  * DLT viewer:
 	* Reduced load if idle
@@ -597,7 +593,7 @@ Changes
  * General: Fixed parsing and printing of MOST messages
  * Several small bugs fixed
 
-2.0.2
+### 2.0.2
 
  * DLT viewer:
 	* Showing timestamp
@@ -630,13 +626,12 @@ Changes
 	* Fixed writing and reading of locally created dlt files
 	* Several smaller bugs fixed
 
-2.0.1
+### 2.0.1
 
  * Full support for serial connection between DLT daemon and DLT Viewer
  * Several small bugs fixed in DLT Viewer
 
-2.0.0
+### 2.0.0
 
  * Initial Release of new DLT daemon Version 2 including the new DLT Client DLT Viewer
  * Initial Release
-
