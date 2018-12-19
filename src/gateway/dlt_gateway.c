@@ -54,7 +54,7 @@
  *
  * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
 DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
@@ -95,9 +95,10 @@ DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *
  *
  * @param con     DltGatewayConnection to be updated
  * @param value   string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
+	                                         char *value)
 {
     int tmp = -1;
 
@@ -128,9 +129,10 @@ DLT_STATIC int dlt_gateway_check_port(DltGatewayConnection *con, char *value)
  *
  * @param con     DltGatewayConnection to be updated
  * @param value   string to be used as ECU identifier
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_ecu(DltGatewayConnection *con,
+	                                        char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -153,10 +155,10 @@ DLT_STATIC int dlt_gateway_check_ecu(DltGatewayConnection *con, char *value)
  *
  * @param con     DltGatewayConnection to be updated
  * @param value   string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
-                                             char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
+                                                            char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -187,9 +189,10 @@ DLT_STATIC int dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
  *
  * @param con     DltGatewayConnection to be updated
  * @param value   string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
+	                                            char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -212,9 +215,10 @@ DLT_STATIC int dlt_gateway_check_timeout(DltGatewayConnection *con, char *value)
  *
  * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection *con,
+	                                                char *value)
 {
     if ((con == NULL) || (value == NULL))
     {
@@ -231,9 +235,9 @@ DLT_STATIC int dlt_gateway_check_send_serial(DltGatewayConnection *con, char *va
  * Allocate passive control messages
  *
  * @param con   DltGatewayConnection to be updated
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
+DLT_STATIC DltReturnValue dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
 {
     if (con == NULL)
     {
@@ -274,10 +278,10 @@ DLT_STATIC int dlt_gateway_allocate_control_messages(DltGatewayConnection *con)
  *
  * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
-                                              char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnection *con,
+                                                             char *value)
 {
     /* list of allowed clients given */
     char *token = NULL;
@@ -349,10 +353,11 @@ DLT_STATIC int dlt_gateway_check_control_messages(DltGatewayConnection *con,
  *
  * @param con   DltGatewayConnection to be updated
  * @param value string to be tested
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
-                                              char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
+	                                            DltGatewayConnection *con,
+                                                    char *value)
 {
     char *token = NULL;
     char *rest = NULL;
@@ -530,12 +535,12 @@ DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] =
  * @param c     DltGatewayConnection
  * @param key   DltGatwayConnection property
  * @param value specified property value from configuration file
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_check_param(DltGateway *gateway,
-                                   DltGatewayConnection *con,
-                                   DltGatewayConfType ctype,
-                                   char *value)
+DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
+                                                  DltGatewayConnection *con,
+                                                  DltGatewayConfType ctype,
+                                                  char *value)
 {
     if ((gateway == NULL) || (con == NULL) || (value == NULL))
     {
@@ -1030,13 +1035,13 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
  * @param msg             DltMessage
  * @param req             1 if requested from gateway, 0 otherwise
  * @param verbose verbose flag
- * @return 0 on success, -1 otherwise
+ * @return Value from DltReturnValue enum
  */
-DLT_STATIC int dlt_gateway_parse_get_log_info(DltDaemon *daemon,
-                                          char *ecu,
-                                          DltMessage *msg,
-                                          int req,
-                                          int verbose)
+DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
+                                                         char *ecu,
+                                                         DltMessage *msg,
+                                                         int req,
+                                                         int verbose)
 {
     char resp_text[DLT_RECEIVE_BUFSIZE] = {'\0'};
     DltServiceGetLogInfoResponse *resp = NULL;

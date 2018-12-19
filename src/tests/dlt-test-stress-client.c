@@ -163,6 +163,9 @@ int main(int argc, char* argv[])
     int c,i;
     int index;
 
+    /* Initialize dltclient */
+    memset(&dltclient, 0x0, sizeof(DltClient));
+
     /* Initialize dltdata */
     dltdata.aflag = 0;
     dltdata.sflag = 0;

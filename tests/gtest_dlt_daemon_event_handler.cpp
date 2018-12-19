@@ -617,11 +617,11 @@ int connectServer(void)
     portno = 8080;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server = gethostbyname("127.0.0.1");
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
+    memcpy((char *)&serv_addr.sin_addr.s_addr,
+           (char *)server->h_addr,
+           server->h_length);
     serv_addr.sin_port = htons(portno);
 
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
@@ -703,7 +703,7 @@ int main(int argc, char **argv)
                 return -1;
             }
 
-            bzero(buffer, 256);
+            memset(buffer, 0, 256);
             (void)(read(newsockfd[i - 1], buffer, 255) + 1); /* just ignore result */
             i--;
         }

@@ -1,6 +1,6 @@
 /**
  * @licence app begin@
- * Copyright (C) 2017 Advanced Driver Information Technology.
+ * Copyright (C) 2018 Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
@@ -12,7 +12,7 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *
- * \author Aditya Paluri <venkataaditya.paluri@in.bosch.com> ADIT 2017
+ * \author Aditya Paluri <venkataaditya.paluri@in.bosch.com> ADIT 2018
  *
  * \file: dlt_daemon_offline_logstorage_internal.h
  * For further information see http://www.genivi.org/.
@@ -50,7 +50,10 @@
 #ifndef DLT_DAEMON_OFFLINE_LOGSTORAGE_INTERNAL_H
 #define DLT_DAEMON_OFFLINE_LOGSTORAGE_INTERNAL_H
 
-DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctxid, char *ecuid);
+DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key,
+                                                   char *appid,
+                                                   char *ctxid,
+                                                   char *ecuid);
 
 DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
@@ -68,7 +71,7 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              int curr_log_level,
                                              int verbose);
 
-int dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
+DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
                                            char *key,
                                            int curr_log_level,

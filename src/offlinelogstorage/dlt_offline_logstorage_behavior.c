@@ -205,9 +205,8 @@ void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head)
  * @param file_config   User configurations for log file
  * @return index on success, -1 if no index is found
  */
-unsigned int dlt_logstorage_get_idx_of_log_file(
-    DltLogStorageUserConfig *file_config,
-    char *file)
+unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
+                                                char *file)
 {
     unsigned int idx = -1;
     char *endptr;

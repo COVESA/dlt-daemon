@@ -1064,15 +1064,10 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
         }
     }
 
-    DLT_SEM_LOCK();
-
     if ((contextid == NULL) || (contextid[0] == '\0'))
     {
-        DLT_SEM_FREE();
         return DLT_RETURN_WRONG_PARAMETER;
     }
-
-    DLT_SEM_FREE();
 
     return dlt_register_context_ll_ts(handle, contextid, description, DLT_USER_LOG_LEVEL_NOT_SET, DLT_USER_TRACE_STATUS_NOT_SET);
 }
@@ -1091,12 +1086,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
 
     //check nullpointer
-    if (!handle)
-    {
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    if ((contextid == NULL) || (contextid[0] == '\0'))
+    if ((handle ==NULL) || (contextid == NULL) || (contextid[0] == '\0'))
     {
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -1173,7 +1163,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
             old_ll_ts = dlt_user.dlt_ll_ts;
             old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
 
-            dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries 
+            dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries
                                                    / DLT_USER_CONTEXT_ALLOC_SIZE) + 1)
                                                    * DLT_USER_CONTEXT_ALLOC_SIZE;
             dlt_user.dlt_ll_ts = (dlt_ll_ts_type*) malloc(sizeof(dlt_ll_ts_type)*
@@ -1294,8 +1284,10 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     return dlt_user_log_send_register_context(&log);
 }
 
-DltReturnValue dlt_register_context_ll_ts(DltContext *handle, const char *contextid,
-                                          const char * description, int loglevel,
+DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
+                                          const char *contextid,
+                                          const char * description,
+										  int loglevel,
                                           int tracestatus)
 {
     return dlt_register_context_ll_ts_llccb(handle,
@@ -3370,7 +3362,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
-            return DLT_RETURN_ERROR;
+            ret = DLT_RETURN_ERROR;
         }
     }
 
@@ -3399,7 +3391,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
-            return DLT_RETURN_ERROR;
+            ret = DLT_RETURN_ERROR;
         }
     }
 
@@ -3428,7 +3420,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
         {
-            return DLT_RETURN_ERROR;
+            ret = DLT_RETURN_ERROR;
         }
     }
 
@@ -4652,8 +4644,8 @@ DltReturnValue dlt_user_log_check_user_message(void)
                                     }
                                     else
                                     {
-                                        dlt_log(LOG_WARNING,"malloc failed!\n");
                                         DLT_SEM_FREE();
+                                        dlt_log(LOG_WARNING,"malloc failed!\n");
                                         return DLT_RETURN_ERROR;
                                     }
                                     break;
