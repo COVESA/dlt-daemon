@@ -322,13 +322,21 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
         dlt_vlog(LOG_WARNING, "Failed to free receiver\n");
         ret = DLT_RETURN_ERROR;
     }
-
-    free(client->serialDevice);
-    client->serialDevice = NULL;
-    free(client->servIP);
-    client->servIP = NULL;
-    free(client->socketPath);
-    client->socketPath = NULL;
+    if (client->serialDevice)
+    {
+        free(client->serialDevice);
+        client->serialDevice = NULL;
+    }
+    if (client->servIP)
+    {
+        free(client->servIP);
+        client->servIP = NULL;
+    }
+    if (client->socketPath)
+    {
+        free(client->socketPath);
+        client->socketPath = NULL;
+    }
 
     return ret;
 }

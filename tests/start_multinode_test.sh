@@ -143,13 +143,6 @@ cleanup()
 #
 setupTest()
 {
-    if [ "$OS" = "QNX" ]
-    then
-        MESSAGE_FILTER_CONF="/etc/dlt_message_filter.conf"
-    else
-        MESSAGE_FILTER_CONF="/etc/dlt_message_filter_ald.conf"
-    fi
-
     which dlt-daemon > /dev/null
     if [ $? -ne '0' ]
     then
@@ -199,7 +192,6 @@ setupTest()
     echo "RingbufferStepSize = 500000" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     echo "ControlSocketPath = /tmp/dlt-ctrl.sock" >>$tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     echo "GatewayConfigFile = $tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf" >> $tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
-    echo "MessageFilterConfigFile = $MESSAGE_FILTER_CONF" >> $tmpPath/$tmpFolder/$gatewayFolderName/dlt.conf
     touch $tmpPath/$tmpFolder/$gatewayFolderName/dlt_gateway.conf
     if [ $? -ne '0' ]
     then
@@ -236,7 +228,6 @@ setupTest()
     echo "RingbufferMaxSize = 10000000" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
     echo "RingbufferStepSize = 500000" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
     echo "ControlSocketPath = /tmp/dlt-ctrl.sock" >>$tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
-    echo "MessageFilterConfigFile = $MESSAGE_FILTER_CONF" >> $tmpPath/$tmpFolder/$passiveFolderName/dlt.conf
     mkdir -p $tmpPath/$tmpFolder/$tmpPassiveDIR
     if [ $? -ne '0' ]
     then

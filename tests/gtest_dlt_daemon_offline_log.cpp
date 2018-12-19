@@ -953,7 +953,7 @@ TEST(t_dlt_logstorage_sync_on_msg, normal)
 
 TEST(t_dlt_logstorage_sync_on_msg, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_sync_on_msg(NULL,NULL,NULL, 0));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_sync_on_msg(NULL, NULL, NULL, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_prepare_msg_cache*/
@@ -1476,7 +1476,6 @@ TEST(t_dlt_logstorage_find_dlt_header, normal)
         EXPECT_EQ(2, dlt_logstorage_find_dlt_header(config.cache, 0,sizeof(data)));
         free(config.cache);
     }
-
 }
 
 TEST(t_dlt_logstorage_find_dlt_header, null)
@@ -1527,7 +1526,7 @@ TEST(t_dlt_logstorage_sync_create_new_file, normal)
     config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
     if(config.cache != NULL)
     {
-        footer = (DltLogStorageCacheFooter *)(config.cache + 50);
+        footer = (DltLogStorageCacheFooter *)((unsigned char *)config.cache + 50);
         if (footer != NULL)
         {
             EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
@@ -1584,7 +1583,6 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path));
         free(config.cache);
         config.cache = NULL;
-
     }
 }
 
@@ -1632,7 +1630,6 @@ TEST(t_dlt_logstorage_sync_capable_data_to_file, normal)
             free(config.cache);
             config.cache = NULL;
     }
-
 }
 
 TEST(t_dlt_logstorage_sync_capable_data_to_file, null)
@@ -1643,7 +1640,6 @@ TEST(t_dlt_logstorage_sync_capable_data_to_file, null)
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_msg_cache*/
 TEST(t_dlt_logstorage_sync_msg_cache, normal)
 {
-
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     file_config.logfile_timestamp =191132;
@@ -1681,7 +1677,6 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
         free(config.cache);
         config.cache = NULL;
     }
-
 }
 
 TEST(t_dlt_logstorage_sync_msg_cache, null)
@@ -1699,9 +1694,9 @@ int connectServer(void)
     server = gethostbyname("127.0.0.1");
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
+    memcpy((char *)&serv_addr.sin_addr.s_addr,
+           (char *)server->h_addr,
+           server->h_length);
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
     {
@@ -1767,7 +1762,7 @@ int main(int argc, char **argv)
                 printf("Error in accept");
                 return -1;
             }
-            bzero(buffer, 256);
+            memset(buffer, 0, 256);
             (void)(read(newsockfd[i-1], buffer, 255) + 1); /* just ignore result */
             i--;
         }

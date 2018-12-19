@@ -1,6 +1,6 @@
 /**
  * @licence app begin@
- * Copyright (C) 2017  Advanced Driver Information Technology.
+ * Copyright (C) 2018  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
@@ -12,7 +12,7 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *
- * \author Aditya Paluri <venkataaditya.paluri@in.bosch.com> ADIT 2017
+ * \author Aditya Paluri <venkataaditya.paluri@in.bosch.com> ADIT 2018
  *
  * \file: dlt_offline_logstorage_behavior_internal.h
  * For further information see http://www.genivi.org/.
@@ -21,7 +21,7 @@
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt_offline_logstorage_behavior_internal.h                             **
+**  SRC-MODULE: dlt_offline_logstorage_behavior_internal.h                    **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -60,9 +60,8 @@ void dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
 
 void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head);
 
-unsigned int dlt_logstorage_get_idx_of_log_file(
-    DltLogStorageUserConfig *file_config,
-    char *file);
+unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
+                                                char *file);
 
 int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                                     char *path,

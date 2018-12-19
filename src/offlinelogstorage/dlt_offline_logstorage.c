@@ -198,6 +198,7 @@ DLT_STATIC int dlt_logstorage_list_add(char *key,
     {
         free(tmp->key);
         free(tmp);
+        tmp->key = NULL;
         tmp = NULL;
         return -1;
     }
@@ -207,6 +208,8 @@ DLT_STATIC int dlt_logstorage_list_add(char *key,
         free(tmp->key);
         free(tmp->data);
         free(tmp);
+        tmp->key = NULL;
+        tmp->data = NULL;
         tmp = NULL;
         return -1;
     }
