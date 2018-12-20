@@ -36,18 +36,18 @@
 
 #include "dlt_cdh_streamer.h"
 
-#define CORE_DIRECTORY  			"/var/core"
-#define CORE_TMP_DIRECTORY  		"/var/core_tmp"
-#define CORE_LOCK_DIRECTORY  		"/tmp/.core_locks"
-#define CORE_MAX_FILENAME_LENGTH	255
-#define MAX_PROC_NAME_LENGTH    	32
-#define CRASH_ID_LEN            	8
-#define CRASHID_FILE           		"/tmp/.crashid" // the file where the white screen app will read the crashid
+#define CORE_DIRECTORY              "/var/core"
+#define CORE_TMP_DIRECTORY          "/var/core_tmp"
+#define CORE_LOCK_DIRECTORY         "/tmp/.core_locks"
+#define CORE_MAX_FILENAME_LENGTH    255
+#define MAX_PROC_NAME_LENGTH        32
+#define CRASH_ID_LEN                8
+#define CRASHID_FILE                "/tmp/.crashid" /* the file where the white screen app will read the crashid */
 
-#define CORE_FILE_PATTERN			"%s/core.%d.%s.%d.gz"
-#define CONTEXT_FILE_PATTERN    	"%s/context.%d.%s.%d.txt"
+#define CORE_FILE_PATTERN           "%s/core.%d.%s.%d.gz"
+#define CONTEXT_FILE_PATTERN        "%s/context.%d.%s.%d.txt"
 
-#define ELF_Ehdr	Elf32_Ehdr
+#define ELF_Ehdr    Elf32_Ehdr
 #define ELF_Phdr    Elf32_Phdr
 #define ELF_Shdr    Elf32_Shdr
 #define ELF_Nhdr    Elf32_Nhdr
@@ -71,10 +71,10 @@ typedef struct
     int can_create_coredump;
     file_streamer_t streamer;
 
-    // coredump content, for crash id generation
+    /* coredump content, for crash id generation */
     ELF_Ehdr m_Ehdr;
-    ELF_Phdr* m_pPhdr;
-    char* m_Nhdr; // buffer with all NOTE pages
+    ELF_Phdr *m_pPhdr;
+    char *m_Nhdr; /* buffer with all NOTE pages */
 
     unsigned int m_note_page_size;
 
@@ -86,11 +86,11 @@ typedef struct
 
 } proc_info_t;
 
-cdh_status_t get_exec_name(unsigned int p_pid_str, char* p_exec_name, int p_exec_name_maxsize);
-cdh_status_t write_proc_context(const proc_info_t*);
-cdh_status_t treat_coredump(proc_info_t* p_proc);
-cdh_status_t treat_crash_data(proc_info_t* p_proc);
-cdh_status_t move_to_core_directory(proc_info_t* p_proc);
+cdh_status_t get_exec_name(unsigned int p_pid_str, char *p_exec_name, int p_exec_name_maxsize);
+cdh_status_t write_proc_context(const proc_info_t *);
+cdh_status_t treat_coredump(proc_info_t *p_proc);
+cdh_status_t treat_crash_data(proc_info_t *p_proc);
+cdh_status_t move_to_core_directory(proc_info_t *p_proc);
 cdh_status_t check_core_directory();
 
-#endif // #ifndef DLT_CDH_H
+#endif /* #ifndef DLT_CDH_H */

@@ -45,12 +45,12 @@
 #include <net/if.h>
 
 #ifdef linux
-#include <sys/timerfd.h>
+#   include <sys/timerfd.h>
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #if defined(linux) && defined(__NR_statx)
-#include <linux/stat.h>
+#   include <linux/stat.h>
 #endif
 
 #include "dlt_types.h"
@@ -72,20 +72,21 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     memset(&hints, 0, sizeof hints);
 #ifdef DLT_USE_IPv6
-    hints.ai_family = AF_INET6; // force IPv6 - will still work with IPv4
+    hints.ai_family = AF_INET6; /* force IPv6 - will still work with IPv4 */
 #else
     hints.ai_family = AF_INET;
 #endif
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP address
+    hints.ai_flags = AI_PASSIVE; /* use my IP address */
 
     snprintf(portnumbuffer, 32, "%d", servPort);
+
     if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
         dlt_vlog(LOG_WARNING, "getaddrinfo error %d: %s\n", rv, gai_strerror(rv));
         return -1;
     }
 
-    for(p = servinfo; p != NULL; p = p->ai_next) {
+    for (p = servinfo; p != NULL; p = p->ai_next) {
         if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             const int lastErrno = errno;
             dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
@@ -96,15 +97,17 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
                  __FUNCTION__, p->ai_family, p->ai_socktype, p->ai_protocol);
         dlt_log(LOG_INFO, str);
 
-        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-        {
+        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
             const int lastErrno = errno;
-            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n", lastErrno, strerror(lastErrno));
+            dlt_vlog(LOG_WARNING,
+                     "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
+                     lastErrno,
+                     strerror(lastErrno));
             continue;
         }
 
         if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
-            const int lastErrno = errno; //close() may set errno too
+            const int lastErrno = errno; /*close() may set errno too */
             close(*sock);
             dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
             continue;
@@ -123,18 +126,21 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
     snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on port: %u\n", __FUNCTION__, servPort);
     dlt_log(LOG_INFO, str);
 
-    // get socket buffer size
-    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "dlt_daemon_socket_open: Socket send queue size: %d\n", dlt_daemon_socket_get_send_qeue_max_size(*sock));
+    /* get socket buffer size */
+    snprintf(str,
+             DLT_DAEMON_TEXTBUFSIZE,
+             "dlt_daemon_socket_open: Socket send queue size: %d\n",
+             dlt_daemon_socket_get_send_qeue_max_size(*sock));
     dlt_log(LOG_INFO, str);
 
-    if (listen(*sock, 3) < 0)
-    {
+    if (listen(*sock, 3) < 0) {
         const int lastErrno = errno;
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno,
+                 strerror(lastErrno));
         return -1;
     }
 
-    return 0; // OK
+    return 0; /* OK */
 }
 
 int dlt_daemon_socket_close(int sock)
@@ -144,36 +150,32 @@ int dlt_daemon_socket_close(int sock)
     return 0;
 }
 
-int dlt_daemon_socket_send(int sock,void* data1,int size1,void* data2,int size2,char serialheader)
+int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int size2, char serialheader)
 {
     int ret = DLT_RETURN_OK;
     int bytes_sent = 0;
-    
+
     /* Optional: Send serial header, if requested */
-    if (serialheader)
-    {
+    if (serialheader) {
         ret = dlt_daemon_socket_sendreliable(sock,
-                                             (void *) dltSerialHeader,
+                                             (void *)dltSerialHeader,
                                              sizeof(dltSerialHeader),
                                              &bytes_sent);
+
         if (ret != DLT_RETURN_OK)
             return ret;
     }
 
     /* Send data */
-    if ((data1 != NULL) && (size1 > 0))
-    {
+    if ((data1 != NULL) && (size1 > 0)) {
         ret = dlt_daemon_socket_sendreliable(sock, data1, size1, &bytes_sent);
+
         if (ret != DLT_RETURN_OK)
-        {
             return ret;
-        }
     }
 
     if ((data2 != NULL) && (size2 > 0))
-    {
         ret = dlt_daemon_socket_sendreliable(sock, data2, size2, &bytes_sent);
-    }
 
     return ret;
 }
@@ -187,23 +189,21 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
     return n;
 }
 
-int dlt_daemon_socket_sendreliable(int sock, void* data_buffer, int message_size, int* bytes_sent)
+int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size, int *bytes_sent)
 {
     int data_sent = 0;
 
-    while (data_sent < message_size)
-    {
+    while (data_sent < message_size) {
         ssize_t ret = send(sock, data_buffer + data_sent, message_size - data_sent, 0);
-        if (ret < 0)
-        {
+
+        if (ret < 0) {
             dlt_vlog(LOG_WARNING,
                      "dlt_daemon_socket_sendreliable: socket send failed [errno: %d]!\n",
                      errno);
             *bytes_sent = data_sent;
             return DLT_DAEMON_ERROR_SEND_FAILED;
         }
-        else
-        {
+        else {
             data_sent += ret;
         }
     }

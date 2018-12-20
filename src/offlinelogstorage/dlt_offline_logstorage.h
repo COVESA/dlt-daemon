@@ -113,7 +113,7 @@
 #define DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE          (1 << 4) /* sync on after specific size */
 #define DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE              (1 << 5) /* sync on file size reached */
 
-#define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S) &(s))
+#define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S)&(s))
 
 /* logstorage max cache */
 unsigned int g_logstorage_cache_max;
@@ -206,7 +206,7 @@ typedef struct
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
     int write_errors;                  /* number of write errors */
-}DltLogStorage;
+} DltLogStorage;
 
 typedef struct {
     char *key; /* The configuration key */
@@ -250,7 +250,7 @@ typedef enum {
  * @return               0 on success, -1 on error
  */
 int dlt_logstorage_device_connected(DltLogStorage *handle,
-                                           char *mount_point);
+                                    char *mount_point);
 
 /**
  * dlt_logstorage_device_disconnected
@@ -261,7 +261,7 @@ int dlt_logstorage_device_connected(DltLogStorage *handle,
  * @return               0 on success, -1 on error
  */
 int dlt_logstorage_device_disconnected(DltLogStorage *handle,
-                                              int reason);
+                                       int reason);
 /**
  * dlt_logstorage_get_config
  *

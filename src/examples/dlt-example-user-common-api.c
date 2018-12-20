@@ -72,7 +72,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-common-api [options] message\n");
     printf("Generate DLT messages and store them to file or send them to daemon.\n");
@@ -94,7 +94,7 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 #ifdef DLT_TEST_ENABLE
     int cflag = 0;
@@ -110,20 +110,21 @@ int main(int argc, char* argv[])
     int c;
 
     char *text;
-    int num,maxnum;
+    int num, maxnum;
     int delay;
 
-    int state=-1,newstate;
+    int state = -1, newstate;
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
+
     while ((c = getopt (argc, argv, "vgcd:n:z:s:")) != -1)
 #else
+
     while ((c = getopt (argc, argv, "vgd:n:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
-        switch (c)
-        {
+        switch (c) {
 #ifdef DLT_TEST_ENABLE
         case 'c':
         {
@@ -158,18 +159,12 @@ int main(int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'd' || optopt == 'f' || optopt == 'n')
-            {
+            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            }
             else if (isprint (optopt))
-            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
             else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
@@ -178,114 +173,93 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
-            break;//for parasoft
+            break;/*for parasoft */
         }
         }
     }
 
     for (index = optind; index < argc; index++)
-    {
         message = argv[index];
-    }
 
-    if (message == 0)
-    {
+    if (message == 0) {
         /* no message, show usage and terminate */
-        fprintf(stderr,"ERROR: No message selected\n");
+        fprintf(stderr, "ERROR: No message selected\n");
         usage();
         return -1;
     }
 
-    DLT_REGISTER_APP("LOG","Test Application for Logging");
-    DLT_REGISTER_CONTEXT_APP(mycontext,"TEST","LOG","Test Context for Logging");
+    DLT_REGISTER_APP("LOG", "Test Application for Logging");
+    DLT_REGISTER_CONTEXT_APP(mycontext, "TEST", "LOG", "Test Context for Logging");
 
     text = message;
 
     if (nvalue)
-    {
         maxnum = atoi(nvalue);
-    }
     else
-    {
         maxnum = 10;
-    }
 
     if (dvalue)
-    {
         delay = atoi(dvalue) * 1000;
-    }
     else
-    {
         delay = 500 * 1000;
-    }
 
-    if (gflag)
-    {
+    if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-        DLT_LOG_ID0(mycontext,DLT_LOG_INFO,10);
-        DLT_LOG_ID1(mycontext,DLT_LOG_INFO,11,DLT_UINT16(1011));
-        DLT_LOG_ID2(mycontext,DLT_LOG_INFO,12,DLT_UINT32(1012),DLT_UINT32(1013));
-        DLT_LOG_ID2(mycontext,DLT_LOG_INFO,13,DLT_UINT8(123),DLT_FLOAT32(1.12));
-        DLT_LOG_ID1(mycontext,DLT_LOG_INFO,14,DLT_STRING("DEAD BEEF"));
+        DLT_LOG_ID0(mycontext, DLT_LOG_INFO, 10);
+        DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 11, DLT_UINT16(1011));
+        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
+        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
+        DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
 #ifdef DLT_TEST_ENABLE
+
     if (cflag)
-    {
         dlt_user_test_corrupt_user_header(1);
-    }
+
     if (svalue)
-    {
-        dlt_user_test_corrupt_message_size(1,atoi(svalue));
-    }
-    if (zvalue)
-    {
-        char* buffer = malloc(atoi(zvalue));
-        if(buffer==0)
-        {
+        dlt_user_test_corrupt_message_size(1, atoi(svalue));
+
+    if (zvalue) {
+        char *buffer = malloc(atoi(zvalue));
+
+        if (buffer == 0) {
             /* no message, show usage and terminate */
-            fprintf(stderr,"Cannot allocate buffer memory!\n");
+            fprintf(stderr, "Cannot allocate buffer memory!\n");
             return -1;
         }
-        DLT_LOG2(mycontext,DLT_LOG_WARN,DLT_STRING(text),DLT_RAW(buffer,atoi(zvalue)));
+
+        DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_STRING(text), DLT_RAW(buffer, atoi(zvalue)));
         free(buffer);
     }
+
 #endif /* DLT_TEST_ENABLE */
 
-    for (num=0;num<maxnum;num++)
-    {
-        printf("Send %d %s\n",num,text);
+    for (num = 0; num < maxnum; num++) {
+        printf("Send %d %s\n", num, text);
 
         newstate = dlt_get_log_state();
-        if(state!=newstate)
-        {
+
+        if (state != newstate) {
             state = newstate;
-            if(state == -1) {
+
+            if (state == -1)
                 printf("Client unknown state!\n");
-            }
-            else if(state == 0) {
+            else if (state == 0)
                 printf("Client disconnected!\n");
-            }
-            else if(state == 1) {
+            else if (state == 1)
                 printf("Client connected!\n");
-            }
         }
 
         if (gflag)
-        {
             /* Non-verbose mode */
-            DLT_LOG_ID2(mycontext,DLT_LOG_WARN,num,DLT_INT(num),DLT_STRING(text));
-        }
+            DLT_LOG_ID2(mycontext, DLT_LOG_WARN, num, DLT_INT(num), DLT_STRING(text));
         else
-        {
             /* Verbose mode */
-            DLT_LOG2(mycontext,DLT_LOG_WARN,DLT_INT(num),DLT_STRING(text));
-        }
+            DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_INT(num), DLT_STRING(text));
 
-        if (delay>0)
-        {
+        if (delay > 0)
             usleep(delay);
-        }
     }
 
     sleep(1);

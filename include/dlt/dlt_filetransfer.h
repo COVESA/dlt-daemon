@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_filetransfer.h
-*/
+ */
 
 #include <limits.h>    /* Needed for LONG_MAX */
 #include <sys/stat.h>  /* Needed for struct stat st*/
@@ -134,4 +134,4 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
  * @param deleteFlag Flag to delete the file after the whole file is transferred (logged to dlt).1->delete,0->NotDelete
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename,int deleteFlag);
+extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);

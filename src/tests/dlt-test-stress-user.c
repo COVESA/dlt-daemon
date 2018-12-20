@@ -64,8 +64,8 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 
 #include <stdio.h>      /* for printf() and fprintf() */
@@ -80,7 +80,7 @@
 
 /* Test functions... */
 
-int testall(int count,int repeat,int delay,int size);
+int testall(int count, int repeat, int delay, int size);
 
 /* Context declaration.. */
 DLT_DECLARE_CONTEXT(context_info)
@@ -102,7 +102,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
 
     printf("Usage: dlt-test-stress-user [options]\n");
     printf("Test user application providing Test messages.\n");
@@ -119,9 +119,9 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    //int vflag = 0;
+    /*int vflag = 0; */
     char *fvalue = 0;
     int nvalue = 10000;
     int rvalue = 100;
@@ -133,12 +133,10 @@ int main(int argc, char* argv[])
     opterr = 0;
 
     while ((c = getopt (argc, argv, "vf:n:r:d:s:")) != -1)
-    {
-        switch (c)
-        {
+        switch (c) {
         case 'v':
         {
-            //vflag = 1;
+            /*vflag = 1; */
             break;
         }
         case 'f':
@@ -168,18 +166,14 @@ int main(int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'd' || optopt == 'f' || optopt == 'n' || optopt == 'r' || optopt == 'd' || optopt == 's')
-            {
+            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') || (optopt == 'r') || (optopt == 'd') ||
+                (optopt == 's'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            }
             else if (isprint (optopt))
-            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
             else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
@@ -187,41 +181,39 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
-            return -1;//for parasoft
+            return -1;/*for parasoft */
         }
         }
-    }
 
-    if (fvalue)
-    {
+
+
+    if (fvalue) {
         /* DLT is intialised automatically, except another output target will be used */
-        if (dlt_init_file(fvalue)<0) /* log to file */
-        {
+        if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
-        }
     }
 
     /* Register APP */
-    DLT_REGISTER_APP("DIFT","DLT Interface Test");
+    DLT_REGISTER_APP("DIFT", "DLT Interface Test");
 
     /* Register CONTEXTS... */
-    DLT_REGISTER_CONTEXT(context_info,"INFO","Information context");
+    DLT_REGISTER_CONTEXT(context_info, "INFO", "Information context");
 
     /* Tests starting */
     printf("Tests starting\n");
-    //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Tests starting"));
+    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Tests starting")); */
 
     /* wait 3 seconds before starting */
-    //sleep(3);
+    /*sleep(3); */
 
-    testall(nvalue,rvalue,dvalue,svalue);
+    testall(nvalue, rvalue, dvalue, svalue);
 
     /* Tests finished */
     printf("Tests finished\n");
-    //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Tests finished"));
+    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Tests finished")); */
 
     /* wait 3 seconds before terminating application */
-    //sleep(3);
+    /*sleep(3); */
 
     /* Unregister CONTEXTS... */
     DLT_UNREGISTER_CONTEXT(context_info);
@@ -236,32 +228,27 @@ int main(int argc, char* argv[])
 /* The test cases */
 /******************/
 
-int testall(int count,int repeat,int delay,int size)
+int testall(int count, int repeat, int delay, int size)
 {
     char buffer[size];
-    int num,rnum;
+    int num, rnum;
 
-    for(num=0;num< size;num++)
-    {
+    for (num = 0; num < size; num++)
         buffer[num] = num;
-    }
 
     /* Test All: Test all start */
-    //printf("Test1: Test all\n");
-    //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all"));
+    /*printf("Test1: Test all\n"); */
+    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all")); */
 
-    for(rnum=0;rnum<repeat;rnum++)
-    {
-        for(num=1;num<=count;num++)
-        {
-            DLT_LOG(context_info,DLT_LOG_INFO,DLT_INT(num),DLT_RAW(buffer, size));
+    for (rnum = 0; rnum < repeat; rnum++)
+        for (num = 1; num <= count; num++) {
+            DLT_LOG(context_info, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, size));
             usleep(delay);
         }
-    }
 
     /* wait 5 seconds after test */
-    //sleep(5);
-    //DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished"));
+    /*sleep(5); */
+    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished")); */
 
     return 0;
 }

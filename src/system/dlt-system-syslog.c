@@ -63,108 +63,103 @@ DLT_DECLARE_CONTEXT(syslogContext)
 
 int init_socket(SyslogOptions opts)
 {
-	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-syslog, init socket, port: "),
-			DLT_INT(opts.Port));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-syslog, init socket, port: "),
+            DLT_INT(opts.Port));
 
-	int sock = -1;
-	struct sockaddr_in syslog_addr;
-
-#ifdef DLT_USE_IPv6
-	sock = socket(AF_INET6, SOCK_DGRAM, 0);
-#else
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
-#endif
-	if(sock < 0)
-	{
-		DLT_LOG(syslogContext, DLT_LOG_FATAL,
-				DLT_STRING("Unable to create socket for SYSLOG."));
-		return -1;
-	}
+    int sock = -1;
+    struct sockaddr_in syslog_addr;
 
 #ifdef DLT_USE_IPv6
-	syslog_addr.sin_family		= AF_INET6;
+    sock = socket(AF_INET6, SOCK_DGRAM, 0);
 #else
-	syslog_addr.sin_family      = AF_INET;
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
 #endif
-	syslog_addr.sin_port 		= htons(opts.Port);
-	syslog_addr.sin_addr.s_addr = INADDR_ANY;
-	bzero(&(syslog_addr.sin_zero), 8);
 
-	if (bind(sock, (struct sockaddr *)&syslog_addr,
-			 sizeof(struct sockaddr)) == -1)
-	{
-		DLT_LOG(syslogContext, DLT_LOG_FATAL,
-				DLT_STRING("Unable to bind socket for SYSLOG."));
-                close(sock);
-		return -1;
-	}
+    if (sock < 0) {
+        DLT_LOG(syslogContext, DLT_LOG_FATAL,
+                DLT_STRING("Unable to create socket for SYSLOG."));
+        return -1;
+    }
 
-	return sock;
+#ifdef DLT_USE_IPv6
+    syslog_addr.sin_family = AF_INET6;
+#else
+    syslog_addr.sin_family = AF_INET;
+#endif
+    syslog_addr.sin_port = htons(opts.Port);
+    syslog_addr.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(syslog_addr.sin_zero), 8);
+
+    if (bind(sock, (struct sockaddr *)&syslog_addr,
+             sizeof(struct sockaddr)) == -1) {
+        DLT_LOG(syslogContext, DLT_LOG_FATAL,
+                DLT_STRING("Unable to bind socket for SYSLOG."));
+        close(sock);
+        return -1;
+    }
+
+    return sock;
 }
 
 int read_socket(int sock)
 {
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-syslog, read socket"));
-	char recv_data[RECV_BUF_SZ];
-	struct sockaddr_in client_addr;
-	socklen_t addr_len = sizeof(struct sockaddr_in);
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-syslog, read socket"));
+    char recv_data[RECV_BUF_SZ];
+    struct sockaddr_in client_addr;
+    socklen_t addr_len = sizeof(struct sockaddr_in);
 
-	int bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
-			(struct sockaddr *) &client_addr, &addr_len);
-	if(bytes_read == -1)
-	{
-		if(errno == EINTR)
-		{
-			return 0;
-		}
-		else
-		{
-			DLT_LOG(syslogContext, DLT_LOG_FATAL,
-					DLT_STRING("Read from socket failed in SYSLOG."));
-			return -1;
-		}
-	}
+    int bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
+                              (struct sockaddr *)&client_addr, &addr_len);
 
-	recv_data[bytes_read] = '\0';
+    if (bytes_read == -1) {
+        if (errno == EINTR) {
+            return 0;
+        }
+        else {
+            DLT_LOG(syslogContext, DLT_LOG_FATAL,
+                    DLT_STRING("Read from socket failed in SYSLOG."));
+            return -1;
+        }
+    }
 
-	if(bytes_read != 0)
-	{
-		DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
-	}
-	return bytes_read;
+    recv_data[bytes_read] = '\0';
+
+    if (bytes_read != 0)
+        DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
+
+    return bytes_read;
 }
 
 void syslog_thread(void *v_conf)
 {
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-syslog, in thread."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-syslog, in thread."));
 
-	DltSystemConfiguration *conf = (DltSystemConfiguration *) v_conf;
-	DLT_REGISTER_CONTEXT(syslogContext, conf->Syslog.ContextId, "SYSLOG Adapter");
+    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    DLT_REGISTER_CONTEXT(syslogContext, conf->Syslog.ContextId, "SYSLOG Adapter");
 
-	int sock = init_socket(conf->Syslog);
-	if(sock < 0)
-		return;
+    int sock = init_socket(conf->Syslog);
 
-	while(!threads.shutdown)
-	{
-		if(read_socket(sock) < 0)
-                {
-                        close(sock);
-			return;
-                }
-	}
-        close (sock);
+    if (sock < 0)
+        return;
+
+    while (!threads.shutdown)
+        if (read_socket(sock) < 0) {
+            close(sock);
+            return;
+        }
+
+    close (sock);
 }
 
 void start_syslog(DltSystemConfiguration *conf)
 {
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-syslog, start syslog"));
-	static pthread_attr_t t_attr;
-	static pthread_t pt;
-	pthread_create(&pt, &t_attr, (void *)syslog_thread, conf);
-	threads.threads[threads.count++] = pt;
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-syslog, start syslog"));
+    static pthread_attr_t t_attr;
+    static pthread_t pt;
+    pthread_create(&pt, &t_attr, (void *)syslog_thread, conf);
+    threads.threads[threads.count++] = pt;
 }

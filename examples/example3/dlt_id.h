@@ -15,7 +15,7 @@
  * @licence end@
  */
 
-// generated file, do not edit
+/* generated file, do not edit */
 
 #ifndef DLT_ID_H
 #define DLT_ID_H

@@ -35,12 +35,12 @@
 #include "dlt-kpi-process.h"
 #include "dlt-kpi-process-list.h"
 
-// CONSTANT DEFINITIONS
-#define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-kpi.conf")
+/* CONSTANT DEFINITIONS */
+#define DEFAULT_CONF_FILE (CONFIGURATION_FILES_DIR "/dlt-kpi.conf")
 
 #define COMMAND_LINE_SIZE 1024
 
-// STRUCTURES
+/* STRUCTURES */
 typedef struct
 {
     char *configurationFileName;
@@ -53,7 +53,7 @@ typedef struct
     DltLogLevelType log_level;
 } DltKpiConfig;
 
-// FUNCTION DECLARATIONS:
+/* FUNCTION DECLARATIONS: */
 DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char **argv);
 DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name);
 void dlt_kpi_free_cli_options(DltKpiOptions *options);

@@ -27,7 +27,7 @@
 #ifndef DLT_DBUS_H_
 #define DLT_DBUS_H_
 
-// DLT related includes.
+/* DLT related includes. */
 #include "dlt.h"
 #include "dlt_common.h"
 
@@ -35,33 +35,33 @@
 
 #define DLT_DBUS_FILTER_MAX 32
 
-// Macros
+/* Macros */
 #define UNUSED(x) (void)(x)
-#define MALLOC_ASSERT(x) if(x == NULL) {\
-    fprintf(stderr, "Out of memory\n");\
-    abort();}
+#define MALLOC_ASSERT(x) if (x == NULL) { \
+        fprintf(stderr, "Out of memory\n"); \
+        abort(); }
 
 #define MAX_LINE 1024
 
-// Command line options
+/* Command line options */
 typedef struct {
-    char     *ConfigurationFileName;
-    char     *ApplicationId;
-    char     *BusType;
-    int     Daemonize;
+    char *ConfigurationFileName;
+    char *ApplicationId;
+    char *BusType;
+    int Daemonize;
 } DltDBusCliOptions;
 
-// Configuration dbus options
+/* Configuration dbus options */
 typedef struct {
-    char     *ContextId;
-    char     *BusType;
-    int  FilterCount;
+    char *ContextId;
+    char *BusType;
+    int FilterCount;
     char *FilterMatch[DLT_DBUS_FILTER_MAX];
 } DBusOptions;
 
 typedef struct {
     char *ApplicationId;
-    DBusOptions            DBus;
+    DBusOptions DBus;
 
 } DltDBusConfiguration;
 

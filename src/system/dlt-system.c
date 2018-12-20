@@ -53,75 +53,73 @@
 #include <signal.h>
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-#include "sd-daemon.h"
+#   include "sd-daemon.h"
 #endif
 
 DLT_DECLARE_CONTEXT(dltsystem)
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-	DltSystemCliOptions options;
-	DltSystemConfiguration config;
+    DltSystemCliOptions options;
+    DltSystemConfiguration config;
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-	int ret;
+    int ret;
 #endif
 
-	if(read_command_line(&options, argc, argv) < 0)
-	{
-		fprintf(stderr, "Failed to read command line!\n");
-		return -1;
-	}
+    if (read_command_line(&options, argc, argv) < 0) {
+        fprintf(stderr, "Failed to read command line!\n");
+        return -1;
+    }
 
-	if(read_configuration_file(&config, options.ConfigurationFileName) < 0)
-	{
-		fprintf(stderr, "Failed to read configuration file!\n");
-		return -1;
-	}
-	DLT_REGISTER_APP(config.ApplicationId, "DLT System Manager");
-	DLT_REGISTER_CONTEXT(dltsystem,"MGR", "Context of main dlt system manager");
+    if (read_configuration_file(&config, options.ConfigurationFileName) < 0) {
+        fprintf(stderr, "Failed to read configuration file!\n");
+        return -1;
+    }
+
+    DLT_REGISTER_APP(config.ApplicationId, "DLT System Manager");
+    DLT_REGISTER_CONTEXT(dltsystem, "MGR", "Context of main dlt system manager");
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
     ret = sd_booted();
 
-    if(ret == 0){
-    	DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system not booted with systemd!\n"));
+    if (ret == 0) {
+        DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system not booted with systemd!\n"));
     }
-    else if(ret < 0)
+    else if (ret < 0)
     {
-    	DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("sd_booted failed!\n"));
-    	return -1;
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("sd_booted failed!\n"));
+        return -1;
     }
-    else
-    {
-    	DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system booted with systemd\n"));
+    else {
+        DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system booted with systemd\n"));
     }
+
 #endif
 
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Configuration loaded."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Configuration loaded."));
 
-	if(options.Daemonize > 0)
-	{
-		if(daemonize() < 0)
-		{
-			DLT_LOG(dltsystem, DLT_LOG_FATAL, DLT_STRING("Daemonization failed!"));
-			return -1;
-		}
-		DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system daemonized."));
-	}
+    if (options.Daemonize > 0) {
+        if (daemonize() < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_FATAL, DLT_STRING("Daemonization failed!"));
+            return -1;
+        }
 
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Setting signal handlers for abnormal exit"));
-	signal(SIGTERM, dlt_system_signal_handler);
-	signal(SIGHUP,  dlt_system_signal_handler);
-	signal(SIGQUIT, dlt_system_signal_handler);
-	signal(SIGINT,  dlt_system_signal_handler);
+        DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system daemonized."));
+    }
 
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Setting signal handlers for abnormal exit"));
+    signal(SIGTERM, dlt_system_signal_handler);
+    signal(SIGHUP, dlt_system_signal_handler);
+    signal(SIGQUIT, dlt_system_signal_handler);
+    signal(SIGINT, dlt_system_signal_handler);
+
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
 
 
-	start_threads(&config);
-	join_threads();
-	return 0;
+    start_threads(&config);
+    join_threads();
+    return 0;
 }
 
 

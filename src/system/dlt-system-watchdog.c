@@ -54,16 +54,12 @@ void wait_period (PeriodicData *info)
 {
     unsigned long long missed;
 
-    if(read (info->timer_fd, &missed, sizeof (missed)) < 0)
-    {
+    if (read (info->timer_fd, &missed, sizeof (missed)) < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR,
                 DLT_STRING("Could not read from timer file descriptor in watchdog.\n"));
-    }
 
     if (missed > 0)
-    {
         info->wakeups_missed += (missed - 1);
-    }
 }
 
 int make_periodic(unsigned int period, PeriodicData *info)
@@ -73,10 +69,9 @@ int make_periodic(unsigned int period, PeriodicData *info)
     int fd;
     struct itimerspec itval;
 
-    if (info==0)
-    {
-    	DLT_LOG(watchdogContext, DLT_LOG_ERROR,
-    						DLT_STRING("Invalid function parameters used for function make_periodic.\n"));
+    if (info == 0) {
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR,
+                DLT_STRING("Invalid function parameters used for function make_periodic.\n"));
         return -1;
     }
 
@@ -86,15 +81,14 @@ int make_periodic(unsigned int period, PeriodicData *info)
     info->wakeups_missed = 0;
     info->timer_fd = fd;
 
-    if (fd == -1)
-    {
-    	DLT_LOG(watchdogContext, DLT_LOG_ERROR,
-    						DLT_STRING("Can't create timer filedescriptor.\n"));
+    if (fd == -1) {
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR,
+                DLT_STRING("Can't create timer filedescriptor.\n"));
         return -1;
     }
 
     /* Make the timer periodic */
-    sec = period/1000000;
+    sec = period / 1000000;
     ns = (period - (sec * 1000000)) * 1000;
     itval.it_interval.tv_sec = sec;
     itval.it_interval.tv_nsec = ns;
@@ -107,88 +101,78 @@ int make_periodic(unsigned int period, PeriodicData *info)
 
 void watchdog_thread(void *v_conf)
 {
-	char str[512];
-	char *watchdogUSec;
-	unsigned int watchdogTimeoutSeconds;
-	unsigned int notifiyPeriodNSec;
-	PeriodicData info;
+    char str[512];
+    char *watchdogUSec;
+    unsigned int watchdogTimeoutSeconds;
+    unsigned int notifiyPeriodNSec;
+    PeriodicData info;
 
-	DLT_REGISTER_CONTEXT(watchdogContext, "DOG","dlt system watchdog context.");
+    DLT_REGISTER_CONTEXT(watchdogContext, "DOG", "dlt system watchdog context.");
 
-	sleep(1);
+    sleep(1);
 
-	DLT_LOG(watchdogContext, DLT_LOG_INFO,DLT_STRING("Watchdog thread started.\n"));
+    DLT_LOG(watchdogContext, DLT_LOG_INFO, DLT_STRING("Watchdog thread started.\n"));
 
-	if (v_conf==0)
-	{
-		DLT_LOG(watchdogContext, DLT_LOG_ERROR,
-					DLT_STRING("Invalid function parameters used for function watchdog_thread.\n"));
-		return;
-	}
+    if (v_conf == 0) {
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR,
+                DLT_STRING("Invalid function parameters used for function watchdog_thread.\n"));
+        return;
+    }
 
+    watchdogUSec = getenv("WATCHDOG_USEC");
 
-	watchdogUSec = getenv("WATCHDOG_USEC");
+    if (watchdogUSec) {
+        DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("watchdogusec: "), DLT_STRING(watchdogUSec));
 
-	if(watchdogUSec)
-	{
-		DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING("watchdogusec: "),DLT_STRING(watchdogUSec));
+        watchdogTimeoutSeconds = atoi(watchdogUSec);
 
-		watchdogTimeoutSeconds = atoi(watchdogUSec);
+        if (watchdogTimeoutSeconds > 0) {
 
-		if( watchdogTimeoutSeconds > 0 ){
+            /* Calculate half of WATCHDOG_USEC in ns for timer tick */
+            notifiyPeriodNSec = watchdogTimeoutSeconds / 2;
 
-			// Calculate half of WATCHDOG_USEC in ns for timer tick
-			notifiyPeriodNSec = watchdogTimeoutSeconds / 2 ;
+            snprintf(str,
+                     512,
+                     "systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n",
+                     watchdogTimeoutSeconds,
+                     notifiyPeriodNSec);
+            DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING(str));
 
-			snprintf(str,512,"systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n", watchdogTimeoutSeconds, notifiyPeriodNSec );
-			DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING(str));
+            if (make_periodic (notifiyPeriodNSec, &info) < 0) {
+                DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not initialize systemd watchdog timer\n"));
+                return;
+            }
 
-			if (make_periodic (notifiyPeriodNSec, &info) < 0 )
-			{
-				DLT_LOG(watchdogContext, DLT_LOG_ERROR,DLT_STRING("Could not initialize systemd watchdog timer\n"));
-				return;
-			}
+            while (1) {
+                if (sd_notify(0, "WATCHDOG=1") < 0)
+                    DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog\n"));
 
-			while (1)
-			{
-				if(sd_notify(0, "WATCHDOG=1") < 0)
-				{
-					DLT_LOG(watchdogContext, DLT_LOG_ERROR,DLT_STRING("Could not reset systemd watchdog\n"));
-				}
+                DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("systemd watchdog waited periodic\n"));
 
-				DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING("systemd watchdog waited periodic\n"));
-
-				/* Wait for next period */
-				wait_period(&info);
-			}
-		}
-		else
-		{
-			snprintf(str,512,"systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
-			DLT_LOG(watchdogContext, DLT_LOG_DEBUG,DLT_STRING(str));
-		}
-	}
-	else
-	{
-		DLT_LOG(watchdogContext, DLT_LOG_ERROR,DLT_STRING("systemd watchdog timeout (WATCHDOG_USEC) is null\n"));
-	}
-
+                /* Wait for next period */
+                wait_period(&info);
+            }
+        }
+        else {
+            snprintf(str, 512, "systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
+            DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING(str));
+        }
+    }
+    else {
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("systemd watchdog timeout (WATCHDOG_USEC) is null\n"));
+    }
 }
 
 void start_systemd_watchdog(DltSystemConfiguration *conf)
 {
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,DLT_STRING("Creating thread for systemd watchdog\n"));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Creating thread for systemd watchdog\n"));
 
-	static pthread_attr_t t_attr;
-	static pthread_t pt;
+    static pthread_attr_t t_attr;
+    static pthread_t pt;
 
-	if (pthread_create(&pt, &t_attr, (void *)watchdog_thread, conf) == 0)
-	{
-		threads.threads[threads.count++] = pt;
-	}
-	else
-	{
-		DLT_LOG(dltsystem, DLT_LOG_ERROR,DLT_STRING("Could not create thread for systemd watchdog\n"));
-	}
+    if (pthread_create(&pt, &t_attr, (void *)watchdog_thread, conf) == 0)
+        threads.threads[threads.count++] = pt;
+    else
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Could not create thread for systemd watchdog\n"));
 }
 #endif

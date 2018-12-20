@@ -27,11 +27,11 @@
 
 #include "../dlt_cdh_cpuinfo.h"
 
-void get_registers(prstatus_t* prstatus, cdh_registers_t* registers)
+void get_registers(prstatus_t *prstatus, cdh_registers_t *registers)
 {
-    struct user_regs_struct* ptr_reg = (struct user_regs_struct*) prstatus->pr_reg;
+    struct user_regs_struct *ptr_reg = (struct user_regs_struct *)prstatus->pr_reg;
 
-    registers->pc = ptr_reg->ecx; // [REG_PROC_COUNTER];
-    registers->ip = ptr_reg->eip; // [REG_INSTR_POINTER];
-    registers->lr = ptr_reg->ebp; // [REG_LINK_REGISTER];
+    registers->pc = ptr_reg->ecx; /* [REG_PROC_COUNTER]; */
+    registers->ip = ptr_reg->eip; /* [REG_INSTR_POINTER]; */
+    registers->lr = ptr_reg->ebp; /* [REG_LINK_REGISTER]; */
 }

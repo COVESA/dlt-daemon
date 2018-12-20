@@ -27,7 +27,8 @@
  *
  * @return 0
  */
-static inline int dlt_logstorage_prop_init(void) {
+static inline int dlt_logstorage_prop_init(void)
+{
     return 0;
 }
 
@@ -35,7 +36,8 @@ static inline int dlt_logstorage_prop_init(void) {
  *
  * @return 0
  */
-static inline int dlt_logstorage_prop_deinit(void) {
+static inline int dlt_logstorage_prop_deinit(void)
+{
     return 0;
 }
 
@@ -43,7 +45,8 @@ static inline int dlt_logstorage_prop_deinit(void) {
  *
  * @return 0
  */
-static inline int check_proprietary_handling(char *type) {
+static inline int check_proprietary_handling(char *type)
+{
     (void)type; return 0;
 }
 #else

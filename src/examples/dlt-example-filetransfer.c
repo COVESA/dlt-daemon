@@ -72,7 +72,7 @@
 
 #define TIMEOUT 1
 
-//!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer.
+/*!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer. */
 DLT_DECLARE_CONTEXT(fileContext)
 
 
@@ -83,7 +83,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-filetransfer [options] absolute-path-to-file\n");
     printf("Simple filetransfer example");
@@ -99,16 +99,16 @@ void usage()
 }
 
 
-//!Main program dlt-test-filestransfer starts here
-int main(int argc, char* argv[])
+/*!Main program dlt-test-filestransfer starts here */
+int main(int argc, char *argv[])
 {
-    //char str[MAXSTRLEN];
+    /*char str[MAXSTRLEN]; */
     int opt, timeout;
 
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
 
-    //char version[255];
+    /*char version[255]; */
     int index;
     int dflag = 0;
     int iflag = 0;
@@ -119,9 +119,7 @@ int main(int argc, char* argv[])
     dlt_set_id(ctid, FLTR_CONTEXT);
 
     while ((opt = getopt(argc, argv, "idf:t:a:c:h")) != -1)
-    {
-        switch (opt)
-        {
+        switch (opt) {
         case 'd':
         {
             dflag = 1;
@@ -139,12 +137,12 @@ int main(int argc, char* argv[])
         }
         case 'a':
         {
-            dlt_set_id(apid,optarg);
+            dlt_set_id(apid, optarg);
             break;
         }
         case 'c':
         {
-            dlt_set_id(ctid,optarg);
+            dlt_set_id(ctid, optarg);
             break;
         }
         case 'h':
@@ -154,68 +152,52 @@ int main(int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'a' || optopt == 'c' ||  optopt == 't')
-            {
+            if ((optopt == 'a') || (optopt == 'c') || (optopt == 't'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            }
             else if (isprint (optopt))
-            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
             else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
         }
-    }
+
+
 
     for (index = optind; index < argc; index++)
-    {
         file = argv[index];
-    }
 
-    if (file == 0)
-    {
+    if (file == 0) {
         /* no message, show usage and terminate */
-        fprintf(stderr,"ERROR: No absolute path to file specified\n");
+        fprintf(stderr, "ERROR: No absolute path to file specified\n");
         usage();
         return -1;
     }
 
-
     if (tvalue)
-    {
         timeout = atoi(tvalue);
-    }
     else
-    {
         timeout = TIMEOUT;
-    }
 
-    //Register the application at the dlt-daemon
-    DLT_REGISTER_APP(apid,FLTR_APP_DESC);
+    /*Register the application at the dlt-daemon */
+    DLT_REGISTER_APP(apid, FLTR_APP_DESC);
 
-    //Register the context of the main program at the dlt-daemon
-    DLT_REGISTER_CONTEXT(fileContext,ctid,FLTR_CONTEXT_DESC);
+    /*Register the context of the main program at the dlt-daemon */
+    DLT_REGISTER_CONTEXT(fileContext, ctid, FLTR_CONTEXT_DESC);
 
-    //More details in corresponding methods
-    if( iflag )
-    {
-        dlt_user_log_file_infoAbout(&fileContext,file);
-    }
+    /*More details in corresponding methods */
+    if (iflag)
+        dlt_user_log_file_infoAbout(&fileContext, file);
 
-    if( dlt_user_log_file_complete(&fileContext,file,dflag,timeout) < 0 )
-    {
+    if (dlt_user_log_file_complete(&fileContext, file, dflag, timeout) < 0)
         printf("File couldn't be transferred. Please check the dlt log messages.\n");
-    }
 
-    //Unregister the context in which the file transfer happened from the dlt-daemon
+    /*Unregister the context in which the file transfer happened from the dlt-daemon */
     DLT_UNREGISTER_CONTEXT(fileContext);
-    //Unregister the context of the main program from the dlt-daemon
+    /*Unregister the context of the main program from the dlt-daemon */
     DLT_UNREGISTER_APP();
 
     return 0;

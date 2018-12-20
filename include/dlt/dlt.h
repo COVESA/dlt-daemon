@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt.h
-*/
+ */
 
 /*******************************************************************************
 **                                                                            **
@@ -63,8 +63,8 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 
 #ifndef DLT_H

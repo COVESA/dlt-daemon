@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-fork-handler.c
-*/
+ */
 
 #include <unistd.h> /* for fork() */
 
@@ -41,8 +41,8 @@ int main()
     usleep(200000);
 
     pid_t pid = fork();
-    if (pid == 0) /* child process */
-    {
+
+    if (pid == 0) { /* child process */
         /* this message should not be visible */
         /* DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's first message after fork, pid: "), DLT_INT32(getpid())); */
         /* unfortunately, this message does arrive, I assume because it still has (locally) valid data ... */
@@ -56,8 +56,7 @@ int main()
     {
         return -1;
     }
-    else /* parent */
-    {
+    else { /* parent */
         DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Parent's first message after fork, pid: "), DLT_INT32(getpid()));
         usleep(500000);
     }

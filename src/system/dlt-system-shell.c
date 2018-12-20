@@ -66,62 +66,58 @@ DLT_DECLARE_CONTEXT(shellContext)
 
 int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t length)
 {
-	(void) length;
+    (void)length;
 
-	DLT_LOG(shellContext,DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-shell, injection callback"));
-	char text[DLT_SHELL_COMMAND_MAX_LENGTH];
+    DLT_LOG(shellContext, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-shell, injection callback"));
+    char text[DLT_SHELL_COMMAND_MAX_LENGTH];
     int syserr = 0;
 
-	if(length<=DLT_SHELL_COMMAND_MAX_LENGTH-1)
-	{
-		strncpy(text,data,length);
-		text[length] = 0;
-	}
-	else
-	{
-		strncpy(text,data,DLT_SHELL_COMMAND_MAX_LENGTH-1);
-		text[DLT_SHELL_COMMAND_MAX_LENGTH-1] = 0;
-	}
+    if (length <= DLT_SHELL_COMMAND_MAX_LENGTH - 1) {
+        strncpy(text, data, length);
+        text[length] = 0;
+    }
+    else {
+        strncpy(text, data, DLT_SHELL_COMMAND_MAX_LENGTH - 1);
+        text[DLT_SHELL_COMMAND_MAX_LENGTH - 1] = 0;
+    }
 
-	DLT_LOG(shellContext,DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-shell, injection injection id:"),
-			DLT_UINT32(service_id));
-	DLT_LOG(shellContext,DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-shell, injection data:"),
-			DLT_STRING(text));
+    DLT_LOG(shellContext, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-shell, injection injection id:"),
+            DLT_UINT32(service_id));
+    DLT_LOG(shellContext, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-shell, injection data:"),
+            DLT_STRING(text));
 
-	switch(service_id)
-	{
-		case 0x1001:
-			if((syserr = system(text)) != 0)
-			{
-				DLT_LOG(shellContext,DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-shell, abnormal exit status."),
-						DLT_STRING(text),
-						DLT_INT(syserr));
-			}
-			else
-			{
-				DLT_LOG(shellContext,DLT_LOG_INFO,
-						DLT_STRING("Shell command executed:"),
-						DLT_STRING(text));
-			}
-			break;
-		default:
-			DLT_LOG(shellContext,DLT_LOG_ERROR,
-					DLT_STRING("dlt-system-shell, unknown command received."),
-					DLT_UINT32(service_id),
-					DLT_STRING(text));
-			break;
-	}
+    switch (service_id) {
+    case 0x1001:
+
+        if ((syserr = system(text)) != 0)
+            DLT_LOG(shellContext, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-shell, abnormal exit status."),
+                    DLT_STRING(text),
+                    DLT_INT(syserr));
+        else
+            DLT_LOG(shellContext, DLT_LOG_INFO,
+                    DLT_STRING("Shell command executed:"),
+                    DLT_STRING(text));
+
+        break;
+    default:
+        DLT_LOG(shellContext, DLT_LOG_ERROR,
+                DLT_STRING("dlt-system-shell, unknown command received."),
+                DLT_UINT32(service_id),
+                DLT_STRING(text));
+        break;
+    }
+
     return 0;
 }
 
 void init_shell()
 {
-	DLT_LOG(dltsystem,DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-shell, register callback"));
-	DLT_REGISTER_CONTEXT(shellContext,"CMD","Execute Shell commands");
-	DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001, dlt_shell_injection_callback);
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-shell, register callback"));
+    DLT_REGISTER_CONTEXT(shellContext, "CMD", "Execute Shell commands");
+    DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001, dlt_shell_injection_callback);
 }

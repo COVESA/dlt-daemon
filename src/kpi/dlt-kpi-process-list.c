@@ -29,8 +29,8 @@
 DltKpiProcessList *dlt_kpi_create_process_list()
 {
     DltKpiProcessList *new_list = malloc(sizeof(DltKpiProcessList));
-    if(new_list == NULL)
-    {
+
+    if (new_list == NULL) {
         fprintf(stderr, "%s: Cannot create process list, out of memory\n", __func__);
         return NULL;
     }
@@ -43,9 +43,8 @@ DltKpiProcessList *dlt_kpi_create_process_list()
 
 DltReturnValue dlt_kpi_free_process_list_soft(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -56,17 +55,16 @@ DltReturnValue dlt_kpi_free_process_list_soft(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_free_process_list(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     DltKpiProcess *tmp;
 
     list->cursor = list->start;
-    while(list->cursor != NULL)
-    {
+
+    while (list->cursor != NULL) {
         tmp = list->cursor->next;
         dlt_kpi_free_process(list->cursor);
         list->cursor = tmp;
@@ -77,9 +75,8 @@ DltReturnValue dlt_kpi_free_process_list(DltKpiProcessList *list)
 
 DltKpiProcess *dlt_kpi_get_process_at_cursor(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return NULL;
     }
 
@@ -88,9 +85,8 @@ DltKpiProcess *dlt_kpi_get_process_at_cursor(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_reset_cursor(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -100,17 +96,17 @@ DltReturnValue dlt_kpi_reset_cursor(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_set_cursor_at_end(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     list->cursor = list->start;
-    if(list->cursor == NULL)
+
+    if (list->cursor == NULL)
         return DLT_RETURN_OK;
 
-    while(list->cursor->next != NULL)
+    while (list->cursor->next != NULL)
         dlt_kpi_increment_cursor(list);
 
     return DLT_RETURN_OK;
@@ -118,13 +114,12 @@ DltReturnValue dlt_kpi_set_cursor_at_end(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_increment_cursor(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->cursor == NULL)
+    if (list->cursor == NULL)
         return DLT_RETURN_ERROR;
 
     list->cursor = list->cursor->next;
@@ -134,13 +129,12 @@ DltReturnValue dlt_kpi_increment_cursor(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->cursor == NULL)
+    if (list->cursor == NULL)
         return DLT_RETURN_ERROR;
 
     list->cursor = list->cursor->prev;
@@ -150,13 +144,12 @@ DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list)
 
 DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProcess *process)
 {
-    if(list == NULL || process == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if ((list == NULL) || (process == NULL)) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->start != NULL)
+    if (list->start != NULL)
         list->start->prev = process;
 
     process->next = list->start;
@@ -167,19 +160,17 @@ DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProce
 
 DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpiProcess *process)
 {
-    if(list == NULL || process == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if ((list == NULL) || (process == NULL)) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->start == NULL) // Empty list?
-    {
+    if (list->start == NULL) { /* Empty list? */
         DltReturnValue ret = dlt_kpi_add_process_at_start(list, process);
         list->cursor = NULL;
         return ret;
     }
-    else if(list->cursor == NULL)
+    else if (list->cursor == NULL)
     {
         dlt_kpi_set_cursor_at_end(list);
         DltReturnValue ret = dlt_kpi_add_process_after_cursor(list, process);
@@ -187,7 +178,7 @@ DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpi
         return ret;
     }
 
-    if(list->cursor->prev != NULL)
+    if (list->cursor->prev != NULL)
         list->cursor->prev->next = process;
     else
         list->start = process;
@@ -201,16 +192,15 @@ DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpi
 
 DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiProcess *process)
 {
-    if(list == NULL || process == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if ((list == NULL) || (process == NULL)) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
-    if(list->cursor == NULL)
+    if (list->cursor == NULL)
         return dlt_kpi_add_process_at_start(list, process);
 
-    if(list->cursor->next != NULL)
+    if (list->cursor->next != NULL)
         list->cursor->next->prev = process;
 
     process->next = list->cursor->next;
@@ -222,63 +212,58 @@ DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiP
 
 DltReturnValue dlt_kpi_remove_process_at_cursor_soft(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->cursor == NULL)
-    {
-	    fprintf(stderr, "%s: Cursor is Invalid (NULL)\n", __func__);
+    if (list->cursor == NULL) {
+        fprintf(stderr, "%s: Cursor is Invalid (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     DltKpiProcess *tmp = list->cursor;
 
-    if(tmp->prev != NULL)
-    {
-        if(tmp->next != NULL)
-        {
+    if (tmp->prev != NULL) {
+        if (tmp->next != NULL) {
             tmp->prev->next = tmp->next;
             tmp->next->prev = tmp->prev;
         }
-        else
+        else {
             tmp->prev->next = NULL;
+        }
     }
-    else
-    {
-        if(tmp->next != NULL)
-        {
+    else {
+        if (tmp->next != NULL) {
             tmp->next->prev = NULL;
             list->start = tmp->next;
         }
-        else
+        else {
             list->start = NULL;
+        }
     }
 
-    list->cursor = tmp->next; // becomes NULL if list is at end
+    list->cursor = tmp->next; /* becomes NULL if list is at end */
 
     return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list)
 {
-    if(list == NULL)
-    {
-       	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if(list->cursor == NULL)
-    {
-    	fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
+    if (list->cursor == NULL) {
+        fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
     DltKpiProcess *tmp = list->cursor;
     DltReturnValue ret = dlt_kpi_remove_process_at_cursor_soft(list);
-    if(ret < DLT_RETURN_OK)
+
+    if (ret < DLT_RETURN_OK)
         return ret;
 
     dlt_kpi_free_process(tmp);

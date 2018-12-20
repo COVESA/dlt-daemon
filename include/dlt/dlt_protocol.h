@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_protocol.h
-*/
+ */
 
 
 /*******************************************************************************
@@ -64,17 +64,17 @@
  * $LastChangedRevision$
  * $LastChangedDate$
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 #ifndef DLT_PROTOCOL_H
 #define DLT_PROTOCOL_H
 
 /**
-  \defgroup protocolapi DLT Protocol API
-  \addtogroup protocolapi
-  \{
-*/
+ * \defgroup protocolapi DLT Protocol API
+ * \addtogroup protocolapi
+ \{
+ */
 
 /*
  * Definitions of the htyp parameter in standard header.
@@ -92,7 +92,7 @@
 #define DLT_IS_HTYP_WSID(htyp) ((htyp) & DLT_HTYP_WSID)
 #define DLT_IS_HTYP_WTMS(htyp) ((htyp) & DLT_HTYP_WTMS)
 
-#define DLT_HTYP_PROTOCOL_VERSION1 (1<<5)
+#define DLT_HTYP_PROTOCOL_VERSION1 (1 << 5)
 
 /*
  * Definitions of msin parameter in extended header.
@@ -138,9 +138,12 @@
 #define DLT_CONTROL_RESPONSE   0x02 /**< Response to request message */
 #define DLT_CONTROL_TIME       0x03 /**< keep-alive message */
 
-#define DLT_MSIN_CONTROL_REQUEST  ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | (DLT_CONTROL_REQUEST  << DLT_MSIN_MTIN_SHIFT))
-#define DLT_MSIN_CONTROL_RESPONSE ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | (DLT_CONTROL_RESPONSE << DLT_MSIN_MTIN_SHIFT))
-#define DLT_MSIN_CONTROL_TIME     ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | (DLT_CONTROL_TIME     << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_REQUEST  ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
+                                   (DLT_CONTROL_REQUEST << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_RESPONSE ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
+                                   (DLT_CONTROL_RESPONSE << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_TIME     ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
+                                   (DLT_CONTROL_TIME << DLT_MSIN_MTIN_SHIFT))
 
 /*
  * Definitions of types of arguments in payload.
@@ -248,7 +251,7 @@ extern const char *dlt_get_service_name(unsigned int id);
 
 
 /**
-  \}
-*/
+ \}
+ */
 
 #endif /* DLT_PROTOCOL_H */

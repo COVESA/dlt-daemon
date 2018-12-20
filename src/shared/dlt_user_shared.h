@@ -211,7 +211,7 @@ int dlt_user_check_userheader(DltUserHeader *userheader);
  * @param len2 length of second segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2);
+DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
 
 /**
  * Atomic write to file descriptor, using vector of 3 elements
@@ -224,6 +224,6 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2
  * @param len3 length of third segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2, void *ptr3, size_t len3);
+DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
 
 #endif /* DLT_USER_SHARED_H */

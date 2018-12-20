@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-adaptor-udp.c
-*/
+ */
 
 /*******************************************************************************
 **                                                                            **
@@ -91,7 +91,7 @@
 
 DLT_DECLARE_CONTEXT(mycontext)
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int sock;
     int bytes_read;
@@ -111,22 +111,20 @@ int main(int argc, char* argv[])
     port = RCVPORT;
 
     while ((opt = getopt(argc, argv, "a:c:hp:v:")) != -1)
-    {
-        switch (opt)
-        {
+        switch (opt) {
         case 'a':
         {
-            dlt_set_id(apid,optarg);
+            dlt_set_id(apid, optarg);
             break;
         }
         case 'c':
         {
-            dlt_set_id(ctid,optarg);
+            dlt_set_id(ctid, optarg);
             break;
         }
         case 'h':
         {
-            dlt_get_version(version,255);
+            dlt_get_version(version, 255);
 
             printf("Usage: dlt-adaptor-udp [options]\n");
             printf("Adaptor for forwarding received UDP messages to DLT daemon.\n");
@@ -135,7 +133,8 @@ int main(int argc, char* argv[])
             printf("-a apid      - Set application id to apid (default: UDPA)\n");
             printf("-c ctid      - Set context id to ctid (default: UDPC)\n");
             printf("-p           - Set receive port number for UDP messages (default: %d) \n", port);
-            printf("-v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
+            printf(
+                "-v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
             printf("-h           - This help\n");
             return 0;
             break;
@@ -147,55 +146,58 @@ int main(int argc, char* argv[])
         }
         case 'v':
         {
-         if(!strcmp(optarg, "FATAL"))
-          {
-              verbosity = DLT_LOG_FATAL;
-              break;
-          }
-         else if(!strcmp(optarg, "ERROR"))
-          {
-              verbosity = DLT_LOG_ERROR;
-              break;
-          }
-         else if(!strcmp(optarg, "WARN"))
-          {
-              verbosity = DLT_LOG_WARN;
-              break;
-          }
-         else if(!strcmp(optarg, "INFO"))
-          {
-              verbosity = DLT_LOG_INFO;
-              break;
-          }
-         else if(!strcmp(optarg, "DEBUG"))
-          {
-              verbosity = DLT_LOG_DEBUG;
-              break;
-          }
-         else if(!strcmp(optarg, "VERBOSE"))
-          {
-              verbosity = DLT_LOG_VERBOSE;
-              break;
-          } else
-          {
-              printf("Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
-              verbosity = DLT_LOG_INFO;
-              break;
-          }
-          break;
+            if (!strcmp(optarg, "FATAL")) {
+                verbosity = DLT_LOG_FATAL;
+                break;
+            }
+            else if (!strcmp(optarg, "ERROR"))
+            {
+                verbosity = DLT_LOG_ERROR;
+                break;
+            }
+            else if (!strcmp(optarg, "WARN"))
+            {
+                verbosity = DLT_LOG_WARN;
+                break;
+            }
+            else if (!strcmp(optarg, "INFO"))
+            {
+                verbosity = DLT_LOG_INFO;
+                break;
+            }
+            else if (!strcmp(optarg, "DEBUG"))
+            {
+                verbosity = DLT_LOG_DEBUG;
+                break;
+            }
+            else if (!strcmp(optarg, "VERBOSE"))
+            {
+                verbosity = DLT_LOG_VERBOSE;
+                break;
+            }
+            else {
+                printf(
+                    "Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
+                verbosity = DLT_LOG_INFO;
+                break;
+            }
+
+            break;
         }
         default: /* '?' */
         {
             fprintf(stderr, "Unknown option '%c'\n", optopt);
             exit(3);
-            return 3;//for parasoft
+            return 3;/*for parasoft */
         }
         }
-    }
+
 
 #ifdef DLT_USE_IPv6
+
     if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 #else
+
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 #endif
     {
@@ -212,34 +214,28 @@ int main(int argc, char* argv[])
     server_addr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(server_addr.sin_zero), 8);
 
-
     if (bind(sock, (struct sockaddr *)&server_addr,
-             sizeof(struct sockaddr)) == -1)
-    {
+             sizeof(struct sockaddr)) == -1) {
         perror("Bind");
         return -1;
     }
 
     addr_len = sizeof(struct sockaddr);
 
-    DLT_REGISTER_APP(apid,PU_DLT_APP_DESC);
-    DLT_REGISTER_CONTEXT(mycontext,ctid,PU_DLT_CONTEXT_DESC);
+    DLT_REGISTER_APP(apid, PU_DLT_APP_DESC);
+    DLT_REGISTER_CONTEXT(mycontext, ctid, PU_DLT_CONTEXT_DESC);
 
-    while (1)
-    {
+    while (1) {
         bytes_read = 0;
 
         bytes_read = recvfrom(sock, recv_data, MAXSTRLEN, 0,
                               (struct sockaddr *)&client_addr, &addr_len);
 
-        if (bytes_read == -1)
-        {
-            if (errno == EINTR)
-            {
+        if (bytes_read == -1) {
+            if (errno == EINTR) {
                 continue;
             }
-            else
-            {
+            else {
                 DLT_UNREGISTER_CONTEXT(mycontext);
                 DLT_UNREGISTER_APP();
                 exit(1);
@@ -249,9 +245,7 @@ int main(int argc, char* argv[])
         recv_data[bytes_read] = '\0';
 
         if (bytes_read != 0)
-        {
             DLT_LOG(mycontext, verbosity, DLT_STRING(recv_data));
-        }
     }
 
     DLT_UNREGISTER_CONTEXT(mycontext);

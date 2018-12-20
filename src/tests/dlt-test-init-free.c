@@ -1,28 +1,28 @@
 /*
-* @licence app begin@
-* SPDX license identifier: MPL-2.0
-*
-* Copyright (C) 2011-2015, BMW AG
-*
-* This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
-*
-* This Source Code Form is subject to the terms of the
-* Mozilla Public License (MPL), v. 2.0.
-* If a copy of the MPL was not distributed with this file,
-* You can obtain one at http://mozilla.org/MPL/2.0/.
-*
-* For further information see http://www.genivi.org/.
-* @licence end@
-*/
+ * @licence app begin@
+ * SPDX license identifier: MPL-2.0
+ *
+ * Copyright (C) 2011-2015, BMW AG
+ *
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ *
+ * This Source Code Form is subject to the terms of the
+ * Mozilla Public License (MPL), v. 2.0.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * For further information see http://www.genivi.org/.
+ * @licence end@
+ */
 
 /*!
-* \author Sven Hassler <sven_hassler@mentor.com>
-*
-* \copyright Copyright © 2011-2015 BMW AG. \n
-* License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
-*
-* \file dlt-test-init-free.c
-*/
+ * \author Sven Hassler <sven_hassler@mentor.com>
+ *
+ * \copyright Copyright © 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt-test-init-free.c
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,9 +32,9 @@
 #include "dlt_common.h"
 #include "dlt_user.h"
 
-void exec(const char* cmd, char *buffer, size_t length);
+void exec(const char *cmd, char *buffer, size_t length);
 void printMemoryUsage();
-char* occupyMemory(uint size);
+char *occupyMemory(uint size);
 void do_example_test();
 void do_dlt_test();
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     printf("Will do %d repetitions.\n", num_repetitions);
 
-    //do_example_test();
+    /*do_example_test(); */
     do_dlt_test();
 
     printf("Done.\n");
@@ -57,25 +57,23 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// Should increase and then decrease memory amount.
+/* Should increase and then decrease memory amount. */
 void do_example_test()
 {
     const int immediatelyFree = 0;
 
     int numBufs = 1024;
-    int sizePerBuf = 1024 * 1024; // 1MB
+    int sizePerBuf = 1024 * 1024; /* 1MB */
 
-    char** bufs = (char**) malloc(numBufs * sizeof(char*));
+    char **bufs = (char **)malloc(numBufs * sizeof(char *));
 
-    for (int i = 0; i < numBufs; i++)
-    {
+    for (int i = 0; i < numBufs; i++) {
         bufs[i] = occupyMemory(sizePerBuf);
 
         printf("after alloc: ");
         printMemoryUsage();
 
-        if (immediatelyFree)
-        {
+        if (immediatelyFree) {
             free(bufs[i]);
 
             printf("after free: ");
@@ -86,9 +84,8 @@ void do_example_test()
     printf("deleting memory:\n");
 
     if (!immediatelyFree)
-        for (int i = 0; i < numBufs; i++)
-        //for (int i = numBufs - 1; i >= 0; i--) // other way round works, too
-        {
+        for (int i = 0; i < numBufs; i++) {
+            /*for (int i = numBufs - 1; i >= 0; i--) // other way round works, too */
             free(bufs[i]);
 
             printf("after free: ");
@@ -98,11 +95,10 @@ void do_example_test()
     free(bufs);
 }
 
-// Should give stable amount of memory across all iterations.
+/* Should give stable amount of memory across all iterations. */
 void do_dlt_test()
 {
-    for (int i = 0; i < num_repetitions; i++)
-    {
+    for (int i = 0; i < num_repetitions; i++) {
         dlt_init();
         dlt_free();
 
@@ -111,17 +107,17 @@ void do_dlt_test()
     }
 }
 
-void exec(const char* cmd, char *buffer, size_t length)
+void exec(const char *cmd, char *buffer, size_t length)
 {
-    FILE* pipe = NULL;
+    FILE *pipe = NULL;
     strncpy(buffer, "ERROR", length);
 
-    if ( (pipe = popen(cmd, "r")) == NULL )
+    if ((pipe = popen(cmd, "r")) == NULL)
         return;
 
     while (fgets(buffer, length, pipe) != NULL);
 
-    if(pipe != NULL)
+    if (pipe != NULL)
         pclose(pipe);
 }
 
@@ -137,13 +133,12 @@ void printMemoryUsage()
     printf("%s", result);
 }
 
-char* occupyMemory(uint size)
+char *occupyMemory(uint size)
 {
-    char* buf = (char*) malloc(size * sizeof(char));
+    char *buf = (char *)malloc(size * sizeof(char));
+
     for (int i = 0; i < 1; i++)
-    {
         buf[i] = 1;
-    }
 
     return buf;
 }

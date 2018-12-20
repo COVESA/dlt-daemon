@@ -24,7 +24,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-sortbytimestamp.cpp
-*/
+ */
 
 /*******************************************************************************
 **                                                                            **
@@ -86,16 +86,15 @@ int verbosity = 0;
 /**
  * Print information, conditional upon requested verbosity level
  */
-void verbose(int level, char * msg, ...)
+void verbose(int level, char *msg, ...)
 {
-    if (level <= verbosity)
-    {
-        if (verbosity > 1) /* timestamp */
-        {
-            time_t tnow = time((time_t*)0);
+    if (level <= verbosity) {
+        if (verbosity > 1) { /* timestamp */
+            time_t tnow = time((time_t *)0);
+
             if (tnow != -1) {
-                char * snow = ctime(&tnow);
-                /* suppress newline char */ 
+                char *snow = ctime(&tnow);
+                /* suppress newline char */
                 snow[strlen(snow) - 1] = 0;
                 printf("%s: ", snow);
             }
@@ -107,26 +106,21 @@ void verbose(int level, char * msg, ...)
         vprintf(msg, args);
 
         /* lines without a terminal newline aren't guaranteed to be displayed */
-        if (msg[len-1] != '\n')
-        {
+        if (msg[len - 1] != '\n')
             fflush(stdout);
-        }
     }
 }
 
 /**
  * Comparison function for use with qsort
  */
-int compare_index_timestamps(const void* a, const void *b)
+int compare_index_timestamps(const void *a, const void *b)
 {
-    if (((TimestampIndex*)a)->tmsp > ((TimestampIndex*)b)->tmsp)
-    {
+    if (((TimestampIndex *)a)->tmsp > ((TimestampIndex *)b)->tmsp)
         return 1;
-    }
-    else if (((TimestampIndex*)a)->tmsp == ((TimestampIndex*)b)->tmsp)
-    {
+    else if (((TimestampIndex *)a)->tmsp == ((TimestampIndex *)b)->tmsp)
         return 0;
-    }
+
     return -1;
 }
 
@@ -140,23 +134,22 @@ void write_messages(int ohandle, DltFile *file, TimestampIndex *timestamps, int 
 
     verbose(1, "Writing %d messages\n", message_count);
 
-    for (int i = 0; i < message_count; ++i)
-    {
-        if (0 == i % 1001 || i == message_count - 1)
-        {
+    for (int i = 0; i < message_count; ++i) {
+        if ((0 == i % 1001) || (i == message_count - 1))
             verbose(2, "Writing message %d\r", i);
-        }
-        dlt_file_message(file,timestamps[i].num,0);
+
+        dlt_file_message(file, timestamps[i].num, 0);
         iov[0].iov_base = file->msg.headerbuffer;
         iov[0].iov_len = file->msg.headersize;
         iov[1].iov_base = file->msg.databuffer;
         iov[1].iov_len = file->msg.datasize;
 
         bytes_written = writev(ohandle, iov, 2);
-        if (0 > bytes_written){
-                printf("in main: writev(ohandle, iov, 2); returned an error!" );
-                dlt_file_free(file,0);
-                exit (-1);
+
+        if (0 > bytes_written) {
+            printf("in main: writev(ohandle, iov, 2); returned an error!");
+            dlt_file_free(file, 0);
+            exit (-1);
         }
     }
 
@@ -170,7 +163,7 @@ void usage()
 {
     char version[DLT_VERBUFSIZE];
 
-    dlt_get_version(version,DLT_VERBUFSIZE);
+    dlt_get_version(version, DLT_VERBUFSIZE);
 
     printf("Usage: dlt-sortbytimestamp [options] [commands] file_in file_out\n");
     printf("Read DLT file, sort by timestamp and store the messages again.\n");
@@ -190,7 +183,7 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int vflag = 0;
     int cflag = 0;
@@ -208,7 +201,7 @@ int main(int argc, char* argv[])
     DltFile file;
     DltFilter filter;
 
-    int ohandle=-1;
+    int ohandle = -1;
 
     int num, begin, end;
 
@@ -217,168 +210,138 @@ int main(int argc, char* argv[])
     verbose(1, "Configuring\n");
 
     while ((c = getopt (argc, argv, "vchf:b:e:")) != -1)
-        switch (c)
-        {
+        switch (c) {
         case 'v':
-            {
-                verbosity += 1;
-                break;
-            }
+        {
+            verbosity += 1;
+            break;
+        }
         case 'c':
-			{
-            	cflag = 1;
-            	break;
-			}
+        {
+            cflag = 1;
+            break;
+        }
         case 'h':
-            {
-                usage();
-                return -1;
-            }
+        {
+            usage();
+            return -1;
+        }
         case 'f':
-            {
-                fvalue = optarg;
-                break;
-            }
+        {
+            fvalue = optarg;
+            break;
+        }
         case 'b':
-            {
-                bvalue = optarg;
-                break;
-            }
+        {
+            bvalue = optarg;
+            break;
+        }
         case 'e':
-            {
-                evalue = optarg;
-                break;
-            }
+        {
+            evalue = optarg;
+            break;
+        }
         case '?':
-            {
-                if (optopt == 'f' || optopt == 'b' || optopt == 'e')
-                {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-                }
-                else if (isprint (optopt))
-                {
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                else
-                {
-                    fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-                }
-                /* unknown or wrong option used, show usage information and terminate */
-                usage();
-                return -1;
-            }
+        {
+            if ((optopt == 'f') || (optopt == 'b') || (optopt == 'e'))
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            else
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+
+            /* unknown or wrong option used, show usage information and terminate */
+            usage();
+            return -1;
+        }
         default:
-            {
-                abort();
-                return -1;//for parasoft
-            }
+        {
+            abort();
+            return -1;    /*for parasoft */
+        }
         }
 
     /* Don't use vflag on quietest levels */
     if (verbosity > 2)
-    {
         vflag = 1;
-    }
 
     verbose (1, "Initializing\n");
 
     /* initialise structure to use DLT file */
-    dlt_file_init(&file,vflag);
+    dlt_file_init(&file, vflag);
 
     /* first parse filter file if filter parameter is used */
-    if (fvalue)
-    {
-        if (bvalue || evalue)
-        {
-            fprintf(stderr,"ERROR: can't specify a range *and* filtering!\n");
-            dlt_file_free(&file,vflag);
+    if (fvalue) {
+        if (bvalue || evalue) {
+            fprintf(stderr, "ERROR: can't specify a range *and* filtering!\n");
+            dlt_file_free(&file, vflag);
             return -1;
         }
 
-        if (dlt_filter_load(&filter,fvalue,vflag) < DLT_RETURN_OK)
-        {
-            dlt_file_free(&file,vflag);
+        if (dlt_filter_load(&filter, fvalue, vflag) < DLT_RETURN_OK) {
+            dlt_file_free(&file, vflag);
             return -1;
         }
 
-        dlt_file_set_filter(&file,&filter,vflag);
+        dlt_file_set_filter(&file, &filter, vflag);
     }
 
     ivalue = argv[optind];
 
-    if (!ivalue)
-    {
-        dlt_file_free(&file,vflag);
-        fprintf(stderr,"ERROR: Need an input file!\n");
+    if (!ivalue) {
+        dlt_file_free(&file, vflag);
+        fprintf(stderr, "ERROR: Need an input file!\n");
         return -1;
     }
 
     ovalue = argv[optind + 1];
 
-    if (ovalue)
-    {
-        ohandle = open(ovalue,O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
-        if (ohandle == -1)
-        {
-            dlt_file_free(&file,vflag);
-            fprintf(stderr,"ERROR: Output file %s cannot be opened!\n",ovalue);
+    if (ovalue) {
+        ohandle = open(ovalue, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+
+        if (ohandle == -1) {
+            dlt_file_free(&file, vflag);
+            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n", ovalue);
             return -1;
         }
     }
-    else
-    {
-        dlt_file_free(&file,vflag);
-        fprintf(stderr,"ERROR: Need an output file!\n");
+    else {
+        dlt_file_free(&file, vflag);
+        fprintf(stderr, "ERROR: Need an output file!\n");
         return -1;
     }
 
     verbose(1, "Loading\n");
 
     /* load, analyse data file and create index list */
-    if (dlt_file_open(&file,ivalue,vflag) >= DLT_RETURN_OK)
-    {
-        while (dlt_file_read(&file,vflag) >= DLT_RETURN_OK)
-        {
-        }
+    if (dlt_file_open(&file, ivalue, vflag) >= DLT_RETURN_OK) {
+        while (dlt_file_read(&file, vflag) >= DLT_RETURN_OK) {}
     }
 
     if (cflag) {
         if (fvalue)
-        {
             printf("Loaded %d messages, %d after filtering.\n", file.counter_total, file.counter);
-        }
         else
-        {
             printf("Loaded %d messages.\n", file.counter_total);
-        }
     }
 
     if (bvalue)
-    {
         begin = atoi(bvalue);
-    }
     else
-    {
         begin = 0;
-    }
 
     if (evalue)
-    {
         end = atoi(evalue);
-    }
     else
-    {
-        end = file.counter-1;
-    }
+        end = file.counter - 1;
 
-    if (begin<0 || begin>=file.counter || begin>end)
-    {
-        fprintf(stderr,"ERROR: Selected first message %d is out of range!\n",begin);
+    if ((begin < 0) || (begin >= file.counter) || (begin > end)) {
+        fprintf(stderr, "ERROR: Selected first message %d is out of range!\n", begin);
         return -1;
     }
-    if (end<0 || end<begin || end>=file.counter)
-    {
-        fprintf(stderr,"ERROR: Selected end message %d is out of range!\n",end);
+
+    if ((end < 0) || (end < begin) || (end >= file.counter)) {
+        fprintf(stderr, "ERROR: Selected end message %d is out of range!\n", end);
         return -1;
     }
 
@@ -388,31 +351,30 @@ int main(int argc, char* argv[])
 
     message_count = 1 + end - begin;
 
-    timestamp_index = (TimestampIndex*)malloc(sizeof(TimestampIndex) * message_count);
+    timestamp_index = (TimestampIndex *)malloc(sizeof(TimestampIndex) * message_count);
 
-    if (timestamp_index == 0)
-    {
-        fprintf(stderr,"ERROR: Failed to allocate memory for message index!\n");
-        dlt_file_free(&file,vflag);
+    if (timestamp_index == 0) {
+        fprintf(stderr, "ERROR: Failed to allocate memory for message index!\n");
+        dlt_file_free(&file, vflag);
         return -1;
     }
 
     verbose(1, "Filling %d entries\n", message_count);
-    for (num = begin; num <= end; num++)
-    {
-        dlt_file_message(&file,num,vflag);
+
+    for (num = begin; num <= end; num++) {
+        dlt_file_message(&file, num, vflag);
         timestamp_index[num - begin].num = num;
         timestamp_index[num - begin].tmsp = file.msg.headerextra.tmsp;
     }
 
     verbose(1, "Sorting\n");
-    qsort((void*)timestamp_index, message_count, sizeof(TimestampIndex), compare_index_timestamps);
+    qsort((void *)timestamp_index, message_count, sizeof(TimestampIndex), compare_index_timestamps);
 
     write_messages(ohandle, &file, timestamp_index, message_count);
     close(ohandle);
 
     verbose(1, "Tidying up.\n");
     free(timestamp_index);
-    dlt_file_free(&file,vflag);
+    dlt_file_free(&file, vflag);
     return 0;
 }

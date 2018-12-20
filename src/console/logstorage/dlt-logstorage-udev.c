@@ -90,42 +90,33 @@ static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
     char *mnt_point = NULL;
 
     if (dev_node == NULL)
-    {
         return NULL;
-    }
 
     f = setmntent("/proc/mounts", "r");
 
-    if (f == NULL)
-    {
+    if (f == NULL) {
         pr_error("Cannot read /proc/mounts\n");
         return NULL;
     }
 
     while (NULL != (ent = getmntent(f)))
-    {
-        if (strncmp(ent->mnt_fsname, dev_node, strlen(ent->mnt_fsname)) == 0)
-        {
+        if (strncmp(ent->mnt_fsname, dev_node, strlen(ent->mnt_fsname)) == 0) {
             mnt_point = strdup(ent->mnt_dir);
 
-            if (mnt_point == NULL)
-            {
+            if (mnt_point == NULL) {
                 pr_error("Cannot duplicate string.\n");
                 return NULL;
             }
 
             /* Remounting rw */
             if (strlen(mnt_point))
-            {
                 /* capabilities needed. Thus we don't really car on failure.
                  * Therefor we can ignore the return value.
                  */
-                (void) mount(NULL, mnt_point, NULL, MS_REMOUNT, ent->mnt_opts);
-            }
+                (void)mount(NULL, mnt_point, NULL, MS_REMOUNT, ent->mnt_opts);
 
             break;
         }
-    }
 
     endmntent(f);
 
@@ -153,56 +144,47 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
     char *dev_node = NULL;
     int ret = 0;
 
-    if (!part)
-    {
+    if (!part) {
         pr_verbose("No partition structure given.\n");
         return -1;
     }
 
     pr_verbose("Checking mount point.\n");
 
-    if (!udev_device_get_devnode(part))
-    {
+    if (!udev_device_get_devnode(part)) {
         pr_verbose("Skipping as no devnode.\n");
         return 0;
     }
 
     dev_node = strdup(udev_device_get_devnode(part));
-    if (dev_node == NULL)
-    {
+
+    if (dev_node == NULL) {
         pr_error("Cannot allocate memory for to store string\n");
         return -1;
     }
 
-    if (event == EVENT_MOUNTED)
-    {
+    if (event == EVENT_MOUNTED) {
         mnt_point = dlt_logstorage_udev_get_mount_point(dev_node);
         logstorage_dev = dlt_logstorage_check_config_file(mnt_point);
 
-        if (logstorage_dev) /* Configuration file available, add node to internal list */
-        {
+        if (logstorage_dev) { /* Configuration file available, add node to internal list */
             logstorage_store_dev_info(dev_node, mnt_point);
         }
-        else
-        {
+        else {
             free(mnt_point);
             mnt_point = NULL;
         }
     }
-    else
-    {
+    else {
         /* remove device information */
         mnt_point = logstorage_delete_dev_info(dev_node);
     }
 
-    if (mnt_point)
-    {
+    if (mnt_point) {
         ret = dlt_logstorage_send_event(event, mnt_point);
 
         if (ret)
-        {
             pr_error("Can't send event for %s to DLT.\n", mnt_point);
-        }
     }
 
     free(dev_node);
@@ -226,32 +208,28 @@ static int logstorage_udev_udevd_callback(void)
     LogstorageCtrlUdev *prvt = NULL;
     struct udev_device *partition = NULL;
 
-    if (!lctrl)
-    {
+    if (!lctrl) {
         pr_error("Not able to get logstorage control instance.\n");
         return -1;
     }
 
     prvt = (LogstorageCtrlUdev *)lctrl->prvt;
 
-    if ((!prvt) || (!prvt->mon))
-    {
+    if ((!prvt) || (!prvt->mon)) {
         pr_error("Not able to get private data.\n");
         return -1;
     }
 
     partition = udev_monitor_receive_device(prvt->mon);
 
-    if (!partition)
-    {
+    if (!partition) {
         pr_error("Not able to get partition.\n");
         return -1;
     }
 
     action = udev_device_get_action(partition);
 
-    if (!action)
-    {
+    if (!action) {
         pr_error("Not able to get action.\n");
         udev_device_unref(partition);
         return -1;
@@ -261,8 +239,7 @@ static int logstorage_udev_udevd_callback(void)
                action,
                udev_device_get_devnode(partition));
 
-    if (strncmp(action, "add", sizeof("add")) == 0)
-    {
+    if (strncmp(action, "add", sizeof("add")) == 0) {
         /*TODO: This can be replaced by polling on /proc/mount.
          * we could get event on modification, and keep track on a list
          * of mounted devices. New devices could be check that way.
@@ -294,8 +271,7 @@ static int logstorage_udev_udevd_callback(void)
  */
 static int dlt_logstorage_udev_check_mounted(struct udev *udev)
 {
-    if (udev == NULL)
-    {
+    if (udev == NULL) {
         pr_error("%s: udev structure is NULL\n", __func__);
         return -1;
     }
@@ -305,8 +281,7 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
     struct udev_list_entry *devices = NULL;
     struct udev_list_entry *dev_list_entry = NULL;
 
-    if (!enumerate)
-    {
+    if (!enumerate) {
         pr_error("Can't enumerate devices.\n");
         return -1;
     }
@@ -330,9 +305,7 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
         partition = udev_device_new_from_syspath(udev, path);
 
         if (!partition)
-        {
             continue;
-        }
 
         pr_verbose("Found device %s %s %s.\n",
                    path,
@@ -362,26 +335,18 @@ int dlt_logstorage_udev_deinit(void)
     LogstorageCtrlUdev *prvt = NULL;
 
     if (!lctrl)
-    {
         return -1;
-    }
 
     prvt = (LogstorageCtrlUdev *)lctrl->prvt;
 
     if (prvt == NULL)
-    {
         return -1;
-    }
 
     if (prvt->mon)
-    {
         udev_monitor_unref(prvt->mon);
-    }
 
     if (prvt->udev)
-    {
         udev_unref(prvt->udev);
-    }
 
     free(prvt);
     lctrl->prvt = NULL;
@@ -404,16 +369,14 @@ int dlt_logstorage_udev_init(void)
 
     pr_verbose("Initializing.\n");
 
-    if (!lctrl)
-    {
+    if (!lctrl) {
         pr_error("Not able to get logstorage control instance.\n");
         return -1;
     }
 
     lctrl->prvt = calloc(1, sizeof(LogstorageCtrlUdev));
 
-    if (!lctrl->prvt)
-    {
+    if (!lctrl->prvt) {
         pr_error("No memory to allocate private data.\n");
         return -1;
     }
@@ -423,8 +386,7 @@ int dlt_logstorage_udev_init(void)
     /* Initialize udev object */
     prvt->udev = udev_new();
 
-    if (!prvt->udev)
-    {
+    if (!prvt->udev) {
         pr_error("Cannot initialize udev object\n");
         dlt_logstorage_udev_deinit();
         return -1;
@@ -435,8 +397,7 @@ int dlt_logstorage_udev_init(void)
      * "add", "remove", "change", etc */
     prvt->mon = udev_monitor_new_from_netlink(prvt->udev, "udev");
 
-    if (!prvt->mon)
-    {
+    if (!prvt->mon) {
         pr_error("Cannot initialize udev monitor\n");
         dlt_logstorage_udev_deinit();
         return -1;
@@ -446,8 +407,7 @@ int dlt_logstorage_udev_init(void)
                                                           "block",
                                                           NULL);
 
-    if (ret)
-    {
+    if (ret) {
         pr_error("Cannot attach filter to monitor: %s.\n", strerror(-ret));
         dlt_logstorage_udev_deinit();
         return -1;
@@ -455,8 +415,7 @@ int dlt_logstorage_udev_init(void)
 
     ret = udev_monitor_enable_receiving(prvt->mon);
 
-    if (ret < 0)
-    {
+    if (ret < 0) {
         pr_error("Cannot start receiving: %s.\n", strerror(-ret));
         dlt_logstorage_udev_deinit();
         return -1;

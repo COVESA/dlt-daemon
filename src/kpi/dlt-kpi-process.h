@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include "dlt-kpi-common.h"
 
-typedef struct DltKpiEventWatch DltKpiEventWatch; // forward declaration
+typedef struct DltKpiEventWatch DltKpiEventWatch; /* forward declaration */
 
 typedef struct DltKpiProcess
 {

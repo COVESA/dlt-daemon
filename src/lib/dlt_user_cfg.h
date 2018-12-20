@@ -89,7 +89,7 @@
 #define DLT_USER_BUFFER_LENGTH               255
 
 /* Number of context entries, which will be allocated,
-   if no more context entries are available */
+ * if no more context entries are available */
 #define DLT_USER_CONTEXT_ALLOC_SIZE          500
 
 /* Maximu length of a filename string */

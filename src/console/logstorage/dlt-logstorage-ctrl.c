@@ -66,7 +66,7 @@
 #include <sys/poll.h>
 
 #if defined(__linux__)
-#include "sd-daemon.h"
+#   include "sd-daemon.h"
 #endif
 
 #include "dlt_protocol.h"
@@ -111,8 +111,7 @@ int dlt_logstorage_must_exit(void)
  */
 static void catch_signal(int signo)
 {
-    if (signo)
-    {
+    if (signo) {
         pr_error("Signal %d received, exiting.", signo);
         dlt_logstorage_exit();
     }
@@ -132,16 +131,13 @@ static void install_signal_handler(void)
     pr_verbose("Installing signal handler.\n");
 
     /* install a signal handler for the above listed signals */
-    for (i = 0 ; signals[i] ; i++)
-    {
+    for (i = 0; signals[i]; i++) {
         memset(&sa, 0, sizeof(sa));
         sa.sa_handler = catch_signal;
 
         if (sigaction(signals[i], &sa, NULL) < 0)
-        {
             pr_error("Failed to install signal %u handler. Error: %s\n",
                      signals[i], strerror(errno));
-        }
     }
 }
 
@@ -163,10 +159,8 @@ static int analyze_response(char *data, void *payload, int len)
     char resp_warning[MAX_RESPONSE_LENGTH] = { 0 };
     char resp_perm_denied[MAX_RESPONSE_LENGTH] = { 0 };
 
-    if (data == NULL || payload == NULL)
-    {
+    if ((data == NULL) || (payload == NULL))
         return -1;
-    }
 
     /* satisfy compiler */
     payload = payload;
@@ -188,16 +182,14 @@ static int analyze_response(char *data, void *payload, int len)
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
     if (strncmp(data, resp_ok, strlen(resp_ok)) == 0)
-    {
         ret = 0;
-    }
-    if (strncmp(data, resp_warning, strlen(resp_warning)) == 0)
-    {
+
+    if (strncmp(data, resp_warning, strlen(resp_warning)) == 0) {
         pr_error("Warning:Some filter configurations are ignored due to configuration issues \n");
         ret = 0;
     }
-    if (strncmp(data, resp_perm_denied, strlen(resp_perm_denied)) == 0)
-    {
+
+    if (strncmp(data, resp_perm_denied, strlen(resp_perm_denied)) == 0) {
         pr_error("Warning: Permission denied.\n");
         ret = 0;
     }
@@ -223,8 +215,7 @@ static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl,
                                          int fd,
                                          void *cb)
 {
-    if ((fd < 0) || !cb || !ev_hdl)
-    {
+    if ((fd < 0) || !cb || !ev_hdl) {
         pr_error("Wrong parameter to add event (%d %p)\n", fd, cb);
         return -1;
     }
@@ -251,28 +242,20 @@ static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
 
     ret = poll(&ev->pfd, 1, POLL_TIME_OUT);
 
-    if (ret <= 0)
-    {
+    if (ret <= 0) {
         if (errno == EINTR)
-        {
             ret = 0;
-        }
 
         if (ret < 0)
-        {
             pr_error("poll error: %s\n", strerror(errno));
-        }
 
         return ret;
     }
 
     if (ev->pfd.revents == 0)
-    {
         return 0;
-    }
 
-    if (ev->pfd.events & EV_MASK_REJECTED)
-    {
+    if (ev->pfd.events & EV_MASK_REJECTED) {
         pr_error("Error while polling. Event received: 0x%x\n", ev->pfd.events);
         /* We only support one event producer.
          * Error means that this producer died.
@@ -284,8 +267,7 @@ static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
         return -1;
     }
 
-    if (!callback)
-    {
+    if (!callback) {
         pr_error("Callback not found, exiting.\n");
         dlt_logstorage_exit();
         return -1;
@@ -293,8 +275,7 @@ static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
 
     pr_verbose("Got new event, calling %p.\n", callback);
 
-    if (callback() < 0)
-    {
+    if (callback() < 0) {
         pr_error("Error while calling the callback, exiting.\n");
         dlt_logstorage_exit();
         return -1;
@@ -327,23 +308,20 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
 
     /* Initializing the communication with the daemon */
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
-           !dlt_logstorage_must_exit())
-    {
+           !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
         pr_error("Retrying to connect in %lds.\n", get_timeout());
         sleep(get_timeout());
     }
 
-    if (dlt_logstorage_must_exit())
-    {
+    if (dlt_logstorage_must_exit()) {
         pr_verbose("Exiting.\n");
         return 0;
     }
 
     pr_verbose("Initializing event generator.\n");
 
-    if (dlt_logstorage_init_handler() < 0)
-    {
+    if (dlt_logstorage_init_handler() < 0) {
         pr_error("Failed to initialize handler.\n");
         dlt_control_deinit();
         return -1;
@@ -351,16 +329,13 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
 
     if (dlt_logstorage_ctrl_add_event(&ev_hdl,
                                       dlt_logstorage_get_handler_fd(),
-                                      dlt_logstorage_get_handler_cb()) < 0)
-    {
+                                      dlt_logstorage_get_handler_cb()) < 0) {
         pr_error("add_event error: %s\n", strerror(errno));
         dlt_logstorage_exit();
     }
 
     while (!dlt_logstorage_must_exit() && (ret == 0))
-    {
         ret = dlt_logstorage_ctrl_execute_event_loop(&ev_hdl);
-    }
 
     /* Clean up */
     dlt_logstorage_deinit_handler();
@@ -378,19 +353,16 @@ static int dlt_logstorage_ctrl_single_request()
     int ret = 0;
 
     /* in case sync all caches, an empty path is given */
-    if (get_default_event_type() != EVENT_SYNC_CACHE)
-    {
+    if (get_default_event_type() != EVENT_SYNC_CACHE) {
         /* Check if a 'CONF_NAME' file is present at the given path */
-        if (!dlt_logstorage_check_config_file(get_default_path()))
-        {
+        if (!dlt_logstorage_check_config_file(get_default_path())) {
             pr_error("No '%s' file available at: %s\n",
                      CONF_NAME,
                      get_default_path());
             return -1;
         }
 
-        if (!dlt_logstorage_check_directory_permission(get_default_path()))
-        {
+        if (!dlt_logstorage_check_directory_permission(get_default_path())) {
             pr_error("'%s' is not writable\n", get_default_path());
             return -1;
         }
@@ -398,8 +370,7 @@ static int dlt_logstorage_ctrl_single_request()
 
     /* Initializing the communication with the daemon */
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
-           !dlt_logstorage_must_exit())
-    {
+           !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
         pr_error("Retrying to connect in %lds.\n", get_timeout());
         sleep(get_timeout());
@@ -441,15 +412,15 @@ static void usage(void)
 }
 
 static struct option long_options[] = {
-    {"command",     required_argument,  0,  'c'},
-    {"daemonize",   optional_argument,  0,  'd'},
-    {"ecuid",       required_argument,  0,  'e'},
-    {"help",        no_argument,        0,  'h'},
-    {"path",        required_argument,  0,  'p'},
-    {"snapshot",    optional_argument,  0,  's'},
-    {"timeout",     required_argument,  0,  't'},
-    {"verbose",     no_argument,        0,  'v'},
-    {0,             0,                  0,  0}
+    { "command", required_argument, 0, 'c' },
+    { "daemonize", optional_argument, 0, 'd' },
+    { "ecuid", required_argument, 0, 'e' },
+    { "help", no_argument, 0, 'h' },
+    { "path", required_argument, 0, 'p' },
+    { "snapshot", optional_argument, 0, 's' },
+    { "timeout", required_argument, 0, 't' },
+    { "verbose", no_argument, 0, 'v' },
+    { 0, 0, 0, 0 }
 };
 
 /** @brief Parses the application arguments
@@ -471,14 +442,11 @@ static int parse_args(int argc, char *argv[])
                             ":s::t:he:p:d::c:v",
                             long_options,
                             &long_index)) != -1)
-    {
-        switch (c)
-        {
+        switch (c) {
         case 's':
             set_default_event_type(EVENT_SYNC_CACHE);
 
-            if (optarg != NULL && strlen(optarg) >= DLT_MOUNT_PATH_MAX)
-            {
+            if ((optarg != NULL) && (strlen(optarg) >= DLT_MOUNT_PATH_MAX)) {
                 pr_error("Mount path '%s' too long\n", optarg);
                 return -1;
             }
@@ -501,8 +469,7 @@ static int parse_args(int argc, char *argv[])
             break;
         case 'p':
 
-            if (strlen(optarg) >= DLT_MOUNT_PATH_MAX)
-            {
+            if (strlen(optarg) >= DLT_MOUNT_PATH_MAX) {
                 pr_error("Mount path '%s' too long\n", optarg);
                 return -1;
             }
@@ -523,13 +490,9 @@ static int parse_args(int argc, char *argv[])
         case '?':
 
             if (isprint(optopt))
-            {
                 pr_error("Unknown option -%c.\n", optopt);
-            }
             else
-            {
                 pr_error("Unknown option character \\x%x.\n", optopt);
-            }
 
             usage();
             return -1;
@@ -537,11 +500,11 @@ static int parse_args(int argc, char *argv[])
             pr_error("Try %s -h for more information.\n", argv[0]);
             return -1;
         }
-    }
 
-    if (get_default_event_type() == EVENT_SYNC_CACHE &&
-        get_handler_type() != CTRL_NOHANDLER)
-    {
+
+
+    if ((get_default_event_type() == EVENT_SYNC_CACHE) &&
+        (get_handler_type() != CTRL_NOHANDLER)) {
         pr_error("Sync caches not available in daemon mode\n");
         return -1;
     }
@@ -553,8 +516,8 @@ static int parse_args(int argc, char *argv[])
 int sd_notify(int unset_environment, const char *state)
 {
     /* Satisfy Compiler for warnings */
-    (void) unset_environment;
-    (void) state;
+    (void)unset_environment;
+    (void)state;
     return 0;
 }
 #endif
@@ -577,36 +540,29 @@ int main(int argc, char *argv[])
 
     /* Get command line arguments */
     if (parse_args(argc, argv) != 0)
-    {
         return -1;
-    }
 
     /* all parameter valid, start communication with daemon or setup
      * communication with control daemon */
-    if (get_handler_type() == CTRL_NOHANDLER)
-    {
+    if (get_handler_type() == CTRL_NOHANDLER) {
         pr_verbose("One shot.\n");
 
         ret = dlt_logstorage_ctrl_single_request();
+
         if (ret < 0)
-        {
             pr_error("Message failed to be send. Please check DLT config.\n");
-        }
     }
-    else
-    {
+    else {
         pr_verbose("Entering in daemon mode.\n");
 
         /* Let's daemonize */
-        if (sd_notify(0, "READY=1") <= 0)
-        {
+        if (sd_notify(0, "READY=1") <= 0) {
             pr_verbose("SD notify failed, manually daemonizing.\n");
 
             /* No message can be sent or Systemd is not available.
              * Daemonizing manually.
              */
-            if (daemon(1, 1))
-            {
+            if (daemon(1, 1)) {
                 pr_error("Failed to daemonize: %s\n", strerror(errno));
                 return EXIT_FAILURE;
             }

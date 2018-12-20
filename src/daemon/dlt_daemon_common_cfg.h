@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_common_cfg.h
-*/
+ */
 
 
 
@@ -86,30 +86,30 @@
 
 /* Default Path for control socket */
 #define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
-                                          "/dlt-ctrl.sock"
+    "/dlt-ctrl.sock"
 
 #ifdef DLT_USE_UNIX_SOCKET_IPC
-#define DLT_DAEMON_DEFAULT_APP_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
-                                          "/dlt-app.sock"
+#   define DLT_DAEMON_DEFAULT_APP_SOCK_PATH DLT_RUNTIME_DEFAULT_DIRECTORY \
+    "/dlt-app.sock"
 #endif
 
 /* Size of text buffer */
 #define DLT_DAEMON_COMMON_TEXTBUFSIZE          255
 
 /* Application ID used when the dlt daemon creates a control message */
-#define DLT_DAEMON_CTRL_APID 		 "DA1"
+#define DLT_DAEMON_CTRL_APID         "DA1"
 /* Context ID used when the dlt daemon creates a control message */
-#define DLT_DAEMON_CTRL_CTID 		 "DC1"
+#define DLT_DAEMON_CTRL_CTID         "DC1"
 
 /* Number of entries to be allocated at one in application table,
-   when no more entries are available */
+ * when no more entries are available */
 #define DLT_DAEMON_APPL_ALLOC_SIZE      500
 /* Number of entries to be allocated at one in context table,
-   when no more entries are available */
+ * when no more entries are available */
 #define DLT_DAEMON_CONTEXT_ALLOC_SIZE  1000
 
 /* Debug get log info function,
-   set to 1 to enable, 0 to disable debugging */
+ * set to 1 to enable, 0 to disable debugging */
 #define DLT_DEBUG_GETLOGINFO 0
 
 /************************/

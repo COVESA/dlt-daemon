@@ -41,7 +41,7 @@
 #include "dlt_cdh.h"
 #include <dirent.h>
 
-// Unusual characters in a windows filename are replaced
+/* Unusual characters in a windows filename are replaced */
 #define UNUSUAL_CHARS                           ":/\\!*"
 #define REPLACEMENT_CHAR                        '_'
 
@@ -49,19 +49,19 @@
 #define COREDUMP_FILESYSTEM_MIN_SIZE_MB         40
 #define COREDUMP_HANDLER_PRIORITY               -19
 
-void core_locks(const proc_info_t* p_proc, int action);
+void core_locks(const proc_info_t *p_proc, int action);
 
 /* ===================================================================
- ** Method      : init_proc_info(...)
- **
- ** Description : initialises all members of process info structure to defined values
- **
- ** Parameters  : INPUT p_proc
- **               OUTPUT pointer to initialised crashed process info structure
- **
- ** Returns     : nothing
- ** ===================================================================*/
-void init_proc_info(proc_info_t* p_proc)
+** Method      : init_proc_info(...)
+**
+** Description : initialises all members of process info structure to defined values
+**
+** Parameters  : INPUT p_proc
+**               OUTPUT pointer to initialised crashed process info structure
+**
+** Returns     : nothing
+** ===================================================================*/
+void init_proc_info(proc_info_t *p_proc)
 {
     memset(p_proc->name, 0, sizeof(p_proc->name));
     memset(p_proc->threadname, 0, sizeof(p_proc->threadname));
@@ -87,107 +87,98 @@ void init_proc_info(proc_info_t* p_proc)
 }
 
 /* ===================================================================
- ** Method      : read_args(...)
- **
- ** Description : reads command line arguments
- **
- ** Parameters  : INPUT argc
- **               INPUT argv
- **               OUTPUT pointer to crashed process info structure
- **
- ** Returns     : 0 if success, else -1
- ** ===================================================================*/
-cdh_status_t read_args(int argc, char** argv, proc_info_t* proc)
+** Method      : read_args(...)
+**
+** Description : reads command line arguments
+**
+** Parameters  : INPUT argc
+**               INPUT argv
+**               OUTPUT pointer to crashed process info structure
+**
+** Returns     : 0 if success, else -1
+** ===================================================================*/
+cdh_status_t read_args(int argc, char **argv, proc_info_t *proc)
 {
-    if (argc < 5)
-    {
+    if (argc < 5) {
         syslog(LOG_ERR, "Usage: cdh timestamp pid signal procname");
         return CDH_NOK;
     }
 
     init_proc_info(proc);
 
-    if (sscanf(argv[1], "%u", &proc->timestamp) != 1)
-    {
+    if (sscanf(argv[1], "%u", &proc->timestamp) != 1) {
         syslog(LOG_ERR, "Unable to read timestamp argument <%s>. Closing", argv[1]);
         return CDH_NOK;
     }
 
-    if (sscanf(argv[2], "%d", &proc->pid) != 1)
-    {
+    if (sscanf(argv[2], "%d", &proc->pid) != 1) {
         syslog(LOG_ERR, "Unable to read pid argument <%s>. Closing", argv[2]);
         return CDH_NOK;
     }
 
-    if (sscanf(argv[3], "%d", &proc->signal) != 1)
-    {
+    if (sscanf(argv[3], "%d", &proc->signal) != 1) {
         syslog(LOG_ERR, "Unable to read signal argument <%s>. Closing", argv[3]);
         return CDH_NOK;
     }
 
-    // save the thread name given by the kernel
+    /* save the thread name given by the kernel */
     strncpy(proc->threadname, argv[4], sizeof(proc->threadname) - 1);
 
-    // initialize the binary name with threadname... in case we cannot read it from /proc
+    /* initialize the binary name with threadname... in case we cannot read it from /proc */
     strncpy(proc->name, argv[4], sizeof(proc->name) - 1);
 
     return CDH_OK;
 }
 
 /* ===================================================================
- ** Method      : remove_unusual_chars(...)
- **
- ** Description : modify the input string to change UNUSUALS_CHARS to
- **              REPLACEMENT_CHAR
- ** Parameters  : INPUT/OUTPUT  string to be modified
- **
- ** Returns     : nothing
- ** ===================================================================*/
-void remove_unusual_chars(char* p_string)
+** Method      : remove_unusual_chars(...)
+**
+** Description : modify the input string to change UNUSUALS_CHARS to
+**              REPLACEMENT_CHAR
+** Parameters  : INPUT/OUTPUT  string to be modified
+**
+** Returns     : nothing
+** ===================================================================*/
+void remove_unusual_chars(char *p_string)
 {
     unsigned int l_char_index = 0;
 
-    for (l_char_index = 0; l_char_index < sizeof(UNUSUAL_CHARS) - 1; l_char_index++)
-    {
-        char* l_str_pointer = p_string;
+    for (l_char_index = 0; l_char_index < sizeof(UNUSUAL_CHARS) - 1; l_char_index++) {
+        char *l_str_pointer = p_string;
 
-        do
-        {
+        do {
             l_str_pointer = strchr(l_str_pointer, UNUSUAL_CHARS[l_char_index]);
 
-            if (l_str_pointer != NULL)
-            {
+            if (l_str_pointer != NULL) {
                 *l_str_pointer = REPLACEMENT_CHAR;
                 l_str_pointer++;
             }
-        }
-        while (l_str_pointer != NULL);
+        } while (l_str_pointer != NULL);
     }
 }
 
 /* ===================================================================
- ** Method      : check_disk_space(...)
- **
- ** Description : check if there is sufficient disk space to write a coredump
- ** Parameters  : INPUT/OUTPUT  string to be modified
- **
- ** Returns     : 0 if success, else -1
- ** ===================================================================*/
+** Method      : check_disk_space(...)
+**
+** Description : check if there is sufficient disk space to write a coredump
+** Parameters  : INPUT/OUTPUT  string to be modified
+**
+** Returns     : 0 if success, else -1
+** ===================================================================*/
 cdh_status_t check_disk_space()
 {
     struct statvfs stat;
     unsigned long free_size = 0;
 
-    if (statvfs(COREDUMP_FILESYSTEM, &stat) < 0)
-    {
+    if (statvfs(COREDUMP_FILESYSTEM, &stat) < 0) {
         syslog(LOG_ERR, "ERR cannot stat disk space on %s: %s", COREDUMP_FILESYSTEM, strerror(errno));
         return CDH_NOK;
     }
 
-    // free space: size of block * number of free blocks (>>20 => MB)
+    /* free space: size of block * number of free blocks (>>20 => MB) */
     free_size = (stat.f_bsize * stat.f_bavail) >> 20;
-    if (free_size < COREDUMP_FILESYSTEM_MIN_SIZE_MB)
-    {
+
+    if (free_size < COREDUMP_FILESYSTEM_MIN_SIZE_MB) {
         syslog(LOG_WARNING, "ERR insufficient disk space for coredump: %ld MB.", free_size);
         return CDH_NOK;
     }
@@ -201,20 +192,17 @@ void clean_core_tmp_dir()
     DIR *d = NULL;
     struct dirent *dir = NULL;
 
-    if ((d = opendir(CORE_TMP_DIRECTORY)) != NULL)
-    {
+    if ((d = opendir(CORE_TMP_DIRECTORY)) != NULL) {
         char lockfilepath[CORE_MAX_FILENAME_LENGTH];
 
-        while ((dir = readdir(d)) != NULL)
-        {
+        while ((dir = readdir(d)) != NULL) {
             struct stat unused_stat;
 
-            // check if lock file exists
+            /* check if lock file exists */
             snprintf(lockfilepath, sizeof(lockfilepath), "%s/%s", CORE_LOCK_DIRECTORY, dir->d_name);
 
-            if (stat(lockfilepath, &unused_stat) != 0)
-            {
-                // No lock file found for this coredump => from previous LC => delete
+            if (stat(lockfilepath, &unused_stat) != 0) {
+                /* No lock file found for this coredump => from previous LC => delete */
                 char filepath[CORE_MAX_FILENAME_LENGTH] = { 0 };
 
                 snprintf(filepath, sizeof(filepath), "%s/%s", CORE_TMP_DIRECTORY, dir->d_name);
@@ -230,24 +218,23 @@ void clean_core_tmp_dir()
 }
 
 /* ===================================================================
- ** Method      : check_core_directory(...)
- **
- ** Description : checks the availability of core dumps directory.
- **               if not available, there is an installation issue.
- **
- ** Parameters  :
- **
- ** Returns     : 0 if success, else -1
- ** ===================================================================*/
-cdh_status_t check_and_create_directory(const char* p_dirname, int create_silently)
+** Method      : check_core_directory(...)
+**
+** Description : checks the availability of core dumps directory.
+**               if not available, there is an installation issue.
+**
+** Parameters  :
+**
+** Returns     : 0 if success, else -1
+** ===================================================================*/
+cdh_status_t check_and_create_directory(const char *p_dirname, int create_silently)
 {
     int l_need_create = 0;
     int l_need_delete = 0;
 
     struct stat l_stat;
 
-    if (lstat(p_dirname, &l_stat) < 0)
-    {
+    if (lstat(p_dirname, &l_stat) < 0) {
         l_need_create = 1;
     }
     else if (!S_ISDIR(l_stat.st_mode))
@@ -256,23 +243,20 @@ cdh_status_t check_and_create_directory(const char* p_dirname, int create_silent
         l_need_create = 1;
     }
 
-    if (l_need_delete > 0)
-    {
+    if (l_need_delete > 0) {
         syslog(LOG_WARNING, "WARN core directory '%s' is not a directory => removing it", p_dirname);
 
-        if (unlink(p_dirname) == -1)
-        {
+        if (unlink(p_dirname) == -1) {
             syslog(LOG_ERR, "ERR core directory '%s' cannot be unlinked: %s", p_dirname, strerror(errno));
             return CDH_NOK;
         }
     }
-    if (l_need_create > 0)
-    {
+
+    if (l_need_create > 0) {
         if (create_silently == 0)
             syslog(LOG_WARNING, "WARN core directory '%s' does not exist => creation", p_dirname);
 
-        if (mkdir(p_dirname, 0666) == -1)
-        {
+        if (mkdir(p_dirname, 0666) == -1) {
             syslog(LOG_ERR, "ERR core directory '%s' cannot be created: %s", p_dirname, strerror(errno));
             return CDH_NOK;
         }
@@ -282,15 +266,15 @@ cdh_status_t check_and_create_directory(const char* p_dirname, int create_silent
 }
 
 /* ===================================================================
- ** Method      : check_core_directory(...)
- **
- ** Description : checks the availability of core dumps directory.
- **               if not available, there is an installation issue.
- **
- ** Parameters  :
- **
- ** Returns     : 0 if success, else -1
- ** ===================================================================*/
+** Method      : check_core_directory(...)
+**
+** Description : checks the availability of core dumps directory.
+**               if not available, there is an installation issue.
+**
+** Parameters  :
+**
+** Returns     : 0 if success, else -1
+** ===================================================================*/
 cdh_status_t check_core_directory()
 {
     if (check_and_create_directory(CORE_DIRECTORY, 0) < 0)
@@ -308,36 +292,35 @@ cdh_status_t check_core_directory()
 }
 
 /* ===================================================================
- ** Method      : move_to_core_directory(...)
- **
- ** Description : move the coredump and context files 
- **              from temporary dir to final core directory
- **
- ** Parameters  :
- **
- ** Returns     : 0 if success, else -1
- ** ===================================================================*/
-cdh_status_t move_to_core_directory(proc_info_t* p_proc)
+** Method      : move_to_core_directory(...)
+**
+** Description : move the coredump and context files
+**              from temporary dir to final core directory
+**
+** Parameters  :
+**
+** Returns     : 0 if success, else -1
+** ===================================================================*/
+cdh_status_t move_to_core_directory(proc_info_t *p_proc)
 {
     char l_src_filename[CORE_MAX_FILENAME_LENGTH] = { 0 };
     char l_dst_filename[CORE_MAX_FILENAME_LENGTH] = { 0 };
-    char* patterns[] = { CORE_FILE_PATTERN, CONTEXT_FILE_PATTERN };
+    char *patterns[] = { CORE_FILE_PATTERN, CONTEXT_FILE_PATTERN };
     unsigned int pattern_num = 0;
 
     if (p_proc == NULL)
         return CDH_NOK;
 
-    for (pattern_num = 0; pattern_num < sizeof(patterns) / sizeof(char*); pattern_num++)
-    {
-        // Don't move coredump if it cannot be created
-        if (p_proc->can_create_coredump == 0 && pattern_num == 0)
+    for (pattern_num = 0; pattern_num < sizeof(patterns) / sizeof(char *); pattern_num++) {
+        /* Don't move coredump if it cannot be created */
+        if ((p_proc->can_create_coredump == 0) && (pattern_num == 0))
             continue;
 
         snprintf(l_src_filename, sizeof(l_src_filename), patterns[pattern_num],
-        CORE_TMP_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
+                 CORE_TMP_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
 
         snprintf(l_dst_filename, sizeof(l_dst_filename), patterns[pattern_num],
-        CORE_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
+                 CORE_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
 
         syslog(LOG_INFO, "Moving coredump from %s to %s", l_src_filename, l_dst_filename);
 
@@ -349,18 +332,18 @@ cdh_status_t move_to_core_directory(proc_info_t* p_proc)
 }
 
 /* ===================================================================
- ** Method      : main(...)
- **
- ** Description :
- **
- ** Parameters  : argc, argv
- **
- ** Returns     :
- ** ===================================================================*/
-int main(int argc, char* argv[])
+** Method      : main(...)
+**
+** Description :
+**
+** Parameters  : argc, argv
+**
+** Returns     :
+** ===================================================================*/
+int main(int argc, char *argv[])
 {
     proc_info_t l_proc_info;
-//    char l_exec_name[CORE_MAX_FILENAME_LENGTH] = {0};
+/*    char l_exec_name[CORE_MAX_FILENAME_LENGTH] = {0}; */
 
     openlog("CoredumpHandler", 0, LOG_DAEMON);
 
@@ -371,26 +354,22 @@ int main(int argc, char* argv[])
         syslog(LOG_ERR, "Failed to get executable name");
 
     syslog(LOG_NOTICE, "Handling coredump procname:%s pid:%d timest:%d signal:%d",
-                    l_proc_info.name,
-                    l_proc_info.pid,
-                    l_proc_info.timestamp,
-                    l_proc_info.signal);
+           l_proc_info.name,
+           l_proc_info.pid,
+           l_proc_info.timestamp,
+           l_proc_info.signal);
 
-    // Increase priority of the coredump handler
+    /* Increase priority of the coredump handler */
     if (nice(COREDUMP_HANDLER_PRIORITY) != COREDUMP_HANDLER_PRIORITY)
         syslog(LOG_WARNING, "Failed to change CDH priority");
 
     if (check_disk_space() < 0)
-    {
-        //return CDH_NOK;
+        /*return CDH_NOK; */
         l_proc_info.can_create_coredump = 0;
-    }
 
     if (check_core_directory() < 0)
-    {
-        //return CDH_NOK;
+        /*return CDH_NOK; */
         l_proc_info.can_create_coredump = 0;
-    }
 
     remove_unusual_chars(l_proc_info.name);
 
@@ -411,48 +390,44 @@ int main(int argc, char* argv[])
     return CDH_OK;
 }
 
-void core_locks(const proc_info_t* p_proc, int action)
+void core_locks(const proc_info_t *p_proc, int action)
 {
     char l_lockfilepath[CORE_MAX_FILENAME_LENGTH] = { 0 };
-    char* patterns[] = { CORE_FILE_PATTERN, CONTEXT_FILE_PATTERN };
+    char *patterns[] = { CORE_FILE_PATTERN, CONTEXT_FILE_PATTERN };
     unsigned int pattern_num = 0;
     int fd_lockfile = -1;
 
     if (p_proc == NULL)
         return;
 
-    for (pattern_num = 0; pattern_num < sizeof(patterns) / sizeof(char*); pattern_num++)
-    {
+    for (pattern_num = 0; pattern_num < sizeof(patterns) / sizeof(char *); pattern_num++) {
         snprintf(l_lockfilepath, sizeof(l_lockfilepath), patterns[pattern_num],
-        CORE_LOCK_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
+                 CORE_LOCK_DIRECTORY, p_proc->timestamp, p_proc->name, p_proc->pid);
 
-        switch (action)
+        switch (action) {
+        case 0:
         {
-            case 0:
-                {
-                unlink(l_lockfilepath);
-                break;
+            unlink(l_lockfilepath);
+            break;
+        }
+
+        case 1:
+        {
+            if ((fd_lockfile = open(l_lockfilepath, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) >= 0) {
+                if (write(fd_lockfile, "1", 1) < 0)
+                    syslog(LOG_WARNING, "Failed to write lockfile %d: %s", fd_lockfile, strerror(errno));
+
+                close(fd_lockfile);
+            }
+            else {
+                syslog(LOG_WARNING, "Failed to open lockfile %s: %s", l_lockfilepath, strerror(errno));
             }
 
-            case 1:
-                {
-                if ((fd_lockfile = open(l_lockfilepath, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR)) >= 0)
-                {
-                    if (write(fd_lockfile, "1", 1) < 0)
-                        syslog(LOG_WARNING, "Failed to write lockfile %d: %s", fd_lockfile, strerror(errno));
+            break;
+        }
 
-                    close(fd_lockfile);
-                }
-                else
-                {
-                    syslog(LOG_WARNING, "Failed to open lockfile %s: %s", l_lockfilepath, strerror(errno));
-                }
-
-                break;
-            }
-
-            default:
-                break;
+        default:
+            break;
         }
     }
 }

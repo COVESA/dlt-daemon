@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_client.h
-*/
+ */
 
 
 /*******************************************************************************
@@ -67,16 +67,16 @@
  */
 
 #ifndef DLT_CLIENT_H
-#define DLT_CLIENT_H
+#   define DLT_CLIENT_H
 
 /**
-  \defgroup clientapi DLT Client API
-  \addtogroup clientapi
-  \{
-*/
+ * \defgroup clientapi DLT Client API
+ * \addtogroup clientapi
+ \{
+ */
 
-#include "dlt_types.h"
-#include "dlt_common.h"
+#   include "dlt_types.h"
+#   include "dlt_common.h"
 
 typedef enum
 {
@@ -99,11 +99,11 @@ typedef struct
     DltClientMode mode;    /**< mode DltClientMode */
 } DltClient;
 
-#ifdef __cplusplus
+#   ifdef __cplusplus
 extern "C" {
-#endif
+#   endif
 
-void dlt_client_register_message_callback(int (*registerd_callback) (DltMessage *message, void *data));
+void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data));
 
 /**
  * Initialising dlt client structure with a specific port
@@ -163,7 +163,12 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
  * @param size Size of injection data within buffer
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_client_send_inject_msg(DltClient *client, char *apid, char *ctid, uint32_t serviceID, uint8_t *buffer, uint32_t size);
+DltReturnValue dlt_client_send_inject_msg(DltClient *client,
+                                          char *apid,
+                                          char *ctid,
+                                          uint32_t serviceID,
+                                          uint8_t *buffer,
+                                          uint32_t size);
 /**
  * Send an set  log level message to the dlt daemon
  * @param client pointer to dlt client structure
@@ -196,13 +201,13 @@ int dlt_client_get_software_version(DltClient *client);
  * @param void
  * @return void
  */
-void dlt_getloginfo_init( void );
+void dlt_getloginfo_init(void);
 /**
  * To free the memory allocated for app description in get log info
  * @param void
  * @return void
  */
-void dlt_getloginfo_free( void );
+void dlt_getloginfo_free(void);
 /**
  * Send a set trace status message to the dlt daemon
  * @param client pointer to dlt client structure
@@ -299,7 +304,7 @@ int dlt_client_set_socket_path(DltClient *client, char *socket_path);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoResponse *resp,
-                                            char *resp_text);
+                                                       char *resp_text);
 
 /**
  * Free memory allocated for get log info message
@@ -307,12 +312,12 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
  * @return 0 on success, -1 otherwise
  */
 int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp);
-#ifdef __cplusplus
+#   ifdef __cplusplus
 }
-#endif
+#   endif
 
 /**
-  \}
-*/
+ \}
+ */
 
 #endif /* DLT_CLIENT_H */

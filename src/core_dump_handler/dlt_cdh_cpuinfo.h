@@ -30,6 +30,6 @@
 
 #include "dlt_cdh.h"
 
-void get_registers(prstatus_t* prstatus, cdh_registers_t* registers);
+void get_registers(prstatus_t *prstatus, cdh_registers_t *registers);
 
 #endif /* DLT_CDH_CPUINFO_H */

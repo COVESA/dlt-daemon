@@ -59,22 +59,22 @@
 #define DLT_GATEWAY_INTERNAL_H_
 
 DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con,
-	                                       char *value);
+                                               char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
-	                                         char *value);
+                                                 char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_ecu(DltGatewayConnection *con,
-	                                        char *value);
+                                                char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
                                                             char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
-	                                            char *value);
+                                                    char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection *con,
-	                                                char *value);
+                                                        char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_allocate_control_messages(DltGatewayConnection *con);
 

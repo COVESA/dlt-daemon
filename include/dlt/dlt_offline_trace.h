@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_offline_trace.h
-*/
+ */
 
 
 /*******************************************************************************
@@ -68,17 +68,17 @@
 #define DLT_OFFLINETRACE_FILENAME_TO_COMPARE "dlt_offlinetrace_"
 /* "dlt_offlinetrace.4294967295.dlt" -> MAX 32byte include NULL terminate */
 #define DLT_OFFLINETRACE_FILENAME_MAX_SIZE   (sizeof(DLT_OFFLINETRACE_FILENAME_BASE) + \
-                                          sizeof(DLT_OFFLINETRACE_FILENAME_DELI) + \
-                                          DLT_OFFLINETRACE_INDEX_MAX_SIZE + \
-                                          sizeof(DLT_OFFLINETRACE_FILENAME_EXT) + 1)
+                                              sizeof(DLT_OFFLINETRACE_FILENAME_DELI) + \
+                                              DLT_OFFLINETRACE_INDEX_MAX_SIZE + \
+                                              sizeof(DLT_OFFLINETRACE_FILENAME_EXT) + 1)
 
 typedef struct
 {
     char directory[NAME_MAX + 1];/**< (String) Store DLT messages to local directory */
     char filename[NAME_MAX + 1]; /**< (String) Filename of currently used log file */
-    int  fileSize;               /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
-    int  maxSize;                /**< (int) Maximum size of all trace files (Default: 4000000) */
-    int  filenameTimestampBased; /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
+    int fileSize;                /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
+    int maxSize;                 /**< (int) Maximum size of all trace files (Default: 4000000) */
+    int filenameTimestampBased;  /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
     int ohandle;
 } DltOfflineTrace;
 
@@ -95,7 +95,11 @@ typedef struct
  *.@param filenameTimestampBased filename to be created on timestamp based or index based
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,const char *directory,int fileSize,int maxSize,int filenameTimestampBased);
+extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,
+                                             const char *directory,
+                                             int fileSize,
+                                             int maxSize,
+                                             int filenameTimestampBased);
 
 /**
  * Uninitialise the offline trace
@@ -120,7 +124,13 @@ extern DltReturnValue dlt_offline_trace_free(DltOfflineTrace *buf);
  * @param size3 size in bytes of third data block to be written, 0 if not used
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,unsigned char *data1,int size1,unsigned char *data2,int size2,unsigned char *data3,int size3);
+extern DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,
+                                              unsigned char *data1,
+                                              int size1,
+                                              unsigned char *data2,
+                                              int size2,
+                                              unsigned char *data3,
+                                              int size3);
 
 /**
  * Get size of currently used offline trace buffer

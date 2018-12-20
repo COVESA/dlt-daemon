@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-preregister-context.c
-*/
+ */
 
 #include <unistd.h> /* for fork() */
 

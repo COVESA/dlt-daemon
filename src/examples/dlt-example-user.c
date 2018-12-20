@@ -63,8 +63,8 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 #include <netdb.h>
 #include <ctype.h>
@@ -79,7 +79,7 @@
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
 int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data);
 
-void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
+void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
 
 DLT_DECLARE_CONTEXT(mycontext1)
 DLT_DECLARE_CONTEXT(mycontext2)
@@ -92,7 +92,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-user [options] message\n");
     printf("Generate DLT messages and store them to file or send them to daemon.\n");
@@ -118,7 +118,7 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int gflag = 0;
     int aflag = 0;
@@ -140,20 +140,21 @@ int main(int argc, char* argv[])
     int c;
 
     char *text;
-    int num,maxnum;
+    int num, maxnum;
     int delay;
 
-    int state=-1,newstate;
+    int state = -1, newstate;
 
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
+
     while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:r:s:l:t:")) != -1)
 #else
+
     while ((c = getopt (argc, argv, "vgakd:f:n:m:l:r:t:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
-        switch (c)
-        {
+        switch (c) {
         case 'g':
         {
             gflag = 1;
@@ -223,18 +224,12 @@ int main(int argc, char* argv[])
         }
         case '?':
         {
-            if (optopt == 'd' || optopt == 'f' || optopt == 'n'|| optopt == 'l' || optopt == 't')
-            {
+            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') || (optopt == 'l') || (optopt == 't'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            }
             else if (isprint (optopt))
-            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
             else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
@@ -243,39 +238,31 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
-            break;//for parasoft
+            break;/*for parasoft */
         }
         }
     }
 
-    if (rvalue == -1)
-    {
+    if (rvalue == -1) {
         for (index = optind; index < argc; index++)
-        {
             message = argv[index];
-        }
     }
-    else /* allocate raw buffer */
-    {
+    else { /* allocate raw buffer */
         message = calloc(sizeof(char), rvalue);
-        memset(message, 'X', rvalue-1);
+        memset(message, 'X', rvalue - 1);
     }
 
-    if (message == 0)
-    {
+    if (message == 0) {
         /* no message, show usage and terminate */
-        fprintf(stderr,"ERROR: No message selected\n");
+        fprintf(stderr, "ERROR: No message selected\n");
         usage();
         return -1;
     }
 
-    if (fvalue)
-    {
+    if (fvalue) {
         /* DLT is initialized automatically, except another output target will be used */
-        if (dlt_init_file(fvalue)<0) /* log to file */
-        {
+        if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
-        }
     }
 
     dlt_with_session_id(1);
@@ -283,68 +270,55 @@ int main(int argc, char* argv[])
     dlt_with_ecu_id(1);
     dlt_verbose_mode();
 
-    DLT_REGISTER_APP("LOG","Test Application for Logging");
+    DLT_REGISTER_APP("LOG", "Test Application for Logging");
     DLT_REGISTER_CONTEXT(mycontext1, "TEST", "Test Context for Logging");
     DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
     DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
 
     DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2, 0x1000, dlt_user_injection_callback_with_specific_data, (void*)"TS1 context");
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
+                                            0x1000,
+                                            dlt_user_injection_callback_with_specific_data,
+                                            (void *)"TS1 context");
     DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3, 0x1000, dlt_user_injection_callback_with_specific_data, (void*)"TS2 context");
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
+                                            0x1000,
+                                            dlt_user_injection_callback_with_specific_data,
+                                            (void *)"TS2 context");
     DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
     DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
 
     text = message;
 
-    if(mvalue)
-    {
-        printf("Set log mode to %d\n",atoi(mvalue));
+    if (mvalue) {
+        printf("Set log mode to %d\n", atoi(mvalue));
         dlt_set_log_mode(atoi(mvalue));
     }
 
-
     if (gflag)
-    {
         DLT_NONVERBOSE_MODE();
-    }
 
     if (aflag)
-    {
         DLT_ENABLE_LOCAL_PRINT();
-    }
 
     if (kflag)
-    {
         DLT_LOG_MARKER();
-    }
 
     if (nvalue)
-    {
         maxnum = atoi(nvalue);
-    }
     else
-    {
         maxnum = 10;
-    }
 
     if (dvalue)
-    {
         delay = atoi(dvalue) * 1000;
-    }
     else
-    {
         delay = 500 * 1000;
-    }
 
     if (tvalue)
-    {
-      dlt_set_resend_timeout_atexit(atoi(tvalue));
-    }
+        dlt_set_resend_timeout_atexit(atoi(tvalue));
 
-    if (gflag)
-    {
+    if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
@@ -354,69 +328,58 @@ int main(int argc, char* argv[])
     }
 
 #ifdef DLT_TEST_ENABLE
+
     if (cflag)
-    {
         dlt_user_test_corrupt_user_header(1);
-    }
+
     if (svalue)
-    {
-        dlt_user_test_corrupt_message_size(1,atoi(svalue));
-    }
-    if (zvalue)
-    {
-        char* buffer = malloc(atoi(zvalue));
-        if(buffer==0)
-        {
+        dlt_user_test_corrupt_message_size(1, atoi(svalue));
+
+    if (zvalue) {
+        char *buffer = malloc(atoi(zvalue));
+
+        if (buffer == 0) {
             /* no message, show usage and terminate */
-            fprintf(stderr,"Cannot allocate buffer memory!\n");
+            fprintf(stderr, "Cannot allocate buffer memory!\n");
             return -1;
         }
+
         DLT_LOG(mycontext1, DLT_LOG_WARN, DLT_STRING(text), DLT_RAW(buffer, atoi(zvalue)));
         free(buffer);
     }
+
 #endif /* DLT_TEST_ENABLE */
 
-    for (num=0;num<maxnum;num++)
-    {
+    for (num = 0; num < maxnum; num++) {
         printf("Send %d %s\n", num, text);
 
         newstate = dlt_get_log_state();
-        if(state!=newstate)
-        {
+
+        if (state != newstate) {
             state = newstate;
-            if(state == -1) {
+
+            if (state == -1)
                 printf("Client unknown state!\n");
-            }
-            else if(state == 0) {
+            else if (state == 0)
                 printf("Client disconnected!\n");
-            }
-            else if(state == 1) {
+            else if (state == 1)
                 printf("Client connected!\n");
-            }
         }
 
-        if (gflag)
-        {
+        if (gflag) {
             /* Non-verbose mode */
             DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
-        else
-        {
+        else {
             if (rvalue == -1)
-            {
                 /* Verbose mode */
                 DLT_LOG(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
-            }
             else
-            {
                 DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
-            }
         }
 
-        if (delay>0)
-        {
+        if (delay > 0)
             usleep(delay);
-        }
     }
 
     sleep(1);
@@ -436,8 +399,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
     DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
     printf("Injection %d, Length=%d \n", service_id, length);
 
-    if (length > 0)
-    {
+    if (length > 0) {
         dlt_print_mixed_string(text, 1024, data, length, 0);
         DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
         printf("%s \n", text);
@@ -453,8 +415,7 @@ int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *da
     DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
     printf("Injection %d, Length=%d \n", service_id, length);
 
-    if (length > 0)
-    {
+    if (length > 0) {
         dlt_print_mixed_string(text, 1024, data, length, 0);
         DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text), DLT_STRING(priv_data));
         printf("%s \n", text);
@@ -463,13 +424,13 @@ int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *da
     return 0;
 }
 
-void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status)
+void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status)
 {
     char text[5];
-    text[4]=0;
+    text[4] = 0;
 
-    memcpy(text,context_id,DLT_ID_SIZE);
+    memcpy(text, context_id, DLT_ID_SIZE);
 
-    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n",text,log_level,trace_status);
+    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n", text, log_level, trace_status);
 }
 

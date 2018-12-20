@@ -64,8 +64,8 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 #include <netdb.h>
 #include <ctype.h>      /* for isprint() */
@@ -106,7 +106,7 @@ void usage()
 {
     char version[255];
 
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
 
     printf("Usage: dlt-test-stress [options]\n");
     printf("Test application executing several stress tests.\n");
@@ -122,28 +122,24 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    //int  vflag = 0;
+    /*int  vflag = 0; */
     char *fvalue = 0;
     int test[MAX_TESTS];
 
-    int i,c,help;
+    int i, c, help;
 
-    for (i=0;i<MAX_TESTS;i++)
-    {
-        test[i]=0;
-    }
+    for (i = 0; i < MAX_TESTS; i++)
+        test[i] = 0;
 
     opterr = 0;
 
     while ((c = getopt (argc, argv, "vf:123")) != -1)
-    {
-        switch (c)
-        {
+        switch (c) {
         case 'v':
         {
-            //vflag = 1;
+            /*vflag = 1; */
             break;
         }
         case 'f':
@@ -169,17 +165,12 @@ int main(int argc, char* argv[])
         case '?':
         {
             if (optopt == 'f')
-            {
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            }
             else if (isprint (optopt))
-            {
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-            }
             else
-            {
-                fprintf (stderr, "Unknown option character `\\x%x'.\n",optopt);
-            }
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
@@ -187,50 +178,43 @@ int main(int argc, char* argv[])
         default:
         {
             abort ();
-            return -1;//for parasoft
+            return -1;/*for parasoft */
         }
         }
-    }
 
-    if (fvalue)
-    {
+
+
+    if (fvalue) {
         /* DLT is intialised automatically, except another output target will be used */
-        if (dlt_init_file(fvalue)<0) /* log to file */
-        {
+        if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
-        }
     }
 
-    help=0;
-    for (i=0;i<MAX_TESTS;i++)
-    {
-        if (test[i]==1)
-        {
-            help=1;
+    help = 0;
+
+    for (i = 0; i < MAX_TESTS; i++)
+        if (test[i] == 1) {
+            help = 1;
             break;
         }
-    }
 
-    if (help==0)
-    {
+
+
+    if (help == 0) {
         usage();
         return -1;
     }
 
-    DLT_REGISTER_APP("DSTS","DLT daemon stress tests");
+    DLT_REGISTER_APP("DSTS", "DLT daemon stress tests");
 
     if (test[0])
-    {
         stress1();
-    }
+
     if (test[1])
-    {
         stress2();
-    }
+
     if (test[2])
-    {
         stress3();
-    }
 
     DLT_UNREGISTER_APP();
 
@@ -241,39 +225,35 @@ int main(int argc, char* argv[])
 
 void stress1(void)
 {
-    int i,c;
+    int i, c;
     char ctid[5];
 
     printf("Starting stress test1... (press \"Enter\" to terminate test) \n");
 
-    printf("* Register   %d contexts...\n",STRESS1_NUM_CONTEXTS);
+    printf("* Register   %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
-    for (i=0; i<STRESS1_NUM_CONTEXTS; i++)
-    {
+    for (i = 0; i < STRESS1_NUM_CONTEXTS; i++) {
         /* Generate id */
-        memset(ctid,0,5);
-        snprintf(ctid,5,"%d",i);
+        memset(ctid, 0, 5);
+        snprintf(ctid, 5, "%d", i);
 
-        //printf("%i: '%s' \n",i,ctid);
+        /*printf("%i: '%s' \n",i,ctid); */
 
-        dlt_register_context(&(mycontext[i]),ctid,ctid);
+        dlt_register_context(&(mycontext[i]), ctid, ctid);
         usleep(500);
     }
 
-    while (1)
-    {
-        c=getchar();
+    while (1) {
+        c = getchar();
+
         /* if "Return" is pressed, exit loop; */
-        if (c==10)
-        {
+        if (c == 10)
             break;
-        }
     }
 
-    printf("* Unregister %d contexts...\n",STRESS1_NUM_CONTEXTS);
+    printf("* Unregister %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
-    for (i=0; i<STRESS1_NUM_CONTEXTS; i++)
-    {
+    for (i = 0; i < STRESS1_NUM_CONTEXTS; i++) {
         DLT_UNREGISTER_CONTEXT(mycontext[i]);
         usleep(500);
     }
@@ -283,7 +263,7 @@ void stress1(void)
 
 void stress2(void)
 {
-    int ret,index;
+    int ret, index;
 
     pthread_t thread[STRESS2_MAX_NUM_THREADS];
     thread_data_t thread_data[STRESS2_MAX_NUM_THREADS];
@@ -292,47 +272,43 @@ void stress2(void)
 
     srand(time(NULL));
 
-    printf("* Creating %d Threads, each of them registers one context,\n",STRESS2_MAX_NUM_THREADS);
+    printf("* Creating %d Threads, each of them registers one context,\n", STRESS2_MAX_NUM_THREADS);
     printf("  sending one log message, then unregisters the context\n");
 
-    for (index=0;index<STRESS2_MAX_NUM_THREADS;index++)
-    {
+    for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++) {
         thread_data[index].num = index;
-        ret=pthread_create(&(thread[index]), NULL, (void *) &thread_function, (void *) &(thread_data[index]));
-        if (ret!=0)
-        {
+        ret = pthread_create(&(thread[index]), NULL, (void *)&thread_function, (void *)&(thread_data[index]));
+
+        if (ret != 0)
             printf("Error creating thread %d: %s \n", index, strerror(errno));
-        }
 
         usleep(1000);
     }
 
-    for (index=0;index<STRESS2_MAX_NUM_THREADS;index++)
-    {
+    for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++)
         pthread_join(thread[index], NULL);
-    }
 
     printf("Finished stress test2 \n\n");
 }
 
 void thread_function(void)
 {
-    //thread_data_t *data;
+    /*thread_data_t *data; */
     DLT_DECLARE_CONTEXT(context_thread1);
     char ctid[5];
 
-    //data = (thread_data_t *) ptr;
+    /*data = (thread_data_t *) ptr; */
 
-    memset(ctid,0,5);
+    memset(ctid, 0, 5);
 
     /* Create random context id */
-    snprintf(ctid,5,"%.2x", rand() & 0x0000ffff);
+    snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
 
-    usleep(rand()/1000);
+    usleep(rand() / 1000);
 
-    DLT_REGISTER_CONTEXT(context_thread1,ctid,ctid);
+    DLT_REGISTER_CONTEXT(context_thread1, ctid, ctid);
 
-    DLT_LOG(context_thread1,DLT_LOG_INFO,DLT_STRING(ctid));
+    DLT_LOG(context_thread1, DLT_LOG_INFO, DLT_STRING(ctid));
 
     DLT_UNREGISTER_CONTEXT(context_thread1);
 }
@@ -344,15 +320,14 @@ void stress3(void)
     int num;
 
     /* Performance test */
-    DLT_REGISTER_CONTEXT(context_stress3,"TST3","Stress Test 3 - Performance");
+    DLT_REGISTER_CONTEXT(context_stress3, "TST3", "Stress Test 3 - Performance");
 
     printf("Starting stress test3... \n");
-    printf("* Logging raw data, up to a size of %d\n",STRESS3_MAX_NUM_MESSAGES);
+    printf("* Logging raw data, up to a size of %d\n", STRESS3_MAX_NUM_MESSAGES);
 
-    for (num=0;num<STRESS3_MAX_NUM_MESSAGES;num++)
-    {
+    for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
         buffer[num] = num;
-        DLT_LOG(context_stress3,DLT_LOG_INFO,DLT_INT(num),DLT_RAW(buffer,num));
+        DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, num));
         usleep(10000);
     }
 

@@ -64,8 +64,8 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          13.01.2010   initial
+ * Initials    Date         Comment
+ * aw          13.01.2010   initial
  */
 
 #include <sys/stat.h>
@@ -96,27 +96,23 @@ DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype
 
 int dlt_user_check_userheader(DltUserHeader *userheader)
 {
-    if (userheader==0)
-    {
+    if (userheader == 0)
         return -1;
-    }
 
-    return  ((userheader->pattern[0] == 'D') &&
-             (userheader->pattern[1] == 'U') &&
-             (userheader->pattern[2] == 'H') &&
-             (userheader->pattern[3] == 1));
+    return (userheader->pattern[0] == 'D') &&
+           (userheader->pattern[1] == 'U') &&
+           (userheader->pattern[2] == 'H') &&
+           (userheader->pattern[3] == 1);
 }
 
-DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2)
+DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2)
 {
     struct iovec iov[2];
     uint32_t bytes_written;
 
-    if (handle<=0)
-    {
+    if (handle <= 0)
         /* Invalid handle */
         return DLT_RETURN_ERROR;
-    }
 
     iov[0].iov_base = ptr1;
     iov[0].iov_len = len1;
@@ -125,24 +121,20 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void* ptr2
 
     bytes_written = writev(handle, iov, 2);
 
-    if (bytes_written!=(len1+len2))
-    {
+    if (bytes_written != (len1 + len2))
         return DLT_RETURN_ERROR;
-    }
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void* ptr2, size_t len2, void *ptr3, size_t len3)
+DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3)
 {
     struct iovec iov[3];
     uint32_t bytes_written;
 
-    if (handle<=0)
-    {
+    if (handle <= 0)
         /* Invalid handle */
         return DLT_RETURN_ERROR;
-    }
 
     iov[0].iov_base = ptr1;
     iov[0].iov_len = len1;
@@ -153,30 +145,29 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void* ptr2
 
     bytes_written = writev(handle, iov, 3);
 
-    if (bytes_written!=(len1+len2+len3))
-    {
-        switch(errno)
+    if (bytes_written != (len1 + len2 + len3)) {
+        switch (errno) {
+        case EBADF:
         {
-            case EBADF:
-            {
-                return DLT_RETURN_PIPE_ERROR; /* EBADF - handle not open */
-                break;
-            }
-            case EPIPE:
-            {
-                return DLT_RETURN_PIPE_ERROR; /* EPIPE - pipe error */
-                break;
-            }
-            case EAGAIN:
-            {
-                return DLT_RETURN_PIPE_FULL; /* EAGAIN - data could not be written */
-                break;
-            }
-            default:
-            {
-                break;
-            }
+            return DLT_RETURN_PIPE_ERROR;     /* EBADF - handle not open */
+            break;
         }
+        case EPIPE:
+        {
+            return DLT_RETURN_PIPE_ERROR;     /* EPIPE - pipe error */
+            break;
+        }
+        case EAGAIN:
+        {
+            return DLT_RETURN_PIPE_FULL;     /* EAGAIN - data could not be written */
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+
         return DLT_RETURN_ERROR;
     }
 

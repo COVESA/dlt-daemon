@@ -42,27 +42,27 @@ int dlt_daemon_handle_event(DltEventHandler *, DltDaemon *, DltDaemonLocal *);
 DltConnection *dlt_event_handler_find_connection_by_id(DltEventHandler *,
                                                        DltConnectionId);
 DltConnection *dlt_event_handler_find_connection(DltEventHandler *,
-                                               int);
+                                                 int);
 
 void dlt_event_handler_cleanup_connections(DltEventHandler *);
 
 int dlt_event_handler_register_connection(DltEventHandler *,
-                                         DltDaemonLocal *,
-                                         DltConnection *,
-                                         int);
+                                          DltDaemonLocal *,
+                                          DltConnection *,
+                                          int);
 
 int dlt_event_handler_unregister_connection(DltEventHandler *,
-                                           DltDaemonLocal *,
-                                           int);
+                                            DltDaemonLocal *,
+                                            int);
 
 int dlt_connection_check_activate(DltEventHandler *,
                                   DltConnection *,
                                   int);
-#ifdef DLT_UNIT_TESTS
+#   ifdef DLT_UNIT_TESTS
 int dlt_daemon_remove_connection(DltEventHandler *ev,
-                                       DltConnection *to_remove);
+                                 DltConnection *to_remove);
 
 void dlt_daemon_add_connection(DltEventHandler *ev,
-                                     DltConnection *connection);
-#endif
+                               DltConnection *connection);
+#   endif
 #endif /* DLT_DAEMON_EVENT_HANDLER_H */

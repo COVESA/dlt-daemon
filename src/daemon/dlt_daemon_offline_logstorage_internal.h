@@ -72,9 +72,9 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              int verbose);
 
 DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
-                                           DltDaemonLocal *daemon_local,
-                                           char *key,
-                                           int curr_log_level,
-                                           int verbose);
+                                                      DltDaemonLocal *daemon_local,
+                                                      char *key,
+                                                      int curr_log_level,
+                                                      int verbose);
 
 #endif

@@ -43,15 +43,13 @@
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
-                                               int len,
-                                               char *ecuid,
-                                               char *appid,
-                                               char *ctxid)
+                                                     int len,
+                                                     char *ecuid,
+                                                     char *appid,
+                                                     char *ctxid)
 {
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
-    {
         return DLT_RETURN_ERROR;
-    }
 
     strncpy(ecuid, key, (len - 2));
     strncpy(appid, ".*", 2);
@@ -72,14 +70,12 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
-                                              int len,
-                                              char *appid,
-                                              char *ctxid)
+                                                    int len,
+                                                    char *appid,
+                                                    char *ctxid)
 {
-    if ((len > (DLT_ID_SIZE + 2)) || (len < 1) )
-    {
+    if ((len > (DLT_ID_SIZE + 2)) || (len < 1))
         return DLT_RETURN_ERROR;
-    }
 
     strncpy(ctxid, (key + 2), (len - 1));
     strncpy(appid, ".*", 2);
@@ -99,14 +95,12 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
-                                              int len,
-                                              char *appid,
-                                              char *ctxid)
+                                                    int len,
+                                                    char *appid,
+                                                    char *ctxid)
 {
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
-    {
         return DLT_RETURN_ERROR;
-    }
 
     strncpy(appid, key + 1, (len - 2));
     strncpy(ctxid, ".*", 2);
@@ -126,37 +120,29 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
-                                              int len,
-                                              char *appid,
-                                              char *ctxid)
+                                                         int len,
+                                                         char *appid,
+                                                         char *ctxid)
 {
     char *tok = NULL;
 
     if (len > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)
-    {
         return DLT_RETURN_ERROR;
-    }
 
     /* copy appid and ctxid */
     tok = strtok(key, ":");
+
     if (tok != NULL)
-    {
         strncpy(appid, tok, DLT_ID_SIZE);
-    }
     else
-    {
         return DLT_RETURN_ERROR;
-    }
 
     tok = strtok(NULL, ":");
+
     if (tok != NULL)
-    {
         strncpy(ctxid, tok, DLT_ID_SIZE);
-    }
     else
-    {
         return DLT_RETURN_ERROR;
-    }
 
     return DLT_RETURN_OK;
 }
@@ -174,39 +160,31 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
-                                               int len,
-                                               char *ecuid,
-                                               char *appid,
-                                               char *ctxid)
+                                                          int len,
+                                                          char *ecuid,
+                                                          char *appid,
+                                                          char *ctxid)
 {
     char *tok = NULL;
 
     if (len > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)
-    {
         return DLT_RETURN_ERROR;
-    }
 
     /* copy appid and ctxid */
     tok = strtok(key, ":");
+
     if (tok != NULL)
-    {
         strncpy(ecuid, tok, DLT_ID_SIZE);
-    }
     else
-    {
         return DLT_RETURN_ERROR;
-    }
 
     tok = strtok(NULL, ":");
 
     if (tok != NULL)
-    {
         strncpy(appid, tok, DLT_ID_SIZE);
-    }
     else
-    {
         return DLT_RETURN_ERROR;
-    }
+
     strncpy(ctxid, ".*", 2);
 
     return DLT_RETURN_OK;
@@ -224,38 +202,34 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
  * @return               None
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
-                                           int len,
-                                           char *ecuid,
-                                           char *appid,
-                                           char *ctxid)
+                                                     int len,
+                                                     char *ecuid,
+                                                     char *appid,
+                                                     char *ctxid)
 {
     char *tok = NULL;
 
     if (len > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)
-    {
         return DLT_RETURN_ERROR;
-    }
 
     tok = strtok(key, ":");
+
     if (tok == NULL)
-    {
         return DLT_RETURN_ERROR;
-    }
 
     len = strlen(tok);
-    if (key[len + 1] == ':')
-    {
+
+    if (key[len + 1] == ':') {
         strncpy(ecuid, tok, DLT_ID_SIZE);
 
         tok = strtok(NULL, ":");
+
         if (tok != NULL)
-        {
             strncpy(ctxid, tok, DLT_ID_SIZE);
-        }
+
         strncpy(appid, ".*", 2);
     }
-    else
-    {
+    else {
         strncpy(ecuid, tok, DLT_ID_SIZE);
         tok = strtok(NULL, ":");
         strncpy(appid, tok, DLT_ID_SIZE);
@@ -285,49 +259,33 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char 
     char *sep = NULL;
 
     if ((key == NULL) || (appid == NULL) || (ctxid == NULL) || (ecuid == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
     len = strlen(key);
 
     sep = strchr (key, ':');
 
     if (sep == NULL)
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
     /* key is ecuid only ecuid::*/
     if ((key[len - 1] == ':') && (key[len - 2] == ':'))
-    {
         return dlt_logstorage_split_ecuid(key, len, ecuid, appid, ctxid);
-    }
     /* key is context id only  ::apid*/
     else if ((key[0] == ':') && (key[1] == ':'))
-    {
         return dlt_logstorage_split_ctid(key, len, appid, ctxid);
-    }
     /* key is application id only :apid: */
-    else if ((key[0] == ':') && key[len - 1] == ':')
-    {
+    else if ((key[0] == ':') && (key[len - 1] == ':'))
         return dlt_logstorage_split_apid(key, len, appid, ctxid);
-    }
     /* key is :apid:ctid */
-    else if ((key[0] == ':') && key[len - 1] != ':')
-    {
+    else if ((key[0] == ':') && (key[len - 1] != ':'))
         return dlt_logstorage_split_apid_ctid(key, len, appid, ctxid);
-    }
     /* key is ecuid:apid: */
-    else if ((key[0] != ':') && key[len - 1] == ':')
-    {
-       return dlt_logstorage_split_ecuid_apid(key, len, ecuid, appid, ctxid);
-    }
+    else if ((key[0] != ':') && (key[len - 1] == ':'))
+        return dlt_logstorage_split_ecuid_apid(key, len, ecuid, appid, ctxid);
     /* key is either ecuid::ctid or ecuid:apid:ctid */
     else
-    {
         return dlt_logstorage_split_multi(key, len, ecuid, appid, ctxid);
-    }
 }
 
 /**
@@ -341,30 +299,28 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char 
  * @param verbose       verbosity flag
  */
 DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
-        DltDaemonLocal *daemon_local,
-        char *apid,
-        char *ctid,
-        char *ecuid,
-        int loglevel,
-        int verbose)
+    DltDaemonLocal *daemon_local,
+    char *apid,
+    char *ctid,
+    char *ecuid,
+    int loglevel,
+    int verbose)
 {
-    DltServiceSetLogLevel req = {0};
-    DltPassiveControlMessage ctrl = {0};
+    DltServiceSetLogLevel req = { 0 };
+    DltPassiveControlMessage ctrl = { 0 };
     DltGatewayConnection *con = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (apid == NULL) || (ctid == NULL) || (ecuid == NULL) ||
-        (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT))
-    {
+        (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     con = dlt_gateway_get_connection(&daemon_local->pGateway, ecuid, verbose);
 
-    if (con == NULL)
-    {
+    if (con == NULL) {
         dlt_vlog(LOG_ERR,
                  "Failed to fond connection to passive node %s\n",
                  ecuid);
@@ -379,8 +335,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
 
     req.log_level = loglevel;
 
-    if (dlt_gateway_send_control_message(con, &ctrl, (void *) &req, verbose) != 0)
-    {
+    if (dlt_gateway_send_control_message(con, &ctrl, (void *)&req, verbose) != 0) {
         dlt_vlog(LOG_ERR,
                  "Failed to forward SET_LOG_LEVEL message to passive node %s\n",
                  ecuid);
@@ -406,58 +361,49 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
  * @return                  0 on success, -1 on error
  */
 DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon,
-                                                DltDaemonLocal *daemon_local,
-                                                DltDaemonContext *context,
-                                                char *ecuid,
-                                                int loglevel,
-                                                int verbose)
+                                                               DltDaemonLocal *daemon_local,
+                                                               DltDaemonContext *context,
+                                                               char *ecuid,
+                                                               int loglevel,
+                                                               int verbose)
 {
     int old_log_level = -1;
     int ll = DLT_LOG_DEFAULT;
 
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
-        (context == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT))
-    {
+        (context == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-
-    if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) == 0)
-    {
+    if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) == 0) {
         old_log_level = context->storage_log_level;
 
         context->storage_log_level = DLT_OFFLINE_LOGSTORAGE_MAX(loglevel,
-                                                            context->storage_log_level);
+                                                                context->storage_log_level);
 
-        if (context->storage_log_level > old_log_level)
-        {
-            if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1)
-            {
+        if (context->storage_log_level > old_log_level) {
+            if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1) {
                 dlt_log(LOG_ERR, "Unable to update log level\n");
                 return DLT_RETURN_ERROR;
             }
         }
-
     }
-    else
-    {
+    else {
 
         old_log_level = context->log_level;
 
         ll = DLT_OFFLINE_LOGSTORAGE_MAX(loglevel, context->log_level);
 
         if (ll > old_log_level)
-        {
             return dlt_daemon_logstorage_update_passive_node_context(daemon_local,
                                                                      context->apid,
                                                                      context->ctid,
                                                                      ecuid,
                                                                      ll,
                                                                      verbose);
-        }
-
     }
+
     return DLT_RETURN_OK;
 }
 
@@ -476,45 +422,40 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon
  * @return                  0 on success, -1 on error
  */
 DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemon,
-                                                 DltDaemonLocal *daemon_local,
-                                                 DltDaemonContext *context,
-                                                 char *ecuid,
-                                                 int loglevel,
-                                                 int verbose)
+                                                                DltDaemonLocal *daemon_local,
+                                                                DltDaemonContext *context,
+                                                                char *ecuid,
+                                                                int loglevel,
+                                                                int verbose)
 {
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
-        (context == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT))
-    {
+        (context == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-
     /* Set storage level to -1, to clear log levels */
     context->storage_log_level = DLT_LOG_DEFAULT;
 
-    if (loglevel == DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL)
-    {
-        if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) == 0)
-        {
+    if (loglevel == DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL) {
+        if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) == 0) {
             if (dlt_daemon_user_send_log_level(daemon,
                                                context,
-                                               verbose) == DLT_RETURN_ERROR)
-            {
+                                               verbose) == DLT_RETURN_ERROR) {
                 dlt_log(LOG_ERR, "Unable to update log level\n");
                 return DLT_RETURN_ERROR;
             }
         }
-        else /* forward set log level to passive node */
-        {
+        else { /* forward set log level to passive node */
             return dlt_daemon_logstorage_update_passive_node_context(daemon_local,
-                                                                    context->apid,
-                                                                    context->ctid,
-                                                                    ecuid,
-                                                                    DLT_LOG_DEFAULT,
-                                                                    verbose);
+                                                                     context->apid,
+                                                                     context->ctid,
+                                                                     ecuid,
+                                                                     DLT_LOG_DEFAULT,
+                                                                     verbose);
         }
     }
+
     return DLT_RETURN_OK;
 }
 
@@ -531,12 +472,12 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemo
  * @return                  0 on success, -1 on error
  */
 DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *daemon,
-                                                   DltDaemonLocal *daemon_local,
-                                                   char *apid,
-                                                   char *ctxid,
-                                                   char *ecuid,
-                                                   int loglevel,
-                                                   int verbose)
+                                                                  DltDaemonLocal *daemon_local,
+                                                                  char *apid,
+                                                                  char *ctxid,
+                                                                  char *ecuid,
+                                                                  int loglevel,
+                                                                  int verbose)
 {
     int ll = DLT_LOG_DEFAULT;
     int num = 0;
@@ -544,37 +485,29 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
     DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
 
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
-            (apid == NULL) || (ctxid == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT))
-    {
+        (apid == NULL) || (ctxid == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
-    {
+    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
         num = dlt_logstorage_get_config(&(daemon->storage_handle[i]), config, apid, ctxid, ecuid);
+
         if (num > 0)
-        {
             break; /* found config */
-        }
     }
 
-    if ((num == 0) || (config[0] == NULL ))
-    {
+    if ((num == 0) || (config[0] == NULL)) {
         dlt_vlog(LOG_ERR,
-                "%s: No information about APID: %s, CTID: %s, ECU: %s in Logstorage configuration\n",
-                __func__, apid, ctxid, ecuid);
+                 "%s: No information about APID: %s, CTID: %s, ECU: %s in Logstorage configuration\n",
+                 __func__, apid, ctxid, ecuid);
         return DLT_RETURN_ERROR;
     }
 
     if (loglevel == DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL)
-    {
         ll = config[0]->reset_log_level;
-    }
     else
-    {
         ll = config[0]->log_level;
-    }
 
     return dlt_daemon_logstorage_update_passive_node_context(daemon_local, apid,
                                                              ctxid, ecuid, ll, verbose);
@@ -601,64 +534,53 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
  * @return                  0 on success, -1 on error
  */
 DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
-                                       DltDaemonLocal *daemon_local,
-                                       char *id,
-                                       int curr_log_level,
-                                       int cmp_flag,
-                                       char *ecuid,
-                                       int verbose)
+                                                  DltDaemonLocal *daemon_local,
+                                                  char *id,
+                                                  int curr_log_level,
+                                                  int cmp_flag,
+                                                  char *ecuid,
+                                                  int verbose)
 {
-    DltDaemonRegisteredUsers* user_list = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
     int i = 0;
-    char tmp_id[DLT_ID_SIZE + 1] = {'\0'};
+    char tmp_id[DLT_ID_SIZE + 1] = { '\0' };
 
-    if ((daemon == NULL) || (daemon_local == NULL) ||(id == NULL) ||
+    if ((daemon == NULL) || (daemon_local == NULL) || (id == NULL) ||
         (ecuid == NULL) || (cmp_flag < DLT_DAEMON_LOGSTORAGE_CMP_APID) ||
-        (cmp_flag > DLT_DAEMON_LOGSTORAGE_CMP_CTID))
-    {
+        (cmp_flag > DLT_DAEMON_LOGSTORAGE_CMP_CTID)) {
         dlt_vlog(LOG_ERR, "Wrong parameter in function %s\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     user_list = dlt_daemon_find_users_list(daemon, ecuid, verbose);
+
     if (user_list == NULL)
-    {
         return DLT_RETURN_ERROR;
-    }
 
-    for (i = 0; i < user_list->num_contexts; i++)
-    {
+    for (i = 0; i < user_list->num_contexts; i++) {
         if (cmp_flag == 1)
-        {
             dlt_set_id(tmp_id, user_list->contexts[i].apid);
-        }
         else
-        {
             dlt_set_id(tmp_id, user_list->contexts[i].ctid);
-        }
 
-        if (strncmp(id, tmp_id, DLT_ID_SIZE) == 0)
-        {
+        if (strncmp(id, tmp_id, DLT_ID_SIZE) == 0) {
             if (curr_log_level > 0)
-            {
                 dlt_daemon_logstorage_send_log_level(daemon,
                                                      daemon_local,
                                                      &user_list->contexts[i],
                                                      ecuid,
                                                      curr_log_level,
                                                      verbose);
-            }
             else /* The request is to reset log levels */
-            {
                 dlt_daemon_logstorage_reset_log_level(daemon,
                                                       daemon_local,
                                                       &user_list->contexts[i],
                                                       ecuid,
                                                       curr_log_level,
                                                       verbose);
-            }
         }
     }
+
     return DLT_RETURN_OK;
 }
 
@@ -680,50 +602,43 @@ DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
  * @return                  0 on success, -1 on error
  */
 DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
-                                  DltDaemonLocal *daemon_local,
-                                  char *apid,
-                                  char *ctxid,
-                                  char *ecuid,
-                                  int curr_log_level,
-                                  int verbose)
+                                             DltDaemonLocal *daemon_local,
+                                             char *apid,
+                                             char *ctxid,
+                                             char *ecuid,
+                                             int curr_log_level,
+                                             int verbose)
 {
     DltDaemonContext *context = NULL;
 
-    if ((daemon == NULL) || (daemon_local == NULL) ||(apid == NULL)
-            || (ctxid == NULL) || (ecuid == NULL))
-    {
+    if ((daemon == NULL) || (daemon_local == NULL) || (apid == NULL)
+        || (ctxid == NULL) || (ecuid == NULL)) {
         dlt_vlog(LOG_ERR, "Wrong parameter in function %s\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     context = dlt_daemon_context_find(daemon, apid, ctxid, ecuid, verbose);
-    if (context != NULL)
-    {
+
+    if (context != NULL) {
         if (curr_log_level > 0)
-        {
             return dlt_daemon_logstorage_send_log_level(daemon,
                                                         daemon_local,
                                                         context,
                                                         ecuid,
                                                         curr_log_level,
                                                         verbose);
-        }
         else /* The request is to reset log levels */
-        {
             return dlt_daemon_logstorage_reset_log_level(daemon,
                                                          daemon_local,
                                                          context,
                                                          ecuid,
                                                          curr_log_level,
                                                          verbose);
-        }
     }
-    else
-    {
-        if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) != 0)
-        {
-            // we intentionally have no data provided by passive node.
-            // We blindly send the log level or reset log level
+    else {
+        if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) != 0) {
+            /* we intentionally have no data provided by passive node. */
+            /* We blindly send the log level or reset log level */
             return dlt_daemon_logstorage_force_reset_level(daemon,
                                                            daemon_local,
                                                            apid,
@@ -732,14 +647,13 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                                            curr_log_level,
                                                            verbose);
         }
-        else
-        {
+        else {
             dlt_vlog(LOG_WARNING,
-                               "%s: No information about APID: %s, CTID: %s, ECU: %s\n",
-                               __func__,
-                               apid,
-                               ctxid,
-                               ecuid);
+                     "%s: No information about APID: %s, CTID: %s, ECU: %s\n",
+                     __func__,
+                     apid,
+                     ctxid,
+                     ecuid);
             return DLT_RETURN_ERROR;
 
         }
@@ -760,38 +674,32 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
  * @return                  0 on success, -1 on error
  */
 DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
-                                           DltDaemonLocal *daemon_local,
-                                           char *key,
-                                           int curr_log_level,
-                                           int verbose)
+                                                      DltDaemonLocal *daemon_local,
+                                                      char *key,
+                                                      int curr_log_level,
+                                                      int verbose)
 {
     int cmp_flag = 0;
-    char appid[DLT_ID_SIZE + 1] = {'\0'};
-    char ctxid[DLT_ID_SIZE + 1] = {'\0'};
-    char ecuid[DLT_ID_SIZE + 1] = {'\0'};
+    char appid[DLT_ID_SIZE + 1] = { '\0' };
+    char ctxid[DLT_ID_SIZE + 1] = { '\0' };
+    char ecuid[DLT_ID_SIZE + 1] = { '\0' };
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (key == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
-    if (dlt_logstorage_split_key(key, appid, ctxid, ecuid) != 0)
-    {
+    if (dlt_logstorage_split_key(key, appid, ctxid, ecuid) != 0) {
         dlt_log(LOG_ERR,
                 "Error while updating application log levels (split key)\n");
         return DLT_RETURN_ERROR;
     }
 
     if (ecuid[0] == '\0') /* ECU id was not specified in filter configuration */
-    {
         dlt_set_id(ecuid, daemon->ecuid);
-    }
 
     /* wildcard for context id, find all contexts of given application id */
-    if (strcmp(ctxid, ".*") == 0)
-    {
+    if (strcmp(ctxid, ".*") == 0) {
         cmp_flag = DLT_DAEMON_LOGSTORAGE_CMP_APID;
 
         if (dlt_logstorage_update_all_contexts(daemon,
@@ -801,9 +709,7 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
                                                cmp_flag,
                                                ecuid,
                                                verbose) != 0)
-        {
             return DLT_RETURN_ERROR;
-        }
     }
     /* wildcard for application id, find all contexts with context id */
     else if (strcmp(appid, ".*") == 0)
@@ -817,9 +723,7 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
                                                cmp_flag,
                                                ecuid,
                                                verbose) != 0)
-        {
             return DLT_RETURN_ERROR;
-        }
     }
     /* In case of given application id, context id pair, call available context
      * find function */
@@ -861,15 +765,14 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
     DltLogStorage *handle = NULL;
     DltLogStorageFilterList **tmp = NULL;
     int i = 0;
-    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {'\0'};
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { '\0' };
     int num_device_configured = 0;
     unsigned int status;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) ||
-        (daemon->storage_handle == NULL) || (dev_num < 0))
-    {
+        (daemon->storage_handle == NULL) || (dev_num < 0)) {
         dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
@@ -880,26 +783,21 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
 
     if ((handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) ||
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
-    {
         return;
-    }
 
     /* First, check number of devices configured */
-    for (i = 0; i < max_device; i++)
-    {
+    for (i = 0; i < max_device; i++) {
         status = daemon->storage_handle[i].config_status;
 
         if (status == DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
-        {
             num_device_configured++;
-        }
     }
 
     /* for all filters (keys) check if application context are already running
      * and log level need to be reset*/
     tmp = &(handle->config_list);
-    while (*(tmp) != NULL)
-    {
+
+    while (*(tmp) != NULL) {
         memset(key, 0, sizeof(key));
 
         strncpy(key,
@@ -907,7 +805,6 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
                 DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
 
         if (num_device_configured == 1)
-        {
             /* Reset context log level  and send to application */
             dlt_logstorage_update_context_loglevel(
                 daemon,
@@ -915,36 +812,30 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
                 key,
                 DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL,
                 verbose);
-        }
         else /* Reset context log level do not send to application as other
-                devices can have same configuration */
-        {
+              * devices can have same configuration */
             dlt_logstorage_update_context_loglevel(
                 daemon,
                 daemon_local,
                 key,
                 DLT_DAEMON_LOGSTORAGE_RESET_LOGLEVEL,
                 verbose);
-        }
+
         tmp = &(*tmp)->next;
     }
 
     /* Re-run update log level for all other configured devices */
-    for (i = 0; i < max_device; i++)
-    {
+    for (i = 0; i < max_device; i++) {
         status = daemon->storage_handle[i].config_status;
+
         if (i == dev_num)
-        {
             continue;
-        }
 
         if (status == DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
-        {
             dlt_daemon_logstorage_update_application_loglevel(daemon,
                                                               daemon_local,
                                                               i,
                                                               verbose);
-        }
     }
 
     return;
@@ -970,12 +861,11 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
 {
     DltLogStorage *handle = NULL;
     DltLogStorageFilterList **tmp = NULL;
-    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {'\0'};
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { '\0' };
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (dev_num < 0))
-    {
+    if ((daemon == NULL) || (dev_num < 0)) {
         dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
@@ -986,15 +876,13 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
 
     if ((handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) ||
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
-    {
         return;
-    }
 
     /* for all filters (keys) check if application or context already running
      * and log level need to be updated*/
     tmp = &(handle->config_list);
-    while (*(tmp) != NULL)
-    {
+
+    while (*(tmp) != NULL) {
         int log_level = -1;
 
         memset(key, 0, sizeof(key));
@@ -1006,8 +894,7 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
         /* Obtain storage configuration data */
         log_level = dlt_logstorage_get_loglevel_by_key(handle, key);
 
-        if (log_level < 0)
-        {
+        if (log_level < 0) {
             dlt_log(LOG_ERR, "Failed to get log level by key \n");
             return;
         }
@@ -1041,7 +928,7 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
                                        char *apid,
                                        char *ctid)
 {
-    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = {0};
+    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
     int i = 0;
     int j = 0;
     int8_t storage_loglevel = -1;
@@ -1049,48 +936,39 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
     int num_config = 0;
 
     if ((daemon == NULL) || (max_device == 0) || (apid == NULL) || (ctid == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
     for (i = 0; i < max_device; i++)
-    {
         if (daemon->storage_handle[i].config_status ==
-            DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
-        {
+            DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE) {
             num_config = dlt_logstorage_get_config(&(daemon->storage_handle[i]),
-                                               config,
-                                               apid,
-                                               ctid,
-                                               daemon->ecuid);
+                                                   config,
+                                                   apid,
+                                                   ctid,
+                                                   daemon->ecuid);
 
-            if (num_config == 0)
-            {
+            if (num_config == 0) {
                 dlt_log(LOG_DEBUG, "No valid filter configuration found\n");
                 continue;
             }
 
-            for (j = 0; j < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; j++)
-            {
+            for (j = 0; j < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; j++) {
                 if (config[j] == NULL)
-                {
                     continue;
-                }
 
                 /* If logstorage configuration do not contain file name,
                  * then it is non verbose control filter, so return level as in this filter */
-                if (config[j]->file_name == NULL)
-                {
+                if (config[j]->file_name == NULL) {
                     storage_loglevel = config[j]->log_level;
                     break;
                 }
+
                 configured_loglevel = config[j]->log_level;
                 storage_loglevel = DLT_OFFLINE_LOGSTORAGE_MAX(
-                        configured_loglevel,
-                        storage_loglevel);
+                    configured_loglevel,
+                    storage_loglevel);
             }
         }
-    }
 
     return storage_loglevel;
 }
@@ -1125,10 +1003,9 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
 
     if ((daemon == NULL) || (user_config == NULL) ||
         (user_config->offlineLogstorageMaxDevices <= 0) || (data1 == NULL) ||
-        (data2 == NULL) || (data3 == NULL))
-    {
+        (data2 == NULL) || (data3 == NULL)) {
         dlt_vlog(LOG_DEBUG,
-                "%s: message type is not LOG. Skip storing.\n",
+                 "%s: message type is not LOG. Skip storing.\n",
                  __func__);
         return;
         /* Log Level changed callback */
@@ -1142,10 +1019,8 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
         user_config->offlineLogstorageMaxCounterIdx;
 
     for (i = 0; i < user_config->offlineLogstorageMaxDevices; i++)
-    {
         if (daemon->storage_handle[i].config_status ==
-            DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE)
-        {
+            DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE) {
             if (dlt_logstorage_write(&(daemon->storage_handle[i]),
                                      &file_config,
                                      data1,
@@ -1153,8 +1028,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                      data2,
                                      size2,
                                      data3,
-                                     size3) != 0)
-            {
+                                     size3) != 0) {
                 dlt_log(LOG_ERR,
                         "dlt_daemon_logstorage_write: failed. "
                         "Disable storage device\n");
@@ -1165,7 +1039,6 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                     DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
             }
         }
-    }
 }
 
 /**
@@ -1189,16 +1062,13 @@ int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((path == NULL) || (daemon == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
     /* connect internal storage device */
     /* Device index always used as 0 as it is setup on DLT daemon startup */
     ret = dlt_logstorage_device_connected(&(daemon->storage_handle[0]), path);
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         dlt_vlog(LOG_ERR, "%s: Device connect failed\n", __func__);
         return DLT_RETURN_ERROR;
     }
@@ -1227,21 +1097,15 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
-    {
         /* call disconnect on all currently connected devices */
         if (daemon->storage_handle[i].connection_type ==
             DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
-        {
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
                 DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
-        }
-    }
 
     return 0;
 }
@@ -1257,57 +1121,48 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (mnt_point == NULL))
-    {
         return DLT_RETURN_WRONG_PARAMETER;
-    }
 
-    if (strlen(mnt_point) > 0) /* mount point is given */
-    {
+    if (strlen(mnt_point) > 0) { /* mount point is given */
         handle = dlt_daemon_logstorage_get_device(daemon,
                                                   daemon_local,
                                                   mnt_point,
                                                   verbose);
-        if (handle == NULL)
-        {
+
+        if (handle == NULL) {
             return DLT_RETURN_ERROR;
         }
-        else
-        {
+        else {
             handle->uconfig.logfile_counteridxlen =
-                                                daemon_local->flags.offlineLogstorageMaxCounterIdx;
+                daemon_local->flags.offlineLogstorageMaxCounterIdx;
             handle->uconfig.logfile_delimiter =
-                                                daemon_local->flags.offlineLogstorageDelimiter;
+                daemon_local->flags.offlineLogstorageDelimiter;
             handle->uconfig.logfile_maxcounter =
-                                                daemon_local->flags.offlineLogstorageMaxCounter;
+                daemon_local->flags.offlineLogstorageMaxCounter;
             handle->uconfig.logfile_timestamp =
-                                                daemon_local->flags.offlineLogstorageTimestamp;
+                daemon_local->flags.offlineLogstorageTimestamp;
+
             if (dlt_logstorage_sync_caches(handle) != 0)
-            {
                 return DLT_RETURN_ERROR;
-            }
         }
     }
-    else /* sync caches for all connected logstorage devices */
-    {
+    else { /* sync caches for all connected logstorage devices */
+
         for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
-        {
             if (daemon->storage_handle[i].connection_type ==
-                DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
-            {
+                DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) {
                 daemon->storage_handle[i].uconfig.logfile_counteridxlen =
-                                                daemon_local->flags.offlineLogstorageMaxCounterIdx;
+                    daemon_local->flags.offlineLogstorageMaxCounterIdx;
                 daemon->storage_handle[i].uconfig.logfile_delimiter =
-                                                    daemon_local->flags.offlineLogstorageDelimiter;
+                    daemon_local->flags.offlineLogstorageDelimiter;
                 daemon->storage_handle[i].uconfig.logfile_maxcounter =
-                                                   daemon_local->flags.offlineLogstorageMaxCounter;
+                    daemon_local->flags.offlineLogstorageMaxCounter;
                 daemon->storage_handle[i].uconfig.logfile_timestamp =
-                                                    daemon_local->flags.offlineLogstorageTimestamp;
+                    daemon_local->flags.offlineLogstorageTimestamp;
+
                 if (dlt_logstorage_sync_caches(&daemon->storage_handle[i]) != 0)
-                {
                     return DLT_RETURN_ERROR;
-                }
             }
-        }
     }
 
     return 0;
@@ -1326,24 +1181,20 @@ DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (mnt_point == NULL))
-    {
         return NULL;
-    }
 
     len1 = strlen(mnt_point);
 
-    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
-    {
+    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
         len2 = strlen(daemon->storage_handle[i].device_mount_point);
 
         /* Check if the requested device path is already used as log storage
          * device. Check for strlen first, to avoid comparison errors when
          * final '/' is given or not */
         len = len1 > len2 ? len2 : len1;
+
         if (strncmp(daemon->storage_handle[i].device_mount_point, mnt_point, len) == 0)
-        {
             return &daemon->storage_handle[i];
-        }
     }
 
     return NULL;

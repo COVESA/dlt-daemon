@@ -100,21 +100,21 @@ typedef struct
     char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
     char ivalue[NAME_MAX + 1];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
-    int  sharedMemorySize;       /**< (int) Size of shared memory (Default: 100000) */
-    int  sendMessageTime;       /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
+    int sharedMemorySize;        /**< (int) Size of shared memory (Default: 100000) */
+    int sendMessageTime;        /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
-    int  offlineTraceFileSize;    /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
-    int  offlineTraceMaxSize;    /**< (int) Maximum size of all trace files (Default: 4000000) */
-    int  offlineTraceFilenameTimestampBased; /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
-    int  loggingMode;    /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
-    int  loggingLevel;    /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
+    int offlineTraceFileSize;     /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
+    int offlineTraceMaxSize;     /**< (int) Maximum size of all trace files (Default: 4000000) */
+    int offlineTraceFilenameTimestampBased;  /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
+    int loggingMode;     /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
+    int loggingLevel;     /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
-    int  sendECUSoftwareVersion; /**< (Boolean) Send ECU software version perdiodically */
+    int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
-    int  sendTimezone; /**< (Boolean) Send Timezone perdiodically */
-    int  offlineLogstorageMaxDevices; /**< (int) Maximum devices to be used as offline logstorage devices */
+    int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
+    int offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
     char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
-    int  offlineLogstorageTimestamp; /**< (int) Append timestamp in offline logstorage filename */
+    int offlineLogstorageTimestamp;  /**< (int) Append timestamp in offline logstorage filename */
     char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
@@ -125,14 +125,14 @@ typedef struct
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
 #endif
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
-    unsigned int  port; /**< port number */
+    unsigned int port;  /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
     int gatewayMode; /**< (Boolean) Gateway Mode */
     char gatewayConfigFile[DLT_DAEMON_FLAG_MAX]; /**< Gateway config file path */
-    int  autoResponseGetLogInfoOption;	/**< (int) The Option of automatic get log info response during context registration. (Default: 7)*/
-    int  contextLogLevel; /**< (int) log level sent to context if registered with default log-level or if enforced*/
-    int  contextTraceStatus;  /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
-    int  enforceContextLLAndTS; /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
+    int autoResponseGetLogInfoOption;   /**< (int) The Option of automatic get log info response during context registration. (Default: 7)*/
+    int contextLogLevel;  /**< (int) log level sent to context if registered with default log-level or if enforced*/
+    int contextTraceStatus;   /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
+    int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
@@ -189,7 +189,10 @@ void dlt_daemon_exit_trigger();
 void dlt_daemon_signal_handler(int sig);
 int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *revc, int verbose);
-int dlt_daemon_process_client_messages_serial(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
+                                              DltDaemonLocal *daemon_local,
+                                              DltReceiver *recv,
+                                              int verbose);
 int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_one_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
@@ -199,28 +202,54 @@ int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon
 #ifdef DLT_USE_UNIX_SOCKET_IPC
 int dlt_daemon_process_app_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 #endif
-int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv,
+                                        int verbose);
 
-typedef int (*dlt_daemon_process_user_message_func)(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
+typedef int (*dlt_daemon_process_user_message_func)(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec,
+                                                    int verbose);
 
-int dlt_daemon_process_user_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
+int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltReceiver *rec,
+                                             int verbose);
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-int dlt_daemon_process_user_message_register_application(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
-int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
-int dlt_daemon_process_user_message_register_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
-int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
+int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
+                                                         DltDaemonLocal *daemon_local,
+                                                         DltReceiver *rec,
+                                                         int verbose);
+int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
+                                                           DltDaemonLocal *daemon_local,
+                                                           DltReceiver *rec,
+                                                           int verbose);
+int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
+                                                     DltDaemonLocal *daemon_local,
+                                                     DltReceiver *rec,
+                                                     int verbose);
+int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
+                                                       DltDaemonLocal *daemon_local,
+                                                       DltReceiver *rec,
+                                                       int verbose);
 int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
 #ifdef DLT_SHM_ENABLE
-int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
+int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
+                                            DltDaemonLocal *daemon_local,
+                                            DltReceiver *rec,
+                                            int verbose);
 #endif
-int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
-int dlt_daemon_process_user_message_marker(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
+int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  DltReceiver *rec,
+                                                  int verbose);
+int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltReceiver *rec,
+                                           int verbose);
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    void dlt_daemon_systemd_watchdog_thread(void *ptr);
+void dlt_daemon_systemd_watchdog_thread(void *ptr);
 #endif
 
 int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, DltTimers timer);

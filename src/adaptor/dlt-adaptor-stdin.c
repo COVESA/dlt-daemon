@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-adaptor-stdin.c
-*/
+ */
 
 /*******************************************************************************
 **                                                                            **
@@ -63,7 +63,7 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
-*/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +82,7 @@
 
 DLT_DECLARE_CONTEXT(mycontext)
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     char str[MAXSTRLEN];
     int opt;
@@ -98,17 +98,15 @@ int main(int argc, char* argv[])
     dlt_set_id(ctid, PS_DLT_CONTEXT);
 
     while ((opt = getopt(argc, argv, "a:c:bht:v:")) != -1)
-    {
-        switch (opt)
-        {
+        switch (opt) {
         case 'a':
         {
-            dlt_set_id(apid,optarg);
+            dlt_set_id(apid, optarg);
             break;
         }
         case 'c':
         {
-            dlt_set_id(ctid,optarg);
+            dlt_set_id(ctid, optarg);
             break;
         }
         case 'b':
@@ -118,12 +116,12 @@ int main(int argc, char* argv[])
         }
         case 't':
         {
-          timeout = atoi(optarg);
-          break;
+            timeout = atoi(optarg);
+            break;
         }
         case 'h':
         {
-            dlt_get_version(version,255);
+            dlt_get_version(version, 255);
 
             printf("Usage: dlt-adaptor-stdin [options]\n");
             printf("Adaptor for forwarding input from stdin to DLT daemon.\n");
@@ -133,49 +131,51 @@ int main(int argc, char* argv[])
             printf("  -c ctid      - Set context id to ctid (default: SINC)\n");
             printf("  -b           - Flush buffered logs before unregistering app\n");
             printf("  -t timeout   - Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
-            printf("  -v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
+            printf(
+                "  -v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
             printf("  -h           - This help\n");
             return 0;
             break;
         }
         case 'v':
         {
-	  if(!strcmp(optarg, "FATAL"))
-          {
-              verbosity = DLT_LOG_FATAL;
-              break;
-          }
-	  else if(!strcmp(optarg, "ERROR"))
-          {
-              verbosity = DLT_LOG_ERROR;
-              break;
-          }
-	  else if(!strcmp(optarg, "WARN"))
-          {
-              verbosity = DLT_LOG_WARN;
-              break;
-          }
-	  else if(!strcmp(optarg, "INFO"))
-          {
-              verbosity = DLT_LOG_INFO;
-              break;
-          }
-	  else if(!strcmp(optarg, "DEBUG"))
-          {
-              verbosity = DLT_LOG_DEBUG;
-              break;
-          }
-	  else if(!strcmp(optarg, "VERBOSE"))
-          {
-              verbosity = DLT_LOG_VERBOSE;
-              break;
-          } else
-          {
-              printf("Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
-              verbosity = DLT_LOG_INFO;
-              break;
-          }
-          break;
+            if (!strcmp(optarg, "FATAL")) {
+                verbosity = DLT_LOG_FATAL;
+                break;
+            }
+            else if (!strcmp(optarg, "ERROR"))
+            {
+                verbosity = DLT_LOG_ERROR;
+                break;
+            }
+            else if (!strcmp(optarg, "WARN"))
+            {
+                verbosity = DLT_LOG_WARN;
+                break;
+            }
+            else if (!strcmp(optarg, "INFO"))
+            {
+                verbosity = DLT_LOG_INFO;
+                break;
+            }
+            else if (!strcmp(optarg, "DEBUG"))
+            {
+                verbosity = DLT_LOG_DEBUG;
+                break;
+            }
+            else if (!strcmp(optarg, "VERBOSE"))
+            {
+                verbosity = DLT_LOG_VERBOSE;
+                break;
+            }
+            else {
+                printf(
+                    "Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
+                verbosity = DLT_LOG_INFO;
+                break;
+            }
+
+            break;
         }
         default: /* '?' */
         {
@@ -183,33 +183,23 @@ int main(int argc, char* argv[])
             return -1;
         }
         }
-    }
 
-    DLT_REGISTER_APP(apid,PS_DLT_APP_DESC);
+    DLT_REGISTER_APP(apid, PS_DLT_APP_DESC);
     DLT_REGISTER_CONTEXT(mycontext, ctid, PS_DLT_CONTEXT_DESC);
+
     if (timeout > -1)
-    {
-      dlt_set_resend_timeout_atexit(timeout);
-    }
+        dlt_set_resend_timeout_atexit(timeout);
 
     while (fgets(str, MAXSTRLEN, stdin))
-    {
-        if (strcmp(str,"")!=0)
-        {
+        if (strcmp(str, "") != 0)
             DLT_LOG(mycontext, verbosity, DLT_STRING(str));
-        }
-    }
 
     DLT_UNREGISTER_CONTEXT(mycontext);
 
     if (bflag == 1)
-    {
         DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
-    }
     else
-    {
         DLT_UNREGISTER_APP();
-    }
 
     return 0;
 }

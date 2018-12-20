@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file example1.c
-*/
+ */
 
 
 /*******************************************************************************
@@ -54,15 +54,15 @@ DLT_DECLARE_CONTEXT(con_exa1);
 
 int main()
 {
-	DLT_REGISTER_APP("EXA1","First Example");
+    DLT_REGISTER_APP("EXA1", "First Example");
 
-	DLT_REGISTER_CONTEXT(con_exa1,"CON","First context");
+    DLT_REGISTER_CONTEXT(con_exa1, "CON", "First context");
 
-	DLT_LOG(con_exa1,DLT_LOG_INFO,DLT_STRING("Hello world!"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("Hello world!"));
 
     usleep(1000);
 
-	DLT_UNREGISTER_CONTEXT(con_exa1);
+    DLT_UNREGISTER_CONTEXT(con_exa1);
 
-	DLT_UNREGISTER_APP();
+    DLT_UNREGISTER_APP();
 }

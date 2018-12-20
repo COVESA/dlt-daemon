@@ -111,24 +111,19 @@ void set_ecuid(char *ecuid)
 {
     char *ecuid_conf = NULL;
 
-    if (local_ecuid != ecuid)
-    {
+    if (local_ecuid != ecuid) {
         /* If user pass NULL, read ECUId from dlt.conf */
-        if (ecuid == NULL)
-        {
-            if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0)
-            {
+        if (ecuid == NULL) {
+            if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0) {
                 memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
                 strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
                 local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
             }
-            else
-            {
+            else {
                 pr_error("Cannot read ECUid from dlt.conf\n");
             }
         }
-        else
-        {
+        else {
             /* Set user passed ECUID */
             memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
             strncpy(local_ecuid, ecuid, DLT_CTRL_ECUID_LEN);
@@ -147,23 +142,19 @@ void set_timeout(long t)
     local_timeout = DLT_CTRL_TIMEOUT;
 
     if (t > 1)
-    {
         local_timeout = t;
-    }
     else
-    {
         pr_error("Timeout to small. Set to default: %d",
                  DLT_CTRL_TIMEOUT);
-    }
 }
 
 int dlt_parse_config_param(char *config_id, char **config_data)
 {
-    FILE * pFile = NULL;
+    FILE *pFile = NULL;
     int value_length = DLT_LINE_LEN;
-    char line[DLT_LINE_LEN-1] = {0};
-    char token[DLT_LINE_LEN] = {0};
-    char value[DLT_LINE_LEN] = {0};
+    char line[DLT_LINE_LEN - 1] = { 0 };
+    char token[DLT_LINE_LEN] = { 0 };
+    char value[DLT_LINE_LEN] = { 0 };
     char *pch = NULL;
     const char *filename = NULL;
 
@@ -174,58 +165,48 @@ int dlt_parse_config_param(char *config_id, char **config_data)
     filename = CONFIGURATION_FILES_DIR "/dlt.conf";
     pFile = fopen(filename, "r");
 
-    if (pFile != NULL)
-    {
-        while (1)
-        {
+    if (pFile != NULL) {
+        while (1) {
             /* fetch line from configuration file */
-            if (fgets(line, value_length - 1, pFile) != NULL)
-            {
-                if (strncmp(line, config_id, strlen(config_id)) == 0)
-                {
+            if (fgets(line, value_length - 1, pFile) != NULL) {
+                if (strncmp(line, config_id, strlen(config_id)) == 0) {
                     pch = strtok(line, " =\r\n");
                     token[0] = 0;
                     value[0] = 0;
 
-                    while (pch != NULL)
-                    {
-                        if (token[0] == 0)
-                        {
+                    while (pch != NULL) {
+                        if (token[0] == 0) {
                             strncpy(token, pch, sizeof(token) - 1);
                             token[sizeof(token) - 1] = 0;
                         }
-                        else
-                        {
+                        else {
                             strncpy(value, pch, sizeof(value) - 1);
                             value[sizeof(value) - 1] = 0;
                             break;
                         }
+
                         pch = strtok(NULL, " =\r\n");
                     }
 
-                    if (token[0] && value[0])
-                    {
-                        if (strcmp(token, config_id) == 0)
-                        {
-                            *(config_data) = (char*)
-                                    calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
+                    if (token[0] && value[0]) {
+                        if (strcmp(token, config_id) == 0) {
+                            *(config_data) = (char *)
+                                calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
                             memcpy(*config_data,
-                                value,
-                                DLT_DAEMON_FLAG_MAX-1);
+                                   value,
+                                   DLT_DAEMON_FLAG_MAX - 1);
                         }
                     }
-
                 }
             }
-            else
-            {
+            else {
                 break;
             }
         }
+
         fclose (pFile);
     }
-    else
-    {
+    else {
         fprintf(stderr, "Cannot open configuration file: %s\n", filename);
     }
 
@@ -248,14 +229,12 @@ static int dlt_control_send_message_to_socket(int sock, DltMessage *msg)
 {
     if (send(sock,
              (const char *)(msg->headerbuffer + sizeof(DltStorageHeader)),
-             msg->headersize - sizeof(DltStorageHeader), 0) == -1)
-    {
+             msg->headersize - sizeof(DltStorageHeader), 0) == -1) {
         pr_error("Sending message header failed: %s\n", strerror(errno));
         return -1;
     }
 
-    if (send(sock, (const char *) msg->databuffer, msg->datasize, 0) == -1)
-    {
+    if (send(sock, (const char *)msg->databuffer, msg->datasize, 0) == -1) {
         pr_error("Sending message failed: %s\n", strerror(errno));
         return -1;
     }
@@ -279,9 +258,7 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
     pr_verbose("Preparing extra headers.\n");
 
     if (!msg || !header)
-    {
         return -1;
-    }
 
     shift = sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
@@ -293,8 +270,7 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
     msg->headerextra.tmsp = dlt_uptime();
 
     /* Copy header extra parameters to header buffer */
-    if (dlt_message_set_extraparameters(msg, get_verbosity()) == -1)
-    {
+    if (dlt_message_set_extraparameters(msg, get_verbosity()) == -1) {
         pr_error("Cannot copy header extra parameter\n");
         return -1;
     }
@@ -329,21 +305,18 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     pr_verbose("Preparing headers.\n");
 
     if (!msg || !header)
-    {
         return -1;
-    }
 
-    msg->storageheader = (DltStorageHeader *) header;
+    msg->storageheader = (DltStorageHeader *)header;
 
-    if (dlt_set_storageheader(msg->storageheader, "") == -1)
-    {
+    if (dlt_set_storageheader(msg->storageheader, "") == -1) {
         pr_error("Storage header initialization failed.\n");
         return -1;
     }
 
     /* prepare standard header */
     msg->standardheader =
-        (DltStandardHeader *) (header + sizeof(DltStorageHeader));
+        (DltStandardHeader *)(header + sizeof(DltStorageHeader));
 
     msg->standardheader->htyp = DLT_HTYP_WEID |
         DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
@@ -362,8 +335,7 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
 
     len = msg->headersize - sizeof(DltStorageHeader) + msg->datasize;
 
-    if (len > UINT16_MAX)
-    {
+    if (len > UINT16_MAX) {
         pr_error("Message header is too long.\n");
         return -1;
     }
@@ -388,22 +360,19 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
 
     pr_verbose("Preparing message.\n");
 
-    if (data == NULL)
-    {
+    if (data == NULL) {
         pr_error("Data for message body is NULL\n");
         return NULL;
     }
 
     msg = calloc(1, sizeof(DltMessage));
 
-    if (msg == NULL)
-    {
+    if (msg == NULL) {
         pr_error("Cannot allocate memory for Dlt Message\n");
         return NULL;
     }
 
-    if (dlt_message_init(msg, get_verbosity()) == -1)
-    {
+    if (dlt_message_init(msg, get_verbosity()) == -1) {
         pr_error("Cannot initialize Dlt Message\n");
         free(msg);
         return NULL;
@@ -415,8 +384,7 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     /* Allocate memory for Dlt Message's buffer */
     msg->databuffer = (uint8_t *)calloc(1, data->size);
 
-    if (msg->databuffer == NULL)
-    {
+    if (msg->databuffer == NULL) {
         pr_error("Cannot allocate memory for data buffer\n");
         free(msg);
         return NULL;
@@ -426,16 +394,14 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     memcpy(msg->databuffer, data->data, data->size);
 
     /* prepare storage header */
-    if (prepare_headers(msg, msg->headerbuffer))
-    {
+    if (prepare_headers(msg, msg->headerbuffer)) {
         dlt_message_free(msg, get_verbosity());
         free(msg);
         return NULL;
     }
 
     /* prepare extra headers */
-    if (prepare_extra_headers(msg, msg->headerbuffer))
-    {
+    if (prepare_extra_headers(msg, msg->headerbuffer)) {
         dlt_message_free(msg, get_verbosity());
         free(msg);
         return NULL;
@@ -459,15 +425,14 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
 {
     int (*callback)(DltMessage *message, void *data) = cb;
 
-    if (!cb || !client)
-    {
+    if (!cb || !client) {
         pr_error("%s Invalid parameters (%p, %p)\n", __func__, client, cb);
         return -1;
     }
 
     pr_verbose("Initializing the connection.\n");
-    if (dlt_client_init(client, get_verbosity()) != 0)
-    {
+
+    if (dlt_client_init(client, get_verbosity()) != 0) {
         pr_error("Failed to register callback (NULL)\n");
         return -1;
     }
@@ -475,15 +440,15 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
     dlt_client_register_message_callback(callback);
 
     client->socketPath = NULL;
-    if (dlt_parse_config_param("ControlSocketPath", &client->socketPath) != 0)
-    {
+
+    if (dlt_parse_config_param("ControlSocketPath", &client->socketPath) != 0) {
         /* Failed to read from conf, copy default */
-        if(dlt_client_set_socket_path(client, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1)
-        {
+        if (dlt_client_set_socket_path(client, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1) {
             pr_error("set socket path didn't succeed\n");
             return -1;
         }
     }
+
     client->mode = DLT_CLIENT_MODE_UNIX;
 
     return dlt_client_connect(client, get_verbosity());
@@ -525,23 +490,18 @@ static void *dlt_control_listen_to_daemon(void *data)
 static int dlt_control_callback(DltMessage *message, void *data)
 {
     char text[DLT_RECEIVE_BUFSIZE] = { 0 };
-    (void) data;
+    (void)data;
 
-    if (message == NULL)
-    {
+    if (message == NULL) {
         pr_error("Received message is null\n");
         return -1;
     }
 
     /* prepare storage header */
     if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-    {
         dlt_set_storageheader(message->storageheader, message->headerextra.ecu);
-    }
     else
-    {
         dlt_set_storageheader(message->storageheader, "LCTL");
-    }
 
     dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, get_verbosity());
 
@@ -582,14 +542,12 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     struct timespec t;
     DltMessage *msg = NULL;
 
-    if (!body)
-    {
+    if (!body) {
         pr_error("Invalid input (%p).\n", body);
         return -1;
     }
 
-    if (clock_gettime(CLOCK_REALTIME, &t) == -1)
-    {
+    if (clock_gettime(CLOCK_REALTIME, &t) == -1) {
         pr_error("Cannot read system time.\n");
         return -1;
     }
@@ -599,8 +557,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* send command to daemon here */
     msg = dlt_control_prepare_message(body);
 
-    if (msg == NULL)
-    {
+    if (msg == NULL) {
         pr_error("Control message preparation failed\n");
         return -1;
     }
@@ -610,8 +567,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* Re-init the return value */
     callback_return = -1;
 
-    if (dlt_control_send_message_to_socket(client.sock, msg) != 0)
-    {
+    if (dlt_control_send_message_to_socket(client.sock, msg) != 0) {
         pr_error("Sending message to daemon failed\n");
         free(msg);
         return -1;
@@ -619,9 +575,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
 
     /* If we timeout the lock is not taken back */
     if (!pthread_cond_timedwait(&answer_cond, &answer_lock, &t))
-    {
         pthread_mutex_unlock(&answer_lock);
-    }
 
     /* Destroying the message */
     dlt_message_free(msg, get_verbosity());
@@ -648,8 +602,7 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
                      char *ecuid,
                      int verbosity)
 {
-    if (!response_analyzer || !ecuid)
-    {
+    if (!response_analyzer || !ecuid) {
         pr_error("Invalid input (%p %p).\n", response_analyzer, ecuid);
         return -1;
     }
@@ -658,8 +611,7 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     set_ecuid(ecuid);
     set_verbosity(verbosity);
 
-    if (dlt_control_init_connection(&client, dlt_control_callback) != 0)
-    {
+    if (dlt_control_init_connection(&client, dlt_control_callback) != 0) {
         pr_error("Connection initialization failed\n");
         dlt_client_cleanup(&client, get_verbosity());
         return -1;
@@ -669,8 +621,7 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     if (pthread_create(&daemon_connect_thread,
                        NULL,
                        dlt_control_listen_to_daemon,
-                       NULL) != 0)
-    {
+                       NULL) != 0) {
         pr_error("Cannot create thread to communicate with DLT daemon.\n");
         return -1;
     }

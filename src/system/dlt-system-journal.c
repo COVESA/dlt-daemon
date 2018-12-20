@@ -65,12 +65,12 @@ extern DltSystemThreads threads;
 #define DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG 2048
 
 #define DLT_SYSTEM_JOURNAL_ASCII_FIRST_VISIBLE_CHARACTER 31
-#define DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH 9+32+1
+#define DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH 9 + 32 + 1
 
 typedef struct
 {
-	char real[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
-	char monotonic[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
+    char real[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
+    char monotonic[DLT_SYSTEM_JOURNAL_BUFFER_SIZE];
 } MessageTimestamp;
 
 DLT_IMPORT_CONTEXT(dltsystem)
@@ -78,327 +78,321 @@ DLT_DECLARE_CONTEXT(journalContext)
 
 int journal_checkUserBufferForFreeSpace()
 {
-	int total_size, used_size;
+    int total_size, used_size;
 
-	dlt_user_check_buffer(&total_size, &used_size);
+    dlt_user_check_buffer(&total_size, &used_size);
 
-	if((total_size - used_size) < (total_size/2))
-	{
-		return -1;
-	}
-	return 1;
+    if ((total_size - used_size) < (total_size / 2))
+        return -1;
+
+    return 1;
 }
 
-int dlt_system_journal_get(sd_journal* j,char *target,const char *field,size_t max_size)
+int dlt_system_journal_get(sd_journal *j, char *target, const char *field, size_t max_size)
 {
-	char *data;
-	size_t length;
-	int error_code;
-	size_t field_size;
+    char *data;
+    size_t length;
+    int error_code;
+    size_t field_size;
 
-	// pre check parameters
-	if(max_size<1 || target == 0 || field == 0 || j == 0)
-		return -1;
+    /* pre check parameters */
+    if ((max_size < 1) || (target == 0) || (field == 0) || (j == 0))
+        return -1;
 
-	// intialise empty target
-	target[0]=0;
+    /* intialise empty target */
+    target[0] = 0;
 
-	// get data from journal
-	error_code = sd_journal_get_data(j, field,(const void **) &data, &length);
+    /* get data from journal */
+    error_code = sd_journal_get_data(j, field, (const void **)&data, &length);
 
-	// check if an error
-	if(error_code)
-		return error_code;
+    /* check if an error */
+    if (error_code)
+        return error_code;
 
-	// calculate field size
-	field_size = strlen(field)+1;
+    /* calculate field size */
+    field_size = strlen(field) + 1;
 
-	//check length
-	if(length<field_size)
-	   return -1;
+    /*check length */
+    if (length < field_size)
+        return -1;
 
-    // copy string
-	if(max_size<=(length-field_size))
-	{
-		// truncate
-		strncpy(target,data+field_size,max_size-1);
-		target[max_size-1]=0;
-	}
-	else
-	{
-		// full copy
-		strncpy(target,data+field_size,length-field_size);
-		target[length-field_size]=0;
+    /* copy string */
+    if (max_size <= (length - field_size)) {
+        /* truncate */
+        strncpy(target, data + field_size, max_size - 1);
+        target[max_size - 1] = 0;
+    }
+    else {
+        /* full copy */
+        strncpy(target, data + field_size, length - field_size);
+        target[length - field_size] = 0;
 
-	}
+    }
 
-	// debug messages
-	//printf("%s = %s\n",field,target);
+    /* debug messages */
+    /*printf("%s = %s\n",field,target); */
 
-	// Success
-	return 0;
+    /* Success */
+    return 0;
 }
 
 void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *timestamp)
 {
-	int ret              = 0;
-	uint64_t time_secs   = 0;
-	uint64_t time_usecs  = 0;
-	struct tm * timeinfo = NULL;
+    int ret = 0;
+    uint64_t time_secs = 0;
+    uint64_t time_usecs = 0;
+    struct tm *timeinfo = NULL;
 
-	char buffer_realtime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]           = { 0 };
-	char buffer_realtime_formatted[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
-	char buffer_monotime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]           = { 0 };
+    char buffer_realtime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
+    char buffer_realtime_formatted[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
+    char buffer_monotime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
 
-	/* Try to get realtime from message source and if not successful try to get realtime from journal entry */
-	ret = dlt_system_journal_get(journal, buffer_realtime, "_SOURCE_REALTIME_TIMESTAMP", sizeof(buffer_realtime));
-	if (ret == 0 && strlen(buffer_realtime) > 0)
-	{
-		errno = 0;
-		time_usecs = strtoull(buffer_realtime, NULL, 10);
-		if (errno != 0)
-			time_usecs = 0;
-	}
-	else
-	{
-		if ((ret = sd_journal_get_realtime_usec(journal, &time_usecs)) < 0)
-		{
-			DLT_LOG(dltsystem, DLT_LOG_WARN,
-							DLT_STRING("dlt-system-journal failed to get realtime: "),
-							DLT_STRING(strerror(-ret)));
+    /* Try to get realtime from message source and if not successful try to get realtime from journal entry */
+    ret = dlt_system_journal_get(journal, buffer_realtime, "_SOURCE_REALTIME_TIMESTAMP", sizeof(buffer_realtime));
 
-			/* just to be sure to have a defined value */
-			time_usecs = 0;
-		}
-	}
+    if ((ret == 0) && (strlen(buffer_realtime) > 0)) {
+        errno = 0;
+        time_usecs = strtoull(buffer_realtime, NULL, 10);
 
-	time_secs = time_usecs / 1000000;
-	timeinfo = localtime((const time_t*) (&time_secs));
-	strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
+        if (errno != 0)
+            time_usecs = 0;
+    }
+    else if ((ret = sd_journal_get_realtime_usec(journal, &time_usecs)) < 0) {
+        DLT_LOG(dltsystem, DLT_LOG_WARN,
+                DLT_STRING("dlt-system-journal failed to get realtime: "),
+                DLT_STRING(strerror(-ret)));
 
-	snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06"PRIu64, buffer_realtime_formatted, time_usecs % 1000000);
+        /* just to be sure to have a defined value */
+        time_usecs = 0;
+    }
 
-	/* Try to get monotonic time from message source and if not successful try to get monotonic time from journal entry */
-	ret = dlt_system_journal_get(journal, buffer_monotime, "_SOURCE_MONOTONIC_TIMESTAMP", sizeof(buffer_monotime));
-	if (ret == 0 && strlen(buffer_monotime) > 0)
-	{
-		errno = 0;
-		time_usecs = strtoull(buffer_monotime, NULL, 10);
-		if (errno != 0)
-			time_usecs = 0;
-	}
-	else
-	{
-		if ((ret = sd_journal_get_monotonic_usec(journal, &time_usecs, NULL)) < 0)
-		{
-			DLT_LOG(dltsystem, DLT_LOG_WARN,
-							DLT_STRING("dlt-system-journal failed to get monotonic time: "),
-							DLT_STRING(strerror(-ret)));
+    time_secs = time_usecs / 1000000;
+    timeinfo = localtime((const time_t *)(&time_secs));
+    strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
 
-			/* just to be sure to have a defined value */
-			time_usecs = 0;
-		}
-	}
+    snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06" PRIu64, buffer_realtime_formatted,
+             time_usecs % 1000000);
 
-	snprintf(timestamp->monotonic, sizeof(timestamp->monotonic), "%"PRId64".%06"PRIu64, time_usecs / 1000000, time_usecs % 1000000);
+    /* Try to get monotonic time from message source and if not successful try to get monotonic time from journal entry */
+    ret = dlt_system_journal_get(journal, buffer_monotime, "_SOURCE_MONOTONIC_TIMESTAMP", sizeof(buffer_monotime));
+
+    if ((ret == 0) && (strlen(buffer_monotime) > 0)) {
+        errno = 0;
+        time_usecs = strtoull(buffer_monotime, NULL, 10);
+
+        if (errno != 0)
+            time_usecs = 0;
+    }
+    else if ((ret = sd_journal_get_monotonic_usec(journal, &time_usecs, NULL)) < 0) {
+        DLT_LOG(dltsystem, DLT_LOG_WARN,
+                DLT_STRING("dlt-system-journal failed to get monotonic time: "),
+                DLT_STRING(strerror(-ret)));
+
+        /* just to be sure to have a defined value */
+        time_usecs = 0;
+    }
+
+    snprintf(timestamp->monotonic,
+             sizeof(timestamp->monotonic),
+             "%" PRId64 ".%06" PRIu64,
+             time_usecs / 1000000,
+             time_usecs % 1000000);
 }
 
 void journal_thread(void *v_conf)
 {
-	int r;
-	sd_journal *j;
-	char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
-	sd_id128_t boot_id;
+    int r;
+    sd_journal *j;
+    char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
+    sd_id128_t boot_id;
 
-    char buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]     = { 0 },
-         buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]    = { 0 },
-         buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]         = { 0 },
-         buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]        = { 0 },
+    char buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
+         buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
+         buffer_pid[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
+         buffer_comm[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
          buffer_message[DLT_SYSTEM_JOURNAL_BUFFER_SIZE_BIG] = { 0 },
-         buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE]   = { 0 };
+         buffer_transport[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
 
     MessageTimestamp timestamp;
 
-	int loglevel,systemd_loglevel;
-	char* systemd_log_levels[] = { "Emergency","Alert","Critical","Error","Warning","Notice","Informational","Debug" };
+    int loglevel, systemd_loglevel;
+    char *systemd_log_levels[] =
+    { "Emergency", "Alert", "Critical", "Error", "Warning", "Notice", "Informational", "Debug" };
 
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-journal, in thread."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-journal, in thread."));
 
-	DltSystemConfiguration *conf = (DltSystemConfiguration *) v_conf;
-	DLT_REGISTER_CONTEXT(journalContext, conf->Journal.ContextId, "Journal Adapter");
+    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    DLT_REGISTER_CONTEXT(journalContext, conf->Journal.ContextId, "Journal Adapter");
 
-	r = sd_journal_open(&j,  SD_JOURNAL_LOCAL_ONLY/*SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY*/);
-			printf("journal open return %d\n", r);
-	if (r < 0) {
-			DLT_LOG(dltsystem, DLT_LOG_ERROR,
-					DLT_STRING("dlt-system-journal, cannot open journal:"),DLT_STRING(strerror(-r)));
-			printf("journal open failed: %s\n", strerror(-r));
-			return;
-	}
+    r = sd_journal_open(&j, SD_JOURNAL_LOCAL_ONLY /*SD_JOURNAL_LOCAL_ONLY|SD_JOURNAL_RUNTIME_ONLY*/);
+    printf("journal open return %d\n", r);
 
-	if(conf->Journal.CurrentBoot)
-	{
-		/* show only current boot entries */
-		r = sd_id128_get_boot(&boot_id);
-		if(r<0)
-		{
-				DLT_LOG(dltsystem, DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-journal failed to get boot id:"),DLT_STRING(strerror(-r)));
-				sd_journal_close(j);
-				return;
+    if (r < 0) {
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("dlt-system-journal, cannot open journal:"), DLT_STRING(strerror(-r)));
+        printf("journal open failed: %s\n", strerror(-r));
+        return;
+    }
 
-		}
-		sd_id128_to_string(boot_id, match + 9);
-		r = sd_journal_add_match(j,match,strlen(match));
-		if(r<0)
-		{
-				DLT_LOG(dltsystem, DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-journal failed to get match:"),DLT_STRING(strerror(-r)));
-				sd_journal_close(j);
-				return;
+    if (conf->Journal.CurrentBoot) {
+        /* show only current boot entries */
+        r = sd_id128_get_boot(&boot_id);
 
-		}
-	}
+        if (r < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-journal failed to get boot id:"), DLT_STRING(strerror(-r)));
+            sd_journal_close(j);
+            return;
 
-	if(conf->Journal.Follow)
-	{
-		/* show only last 10 entries and follow */
+        }
+
+        sd_id128_to_string(boot_id, match + 9);
+        r = sd_journal_add_match(j, match, strlen(match));
+
+        if (r < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-journal failed to get match:"), DLT_STRING(strerror(-r)));
+            sd_journal_close(j);
+            return;
+
+        }
+    }
+
+    if (conf->Journal.Follow) {
+        /* show only last 10 entries and follow */
         r = sd_journal_seek_tail(j);
-		if(r<0)
-		{
-				DLT_LOG(dltsystem, DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-journal failed to seek to tail:"),DLT_STRING(strerror(-r)));
-				sd_journal_close(j);
-				return;
 
-		}
+        if (r < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-journal failed to seek to tail:"), DLT_STRING(strerror(-r)));
+            sd_journal_close(j);
+            return;
+
+        }
+
         r = sd_journal_previous_skip(j, 10);
-		if(r<0)
-		{
-				DLT_LOG(dltsystem, DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-journal failed to seek back 10 entries:"),DLT_STRING(strerror(-r)));
-				sd_journal_close(j);
-				return;
 
-		}
+        if (r < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-journal failed to seek back 10 entries:"), DLT_STRING(strerror(-r)));
+            sd_journal_close(j);
+            return;
 
-	}
+        }
+    }
 
-	while(!threads.shutdown)
-	{
+    while (!threads.shutdown) {
 
-		r = sd_journal_next(j);
-		if(r<0)
-		{
-				DLT_LOG(dltsystem, DLT_LOG_ERROR,
-						DLT_STRING("dlt-system-journal failed to get next entry:"),DLT_STRING(strerror(-r)));
-				sd_journal_close(j);
-				return;
+        r = sd_journal_next(j);
 
-		}
-		else if(r>0)
-		{
-			/* get all data from current journal entry */
-			dlt_system_journal_get_timestamp(j, &timestamp);
+        if (r < 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                    DLT_STRING("dlt-system-journal failed to get next entry:"), DLT_STRING(strerror(-r)));
+            sd_journal_close(j);
+            return;
 
-			/* get data from journal entry, empty string if invalid fields */
-			dlt_system_journal_get(j,buffer_comm,"_COMM",sizeof(buffer_comm));
-			dlt_system_journal_get(j,buffer_pid,"_PID",sizeof(buffer_pid));
-			dlt_system_journal_get(j,buffer_priority,"PRIORITY",sizeof(buffer_priority));
-			dlt_system_journal_get(j,buffer_message,"MESSAGE",sizeof(buffer_message));
-			dlt_system_journal_get(j,buffer_transport,"_TRANSPORT",sizeof(buffer_transport));
+        }
+        else if (r > 0)
+        {
+            /* get all data from current journal entry */
+            dlt_system_journal_get_timestamp(j, &timestamp);
 
-			/* prepare process string */
-			if(strcmp(buffer_transport,"kernel")==0)
-				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"kernel:");
-			else
-				snprintf(buffer_process,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s[%s]:",buffer_comm,buffer_pid);
+            /* get data from journal entry, empty string if invalid fields */
+            dlt_system_journal_get(j, buffer_comm, "_COMM", sizeof(buffer_comm));
+            dlt_system_journal_get(j, buffer_pid, "_PID", sizeof(buffer_pid));
+            dlt_system_journal_get(j, buffer_priority, "PRIORITY", sizeof(buffer_priority));
+            dlt_system_journal_get(j, buffer_message, "MESSAGE", sizeof(buffer_message));
+            dlt_system_journal_get(j, buffer_transport, "_TRANSPORT", sizeof(buffer_transport));
 
-			/* map log level on demand */
-			loglevel = DLT_LOG_INFO;
-			systemd_loglevel = atoi(buffer_priority);
-			if(conf->Journal.MapLogLevels)
-			{
-				/* Map log levels from journal to DLT */
-				switch(systemd_loglevel)
-				{
-					case 0: /* Emergency */
-					case 1: /* Alert */
-					case 2: /* Critical */
-						loglevel = DLT_LOG_FATAL;
-						break;
-					case 3: /* Error */
-						loglevel = DLT_LOG_ERROR;
-						break;
-					case 4: /* Warning */
-						loglevel = DLT_LOG_WARN;
-						break;
-					case 5: /* Notice */
-					case 6: /* Informational */
-						loglevel = DLT_LOG_INFO;
-						break;
-					case 7: /* Debug */
-						loglevel = DLT_LOG_DEBUG;
-						break;
-					default:
-						loglevel = DLT_LOG_INFO;
-						break;
-				}
-			}
-			if(systemd_loglevel>=0 && systemd_loglevel<=7)
-				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"%s:",systemd_log_levels[systemd_loglevel]);
-			else
-				snprintf(buffer_priority,DLT_SYSTEM_JOURNAL_BUFFER_SIZE,"prio_unknown:");
+            /* prepare process string */
+            if (strcmp(buffer_transport, "kernel") == 0)
+                snprintf(buffer_process, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "kernel:");
+            else
+                snprintf(buffer_process, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "%s[%s]:", buffer_comm, buffer_pid);
 
-			/* write log entry */
+            /* map log level on demand */
+            loglevel = DLT_LOG_INFO;
+            systemd_loglevel = atoi(buffer_priority);
+
+            if (conf->Journal.MapLogLevels) {
+                /* Map log levels from journal to DLT */
+                switch (systemd_loglevel) {
+                case 0:     /* Emergency */
+                case 1:     /* Alert */
+                case 2:     /* Critical */
+                    loglevel = DLT_LOG_FATAL;
+                    break;
+                case 3:     /* Error */
+                    loglevel = DLT_LOG_ERROR;
+                    break;
+                case 4:     /* Warning */
+                    loglevel = DLT_LOG_WARN;
+                    break;
+                case 5:     /* Notice */
+                case 6:     /* Informational */
+                    loglevel = DLT_LOG_INFO;
+                    break;
+                case 7:     /* Debug */
+                    loglevel = DLT_LOG_DEBUG;
+                    break;
+                default:
+                    loglevel = DLT_LOG_INFO;
+                    break;
+                }
+            }
+
+            if ((systemd_loglevel >= 0) && (systemd_loglevel <= 7))
+                snprintf(buffer_priority, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "%s:", systemd_log_levels[systemd_loglevel]);
+            else
+                snprintf(buffer_priority, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "prio_unknown:");
+
+            /* write log entry */
             DLT_LOG(journalContext, loglevel,
-                        DLT_STRING(timestamp.real),
-                        DLT_STRING(timestamp.monotonic),
-                        DLT_STRING(buffer_process),
-                        DLT_STRING(buffer_priority),
-                        DLT_STRING(buffer_message)
-                        );
-		}
-		else
-		{
-			r = sd_journal_wait(j,1000000);
-			if(r<0)
-			{
-					DLT_LOG(dltsystem, DLT_LOG_ERROR,
-							DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),DLT_STRING(strerror(-r)));
-					sd_journal_close(j);
-					return;
+                    DLT_STRING(timestamp.real),
+                    DLT_STRING(timestamp.monotonic),
+                    DLT_STRING(buffer_process),
+                    DLT_STRING(buffer_priority),
+                    DLT_STRING(buffer_message)
+                    );
+        }
+        else {
+            r = sd_journal_wait(j, 1000000);
 
-			}
-		}
+            if (r < 0) {
+                DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                        DLT_STRING("dlt-system-journal failed to call sd_journal_get_realtime_usec(): "),
+                        DLT_STRING(strerror(-r)));
+                sd_journal_close(j);
+                return;
 
-		if(journal_checkUserBufferForFreeSpace()==-1)
-		{
-			// buffer is nearly full
-			// wait 500ms for writing next entry
-			struct timespec t;
-			t.tv_sec = 0;
-			t.tv_nsec = 1000000ul*500;
-			nanosleep(&t, NULL);
-		}
+            }
+        }
 
-	}
+        if (journal_checkUserBufferForFreeSpace() == -1) {
+            /* buffer is nearly full */
+            /* wait 500ms for writing next entry */
+            struct timespec t;
+            t.tv_sec = 0;
+            t.tv_nsec = 1000000ul * 500;
+            nanosleep(&t, NULL);
+        }
+    }
 
     sd_journal_close(j);
 
-	DLT_UNREGISTER_CONTEXT(journalContext);
+    DLT_UNREGISTER_CONTEXT(journalContext);
 
 }
 
 void start_systemd_journal(DltSystemConfiguration *conf)
 {
-	DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-			DLT_STRING("dlt-system-journal, start journal"));
-	static pthread_attr_t t_attr;
-	static pthread_t pt;
-	pthread_create(&pt, &t_attr, (void *)journal_thread, conf);
-	threads.threads[threads.count++] = pt;
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("dlt-system-journal, start journal"));
+    static pthread_attr_t t_attr;
+    static pthread_t pt;
+    pthread_create(&pt, &t_attr, (void *)journal_thread, conf);
+    threads.threads[threads.count++] = pt;
 }
 
 #endif /* DLT_SYSTEMD_JOURNAL_ENABLE */

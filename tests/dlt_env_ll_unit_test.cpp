@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_env_ll_unit_test.cpp
-*/
+ */
 
 #include "gtest/gtest.h"
 #include "dlt_user.h"
@@ -31,7 +31,7 @@
 /* simply include the whole file to allow testing it */
 #include "src/lib/dlt_env_ll.c"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
@@ -45,7 +45,7 @@ TEST(DltExtensionTests, extract_id)
     char env0[] = "abcd:1234:3";
     char *tmp = &env0[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env0[0], 4); // moved 4 bytes
+    ASSERT_EQ(tmp - &env0[0], 4); /* moved 4 bytes */
     ASSERT_EQ(id[0], 'a');
     ASSERT_EQ(id[1], 'b');
     ASSERT_EQ(id[2], 'c');
@@ -54,7 +54,7 @@ TEST(DltExtensionTests, extract_id)
     char env1[] = "abc:1234:3";
     tmp = &env1[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env1[0], 3); // moved 3 bytes
+    ASSERT_EQ(tmp - &env1[0], 3); /* moved 3 bytes */
     ASSERT_EQ(id[0], 'a');
     ASSERT_EQ(id[1], 'b');
     ASSERT_EQ(id[2], 'c');
@@ -63,7 +63,7 @@ TEST(DltExtensionTests, extract_id)
     char env2[] = "ab:1234:3";
     tmp = &env2[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env2[0], 2); // moved 2 bytes
+    ASSERT_EQ(tmp - &env2[0], 2); /* moved 2 bytes */
     ASSERT_EQ(id[0], 'a');
     ASSERT_EQ(id[1], 'b');
     ASSERT_EQ(id[2], 0);
@@ -72,7 +72,7 @@ TEST(DltExtensionTests, extract_id)
     char env3[] = "a:1234:3";
     tmp = &env3[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env3[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env3[0], 1); /* moved 1 byte */
     ASSERT_EQ(id[0], 'a');
     ASSERT_EQ(id[1], 0);
     ASSERT_EQ(id[2], 0);
@@ -81,7 +81,7 @@ TEST(DltExtensionTests, extract_id)
     char env4[] = ":1234:3";
     tmp = &env4[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env4[0], 0); // moved 1 byte
+    ASSERT_EQ(tmp - &env4[0], 0); /* moved 1 byte */
     ASSERT_EQ(id[0], 0);
     ASSERT_EQ(id[1], 0);
     ASSERT_EQ(id[2], 0);
@@ -90,7 +90,7 @@ TEST(DltExtensionTests, extract_id)
     char env5[] = "abcd:1234:3;";
     tmp = &env5[0];
     ASSERT_EQ(dlt_env_extract_id(&tmp, id), 0);
-    ASSERT_EQ(tmp - &env5[0], 4); // moved 4 bytes
+    ASSERT_EQ(tmp - &env5[0], 4); /* moved 4 bytes */
     ASSERT_EQ(id[0], 'a');
     ASSERT_EQ(id[1], 'b');
     ASSERT_EQ(id[2], 'c');
@@ -129,49 +129,49 @@ TEST(DltExtensionTests, extract_ll)
     char env_1[] = "-1";
     char *tmp = &env_1[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env_1[0], 2); // moved 2 bytes
+    ASSERT_EQ(tmp - &env_1[0], 2); /* moved 2 bytes */
     ASSERT_EQ(ll, -1);
 
     char env0[] = "0;";
     tmp = &env0[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env0[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env0[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 0);
 
     char env1[] = "1;";
     tmp = &env1[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env1[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env1[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 1);
 
     char env2[] = "2;";
     tmp = &env2[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env2[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env2[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 2);
 
     char env3[] = "3;";
     tmp = &env3[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env3[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env3[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 3);
 
     char env4[] = "4;";
     tmp = &env4[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env4[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env4[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 4);
 
     char env5[] = "5;";
     tmp = &env5[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env5[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env5[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 5);
 
     char env6[] = "6;";
     tmp = &env6[0];
     ASSERT_EQ(dlt_env_extract_ll(&tmp, &ll), 0);
-    ASSERT_EQ(tmp - &env6[0], 1); // moved 1 byte
+    ASSERT_EQ(tmp - &env6[0], 1); /* moved 1 byte */
     ASSERT_EQ(ll, 6);
 
     /* testing invalid input */
@@ -211,7 +211,7 @@ TEST(DltExtensionTests, extract_ll_item)
     char env0[] = "abcd:1234:3";
     char *tmp = &env0[0];
     ASSERT_EQ(dlt_env_extract_ll_item(&tmp, &item), 0);
-    ASSERT_EQ(tmp - &env0[0], 11); // moved 11 bytes
+    ASSERT_EQ(tmp - &env0[0], 11); /* moved 11 bytes */
     ASSERT_EQ(item.appId[0], 'a');
     ASSERT_EQ(item.appId[1], 'b');
     ASSERT_EQ(item.appId[2], 'c');
@@ -225,7 +225,7 @@ TEST(DltExtensionTests, extract_ll_item)
     char env1[] = "::-1;";
     tmp = &env1[0];
     ASSERT_EQ(dlt_env_extract_ll_item(&tmp, &item), 0);
-    ASSERT_EQ(tmp - &env1[0], 4); // moved 4 bytes
+    ASSERT_EQ(tmp - &env1[0], 4); /* moved 4 bytes */
     ASSERT_EQ(item.appId[0], 0);
     ASSERT_EQ(item.appId[1], 0);
     ASSERT_EQ(item.appId[2], 0);
@@ -271,9 +271,9 @@ TEST(DltExtensionTests, extract_ll_item)
 
 TEST(DltExtensionTests, basic_ll_set_handling)
 {
-    dlt_env_init_ll_set(NULL); // must not crash
-    dlt_env_free_ll_set(NULL); // must not crash
-    dlt_env_increase_ll_set(NULL); // must not crash
+    dlt_env_init_ll_set(NULL); /* must not crash */
+    dlt_env_free_ll_set(NULL); /* must not crash */
+    dlt_env_increase_ll_set(NULL); /* must not crash */
 
     dlt_env_ll_set ll_set;
     dlt_env_init_ll_set(&ll_set);
@@ -287,16 +287,16 @@ TEST(DltExtensionTests, basic_ll_set_handling)
     EXPECT_EQ(0, ll_set.num_elem);
 
     dlt_env_init_ll_set(&ll_set);
+
     for (int i = 0; i < DLT_ENV_LL_SET_INCREASE; ++i)
-    {
         ll_set.item[i].ll = i;
-    }
+
     dlt_env_increase_ll_set(&ll_set);
     EXPECT_EQ(2 * DLT_ENV_LL_SET_INCREASE, ll_set.array_size);
+
     for (int i = 0; i < DLT_ENV_LL_SET_INCREASE; ++i)
-    {
         EXPECT_EQ(ll_set.item[i].ll, i);
-    }
+
     dlt_env_free_ll_set(&ll_set);
     EXPECT_TRUE(NULL == ll_set.item);
     EXPECT_EQ(0, ll_set.array_size);
@@ -320,15 +320,14 @@ TEST(DltExtensionTests, extract_ll_set)
 
     /* force increasing the list */
     char env1[] =
-                    "abcd:0000:3;abcd:0001:3;abcd:0002:3;abcd:0003:3;abcd:0004:3;abcd:0005:3;abcd:0006:3;abcd:0007:3;abcd:0008:3;abcd:0009:3;abcd:0010:3";
+        "abcd:0000:3;abcd:0001:3;abcd:0002:3;abcd:0003:3;abcd:0004:3;abcd:0005:3;abcd:0006:3;abcd:0007:3;abcd:0008:3;abcd:0009:3;abcd:0010:3";
     tmp = &env1[0];
     ASSERT_EQ(dlt_env_extract_ll_set(&tmp, &ll_set), 0);
     EXPECT_EQ(ll_set.array_size, 2 * DLT_ENV_LL_SET_INCREASE);
     EXPECT_EQ(ll_set.num_elem, 11);
+
     for (size_t i = 0; i < ll_set.num_elem; ++i)
-    {
         EXPECT_EQ(ll_set.item[i].ctxId[3], i % 10 + '0');
-    }
 
     dlt_env_free_ll_set(&ll_set);
 
@@ -439,56 +438,56 @@ TEST(DltExtensionTests, adjust_ll_from_env)
     dlt_env_free_ll_set(&ll_set);
 }
 
-// int dlt_env_helper_to_lower(char **env, char *result, int res_len)
+/* int dlt_env_helper_to_lower(char **env, char *result, int res_len) */
 TEST(DltExtensionTests, dlt_env_helper_to_lower)
 {
-    // default behavior
+    /* default behavior */
     char env0[] = "1238<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo;ABcd";
     char res0[] = "1238<><<>>>>#$//abcdabcdedfghijklmnopqrstuvwxyzpo";
     char *tmp0 = &env0[0];
 
     char result0[sizeof(res0)];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp0, result0, sizeof(result0)));
-    ASSERT_EQ(';', *tmp0); // next char is ';'
-    ASSERT_STREQ(res0, result0); // stops at ';' and is correctly converted
+    ASSERT_EQ(';', *tmp0); /* next char is ';' */
+    ASSERT_STREQ(res0, result0); /* stops at ';' and is correctly converted */
 
-    // default behavior with end of string
+    /* default behavior with end of string */
     char env1[] = "1238<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo";
     char res1[] = "1238<><<>>>>#$//abcdabcdedfghijklmnopqrstuvwxyzpo";
     char *tmp1 = &env1[0];
 
     char result1[sizeof(res1)];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp1, result1, sizeof(result1)));
-    ASSERT_EQ(0, *tmp1); // next char is void
-    ASSERT_STREQ(res1, result1); // stops at end-of-string and is correctly converted
+    ASSERT_EQ(0, *tmp1); /* next char is void */
+    ASSERT_STREQ(res1, result1); /* stops at end-of-string and is correctly converted */
 
-    // result string too short
+    /* result string too short */
     char env2[] = "2238<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo";
     char res2[] = "2238<><<>>>>#$//abcdabcdedfg";
     char *tmp2 = &env2[0];
 
     char result2[sizeof(res2)];
     ASSERT_EQ(-1, dlt_env_helper_to_lower(&tmp2, result2, sizeof(result2)));
-    ASSERT_EQ('H', *tmp2); // next char is void
-    ASSERT_STREQ(res2, result2); // stops at end-of-string and is partially converted
+    ASSERT_EQ('H', *tmp2); /* next char is void */
+    ASSERT_STREQ(res2, result2); /* stops at end-of-string and is partially converted */
 
-    // input string shorter than result
+    /* input string shorter than result */
     char env3[] = "3338<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo";
     char res3[] = "3338<><<>>>>#$//abcdabcdedfghijklmnopqrstuvwxyzpo";
     char *tmp3 = &env3[0];
 
     char result3[sizeof(res3) + 5];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp3, result3, sizeof(result3)));
-    ASSERT_EQ(0, *tmp3); // next char is void
-    ASSERT_STREQ(res3, result3); // stops at end-of-string and is correctly converted
+    ASSERT_EQ(0, *tmp3); /* next char is void */
+    ASSERT_STREQ(res3, result3); /* stops at end-of-string and is correctly converted */
 }
 
-// int dlt_env_extract_symbolic_ll(char **env, int8_t * ll)
+/* int dlt_env_extract_symbolic_ll(char **env, int8_t * ll) */
 TEST(DltExtensionTests, dlt_env_extract_symbolic_ll)
 {
     int8_t result;
 
-    // correct behavior
+    /* correct behavior */
     char env0[] = "DEFAULT;off;fatal;error;warning;info;DeBuG;verbose";
     char *tmp0 = &env0[0];
 
@@ -524,7 +523,7 @@ TEST(DltExtensionTests, dlt_env_extract_symbolic_ll)
     ASSERT_EQ(0, *tmp0);
     ASSERT_EQ(6, result);
 
-    // incorrect behavior
+    /* incorrect behavior */
     char env1[] = "DEF";
     char *tmp1 = &env1[0];
 
@@ -533,7 +532,7 @@ TEST(DltExtensionTests, dlt_env_extract_symbolic_ll)
     ASSERT_EQ(0, *tmp1);
     ASSERT_EQ(18, result); /* 'result' is not touched */
 
-    // incorrect behavior
+    /* incorrect behavior */
     char env2[] = "DEFaultingfBa";
     char *tmp2 = &env2[0];
 

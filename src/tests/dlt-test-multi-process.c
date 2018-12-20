@@ -58,30 +58,30 @@
 #include "dlt_common.h"
 #include "dlt-test-multi-process.h"
 
-// Constants
+/* Constants */
 #define MAX_PROCS 100
 #define MAX_THREADS 100
 
 #ifndef WAIT_ANY
-#define WAIT_ANY -1
+#   define WAIT_ANY -1
 #endif
 
-// Structs
+/* Structs */
 typedef struct {
-    int nmsgs;            // Number of messages to send
-    int nprocs;            // Number of processes to start
-    int nthreads;        // Number of threads to start
-    int delay;            // Delay between logs messages for each process
-    int delay_fudge;    // Fudge the delay by 0-n to cause desynchronization
+    int nmsgs;            /* Number of messages to send */
+    int nprocs;            /* Number of processes to start */
+    int nthreads;        /* Number of threads to start */
+    int delay;            /* Delay between logs messages for each process */
+    int delay_fudge;    /* Fudge the delay by 0-n to cause desynchronization */
 } s_parameters;
 
 typedef struct {
-    s_parameters     params;
-    DltContext        ctx;
+    s_parameters params;
+    DltContext ctx;
 } s_thread_data;
 
-// Forward declarations
-void init_params(s_parameters * params);
+/* Forward declarations */
+void init_params(s_parameters *params);
 void quit_handler(int signum);
 void cleanup();
 void do_forks(s_parameters params);
@@ -89,10 +89,10 @@ void run_threads(s_parameters params);
 void do_logging(s_thread_data *data);
 int wait_for_death();
 
-// State information
+/* State information */
 volatile sig_atomic_t in_handler = 0;
 
-// Globals for cleanup from main and signal handler
+/* Globals for cleanup from main and signal handler */
 pid_t pids[MAX_PROCS];
 unsigned int pidcount = 0;
 
@@ -102,7 +102,7 @@ unsigned int pidcount = 0;
 void usage(char *prog_name)
 {
     char version[255];
-    dlt_get_version(version,255);
+    dlt_get_version(version, 255);
     s_parameters defaults;
     init_params(&defaults);
 
@@ -120,12 +120,13 @@ void usage(char *prog_name)
 /**
  * Set nice default values for parameters
  */
-void init_params(s_parameters * params) {
-    params->nmsgs        = 100;
-    params->nprocs        = 10;
-    params->nthreads    = 2;
-    params->delay        = 1000;
-    params->delay_fudge    = 100;
+void init_params(s_parameters *params)
+{
+    params->nmsgs = 100;
+    params->nprocs = 10;
+    params->nthreads = 2;
+    params->delay = 1000;
+    params->delay_fudge = 100;
 }
 
 /**
@@ -135,55 +136,52 @@ int read_cli(s_parameters *params, int argc, char **argv)
 {
     int c;
     opterr = 0;
+
     while ((c = getopt (argc, argv, "m:p:t:d:f:")) != -1)
-    {
-        switch(c)
-        {
-            case 'm':
-                params->nmsgs        = atoi(optarg);
-                break;
-            case 'p':
-                params->nprocs         = atoi(optarg);
-                if(params->nprocs > MAX_PROCS)
-                {
-                    fprintf(stderr, "Too many processes selected.\n");
-                    return -1;
-                }
-                break;
-            case 't':
-                params->nthreads    = atoi(optarg);
-                if(params->nprocs > MAX_PROCS)
-                {
-                    fprintf(stderr, "Too many threads selected.\n");
-                    return -1;
-                }
-                break;
-            case 'd':
-                params->delay        = atoi(optarg);
-                break;
-            case 'f':
-                params->delay_fudge    = atoi(optarg);
-                break;
-            case '?':
-                if(optopt == 'n' || optopt == 'd' || optopt == 'f')
-                {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                }
-                else if(isprint(optopt))
-                {
-                    fprintf(stderr, "Unknown option '-%c'.\n", optopt);
-                }
-                else
-                {
-                    fprintf(stderr, "Unknown option character '\\x%x'.\n", optopt);
-                }
+        switch (c) {
+        case 'm':
+            params->nmsgs = atoi(optarg);
+            break;
+        case 'p':
+            params->nprocs = atoi(optarg);
+
+            if (params->nprocs > MAX_PROCS) {
+                fprintf(stderr, "Too many processes selected.\n");
                 return -1;
-                break;
-            default:
-                abort();
-                                return -1;//for parasoft
+            }
+
+            break;
+        case 't':
+            params->nthreads = atoi(optarg);
+
+            if (params->nprocs > MAX_PROCS) {
+                fprintf(stderr, "Too many threads selected.\n");
+                return -1;
+            }
+
+            break;
+        case 'd':
+            params->delay = atoi(optarg);
+            break;
+        case 'f':
+            params->delay_fudge = atoi(optarg);
+            break;
+        case '?':
+
+            if ((optopt == 'n') || (optopt == 'd') || (optopt == 'f'))
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option '-%c'.\n", optopt);
+            else
+                fprintf(stderr, "Unknown option character '\\x%x'.\n", optopt);
+
+            return -1;
+            break;
+        default:
+            abort();
+            return -1;                    /*for parasoft */
         }
-    }
+
     return 0;
 }
 
@@ -192,24 +190,27 @@ int read_cli(s_parameters *params, int argc, char **argv)
  */
 int main(int argc, char **argv)
 {
-    // Prepare parameters
+    /* Prepare parameters */
     s_parameters params;
     init_params(&params);
-    if(read_cli(&params, argc, argv) != 0) {
+
+    if (read_cli(&params, argc, argv) != 0) {
         usage(argv[0]);
         exit(-1);
     }
 
-    // Launch the child processes
+    /* Launch the child processes */
     do_forks(params);
 
-    // Register signal handlers
-    if(signal(SIGINT, quit_handler) == SIG_IGN)
-        signal(SIGINT, SIG_IGN);     // C-c
-    if(signal(SIGHUP, quit_handler) == SIG_IGN)
-        signal(SIGHUP, SIG_IGN);     // Terminal closed
-    if(signal(SIGTERM, quit_handler) == SIG_IGN)
-        signal(SIGTERM, SIG_IGN);     // kill (nice)
+    /* Register signal handlers */
+    if (signal(SIGINT, quit_handler) == SIG_IGN)
+        signal(SIGINT, SIG_IGN);     /* C-c */
+
+    if (signal(SIGHUP, quit_handler) == SIG_IGN)
+        signal(SIGHUP, SIG_IGN);     /* Terminal closed */
+
+    if (signal(SIGTERM, quit_handler) == SIG_IGN)
+        signal(SIGTERM, SIG_IGN);     /* kill (nice) */
 
     printf("Setup done. Listening. My pid: %d\n", getpid());
     fflush(stdout);
@@ -227,30 +228,30 @@ void do_forks(s_parameters params)
 {
     int i;
 
-    // Launch child processes
-    for(i=0;i<params.nprocs;i++)
-    {
+    /* Launch child processes */
+    for (i = 0; i < params.nprocs; i++) {
         pid_t pid = fork();
-        switch(pid)
-        {
-        case -1: // An error occured
-            if(errno == EAGAIN)
-            {
+
+        switch (pid) {
+        case -1: /* An error occured */
+
+            if (errno == EAGAIN) {
                 fprintf(stderr, "Could not allocate resources for child process.\n");
                 cleanup();
                 abort();
             }
-            if(errno == ENOMEM)
-            {
+
+            if (errno == ENOMEM) {
                 fprintf(stderr, "Could not allocate memory for child process' kernel structure.\n");
                 cleanup();
                 abort();
             }
+
             break;
-        case 0: // Child process, start threads
+        case 0: /* Child process, start threads */
             run_threads(params);
             break;
-        default: // Parent process, store the childs pid
+        default: /* Parent process, store the childs pid */
             pids[pidcount++] = pid;
             break;
         }
@@ -263,8 +264,9 @@ void do_forks(s_parameters params)
  */
 void quit_handler(int signum)
 {
-    if(in_handler)
+    if (in_handler)
         raise(signum);
+
     in_handler = 1;
 
     cleanup();
@@ -279,10 +281,9 @@ void quit_handler(int signum)
 void cleanup()
 {
     unsigned int i;
-    for(i=0;i<pidcount;i++)
-    {
+
+    for (i = 0; i < pidcount; i++)
         kill(pids[i], SIGINT);
-    }
 }
 
 /**
@@ -291,9 +292,9 @@ void cleanup()
 time_t mksleep_time(int delay, int fudge)
 {
     if (!fudge)
-        return delay*1000;
+        return delay * 1000;
     else
-        return (delay+rand()%fudge)*1000;
+        return (delay + rand() % fudge) * 1000;
 }
 
 /**
@@ -301,21 +302,22 @@ time_t mksleep_time(int delay, int fudge)
  */
 void do_logging(s_thread_data *data)
 {
-    DltContext         mycontext;
-    char             ctid[5];
-    char             ctid_name[256];
+    DltContext mycontext;
+    char ctid[5];
+    char ctid_name[256];
 
 
-    snprintf(ctid,5,"%.2x", rand() & 0x0000ffff);
-    snprintf(ctid_name,256, "Child %s in dlt-test-multi-process", ctid);
+    snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
+    snprintf(ctid_name, 256, "Child %s in dlt-test-multi-process", ctid);
     DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
 
     int msgs_left = data->params.nmsgs;
-    while(msgs_left-- > 0)
-    {
+
+    while (msgs_left-- > 0) {
         DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
         usleep(mksleep_time(data->params.delay, data->params.delay_fudge));
     }
+
     DLT_UNREGISTER_CONTEXT(mycontext);
 }
 
@@ -324,38 +326,34 @@ void do_logging(s_thread_data *data)
  */
 void run_threads(s_parameters params)
 {
-    pthread_t        thread[params.nthreads];
-    s_thread_data    thread_data;
-    char             apid[5];
-    char            apid_name[256];
-    int             i;
+    pthread_t thread[params.nthreads];
+    s_thread_data thread_data;
+    char apid[5];
+    char apid_name[256];
+    int i;
 
     srand(getpid());
 
-    snprintf(apid,5,"MT%02u", pidcount);
-    snprintf(apid_name,256, "Apps %s.", apid);
+    snprintf(apid, 5, "MT%02u", pidcount);
+    snprintf(apid_name, 256, "Apps %s.", apid);
 
     DLT_REGISTER_APP(apid, apid_name);
 
-    thread_data.params     = params;
+    thread_data.params = params;
 
-    for(i=0;i<params.nthreads;i++)
-    {
-        if(pthread_create(&(thread[i]), NULL, (void *) &do_logging, &thread_data) != 0)
-        {
+    for (i = 0; i < params.nthreads; i++)
+        if (pthread_create(&(thread[i]), NULL, (void *)&do_logging, &thread_data) != 0) {
             printf("Error creating thread.\n");
             abort();
         }
-    }
 
-    for(i=0;i<params.nthreads;i++)
-    {
+
+
+    for (i = 0; i < params.nthreads; i++)
         pthread_join(thread[i], NULL);
-    }
-
 
     DLT_UNREGISTER_APP();
-    // We can exit now
+    /* We can exit now */
     exit(0);
 }
 
@@ -365,26 +363,24 @@ void run_threads(s_parameters params)
 int wait_for_death()
 {
     int pids_left = pidcount;
-    while(pids_left > 0)
-    {
+
+    while (pids_left > 0) {
         int status;
         pid_t w = waitpid(WAIT_ANY, &status, 0);
-        if(status < 0)
-        {
+
+        if (status < 0) {
             return -1;
         }
-        else
-        {
+        else {
             unsigned int i;
-            for(i=0;i<pidcount;i++)
-            {
-                if(pids[i] == w)
-                {
+
+            for (i = 0; i < pidcount; i++)
+                if (pids[i] == w) {
                     pids_left--;
                     break;
                 }
-            }
         }
     }
+
     return 0;
 }

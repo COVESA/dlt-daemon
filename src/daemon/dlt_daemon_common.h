@@ -64,41 +64,41 @@
  * $LastChangedRevision: 1670 $
  * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
  * $LastChangedBy$
- Initials    Date         Comment
- aw          15.02.2010   initial
+ * Initials    Date         Comment
+ * aw          15.02.2010   initial
  */
 
 #ifndef DLT_DAEMON_COMMON_H
-#define DLT_DAEMON_COMMON_H
+#   define DLT_DAEMON_COMMON_H
 
 /**
-  \defgroup daemonapi DLT Daemon API
-  \addtogroup daemonapi
-  \{
-*/
+ * \defgroup daemonapi DLT Daemon API
+ * \addtogroup daemonapi
+ \{
+ */
 
-#include <limits.h>
-#include <semaphore.h>
-#include "dlt_common.h"
-#include "dlt_user.h"
-#include "dlt_offline_logstorage.h"
-#include "dlt_gateway_types.h"
+#   include <limits.h>
+#   include <semaphore.h>
+#   include "dlt_common.h"
+#   include "dlt_user.h"
+#   include "dlt_offline_logstorage.h"
+#   include "dlt_gateway_types.h"
 
-#ifdef __cplusplus
+#   ifdef __cplusplus
 extern "C" {
-#endif
+#   endif
 
-#define DLT_DAEMON_RINGBUFFER_MIN_SIZE    500000 /**< Ring buffer size for storing log messages while no client is connected */
-#define DLT_DAEMON_RINGBUFFER_MAX_SIZE  10000000 /**< Ring buffer size for storing log messages while no client is connected */
-#define DLT_DAEMON_RINGBUFFER_STEP_SIZE   500000 /**< Ring buffer size for storing log messages while no client is connected */
+#   define DLT_DAEMON_RINGBUFFER_MIN_SIZE    500000/**< Ring buffer size for storing log messages while no client is connected */
+#   define DLT_DAEMON_RINGBUFFER_MAX_SIZE  10000000/**< Ring buffer size for storing log messages while no client is connected */
+#   define DLT_DAEMON_RINGBUFFER_STEP_SIZE   500000/**< Ring buffer size for storing log messages while no client is connected */
 
-#define DLT_DAEMON_SEND_TO_ALL     -3   /**< Constant value to identify the command "send to all" */
-#define DLT_DAEMON_SEND_FORCE      -4   /**< Constant value to identify the command "send force to all" */
+#   define DLT_DAEMON_SEND_TO_ALL     -3/**< Constant value to identify the command "send to all" */
+#   define DLT_DAEMON_SEND_FORCE      -4/**< Constant value to identify the command "send force to all" */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 
-#define DLT_DAEMON_SEM_LOCK() { sem_wait(&dlt_daemon_mutex); }
-#define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
+#   define DLT_DAEMON_SEM_LOCK() { sem_wait(&dlt_daemon_mutex); }
+#   define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
 extern sem_t dlt_daemon_mutex;
 
 /**
@@ -106,11 +106,11 @@ extern sem_t dlt_daemon_mutex;
  */
 typedef enum
 {
-    DLT_DAEMON_STATE_INIT =                   0,  /**< Initial state */
-    DLT_DAEMON_STATE_BUFFER =            1,  /**< logging is buffered until external logger is connected or internal logging is activated */
-    DLT_DAEMON_STATE_BUFFER_FULL =       2,  /**< then internal buffer is full, wait for connect from client */
-    DLT_DAEMON_STATE_SEND_BUFFER =       3,  /**< external logger is connected, but buffer is still not empty or external logger queue is full */
-    DLT_DAEMON_STATE_SEND_DIRECT =       4   /**< External logger is connected or internal logging is active, and buffer is empty */
+    DLT_DAEMON_STATE_INIT = 0,                    /**< Initial state */
+    DLT_DAEMON_STATE_BUFFER = 1,             /**< logging is buffered until external logger is connected or internal logging is activated */
+    DLT_DAEMON_STATE_BUFFER_FULL = 2,        /**< then internal buffer is full, wait for connect from client */
+    DLT_DAEMON_STATE_SEND_BUFFER = 3,        /**< external logger is connected, but buffer is still not empty or external logger queue is full */
+    DLT_DAEMON_STATE_SEND_DIRECT = 4         /**< External logger is connected or internal logging is active, and buffer is empty */
 } DltDaemonState;
 
 /**
@@ -118,7 +118,7 @@ typedef enum
  */
 typedef struct
 {
-    char  apid[DLT_ID_SIZE];                  /**< application id */
+    char apid[DLT_ID_SIZE];                   /**< application id */
     pid_t pid;                   /**< process id of user application */
     int user_handle;    /**< connection handle for connection to user application */
     char *application_description; /**< context description */
@@ -192,14 +192,22 @@ typedef struct
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_init(DltDaemon *daemon,unsigned long RingbufferMinSize,unsigned long RingbufferMaxSize,unsigned long RingbufferStepSize,const char *runtime_directory,int InitialContextLogLevel, int InitialContextTraceStatus, int ForceLLTS, int verbose);
+int dlt_daemon_init(DltDaemon *daemon,
+                    unsigned long RingbufferMinSize,
+                    unsigned long RingbufferMaxSize,
+                    unsigned long RingbufferStepSize,
+                    const char *runtime_directory,
+                    int InitialContextLogLevel,
+                    int InitialContextTraceStatus,
+                    int ForceLLTS,
+                    int verbose);
 /**
  * De-Initialise the dlt daemon structure
  * @param daemon pointer to dlt daemon structure
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_free(DltDaemon *daemon,int verbose);
+int dlt_daemon_free(DltDaemon *daemon, int verbose);
 /**
  * Initialize data structures to store information about applications running on same
  * or passive node.
@@ -245,7 +253,7 @@ int dlt_daemon_load_runtime_configuration(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to added context, null pointer on error
  */
-DltDaemonApplication* dlt_daemon_application_add(DltDaemon *daemon,
+DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                                                  char *apid,
                                                  pid_t pid,
                                                  char *description,
@@ -272,7 +280,7 @@ int dlt_daemon_application_del(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to application, null pointer on error or not found
  */
-DltDaemonApplication* dlt_daemon_application_find(DltDaemon *daemon,
+DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
                                                   char *apid,
                                                   char *ecu,
                                                   int verbose);
@@ -283,7 +291,7 @@ DltDaemonApplication* dlt_daemon_application_find(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int verbose);
 /**
  * Save applications from internal context management to file
  * @param daemon pointer to dlt daemon structure
@@ -291,7 +299,7 @@ int dlt_daemon_applications_load(DltDaemon *daemon,const char *filename, int ver
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_applications_save(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int verbose);
 /**
  * Invalidate all applications fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
@@ -311,7 +319,7 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_applications_clear(DltDaemon *daemon,char *ecu, int verbose);
+int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose);
 
 /**
  * Add (new) context to internal context management
@@ -327,7 +335,7 @@ int dlt_daemon_applications_clear(DltDaemon *daemon,char *ecu, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to added context, null pointer on error
  */
-DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,
+DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                                          char *apid,
                                          char *ctid,
                                          int8_t log_level,
@@ -346,7 +354,7 @@ DltDaemonContext* dlt_daemon_context_add(DltDaemon *daemon,
  * @return negative value if there was an error
  */
 int dlt_daemon_context_del(DltDaemon *daemon,
-                           DltDaemonContext* context,
+                           DltDaemonContext *context,
                            char *ecu,
                            int verbose);
 /**
@@ -358,7 +366,7 @@ int dlt_daemon_context_del(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to context, null pointer on error or not found
  */
-DltDaemonContext* dlt_daemon_context_find(DltDaemon *daemon,
+DltDaemonContext *dlt_daemon_context_find(DltDaemon *daemon,
                                           char *apid,
                                           char *ctid,
                                           char *ecu,
@@ -390,7 +398,7 @@ int dlt_daemon_contexts_clear(DltDaemon *daemon, char *ecu, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbose);
 /**
  * Save contexts from internal context management to file
  * @param daemon pointer to dlt daemon structure
@@ -398,7 +406,7 @@ int dlt_daemon_contexts_load(DltDaemon *daemon,const char *filename, int verbose
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_contexts_save(DltDaemon *daemon, const char *filename, int verbose);
 /**
  * Load persistant configuration
  * @param daemon pointer to dlt daemon structure
@@ -406,7 +414,7 @@ int dlt_daemon_contexts_save(DltDaemon *daemon,const char *filename, int verbose
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_configuration_load(DltDaemon *daemon, const char *filename, int verbose);
 /**
  * Save configuration persistantly
  * @param daemon pointer to dlt daemon structure
@@ -414,7 +422,7 @@ int dlt_daemon_configuration_load(DltDaemon *daemon,const char *filename, int ve
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_configuration_save(DltDaemon *daemon,const char *filename, int verbose);
+int dlt_daemon_configuration_save(DltDaemon *daemon, const char *filename, int verbose);
 
 
 /**
@@ -424,7 +432,7 @@ int dlt_daemon_configuration_save(DltDaemon *daemon,const char *filename, int ve
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context, int verbose);
+int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context, int verbose);
 
 /**
  * Send user message DLT_USER_MESSAGE_LOG_STATE to user application
@@ -433,7 +441,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon,DltDaemonContext *context, 
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_daemon_user_send_log_state(DltDaemon *daemon,DltDaemonApplication *app,int verbose);
+int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app, int verbose);
 
 /**
  * Send user messages to all user applications using default context, or trace status
@@ -477,7 +485,13 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
  * @param ForceLLTS force default log-level
  * @param verbose if set to true verbose information is printed out.
  */
-void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *filename, const char *filename1, int InitialContextLogLevel, int InitialContextTraceStatus, int InitialEnforceLlTsStatus, int verbose);
+void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
+                                                 const char *filename,
+                                                 const char *filename1,
+                                                 int InitialContextLogLevel,
+                                                 int InitialContextTraceStatus,
+                                                 int InitialEnforceLlTsStatus,
+                                                 int verbose);
 
 /**
  * Change the logging state of dlt daemon
@@ -486,12 +500,12 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,const char *f
  */
 void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState);
 
-#ifdef __cplusplus
+#   ifdef __cplusplus
 }
-#endif
+#   endif
 
 /**
-  \}
-*/
+ \}
+ */
 
 #endif /* DLT_DAEMON_COMMON_H */

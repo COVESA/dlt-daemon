@@ -83,8 +83,7 @@ void print_list()
     struct LogstorageDeviceInfo *ptr = g_info;
     pr_verbose(" -------Device list-------\n");
 
-    while (ptr != NULL)
-    {
+    while (ptr != NULL) {
         pr_verbose("%p:\t[%s][%s] \n", ptr, ptr->dev_node, ptr->mnt_point);
         ptr = ptr->next;
     }
@@ -108,21 +107,16 @@ static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
     struct LogstorageDeviceInfo *ptr = g_info;
 
     if (!node)
-    {
         return NULL;
-    }
 
     pr_verbose("Looking for %s.\n", node);
 
-    while (ptr != NULL)
-    {
-        if (strncmp(ptr->dev_node, node, DLT_MOUNT_PATH_MAX) == 0)
-        {
+    while (ptr != NULL) {
+        if (strncmp(ptr->dev_node, node, DLT_MOUNT_PATH_MAX) == 0) {
             pr_verbose("%s found in %p.\n", node, ptr);
             break;
         }
-        else
-        {
+        else {
             ptr = ptr->next;
         }
     }
@@ -145,14 +139,12 @@ int logstorage_store_dev_info(const char *node, const char *path)
     struct LogstorageDeviceInfo *ptr = NULL;
     size_t path_len = 0;
 
-    if ((node == NULL) || (path == NULL))
-    {
+    if ((node == NULL) || (path == NULL)) {
         pr_error("Invalid input\n");
         return -1;
     }
 
-    if (logstorage_find_dev_info(node))
-    {
+    if (logstorage_find_dev_info(node)) {
         pr_verbose("%s already in list.\n", node);
         print_list();
         return 0;
@@ -160,22 +152,20 @@ int logstorage_store_dev_info(const char *node, const char *path)
 
     ptr = calloc(1, sizeof(struct LogstorageDeviceInfo));
 
-    if (ptr == NULL)
-    {
+    if (ptr == NULL) {
         pr_error("Node creation failed\n");
         return -1;
     }
 
     ptr->dev_node = strdup(node);
     path_len = strlen(path);
-    if (path_len >DLT_MOUNT_PATH_MAX)
-    {
+
+    if (path_len > DLT_MOUNT_PATH_MAX)
         path_len = (size_t)DLT_MOUNT_PATH_MAX;
-    }
+
     ptr->mnt_point = (char *)calloc(1, path_len + 1);
 
-    if (ptr->mnt_point == NULL)
-    {
+    if (ptr->mnt_point == NULL) {
         pr_error("memory allocation failed for mnt_point\n");
         return -1;
     }
@@ -187,9 +177,7 @@ int logstorage_store_dev_info(const char *node, const char *path)
     ptr->next = g_info;
 
     if (g_info)
-    {
         g_info->prev = ptr;
-    }
 
     g_info = ptr;
 
@@ -216,8 +204,7 @@ char *logstorage_delete_dev_info(const char *node)
 
     del = logstorage_find_dev_info(node);
 
-    if (del == NULL)
-    {
+    if (del == NULL) {
         pr_verbose("%s not found in list.\n", node);
         print_list();
         return ret;
@@ -227,19 +214,13 @@ char *logstorage_delete_dev_info(const char *node)
     ret = del->mnt_point;
 
     if (del->prev)
-    {
         del->prev->next = del->next;
-    }
 
     if (del->next)
-    {
         del->next->prev = del->prev;
-    }
 
     if (del == g_info)
-    {
         g_info = g_info->next;
-    }
 
     free(del->dev_node);
     free(del);

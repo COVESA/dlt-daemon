@@ -78,7 +78,7 @@ static struct PassiveNodeOptions {
 } g_options = {
     .command = UNDEFINED,
     .connection_state = UNDEFINED,
-    .node_id = {'\0'},
+    .node_id = { '\0' },
 };
 
 unsigned int get_command(void)
@@ -98,13 +98,11 @@ unsigned int get_connection_state(void)
 
 void set_connection_state(unsigned int s)
 {
-    if ((s == DLT_NODE_CONNECT) || (s == DLT_NODE_DISCONNECT))
-    {
+    if ((s == DLT_NODE_CONNECT) || (s == DLT_NODE_DISCONNECT)) {
         g_options.connection_state = s;
         set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECT);
     }
-    else
-    {
+    else {
         pr_error("Connection status %u invalid\n", s);
         exit(-1);
     }
@@ -112,13 +110,11 @@ void set_connection_state(unsigned int s)
 
 void set_node_id(char *id)
 {
-    if (id == 0)
-    {
+    if (id == 0) {
         pr_error("node identifier is NULL\n");
         exit(-1);
     }
-    else
-    {
+    else {
         strncpy(g_options.node_id, id, DLT_ID_SIZE);
     }
 }
@@ -134,28 +130,22 @@ char *get_node_id()
  * @param info DltServicePassiveNodeConnectionInfo
  */
 static void dlt_print_passive_node_status(
-                DltServicePassiveNodeConnectionInfo *info)
+    DltServicePassiveNodeConnectionInfo *info)
 {
     unsigned int i = 0;
     char *status;
 
     if (info == NULL)
-    {
         return;
-    }
 
     printf("\nPassive Node connection status:\n"
            "---------------------------------\n");
-    for(i = 0; i < info->num_connections; i++)
-    {
+
+    for (i = 0; i < info->num_connections; i++) {
         if (info->connection_status[i] == DLT_GATEWAY_CONNECTED)
-        {
             status = DLT_NODE_CONNECTED_STR;
-        }
         else
-        {
             status = DLT_NODE_DISCONNECTED_STR;
-        }
 
         printf("%.4s: %s\n", &info->node_id[i * DLT_ID_SIZE], status);
     }
@@ -181,10 +171,8 @@ static int dlt_passive_node_analyze_response(char *answer,
     int ret = -1;
     char resp_ok[MAX_RESPONSE_LENGTH] = { 0 };
 
-    if (answer == NULL || payload == NULL)
-    {
+    if ((answer == NULL) || (payload == NULL))
         return -1;
-    }
 
     snprintf(resp_ok,
              MAX_RESPONSE_LENGTH,
@@ -194,26 +182,22 @@ static int dlt_passive_node_analyze_response(char *answer,
     pr_verbose("Response received: '%s'\n", answer);
     pr_verbose("Response expected: '%s'\n", resp_ok);
 
-    if (strncmp(answer, resp_ok, strlen(resp_ok)) == 0)
-    {
+    if (strncmp(answer, resp_ok, strlen(resp_ok)) == 0) {
         ret = 0;
 
-        if (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS)
-        {
-            if ((int)sizeof(DltServicePassiveNodeConnectionInfo) > len)
-            {
+        if (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS) {
+            if ((int)sizeof(DltServicePassiveNodeConnectionInfo) > len) {
                 pr_error("Received payload is smaller than expected\n");
                 pr_verbose("Expected: %lu,\nreceived: %d",
                            sizeof(DltServicePassiveNodeConnectionInfo),
                            len);
                 ret = -1;
             }
-            else
-            {
+            else {
                 DltServicePassiveNodeConnectionInfo *info =
-                    (DltServicePassiveNodeConnectionInfo *) (payload);
-                if (info == NULL)
-                {
+                    (DltServicePassiveNodeConnectionInfo *)(payload);
+
+                if (info == NULL) {
                     fprintf(stderr, "Received response is NULL\n");
                     return -1;
                 }
@@ -235,19 +219,18 @@ DltControlMsgBody *dlt_passive_node_prepare_message_body()
 {
     DltControlMsgBody *mb = calloc(1, sizeof(DltControlMsgBody));
     char *ecuid = get_node_id();
-    if (mb == NULL)
-    {
-        return NULL;
-    }
 
-    if (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECT)
-    {
+    if (mb == NULL)
+        return NULL;
+
+    if (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECT) {
         mb->data = calloc(1, sizeof(DltServicePassiveNodeConnect));
-        if (mb->data == NULL)
-        {
+
+        if (mb->data == NULL) {
             free(mb);
             return NULL;
         }
+
         mb->size = sizeof(DltServicePassiveNodeConnect);
         DltServicePassiveNodeConnect *serv = (DltServicePassiveNodeConnect *)
             mb->data;
@@ -256,18 +239,17 @@ DltControlMsgBody *dlt_passive_node_prepare_message_body()
 
         memcpy(serv->node_id, ecuid, DLT_ID_SIZE);
     }
-    else /* DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS */
-    {
+    else { /* DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS */
         mb->data = calloc(1, sizeof(DltServicePassiveNodeConnectionInfo));
-        if (mb->data == NULL)
-        {
+
+        if (mb->data == NULL) {
             free(mb);
             return NULL;
         }
 
         mb->size = sizeof(DltServicePassiveNodeConnectionInfo);
         DltServicePassiveNodeConnectionInfo *serv =
-            (DltServicePassiveNodeConnectionInfo *) mb->data;
+            (DltServicePassiveNodeConnectionInfo *)mb->data;
         serv->service_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS;
     }
 
@@ -280,14 +262,11 @@ DltControlMsgBody *dlt_passive_node_prepare_message_body()
 void dlt_passive_node_destroy_message_body(DltControlMsgBody *msg_body)
 {
     if (msg_body == NULL)
-    {
         return;
-    }
 
     if (msg_body->data != NULL)
-    {
         free(msg_body->data);
-    }
+
     free(msg_body);
 }
 
@@ -303,8 +282,7 @@ static int dlt_passive_node_ctrl_single_request()
     /* Initializing the communication with the daemon */
     if (dlt_control_init(dlt_passive_node_analyze_response,
                          get_ecuid(),
-                         get_verbosity()) != 0)
-    {
+                         get_verbosity()) != 0) {
         pr_error("Failed to initialize connection with the daemon.\n");
         return ret;
     }
@@ -313,8 +291,7 @@ static int dlt_passive_node_ctrl_single_request()
     DltControlMsgBody *msg_body = NULL;
     msg_body = dlt_passive_node_prepare_message_body();
 
-    if (msg_body == NULL)
-    {
+    if (msg_body == NULL) {
         pr_error("Data for Dlt Message body is NULL\n");
         return ret;
     }
@@ -362,21 +339,19 @@ static int parse_args(int argc, char *argv[])
     opterr = 0;
 
     while ((c = getopt(argc, argv, "c:hn:stv")) != -1)
-    {
-        switch(c)
-        {
+        switch (c) {
         case 'c':
-            state = (int)strtol(optarg,NULL, 10);
-            if (state == DLT_NODE_CONNECT || state == DLT_NODE_DISCONNECT)
-            {
+            state = (int)strtol(optarg, NULL, 10);
+
+            if ((state == DLT_NODE_CONNECT) || (state == DLT_NODE_DISCONNECT)) {
                 set_connection_state(state);
                 set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECT);
             }
-            else
-            {
+            else {
                 pr_error("unknown connection state: %d\n", state);
                 return -1;
             }
+
             break;
         case 'h':
             usage();
@@ -395,21 +370,18 @@ static int parse_args(int argc, char *argv[])
             pr_verbose("Now in verbose mode.\n");
             break;
         case '?':
+
             if (isprint(optopt))
-            {
                 pr_error("Unknown option -%c.\n", optopt);
-            }
             else
-            {
                 pr_error("Unknown option character \\x%x.\n", optopt);
-            }
+
             usage();
             return -1;
         default:
             pr_error("Try %s -h for more information.\n", argv[0]);
             return -1;
         }
-    }
 
     return 0;
 }
@@ -432,15 +404,12 @@ int main(int argc, char *argv[])
 
     /* Get command line arguments */
     if (parse_args(argc, argv) != 0)
-    {
         return -1;
-    }
 
-    if (get_command() == UNDEFINED ||
-       (get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECT &&
-       g_options.node_id[0] == '\0' &&
-       g_options.connection_state == DLT_NODE_CONNECT_UNDEF))
-    {
+    if ((get_command() == UNDEFINED) ||
+        ((get_command() == DLT_SERVICE_ID_PASSIVE_NODE_CONNECT) &&
+         (g_options.node_id[0] == '\0') &&
+         (g_options.connection_state == DLT_NODE_CONNECT_UNDEF))) {
         pr_error("No valid parameter configuration given!\n");
         usage();
         return -1;

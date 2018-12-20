@@ -35,19 +35,19 @@
 
 typedef struct
 {
-    FILE* stream;
+    FILE *stream;
     unsigned int offset;
     gzFile gz_dst_file;
-    unsigned char* read_buf;
+    unsigned char *read_buf;
 
 } file_streamer_t;
 
-cdh_status_t stream_init(file_streamer_t* p_fs, const char* p_src_fname, const char* p_dst_fname);
-cdh_status_t stream_close(file_streamer_t* p_fs);
-cdh_status_t stream_read(file_streamer_t* p_fs, void* p_buf, unsigned int p_size);
-cdh_status_t stream_finish(file_streamer_t* p_fs);
-cdh_status_t stream_move_to_offest(file_streamer_t* p_fs, unsigned int p_offset);
-cdh_status_t stream_move_ahead(file_streamer_t* p_fs, unsigned int p_nbbytes);
-unsigned int stream_get_offset(file_streamer_t* p_fs);
+cdh_status_t stream_init(file_streamer_t *p_fs, const char *p_src_fname, const char *p_dst_fname);
+cdh_status_t stream_close(file_streamer_t *p_fs);
+cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, unsigned int p_size);
+cdh_status_t stream_finish(file_streamer_t *p_fs);
+cdh_status_t stream_move_to_offest(file_streamer_t *p_fs, unsigned int p_offset);
+cdh_status_t stream_move_ahead(file_streamer_t *p_fs, unsigned int p_nbbytes);
+unsigned int stream_get_offset(file_streamer_t *p_fs);
 
 #endif /* #ifndef DLT_CDH_STREAMER_H */

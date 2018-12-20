@@ -48,7 +48,7 @@ DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiP
 DltReturnValue dlt_kpi_remove_process_at_cursor_soft(DltKpiProcessList *list);
 DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list);
 
-// DltReturnValue dlt_kpi_remove_process_after_cursor(DltKpiProcessList *list);
-// DltReturnValue dlt_kpi_remove_first_process(DltKpiProcessList *list);
+/* DltReturnValue dlt_kpi_remove_process_after_cursor(DltKpiProcessList *list); */
+/* DltReturnValue dlt_kpi_remove_first_process(DltKpiProcessList *list); */
 
 #endif /* SRC_KPI_DLT_KPI_PROCESS_LIST_H_ */

@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-cpp-extension.cpp
-*/
+ */
 
 #include "dlt_cpp_extension.hpp"
 #include <stdio.h>
@@ -36,7 +36,7 @@ struct MyStruct
 };
 
 template<>
-inline int logToDlt(DltContextData & log, MyStruct const & value)
+inline int logToDlt(DltContextData &log, MyStruct const &value)
 {
     int result = 0;
 
@@ -49,9 +49,7 @@ inline int logToDlt(DltContextData & log, MyStruct const & value)
     result += dlt_user_log_write_string(&log, ")");
 
     if (result != 0)
-    {
         result = -1;
-    }
 
     return result;
 }
@@ -62,15 +60,14 @@ inline int logToDlt(DltContextData & log, MyStruct const & value)
  */
 int main()
 {
-    if (dlt_register_app("TCPP", "Test cpp extension") < 0)
-    {
+    if (dlt_register_app("TCPP", "Test cpp extension") < 0) {
         printf("Failed to register application\n");
         return -1;
     }
 
     DltContext ctx;
-    if (dlt_register_context_ll_ts(&ctx, "TCPP", "Test cpp extension", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF) < 0)
-    {
+
+    if (dlt_register_context_ll_ts(&ctx, "TCPP", "Test cpp extension", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF) < 0) {
         printf("Failed to register context\n");
         return -1;
     }
@@ -89,7 +86,7 @@ int main()
     MyStruct myData = { 1u, 2u, 3u };
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, "MyStruct myData", myData);
 
-    char * non_const_string = (char *) malloc(17);
+    char *non_const_string = (char *)malloc(17);
     memcpy(non_const_string, "non_const_string", 16);
     non_const_string[16] = 0;
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, "char *", non_const_string);

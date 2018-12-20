@@ -22,7 +22,7 @@
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_shm.h
-*/
+ */
 
 
 /*******************************************************************************
@@ -89,8 +89,8 @@ typedef struct
     int size;
 } DltShmBlockHead;
 
-#define DLT_SHM_SEM_GET(id) dlt_shm_pv(id,-1)
-#define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id,1)
+#define DLT_SHM_SEM_GET(id) dlt_shm_pv(id, -1)
+#define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id, 1)
 
 /**
  * Initialise the shared memory on the client side.
@@ -99,7 +99,7 @@ typedef struct
  * @param key the identifier of the shm, must be the same for server and client
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_client(DltShm *buf,int key);
+extern DltReturnValue dlt_shm_init_client(DltShm *buf, int key);
 
 /**
  * Initialise the shared memory on the server side.
@@ -109,7 +109,7 @@ extern DltReturnValue dlt_shm_init_client(DltShm *buf,int key);
  * @param size the requested size of the shm
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_server(DltShm *buf,int key,int size);
+extern DltReturnValue dlt_shm_init_server(DltShm *buf, int key, int size);
 
 /**
  * Push data from client onto the shm.
@@ -122,7 +122,13 @@ extern DltReturnValue dlt_shm_init_server(DltShm *buf,int key,int size);
  * @param size3 size in bytes of third data block to be written, 0 if not used
  * @return negative value if there was an error
  */
-extern int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size1,const unsigned char *data2,unsigned int size2,const unsigned char *data3,unsigned int size3);
+extern int dlt_shm_push(DltShm *buf,
+                        const unsigned char *data1,
+                        unsigned int size1,
+                        const unsigned char *data2,
+                        unsigned int size2,
+                        const unsigned char *data3,
+                        unsigned int size3);
 
 /**
  * Pull data from shm.
@@ -133,7 +139,7 @@ extern int dlt_shm_push(DltShm *buf,const unsigned char *data1,unsigned int size
  * @param size maximum size to be written into buffer
  * @return negative value if there was an error
  */
-extern int dlt_shm_pull(DltShm *buf,unsigned char *data, int size);
+extern int dlt_shm_pull(DltShm *buf, unsigned char *data, int size);
 
 /**
  * Copy message from shm.
@@ -144,7 +150,7 @@ extern int dlt_shm_pull(DltShm *buf,unsigned char *data, int size);
  * @param size maximum size to be written into buffer
  * @return negative value if there was an error
  */
-extern int dlt_shm_copy(DltShm *buf,unsigned char *data, int size);
+extern int dlt_shm_copy(DltShm *buf, unsigned char *data, int size);
 
 /**
  * Delete message from shm.
