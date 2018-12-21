@@ -4,9 +4,72 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.17.0 STABLE
+2.18.0 STABLE
 
 ## Changes
+
+### 2.18.0
+
+   * fix broken/missing links in documentation
+   * CMake: Set default configuration
+   * Code beautification using uncrustify
+   * Documentation update
+   * dlt-daemon: Output current number of connections as default
+   * Remove unnecessary reference to zlib in .pc file
+   * Cleanup of unit test fixes
+   * gtest: Modification to offline logstorage
+   * libdlt: Add error handling
+   * exit DLT daemon if /dev/null open fails during fork
+   * Improvement - use dup2 in place of dup in daemon fork
+   * Remove one-instance-lock mechanism
+   * daemon: Add exit trigger
+   * UnitTest: Updates
+   * Made socket send reliable
+   * lib: socket: Flush all data before closing socket
+   * buffer: Code cleanup
+   * buffer: Improve logging
+   * Removed log level change callback notification while context register done with ll_ts API
+   * Logging: avoided missing of log level change callback
+   * Injection: New callback with private data Added new injection callback with private data as argument
+   * Fixed compiler error with previous commit
+   * Dynamic allocation of msg buffer
+   * cmake: systemd: fix hardcoded user in dlt-dbus.service (Issue #36)
+   * rename #define STATIC to DLT_STATIC
+   * Use poll in the dlt-daemon for POSIX compliance
+   * dlt-client: logging: Extended the receiver buffer size
+   * dlt-control: update get log info
+   * Protocol: DLT Service ID Enum instead of defines
+   * Gateway Improvements
+   * Log storage - Updates (#82)
+   * Fflush stdout in the intenal logger (#81)
+   * dlt-daemon: per ECU list of user information (#80)
+   * Add dlt-sortbytimestamp utility plus documentation (#73)
+   * Fix compiler warning PR #77
+   * Fix compilation with glibc 2.28 (#77)
+   * Fix gcc 8 build (#74)
+   * dlt-daemon: fixed linked-list element remove (#71)
+   * Update dlt_user.c (#66)
+   * dlt-daemon: Fix no state transition to BUFFER state (#65)
+   * file parser: Replace hash functions with list (#67)
+   * libdlt: Avoid busy loop in error case of mq_receive() (#59)
+   * dlt-daemon: Output signal number at exit (#68)
+   * dlt-daemon: Improve error logging on accept() failure (#69)
+   * dlt-daemon: Avoid to output duplicated application registration message (#63)
+   * dlt-daemon: Not output Context un-/registration DLT message by default (#62)
+   * dlt-daemon: Continue to send log level / connection status even if error occurs (#61)
+   * IPC: Unix socket added (#43)
+   * Introduce controlling entire system trace status feature from dlt-control (#57)
+   * dlt-daemon: Lower log level of logs not to output unintentional warning (#58)
+   * dlt-daemon: Fix infinite loop on set log level using wildcards (#55)
+   * dlt-daemon: Fix repeated output of marker message (#54)
+   * dlt-control: Fix Setting default trace status issue (#53)
+   * Fix ForceContextLogLevelAndTraceStatus handling in dlt_daemon_client.c (#50)
+   * minor compiler warning gcc 7.x (#30)
+   * improve error reporting in dlt_daemon_socket (#41)
+   * Fix SEGV dlt_offline_trace.c (#32)
+   * fix PR #26 socket_sendreliable data_send update
+   * Prevention for occasional corrupted messages  (#26)
+   * README: Update contact information
 
 ### 2.17.0
   * Fix for initialization of buffer settings in DLT user library.
