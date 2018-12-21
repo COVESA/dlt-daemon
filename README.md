@@ -43,7 +43,7 @@ optional: sudo ldconfig`
  Option | Value | Comment
  :--- | :--- | :---
 BUILD_SHARED_LIBS | ON | Set to OFF to build static libraries
-DLT_IPC                       |"FIFO"          | Set to either "UNIX_SOCKET" or"FIFO"
+DLT_IPC                       |"FIFO"          | Set to either "UNIX_SOCKET" or "FIFO"
 WITH_DLT_USE_IPv6             | ON             | Set to ON for IPv6 support
 WITH_DLT_EXAMPLES             | ON             | Set to ON to build src/examples binaries
 DLT_USER                      | genivi         | Set user for process not run as root
@@ -55,12 +55,12 @@ CMAKE_BUILD_TYPE              | RelWithDebInfo
 #### Command Line Tool Options
  Option | Value | Comment
  :--- | :--- | :---
-WITH_DLT_ADAPTOR              | ON             | Set to ON to build src/adaptor binaries
+WITH_DLT_ADAPTOR              | OFF             | Set to ON to build src/adaptor binaries
 WITH_DLT_CONSOLE              | ON             | Set to ON to build src/console binaries
-WITH_DLT_SYSTEM               | ON             | Set to ON to build src/system binaries
+WITH_DLT_SYSTEM               | OFF             | Set to ON to build src/system binaries
 WITH_DLT_LOGSTORAGE_CTRL_UDEV | OFF            | PROTOTYPE! Set to ON to build
 WITH_DLT_LOGSTORAGE_CTRL_PROP | OFF            | PROTOTYPE! Set to ON to build logstorage control application with proprietary support
-WITH_DLT_KPI                  | ON             | Set to ON to build src/kpi binaries
+WITH_DLT_KPI                  | OFF            | Set to ON to build src/kpi binaries
 
 #### Linux OS Integration Options
  Option | Value | Comment
@@ -68,13 +68,13 @@ WITH_DLT_KPI                  | ON             | Set to ON to build src/kpi bina
 WITH_SYSTEMD                  | OFF            | Set to ON to run CMakeLists.txt in systemd
 WITH_SYSTEMD_WATCHDOG         | OFF            | Set to ON to use the systemd watchdog in dlt-daemon
 WITH_SYSTEMD_JOURNAL          | OFF            | Set to ON to use the systemd journal in dlt-system
-WITH_DLT_DBUS                 | ON             | Set to ON to build src/dbus binaries
+WITH_DLT_DBUS                 | OFF             | Set to ON to build src/dbus binaries
 
 #### Documentation Options
  Option | Value | Comment
  :--- | :--- | :---
 WITH_DOC                      | OFF            | Set to ON to build documentation target
-WITH_MAN                      | ON             | Set to OFF to skip building of man pages
+WITH_MAN                      | OFF             | Set to OFF to skip building of man pages
 
 #### Test Options
 Option | Value | Comment
@@ -82,7 +82,7 @@ Option | Value | Comment
 WITH_TESTSCRIPTS              | OFF            | Set to ON to run CMakeLists.txt in test scripts
 WITH_DLT_TESTS                | ON             | Set to ON to build src/test binaries
 WITH_DLTTEST                  | OFF            | Set to ON to build with modifications to test User-Daemon communication with corrupt messages
-WITH_DLT_UNIT_TESTS           | ON             | Set to ON to build unit test binaries
+WITH_DLT_UNIT_TESTS           | OFF             | Set to ON to build unit test binaries
 WITH_GPROF                    | OFF            | Set \-pg to compile flag
 
 #### Experimental Features Options
