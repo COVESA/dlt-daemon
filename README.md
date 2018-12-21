@@ -109,7 +109,7 @@ Specific documentation can be found in the following files:
 - [Glossary](doc/dlt_glossary.md)
 - [For Developers](doc/dlt_for_developers.md)
 - [Logstorage](doc/dlt_offline_logstorage.md)
-- [MultiNode](doc/dlt_multi_node.md)
+- [MultiNode](doc/dlt_multinode.md)
 
 All text based documentation will be replaced with by Markdown-based documentation for convinient access.
 
