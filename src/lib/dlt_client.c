@@ -474,8 +474,10 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
         }
 
         while (dlt_message_read(&msg, (unsigned char *)(client->receiver.buf),
-                                (unsigned int) client->receiver.bytesRcvd, 0,
-                                verbose) == DLT_MESSAGE_ERROR_OK) {
+                                client->receiver.bytesRcvd,
+                                client->resync_serial_header,
+                                verbose) == DLT_MESSAGE_ERROR_OK)
+        {
             /* Call callback function */
             if (message_callback_function)
                 (*message_callback_function)(&msg, data);
@@ -510,6 +512,48 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
     if (dlt_message_free(&msg, verbose) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *msg)
+{
+    int ret = 0;
+
+    if ((client == NULL) || (client->sock < 0)
+        || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        dlt_log(LOG_ERR, "Invalid parameters\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if (client->send_serial_header)
+    {
+        ret = send(client->sock, (const char *)dltSerialHeader,
+                   sizeof(dltSerialHeader), 0);
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_ERR, "Sending serial header failed: %s\n",
+                        strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    ret = send(client->sock,
+               (const char *)(msg->headerbuffer + sizeof(DltStorageHeader)),
+               msg->headersize - sizeof(DltStorageHeader), 0);
+    if (ret < 0)
+    {
+        dlt_vlog(LOG_ERR, "Sending message header failed: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+
+    ret = send(client->sock, (const char *)msg->databuffer, msg->datasize, 0);
+    if ( ret < 0)
+    {
+        dlt_vlog(LOG_ERR, "Sending message failed: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
 
     return DLT_RETURN_OK;
 }
@@ -616,6 +660,16 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     /* Send data (without storage header) */
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
         /* via FileDescriptor */
+        if (client->send_serial_header)
+        {
+            ret = write(client->sock, dltSerialHeader, sizeof(dltSerialHeader));
+            if (ret < 0)
+            {
+                dlt_log(LOG_ERR, "Sending message failed\n");
+                dlt_message_free(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+        }
         ret =
             (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
 
@@ -643,9 +697,12 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     }
     else {
         /* via Socket */
-        send(client->sock, (const char *)(msg.headerbuffer + sizeof(DltStorageHeader)),
-             msg.headersize - sizeof(DltStorageHeader), 0);
-        send(client->sock, (const char *)msg.databuffer, msg.datasize, 0);
+        if (dlt_client_send_message_to_socket(client, &msg) == DLT_RETURN_ERROR)
+        {
+            dlt_log(LOG_ERR, "Sending message to socket failed\n");
+            dlt_message_free(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
     }
 
     /* free message */

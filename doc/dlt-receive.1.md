@@ -46,6 +46,14 @@ Receive DLT messages from DLT daemon and print or store the messages.
 
 :   Verbose mode.
 
+-S
+
+:   Send message with serial header (Default: Without serial header)
+
+-R
+
+:   Enable resync serial header
+
 -y
 
 :   Serial device mode.

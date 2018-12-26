@@ -318,6 +318,8 @@ static void usage()
     printf("  -s         Show passive node(s) connection status\n");
     printf("  -t         Specify connection timeout (Default: %ds)\n",
            DLT_CTRL_TIMEOUT);
+    printf("  -S         Send message with serial header (Default: Without serial header)\n");
+    printf("  -R         Enable resync serial header\n");
     printf("  -v         Set verbose flag (Default:%d)\n", get_verbosity());
 }
 
@@ -338,7 +340,7 @@ static int parse_args(int argc, char *argv[])
     /* Get command line arguments */
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "c:hn:stv")) != -1)
+    while ((c = getopt(argc, argv, "c:hn:st:SRv")) != -1)
         switch (c) {
         case 'c':
             state = (int)strtol(optarg, NULL, 10);
@@ -365,6 +367,16 @@ static int parse_args(int argc, char *argv[])
         case 't':
             set_timeout((int) strtol(optarg, NULL, 10));
             break;
+        case 'S':
+        {
+            set_send_serial_header(1);
+            break;
+        }
+        case 'R':
+        {
+            set_resync_serial_header(1);
+            break;
+        }
         case 'v':
             set_verbosity(1);
             pr_verbose("Now in verbose mode.\n");
@@ -401,6 +413,8 @@ int main(int argc, char *argv[])
 
     set_ecuid(NULL);
     set_timeout(DLT_CTRL_TIMEOUT);
+    set_send_serial_header(0);
+    set_resync_serial_header(0);
 
     /* Get command line arguments */
     if (parse_args(argc, argv) != 0)

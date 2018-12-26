@@ -34,6 +34,14 @@ Send a trigger to DLT daemon to (dis)connect a passive node or get current passi
 
 :   Specify connection timeout (Default: 10s)
 
+-S
+
+:   Send message with serial header (Default: Without serial header)
+
+-R
+
+:   Enable resync serial header
+
 -v
 
 :   Set verbose flag (Default:0)

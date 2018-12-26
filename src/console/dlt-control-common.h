@@ -61,8 +61,8 @@ typedef struct
     uint32_t size;   /**< size of that data */
 } DltControlMsgBody;
 
-/* As verbosity, ecuid and timeout are needed during the communication,
- * defining getter and setters here.
+/* As verbosity, ecuid, timeout, send_serial_header, resync_serial_header are
+ * needed during the communication, defining getter and setters here.
  * Then there is no need to define them in the control's user application.
  */
 int get_verbosity(void);
@@ -73,6 +73,9 @@ void set_ecuid(char *);
 
 int get_timeout(void);
 void set_timeout(int);
+
+void set_send_serial_header(const int value);
+void set_resync_serial_header(const int value);
 
 /* Parse dlt.conf file and return the value of requested configuration */
 int dlt_parse_config_param(char *config_id, char **config_data);

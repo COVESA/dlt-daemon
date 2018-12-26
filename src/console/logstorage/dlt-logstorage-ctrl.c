@@ -406,19 +406,23 @@ static void usage(void)
     printf("                             Don't use -s together with -d and -c\n");
     printf("  -t                         Specify connection timeout (Default: %ds)\n",
            DLT_CTRL_TIMEOUT);
+    printf("  -S --send-header           Send message with serial header (Default: Without serial header)\n");
+    printf("  -R --resync-header         Enable resync serial header\n");
     printf("  -v --verbose               Set verbose flag (Default:%d)\n", get_verbosity());
 }
 
 static struct option long_options[] = {
-    { "command", required_argument, 0, 'c' },
-    { "daemonize", optional_argument, 0, 'd' },
-    { "ecuid", required_argument, 0, 'e' },
-    { "help", no_argument, 0, 'h' },
-    { "path", required_argument, 0, 'p' },
-    { "snapshot", optional_argument, 0, 's' },
-    { "timeout", required_argument, 0, 't' },
-    { "verbose", no_argument, 0, 'v' },
-    { 0, 0, 0, 0 }
+    {"command",       required_argument,  0,  'c'},
+    {"daemonize",     optional_argument,  0,  'd'},
+    {"ecuid",         required_argument,  0,  'e'},
+    {"help",          no_argument,        0,  'h'},
+    {"path",          required_argument,  0,  'p'},
+    {"snapshot",      optional_argument,  0,  's'},
+    {"timeout",       required_argument,  0,  't'},
+    {"send-header",   no_argument,        0,  'S'},
+    {"resync-header", no_argument,        0,  'R'},
+    {"verbose",       no_argument,        0,  'v'},
+    {0,               0,                  0,  0}
 };
 
 /** @brief Parses the application arguments
@@ -437,7 +441,7 @@ static int parse_args(int argc, char *argv[])
 
     while ((c = getopt_long(argc,
                             argv,
-                            ":s::t:he:p:d::c:v",
+                            ":s::t:hSRe:p:d::c:v",
                             long_options,
                             &long_index)) != -1)
         switch (c) {
@@ -454,6 +458,16 @@ static int parse_args(int argc, char *argv[])
         case 't':
             set_timeout((int) strtol(optarg, NULL, 10));
             break;
+        case 'S':
+        {
+            set_send_serial_header(1);
+            break;
+        }
+        case 'R':
+        {
+            set_resync_serial_header(1);
+            break;
+        }
         case 'h':
             usage();
             return -1;
@@ -535,6 +549,8 @@ int main(int argc, char *argv[])
 
     set_ecuid(NULL);
     set_timeout(DLT_CTRL_TIMEOUT);
+    set_send_serial_header(0);
+    set_resync_serial_header(0);
 
     /* Get command line arguments */
     if (parse_args(argc, argv) != 0)

@@ -95,9 +95,11 @@ typedef struct
     int port;              /**< Port for TCP connections (optional) */
     char *serialDevice;    /**< serialDevice Devicename of serial device */
     char *socketPath;      /**< socketPath Unix socket path */
-    char ecuid[4];           /**< ECUiD */
+    char ecuid[4];         /**< ECUiD */
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
     DltClientMode mode;    /**< mode DltClientMode */
+    int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
+    int resync_serial_header;  /**< (Boolean) Resync to serial header on all connection */
 } DltClient;
 
 #   ifdef __cplusplus
@@ -145,6 +147,15 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose);
+
+/**
+ * Send a message to the daemon through the socket.
+ * @param client pointer to dlt client structure.
+ * @param msg The message to be send in DLT format.
+ * @return Value from DltReturnValue enum.
+ */
+DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *msg);
+
 /**
  * Send ancontrol message to the dlt daemon
  * @param client pointer to dlt client structure

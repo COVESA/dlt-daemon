@@ -95,6 +95,8 @@ typedef struct {
     int systemloggervalue;
     char ecuid[4];
     int ohandle;
+    int sendSerialHeaderFlag;
+    int resyncSerialHeaderFlag;
     DltFile file;
     DltFilter filter;
 } DltReceiveData;
@@ -118,6 +120,8 @@ void usage()
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
+    printf("  -S            Send message with serial header (Default: Without serial header)\n");
+    printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -f            Activate filetransfer test case\n");
     printf("  -s            Activate systemd journal test case\n");
@@ -143,6 +147,8 @@ int main(int argc, char *argv[])
     dltdata.ovalue = 0;
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
+    dltdata.sendSerialHeaderFlag = 0;
+    dltdata.resyncSerialHeaderFlag = 0;
     dltdata.ohandle = -1;
     dltdata.filetransfervalue = 0;
     dltdata.systemjournalvalue = 0;
@@ -150,7 +156,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vshyfla:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vshSRyfla:o:e:b:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -161,6 +167,16 @@ int main(int argc, char *argv[])
         {
             usage();
             return -1;
+        }
+        case 'S':
+        {
+            dltdata.sendSerialHeaderFlag = 1;
+            break;
+        }
+        case 'R':
+        {
+            dltdata.resyncSerialHeaderFlag = 1;
+            break;
         }
         case 'y':
         {
@@ -261,6 +277,10 @@ int main(int argc, char *argv[])
 
         dlt_client_setbaudrate(&dltclient, dltdata.bvalue);
     }
+
+    /* Update the send and resync serial header flags based on command line option */
+    dltclient.send_serial_header = dltdata.sendSerialHeaderFlag;
+    dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file), dltdata.vflag);

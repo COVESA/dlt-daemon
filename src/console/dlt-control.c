@@ -104,6 +104,8 @@ typedef struct {
     int jvalue;
     int kvalue;
     int bvalue;
+    int sendSerialHeaderFlag;
+    int resyncSerialHeaderFlag;
     char ecuid[4];
     DltFile file;
     DltFilter filter;
@@ -125,6 +127,8 @@ void usage()
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
+    printf("  -S            Send message with serial header (Default: Without serial header)\n");
+    printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
@@ -305,7 +309,7 @@ int main(int argc, char *argv[])
     /* Default return value */
     ret = 0;
 
-    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogjku")) != -1)
+    while ((c = getopt (argc, argv, "vhSRye:b:a:c:s:m:x:t:l:r:d:f:i:ogjku")) != -1)
         switch (c) {
         case 'v':
         {
@@ -316,6 +320,16 @@ int main(int argc, char *argv[])
         {
             usage();
             return -1;
+        }
+        case 'S':
+        {
+            dltdata.sendSerialHeaderFlag = 1;
+            break;
+        }
+        case 'R':
+        {
+            dltdata.resyncSerialHeaderFlag = 1;
+            break;
         }
         case 'y':
         {
@@ -513,6 +527,10 @@ int main(int argc, char *argv[])
 
         dlt_client_setbaudrate(&g_dltclient, dltdata.bvalue);
     }
+
+    /* Update the send and resync serial header flags based on command line option */
+    g_dltclient.send_serial_header = dltdata.sendSerialHeaderFlag;
+    g_dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file), dltdata.vflag);

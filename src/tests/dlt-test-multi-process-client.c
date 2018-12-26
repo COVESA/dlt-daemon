@@ -66,6 +66,8 @@ typedef struct {
     char *output;
     int output_handle;
     int messages_left;
+    int sendSerialHeaderFlag;
+    int resyncSerialHeaderFlag;
     DltClient *client_ref;
 } s_parameters;
 
@@ -93,6 +95,8 @@ void usage(char *name)
     printf("%s", version);
     printf("Options:\n");
     printf(" -m             Total messages to receive. (Default: 10000)\n");
+    printf(" -S             Send message with serial header (Default: Without serial header)\n");
+    printf(" -R             Enable resync serial header\n");
     printf(" -y             Serial device mode.\n");
     printf(" -b baudrate    Serial device baudrate. (Default: 115200)\n");
     printf(" -v             Verbose. Increases the verbosity level of dlt client library.\n");
@@ -110,6 +114,8 @@ void init_params(s_parameters *params)
     params->output = NULL;
     params->output_handle = -1;
     params->baudrate = 115200;
+    params->sendSerialHeaderFlag = 0;
+    params->resyncSerialHeaderFlag = 0;
 }
 
 /**
@@ -121,11 +127,21 @@ int read_params(s_parameters *params, int argc, char *argv[])
     int c;
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "m:yb:vo:")) != -1)
+    while ((c = getopt(argc, argv, "m:yb:vo:SR")) != -1)
         switch (c) {
         case 'm':
             params->max_messages = atoi(optarg);
             break;
+        case 'S':
+        {
+            params->sendSerialHeaderFlag = 1;
+            break;
+        }
+        case 'R':
+        {
+            params->resyncSerialHeaderFlag = 1;
+            break;
+        }
         case 'y':
             params->serial = 1;
             break;
@@ -203,6 +219,10 @@ int main(int argc, char *argv[])
 
     dlt_client_init(&client, params.verbose);
     dlt_client_register_message_callback(receive);
+
+    /* Update the send and resync serial header flags based on command line option */
+    client.send_serial_header = params.sendSerialHeaderFlag;
+    client.resync_serial_header = params.resyncSerialHeaderFlag;
 
     err = init_dlt_connect(&client, &params, argc, argv);
 

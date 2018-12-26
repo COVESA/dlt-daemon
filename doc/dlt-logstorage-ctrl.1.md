@@ -38,6 +38,14 @@ Send a trigger to DLT Daemon to connect/disconnect a certain offline logstorage 
 
 :    Specify connection timeout. Default is: 10s.
 
+-S
+
+:   Send message with serial header (Default: Without serial header)
+
+-R
+
+:   Enable resync serial header
+
 # EXAMPLES
 
 Activate the offline logstorage device mounted on /mnt/dltlog
