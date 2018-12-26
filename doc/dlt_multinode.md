@@ -79,5 +79,7 @@ Options:
   -n         passive Node identifier (e.g. ECU2)
   -s         Show passive node(s) connection status
   -t         Specify connection timeout (Default: 10s)
+  -S         Send message with serial header (Default: Without serial header)
+  -R         Enable resync serial header
   -v         Set verbose flag (Default:0)
 ```

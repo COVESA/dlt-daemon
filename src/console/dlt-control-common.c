@@ -155,6 +155,16 @@ void set_timeout(int t)
                  DLT_CTRL_TIMEOUT);
 }
 
+void set_send_serial_header(const int value)
+{
+    g_client.send_serial_header = value;
+}
+
+void set_resync_serial_header(const int value)
+{
+    g_client.resync_serial_header = value;
+}
+
 int dlt_parse_config_param(char *config_id, char **config_data)
 {
     FILE *pFile = NULL;
@@ -219,32 +229,6 @@ int dlt_parse_config_param(char *config_id, char **config_data)
 
     if (*config_data == NULL)
         return -1;
-
-    return 0;
-}
-
-/** @brief Send a message to the daemon through the socket.
- *
- * The socket as to be opened and active before sending.
- *
- * @param sock The socket to send the message through
- * @param msg The message to be send in DLT format.
- *
- * @return 0 on success, -1 otherwise.
- */
-static int dlt_control_send_message_to_socket(int sock, DltMessage *msg)
-{
-    if (send(sock,
-             (const char *)(msg->headerbuffer + sizeof(DltStorageHeader)),
-             msg->headersize - sizeof(DltStorageHeader), 0) == -1) {
-        pr_error("Sending message header failed: %s\n", strerror(errno));
-        return -1;
-    }
-
-    if (send(sock, (const char *)msg->databuffer, msg->datasize, 0) == -1) {
-        pr_error("Sending message failed: %s\n", strerror(errno));
-        return -1;
-    }
 
     return 0;
 }
@@ -574,8 +558,10 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* Re-init the return value */
     callback_return = -1;
 
-    if (dlt_control_send_message_to_socket(g_client.sock, msg) != 0) {
+    if (dlt_client_send_message_to_socket(&g_client, msg) != DLT_RETURN_OK)
+    {
         pr_error("Sending message to daemon failed\n");
+        dlt_message_free(msg, get_verbosity());
         free(msg);
         return -1;
     }

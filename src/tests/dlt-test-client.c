@@ -101,6 +101,8 @@ typedef struct
     char *tvalue;
     char *evalue;
     int bvalue;
+    int sendSerialHeaderFlag;
+    int resyncSerialHeaderFlag;
 
     char ecuid[4];
     int ohandle;
@@ -139,6 +141,8 @@ void usage()
     printf("  -s            Print DLT messages; only headers\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
+    printf("  -S            Send message with serial header (Default: Without serial header)\n");
+    printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: ECU1)\n");
@@ -167,6 +171,8 @@ int main(int argc, char *argv[])
     dltdata.fvalue = 0;
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
+    dltdata.sendSerialHeaderFlag = 0;
+    dltdata.resyncSerialHeaderFlag = 0;
     dltdata.ohandle = -1;
 
     dltdata.running_test = 0;
@@ -185,7 +191,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:z:")) != -1)
+    while ((c = getopt (argc, argv, "vashSRyxmf:o:e:b:z:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -216,6 +222,16 @@ int main(int argc, char *argv[])
         {
             usage();
             return -1;
+        }
+        case 'S':
+        {
+            dltdata.sendSerialHeaderFlag = 1;
+            break;
+        }
+        case 'R':
+        {
+            dltdata.resyncSerialHeaderFlag = 1;
+            break;
         }
         case 'y':
         {
@@ -314,6 +330,10 @@ int main(int argc, char *argv[])
 
         dlt_client_setbaudrate(&g_dltclient, dltdata.bvalue);
     }
+
+    /* Update the send and resync serial header flags based on command line option */
+    g_dltclient.send_serial_header = dltdata.sendSerialHeaderFlag;
+    g_dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file), dltdata.vflag);

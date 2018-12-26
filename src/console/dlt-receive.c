@@ -125,6 +125,8 @@ typedef struct {
     char *jvalue;       /* filename for json filter file */
     char *evalue;
     int bvalue;
+    int sendSerialHeaderFlag;
+    int resyncSerialHeaderFlag;
     int64_t climit;
     char ecuid[4];
     int ohandle;
@@ -155,6 +157,8 @@ void usage()
     printf("  -s            Print DLT messages; only headers\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
+    printf("  -S            Send message with serial header (Default: Without serial header)\n");
+    printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -u            UDP multicast mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
@@ -327,6 +331,8 @@ int main(int argc, char *argv[])
     dltdata.jvalue = 0;
     dltdata.evalue = 0;
     dltdata.bvalue = 0;
+    dltdata.sendSerialHeaderFlag = 0;
+    dltdata.resyncSerialHeaderFlag = 0;
     dltdata.climit = -1; /* default: -1 = unlimited */
     dltdata.ohandle = -1;
     dltdata.totalbytes = 0;
@@ -348,7 +354,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyuxmf:j:o:e:b:c:p:")) != -1)
+    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -379,6 +385,16 @@ int main(int argc, char *argv[])
         {
             usage();
             return -1;
+        }
+        case 'S':
+        {
+            dltdata.sendSerialHeaderFlag = 1;
+            break;
+        }
+        case 'R':
+        {
+            dltdata.resyncSerialHeaderFlag = 1;
+            break;
         }
         case 'y':
         {
@@ -520,6 +536,10 @@ int main(int argc, char *argv[])
 
         dlt_client_setbaudrate(&dltclient, dltdata.bvalue);
     }
+
+    /* Update the send and resync serial header flags based on command line option */
+    dltclient.send_serial_header = dltdata.sendSerialHeaderFlag;
+    dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
     /* initialise structure to use DLT file */
     dlt_file_init(&(dltdata.file), dltdata.vflag);
