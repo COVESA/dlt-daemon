@@ -3825,7 +3825,7 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
 
 void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
 {
-    char number16[2] = { 0 };
+    char number16[3] = {0};
     char *endptr;
     int count;
 
