@@ -186,6 +186,7 @@ void *dlt_kpi_start_process_thread()
 DltReturnValue dlt_kpi_process_loop()
 {
     static unsigned long int old_millis, sleep_millis, dif_millis;
+    struct timespec ts;
 
     old_millis = get_millis();
 
@@ -201,7 +202,9 @@ DltReturnValue dlt_kpi_process_loop()
         else
             sleep_millis = config.process_log_interval - dif_millis;
 
-        usleep(sleep_millis * 1000);
+        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        nanosleep(&ts, NULL);
 
         old_millis = get_millis();
     }
@@ -424,6 +427,7 @@ void *dlt_kpi_start_irq_thread()
 DltReturnValue dlt_kpi_irq_loop()
 {
     static unsigned long int old_millis, sleep_millis, dif_millis;
+    struct timespec ts;
 
     old_millis = get_millis();
 
@@ -439,7 +443,9 @@ DltReturnValue dlt_kpi_irq_loop()
         else
             sleep_millis = config.irq_log_interval - dif_millis;
 
-        usleep(sleep_millis * 1000);
+        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        nanosleep(&ts, NULL);
 
         old_millis = get_millis();
     }
@@ -458,6 +464,7 @@ void *dlt_kpi_start_check_thread()
 DltReturnValue dlt_kpi_check_loop()
 {
     static unsigned long int old_millis, sleep_millis, dif_millis;
+    struct timespec ts;
 
     old_millis = get_millis();
 
@@ -473,7 +480,9 @@ DltReturnValue dlt_kpi_check_loop()
         else
             sleep_millis = config.check_log_interval - dif_millis;
 
-        usleep(sleep_millis * 1000);
+        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        nanosleep(&ts, NULL);
 
         old_millis = get_millis();
     }

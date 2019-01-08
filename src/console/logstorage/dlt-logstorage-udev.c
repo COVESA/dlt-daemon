@@ -207,6 +207,7 @@ static int logstorage_udev_udevd_callback(void)
     DltLogstorageCtrl *lctrl = get_logstorage_control();
     LogstorageCtrlUdev *prvt = NULL;
     struct udev_device *partition = NULL;
+    struct timespec ts;
 
     if (!lctrl) {
         pr_error("Not able to get logstorage control instance.\n");
@@ -247,7 +248,9 @@ static int logstorage_udev_udevd_callback(void)
          * Then, udev is only interesting to simplify the check on new devices,
          * and/or for hot unplug (without unmount).
          */
-        usleep(500 * 1000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * NANOSEC_PER_MILLISEC;
+        nanosleep(&ts, NULL);
         ret = check_mountpoint_from_partition(EVENT_MOUNTED, partition);
     }
     else if (strncmp(action, "remove", sizeof("remove")) == 0)

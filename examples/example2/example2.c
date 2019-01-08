@@ -57,6 +57,7 @@ DLT_DECLARE_CONTEXT(con_exa2);
 int main()
 {
     int num;
+    struct timespec ts;
 
     DLT_REGISTER_APP("EXA2", "Third Example");
     DLT_REGISTER_CONTEXT(con_exa2, "CON", "First context");
@@ -67,7 +68,9 @@ int main()
         DLT_LOG_ID(con_exa2, DLT_LOG_INFO, DLT_EXA2_CON_EXA2_ID1, DLT_INT32(12345678), DLT_STRING("Hello world 1!"));
         DLT_LOG_ID(con_exa2, DLT_LOG_ERROR, DLT_EXA2_CON_EXA2_ID2, DLT_INT32(87654321), DLT_STRING("Hello world 2!"));
         DLT_LOG_ID(con_exa2, DLT_LOG_WARN, DLT_EXA2_CON_EXA2_ID3, DLT_INT32(11223344), DLT_STRING("Hello world 3!"));
-        usleep(1000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 1000000;
+        nanosleep(&ts, NULL);
     }
 
     DLT_UNREGISTER_CONTEXT(con_exa2);

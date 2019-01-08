@@ -227,6 +227,7 @@ void stress1(void)
 {
     int i, c;
     char ctid[5];
+    struct timespec ts;
 
     printf("Starting stress test1... (press \"Enter\" to terminate test) \n");
 
@@ -240,7 +241,9 @@ void stress1(void)
         /*printf("%i: '%s' \n",i,ctid); */
 
         dlt_register_context(&(mycontext[i]), ctid, ctid);
-        usleep(500);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     while (1) {
@@ -255,7 +258,9 @@ void stress1(void)
 
     for (i = 0; i < STRESS1_NUM_CONTEXTS; i++) {
         DLT_UNREGISTER_CONTEXT(mycontext[i]);
-        usleep(500);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     printf("Finished stress test1 \n\n");
@@ -264,6 +269,7 @@ void stress1(void)
 void stress2(void)
 {
     int ret, index;
+    struct timespec ts;
 
     pthread_t thread[STRESS2_MAX_NUM_THREADS];
     thread_data_t thread_data[STRESS2_MAX_NUM_THREADS];
@@ -282,7 +288,9 @@ void stress2(void)
         if (ret != 0)
             printf("Error creating thread %d: %s \n", index, strerror(errno));
 
-        usleep(1000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 1000 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++)
@@ -296,6 +304,7 @@ void thread_function(void)
     /*thread_data_t *data; */
     DLT_DECLARE_CONTEXT(context_thread1);
     char ctid[5];
+    struct timespec ts;
 
     /*data = (thread_data_t *) ptr; */
 
@@ -304,7 +313,9 @@ void thread_function(void)
     /* Create random context id */
     snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
 
-    usleep(rand() / 1000);
+    ts.tv_sec = 0;
+    ts.tv_nsec = rand();
+    nanosleep(&ts, NULL);
 
     DLT_REGISTER_CONTEXT(context_thread1, ctid, ctid);
 
@@ -318,6 +329,7 @@ void stress3(void)
     DLT_DECLARE_CONTEXT(context_stress3);
     char buffer[STRESS3_MAX_NUM_MESSAGES];
     int num;
+    struct timespec ts;
 
     /* Performance test */
     DLT_REGISTER_CONTEXT(context_stress3, "TST3", "Stress Test 3 - Performance");
@@ -328,7 +340,9 @@ void stress3(void)
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
         buffer[num] = num;
         DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, num));
-        usleep(10000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 10000 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     printf("Finished stress test3 \n\n");

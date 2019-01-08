@@ -40,6 +40,9 @@
 
 #define COMMAND_LINE_SIZE 1024
 
+#define NANOSEC_PER_MILLISEC 1000000
+#define NANOSEC_PER_SEC 1000000000
+
 /* STRUCTURES */
 typedef struct
 {

@@ -68,6 +68,9 @@
 
 #define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES INT_MAX
 
+#define NANOSEC_PER_MILLISEC 1000000
+#define NANOSEC_PER_SEC 1000000000
+
 
 /*!Buffer for dlt file transfer. The size is defined by BUFFER_SIZE */
 unsigned char buffer[BUFFER_SIZE];
@@ -194,7 +197,10 @@ int isFile (const char *file)
  */
 void doTimeout(int timeout)
 {
-    usleep(timeout * 1000);
+    struct timespec ts;
+    ts.tv_sec = (timeout * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+    ts.tv_nsec = (timeout * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+    nanosleep(&ts, NULL);
 }
 
 /*!Checks free space of the user buffer */

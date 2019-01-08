@@ -292,9 +292,9 @@ void cleanup()
 time_t mksleep_time(int delay, int fudge)
 {
     if (!fudge)
-        return delay * 1000;
+        return delay*1000000;
     else
-        return (delay + rand() % fudge) * 1000;
+        return (delay+rand()%fudge)*1000000;
 }
 
 /**
@@ -305,7 +305,8 @@ void do_logging(s_thread_data *data)
     DltContext mycontext;
     char ctid[5];
     char ctid_name[256];
-
+    struct timespec ts;
+    time_t sleep_time;
 
     snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
     snprintf(ctid_name, 256, "Child %s in dlt-test-multi-process", ctid);
@@ -315,7 +316,10 @@ void do_logging(s_thread_data *data)
 
     while (msgs_left-- > 0) {
         DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
-        usleep(mksleep_time(data->params.delay, data->params.delay_fudge));
+        sleep_time = mksleep_time(data->params.delay, data->params.delay_fudge);
+        ts.tv_sec = sleep_time / 1000000000;
+        ts.tv_nsec = sleep_time % 1000000000;
+        nanosleep(&ts, NULL);
     }
 
     DLT_UNREGISTER_CONTEXT(mycontext);

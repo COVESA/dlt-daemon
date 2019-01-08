@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
     int c;
     int index;
     char *endptr = NULL;
+    struct timespec ts;
 
     /* Initialize dltdata */
     dltdata.vflag = 0;
@@ -641,7 +642,9 @@ int main(int argc, char *argv[])
         /*dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag); */
 
         /* Wait timeout */
-        usleep(dltdata.tvalue * 1000);
+        ts.tv_sec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        nanosleep(&ts, NULL);
     }
 
     /* Dlt Client Cleanup */

@@ -733,6 +733,7 @@ int dlt_user_atexit_blow_out_user_buffer(void)
 {
 
     int count, ret;
+    struct timespec ts;
 
     uint32_t exitTime = dlt_uptime() + dlt_user.timeout_at_exit_handler;
 
@@ -770,7 +771,9 @@ int dlt_user_atexit_blow_out_user_buffer(void)
                 }
             }
 
-            usleep(DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP);
+            ts.tv_sec = 0;
+            ts.tv_nsec = DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP;
+            nanosleep(&ts, NULL);
         }
 
         DLT_SEM_LOCK();
@@ -2786,6 +2789,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
                                                         void *payload)
 {
     int ret = DLT_RETURN_ERROR;
+    struct timespec ts;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
         dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
@@ -2793,7 +2797,10 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
     }
 
     while (check_buffer() < 0) {
-        usleep(1000 * 50); /* Wait 50ms */
+        /* Wait 50ms */
+        ts.tv_sec = 0;
+        ts.tv_nsec = 1000000*50;
+        nanosleep(&ts, NULL);
         dlt_user_log_resend_buffer();
     }
 
@@ -3478,6 +3485,7 @@ DltReturnValue dlt_disable_local_print(void)
 
 void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
 {
+    struct timespec ts;
 #ifdef linux
     prctl(PR_SET_NAME, "dlt_receiver", 0, 0, 0);
 #endif
@@ -3488,7 +3496,10 @@ void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
             /* Critical error */
             dlt_log(LOG_CRIT, "Receiver thread encountered error condition\n");
 
-        usleep(DLT_USER_RECEIVE_DELAY); /* delay */
+        /* delay */
+        ts.tv_sec = 0;
+        ts.tv_nsec = DLT_USER_RECEIVE_NDELAY;
+        nanosleep(&ts, NULL);
     }
 }
 

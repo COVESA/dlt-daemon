@@ -232,6 +232,7 @@ int testall(int count, int repeat, int delay, int size)
 {
     char buffer[size];
     int num, rnum;
+    struct timespec ts;
 
     for (num = 0; num < size; num++)
         buffer[num] = num;
@@ -243,7 +244,9 @@ int testall(int count, int repeat, int delay, int size)
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
             DLT_LOG(context_info, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, size));
-            usleep(delay);
+            ts.tv_sec = (delay * 1000) / 1000000000;
+            ts.tv_nsec = (delay * 1000) % 1000000000;
+            nanosleep(&ts, NULL);
         }
 
     /* wait 5 seconds after test */

@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     char *text;
     int num, maxnum;
     int delay;
+    struct timespec ts;
 
     opterr = 0;
 
@@ -206,9 +207,9 @@ int main(int argc, char *argv[])
         maxnum = 10;
 
     if (dvalue)
-        delay = atoi(dvalue) * 1000;
+        delay = atoi(dvalue) * 1000000;
     else
-        delay = 500 * 1000;
+        delay = 500 * 1000000;
 
     if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
@@ -257,8 +258,11 @@ int main(int argc, char *argv[])
             dlt_user_log_write_finish(&mycontextdata);
         }
 
-        if (delay > 0)
-            usleep(delay);
+        if (delay > 0) {
+            ts.tv_sec = delay / 1000000000;
+            ts.tv_nsec = delay % 1000000000;
+            nanosleep(&ts, NULL);
+        }
     }
 
     dlt_unregister_context(&mycontext);
