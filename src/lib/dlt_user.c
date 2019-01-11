@@ -95,9 +95,8 @@ static pthread_t dlt_receiverthread_handle;
 /* calling dlt_user_atexit_handler() second time fails with error message */
 static int atexit_registered = 0;
 
-/* calling atfork_handler() only once */
-static int atfork_registered = 0;
-
+/* used to disallow DLT usage in fork() child */
+static int g_dlt_is_child = 0;
 
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
@@ -174,8 +173,6 @@ static DltReturnValue dlt_user_log_out_error_handling(void *ptr1,
 
 static int dlt_start_threads();
 static void dlt_stop_threads();
-static void dlt_fork_pre_fork_handler();
-static void dlt_fork_parent_fork_handler();
 static void dlt_fork_child_fork_handler();
 
 
@@ -431,10 +428,7 @@ DltReturnValue dlt_init(void)
     }
 
     /* prepare for fork() call */
-    if (atfork_registered == 0) {
-        atfork_registered = 1;
-        pthread_atfork(&dlt_fork_pre_fork_handler, &dlt_fork_parent_fork_handler, &dlt_fork_child_fork_handler);
-    }
+    pthread_atfork(NULL, NULL, &dlt_fork_child_fork_handler);
 
     return DLT_RETURN_OK;
 }
@@ -710,6 +704,11 @@ DltReturnValue dlt_init_common(void)
 
 void dlt_user_atexit_handler(void)
 {
+    /* parent will do clean-up */
+    if (g_dlt_is_child) {
+        return;
+    }
+
     if (!dlt_user_initialised) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
         /* close file */
@@ -950,6 +949,10 @@ DltReturnValue dlt_register_app(const char *appid, const char *description)
 {
     DltReturnValue ret = DLT_RETURN_OK;
 
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if (!dlt_user_initialised) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
@@ -1025,6 +1028,10 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
     if (handle == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if (!dlt_user_initialised) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
@@ -1058,6 +1065,10 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     /*check nullpointer */
     if ((handle == NULL) || (contextid == NULL) || (contextid[0] == '\0'))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     if ((loglevel < DLT_USER_LOG_LEVEL_NOT_SET) || (loglevel >= DLT_LOG_MAX)) {
         dlt_vlog(LOG_ERR, "Loglevel %d is outside valid range", loglevel);
@@ -1264,6 +1275,10 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
     if ((handle == NULL) || (contextid == NULL) || (contextid[0] == '\0'))
         return DLT_RETURN_WRONG_PARAMETER;
 
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if (!dlt_user_initialised) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
@@ -1282,6 +1297,10 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
 DltReturnValue dlt_unregister_app(void)
 {
     DltReturnValue ret = DLT_RETURN_OK;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     if (!dlt_user_initialised) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
@@ -1310,6 +1329,10 @@ DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
 {
     DltReturnValue ret = DLT_RETURN_OK;
 
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if (!dlt_user_initialised) {
         dlt_vlog(LOG_ERR, "%s dlt_user_initialised false\n", __func__);
         return DLT_RETURN_ERROR;
@@ -1328,6 +1351,10 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
 {
     DltContextData log;
     DltReturnValue ret = DLT_RETURN_OK;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     log.handle = NULL;
     log.context_description = NULL;
@@ -1382,6 +1409,10 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
 DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType tracestatus)
 {
     uint32_t i;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     if ((loglevel < DLT_USER_LOG_LEVEL_NOT_SET) || (loglevel >= DLT_LOG_MAX)) {
         dlt_vlog(LOG_ERR, "Loglevel %d is outside valid range", loglevel);
@@ -1451,6 +1482,10 @@ int dlt_get_log_state()
 
 DltReturnValue dlt_set_log_mode(DltUserLogMode mode)
 {
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if ((mode < DLT_USER_MODE_UNDEFINED) || (mode >= DLT_USER_MODE_MAX)) {
         dlt_vlog(LOG_ERR, "User log mode %d is outside valid range", mode);
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1468,6 +1503,10 @@ DltReturnValue dlt_set_log_mode(DltUserLogMode mode)
 
 int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
 {
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     if (dlt_user_initialised == 0) {
         if (dlt_init() < 0)
             return -1;
@@ -1485,6 +1524,10 @@ DltReturnValue dlt_forward_msg(void *msgdata, size_t size)
 
     if ((msgdata == NULL) || (size == 0))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK)
         /* Type of internal user message; same value for Trace messages */
@@ -1597,6 +1640,10 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
     /* check nullpointer */
     if ((handle == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
 
     /* check log levels */
     ret = dlt_user_is_logLevel_enabled(handle, loglevel);
@@ -4681,35 +4728,10 @@ void dlt_stop_threads()
     }
 }
 
-static void dlt_fork_pre_fork_handler()
-{
-    dlt_stop_threads();
-}
-
-static void dlt_fork_parent_fork_handler()
-{
-    if (dlt_user_initialised) {
-        if (dlt_start_threads() < 0) {
-            snprintf(str, DLT_USER_BUFFER_LENGTH,
-                     "Logging disabled, failed re-start thread after fork(pid=%i)!\n",
-                     getpid());
-            dlt_log(LOG_WARNING, str);
-            /* cleanup is the only thing we can do here */
-            dlt_log_free();
-            dlt_free();
-        }
-    }
-}
-
 static void dlt_fork_child_fork_handler()
 {
-    if (dlt_user_initialised) {
-        /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
-        dlt_user.dlt_log_handle = -1;
-        dlt_log_free();
-        dlt_free();
-        /* the only thing that remains is the atexit-handler */
-    }
+    g_dlt_is_child = 1;
+    dlt_user_initialised = false;
 }
 
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
