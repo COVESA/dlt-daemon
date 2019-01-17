@@ -2712,7 +2712,7 @@ DltReturnValue dlt_user_trace_network_segmented_start(uint32_t *id,
         *id = tv.tv_usec;
 
         /* Write identifier */
-        if (dlt_user_log_write_string(&log, "NWST") < 0) {
+        if (dlt_user_log_write_string(&log, DLT_TRACE_NW_START) < 0) {
             dlt_user_free_buffer(&(log.buffer));
             return DLT_RETURN_ERROR;
         }
@@ -2811,7 +2811,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
         log.size = 0;
 
         /* Write identifier */
-        if (dlt_user_log_write_string(&log, "NWCH") < DLT_RETURN_OK) {
+        if (dlt_user_log_write_string(&log, DLT_TRACE_NW_SEGMENT) < DLT_RETURN_OK) {
             dlt_user_free_buffer(&(log.buffer));
             return DLT_RETURN_ERROR;
         }
@@ -2880,7 +2880,7 @@ DltReturnValue dlt_user_trace_network_segmented_end(uint32_t id, DltContext *han
         log.size = 0;
 
         /* Write identifier */
-        if (dlt_user_log_write_string(&log, "NWEN") < DLT_RETURN_OK) {
+        if (dlt_user_log_write_string(&log, DLT_TRACE_NW_END) < DLT_RETURN_OK) {
             dlt_user_free_buffer(&(log.buffer));
             return DLT_RETURN_ERROR;
         }
@@ -3154,7 +3154,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
         /* If truncation is allowed, check if we must do it */
         if ((allow_truncate > 0) && ((header_len + payload_len + sizeof(uint16_t)) > dlt_user.log_buf_len)) {
             /* Identify as truncated */
-            if (dlt_user_log_write_string(&log, "NWTR") < DLT_RETURN_OK) {
+            if (dlt_user_log_write_string(&log, DLT_TRACE_NW_END) < DLT_RETURN_OK) {
                 dlt_user_free_buffer(&(log.buffer));
                 return DLT_RETURN_ERROR;
             }

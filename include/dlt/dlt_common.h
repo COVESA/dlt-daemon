@@ -378,6 +378,14 @@ enum {
 #   define DLT_LINE_LEN 1024
 
 /**
+ * Macros for network trace
+ */
+#define DLT_TRACE_NW_TRUNCATED "NWTR"
+#define DLT_TRACE_NW_START "NWST"
+#define DLT_TRACE_NW_SEGMENT "NWCH"
+#define DLT_TRACE_NW_END "NWEN"
+
+/**
  * Provision to test static function
  */
 #   ifndef DLT_UNIT_TESTS
