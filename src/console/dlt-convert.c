@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
 
                         if (end == (file.counter - 1)) {
                             /* Sleep if no new message was received */
-                            sleep(1);
+                            sleep(0.1);
                         }
                         else {
                             /* set new end of log file and continue reading */
