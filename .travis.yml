@@ -2,7 +2,7 @@ language: c
 
 compiler: gcc
 
-script: cmake -DWITH_DLTTEST=on -DWITH_TEST_SCRIPTS=on -DWITH_DLT_UNIT_TEST=on CMakeLists.txt && make && ./src/tests/dlt-test-user
+script: cmake -DWITH_DLT_TESTS=ON -DWITH_TESTSCRIPTS=ON -DWITH_DLT_UNIT_TESTS=ON -DWITH_SYSTEMD=ON -DWITH_SYSTEMD_JOURNAL=ON CMakeLists.txt && make && ./src/tests/dlt-test-user
 
 addons:
   apt:
@@ -11,3 +11,6 @@ addons:
       - cmake
       - libdbus-1-dev
       - build-essential
+      - systemd
+      - libsystemd-daemon-dev
+      - libsystemd-journal-dev
