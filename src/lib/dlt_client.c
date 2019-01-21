@@ -116,13 +116,15 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
         return DLT_RETURN_ERROR;
 
     client->sock = -1;
-    client->servIP = 0;
-    client->serialDevice = 0;
+    client->servIP = NULL;
+    client->serialDevice = NULL;
     client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
     client->port = port;
-    client->socketPath = 0;
+    client->socketPath = NULL;
     client->mode = DLT_CLIENT_MODE_TCP;
-    client->receiver.buffer = 0;
+    client->receiver.buffer = NULL;
+    client->receiver.buf = NULL;
+    client->receiver.backup_buf = NULL;
 
     return DLT_RETURN_OK;
 }
