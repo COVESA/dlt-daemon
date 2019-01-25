@@ -45,6 +45,10 @@ install(TARGETS dlt-daemon
 	COMPONENT base)
 
 if (WITH_DLT_UNIT_TESTS)
+    if (WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD) 
+        set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${systemd_SRCS})
+    endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+
     add_library(dlt_daemon ${dlt_daemon_SRCS})
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
     install(TARGETS dlt_daemon
