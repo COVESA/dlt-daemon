@@ -20,6 +20,10 @@ endif()
 set(DLT_LIBRARIES ${LIBRARIES} dlt)
 set(DLT_DAEMON_LIBRARIES ${LIBRARIES} dlt_daemon)
 
+if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG)
+  set(DLT_DAEMON_LIBRARIES ${DLT_DAEMON_LIBRARIES} systemd)
+endif()
+
 add_executable(gtest_dlt_common gtest_dlt_common.cpp)
 add_executable(gtest_dlt_user gtest_dlt_user.cpp)
 add_executable(gtest_dlt_daemon_common gtest_dlt_daemon_common.cpp ../src/daemon/dlt_daemon_common.c)
