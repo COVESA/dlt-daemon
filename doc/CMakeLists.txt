@@ -80,9 +80,30 @@ if(WITH_MAN)
 	  MESSAGE(FATAL_ERROR "Could not find gzip for man page compression.")
 	endif(NOT GZIP_TOOL)
 
+	FIND_PROGRAM(PANDOC_TOOL
+				 NAMES pandoc
+				 PATHS /bin
+					   /usr/bin
+					   /usr/local/bin)
+
+
+    if(NOT GZIP_TOOL)
+      MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
+    endif(NOT GZIP_TOOL)
+
 	set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 	set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
 
+	set(MD_SRC
+				${MAN_SRC_DIR}/dlt.conf.5.md
+				${MAN_SRC_DIR}/dlt-system.conf.5.md
+				${MAN_SRC_DIR}/dlt-convert.1.md
+				${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md
+				${MAN_SRC_DIR}/dlt-daemon.1.md
+				${MAN_SRC_DIR}/dlt-receive.1.md
+				${MAN_SRC_DIR}/dlt-system.1.md
+				${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md
+				${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md)
 	set(MAN_SRC
 				${MAN_SRC_DIR}/dlt.conf.5
 				${MAN_SRC_DIR}/dlt-system.conf.5
@@ -114,11 +135,17 @@ if(WITH_MAN)
 				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
 				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
 
-	foreach(MAN ${MAN_SRC})
-		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${MAN} ${MAN_BUILD_DIR})
-	endforeach(MAN)
+	add_custom_target(generate_man ALL
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt.conf.5.md -o ${MAN_BUILD_DIR}/dlt.conf.5
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.conf.5.md -o ${MAN_BUILD_DIR}/dlt-system.conf.5
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-convert.1.md -o ${MAN_BUILD_DIR}/dlt-convert.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md -o ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-daemon.1.md -o ${MAN_BUILD_DIR}/dlt-daemon.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-receive.1.md -o ${MAN_BUILD_DIR}/dlt-receive.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.1.md -o ${MAN_BUILD_DIR}/dlt-system.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
+				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1
 
-	add_custom_target(compress_man ALL
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
 				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-convert.1  > ${MAN_BUILD_DIR}/dlt-convert.1.gz
