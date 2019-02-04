@@ -821,7 +821,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
 
         if (ret == 0) {
             /* check if adding new data do not exceed max file size */
-            if (s.st_size + log_msg_size >= (int)config->file_size) {
+            if (s.st_size + log_msg_size > (int)config->file_size) {
                 fclose(config->log);
                 config->log = NULL;
                 ret = dlt_logstorage_open_log_file(config,
@@ -1090,7 +1090,7 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
         remain_cache_size = config->file_size - footer->offset;
     }
 
-    if (msg_size < remain_cache_size) { /* add at current position */
+    if (msg_size <= remain_cache_size) { /* add at current position */
         curr_write_addr = (void *)(config->cache + footer->offset);
         footer->offset += msg_size;
     }
@@ -1150,10 +1150,6 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
         /* start writing from beginning */
         curr_write_addr = config->cache;
         footer->offset = msg_size;
-        footer->wrap_around_cnt += 1;
-    }
-    else { /* message just fits into cache */
-        curr_write_addr = (void *)(config->cache + footer->offset);
         footer->wrap_around_cnt += 1;
     }
 
