@@ -25,6 +25,8 @@
  */
 
 #include <unistd.h> /* for fork() */
+#include <time.h>
+#include <errno.h>
 
 #include "dlt.h"
 
@@ -34,23 +36,31 @@
 int main()
 {
     DltContext mainContext;
+    struct timespec timeout, r;
+
+    timeout.tv_sec  = 0;
+    timeout.tv_nsec = 200000000L;
 
     DLT_REGISTER_APP("PRNT", "Parent application");
     DLT_REGISTER_CONTEXT(mainContext, "CTXP", "Parent context");
     DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message before fork"));
-    usleep(200000);
+    nanosleep(&timeout, &r);
 
     pid_t pid = fork();
-
     if (pid == 0) { /* child process */
         /* this message should not be visible */
-        /* DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's first message after fork, pid: "), DLT_INT32(getpid())); */
-        /* unfortunately, this message does arrive, I assume because it still has (locally) valid data ... */
+        DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's first message after fork, pid: "), DLT_INT32(getpid()));
 
+        /* this will not register CHLD application */
         DLT_REGISTER_APP("CHLD", "Child application");
+        /* this will not register CTXC context */
         DLT_REGISTER_CONTEXT(mainContext, "CTXC", "Child context");
+        /* this will not log a message */
         DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's second message after fork, pid: "), DLT_INT32(getpid()));
-        usleep(400000);
+        nanosleep(&timeout, &r);
+        if (execlp("dlt-example-user", "dlt-example-user", "-n 1",
+                   "you should see this message", NULL))
+            return errno;
     }
     else if (pid == -1) /* error in fork */
     {
@@ -58,7 +68,7 @@ int main()
     }
     else { /* parent */
         DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Parent's first message after fork, pid: "), DLT_INT32(getpid()));
-        usleep(500000);
+        nanosleep(&timeout, &r);
     }
 
     DLT_UNREGISTER_APP()
