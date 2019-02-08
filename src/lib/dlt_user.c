@@ -1086,10 +1086,10 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     /* Double registration is already checked by daemon */
 
     /* Allocate or expand context array */
-    if (dlt_user.dlt_ll_ts == 0) {
+    if (dlt_user.dlt_ll_ts == NULL) {
         dlt_user.dlt_ll_ts = (dlt_ll_ts_type *)malloc(sizeof(dlt_ll_ts_type) * DLT_USER_CONTEXT_ALLOC_SIZE);
 
-        if (dlt_user.dlt_ll_ts == 0) {
+        if (dlt_user.dlt_ll_ts == NULL) {
             DLT_SEM_FREE();
             return DLT_RETURN_ERROR;
         }
@@ -1129,7 +1129,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
         dlt_user.dlt_ll_ts = (dlt_ll_ts_type *)malloc(sizeof(dlt_ll_ts_type) *
                                                       dlt_user.dlt_ll_ts_max_num_entries);
 
-        if (dlt_user.dlt_ll_ts == 0) {
+        if (dlt_user.dlt_ll_ts == NULL) {
             dlt_user.dlt_ll_ts = old_ll_ts;
             dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
             DLT_SEM_FREE();
@@ -3127,7 +3127,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (dlt_user.dlt_ll_ts == 0)
+    if (dlt_user.dlt_ll_ts == NULL)
         return DLT_RETURN_ERROR;
 
     if (handle->trace_status_ptr && (*(handle->trace_status_ptr) == DLT_TRACE_STATUS_ON)) {
