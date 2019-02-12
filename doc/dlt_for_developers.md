@@ -10,12 +10,10 @@ Table of Contents
 5. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
 6. [DLT API Usage](#DLT-API-Usage)
 7. [DLT injection messages](#DLT-Injection-Messages)
-8.1	Log level changed callback	21
-9	Build DLT from source	21
-
- 
+8. [Log level changed callback](#Log-level-changed-callback)
 
 ## DLT Example Application
+
 This example gives an overview of DLT usage inside an application by using a minimal code example. Detailed information about the API can be found later in this document.
 
 ```
@@ -41,43 +39,51 @@ int main()
 }
 ```
 
-DLT is quite easy to use. The first thing a developer has to do is to include the dlt header file. DLT contexts can be statically declared using the macro shown in next line.  
-Firstly, a DLT application has to be registered inside the main function. For this, an application identifier APID and application description has to be specified. Afterwards, one or more DLT contexts could be specified.  
+DLT is quite easy to use. The first thing a developer has to do is to include the dlt header file. DLT contexts can be statically declared using the macro shown in next line.
+Firstly, a DLT application has to be registered inside the main function. For this, an application identifier APID and application description has to be specified. Afterwards, one or more DLT contexts could be specified.
 To log messages in verbose mode, the DLT_LOG macro can be used. As parameter, the logging context, the log level and a variable list of parameters have to be specified. DLT requires each parameter to be strongly typed using DLT type macros. In this example, DLT_CSTRING  is used to specify a constant string.
-On application cleanup, all DLT contexts, as well as the DLT application have to be unregistered.  
+On application cleanup, all DLT contexts, as well as the DLT application have to be unregistered.
 
 ## General Rules for Logging
+
 ### Be Smart
+
 Before implementing logging in code one should take a second to think about a concept first. Often strategic places in the software can be used as a central place for logging. Such places are often interfaces to other SW components. Use the solution with the smallest impact. Avoid logging the “good cases” but log e.g. in your error handling sections – you will need error handling anyway. In case an error occurred more logs don’t matter as long as your regular code produces little logs. Keep in mind that tracing comes with a price tag – you are working in an embedded environment where CPU, memory and Bandwidth are sparse.
+
 ### Avoid high frequency outputs
+
 Certain events occur very often in a system – some of them dozens of times per second. In such a case do not implement logging for each occurrence. One example is the screen frame rate. Instead of printing a log for each frame rate aggregate the information and print an average once every five seconds or – even better – report once a second if the frame rate is below a critical value.
+
 ### Combine multiple messages
+
 Please always consider that each Log message creates a certain overhead. In case of DLT as the way of logging each has a header of 20 bytes. Therefore please aggregate information. In this way all necessary information is always combined.
 Please always use a human readable format; use identifiers for the different values, be consistent with separators. This helps to work with the data, especially when log messages are processed by scripts.
 Such scripts often use regular expressions – make the job easier!
 For example don’t write log entries like this:
 
-```
-Total frames:  1000
-Sync frames:   0
-Reem frames:   0
-Valid frames:  100
-Urgent frames: 0
-```
+
+> Total frames:  1000
+> Sync frames:   0
+> Reem frames:   0
+> Valid frames:  100
+> Urgent frames: 0
 
 Better aggregate Information into a single message:
-```
-Frame info: total=1000, sync=0, reem=1000, valid=0, urgent=1
-```
+
+> Frame info: total=1000, sync=0, reem=1000, valid=0, urgent=1
 
 ### Do not use ASCII-art
+
 Information should be “on your fingertips”. Logging is a tool to ease crushing bugs, not to win a computer art contest. → Don’t use ASCII Art!
 
 ### Do not create charts using ASCII
+
 Charts can be a great help to visualize what is going on in the system. This type can be nicely done by a trace analysis or in case of usage of the DLT Viewer, in a Plugin. It certainly should always be done in a post processing step. Doing this on the target is a waste of resources.
 
 ### Avoid tracing in loops
+
 Bad example:
+
 ```
 for(int index=0; index<MAX; index++)
 {
@@ -85,7 +91,9 @@ for(int index=0; index<MAX; index++)
   /* ... */
 }
 ```
+
 Good example:
+
 ```
 for(int index=0; index<MAX; index++)
 {
@@ -96,6 +104,7 @@ LOG("Loop count: %d", index);
 ```
 
 ### Other do and avoids
+
 Topic | Description
 --- | ---
 Avoid timestamps | Do not include a timestamp in your log messages. In case of DLT the logging system itself already provides a timestamp.
@@ -109,7 +118,9 @@ Do not log to the console | Do not use _printf()_ or similar statements to trace
 Do  “macrotize” dlt macros | Don’t write your own macros to capsulate DLT macros.
 
 ## The use of Log Levels
+
 ###	Overview
+
 The following log levels are available in DLT:
 
 Log Level | Description
@@ -125,92 +136,113 @@ Please be aware the the default Log Level is set to INFO: This means message whi
 Hint: The default Log Level can be changed by setting an environment variable (see DLT Library - runtime configuration).
 
 ### What to log at FATAL level
+
 Fatal errors are the most serious error and should be very rare. They are, for example:
--	Errors that cause the whole system to fail
--	A corrupted boot environment which prevents system boot
--	A critical hardware component is missing, failing or is preventing start-up.
--	When your software/process/component exits due to a fatal error. Log the EXIT and the reason.
--	Failure of a major critical component to start
+
+- Errors that cause the whole system to fail
+- A corrupted boot environment which prevents system boot
+- A critical hardware component is missing, failing or is preventing start-up.
+- When your software/process/component exits due to a fatal error. Log the EXIT and the reason.
+- Failure of a major critical component to start
 
 ### What to log at ERROR level
+
 This level is reserved for errors which impact the correct functionality of the system or its components. Errors related to connected customer devices such as phones should be logged at INFO level. Error level logs may be:
--	A non-critical component is failing or cannot be found
--	A system component is crashing
--	A system essential file can’t be read or written
--	Detection of corrupted network messages, files, etc. when these impact correct
--	Some major functionality could not be provided (e.g. the route in the navigation could not be calculated)
--	When your software/process/component exits due to an error. Log the EXIT and reason
+
+- A non-critical component is failing or cannot be found
+- A system component is crashing
+- A system essential file can’t be read or written
+- Detection of corrupted network messages, files, etc. when these impact correct
+- Some major functionality could not be provided (e.g. the route in the navigation could not be calculated)
+- When your software/process/component exits due to an error. Log the EXIT and reason
 
 ### What to log at WARNING level
+
 This level must be used for problems where a correct behavior cannot be ensured, i.e. problems that could affect the correct functionality of the system or its components. Warnings related to connected customer devices such as phones must be logged at INFO level. Examples for warning log messages could be: DLT dropping logs
--	No disk space available for core dump
--	Audio stream packet dropped
--	If a process of calculation takes longer than the time allowed in specification e.g. Calculation of route in the navigation takes longer than allowed
+
+- No disk space available for core dump
+- Audio stream packet dropped
+- If a process of calculation takes longer than the time allowed in specification e.g. Calculation of route in the navigation takes longer than allowed
 
 ### What to log at INFO level
+
 This level is reserved for key information and high-level events which are not errors or warnings of the system itself or of connected consumer devices.
--	Start and non-error related stop of software components. Include version information in start log.
--	Detection of key hardware components. Include key HW information in log.
--	Customer device connected. Include key device and media info.
--	Customer device detached or connection lost.
--	Failure to connect to customer device. Include reason
--	Corrupted disk, song, photo, etc. on customer device.
--	Key system/HW information at start-up
--	Information needed for reproducing and understanding user activity
--	Information for reproducing the environment (Large volume data such as GPS traces should be logged at a reasonable rate. Especially with very frequent logs it should be taken care of that no redundancy occurs)
--	Key information used for KPI (Key performance index) reporting
+
+- Start and non-error related stop of software components. Include version information in start log.
+- Detection of key hardware components. Include key HW information in log.
+- Customer device connected. Include key device and media info.
+- Customer device detached or connection lost.
+- Failure to connect to customer device. Include reason
+- Corrupted disk, song, photo, etc. on customer device.
+- Key system/HW information at start-up
+- Information needed for reproducing and understanding user activity
+- Information for reproducing the environment (Large volume data such as GPS traces should be logged at a reasonable rate. Especially with very frequent logs it should be taken care of that no redundancy occurs)
+- Key information used for KPI (Key performance index) reporting
 
 ### What to log at DEBUG level
+
 This level should be used for debug information that can help developers debug the functionality of their software. For example:
--	Information about entering and exiting major procedures
--	Values of key variables, but not dumps of arrays and large number of variables
--	Information about events received
--	Network connection information
--	Debug relevant information about hardware
+
+- Information about entering and exiting major procedures
+- Values of key variables, but not dumps of arrays and large number of variables
+- Information about events received
+- Network connection information
+- Debug relevant information about hardware
 
 ### What to log at VERBOSE level
+
 This level is the most detailed level and should be used for in depth debug information that can help developers debug the functionality of their software. For example:
--	Detailed trace information
--	Dumps of a large number of variables, dumps of arrays and structures
--	Detailed information about events received, even events that happen very frequently
--	Detailed network connection information
--	Detailed hardware information
--	Information about loops and iterations
+
+- Detailed trace information
+- Dumps of a large number of variables, dumps of arrays and structures
+- Detailed information about events received, even events that happen very frequently
+- Detailed network connection information
+- Detailed hardware information
+- Information about loops and iterations
 
 ## DLT Library Runtime Configuration
+
 The DLT library can be configured at runtime – globally or for a specific process – by setting different environment variables. In the following, these environment variables are described:
+
 ###	Initial Log level
-The default log level of DLT User library is DLT_LOG_INFO. This can be changed using a DLT client application (e.g. DLT Viewer). But there might be situations where DEBUG or VERBOSE messages are needed before the DLT Daemon updated the user library.  
-In this case DLT_INITIAL_LOG_LEVEL can be exported. Using this environment variable, the user can specify log level for contexts that will be used on library startup.  
+
+The default log level of DLT User library is DLT_LOG_INFO. This can be changed using a DLT client application (e.g. DLT Viewer). But there might be situations where DEBUG or VERBOSE messages are needed before the DLT Daemon updated the user library.
+
+In this case DLT_INITIAL_LOG_LEVEL can be exported. Using this environment variable, the user can specify log level for contexts that will be used on library startup.
+
 For example, an application “EXA1” has two contexts “CON1” and “CON2”. For “CON1” log level DEBUG and for “CON2” log level VERBOSE shall be used. The following has to be exported to configure the library:
-```
- export DLT_INITIAL_LOG_LEVEL=”EXA1:CON1:5;EXA1:CON2:6”
-```
+
+> export DLT_INITIAL_LOG_LEVEL=”EXA1:CON1:5;EXA1:CON2:6”
 
 ### Local print mode
+
 Sometimes it might be useful to print DLT messages for debugging directly to console. To force the library to do so, the following environment variable can be exported:
-```
-export DLT_LOCAL_PRINT_MODE=FORCE_ON
-```
+
+> export DLT_LOCAL_PRINT_MODE=FORCE_ON
+
+
 ###	Library buffer size
+
 The DLT library contains a message buffer in case the DLT Daemon is not started yet or the connection to DLT Daemon is temporarily lost. The buffer is allocated while library initialization with a minimum size. If more messages need to be stored, the buffer grows in defined steps up to a maximum size. In case messages are flushed to DLT Daemon, the buffer is reduced to its minimal size. The default values and the environment variable names to set these values are described below:
 
-|	| Default value [in bytes] |	Environment variable name
+| | Default value [in bytes] |	Environment variable name
 --- | --- | ---
 Minimal size | 50000 | DLT_USER_BUFFER_MIN
 Maximal size | 500000 | DLT_USER_BUFFER_MAX
 Step size | 50000 | DLT_USER_BUFFER_STEP
 
 For example, to limit the maximum buffer size to 250k bytes, the following can be exported:
-```
-export DLT_USER_BUFFER_MAX=250000
-```
+
+> export DLT_USER_BUFFER_MAX=250000
 
 ## DLT API Usage
 
 ### Register application
-**Important note**: If the application uses _fork()_, DLT_REGISTER_APP may not be called before fork().  
+
+**Important note**: If the application uses _fork()_, DLT_REGISTER_APP may not be called before fork().
+
 The DLT application has to be registered as early as possible during the initialization of the application by calling DLT_REGISTER_APP(). It is only allowed to call DLT_REGISTER_APP() once per application. An application id (maximum four characters) has to be specified and must be unique within an ECU. In this example "MAPP" is used. And also a description for the application can be specified, here it is "Test Application for Logging".
+
 ```
 int main(int argc, const char* argv[])
 {
@@ -221,20 +253,27 @@ int main(int argc, const char* argv[])
 DLT_REGISTER_APP is asynchronous. It may take some milliseconds to establish the IPC channel. Because of this, messages might be lost if logs are emitted immediately after registering. Typically this is not a problem, but may arise especially with simple examples.
 
 ### Define and register all logging contexts
+
 As many contexts as needed can be defined. These contexts can be declared as contexts in different C or CPP files. But each context is only allowed to be declared once. Therefore a unique variable name for each context has to be used.
+
 ```
 DLT_DECLARE_CONTEXT(myContext1);
 DLT_DECLARE_CONTEXT(myContext2);
 DLT_DECLARE_CONTEXT(myContext3);
 ```
+
 If contexts from another C or CPP file shall be used, these contexts can be imported by calling:
+
 ```
 DLT_IMPORT_CONTEXT(myContext1);
 DLT_IMPORT_CONTEXT(myContext2);
 DLT_IMPORT_CONTEXT(myContext3);
 ```
+
 After the application is registered and contexts are declared, contexts need to be registered early during initialization of the application. DLT_REGISTER_CONTEXT() shall not be called before DLT_REGISTER_APP().
+
 During registration of each context, a context id must be provided (maximum four characters long). In this example "TESX" is used. Also a description for the context can be provided; here it is "Test Context X for Logging". A context can also be registered with a predefined Log Level and Trace Status by using the Macro DLT_REGISTER_CONTEXT_LL_TS. The third context is registered using this method.
+
 ```
 int main(int argc, const char* argv[])
 {
@@ -247,7 +286,9 @@ int main(int argc, const char* argv[])
 ```
 
 ### Unregister contexts and application
+
 Before terminating the application registered contexts and at last the application need to be unregistered.
+
 ```
 int main(int argc, const char* argv[])
 {
@@ -264,13 +305,17 @@ int main(int argc, const char* argv[])
 ```
 
 ### Logging command
+
 DLT provides functions and macros for logging, whereas the interface for Verbose and Non-Verbose differs. The following table shows an example of all 4 types for logging using a constant string and an integer.
 
 #### Verbose vs. Non-Verbose API
+
 The following table shows an example of all 4 types for logging e.g. a string and an integer.
 
 ##### MACRO
+
 ###### Verbose
+
 ```DLT_LOG(ctx, DLT_LOG_INFO, DLT_STRING("ID: "), DLT_UINT32(123));```
 
 ###### Non-Verbose
@@ -316,13 +361,16 @@ else {
 ```
 
 ##### Switching Verbose and Non-Verbose
+
 To switch Verbose/Non-Verbose mode (Verbose mode is default), the following APIs are available:
+
 ```
 DLT_VERBOSE_MODE();
 DLT_NONVERBOSE_MODE();
 ```
 
 ### Logging parameters
+
 The following parameter types can be used. Multiple parameters can be added to a single log message. The size of all logging parameters together should not exceed 1390 bytes, including the DLT message header.
 
 Type | Description
@@ -353,6 +401,7 @@ DLT_BIN16(UINT_VAR | 16 Bit binary value
 DLT_PTR(PTR_VAR) | Architecture independent macro to print pointers
 
 ###	DLT C++ Extension
+
 Important note: By default, C++ Extension is disabled in ADIT platform. It can be enabled by setting the CMake option: *WITH_DLT_CXX11_EXT=ON*.
 The DLT C++ extension was added to DLT in version 2.13 . This approach solves the need to specify the type of each argument for applications written in C++ by using C++ templates and function overloading. The following shows the usage of this API extension:
 
@@ -360,12 +409,12 @@ The DLT C++ extension was added to DLT in version 2.13 . This approach solves th
 #define DLT_LOG_CXX(CONTEXT, LOGLEVEL, ...)
 #define DLT_LOG_FCN_CXX(CONTEXT, LOGLEVEL, ...)
 
-
 DLT_LOG_CXX(ctx, DLT_LOG_WARN, 1.0, 65);
 DLT_LOG_FCN_CXX(ctx, DLT_LOG_WARN, "Test String", 145, 3.141);
 ```
 
 This works as well with C++ standard containers like std::vector, std::map, std::list. Of course, the logToDlt function can be overloaded to print user defined structures or classes.
+
 ```
 struct MyStruct
 {
@@ -397,32 +446,35 @@ inline int logToDlt(DltContextData & log, MyStruct const & value)
 ```
 
 ###	Check if a specific Log Level is enabled
+
 In some scenarios it might be necessary to check if a specific Log Level is enabled or not, before log data is send to DLT Library. The macro is defined as follows:
-DLT_IS_LOG_LEVEL_ENABLED(CONTEXT,LOGLEVEL)
+
+> DLT_IS_LOG_LEVEL_ENABLED(CONTEXT,LOGLEVEL)
+
 In general, there is no need to check the active Log Level to decide if a log message can be send to not. This is handled inside the DLT_LOG macro.
 
 ## DLT Injection Messages
+
 DLT provides an interface to register injection callbacks which can be sent by a DLT Client (e.g. DLT Viewer) to the application. An injection message callback is always registered for a specific context. The API to register a callback is defined as follows:
 
-```
-DLT_REGISTER_INJECTION_CALLBACK(CONTEXT, SERVICEID, CALLBACK);
-```
+> DLT_REGISTER_INJECTION_CALLBACK(CONTEXT, SERVICEID, CALLBACK);
 
 Injection message Service IDs must be bigger than 0xFFF, because IDs up to 0xFFF are reserved for DLT Daemon control messages.  
 The callback function needs to have the following definition:
-```
-int injection_callback(uint32_t service_id, void *data, uint32_t length);
-```
+
+> int injection_callback(uint32_t service_id, void *data, uint32_t length);
+
 For example, registering a callback function for a specific context with the service ID 0x1000 might look like:
-```
-DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, injection_callback);
-```
+
+
+> DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, injection_callback);
+
 From DLT Viewer, an injection message can be sent by right-clicking the corresponding context in the project view (“Send injection”). A dialog will pop up to specify the injection data as shown below.
 
 ![alt text](images/dlt-viewer-send-injection-dialog.png "DLT Viewer Send Injection Callback")
 
 ## Log level changed callback
+
 A callback function can be registered to be called whenever the Log Level of a context changed. The usage is similar to DLT_REGISTER_INJECTION_CALLBACK.
-```
-DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(CONTEXT, CALLBACK)
-```
+
+> DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(CONTEXT, CALLBACK)
