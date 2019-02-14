@@ -94,8 +94,8 @@ extern "C" {
 #   define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)    /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
-#   define DLT_SEM_LOCK() { sem_wait(&dlt_mutex); }
-#   define DLT_SEM_FREE() { sem_post(&dlt_mutex); }
+#   define DLT_SEM_LOCK() { sem_wait(dlt_mutex); }
+#   define DLT_SEM_FREE() { sem_post(dlt_mutex); }
 
 /**
  * This structure is used for every context used in an application.
@@ -502,6 +502,14 @@ DltReturnValue dlt_init_file(const char *name);
 DltReturnValue dlt_free();
 
 /**
+ * Terminate the user lib.
+ * Fix for popen()/fork() issue.
+ * New method instead of dlt_free call dlt_force_free. Which is called in dlt_fork_child_fork_handler()
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_force_free();
+
+ /**
  * Check the library version of DLT library.
  * @param user_major_version the major version to be compared
  * @param user_minor_version the minor version to be compared
