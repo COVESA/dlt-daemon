@@ -89,7 +89,7 @@ static char dlt_daemon_fifo[NAME_MAX + 1];
 
 static char str[DLT_USER_BUFFER_LENGTH];
 
-static sem_t dlt_mutex;
+static sem_t *dlt_mutex;
 static pthread_t dlt_receiverthread_handle;
 
 /* calling dlt_user_atexit_handler() second time fails with error message */
@@ -104,8 +104,8 @@ static int g_dlt_is_child = 0;
 #define DLT_DELAYED_RESEND_INDICATOR_PATTERN 0xFFFF
 
 /* Mutex to wait on while message queue is not initialized */
-pthread_mutex_t mq_mutex;
-pthread_cond_t mq_init_condition;
+pthread_mutex_t *mq_mutex;
+pthread_cond_t *mq_init_condition;
 
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
@@ -353,6 +353,38 @@ DltReturnValue dlt_init(void)
     /* WARNING: multithread unsafe ! */
     /* Another thread will check that dlt_user_initialised != 0, but the lib is not initialised ! */
     dlt_user_initialised = true;
+    if (dlt_mutex == NULL) {
+        dlt_mutex = (sem_t *)malloc (sizeof(sem_t));
+        if (dlt_mutex == NULL) {
+            dlt_vnlog(LOG_ERR, DLT_USER_BUFFER_LENGTH, "cannot allocate memory!\n");
+            dlt_user_initialised = false;
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    if (mq_init_condition == NULL) {
+        mq_init_condition = (pthread_cond_t *)malloc (sizeof(pthread_cond_t));
+        if (mq_init_condition == NULL) {
+            dlt_vnlog(LOG_ERR, DLT_USER_BUFFER_LENGTH, "cannot allocate memory!\n");
+            free(dlt_mutex);
+            dlt_mutex = NULL;
+            dlt_user_initialised = false;
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    if (mq_mutex == NULL) {
+        mq_mutex = (pthread_mutex_t *)malloc (sizeof(pthread_mutex_t));
+        if (mq_mutex == NULL) {
+            dlt_vnlog(LOG_ERR, DLT_USER_BUFFER_LENGTH, "cannot allocate memory!\n");
+            free(mq_init_condition);
+            mq_init_condition = NULL;
+            free(dlt_mutex);
+            dlt_mutex = NULL;
+            dlt_user_initialised = false;
+            return DLT_RETURN_ERROR;
+        }
+    }
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
     if (dlt_init_common() == DLT_RETURN_ERROR) {
@@ -418,9 +450,9 @@ DltReturnValue dlt_init(void)
         return DLT_RETURN_ERROR;
     }
 
-    pthread_mutex_init(&mq_mutex, &attr);
+    pthread_mutex_init(mq_mutex, &attr);
     pthread_mutexattr_destroy(&attr);
-    pthread_cond_init(&mq_init_condition, NULL);
+    pthread_cond_init(mq_init_condition, NULL);
 
     if (dlt_start_threads() < 0) {
         dlt_user_initialised = false;
@@ -462,12 +494,12 @@ DltReturnValue dlt_init_file(const char *name)
 
 DltReturnValue dlt_init_message_queue(void)
 {
-    dlt_lock_mutex(&mq_mutex);
+    dlt_lock_mutex(mq_mutex);
 
     if ((dlt_user.dlt_segmented_queue_read_handle >= 0) &&
         (dlt_user.dlt_segmented_queue_write_handle >= 0)) {
         /* Already intialized */
-        dlt_unlock_mutex(&mq_mutex);
+        dlt_unlock_mutex(mq_mutex);
         return DLT_RETURN_OK;
     }
 
@@ -506,7 +538,7 @@ DltReturnValue dlt_init_message_queue(void)
 
         if (dlt_user.dlt_segmented_queue_read_handle < 0) {
             dlt_vnlog(LOG_CRIT, 256, "Can't create message queue read handle!: %s \n", strerror(errno));
-            dlt_unlock_mutex(&mq_mutex);
+            dlt_unlock_mutex(mq_mutex);
             return DLT_RETURN_ERROR;
         }
     }
@@ -516,12 +548,12 @@ DltReturnValue dlt_init_message_queue(void)
     if (dlt_user.dlt_segmented_queue_write_handle < 0) {
 
         dlt_vnlog(LOG_CRIT, 256, "Can't open message queue write handle!: %s \n", strerror(errno));
-        dlt_unlock_mutex(&mq_mutex);
+        dlt_unlock_mutex(mq_mutex);
         return DLT_RETURN_ERROR;
     }
 
-    pthread_cond_signal(&mq_init_condition);
-    dlt_unlock_mutex(&mq_mutex);
+    pthread_cond_signal(mq_init_condition);
+    dlt_unlock_mutex(mq_mutex);
     return DLT_RETURN_OK;
 }
 
@@ -539,7 +571,7 @@ DltReturnValue dlt_init_common(void)
     uint32_t buffer_max_configured = 0;
 
     /* Binary semaphore for threads */
-    if (sem_init(&dlt_mutex, 0, 1) == -1) {
+    if (sem_init(dlt_mutex, 0, 1) == -1) {
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
     }
@@ -928,13 +960,157 @@ DltReturnValue dlt_free(void)
     dlt_user.dlt_segmented_queue_read_handle = -1;
     mq_unlink(queue_name);
 
-    pthread_cond_destroy(&mq_init_condition);
-    pthread_mutex_destroy(&mq_mutex);
-    sem_destroy(&dlt_mutex);
+    pthread_cond_destroy(mq_init_condition);
+    pthread_mutex_destroy(mq_mutex);
+    sem_destroy(dlt_mutex);
 
+    if(!mq_init_condition)
+    {
+    	free(mq_init_condition);
+    	mq_init_condition = NULL;
+    }
+    if(!mq_mutex)
+    {
+    	free(mq_mutex);
+    	mq_mutex = NULL;
+    }
+    if(!dlt_mutex)
+    {
+    	free(dlt_mutex);
+    	dlt_mutex = NULL;
+    }
     /* allow the user app to do dlt_init() again. */
     /* The flag is unset only to keep almost the same behaviour as before, on EntryNav */
     /* This should be removed for other projects (see documentation of dlt_free() */
+    dlt_user_freeing = 0;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_force_free(void)
+{
+    uint32_t i;
+    char filename[DLT_USER_MAX_FILENAME_LENGTH];
+
+    if( dlt_user_freeing != 0 )
+        // resources are already being freed. Do nothing and return.
+        return DLT_RETURN_ERROR;
+
+    // library is freeing its resources. Avoid to allocate it in dlt_init()
+    dlt_user_freeing = 1;
+
+    if (!dlt_user_initialised)
+    {
+        dlt_user_freeing = 0;
+        return DLT_RETURN_ERROR;
+    }
+    dlt_user_initialised = false;
+
+    if (dlt_user.dlt_user_handle!=DLT_FD_INIT)
+    {
+        snprintf(filename,DLT_USER_MAX_FILENAME_LENGTH,"%s/dlt%d",dlt_user_dir,getpid());
+        dlt_log(LOG_WARNING,filename);
+        close(dlt_user.dlt_user_handle);
+        dlt_user.dlt_user_handle=DLT_FD_INIT;
+
+        unlink(filename);
+    }
+
+#ifdef DLT_SHM_ENABLE
+    /* free shared memory */
+    dlt_shm_free_client(&dlt_user.dlt_shm);
+#endif
+
+    if (dlt_user.dlt_log_handle!=-1)
+    {
+        /* close log file/output fifo to daemon */
+        close(dlt_user.dlt_log_handle);
+        dlt_user.dlt_log_handle = -1;
+    }
+
+    /* Ignore return value */
+    dlt_receiver_free(&(dlt_user.receiver));
+
+    /* Ignore return value */
+    dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
+
+    if (dlt_user.dlt_ll_ts)
+    {
+        for (i=0;i<dlt_user.dlt_ll_ts_max_num_entries;i++)
+        {
+            if( dlt_user.dlt_ll_ts[i].context_description != NULL)
+            {
+                free (dlt_user.dlt_ll_ts[i].context_description);
+                dlt_user.dlt_ll_ts[i].context_description = NULL;
+            }
+
+            if (dlt_user.dlt_ll_ts[i].log_level_ptr != NULL)
+            {
+                free(dlt_user.dlt_ll_ts[i].log_level_ptr);
+                dlt_user.dlt_ll_ts[i].log_level_ptr = NULL;
+            }
+
+            if (dlt_user.dlt_ll_ts[i].trace_status_ptr != NULL)
+            {
+                free(dlt_user.dlt_ll_ts[i].trace_status_ptr);
+                dlt_user.dlt_ll_ts[i].trace_status_ptr = NULL;
+            }
+
+            if (dlt_user.dlt_ll_ts[i].injection_table != NULL)
+            {
+                free(dlt_user.dlt_ll_ts[i].injection_table);
+                dlt_user.dlt_ll_ts[i].injection_table = NULL;
+            }
+            dlt_user.dlt_ll_ts[i].nrcallbacks     = 0;
+            dlt_user.dlt_ll_ts[i].log_level_changed_callback = 0;
+        }
+
+        free(dlt_user.dlt_ll_ts);
+        dlt_user.dlt_ll_ts = NULL;
+        dlt_user.dlt_ll_ts_max_num_entries = 0;
+        dlt_user.dlt_ll_ts_num_entries = 0;
+    }
+
+    dlt_env_free_ll_set(&dlt_user.initial_ll_set);
+
+    char queue_name[NAME_MAX];
+    snprintf(queue_name,NAME_MAX, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+
+    /**
+     * Ignore errors from these, to not to spam user if dlt_free
+     * is accidentally called multiple times.
+     */
+    mq_close(dlt_user.dlt_segmented_queue_write_handle);
+    mq_close(dlt_user.dlt_segmented_queue_read_handle);
+    dlt_user.dlt_segmented_queue_write_handle = -1;
+    dlt_user.dlt_segmented_queue_read_handle = -1;
+    mq_unlink(queue_name);
+
+    /*
+     * sem/mutex/condvar cannot be destroyed in the child context as child is
+     * not the owner of the lock when it is already contended before fork().
+     * Hence performing a force free, as in the child context a copy of the
+     * sem/mutex/condvar is being held anyway!
+     */
+    if(!mq_init_condition)
+    {
+    	free(mq_init_condition);
+    	mq_init_condition = NULL;
+    }
+    if(!mq_mutex)
+    {
+    	free(mq_mutex);
+    	mq_mutex = NULL;
+    }
+    if(!dlt_mutex)
+    {
+    	free(dlt_mutex);
+    	dlt_mutex = NULL;
+    }
+
+    // allow the user app to do dlt_init() again.
+    // The flag is unset only to keep almost the same behaviour as before, on EntryNav
+    // This should be removed for other projects (see documentation of dlt_free()
     dlt_user_freeing = 0;
 
     return DLT_RETURN_OK;
@@ -2921,12 +3097,12 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
     while (1) {
         /* Wait until message queue is initialized */
-        dlt_lock_mutex(&mq_mutex);
+        dlt_lock_mutex(mq_mutex);
 
         if (dlt_user.dlt_segmented_queue_read_handle < 0)
-            pthread_cond_wait(&mq_init_condition, &mq_mutex);
+            pthread_cond_wait(mq_init_condition, mq_mutex);
 
-        dlt_unlock_mutex(&mq_mutex);
+        dlt_unlock_mutex(mq_mutex);
 
         ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
                                   sizeof(s_segmented_data *), NULL);
@@ -4731,7 +4907,20 @@ void dlt_stop_threads()
 static void dlt_fork_child_fork_handler()
 {
     g_dlt_is_child = 1;
-    dlt_user_initialised = false;
+    if (dlt_user_initialised) {
+        /* don't start anything else but cleanup everything and avoid blow-out of buffers*/
+        dlt_user.dlt_log_handle = -1;
+        dlt_log_free();
+    /*
+     * calling dlt_free here causes locks to be held which causes permanent
+     * hang in child context when any of the parent threads already obtain
+     * the lock before fork! Since in the child context the resouces which
+     * is a copy of the parent is not under any contention and can be free'd up
+     * without having any locks dlt_force_free is introduced.
+    */
+    dlt_force_free();
+        /* the only thing that remains is the atexit-handler */
+    }
 }
 
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
