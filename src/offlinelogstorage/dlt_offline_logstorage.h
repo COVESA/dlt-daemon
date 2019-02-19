@@ -54,7 +54,6 @@
 #define DLT_OFFLINE_LOGSTORAGE_H
 
 #include <search.h>
-#include <stdbool.h>
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_config_file_parser.h"
@@ -125,6 +124,7 @@ typedef struct
     unsigned int offset;          /* current write offset */
     unsigned int wrap_around_cnt; /* wrap around counter */
     unsigned int last_sync_offset; /* last sync position */
+    unsigned int end_sync_offset; /* end position of previous round */
 } DltLogStorageCacheFooter;
 
 typedef struct
@@ -164,6 +164,8 @@ struct DltLogStorageFilterConfig
                                   char *dev_path,
                                   int log_msg_size);
     int (*dlt_logstorage_write)(DltLogStorageFilterConfig *config,
+                                DltLogStorageUserConfig *file_config,
+                                char *dev_path,
                                 unsigned char *data1,
                                 int size1,
                                 unsigned char *data2,
@@ -180,10 +182,6 @@ struct DltLogStorageFilterConfig
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
-    unsigned int total_write_count; /* total count of data need to sync to file */
-    bool pre_cache_sync;            /* sync done in previous wrap around */
-    bool cur_cache_sync;            /* sync done in present cache */
-    bool sync_from_start;           /* sync done from start of cache */
     DltLogStorageFileList *records; /* File name list */
 };
 

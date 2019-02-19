@@ -89,11 +89,11 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
  * @return 0 on success, -1 on error
  */
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
+                                           DltLogStorageUserConfig *uconfig,
+                                           char *dev_path,
                                            int reason)
 {
     DltLogStorageFilterList *tmp = NULL;
-    DltLogStorageUserConfig *uconfig = NULL;
-    char *dev_path = NULL;
 
     while (*(list) != NULL) {
         tmp = *list;
@@ -295,7 +295,8 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
         return;
     }
 
-    dlt_logstorage_list_destroy(&(handle->config_list), reason);
+    dlt_logstorage_list_destroy(&(handle->config_list), &handle->uconfig,
+                                handle->device_mount_point, reason);
 }
 
 
@@ -2032,6 +2033,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
         if (ret == 0) { /* log data (write) */
             ret = config[i]->dlt_logstorage_write(config[i],
+                                                  uconfig,
+                                                  handle->device_mount_point,
                                                   data1,
                                                   size1,
                                                   data2,

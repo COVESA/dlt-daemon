@@ -1115,9 +1115,20 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
         /* call disconnect on all currently connected devices */
         if (daemon->storage_handle[i].connection_type ==
             DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+        {
+            (&daemon->storage_handle[i])->uconfig.logfile_counteridxlen =
+                                        daemon_local->flags.offlineLogstorageMaxCounterIdx;
+            (&daemon->storage_handle[i])->uconfig.logfile_delimiter =
+                                        daemon_local->flags.offlineLogstorageDelimiter;
+            (&daemon->storage_handle[i])->uconfig.logfile_maxcounter =
+                                        daemon_local->flags.offlineLogstorageMaxCounter;
+            (&daemon->storage_handle[i])->uconfig.logfile_timestamp =
+                                        daemon_local->flags.offlineLogstorageTimestamp;
+
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
                 DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
+        }
 
     return 0;
 }

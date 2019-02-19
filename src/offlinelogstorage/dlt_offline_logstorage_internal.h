@@ -51,6 +51,8 @@
 #define DLT_OFFLINE_LOGSTORAGE_INTERNAL_H
 
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
+                                           DltLogStorageUserConfig *uconfig,
+                                           char *dev_path,
                                            int reason);
 
 DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,

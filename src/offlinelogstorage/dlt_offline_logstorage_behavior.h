@@ -58,6 +58,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                   char *dev_path,
                                   int log_msg_size);
 int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
+                                DltLogStorageUserConfig *file_config,
+                                char *dev_path,
                                 unsigned char *data1,
                                 int size1,
                                 unsigned char *data2,
@@ -79,6 +81,8 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
                                      int log_msg_size);
 
 int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
+                                   DltLogStorageUserConfig *file_config,
+                                   char *dev_path,
                                    unsigned char *data1,
                                    int size1,
                                    unsigned char *data2,
