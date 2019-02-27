@@ -135,6 +135,45 @@ Read gateway configuration from another location
 
     Default: /etc/dlt_gateway.conf
 
+# Permission configuration
+
+DLT daemon runs with e.g.
+ User: genivi_dlt
+ Group: genivi_dlt
+
+DLT user applications run with different user and group than dlt-daemon but with supplimentory group: dlt_user_apps_group
+
+<basedir>/dlt FIFO will be created by dlt-daemon with
+    User: genivi_dlt
+    Group: dlt_user_apps_group
+    Permission: 620
+
+so that only dlt-daemon can read and only processes in dlt_user_apps_group can write.
+
+<basedir>/dltpipes will be created by dlt-daemon with
+    User: genivi_dlt
+    Group: genivi_dlt
+    Permission: 3733 (i.e Sticky bit and SGID turned on)
+
+<basedir>/dltpipes/dlt<PID> FIFO will be created by dlt application (user lib) with
+    User: <user of the application>
+    Group: genivi_dlt (inherited from <basedir>dltpipes/ due to SGID)
+    Permission: 620
+
+Thus DLT user applications (and also or attackers) can create the dlt<PID> FIFO
+(for communication from dlt-daemon to DLT user application) under <basedir>/dltpipes/. Since sticky bit is set the applications who creates the FIFO can only rename/delete it.
+
+Since SGID of <basedir>/dltpipes is set the group of dlt<PID> FIFO will be genivi_dlt which enables dlt daemon to have write permission on all the dlt<PID> FIFO.
+
+One dlt user application cannot access dlt<PID> FIFO created by other dlt user application(if they run with different user).
+
+Owner group of daemon FIFO directory(Default: /tmp/dlt) (If not set, primary group of dlt-daemon process is used).
+Application should have write permission to this group for tracing into dlt. For this opton to work, dlt-daemon should have this group in it's supplementary group.
+
+## DaemonFifoGroup
+
+    Default: group of dlt-daemon process
+
 # CONTROL APPLICATION OPTIONS
 
 ## ControlSocketPath
