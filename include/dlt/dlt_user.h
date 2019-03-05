@@ -486,6 +486,8 @@ DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
  */
 DltReturnValue dlt_init();
 
+DltReturnValue dlt_init_with_appid();
+
 /**
  * Initialize the user lib writing only to file.
  * This function has to be called first, before using any DLT user lib functions.

@@ -505,9 +505,9 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 
             if (close(application->user_handle) < 0)
                 dlt_vlog(LOG_WARNING,
-                         "close() failed to %s/dltpipes/dlt%d, errno=%d (%s)!\n",
+                         "close() failed to %s/dltpipes/dlt%.4s, errno=%d (%s)!\n",
                          dltFifoBaseDir,
-                         pid,
+                         apid,
                          errno,
                          strerror(errno)); /* errno 2: ENOENT - No such file or directory */
 
@@ -524,9 +524,9 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #else
         snprintf(filename,
                  DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                 "%s/dltpipes/dlt%d",
+                 "%s/dltpipes/dlt%.4s",
                  dltFifoBaseDir,
-                 pid);
+                 apid);
 
         dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 

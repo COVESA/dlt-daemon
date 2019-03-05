@@ -267,7 +267,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     return DLT_RETURN_OK;
 }
 #else /* setup fifo*/
-static DltReturnValue dlt_initialize_fifo_connection(void)
+static DltReturnValue dlt_initialize_fifo_connection(const char* appId)
 {
     char filename[DLT_USER_MAX_FILENAME_LENGTH];
     int ret;
@@ -295,7 +295,10 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     }
 
     /* create and open DLT user FIFO */
-    snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%d", dlt_user_dir, getpid());
+    if (appId == NULL)
+        snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%d", dlt_user_dir, getpid());
+    else
+        snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%s", dlt_user_dir, appId);
 
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
@@ -343,7 +346,12 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 }
 #endif
 
-DltReturnValue dlt_init(void)
+DltReturnValue dlt_init()
+{
+    return dlt_init_with_appid(NULL);
+}
+
+DltReturnValue dlt_init_with_appid(const char* appId)
 {
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0)
@@ -387,7 +395,7 @@ DltReturnValue dlt_init(void)
 
 #else /* FIFO connection */
 
-    if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
+    if (dlt_initialize_fifo_connection(appId) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     dlt_user.connection_state = DLT_USER_CONNECTED;
@@ -820,7 +828,7 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%d", dlt_user_dir, getpid());
+        snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%.4s", dlt_user_dir, dlt_user.appID);
         unlink(filename);
     }
 
@@ -954,7 +962,7 @@ DltReturnValue dlt_register_app(const char *appid, const char *description)
         return DLT_RETURN_ERROR;
 
     if (!dlt_user_initialised) {
-        if (dlt_init() < 0) {
+        if (dlt_init_with_appid(appid) < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
         }
