@@ -1,6 +1,6 @@
 # Diagnostic Log and Trace
 
-Build and Test status: ![build and test status](https://travis-ci.org/jardous/dlt-daemon.svg?branch=master)
+Build and Test status: [![build and test status](https://travis-ci.org/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.org/GENIVI/dlt-daemon)
 
 ## Overview
 
