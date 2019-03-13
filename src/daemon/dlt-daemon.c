@@ -2597,7 +2597,11 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                       daemon->ecuid,
                                       verbose);
 
-    if (context) {
+    /* In case the daemon is loaded with predefined contexts and its context
+     * unregisters, the context information will not be deleted from daemon's
+     * table until its parent application is unregistered.
+     */
+    if (context && context->predefined == false) {
         /* Delete this connection entry from internal table*/
         if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
             dlt_vlog(LOG_WARNING,

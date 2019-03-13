@@ -912,6 +912,14 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
     context->log_level_pos = log_level_pos;
     context->user_handle = user_handle;
 
+    /* In case a context is loaded from runtime config file,
+     * the user_handle is 0 and we mark that context as predefined.
+     */
+    if (context->user_handle == 0)
+        context->predefined = true;
+    else
+        context->predefined = false;
+
     /* Sort */
     if (new_context) {
         qsort(user_list->contexts,
