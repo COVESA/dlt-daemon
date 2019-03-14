@@ -285,6 +285,8 @@ int main(int argc, const char* argv[])
 }
 ```
 
+Note: Please be aware that it might be taken up to a second until the synchronization of loglevel between DLT Daemon and application is done.
+
 ### Unregister contexts and application
 
 Before terminating the application registered contexts and at last the application need to be unregistered.
