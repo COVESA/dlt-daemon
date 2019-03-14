@@ -87,9 +87,9 @@ if(WITH_MAN)
 					   /usr/local/bin)
 
 
-    if(NOT GZIP_TOOL)
+    if(NOT PANDOC_TOOL)
       MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
-    endif(NOT GZIP_TOOL)
+    endif(NOT PANDOC_TOOL)
 
 	set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 	set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
