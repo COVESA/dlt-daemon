@@ -143,6 +143,13 @@
 /* Retry interval for mq error in usec */
 #define DLT_USER_MQ_ERROR_RETRY_INTERVAL 100000
 
+/* Maximum retry count for reattach to dlt-daemon
+   (Default: 30 count  * 500000 usec = 15s) */
+#define DLT_USER_REATTACH_MAX_COUNT 30
+
+/* Retry interval for reattach to dlt-daemon (1000 usec = 1ms) */
+#define DLT_USER_REATTACH_INTERVAL 500000
+
 
 /* Name of environment variable to change the dlt log message buffer size */
 #define DLT_USER_ENV_LOG_MSG_BUF_LEN "DLT_LOG_MSG_BUF_LEN"
