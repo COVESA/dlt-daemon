@@ -2917,9 +2917,24 @@ void dlt_user_trace_network_segmented_thread(void *unused)
     prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
 #endif
 
+    int count = 0;
     s_segmented_data *data;
+    struct timespec reattach_interval;
+
+    reattach_interval.tv_sec = 0;
+    reattach_interval.tv_nsec = DLT_USER_REATTACH_INTERVAL;
 
     while (1) {
+        // Normally reattaching to dlt-daemon is triggered when app tries to output log.
+        // Even if the app outputs log only before starting up of the dlt-daemon,
+        // this retry loop helps reattaching.
+        while ((dlt_user.dlt_log_handle < 0) && (count < DLT_USER_REATTACH_MAX_COUNT))
+        {
+            dlt_user_log_reattach_to_daemon();
+            nanosleep(&reattach_interval, NULL);
+            count++;
+        }
+
         /* Wait until message queue is initialized */
         dlt_lock_mutex(&mq_mutex);
 
