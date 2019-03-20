@@ -922,11 +922,18 @@ DltReturnValue dlt_free(void)
      * Ignore errors from these, to not to spam user if dlt_free
      * is accidentally called multiple times.
      */
-    mq_close(dlt_user.dlt_segmented_queue_write_handle);
-    mq_close(dlt_user.dlt_segmented_queue_read_handle);
-    dlt_user.dlt_segmented_queue_write_handle = -1;
-    dlt_user.dlt_segmented_queue_read_handle = -1;
-    mq_unlink(queue_name);
+    if (dlt_user.dlt_segmented_queue_write_handle > 0)
+        mq_close(dlt_user.dlt_segmented_queue_write_handle);
+
+    if (dlt_user.dlt_segmented_queue_read_handle > 0)
+        mq_close(dlt_user.dlt_segmented_queue_read_handle);
+
+    if ((dlt_user.dlt_segmented_queue_write_handle > 0) ||
+        (dlt_user.dlt_segmented_queue_read_handle > 0))
+        mq_unlink(queue_name);
+
+    dlt_user.dlt_segmented_queue_write_handle = DLT_FD_INIT;
+    dlt_user.dlt_segmented_queue_read_handle = DLT_FD_INIT;
 
     pthread_cond_destroy(&mq_init_condition);
     pthread_mutex_destroy(&mq_mutex);
