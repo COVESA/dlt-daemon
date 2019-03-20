@@ -60,7 +60,7 @@
 #include "dlt_config_file_parser.h"
 
 #define DLT_OFFLINE_LOGSTORAGE_MAXIDS               100 /* Maximum entries for each apids and ctids */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS 7 /* max number of possible filters when searching for */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS   7  /* Max number of possible keys when searching for */
 
 #define DLT_OFFLINE_LOGSTORAGE_INIT_DONE           1  /* For device configuration status */
 #define DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED    1
@@ -191,7 +191,8 @@ typedef struct DltLogStorageFilterList DltLogStorageFilterList;
 
 struct DltLogStorageFilterList
 {
-    char *key;                        /* Key to find data */
+    char *key_list;                   /* List of key */
+    int num_keys;                     /* Number of keys */
     DltLogStorageFilterConfig *data;  /* Filter data */
     DltLogStorageFilterList *next;    /* Pointer to next */
 };
@@ -199,9 +200,8 @@ struct DltLogStorageFilterList
 typedef struct
 {
     DltLogStorageFilterList *config_list; /* List of all filters */
-    DltLogStorageUserConfig uconfig;  /* User configurations for file name*/
-    int num_configs;                  /* Number of configs */
-    int num_filter_keys;                /* Number of keys */
+    DltLogStorageUserConfig uconfig;   /* User configurations for file name*/
+    int num_configs;                   /* Number of configs */
     char device_mount_point[DLT_MOUNT_PATH_MAX + 1]; /* Device mount path */
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
