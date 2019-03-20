@@ -482,7 +482,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
     int ll = DLT_LOG_DEFAULT;
     int num = 0;
     int i = 0;
-    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
 
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
         (apid == NULL) || (ctxid == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
@@ -768,6 +768,7 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
     char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { '\0' };
     int num_device_configured = 0;
     unsigned int status;
+    int log_level = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -796,31 +797,37 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
     /* for all filters (keys) check if application context are already running
      * and log level need to be reset*/
     tmp = &(handle->config_list);
+    while (*(tmp) != NULL)
+    {
+        for (i = 0; i < (*tmp)->num_keys; i++)
+        {
+            memset(key, 0, sizeof(key));
 
-    while (*(tmp) != NULL) {
-        memset(key, 0, sizeof(key));
+            strncpy(key, ((*tmp)->key_list
+                          + (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                    DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
 
-        strncpy(key,
-                (*tmp)->key,
-                DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
+            if (num_device_configured == 1)
+            {
+                /* Reset context log level and send to application */
+                log_level = DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL;
+            }
+            else
+            {
+                /**
+                 * Reset context log level do not send to application as other
+                 * devices can have same configuration
+                 * */
+                log_level = DLT_DAEMON_LOGSTORAGE_RESET_LOGLEVEL;
+            }
 
-        if (num_device_configured == 1)
-            /* Reset context log level  and send to application */
             dlt_logstorage_update_context_loglevel(
-                daemon,
-                daemon_local,
-                key,
-                DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL,
-                verbose);
-        else /* Reset context log level do not send to application as other
-              * devices can have same configuration */
-            dlt_logstorage_update_context_loglevel(
-                daemon,
-                daemon_local,
-                key,
-                DLT_DAEMON_LOGSTORAGE_RESET_LOGLEVEL,
-                verbose);
-
+                    daemon,
+                    daemon_local,
+                    key,
+                    log_level,
+                    verbose);
+        }
         tmp = &(*tmp)->next;
     }
 
@@ -862,10 +869,13 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
     DltLogStorage *handle = NULL;
     DltLogStorageFilterList **tmp = NULL;
     char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { '\0' };
+    int i = 0;
+    int log_level = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (dev_num < 0)) {
+    if ((daemon == NULL) || (daemon_local == NULL) || (dev_num < 0))
+    {
         dlt_vlog(LOG_ERR,
                  "Invalid function parameters used for %s\n",
                  __func__);
@@ -881,30 +891,31 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
     /* for all filters (keys) check if application or context already running
      * and log level need to be updated*/
     tmp = &(handle->config_list);
+    while (*(tmp) != NULL)
+    {
+        for (i = 0; i < (*tmp)->num_keys; i++)
+        {
+            memset(key, 0, sizeof(key));
 
-    while (*(tmp) != NULL) {
-        int log_level = -1;
+            strncpy(key, ((*tmp)->key_list
+                    + (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                    DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
 
-        memset(key, 0, sizeof(key));
+            /* Obtain storage configuration data */
+            log_level = dlt_logstorage_get_loglevel_by_key(handle, key);
+            if (log_level < 0)
+            {
+                dlt_log(LOG_ERR, "Failed to get log level by key \n");
+                return;
+            }
 
-        strncpy(key,
-                (*tmp)->key,
-                DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
-
-        /* Obtain storage configuration data */
-        log_level = dlt_logstorage_get_loglevel_by_key(handle, key);
-
-        if (log_level < 0) {
-            dlt_log(LOG_ERR, "Failed to get log level by key \n");
-            return;
+            /* Update context log level with storage configuration log level */
+            dlt_logstorage_update_context_loglevel(daemon,
+                                                daemon_local,
+                                                key,
+                                                log_level,
+                                                verbose);
         }
-
-        /* Update context log level with storage configuration log level */
-        dlt_logstorage_update_context_loglevel(daemon,
-                                               daemon_local,
-                                               key,
-                                               log_level,
-                                               verbose);
         tmp = &(*tmp)->next;
     }
 
@@ -928,7 +939,7 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
                                        char *apid,
                                        char *ctid)
 {
-    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
     int i = 0;
     int j = 0;
     int8_t storage_loglevel = -1;
@@ -952,7 +963,8 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
                 continue;
             }
 
-            for (j = 0; j < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; j++) {
+            for (j = 0; j < num_config; j++)
+            {
                 if (config[j] == NULL)
                     continue;
 

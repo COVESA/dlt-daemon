@@ -79,6 +79,15 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
     }
 }
 
+/**
+ * dlt_logstorage_list_destroy
+ *
+ * Destroy Filter configurations list.
+ *
+ * @param list List of the filter configurations will be destroyed.
+ * @param reason Reason for the destroying of Filter configurations list
+ * @return 0 on success, -1 on error
+ */
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
                                            int reason)
 {
@@ -89,10 +98,10 @@ DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
     while (*(list) != NULL) {
         tmp = *list;
         *list = (*list)->next;
-
-        if (tmp->key != NULL) {
-            free(tmp->key);
-            tmp->key = NULL;
+        if (tmp->key_list != NULL)
+        {
+            free(tmp->key_list);
+            tmp->key_list = NULL;
         }
 
         if (tmp->data != NULL) {
@@ -148,21 +157,25 @@ DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
     return 0;
 }
 
-DLT_STATIC int dlt_logstorage_list_add(char *key,
+/**
+ * dlt_logstorage_list_add
+ *
+ * Add Filter configurations to the list.
+ *
+ * @param keys Keys will be added to the list.
+ * @param num_keys Number of keys
+ * @param data Filter configurations data will be added to the list.
+ * @param list List of the filter configurations
+ * @return 0 on success, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_list_add(char *keys,
+                                       int num_keys,
                                        DltLogStorageFilterConfig *data,
                                        DltLogStorageFilterList **list)
 {
     DltLogStorageFilterList *tmp = NULL;
 
     while (*(list) != NULL) {
-        /* if the key is already present then the data should be updated */
-        if (strncmp((*list)->key, key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0) {
-            if (dlt_logstorage_list_add_config(data, &((*list)->data)) != 0)
-                return -1;
-
-            return 0;
-        }
-
         list = &(*list)->next;
     }
 
@@ -171,24 +184,34 @@ DLT_STATIC int dlt_logstorage_list_add(char *key,
     if (tmp == NULL)
         return -1;
 
-    tmp->key = strdup(key);
+    tmp->key_list = (char *)calloc(
+                (num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN), sizeof(char));
+    if (tmp->key_list == NULL)
+    {
+        free(tmp);
+        tmp = NULL;
+        return -1;
+    }
+
+    memcpy(tmp->key_list, keys, num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
+    tmp->num_keys = num_keys;
     tmp->next = NULL;
     tmp->data = calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (tmp->data == NULL) {
-        free(tmp->key);
+        free(tmp->key_list);
+        tmp->key_list = NULL;
         free(tmp);
-        tmp->key = NULL;
         tmp = NULL;
         return -1;
     }
 
     if (dlt_logstorage_list_add_config(data, &(tmp->data)) != 0) {
-        free(tmp->key);
+        free(tmp->key_list);
+        tmp->key_list = NULL;
         free(tmp->data);
-        free(tmp);
-        tmp->key = NULL;
         tmp->data = NULL;
+        free(tmp);
         tmp = NULL;
         return -1;
     }
@@ -198,17 +221,39 @@ DLT_STATIC int dlt_logstorage_list_add(char *key,
     return 0;
 }
 
-DLT_STATIC void *dlt_logstorage_list_find(char *key,
-                                          DltLogStorageFilterList **list)
+/**
+ * dlt_logstorage_list_find
+ *
+ * Find all Filter configurations corresponding with key provided.
+ *
+ * @param key Key to find the filter configurations
+ * @param list List of the filter configurations
+ * @param config Filter configurations corresponding with the key.
+ * @return Number of the filter configuration found.
+ */
+DLT_STATIC int dlt_logstorage_list_find(char *key,
+                                        DltLogStorageFilterList **list,
+                                        DltLogStorageFilterConfig **config)
 {
+    int i = 0;
+    int num = 0;
+
     while (*(list) != NULL) {
-        if (strncmp((*list)->key, key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0)
-            return (*list)->data;
-        else
-            list = &(*list)->next;
+        for (i = 0; i < (*list)->num_keys; i++)
+        {
+            if (strncmp(((*list)->key_list
+                        + (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                        key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0)
+            {
+                config[num] = (*list)->data;
+                num++;
+                break;
+            }
+        }
+        list = &(*list)->next;
     }
 
-    return NULL;
+    return num;
 }
 
 /* Configuration file parsing helper functions */
@@ -676,7 +721,6 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
     int ret = 0;
     int num_keys = 0;
     char *keys = NULL;
-    int idx = 0;
 
     if ((handle == NULL) || (data == NULL)) {
         dlt_vlog(LOG_ERR, "Invalid parameters in %s\n", __func__);
@@ -695,24 +739,20 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
     }
 
     /* hash_add */
-    for (idx = 0; idx < num_keys; idx++) {
-        if (dlt_logstorage_list_add(keys + (idx * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN),
-                                    data,
-                                    &(handle->config_list)) != 0) {
-            dlt_log(LOG_ERR,
-                    "Adding to hash table failed, returning failure\n");
-
-            dlt_logstorage_free(handle, DLT_LOGSTORAGE_SYNC_ON_ERROR);
-
-            free(keys);
-            return -1;
-        }
-
-        /* update filter keys and number of keys */
-        handle->num_filter_keys += 1;
+    if (dlt_logstorage_list_add(keys,
+                                num_keys,
+                                data,
+                                &(handle->config_list)) != 0)
+    {
+        dlt_log(LOG_ERR, "Adding to hash table failed, returning failure\n");
+        dlt_logstorage_free(handle, DLT_LOGSTORAGE_SYNC_ON_ERROR);
+        free(keys);
+        keys = NULL;
+        return -1;
     }
 
     free(keys);
+    keys = NULL;
     return 0;
 }
 
@@ -1329,8 +1369,7 @@ DLT_STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
     ret = dlt_logstorage_prepare_table(handle, tmp_data);
 
     if (ret != 0) {
-        dlt_vlog(LOG_ERR, "%s Error: Storing filter values failed\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "%s Error: Storing filter values failed\n", __func__);
         ret = DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR;
     }
 
@@ -1405,16 +1444,15 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
     ret = dlt_logstorage_setup_table(handle, &tmp_data);
 
     if (ret != 0) {
-        dlt_vlog(LOG_ERR, "%s Error: Storing filter values failed\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "%s Error: Storing filter values failed\n", __func__);
         ret = DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR;
     }
     else { /* move to next free filter configuration, if no error occurred */
         handle->num_configs += 1;
-
-        /* free tmp_data */
-        dlt_logstorage_filter_config_free(&tmp_data);
     }
+
+    /* free tmp_data */
+    dlt_logstorage_filter_config_free(&tmp_data);
 
     return ret;
 }
@@ -1588,7 +1626,7 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
-    handle->num_filter_keys = 0;
+    handle->num_configs = 0;
 
     /* Setup logstorage with config file settings */
     return dlt_logstorage_load_config(handle);
@@ -1618,7 +1656,6 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
-    handle->num_filter_keys = 0;
     handle->num_configs = 0;
 
     return 0;
@@ -1637,7 +1674,10 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
  */
 int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
 {
-    DltLogStorageFilterConfig *config = NULL;
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
+    int num_configs = 0;
+    int i = 0;
+    int log_level = 0;
 
     /* Check if handle is NULL,already initialized or already configured  */
     if ((handle == NULL) ||
@@ -1646,30 +1686,51 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
         return -1;
 
-    config = (DltLogStorageFilterConfig *)
-        dlt_logstorage_list_find(key, &(handle->config_list));
+    num_configs = dlt_logstorage_list_find(key, &(handle->config_list), config);
 
-    if (config == NULL) {
+    if (num_configs == 0)
+    {
         dlt_vlog(LOG_WARNING, "Configuration for key [%s] not found!\n", key);
         return -1;
     }
+    else if (num_configs == 1)
+    {
+        if (config[0] != NULL)
+        {
+            log_level = config[0]->log_level;
+        }
+    }
+    else
+    {
+        /**
+         * Multiple configurations found, raise a warning to the user and go
+         * for the more verbose one.
+         */
+        dlt_vlog(LOG_WARNING, "Multiple configuration for key [%s] found,"
+                 " return the highest log level!\n", key);
 
-    return config->log_level;
+        for (i = 0; i < num_configs; i++)
+        {
+            if ((config[i] != NULL) && (config[i]->log_level > log_level))
+            {
+                log_level = config[i]->log_level;
+            }
+        }
+    }
+
+    return log_level;
 }
 
 /**
  * dlt_logstorage_get_config
  *
  * Obtain the configuration data of all filters for provided apid and ctid
- * For a given apid and ctid, there can be 3 possiblities of configuration
- * data available in the Hash map, this function will return the address
- * of configuration data for all these 3 combinations
  *
  * @param handle    DltLogStorage handle
- * @param config    Pointer to array of filter configurations
+ * @param config    [out] Pointer to array of filter configurations
  * @param apid      application id
  * @param ctid      context id
- * @return          number of found configurations
+ * @return          number of configurations found
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
                               DltLogStorageFilterConfig **config,
@@ -1677,13 +1738,14 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
                               char *ctid,
                               char *ecuid)
 {
-    DltLogStorageFilterConfig *ptr_config = NULL;
-    char key[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] =
+    DltLogStorageFilterConfig **cur_config_ptr = NULL;
+    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] =
     { { '\0' }, { '\0' }, { '\0' } };
     int i = 0;
     int apid_len = 0;
     int ctid_len = 0;
     int ecuid_len = 0;
+    int num_configs = 0;
     int num = 0;
 
     /* Check if handle is NULL,already initialized or already configured  */
@@ -1714,15 +1776,9 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
         strncat(key[0], ":", 1);
         strncat(key[0], ":", 1);
 
-        ptr_config = (DltLogStorageFilterConfig *)dlt_logstorage_list_find(
-            key[0], &(handle->config_list));
-
-        if (ptr_config != NULL) {
-            config[num] = ptr_config;
-            num += 1;
-        }
-
-        return num;
+        num_configs = dlt_logstorage_list_find(key[0], &(handle->config_list),
+                                               config);
+        return num_configs;
     }
 
     apid_len = strlen(apid);
@@ -1776,17 +1832,20 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
     strncat(key[6], ":", 1);
 
     /* Search the list three times with keys as -apid: , :ctid and apid:ctid */
-    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; i++) {
-        ptr_config = (DltLogStorageFilterConfig *)
-            dlt_logstorage_list_find(key[i], &(handle->config_list));
-
-        if (ptr_config != NULL) {
-            config[num] = ptr_config;
-            num += 1;
+    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS; i++)
+    {
+        cur_config_ptr = &config[num_configs];
+        num = dlt_logstorage_list_find(key[i], &(handle->config_list),
+                                       cur_config_ptr);
+        num_configs += num;
+        /* If all filter configurations matched, stop and return */
+        if (num_configs == handle->num_configs)
+        {
+            break;
         }
     }
 
-    return num;
+    return num_configs;
 }
 
 /**
@@ -1827,7 +1886,8 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
         return 0;
     }
 
-    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; i++) {
+    for (i = 0 ; i < num ; i++)
+    {
         if (config[i] == NULL)
             continue;
 
@@ -1870,7 +1930,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
                          unsigned char *data3,
                          int size3)
 {
-    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
+
     int i = 0;
     int ret = 0;
     int num = 0;
@@ -1953,7 +2014,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
     }
 
     /* store log message in every found filter */
-    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS; i++) {
+    for (i = 0; i < num; i++)
+    {
         if (config[i] == NULL)
             continue;
 

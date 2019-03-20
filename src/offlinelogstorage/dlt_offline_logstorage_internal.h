@@ -56,11 +56,13 @@ DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
 DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
                                               DltLogStorageFilterConfig **listdata);
 DLT_STATIC int dlt_logstorage_list_add(char *key,
+                                       int num_keys,
                                        DltLogStorageFilterConfig *data,
                                        DltLogStorageFilterList **list);
 
-DLT_STATIC void *dlt_logstorage_list_find(char *key,
-                                          DltLogStorageFilterList **list);
+DLT_STATIC int dlt_logstorage_list_find(char *key,
+                                        DltLogStorageFilterList **list,
+                                        DltLogStorageFilterConfig **config);
 
 DLT_STATIC int dlt_logstorage_count_ids(const char *str);
 

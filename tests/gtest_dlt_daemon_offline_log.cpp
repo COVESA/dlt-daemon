@@ -38,13 +38,14 @@ TEST(t_dlt_logstorage_list_add, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     char key = 1;
+    int num_keys = 1;
 
     data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, data, &list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
     }
 }
@@ -71,13 +72,14 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     char key = 1;
+    int num_keys = 1;
 
     data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, data, &list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
     }
 }
@@ -87,10 +89,12 @@ TEST(t_dlt_logstorage_list_find, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
-    DltLogStorageFilterConfig *retData;
-    char key[] = "1";
+    int num_configs = 0;
+    char key[] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
+    int num_keys = 1;
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
 
     data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
@@ -99,15 +103,15 @@ TEST(t_dlt_logstorage_list_find, normal)
         data->ctids = strdup(ctid);
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, data, &list));
+        ASSERT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &list));
 
-        retData = (DltLogStorageFilterConfig *)dlt_logstorage_list_find(key, &list);
-        EXPECT_NE((DltLogStorageFilterConfig *)NULL, retData);
+        num_configs = dlt_logstorage_list_find(key, &list, config);
 
-        if (retData != NULL) {
-            EXPECT_STREQ(apid, retData->apids);
-            EXPECT_STREQ(ctid, retData->ctids);
-        }
+        ASSERT_EQ(1, num_configs);
+        ASSERT_NE((DltLogStorageFilterConfig *)NULL, config[0]);
+
+        EXPECT_STREQ(apid, config[0]->apids);
+        EXPECT_STREQ(ctid, config[0]->ctids);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
     }
@@ -122,13 +126,14 @@ TEST(t_dlt_logstorage_free, normal)
     int reason = 0;
     handle.num_configs = 0;
     handle.config_list = NULL;
+    int num_keys = 1;
 
     data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, data, &handle.config_list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &handle.config_list));
 
         dlt_logstorage_free(&handle, reason);
     }
@@ -190,7 +195,6 @@ TEST(t_dlt_logstorage_prepare_table, normal)
     char ctids[] = "5678";
     data.apids = apids;
     data.ctids = ctids;
-    handle.num_filter_keys = 1;
     data.records = NULL;
     data.log = NULL;
     data.cache = NULL;
@@ -438,7 +442,6 @@ TEST(t_dlt_logstorage_store_filters, normal)
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
-    handle.num_filter_keys = 0;
 
     handle.config_list = NULL;
 
@@ -458,7 +461,6 @@ TEST(t_dlt_logstorage_load_config, normal)
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
-    handle.num_filter_keys = 0;
     handle.config_list = NULL;
     strncpy(handle.device_mount_point, "/tmp", DLT_MOUNT_PATH_MAX);
 
@@ -478,7 +480,6 @@ TEST(t_dlt_logstorage_device_connected, normal)
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
-    handle.num_filter_keys = 0;
     handle.config_list = NULL;
     strncpy(handle.device_mount_point, "/tmp", DLT_MOUNT_PATH_MAX);
 
@@ -515,13 +516,14 @@ TEST(t_dlt_logstorage_get_loglevel_by_key, normal)
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
+    int num_keys = 1;
 
     config = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (config != NULL) {
         config->log_level = DLT_LOG_ERROR;
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, config, &(handle.config_list)));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, config, &(handle.config_list)));
         EXPECT_GE(DLT_LOG_ERROR, dlt_logstorage_get_loglevel_by_key(&handle, key));
 
         free(config);
@@ -555,10 +557,11 @@ TEST(t_dlt_logstorage_get_config, normal)
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
 
     num_config = dlt_logstorage_get_config(&handle, config, apid, ctid, ecuid);
 
@@ -590,15 +593,16 @@ TEST(t_dlt_logstorage_filter, normal)
     char key0[] = ":1234:\000\000\000\000";
     char key1[] = "::5678\000\000\000\000";
     char key2[] = ":1234:5678";
-    DltLogStorageFilterConfig *config[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_CONFIGS] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
     DltLogStorage handle;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
 
     num = dlt_logstorage_filter(&handle, config, apid, ctid, ecuid, 0);
 
@@ -638,10 +642,11 @@ TEST(t_dlt_logstorage_write, normal)
     char key0[] = ":1234:\000\000\000\000";
     char key1[] = "::5678\000\000\000\000";
     char key2[] = ":1234:5678";
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write(&handle, &uconfig, data1, size1, data2, size2, data3, size3));
 }
 
@@ -666,9 +671,11 @@ TEST(t_dlt_logstorage_sync_caches, normal)
     configs.ctids = ctid;
     configs.ecuid = ecuid;
     configs.file_name = filename;
+    int num_keys = 1;
+
     dlt_logstorage_filter_set_strategy(&configs, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, &configs, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &configs, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_caches(&handle));
 }
 
@@ -1215,11 +1222,12 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
 
     daemon.storage_handle = &storage_handle;
     daemon.storage_handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
-    daemon.storage_handle->num_filter_keys = 1;
     daemon.storage_handle->config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     daemon.storage_handle->config_list = NULL;
+    daemon.storage_handle->num_configs = 1;
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, &value, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_NO_THROW(dlt_daemon_logstorage_update_application_loglevel(&daemon, &daemon_local, device_index, 0));
 
     EXPECT_EQ(4, dlt_daemon_logstorage_get_loglevel(&daemon, 1, apid, ctid));
@@ -1267,11 +1275,11 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
 
     daemon.storage_handle = &storage_handle;
     daemon.storage_handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
-    daemon.storage_handle->num_filter_keys = 1;
     daemon.storage_handle->config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     daemon.storage_handle->config_list = NULL;
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, &value, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_NO_THROW(dlt_daemon_logstorage_update_application_loglevel(&daemon, &daemon_local, device_index, 0));
 }
 
@@ -1324,10 +1332,11 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     char key0[] = "1234:\000\000\000\000";
     char key1[] = ":5678\000\000\000\000";
     char key2[] = "1234:5678";
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, &value, &(daemon.storage_handle->config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, &value, &(daemon.storage_handle->config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, &value, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_NO_THROW(dlt_daemon_logstorage_write(&daemon, &uconfig, data1, size, data2, size, data3, size));
 }
 
@@ -1420,8 +1429,9 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
     configs.ecuid = ecuid;
     configs.file_name = file_name;
     dlt_logstorage_filter_set_strategy(&configs, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    int num_keys = 1;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, &configs, &(daemon.storage_handle->config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &configs, &(daemon.storage_handle->config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_sync_cache(&daemon, &daemon_local, path, 0));
 }
 
