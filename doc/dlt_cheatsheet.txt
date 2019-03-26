@@ -75,7 +75,8 @@ int main(int argc, const char\* argv\[\])
 ----
 
 .Important notes:
-* If your application uses fork(), you may not call DLT_REGISTER_APP before fork(). And fork() should never be called after DLT_REGISTER_APP. This is because of state information and inter process communication channel to daemon would be copied to new process, but threads would be not. If you are not sure where you are calling DLT_REGISTER_APP() the first time, you can initialise the DLT user library by calling the initialisation routine directly.
+* DLT may not be used in a forked child until a variant of exec() is called,
+  because DLT is using non async-signal-safe functions.
 ----
 dlt_user_init();
 ----

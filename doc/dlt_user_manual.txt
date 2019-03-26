@@ -267,7 +267,8 @@ DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 ----
 
 .Important notes:
-* if fork() is called from an application after DLT_REGISTER_APP, dlt is reset in child process and user application needs to re-register application and contexts in child-process
+* DLT may not be used in a forked child until a variant of exec() is called,
+  because DLT is using non async-signal-safe functions.
 * DLT_REGISTER_APP is asynchronous. It may take some milliseconds to establish the IPC channel. Because of this, you might lose messages if you log immediately after registering. Typically this is not a problem, but may arise especially with simple examples.
 
 ==== Use one of the DLT macros or the DLT function interface:
@@ -387,5 +388,3 @@ dlt_free(); | After using the application and contexts, they must be unregistere
 Implementation specifics
 
 * The implementation is multithread safe.
-* Initialize DLT application and contexts, then forking and using the forked process, will lead to unclear behavior (or in worst case to a crash), as the forked process uses another process id as the parent process. Instead, initialize the DLT application and contexts in the forked process.
-
