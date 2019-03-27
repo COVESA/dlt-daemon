@@ -33,6 +33,11 @@ add_executable(dlt-test-preregister-context dlt-test-preregister-context.c)
 add_executable(gtest_dlt_daemon_gateway gtest_dlt_daemon_gateway.cpp ${systemd_SRCS})
 add_executable(gtest_dlt_daemon_event_handler gtest_dlt_daemon_event_handler.cpp ${systemd_SRCS})
 add_executable(gtest_dlt_daemon_offline_log gtest_dlt_daemon_offline_log.cpp ${systemd_SRCS})
+
+if(WITH_DLT_SHM_ENABLE)
+    add_executable(gtest_dlt_shm gtest_dlt_shm.cpp)
+endif(WITH_DLT_SHM_ENABLE)
+
 target_link_libraries(gtest_dlt_common ${DLT_LIBRARIES})
 target_link_libraries(gtest_dlt_user ${DLT_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_common ${DLT_LIBRARIES})
@@ -42,6 +47,10 @@ target_link_libraries(dlt-test-preregister-context ${DLT_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_gateway ${DLT_DAEMON_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_event_handler ${DLT_DAEMON_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_offline_log ${DLT_DAEMON_LIBRARIES})
+
+if(WITH_DLT_SHM_ENABLE)
+    target_link_libraries(gtest_dlt_shm ${DLT_DAEMON_LIBRARIES})
+endif(WITH_DLT_SHM_ENABLE)
 
 if(${WITH_DLT_CXX11_EXT})
   add_executable(dlt-test-cpp-extension dlt-test-cpp-extension.cpp)

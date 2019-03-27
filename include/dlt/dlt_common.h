@@ -410,6 +410,13 @@ extern char dltSerialHeaderChar[DLT_ID_SIZE];
  */
 extern char dltFifoBaseDir[PATH_MAX + 1];
 
+#ifdef DLT_SHM_ENABLE
+/**
+ * The common name of the dlt-daemon and application share memory
+ */
+extern char dltShmName[NAME_MAX + 1];
+#endif
+
 /**
  * The type of a DLT ID (context id, application id, etc.)
  */

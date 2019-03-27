@@ -107,6 +107,10 @@ cleanup()
 
     rm -f $tmpPath/dlt.conf
     rm -f $tmpPath/dlt_gateway.conf
+    rm -f /dev/shm/dlt-shm
+    rm -f /dev/shm/sem.dlt-shm
+    rm -f /dev/shm/dlt-shm-passive
+    rm -f /dev/shm/sem.dlt-shm-passive
     return 0
 }
 #
@@ -173,9 +177,17 @@ setupTest()
 #
 startDaemons()
 {
+    DLT_PASSIVE_SHM_NAME=""
     tmpPath=/tmp
     dlt-daemon -d
-    dlt-daemon -d -p 3495 -c $tmpPath/dlt.conf
+    sleep 1
+
+    # Check if the dlt shm file exist (DLT_SHM_ENABLE=ON)
+    if [ -f /dev/shm/dlt-shm ]; then
+        DLT_PASSIVE_SHM_NAME="-s dlt-shm-passive"
+    fi
+
+    dlt-daemon -d -p 3495 -c $tmpPath/dlt.conf $DLT_PASSIVE_SHM_NAME
     return 0
 }
 

@@ -123,8 +123,11 @@ typedef struct
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
 #else
     char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
-#endif
     char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
+#endif
+#ifdef DLT_SHM_ENABLE
+    char dltShmName[NAME_MAX + 1]; /**< Shared memory name */
+#endif
     unsigned int port;  /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
     int gatewayMode; /**< (Boolean) Gateway Mode */

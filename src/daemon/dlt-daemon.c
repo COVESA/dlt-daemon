@@ -110,6 +110,12 @@ void usage()
     printf("                (Applications wanting to connect to a daemon using a\n");
     printf("                custom directory need to be started with the environment \n");
     printf("                variable DLT_PIPE_DIR set appropriately)\n");
+#ifdef DLT_SHM_ENABLE
+    printf("  -s filename   The file name to create the share memory (Default: /dlt-shm)\n");
+    printf("                (Applications wanting to connect to a daemon using a\n");
+    printf("                custom shm name need to be started with the environment \n");
+    printf("                variable DLT_SHM_NAME set appropriately)\n");
+#endif
     printf("  -p port       port to monitor for incoming requests (Default: 3490)\n");
     printf("                (Applications wanting to connect to a daemon using a custom\n");
     printf("                port need to be started with the environment variable\n");
@@ -135,9 +141,17 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     daemon_local->flags.port = DLT_DAEMON_TCP_PORT;
     strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, sizeof(DLT_USER_IPC_PATH));
 
+#ifdef DLT_SHM_ENABLE
+    strncpy(dltShmName, "/dlt-shm", NAME_MAX);
+#endif
+
     opterr = 0;
 
+#ifdef DLT_SHM_ENABLE
+    while ((c = getopt (argc, argv, "hdc:t:s:p:")) != -1)
+#else
     while ((c = getopt (argc, argv, "hdc:t:p:")) != -1)
+#endif
         switch (c) {
         case 'd':
         {
@@ -154,6 +168,13 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
             strncpy(dltFifoBaseDir, optarg, NAME_MAX);
             break;
         }
+#ifdef DLT_SHM_ENABLE
+        case 's':
+        {
+            strncpy(dltShmName, optarg, NAME_MAX);
+            break;
+        }
+#endif
         case 'p':
         {
             daemon_local->flags.port = atoi(optarg);
@@ -193,8 +214,12 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
 #ifndef DLT_USE_UNIX_SOCKET_IPC
     snprintf(daemon_local->flags.userPipesDir, NAME_MAX + 1, "%s/dltpipes", dltFifoBaseDir);
-#endif
     snprintf(daemon_local->flags.daemonFifoName, NAME_MAX + 1, "%s/dlt", dltFifoBaseDir);
+#endif
+
+#ifdef DLT_SHM_ENABLE
+    strncpy(daemon_local->flags.dltShmName, dltShmName, NAME_MAX);
+#endif
 
     return 0;
 
@@ -919,7 +944,9 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 #ifdef DLT_SHM_ENABLE
 
     /* init shared memory */
-    if (dlt_shm_init_server(&(daemon_local->dlt_shm), DLT_SHM_KEY, daemon_local->flags.sharedMemorySize) == -1) {
+    if (dlt_shm_init_server(&(daemon_local->dlt_shm), daemon_local->flags.dltShmName,
+        daemon_local->flags.sharedMemorySize) == DLT_RETURN_ERROR)
+    {
         dlt_log(LOG_ERR, "Could not initialize shared memory\n");
         return -1;
     }
@@ -1287,12 +1314,14 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     /* Try to delete existing pipe, ignore result of unlink() */
     unlink(daemon_local->flags.daemonFifoName);
+#endif
 
 #ifdef DLT_SHM_ENABLE
     /* free shared memory */
-    dlt_shm_free_server(&(daemon_local->dlt_shm));
+    dlt_shm_free_server(&(daemon_local->dlt_shm), daemon_local->flags.dltShmName);
 #endif
 
     if (daemon_local->flags.offlineLogstorageMaxDevices > 0) {
@@ -2758,8 +2787,7 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
                                             int verbose)
 {
     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-    int j, sent, third_value;
-    ssize_t ret;
+    int sent;
     uint8_t *rcv_buffer = NULL;
     int size;
     uint32_t len = sizeof(DltUserHeader);

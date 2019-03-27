@@ -371,14 +371,12 @@ DltReturnValue dlt_init(void)
     memset(&(dlt_user.dlt_shm), 0, sizeof(DltShm));
 
     /* init shared memory */
-    if (dlt_shm_init_client(&(dlt_user.dlt_shm), DLT_SHM_KEY) < 0) {
-        snprintf(str, DLT_USER_BUFFER_LENGTH, "Logging disabled, Shared memory %d cannot be created!\n", DLT_SHM_KEY);
-        dlt_log(LOG_WARNING, str);
-        /*return 0; */
-    }
+    if (dlt_shm_init_client(&(dlt_user.dlt_shm), dltShmName) < DLT_RETURN_OK)
+        dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Logging disabled,"
+                    " Shared memory %s cannot be created!\n", dltShmName);
+#endif
 
-#elif defined DLT_USE_UNIX_SOCKET_IPC
-
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     if (dlt_initialize_socket_connection() != DLT_RETURN_OK)
         /* We could connect to the pipe, but not to the socket, which is normally */
         /* open before by the DLT daemon => bad failure => return error code */
@@ -386,7 +384,6 @@ DltReturnValue dlt_init(void)
         return DLT_RETURN_ERROR;
 
 #else /* FIFO connection */
-
     if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
@@ -397,7 +394,6 @@ DltReturnValue dlt_init(void)
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
     }
-
 #endif
 
     /* These will be lazy initialized only when needed */
@@ -4554,13 +4550,9 @@ void dlt_user_log_reattach_to_daemon(void)
 #ifdef DLT_SHM_ENABLE
 
         /* init shared memory */
-        if (dlt_shm_init_client(&dlt_user.dlt_shm, DLT_SHM_KEY) < 0)
-            dlt_vnlog(LOG_WARNING,
-                      DLT_USER_BUFFER_LENGTH,
-                      "Loging disabled, Shared memory %d cannot be created!\n",
-                      DLT_SHM_KEY);
-            /*return DLT_RETURN_OK; */
-
+        if (dlt_shm_init_client(&dlt_user.dlt_shm, dltShmName) < DLT_RETURN_OK)
+            dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Logging disabled,"
+                      " Shared memory %s cannot be created!\n", dltShmName);
 #endif
 
         dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
