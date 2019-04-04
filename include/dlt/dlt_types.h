@@ -158,7 +158,7 @@ typedef enum
     DLT_NW_TRACE_USER_DEFINED4 = 0x0C,
     DLT_NW_TRACE_USER_DEFINED5 = 0x0D,
     DLT_NW_TRACE_USER_DEFINED6 = 0x0E,
-    DLT_NW_TRACE_USER_DEFINED7 = 0x0F,
+    DLT_NW_TRACE_RESEND = 0x0F,             /**< Mark a resend */
     DLT_NW_TRACE_MAX                        /**< maximum value, used for range check */
 } DltNetworkTraceType;
 
