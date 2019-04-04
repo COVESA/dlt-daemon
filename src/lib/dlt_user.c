@@ -665,7 +665,7 @@ DltReturnValue dlt_init_common(void)
     }
 
     if (dlt_user.resend_buffer == NULL) {
-        dlt_user.resend_buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+        dlt_user.resend_buffer = calloc(sizeof(unsigned char), (dlt_user.log_buf_len + 100));
 
         if (dlt_user.resend_buffer == NULL) {
             dlt_user_initialised = false;
