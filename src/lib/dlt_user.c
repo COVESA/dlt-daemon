@@ -2956,7 +2956,8 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         }
 
         /* Indicator just to try to flush the buffer */
-        if (data->payload_len == DLT_DELAYED_RESEND_INDICATOR_PATTERN) {
+        /* DLT_NW_TRACE_RESEND custom type is used to mark a resend */
+        if(data->nw_trace_type == DLT_NW_TRACE_RESEND) {
             /* Sleep 100ms, to allow other process to read FIFO */
             usleep(100 * 1000);
 
@@ -3530,7 +3531,8 @@ DltReturnValue dlt_user_queue_resend(void)
     if (resend_data == NULL)
         return DLT_RETURN_ERROR;
 
-    resend_data->payload_len = DLT_DELAYED_RESEND_INDICATOR_PATTERN;
+    /* DLT_NW_TRACE_RESEND custom type is used to mark a resend */
+    resend_data->nw_trace_type = DLT_NW_TRACE_RESEND;
 
     /* Open queue if it is not open */
     if (dlt_init_message_queue() < DLT_RETURN_OK) {
