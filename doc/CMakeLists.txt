@@ -25,29 +25,49 @@ if(WITH_DOC)
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 
+    FIND_PROGRAM(ASCIIDOC_TOOL
+             NAMES asciidoc
+             PATHS /bin
+                   /usr/bin
+                   /usr/local/bin)
+
+    if(NOT ASCIIDOC_TOOL)
+      MESSAGE(FATAL_ERROR "Could not find asciidoc for doc-manuals generation.")
+    endif(NOT ASCIIDOC_TOOL)
+
 	add_custom_target (doc-manuals ALL
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
 		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
-  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
+		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
+		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
+		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
+		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 
+    FIND_PROGRAM(A2X_TOOL
+             NAMES a2x
+             PATHS /bin
+                   /usr/bin
+                   /usr/local/bin)
+
+    if(NOT A2X_TOOL)
+      MESSAGE(FATAL_ERROR "Could not find a2x for doc-man generation.")
+    endif(NOT A2X_TOOL)
+
 	add_custom_target (doc-man
-  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-logstorage-ctrl.1.txt
-		COMMAND a2x --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-passive-node-ctrl.1.txt
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-logstorage-ctrl.1.txt
+		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-passive-node-ctrl.1.txt
 	)
 
 endif(WITH_DOC)
