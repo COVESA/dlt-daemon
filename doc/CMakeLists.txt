@@ -29,27 +29,11 @@ if(WITH_DOC)
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
 		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
 		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/INSTALL.html ${CMAKE_SOURCE_DIR}/INSTALL
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.md
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/ReleaseNotes.html ${CMAKE_SOURCE_DIR}/ReleaseNotes.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_filetransfer.html ${CMAKE_SOURCE_DIR}/doc/dlt_filetransfer.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-daemon.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-receive.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-convert.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-sortbytimestamp.1.html ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-system.conf.5.html ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_extended_network_trace.html ${CMAKE_SOURCE_DIR}/doc/dlt_extended_network_trace.txt
   		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
-  		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_offline_logstorage.html ${CMAKE_SOURCE_DIR}/doc/dlt_offline_logstorage.txt
-        COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_multinode.html ${CMAKE_SOURCE_DIR}/doc/dlt_multinode.txt
-		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-kpi.html ${CMAKE_SOURCE_DIR}/doc/dlt_kpi.txt
-		COMMAND asciidoc -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt-cdh.html ${CMAKE_SOURCE_DIR}/doc/dlt_cdh.txt
   		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 	)
 
