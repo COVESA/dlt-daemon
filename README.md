@@ -206,7 +206,7 @@ https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace_lists.
 
 ## Contact
 
-Christoph Lipka <clipka@de.adit-jv.com>,
-Manikandan Chockalingam <Manikandan.Chockalingam@in.bosch.com>
+Saya Sugiura <ssugiura@jp.adit-jv.com>,
+Quynh Le Hoang Ngoc <Quynh.LeHoangNgoc@vn.bosch.com>
 
 ![alt text](doc/images/genivilogo.png "GENIVI")
