@@ -98,6 +98,9 @@ static int atexit_registered = 0;
 /* used to disallow DLT usage in fork() child */
 static int g_dlt_is_child = 0;
 
+/*Max DLT message size is 1390 bytes plus some extra header space  to accomidate the resend buffer*/
+#define DLT_USER_EXTRA_BUFF_SIZE 100
+
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
@@ -665,7 +668,7 @@ DltReturnValue dlt_init_common(void)
     }
 
     if (dlt_user.resend_buffer == NULL) {
-        dlt_user.resend_buffer = calloc(sizeof(unsigned char), (dlt_user.log_buf_len + 100));
+        dlt_user.resend_buffer = calloc(sizeof(unsigned char), (dlt_user.log_buf_len + DLT_USER_EXTRA_BUFF_SIZE));
 
         if (dlt_user.resend_buffer == NULL) {
             dlt_user_initialised = false;
