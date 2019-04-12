@@ -20,10 +20,10 @@ if(WITH_DOC)
 
     configure_file(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/doxygen.cfg @ONLY)
 
-	add_custom_target (doc ALL
-  		COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg
-  		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-	)
+    add_custom_target (doc ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
 
     FIND_PROGRAM(ASCIIDOC_TOOL
              NAMES asciidoc
@@ -32,151 +32,131 @@ if(WITH_DOC)
                    /usr/local/bin)
 
     if(NOT ASCIIDOC_TOOL)
-      MESSAGE(FATAL_ERROR "Could not find asciidoc for doc-manuals generation.")
+        MESSAGE(FATAL_ERROR "Could not find asciidoc for doc-manuals generation.")
     endif(NOT ASCIIDOC_TOOL)
 
-	add_custom_target (doc-manuals ALL
-		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
-		COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
-		COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
-		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
-		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
-		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
-		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
-		COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-	)
-
-    FIND_PROGRAM(A2X_TOOL
-             NAMES a2x
-             PATHS /bin
-                   /usr/bin
-                   /usr/local/bin)
-
-    if(NOT A2X_TOOL)
-      MESSAGE(FATAL_ERROR "Could not find a2x for doc-man generation.")
-    endif(NOT A2X_TOOL)
-
-	add_custom_target (doc-man
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-daemon.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-receive.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-convert.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-sortbytimestamp.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt.conf.5.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-system.conf.5.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-logstorage-ctrl.1.txt
-		COMMAND ${A2X_TOOL} --doctype manpage --format manpage ${CMAKE_SOURCE_DIR}/doc/dlt-passive-node-ctrl.1.txt
-	)
+    add_custom_target (doc-manuals ALL
+        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
+        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
+        COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
 
 endif(WITH_DOC)
 
 if(WITH_MAN)
-	# Compress the man pages and install to proper place
-	FIND_PROGRAM(GZIP_TOOL
-	             NAMES gzip
-	             PATHS /bin
-	                   /usr/bin
-	                   /usr/local/bin)
+    # Compress the man pages and install to proper place
+    FIND_PROGRAM(GZIP_TOOL
+                 NAMES gzip
+                 PATHS /bin
+                       /usr/bin
+                       /usr/local/bin)
 
-	if(NOT GZIP_TOOL)
-	  MESSAGE(FATAL_ERROR "Could not find gzip for man page compression.")
-	endif(NOT GZIP_TOOL)
+    if(NOT GZIP_TOOL)
+        MESSAGE(FATAL_ERROR "Could not find gzip for man page compression.")
+    endif(NOT GZIP_TOOL)
 
-	FIND_PROGRAM(PANDOC_TOOL
-				 NAMES pandoc
-				 PATHS /bin
-					   /usr/bin
-					   /usr/local/bin)
-
+    FIND_PROGRAM(PANDOC_TOOL
+             NAMES pandoc
+             PATHS /bin
+                   /usr/bin
+                   /usr/local/bin)
 
     if(NOT PANDOC_TOOL)
-      MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
+        MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
     endif(NOT PANDOC_TOOL)
 
-	set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-	set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
+    set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+    set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
 
-	set(MD_SRC
-				${MAN_SRC_DIR}/dlt.conf.5.md
-				${MAN_SRC_DIR}/dlt-system.conf.5.md
-				${MAN_SRC_DIR}/dlt-convert.1.md
-				${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md
-				${MAN_SRC_DIR}/dlt-daemon.1.md
-				${MAN_SRC_DIR}/dlt-receive.1.md
-				${MAN_SRC_DIR}/dlt-system.1.md
-				${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md
-				${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md)
-	set(MAN_SRC
-				${MAN_SRC_DIR}/dlt.conf.5
-				${MAN_SRC_DIR}/dlt-system.conf.5
-				${MAN_SRC_DIR}/dlt-convert.1
-				${MAN_SRC_DIR}/dlt-sortbytimestamp.1
-				${MAN_SRC_DIR}/dlt-daemon.1
-				${MAN_SRC_DIR}/dlt-receive.1
-				${MAN_SRC_DIR}/dlt-system.1
-				${MAN_SRC_DIR}/dlt-logstorage-ctrl.1
-				${MAN_SRC_DIR}/dlt-passive-node-ctrl.1)
-	set(MAN_BUILD_SRC
-				${MAN_BUILD_DIR}/dlt.conf.5
-				${MAN_BUILD_DIR}/dlt-system.conf.5
-				${MAN_BUILD_DIR}/dlt-convert.1
-				${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
-				${MAN_BUILD_DIR}/dlt-daemon.1
-				${MAN_BUILD_DIR}/dlt-receive.1
-				${MAN_BUILD_DIR}/dlt-system.1
-				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
-				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1)
-	set(MAN_BUILD_GZ
-				${MAN_BUILD_DIR}/dlt.conf.5.gz
-				${MAN_BUILD_DIR}/dlt-system.conf.5.gz
-				${MAN_BUILD_DIR}/dlt-convert.1.gz
-				${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
-				${MAN_BUILD_DIR}/dlt-daemon.1.gz
-				${MAN_BUILD_DIR}/dlt-receive.1.gz
-				${MAN_BUILD_DIR}/dlt-system.1.gz
-				${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
-				${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
+    set(MD_SRC
+        ${MAN_SRC_DIR}/dlt.conf.5.md
+        ${MAN_SRC_DIR}/dlt-system.conf.5.md
+        ${MAN_SRC_DIR}/dlt-convert.1.md
+        ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md
+        ${MAN_SRC_DIR}/dlt-daemon.1.md
+        ${MAN_SRC_DIR}/dlt-receive.1.md
+        ${MAN_SRC_DIR}/dlt-system.1.md
+        ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md
+        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md)
 
-	add_custom_target(generate_man ALL
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt.conf.5.md -o ${MAN_BUILD_DIR}/dlt.conf.5
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.conf.5.md -o ${MAN_BUILD_DIR}/dlt-system.conf.5
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-convert.1.md -o ${MAN_BUILD_DIR}/dlt-convert.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md -o ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-daemon.1.md -o ${MAN_BUILD_DIR}/dlt-daemon.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-receive.1.md -o ${MAN_BUILD_DIR}/dlt-receive.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.1.md -o ${MAN_BUILD_DIR}/dlt-system.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
-				COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1
+    set(MAN_SRC
+        ${MAN_SRC_DIR}/dlt.conf.5
+        ${MAN_SRC_DIR}/dlt-system.conf.5
+        ${MAN_SRC_DIR}/dlt-convert.1
+        ${MAN_SRC_DIR}/dlt-sortbytimestamp.1
+        ${MAN_SRC_DIR}/dlt-daemon.1
+        ${MAN_SRC_DIR}/dlt-receive.1
+        ${MAN_SRC_DIR}/dlt-system.1
+        ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1
+        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1)
 
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-convert.1  > ${MAN_BUILD_DIR}/dlt-convert.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1  > ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
-				COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
+    set(MAN_BUILD_SRC
+        ${MAN_BUILD_DIR}/dlt.conf.5
+        ${MAN_BUILD_DIR}/dlt-system.conf.5
+        ${MAN_BUILD_DIR}/dlt-convert.1
+        ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
+        ${MAN_BUILD_DIR}/dlt-daemon.1
+        ${MAN_BUILD_DIR}/dlt-receive.1
+        ${MAN_BUILD_DIR}/dlt-system.1
+        ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
+        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1)
 
-	# If user has not set the base dir for man pages, use a default location
-	set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
+    set(MAN_BUILD_GZ
+        ${MAN_BUILD_DIR}/dlt.conf.5.gz
+        ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        ${MAN_BUILD_DIR}/dlt-convert.1.gz
+        ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
+        ${MAN_BUILD_DIR}/dlt-daemon.1.gz
+        ${MAN_BUILD_DIR}/dlt-receive.1.gz
+        ${MAN_BUILD_DIR}/dlt-system.1.gz
+        ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
 
-	install(FILES
-			${MAN_BUILD_DIR}/dlt.conf.5.gz
-			${MAN_BUILD_DIR}/dlt-system.conf.5.gz
-		DESTINATION ${MAN_INSTALL_DIR}/man5
-	)
+    add_custom_target(generate_man ALL
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt.conf.5.md -o ${MAN_BUILD_DIR}/dlt.conf.5
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.conf.5.md -o ${MAN_BUILD_DIR}/dlt-system.conf.5
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-convert.1.md -o ${MAN_BUILD_DIR}/dlt-convert.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md -o ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-daemon.1.md -o ${MAN_BUILD_DIR}/dlt-daemon.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-receive.1.md -o ${MAN_BUILD_DIR}/dlt-receive.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.1.md -o ${MAN_BUILD_DIR}/dlt-system.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1
 
-	install(FILES
-			${MAN_BUILD_DIR}/dlt-convert.1.gz
-			${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
-			${MAN_BUILD_DIR}/dlt-daemon.1.gz
-			${MAN_BUILD_DIR}/dlt-receive.1.gz
-			${MAN_BUILD_DIR}/dlt-system.1.gz
-			${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
-			${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
-		DESTINATION ${MAN_INSTALL_DIR}/man1
-	)
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-convert.1  > ${MAN_BUILD_DIR}/dlt-convert.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1  > ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
+
+    # If user has not set the base dir for man pages, use a default location
+    set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
+
+    install(FILES
+        ${MAN_BUILD_DIR}/dlt.conf.5.gz
+        ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        DESTINATION ${MAN_INSTALL_DIR}/man5
+    )
+
+    install(FILES
+        ${MAN_BUILD_DIR}/dlt-convert.1.gz
+        ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
+        ${MAN_BUILD_DIR}/dlt-daemon.1.gz
+        ${MAN_BUILD_DIR}/dlt-receive.1.gz
+        ${MAN_BUILD_DIR}/dlt-system.1.gz
+        ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
+        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
+        DESTINATION ${MAN_INSTALL_DIR}/man1
+    )
 endif(WITH_MAN)

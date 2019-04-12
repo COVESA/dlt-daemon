@@ -258,9 +258,9 @@ DLT_DECLARE_CONTEXT(myContext);
 ----
 int main(int argc, const char\* argv\[\])
 {
-DLT_REGISTER_APP("LOG","Test Application for Logging");
+    DLT_REGISTER_APP("LOG","Test Application for Logging");
 
-DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
+    DLT_REGISTER_CONTEXT(mycontext,"TEST","Test Context for Logging");
 ...
 
 }

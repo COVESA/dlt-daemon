@@ -20,7 +20,7 @@ Finally after sending all the data segments, one more packet is sent to indicate
 
 Truncated message can be sent using the following function:
 
-> int dlt_user_trace_network_truncated(DltContext *handle,  DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate)
+` int dlt_user_trace_network_truncated(DltContext *handle,  DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate) `
 
 This will send a packet in the following format:
 
@@ -35,17 +35,17 @@ payload | The truncated nw_trace payload | RAW
 
 User can send a segmented network trace message asynchronously using:
 
-> void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload)
+` void dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload) `
 
 This will start a background thread and return immediately.
 
 User can also send all the required packages one by one using:
 
-> int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len)
->
-> int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload)
->
-> int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkTraceType nw_trace_type)
+` int dlt_user_trace_network_segmented_start(unsigned int *id, DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len) `
+
+` int dlt_user_trace_network_segmented_segment(int id, DltContext *handle, DltNetworkTraceType nw_trace_type, int sequence, uint16_t payload_len, void *payload) `
+
+` int dlt_user_trace_network_segmented_end(int id, DltContext *handle, DltNetworkTraceType nw_trace_type) `
 
 *NOTE*: It is not recommended to use these functions unless you really have to.
 

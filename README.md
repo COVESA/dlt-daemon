@@ -28,7 +28,7 @@ The following packages need to be installed in order to be able to build and ins
 
 On Ubuntu those dependencies can be installed with the following command:
 
-> sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+`sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev`
 
 To build and install the DLT daemon, follow these steps:
 
@@ -129,9 +129,9 @@ All text based documentation will be replaced with by Markdown-based documentati
 
 Old documentation (not maintained - will be removed in future releases):
 
-- DLT User Manual: doc/dlt_user_manual.txt
+- DLT User Manual: doc/dlt\_user\_manual.txt
 - DLT Cheatsheet: doc/dlt_cheatsheet.txt
-- DLT Design Specification: doc/dlt_design_specification.txt
+- DLT Design Specification: doc/dlt\_design\_specification.txt
 - DLT Compilation of all documentation: doc/dlt_book.txt
 
 ### API Documentation
@@ -164,8 +164,8 @@ If the man pages are changed the following command must be executed.
 ```bash
 mkdir build
 cd build
-cmake -DWITH_DOC=ON ..
-make doc-man
+cmake -DWITH_MAN=ON ..
+make generate_man
 ```
 
 The generated man pages overwrite the existing ones.
@@ -187,8 +187,8 @@ uncrustify version: 0.68_f
 
 List of open issues can be found on [Github](https://github.com/GENIVI/dlt-daemon/issues)
 
-- DLT library: Usage of dlt_user_log_write_float64() and DLT_FLOAT64() leads to "Illegal instruction (core dumped)" on ARM target.
-- DLT library: Nested calls to DLT_LOG_ ... are not supported, and will lead to a deadlock.
+- DLT library: Usage of dlt\_user\_log\_write\_float64() and DLT_FLOAT64() leads to "Illegal instruction (core dumped)" on ARM target.
+- DLT library: Nested calls to DLT\_LOG\_ ... are not supported, and will lead to a deadlock.
 - For Non linux platforms [eg: QNX] IPC supported is UNIX_SOCKET. For Linux Platforms both IPC FIFO and UNIX_SOCKET are supported
 
 ## Software/Hardware
@@ -198,7 +198,7 @@ Developed and tested with Ubuntu Linux 16 64-bit / Intel PC
 ## License
 
 Full information on the license for this software is available in the "LICENSE" file.
-Full information on the license for the cityhash code is available in "COPYING" file in src/core_dump_handler/cityhash_c.
+Full information on the license for the cityhash code is available in "COPYING" file in src/core\_dump\_handler/cityhash_c.
 
 ## Mailinglist
 
