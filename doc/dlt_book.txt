@@ -30,9 +30,7 @@ Information
 
 :leveloffset: 2
 
-include::../README[]
-
-include::../INSTALL[]
+include::../README.md[]
 
 :leveloffset: 0
 
@@ -49,13 +47,13 @@ include::dlt_loglevel_explained.txt[]
 
 include::dlt_design_specification.txt[]
 
-include::dlt_filetransfer.txt[]
+include::dlt_filetransfer.md[]
 
-include::dlt_extended_network_trace.txt[]
+include::dlt_extended_network_trace.md[]
 
-include::dlt_kpi.txt[]
+include::dlt_kpi.md[]
 
-include::dlt_cdh.txt[]
+include::dlt_cdh.md[]
 
 :leveloffset: 0
 
@@ -64,20 +62,20 @@ Manpages
 
 :leveloffset: 2
 
-include::dlt-daemon.1.txt[]
+include::dlt-daemon.1.md[]
 
-include::dlt.conf.5.txt[]
+include::dlt.conf.5.md[]
 
-include::dlt-system.1.txt[]
+include::dlt-system.1.md[]
 
-include::dlt-system.conf.5.txt[]
+include::dlt-system.conf.5.md[]
 
-include::dlt-convert.1.txt[]
+include::dlt-convert.1.md[]
 
-include::dlt-sortbytimestamp.1.txt[]
+include::dlt-sortbytimestamp.1.md[]
 
-include::dlt-receive.1.txt[]
+include::dlt-receive.1.md[]
 
-include::dlt-logstorage-ctrl.1.txt[]
+include::dlt-logstorage-ctrl.1.md[]
 
 :leveloffset: 0

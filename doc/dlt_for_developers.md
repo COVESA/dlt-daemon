@@ -404,7 +404,6 @@ DLT_PTR(PTR_VAR) | Architecture independent macro to print pointers
 
 ###	DLT C++ Extension
 
-Important note: By default, C++ Extension is disabled in ADIT platform. It can be enabled by setting the CMake option: *WITH_DLT_CXX11_EXT=ON*.
 The DLT C++ extension was added to DLT in version 2.13 . This approach solves the need to specify the type of each argument for applications written in C++ by using C++ templates and function overloading. The following shows the usage of this API extension:
 
 ```

@@ -23,31 +23,31 @@ The following will explain the meaning to each three-character-identifier and ea
 
 The datasets in these messages have the following form:
 
-> \[PID\];\[Parent PID\];\[Commandline\]
+`[PID];[Parent PID];[Commandline]`
 
 Example message:
 
-> NEW 21226;1;/usr/libexec/nm-dispatcher
+`NEW 21226;1;/usr/libexec/nm-dispatcher`
 
 *STP*: This identifies a message that contains datasets describing processes that have ended since the last interval.
 
 The datasets in these messages have the following form:
 
-\[PID\]
+`[PID]`
 
 Example message:
 
-> STP 20541
+`STP 20541`
 
 *ACT*: This identifies a message that contains datasets describing active processes. These are processes that have consumed CPU time since the last interval.
 
 The datasets in these messages have the following form:
 
-> \[PID\];\[CPU time in milliseconds per second\];\[RSS bytes\];\[CTX-switches since last interval\];\[I/O bytes\];\[I/O wait time in milliseconds per second\]
+`[PID];[CPU time in milliseconds per second];[RSS bytes];[CTX-switches since last interval];[I/O bytes];[I/O wait time in milliseconds per second]`
 
 Example message:
 
-> ACT 20503;10;389;3;1886649;0
+`ACT 20503;10;389;3;1886649;0`
 
 NOTE: The *CPU time* value is the active time of a process in milliseconds, divided by the number of CPU cores. So this value should never get greater than 1000ms, which would mean 100% CPU usage.
 
@@ -55,21 +55,21 @@ NOTE: The *CPU time* value is the active time of a process in milliseconds, divi
 
 The datasets in these messages have the following form:
 
-> \[PID\];\[Commandline\]
+`[PID];[Commandline]`
 
 Example message:
 
-> CHK 660;/sbin/audispd
+`CHK 660;/sbin/audispd`
 
 *IRQ*: This identifies a message that contains datasets describing the numbers of interrupts that occurred on each CPU.
 
 The datasets in these messages have the following form:
 
-> \[IRQ name\];cpu\[CPU number\];\[Number of total interrupts\];
+`[IRQ name];cpu[CPU number];[Number of total interrupts];`
 
 Example message:
 
-> IRQ 0;cpu0:133;cpu1:0; 1;cpu0:76827;cpu1:0;
+`IRQ 0;cpu0:133;cpu1:0; 1;cpu0:76827;cpu1:0;`
 
 Synchronization messages:
 

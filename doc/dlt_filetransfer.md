@@ -28,7 +28,7 @@ The file transfer is at least one single transaction. This transaction consist o
 
 Every filetransfer must begin with the header package using:
 
-> int dlt_user_log_file_header(DltContext *fileContext,const char *filename)
+` int dlt_user_log_file_header(DltContext *fileContext,const char *filename) `
 
 Header Header Package Protocol:
 
@@ -47,7 +47,7 @@ FLST | Package flag
 
 After the header package was sent, at least one or more data packages can be send using:
 
-> int dlt_user_log_file_data(DltContext *fileContext,const char *filename,int packageToTransfer, int timeout)
+` int dlt_user_log_file_data(DltContext *fileContext,const char *filename,int packageToTransfer, int timeout) `
 
 Data Data Package Protocol:
 
@@ -63,7 +63,7 @@ FLDA | Package flag
 
 After all data packages were sent, the end package must be sent to indicate that the filetransfer is over using:
 
-> int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int deleteFlag)
+` int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int deleteFlag) `
 
 End Package Protocol:
 
@@ -77,7 +77,7 @@ FLFI | Package flag
 
 The library offers the user the possibility to log informations about a file using the following method without transferring the file itself using:
 
-> dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
+` dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename) `
 
 File Information Protocol:
 
@@ -118,7 +118,7 @@ FLIF | Package flag
 
 If an error happens during file transfer, the library will execute the mehtod:
 
-> void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode)
+` void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode) `
 
 File transfer error Protocol:
 
@@ -214,7 +214,7 @@ Options:
 
 When you call "sudo make install", some automatic tests will be installed. Start the test using the following command from bash:
 
-> dlt-test-filetransfer
+` dlt-test-filetransfer `
 
 It's important that the dlt-filetransfer example files are installed in /usr/share/dlt-filetransfer which will be done automatically by using "sudo make install".
 

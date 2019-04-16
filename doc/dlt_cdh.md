@@ -14,7 +14,7 @@ When a program crash occurs on the system the Core Dump Handler is triggered to 
 
 Add
 
-> -DWITH_DLT_COREDUMPHANDLER=ON -DTARGET_CPU_NAME={i686|x86_64}
+`-DWITH_DLT_COREDUMPHANDLER=ON -DTARGET_CPU_NAME={i686|x86_64}`
 
 options to cmake. The core dump handler code currently supports the i686 and x86_64 architecture.
 
@@ -22,7 +22,7 @@ options to cmake. The core dump handler code currently supports the i686 and x86
 
 As *root* (not sudo) execute the following:
 
-> echo "|/usr/local/bin/dlt-cdh %t %p %s %e" > /proc/sys/kernel/core_pattern
+`echo "|/usr/local/bin/dlt-cdh %t %p %s %e" > /proc/sys/kernel/core_pattern`
 
 NOTE: replace */usr/local/bin* with the path dlt-cdh has been installed to. This instructs the kernel to pipe a core dump as standard input to dlt-cdh together with the following parameters:
 
@@ -33,7 +33,7 @@ NOTE: replace */usr/local/bin* with the path dlt-cdh has been installed to. This
 
 See
 
-> man core
+`man core`
 
 for details
 
@@ -41,25 +41,27 @@ for details
 
 In */usr/lib/sysctl.d/* the file *50-coredump.conf* has to be created which is done automatically by
 
-> make install
+`make install`
 
 Unfortunately - at least on Fedora systems - abrt has to be removed with
 
-> yum remove abrtd*
+`yum remove abrtd*`
 
 because it ruthlessly overwrites our change at every boot. The core dump handler can be activated then without reboot by running
 
-> sysctl -p /usr/lib/sysctl.d/50-coredump.conf
+`sysctl -p /usr/lib/sysctl.d/50-coredump.conf`
 
 ### Configuration of link:dlt_filetransfer.html[DLT Filetransfer] for usage with dlt-cdh
 
 Make sure the following is set in the "Filetransfer Manager" section of */etc/dlt-system.conf*:
 
-> ...
-> FiletransferEnable = 1
-> ...
-> FiletransferDirectory = /var/core
-> ...
+```
+...
+FiletransferEnable = 1
+...
+FiletransferDirectory = /var/core
+...
+```
 
 ### Generation of core dump
 
