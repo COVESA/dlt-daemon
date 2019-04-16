@@ -4,9 +4,32 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.0 STABLE
+2.18.2 STABLE
 
 ## Changes
+
+### 2.18.2
+
+   * Size of Resend buffer less than or equal to DLT_USER_BUF_MAX_SIZE res… (#116)
+   * Fixed memory leak when receiving network traces of 0xFFFF length
+   * Contact information update (#118)
+   * lib: Add mq_close/mq_unlink conditions
+   * doc: Do not allow DLT usage in forked child (#95)
+   * doc: Raise an awareness of log level sync
+   * dlt_offline_logstorage: fix multiple file creation error (#85, #94)
+   * doc: Fix PANDOC_TOOL condition
+   * Travis CI: Fix link in README.md (#106, #108)
+
+### 2.18.1
+
+   * doc: Move all man pages to markdown files (#102)
+   * Fix linking problem with tests when systemd enabled (#103)
+   * libdlt: Do not allow DLT usage in forked child (#95)
+   * Travis CI: build with systemd enabled (#97)
+   * Make dlt-convert more responsive when watching a file
+   * Travis CI: fix - add new line to .travis.yml
+   * Build and test status added
+   * Add the Travis CI script
 
 ### 2.18.0
 
