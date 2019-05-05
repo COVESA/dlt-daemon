@@ -36,7 +36,7 @@ cd build
 cmake ..
 make
 optional: sudo make install
-optional: sudo ldconfig`
+optional: sudo ldconfig
 ```
 
 ### Configuration
