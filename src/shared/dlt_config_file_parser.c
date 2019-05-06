@@ -123,7 +123,7 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
     int section = file->num_sections;
 
     /* check if adding another section would exceed max number of sections */
-    if (section + 1 >= DLT_CONFIG_FILE_SECTIONS_MAX) {
+    if (section >= DLT_CONFIG_FILE_SECTIONS_MAX) {
         dlt_log(LOG_WARNING, "Cannot store more sections\n");
         return -1; /* reached max number of sections */
     }
@@ -538,6 +538,6 @@ int dlt_config_file_get_value(const DltConfigFile *file,
         }
     }
 
-    dlt_log(LOG_WARNING, "Entry does not exist in section \n");
+    dlt_vlog(LOG_WARNING, "Entry does not exist in section: %s\n", key);
     return -1;
 }

@@ -62,7 +62,7 @@
 #define DLT_CONFIG_FILE_PATH_MAX_LEN       100 /* absolute path including filename */
 #define DLT_CONFIG_FILE_ENTRY_MAX_LEN      100 /* Entry for section, key and value */
 #define DLT_CONFIG_FILE_LINE_MAX_LEN       210
-#define DLT_CONFIG_FILE_SECTIONS_MAX       100
+#define DLT_CONFIG_FILE_SECTIONS_MAX       125
 #define DLT_CONFIG_FILE_KEYS_MAX            25 /* Maximal keys per section */
 
 typedef struct DltConfigKeyData
