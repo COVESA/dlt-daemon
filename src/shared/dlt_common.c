@@ -830,7 +830,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
             if (datalength > 0) {
                 DLT_MSG_READ_VALUE(retval, ptr, datalength, uint8_t); /* No endian conversion necessary */
 
-                if ((retval < 3) || (retval == 8))
+                if ((retval < DLT_SERVICE_RESPONSE_LAST) || (retval == 8))
                     snprintf(text + strlen(text), textlength - strlen(text), "%s", return_type[retval]);
                 else
                     snprintf(text + strlen(text), textlength - strlen(text), "%.2x", retval);
