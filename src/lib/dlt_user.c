@@ -2958,6 +2958,10 @@ DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
                                                 uint16_t payload_len,
                                                 void *payload)
 {
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
     /* Send as normal trace if possible */
     if (header_len + payload_len + sizeof(uint16_t) < dlt_user.log_buf_len)
         return dlt_user_trace_network(handle, nw_trace_type, header_len, header, payload_len, payload);
