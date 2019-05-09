@@ -997,8 +997,21 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
         if (footer->wrap_around_cnt < 1) {
             footer->end_sync_offset = footer->offset;
         }
+
+        /* write data to cache */
+        memcpy(curr_write_addr, data1, size1);
+        curr_write_addr += size1;
+        memcpy(curr_write_addr, data2, size2);
+        curr_write_addr += size2;
+        memcpy(curr_write_addr, data3, size3);
     }
-    else
+
+    /*
+     * In case the msg_size is equal to remaining cache size,
+     * the message is still written in cache.
+     * Then whole cache data is synchronized to file.
+     */
+    if (msg_size >= remain_cache_size)
     {
         /*check for message size exceeds cache size for specific_size strategy */
         if ((unsigned int) msg_size > cache_size)
@@ -1043,18 +1056,22 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
              footer->wrap_around_cnt += 1;
          }
 
-        /* start writing from beginning */
-        footer->end_sync_offset = footer->offset;
-        curr_write_addr = config->cache;
-        footer->offset = msg_size;
+         if (msg_size > remain_cache_size)
+         {
+            /* start writing from beginning */
+            footer->end_sync_offset = footer->offset;
+            curr_write_addr = config->cache;
+            footer->offset = msg_size;
+
+            /* write data to cache */
+            memcpy(curr_write_addr, data1, size1);
+            curr_write_addr += size1;
+            memcpy(curr_write_addr, data2, size2);
+            curr_write_addr += size2;
+            memcpy(curr_write_addr, data3, size3);
+         }
     }
 
-    /* write data to cache */
-    memcpy(curr_write_addr, data1, size1);
-    curr_write_addr += size1;
-    memcpy(curr_write_addr, data2, size2);
-    curr_write_addr += size2;
-    memcpy(curr_write_addr, data3, size3);
 
     return 0;
 }
