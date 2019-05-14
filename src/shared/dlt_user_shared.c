@@ -73,9 +73,66 @@
 #include <errno.h>
 
 #include <sys/uio.h> /* writev() */
+#include <sys/ioctl.h> /* ioctl() */
+#include <string.h> /* strerror() */
+#include <syslog.h>
 
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
+
+static DltReturnValue dlt_writev_reliable(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
+
+DltReturnValue dlt_writev_reliable(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3)
+{
+    struct iovec iov[3];
+    uint32_t bytes_written;
+    int daemon_fifo_size;
+    size_t non_read_bytes = 0;
+
+    if (handle <= 0)
+        /* Invalid handle */
+        return DLT_RETURN_ERROR;
+
+    iov[0].iov_base = ptr1;
+    iov[0].iov_len = len1;
+    iov[1].iov_base = ptr2;
+    iov[1].iov_len = len2;
+    iov[2].iov_base = ptr3;
+    iov[2].iov_len = len3;
+
+    if (dlt_is_file_check != 1)
+    {
+        /* Get Daemon FIFO size */
+        if ((daemon_fifo_size = fcntl(handle, F_GETPIPE_SZ , 0)) == -1)
+        {
+            dlt_vlog(LOG_ERR, "get FIFO size error, could not perform write operation: %s\n",strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+        if ((daemon_fifo_size > 0) && (ioctl(handle, FIONREAD, &non_read_bytes) != -1))
+        {
+            // Determine the FIFO size availability prior writing data to PIPE
+            if ((daemon_fifo_size - non_read_bytes) > (len1+len2+len3))
+            {
+                bytes_written = writev(handle, iov, 3);
+            }
+            else
+            {
+                dlt_vlog(LOG_DEBUG, "Not enough space available to write the data to FIFO, hence storing it in ring buffer\n");
+                return DLT_RETURN_ERROR; // Not enough size to write data to FIFO
+            }
+        }
+        else
+            return DLT_RETURN_ERROR;
+    }
+    else
+    {
+        // writing data to a File
+        bytes_written = writev(handle, iov, 3);
+    }
+    if (bytes_written != (len1 + len2 + len3))
+        return DLT_RETURN_ERROR;
+    return DLT_RETURN_OK;
+}
 
 DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype)
 {
@@ -107,45 +164,15 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
 
 DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2)
 {
-    struct iovec iov[2];
-    uint32_t bytes_written;
-
-    if (handle <= 0)
-        /* Invalid handle */
-        return DLT_RETURN_ERROR;
-
-    iov[0].iov_base = ptr1;
-    iov[0].iov_len = len1;
-    iov[1].iov_base = ptr2;
-    iov[1].iov_len = len2;
-
-    bytes_written = writev(handle, iov, 2);
-
-    if (bytes_written != (len1 + len2))
-        return DLT_RETURN_ERROR;
-
-    return DLT_RETURN_OK;
+    return dlt_writev_reliable(handle, ptr1, len1, ptr2,  len2, 0, 0);
 }
 
 DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3)
 {
-    struct iovec iov[3];
-    uint32_t bytes_written;
-
-    if (handle <= 0)
-        /* Invalid handle */
-        return DLT_RETURN_ERROR;
-
-    iov[0].iov_base = ptr1;
-    iov[0].iov_len = len1;
-    iov[1].iov_base = ptr2;
-    iov[1].iov_len = len2;
-    iov[2].iov_base = ptr3;
-    iov[2].iov_len = len3;
-
-    bytes_written = writev(handle, iov, 3);
-
-    if (bytes_written != (len1 + len2 + len3)) {
+    DltReturnValue ret;
+    ret = dlt_writev_reliable(handle, ptr1, len1, ptr2, len2, ptr3, len3);
+    if (ret < DLT_RETURN_OK)
+	{
         switch (errno) {
         case EBADF:
         {
@@ -171,5 +198,5 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
         return DLT_RETURN_ERROR;
     }
 
-    return DLT_RETURN_OK;
+    return ret;
 }
