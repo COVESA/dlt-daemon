@@ -64,6 +64,7 @@
 
 #include "dlt_daemon_client.h"
 #include "dlt_daemon_connection.h"
+#include "dlt_daemon_event_handler.h"
 
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
@@ -109,27 +110,32 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                int size2,
                                                int verbose)
 {
-    int j, sent = 0;
+    int sent = 0;
+    unsigned int i = 0;
+    int ret = 0;
     DltConnection *temp = NULL;
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
+
+    PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return 0;
     }
 
-    temp = daemon_local->pEvent.connections;
-    temp = dlt_connection_get_next(temp, type_mask);
+    for (i = 0; i < daemon_local->pEvent.nfds; i++)
+    {
+        temp = dlt_event_handler_find_connection(&(daemon_local->pEvent),
+                                        daemon_local->pEvent.pfd[i].fd);
 
-    /* FIXME: the lock shall include the for loop as data
-     * can be affect between each iteration, but
-     * dlt_daemon_close_socket may call us too ...
-     */
-    for (j = 0; ((j < daemon_local->client_connections) && (temp != NULL)); j++) {
-        int ret = 0;
+        if ((temp == NULL) || (temp->receiver == NULL) ||
+            !((1 << temp->type) & type_mask)) {
+            dlt_vlog(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
+            continue;
+        }
+
         DLT_DAEMON_SEM_LOCK();
-        DltConnection *next = dlt_connection_get_next(temp->next, type_mask);
 
         ret = dlt_connection_send_multiple(temp,
                                            data1,
@@ -154,8 +160,6 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
              * then do not store in ring buffer
              */
             sent = 1;
-
-        temp = next;
     } /* for */
 
     return sent;

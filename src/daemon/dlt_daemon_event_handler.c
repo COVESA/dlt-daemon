@@ -285,14 +285,15 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
  *
  * @return The found connection pointer, NULL otherwise.
  */
-DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
-                                                 int fd)
+DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev, int fd)
 {
-
     DltConnection *temp = ev->connections;
 
-    while ((temp != NULL) && (temp->receiver->fd != fd))
+    while (temp != NULL) {
+        if ((temp->receiver != NULL) && (temp->receiver->fd == fd))
+            return temp;
         temp = temp->next;
+    }
 
     return temp;
 }
