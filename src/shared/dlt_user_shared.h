@@ -75,6 +75,9 @@
 
 #include <sys/types.h>
 
+// Global variable to check the dlt logging is to a file or to FIFO
+int dlt_is_file_check;
+
 /**
  * This is the header of each message to be exchanged between application and daemon.
  */
