@@ -778,6 +778,11 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    if (dlt_daemon_local_init_p3(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
+        dlt_log(LOG_CRIT, "Initialization of phase 3 failed!\n");
+        return -1;
+    }
+
     dlt_daemon_log_internal(&daemon,
                             &daemon_local,
                             "Daemon launched. Starting to output traces...",
@@ -882,19 +887,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
         return -1;
     }
 
-    /* init offline trace */
-    if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&
-        daemon_local->flags.offlineTraceDirectory[0]) {
-        if (dlt_offline_trace_init(&(daemon_local->offlineTrace),
-                                   daemon_local->flags.offlineTraceDirectory,
-                                   daemon_local->flags.offlineTraceFileSize,
-                                   daemon_local->flags.offlineTraceMaxSize,
-                                   daemon_local->flags.offlineTraceFilenameTimestampBased) == -1) {
-            dlt_log(LOG_ERR, "Could not initialize offline trace\n");
-            return -1;
-        }
-    }
-
     /* Init offline logstorage for MAX devices */
     if (daemon_local->flags.offlineLogstorageMaxDevices > 0) {
         daemon->storage_handle = malloc(sizeof(DltLogStorage) * daemon_local->flags.offlineLogstorageMaxDevices);
@@ -956,6 +948,32 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     return 0;
 }
+
+int dlt_daemon_local_init_p3(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == 0) || (daemon_local == 0)) {
+        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_local_init_p3()\n");
+        return -1;
+    }
+
+    /* init offline trace */
+    if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&
+        daemon_local->flags.offlineTraceDirectory[0]) {
+        if (dlt_offline_trace_init(&(daemon_local->offlineTrace),
+                                   daemon_local->flags.offlineTraceDirectory,
+                                   daemon_local->flags.offlineTraceFileSize,
+                                   daemon_local->flags.offlineTraceMaxSize,
+                                   daemon_local->flags.offlineTraceFilenameTimestampBased) == -1) {
+            dlt_log(LOG_ERR, "Could not initialize offline trace\n");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 
 static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
 {
@@ -1287,13 +1305,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
     /* Try to delete existing pipe, ignore result of unlink() */
     unlink(daemon_local->flags.daemonFifoName);
-#else
-    /* Try to delete existing pipe, ignore result of unlink() */
-    unlink(daemon_local->flags.appSockPath);
-#endif
 
 #ifdef DLT_SHM_ENABLE
     /* free shared memory */

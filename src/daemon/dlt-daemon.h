@@ -181,6 +181,7 @@ typedef DltDaemonTimingPacketThreadData DltDaemonECUVersionThreadData;
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_local_init_p3(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_connection_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
