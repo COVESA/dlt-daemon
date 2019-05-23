@@ -71,7 +71,6 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
                                    size_t msg_size)
 {
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
-    int bytes_sent = 0;
     int ret = 0;
 
     if ((conn != NULL) && (conn->receiver != NULL))
@@ -88,9 +87,7 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
     case DLT_CONNECTION_CLIENT_MSG_TCP:
         ret = dlt_daemon_socket_sendreliable(conn->receiver->fd,
                                              msg,
-                                             msg_size,
-                                             &bytes_sent);
-        conn->receiver->bytes_sent += bytes_sent;
+                                             msg_size);
         return ret;
     default:
         return DLT_DAEMON_ERROR_UNKNOWN;
