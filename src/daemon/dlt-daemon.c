@@ -1654,7 +1654,6 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                 daemon,
                                 daemon_local,
                                 verbose);
-        receiver->fd = -1;
         return -1;
     }
 
@@ -1904,7 +1903,6 @@ int dlt_daemon_process_control_messages(
                                 daemon,
                                 daemon_local,
                                 verbose);
-        receiver->fd = -1;
         /* FIXME: Why the hell do we need to close the socket
          * on control message reception ??
          */
@@ -2028,7 +2026,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                                 daemon,
                                 daemon_local,
                                 verbose);
-        receiver->fd = -1;
         return 0;
     }
 
