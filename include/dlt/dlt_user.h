@@ -825,14 +825,6 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
 DltReturnValue dlt_log_marker();
 
 /**
- * Forward a complete DLT message to the DLT daemon
- * @param msgdata Message data of DLT message
- * @param size Size of DLT message
- * @return Value from DltReturnValue enum
- */
-DltReturnValue dlt_forward_msg(void *msgdata, size_t size);
-
-/**
  * Get the total size and available size of the shared memory buffer between daemon and applications.
  * This information is useful to control the flow control between applications and daemon.
  * For example only 50% of the buffer should be used for file transfer.
