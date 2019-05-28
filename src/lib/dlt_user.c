@@ -1422,25 +1422,6 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
         }
     }
 
-    /* Removed because of DltLogLevelType and DltTraceStatusType
-     *
-     * if ((loglevel<DLT_LOG_DEFAULT) || (loglevel>DLT_LOG_VERBOSE))
-     * {
-     *  return DLT_RETURN_ERROR;
-     * }
-     *
-     * if ((tracestatus<DLT_TRACE_STATUS_DEFAULT) || (tracestatus>DLT_TRACE_STATUS_ON))
-     * {
-     *  return DLT_RETURN_ERROR;
-     * }
-     *
-     * if (dlt_user.dlt_ll_ts==0)
-     * {
-     *  return DLT_RETURN_ERROR;
-     * }
-     *
-     */
-
     DLT_SEM_LOCK();
 
     if (dlt_user.dlt_ll_ts == NULL) {
@@ -3932,20 +3913,6 @@ DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType logle
 
     if ((appid == NULL) || (appid[0] == '\0'))
         return DLT_RETURN_ERROR;
-
-    /* Removed because of DltLogLevelType and DltTraceStatusType
-     *
-     * if ((loglevel<DLT_LOG_DEFAULT) || (loglevel>DLT_LOG_VERBOSE))
-     * {
-     *  return DLT_RETURN_ERROR;
-     * }
-     *
-     * if ((tracestatus<DLT_TRACE_STATUS_DEFAULT) || (tracestatus>DLT_TRACE_STATUS_ON))
-     * {
-     *  return DLT_RETURN_ERROR;
-     * }
-     *
-     */
 
     /* set userheader */
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_APP_LL_TS) < DLT_RETURN_OK)
