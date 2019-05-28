@@ -45,8 +45,10 @@ if(WITH_SYSTEMD)
         message( STATUS "Configured systemd unit file:dlt-receive.service" )
     endif(WITH_DLT_CONSOLE AND WITH_DLT_EXAMPLES)
 
-    configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-example-user.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service)
-    message( STATUS "Configured systemd unit file:dlt-example-user.service" )
+    if(WITH_DLT_EXAMPLES)
+        configure_file(${CMAKE_SOURCE_DIR}/systemd/dlt-example-user.service.cmake ${PROJECT_BINARY_DIR}/systemd/dlt-example-user.service)
+        message( STATUS "Configured systemd unit file:dlt-example-user.service" )
+    endif(WITH_DLT_EXAMPLES)
 
     if(WITH_DLT_ADAPTOR)
         set( DLT_ADAPTOR_UDP_APPID "DUDP" )
