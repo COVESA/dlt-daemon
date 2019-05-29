@@ -87,8 +87,6 @@ static char dlt_user_dir[NAME_MAX + 1];
 static char dlt_daemon_fifo[NAME_MAX + 1];
 #endif
 
-static char str[DLT_USER_BUFFER_LENGTH];
-
 static sem_t dlt_mutex;
 static pthread_t dlt_receiverthread_handle;
 
@@ -118,12 +116,9 @@ void dlt_lock_mutex(pthread_mutex_t *mutex)
 
     if ( lock_mutex_result != 0 )
     {
-        snprintf(str,
-                 DLT_USER_BUFFER_LENGTH,
+        dlt_vlog(LOG_ERR,
                  "Mutex lock failed unexpected pid=%i with result %i!\n",
-                 getpid(),
-                 lock_mutex_result);
-        dlt_log(LOG_ERR, str);
+                 getpid(), lock_mutex_result);
     }
 }
 
@@ -371,8 +366,9 @@ DltReturnValue dlt_init(void)
 
     /* init shared memory */
     if (dlt_shm_init_client(&(dlt_user.dlt_shm), DLT_SHM_KEY) < 0) {
-        snprintf(str, DLT_USER_BUFFER_LENGTH, "Logging disabled, Shared memory %d cannot be created!\n", DLT_SHM_KEY);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING,
+                 "Logging disabled, Shared memory %d cannot be created!\n",
+                 DLT_SHM_KEY);
         /*return 0; */
     }
 #endif
@@ -574,11 +570,9 @@ DltReturnValue dlt_init_common(void)
 
     if (env_initial_log_level != NULL) {
         if (dlt_env_extract_ll_set(&env_initial_log_level, &dlt_user.initial_ll_set) != 0) {
-            snprintf(str,
-                     DLT_USER_BUFFER_LENGTH,
+            dlt_vlog(LOG_WARNING,
                      "Unable to parse initial set of log-levels from environment! Env:\n%s\n",
                      getenv("DLT_INITIAL_LOG_LEVEL"));
-            dlt_log(LOG_WARNING, str);
         }
     }
 
@@ -4571,10 +4565,9 @@ void dlt_stop_threads()
         dlt_receiverthread_result = pthread_cancel(dlt_receiverthread_handle);
 
         if (dlt_receiverthread_result != 0) {
-            snprintf(str, DLT_USER_BUFFER_LENGTH,
+            dlt_vlog(LOG_ERR,
                      "ERROR pthread_cancel(dlt_receiverthread_handle): %s\n",
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
     }
 
@@ -4586,10 +4579,9 @@ void dlt_stop_threads()
         dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
 
         if (dlt_segmented_nwt_result != 0) {
-            snprintf(str, DLT_USER_BUFFER_LENGTH,
+            dlt_vlog(LOG_ERR,
                      "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
     }
 
@@ -4598,10 +4590,9 @@ void dlt_stop_threads()
         int joined = pthread_join(dlt_receiverthread_handle, NULL);
 
         if (joined < 0) {
-            snprintf(str, DLT_USER_BUFFER_LENGTH,
+            dlt_vlog(LOG_ERR,
                      "ERROR pthread_join(dlt_receiverthread_handle, NULL): %s\n",
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
 
         dlt_receiverthread_handle = 0; /* set to invalid */
@@ -4611,10 +4602,9 @@ void dlt_stop_threads()
         int joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
 
         if (joined < 0) {
-            snprintf(str, DLT_USER_BUFFER_LENGTH,
+            dlt_vlog(LOG_ERR,
                      "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n",
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
 
         dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */

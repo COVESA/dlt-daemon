@@ -244,12 +244,9 @@ enum {
 
 #   define PRINT_FUNCTION_VERBOSE(_verbose)  \
     { \
-        static char _strbuf[255]; \
-    \
         if (_verbose) \
         { \
-            snprintf(_strbuf, 255, "%s()\n", __func__); \
-            dlt_log(LOG_INFO, _strbuf); \
+            dlt_vlog(LOG_INFO, "%s()\n", __func__); \
         } \
     }
 

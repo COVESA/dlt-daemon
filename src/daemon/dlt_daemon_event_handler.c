@@ -187,7 +187,6 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 {
     int ret = 0;
     unsigned int i = 0;
-    char str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
 
     if ((pEvent == NULL) || (daemon == NULL) || (daemon_local == NULL))
@@ -249,11 +248,8 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         callback = dlt_connection_get_callback(con);
 
         if (!callback) {
-            snprintf(str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Unable to find function for %d handle type.\n",
+            dlt_vlog(LOG_CRIT, "Unable to find function for %d handle type.\n",
                      type);
-            dlt_log(LOG_CRIT, str);
             return -1;
         }
 
@@ -262,11 +258,8 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                      daemon_local,
                      con->receiver,
                      daemon_local->flags.vflag) == -1) {
-            snprintf(str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Processing from %d handle type failed!\n",
+            dlt_vlog(LOG_CRIT, "Processing from %d handle type failed!\n",
                      type);
-            dlt_log(LOG_CRIT, str);
             return -1;
         }
     }

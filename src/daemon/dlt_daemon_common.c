@@ -88,7 +88,6 @@
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_serial.h"
 
-static char str[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
 sem_t dlt_daemon_mutex;
 
@@ -240,13 +239,8 @@ int dlt_daemon_init(DltDaemon *daemon,
     dlt_set_id(daemon->ecuid, "");
 
     /* initialize ring buffer for client connection */
-    snprintf(str,
-             DLT_DAEMON_COMMON_TEXTBUFSIZE,
-             "Ringbuffer configuration: %lu/%lu/%lu\n",
-             RingbufferMinSize,
-             RingbufferMaxSize,
-             RingbufferStepSize);
-    dlt_log(LOG_INFO, str);
+    dlt_vlog(LOG_INFO, "Ringbuffer configuration: %lu/%lu/%lu\n",
+             RingbufferMinSize, RingbufferMaxSize, RingbufferStepSize);
 
     if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), RingbufferMinSize, RingbufferMaxSize,
                                 RingbufferStepSize) == DLT_RETURN_ERROR)
@@ -1312,12 +1306,12 @@ int dlt_daemon_configuration_load(DltDaemon *daemon, const char *filename, int v
                     /* parse arguments here */
                     if (strcmp(token, "LoggingMode") == 0) {
                         daemon->mode = atoi(value);
-                        snprintf(str, DLT_DAEMON_COMMON_TEXTBUFSIZE, "Runtime Option: %s=%d\n", token, daemon->mode);
-                        dlt_log(LOG_INFO, str);
+                        dlt_vlog(LOG_INFO, "Runtime Option: %s=%d\n", token,
+                                 daemon->mode);
                     }
                     else {
-                        snprintf(str, DLT_DAEMON_COMMON_TEXTBUFSIZE, "Unknown option: %s=%s\n", token, value);
-                        dlt_log(LOG_WARNING, str);
+                        dlt_vlog(LOG_WARNING, "Unknown option: %s=%s\n", token,
+                                 value);
                     }
                 }
             }

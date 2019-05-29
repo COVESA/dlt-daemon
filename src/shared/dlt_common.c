@@ -65,8 +65,6 @@
 #   include <winbase.h>
 #endif
 
-static char str[DLT_COMMON_BUFFER_LENGTH];
-
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltFifoBaseDir[PATH_MAX + 1] = "/tmp";
@@ -125,9 +123,9 @@ DltReturnValue dlt_print_hex_string(char *text, int textlength, uint8_t *ptr, in
 
     /* Length 3: AB_ , A is first digit of hex number, B is second digit of hex number, _ is space */
     if (textlength < (size * 3)) {
-        char str[255];
-        snprintf(str, 254, "String does not fit hex data (available=%d, required=%d) !\n", textlength, size * 3);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING,
+                 "String does not fit hex data (available=%d, required=%d) !\n",
+                 textlength, size * 3);
         return DLT_RETURN_ERROR;
     }
 
@@ -169,12 +167,9 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
          * ((size/16) lines + extra line for the rest) */
 
     if (textlength < required_size) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
+        dlt_vlog(LOG_WARNING,
                  "String does not fit mixed data (available=%d, required=%d) !\n",
-                 textlength,
-                 required_size);
-        dlt_log(LOG_WARNING, str);
+                 textlength, required_size);
         return DLT_RETURN_ERROR;
     }
 
@@ -262,9 +257,9 @@ DltReturnValue dlt_print_char_string(char **text, int textlength, uint8_t *ptr, 
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (textlength < size) {
-        char str[255];
-        snprintf(str, 254, "String does not fit character data (available=%d, required=%d) !\n", textlength, size);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING,
+                 "String does not fit character data (available=%d, required=%d) !\n",
+                 textlength, size);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -387,8 +382,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     handle = fopen(filename, "r");
 
     if (handle == NULL) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Filter file %s cannot be opened!\n", filename);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
         return DLT_RETURN_ERROR;
     }
 
@@ -430,11 +424,9 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
             dlt_filter_add(filter, apid, ctid, verbose);
         }
         else {
-            snprintf(str,
-                     DLT_COMMON_BUFFER_LENGTH,
+            dlt_vlog(LOG_WARNING,
                      "Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
                      DLT_FILTER_MAX);
-            dlt_log(LOG_WARNING, str);
         }
     }
 
@@ -457,8 +449,7 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
     handle = fopen(filename, "w");
 
     if (handle == NULL) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Filter file %s cannot be opened!\n", filename);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
         return DLT_RETURN_ERROR;
     }
 
@@ -520,8 +511,9 @@ DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *c
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (filter->counter >= DLT_FILTER_MAX) {
-        sprintf(str, "Maximum number (%d) of allowed filters reached, ignoring filter!\n", DLT_FILTER_MAX);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING,
+                 "Maximum number (%d) of allowed filters reached, ignoring filter!\n",
+                 DLT_FILTER_MAX);
         return DLT_RETURN_ERROR;
     }
 
@@ -809,10 +801,9 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
         id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
         if (textlength < ((datalength * 3) + 20)) {
-            char str[255];
-            snprintf(str, 254, "String does not fit binary data (available=%d, required=%d) !\n", textlength,
-                     (datalength * 3) + 20);
-            dlt_log(LOG_WARNING, str);
+            dlt_vlog(LOG_WARNING,
+                     "String does not fit binary data (available=%d, required=%d) !\n",
+                     textlength, (datalength * 3) + 20);
             return DLT_RETURN_ERROR;
         }
 
@@ -985,22 +976,15 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     msg->datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
 
     if (verbose) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
-                 "BufferLength=%d, HeaderSize=%d, DataSize=%d\n",
-                 length,
-                 msg->headersize,
-                 msg->datasize);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "BufferLength=%d, HeaderSize=%d, DataSize=%d\n",
+                 length, msg->headersize, msg->datasize);
     }
 
     /* check data size */
     if (msg->datasize < 0) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
+        dlt_vlog(LOG_WARNING,
                  "Plausibility check failed. Complete message size too short (%d)!\n",
                  msg->datasize);
-        dlt_log(LOG_WARNING, str);
         return DLT_MESSAGE_ERROR_CONTENT;
     }
 
@@ -1043,9 +1027,9 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     }
 
     if (msg->databuffer == NULL) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Cannot allocate memory for payload buffer of size %d!\n",
+        dlt_vlog(LOG_WARNING,
+                 "Cannot allocate memory for payload buffer of size %d!\n",
                  msg->datasize);
-        dlt_log(LOG_WARNING, str);
         return DLT_MESSAGE_ERROR_UNKNOWN;
     }
 
@@ -1184,18 +1168,15 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
 
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "HeaderSize=%d, DataSize=%d\n", file->msg.headersize,
-                 file->msg.datasize);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "HeaderSize=%d, DataSize=%d\n",
+                 file->msg.headersize, file->msg.datasize);
     }
 
     /* check data size */
     if (file->msg.datasize < 0) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
+        dlt_vlog(LOG_WARNING,
                  "Plausibility check failed. Complete message size too short! (%d)\n",
                  file->msg.datasize);
-        dlt_log(LOG_WARNING, str);
         return DLT_RETURN_ERROR;
     }
 
@@ -1277,18 +1258,15 @@ DltReturnValue dlt_file_read_header_raw(DltFile *file, int resync, int verbose)
     file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
 
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "HeaderSize=%d, DataSize=%d\n", file->msg.headersize,
-                 file->msg.datasize);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "HeaderSize=%d, DataSize=%d\n",
+                 file->msg.headersize, file->msg.datasize);
     }
 
     /* check data size */
     if (file->msg.datasize < 0) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
+        dlt_vlog(LOG_WARNING,
                  "Plausibility check failed. Complete message size too short! (%d)\n",
                  file->msg.datasize);
-        dlt_log(LOG_WARNING, str);
         return DLT_RETURN_ERROR;
     }
 
@@ -1358,22 +1336,18 @@ DltReturnValue dlt_file_read_data(DltFile *file, int verbose)
     }
 
     if (file->msg.databuffer == NULL) {
-        snprintf(str,
-                 DLT_COMMON_BUFFER_LENGTH,
+        dlt_vlog(LOG_WARNING,
                  "Cannot allocate memory for payload buffer of size %d!\n",
                  file->msg.datasize);
-        dlt_log(LOG_WARNING, str);
         return DLT_RETURN_ERROR;
     }
 
     /* load payload data from file */
     if (fread(file->msg.databuffer, file->msg.datasize, 1, file->handle) != 1) {
         if (file->msg.datasize != 0) {
-            snprintf(str,
-                     DLT_COMMON_BUFFER_LENGTH,
+            dlt_vlog(LOG_WARNING,
                      "Cannot read payload data from file of size %d!\n",
                      file->msg.datasize);
-            dlt_log(LOG_WARNING, str);
             return DLT_RETURN_ERROR;
         }
     }
@@ -1403,29 +1377,25 @@ DltReturnValue dlt_file_open(DltFile *file, const char *filename, int verbose)
     file->handle = fopen(filename, "rb");
 
     if (file->handle == NULL) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH - 1, "File %s cannot be opened!\n", filename);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "File %s cannot be opened!\n", filename);
         return DLT_RETURN_ERROR;
     }
 
     if (0 != fseek(file->handle, 0, SEEK_END)) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "dlt_file_open: Seek failed to 0,SEEK_END");
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "dlt_file_open: Seek failed to 0,SEEK_END");
         return DLT_RETURN_ERROR;
     }
 
     file->file_length = ftell(file->handle);
 
     if (0 != fseek(file->handle, 0, SEEK_SET)) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "dlt_file_open: Seek failed to 0,SEEK_SET");
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "dlt_file_open: Seek failed to 0,SEEK_SET");
         return DLT_RETURN_ERROR;
     }
 
     if (verbose) {
         /* print file length */
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "File is %lu bytes long\n", file->file_length);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "File is %lu bytes long\n", file->file_length);
     }
 
     return DLT_RETURN_OK;
@@ -1437,8 +1407,7 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
     int found = DLT_RETURN_OK;
 
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "%s: Message %d:\n", __func__, file->counter_total);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "%s: Message %d:\n", __func__, file->counter_total);
     }
 
     if (file == NULL)
@@ -1461,15 +1430,14 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
 
     /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
     if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek failed to file_position %ld \n", file->file_position);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "Seek failed to file_position %ld \n",
+                 file->file_position);
         return DLT_RETURN_ERROR;
     }
 
     /* get file position at start of DLT message */
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Position in file: %ld\n", file->file_position);
-        dlt_log(LOG_INFO, str);
+        dlt_vlog(LOG_INFO, "Position in file: %ld\n", file->file_position);
     }
 
     /* read header */
@@ -1484,8 +1452,7 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
         if (dlt_file_read_header_extended(file, verbose) < DLT_RETURN_OK) {
             /* go back to last position in file */
             if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-                snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek to last file pos failed!\n");
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "Seek to last file pos failed!\n");
             }
 
             return DLT_RETURN_ERROR;
@@ -1505,13 +1472,12 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
         /* skip payload data */
         if (fseek(file->handle, file->msg.datasize, SEEK_CUR) != 0) {
             /* go back to last position in file */
-            snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek failed to skip payload data of size %d!\n",
+            dlt_vlog(LOG_WARNING,
+                     "Seek failed to skip payload data of size %d!\n",
                      file->msg.datasize);
-            dlt_log(LOG_WARNING, str);
 
             if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-                snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek back also failed!\n");
-                dlt_log(LOG_WARNING, str);
+                dlt_log(LOG_WARNING, "Seek back also failed!\n");
             }
 
             return DLT_RETURN_ERROR;
@@ -1524,17 +1490,14 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
                   file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize,
                   SEEK_CUR)) {
 
-            snprintf(str,
-                     DLT_COMMON_BUFFER_LENGTH,
+            dlt_vlog(LOG_WARNING,
                      "Seek failed to skip extra header and payload data from file of size %d!\n",
-                     file->msg.headersize - (int32_t)sizeof(DltStorageHeader) - (int32_t)sizeof(DltStandardHeader) +
-                     file->msg.datasize);
-            dlt_log(LOG_WARNING, str);
+                     file->msg.headersize - (int32_t)sizeof(DltStorageHeader) -
+                     (int32_t)sizeof(DltStandardHeader) + file->msg.datasize);
 
             /* go back to last position in file */
             if (fseek(file->handle, file->file_position, SEEK_SET)) {
-                snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek back also failed!\n");
-                dlt_log(LOG_WARNING, str);
+                dlt_log(LOG_WARNING, "Seek back also failed!\n");
             }
 
             return DLT_RETURN_ERROR;
@@ -1563,8 +1526,7 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
     long *ptr;
 
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "%s: Message %d:\n", __func__, file->counter_total);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "%s: Message %d:\n", __func__, file->counter_total);
     }
 
     if (file == NULL)
@@ -1591,16 +1553,14 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
 
     /* get file position at start of DLT message */
     if (verbose) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Position in file: %ld\n", file->file_position);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "Position in file: %ld\n", file->file_position);
     }
 
     /* read header */
     if (dlt_file_read_header_raw(file, resync, verbose) < DLT_RETURN_OK) {
         /* go back to last position in file */
         if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-            snprintf(str, DLT_COMMON_BUFFER_LENGTH, "dlt_file_read_raw, fseek failed 1\n");
-            dlt_log(LOG_WARNING, str);
+            dlt_log(LOG_WARNING, "dlt_file_read_raw, fseek failed 1\n");
         }
 
         return DLT_RETURN_ERROR;
@@ -1610,8 +1570,7 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
     if (dlt_file_read_header_extended(file, verbose) < DLT_RETURN_OK) {
         /* go back to last position in file */
         if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-            snprintf(str, DLT_COMMON_BUFFER_LENGTH, "dlt_file_read_raw, fseek failed 2\n");
-            dlt_log(LOG_WARNING, str);
+            dlt_log(LOG_WARNING, "dlt_file_read_raw, fseek failed 2\n");
         }
 
         return DLT_RETURN_ERROR;
@@ -1620,8 +1579,7 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
     if (dlt_file_read_data(file, verbose) < DLT_RETURN_OK) {
         /* go back to last position in file */
         if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-            snprintf(str, DLT_COMMON_BUFFER_LENGTH, "dlt_file_read_raw, fseek failed 3\n");
-            dlt_log(LOG_WARNING, str);
+            dlt_log(LOG_WARNING, "dlt_file_read_raw, fseek failed 3\n");
         }
 
         return DLT_RETURN_ERROR;
@@ -1667,16 +1625,14 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose)
 
     /* check if message is in range */
     if (index >= file->counter) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Message %d out of range!\r\n", index);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "Message %d out of range!\r\n", index);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     /* seek to position in file */
     if (fseek(file->handle, file->index[index], SEEK_SET) != 0) {
-        snprintf(str, DLT_COMMON_BUFFER_LENGTH, "Seek to message %d to position %ld failed!\r\n", index,
-                 file->index[index]);
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "Seek to message %d to position %ld failed!\r\n",
+                 index, file->index[index]);
         return DLT_RETURN_ERROR;
     }
 

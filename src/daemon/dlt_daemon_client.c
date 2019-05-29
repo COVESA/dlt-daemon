@@ -69,9 +69,6 @@
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
 
-/** Global text output buffer, mainly used for creation of error/warning strings */
-static char str[DLT_DAEMON_TEXTBUFSIZE];
-
 /** Inline function to calculate/set the requested log level or traces status
  *  with default log level or trace status when "ForceContextLogLevelAndTraceStatus"
  *  is enabled and set to 1 in dlt.conf file.
@@ -180,14 +177,9 @@ int dlt_daemon_client_send_all(DltDaemon *daemon,
     void *msg1, *msg2;
     int msg1_sz, msg2_sz;
     int ret = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Invalid parameters\n",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return 0;
     }
 
@@ -1011,8 +1003,7 @@ void dlt_daemon_control_get_log_info(int sock,
         offset += sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "#apid: %d \n", count_app_ids);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "#apid: %d \n", count_app_ids);
 #endif
 
         for (i = 0; i < count_app_ids; i++) {
@@ -1044,8 +1035,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
                 dlt_print_id(buf, apid);
-                snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "apid: %s\n", buf);
-                dlt_log(LOG_DEBUG, str);
+                dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
 #endif
 
                 if (req->apid[0] != '\0')
@@ -1057,14 +1047,12 @@ void dlt_daemon_control_get_log_info(int sock,
                 offset += sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "#ctid: %d \n", count_con_ids);
-                dlt_log(LOG_DEBUG, str);
+                dlt_vlog(LOG_DEBUG, "#ctid: %d \n", count_con_ids);
 #endif
 
                 for (j = 0; j < count_con_ids; j++) {
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "j: %d \n", j);
-                    dlt_log(LOG_DEBUG, str);
+                    dlt_vlog(LOG_DEBUG, "j: %d \n", j);
 #endif
 
                     if (!((count_con_ids == 1) && (req->apid[0] != '\0') &&
@@ -1083,8 +1071,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
                         dlt_print_id(buf, context->ctid);
-                        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ctid: %s \n", buf);
-                        dlt_log(LOG_DEBUG, str);
+                        dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
 #endif
 
                         /* Mode 4, 6, 7 */
@@ -1119,8 +1106,8 @@ void dlt_daemon_control_get_log_info(int sock,
                         }
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ll=%d ts=%d \n", (int32_t)ll, (int32_t)ts);
-                        dlt_log(LOG_DEBUG, str);
+                        dlt_vlog(LOG_DEBUG, "ll=%d ts=%d \n", (int32_t)ll,
+                                 (int32_t)ts);
 #endif
                     }
 
@@ -2203,26 +2190,19 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return -1;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "%s: Fail to read timer (%s)\n", __func__,
+                 strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }
@@ -2255,26 +2235,19 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return -1;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "%s: Fail to read timer (%s)\n", __func__,
+                 strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }
@@ -2313,27 +2286,18 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = -1;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return res;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "Failed to read timer_wd; %s\n",
-                 strerror(errno));
-        dlt_log(LOG_WARNING, local_str);
+        dlt_vlog(LOG_WARNING, "Failed to read timer_wd; %s\n", strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }

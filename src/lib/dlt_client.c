@@ -100,8 +100,6 @@
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
 
-static char str[DLT_CLIENT_TEXTBUFSIZE];
-
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data))
 {
     message_callback_function = registerd_callback;
@@ -184,19 +182,14 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         for (p = servinfo; p != NULL; p = p->ai_next) {
             if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "socket() failed! %s\n",
-                         strerror(errno));
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "socket() failed! %s\n", strerror(errno));
                 continue;
             }
 
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "connect() failed! %s\n",
-                         strerror(errno));
                 close(client->sock);
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "connect() failed! %s\n",
+                         strerror(errno));
                 continue;
             }
 

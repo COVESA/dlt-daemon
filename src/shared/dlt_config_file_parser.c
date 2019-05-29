@@ -357,7 +357,6 @@ static int dlt_config_file_read_line(char *line, char *str1, char *str2)
 static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
 {
     int ret = 0;
-    char error_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = { '\0' };
     char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
     char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
@@ -393,8 +392,8 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
 
             break;
         default:     /* something is wrong with the line */
-            snprintf(error_str, DLT_DAEMON_TEXTBUFSIZE, "Line (%d) \"%s\" is invalid\n", line_number, line);
-            dlt_log(LOG_WARNING, error_str);
+            dlt_vlog(LOG_WARNING, "Line (%d) \"%s\" is invalid\n", line_number,
+                     line);
         }
     }
 }

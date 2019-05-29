@@ -59,9 +59,6 @@
 
 #include "dlt_daemon_socket.h"
 
-/** Global text output buffer, mainly used for creation of error/warning strings */
-static char str[DLT_DAEMON_TEXTBUFSIZE];
-
 int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 {
     int yes = 1;
@@ -92,9 +89,8 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
             continue;
         }
 
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n",
+        dlt_vlog(LOG_INFO, "%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n",
                  __FUNCTION__, p->ai_family, p->ai_socktype, p->ai_protocol);
-        dlt_log(LOG_INFO, str);
 
         if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
             const int lastErrno = errno;
@@ -122,15 +118,11 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort)
 
     freeaddrinfo(servinfo);
 
-    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on port: %u\n", __FUNCTION__, servPort);
-    dlt_log(LOG_INFO, str);
+    dlt_vlog(LOG_INFO, "%s: Listening on port: %u\n", __func__, servPort);
 
     /* get socket buffer size */
-    snprintf(str,
-             DLT_DAEMON_TEXTBUFSIZE,
-             "dlt_daemon_socket_open: Socket send queue size: %d\n",
+    dlt_vlog(LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
              dlt_daemon_socket_get_send_qeue_max_size(*sock));
-    dlt_log(LOG_INFO, str);
 
     if (listen(*sock, 3) < 0) {
         const int lastErrno = errno;
