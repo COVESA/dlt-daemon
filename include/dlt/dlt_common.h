@@ -800,6 +800,17 @@ typedef struct
     int size;
 } DltBufferBlockHead;
 
+#   ifdef DLT_IPv6
+#   define DLT_IP_SIZE (16)
+#   else
+#   define DLT_IP_SIZE (40)
+#   endif
+typedef struct DltBindAddress
+{
+    char ip[DLT_IP_SIZE];
+    struct DltBindAddress* next;
+} DltBindAddress_t;
+
 #   define DLT_MESSAGE_ERROR_OK       0
 #   define DLT_MESSAGE_ERROR_UNKNOWN -1
 #   define DLT_MESSAGE_ERROR_SIZE    -2

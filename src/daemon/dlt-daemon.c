@@ -265,6 +265,16 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
     daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
 
+    daemon_local->flags.ipNodes = malloc(sizeof(DltBindAddress_t));
+    if (daemon_local->flags.ipNodes == NULL) {
+        dlt_log(LOG_ERR, "Could not allocate default IP node\n");
+        return -1;
+    }
+    else {
+        strncpy(daemon_local->flags.ipNodes->ip, "0.0.0.0", sizeof(daemon_local->flags.ipNodes->ip) - 1);
+        daemon_local->flags.ipNodes->next = NULL;
+    }
+
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
         filename = daemon_local->flags.cvalue;
@@ -564,6 +574,34 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             fprintf(stderr,
                                     "Invalid value for ForceContextLogLevelAndTraceStatus: %i. Must be 0, 1\n",
                                     intval);
+                        }
+                    }
+                    else if (strcmp(token, "BindAddress") == 0)
+                    {
+                        DltBindAddress_t *head = daemon_local->flags.ipNodes;
+                        DltBindAddress_t *newNode = NULL;
+                        DltBindAddress_t *temp = NULL;
+
+                        /* update first IP node with address from configuration file */
+                        char *tok = strtok(value, ",;");
+                        if (tok != NULL) {
+                            // set first IP address
+                            strncpy(head->ip, tok, sizeof(head->ip) - 1);
+                            temp = head; // head->next is by default NULL, no need to set it
+                        }
+                        tok = strtok(NULL, ",;");
+                        while (tok != NULL ) {
+                            newNode = malloc(sizeof(DltBindAddress_t));
+                            if (newNode == NULL) {
+                                dlt_log(LOG_ERR, "Could not allocate for IP list\n");
+                                return -1;
+                            }
+                            else {
+                                strncpy(newNode->ip, tok, sizeof(newNode->ip) - 1);
+                            }
+                            temp->next = newNode;
+                            temp = temp->next;
+                            tok = strtok(NULL, ",;");
                         }
                     }
                     else {
@@ -1102,6 +1140,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
     int fd = -1;
     int mask = 0;
+    DltBindAddress_t* head = daemon_local->flags.ipNodes;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1137,7 +1176,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
         return DLT_RETURN_ERROR;
     }
-
 #else
 
     if (dlt_daemon_init_fifo(daemon_local)) {
@@ -1150,19 +1188,23 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     /* create and open socket to receive incoming connections from client */
     daemon_local->client_connections = 0;
 
-    if (dlt_daemon_socket_open(&fd, daemon_local->flags.port) == DLT_RETURN_OK) {
-        if (dlt_connection_create(daemon_local,
-                                  &daemon_local->pEvent,
-                                  fd,
-                                  POLLIN,
-                                  DLT_CONNECTION_CLIENT_CONNECT)) {
+    while (head != NULL) {
+        fd = -1;
+        if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
+            if (dlt_connection_create(daemon_local,
+                                      &daemon_local->pEvent,
+                                      fd,
+                                      POLLIN,
+                                      DLT_CONNECTION_CLIENT_CONNECT)) {
+                dlt_log(LOG_ERR, "Could not initialize main socket.\n");
+                return DLT_RETURN_ERROR;
+            }
+        }
+        else {
             dlt_log(LOG_ERR, "Could not initialize main socket.\n");
             return DLT_RETURN_ERROR;
         }
-    }
-    else {
-        dlt_log(LOG_ERR, "Could not initialize main socket.\n");
-        return DLT_RETURN_ERROR;
+        head = head->next;
     }
 
     /* create and open unix socket to receive incoming connections from
@@ -1170,6 +1212,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
      * socket access permission set to srw-rw---- (660)  */
     mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
 
+    fd = -1;
     if (dlt_daemon_unix_socket_open(&fd,
                                     daemon_local->flags.ctrlSockPath,
                                     SOCK_STREAM,
@@ -1319,6 +1362,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
     unlink(daemon_local->flags.ctrlSockPath);
 
+    /* free IP list */
+    free(daemon_local->flags.ipNodes);
 }
 
 void dlt_daemon_exit_trigger()
