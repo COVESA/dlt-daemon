@@ -188,8 +188,9 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
             fprintf (stderr, "Invalid option, this should never occur!\n");
             return -1;
         }
-        } /* switch() */
+        }
 
+    /* switch() */
 
 #ifndef DLT_USE_UNIX_SOCKET_IPC
     snprintf(daemon_local->flags.userPipesDir, NAME_MAX + 1, "%s/dltpipes", dltFifoBaseDir);
@@ -266,6 +267,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
 
     daemon_local->flags.ipNodes = malloc(sizeof(DltBindAddress_t));
+
     if (daemon_local->flags.ipNodes == NULL) {
         dlt_log(LOG_ERR, "Could not allocate default IP node\n");
         return -1;
@@ -584,14 +586,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
                         /* update first IP node with address from configuration file */
                         char *tok = strtok(value, ",;");
+
                         if (tok != NULL) {
-                            // set first IP address
+                            /* set first IP address */
                             strncpy(head->ip, tok, sizeof(head->ip) - 1);
-                            temp = head; // head->next is by default NULL, no need to set it
+                            temp = head; /* head->next is by default NULL, no need to set it */
                         }
+
                         tok = strtok(NULL, ",;");
-                        while (tok != NULL ) {
+
+                        while (tok != NULL) {
                             newNode = malloc(sizeof(DltBindAddress_t));
+
                             if (newNode == NULL) {
                                 dlt_log(LOG_ERR, "Could not allocate for IP list\n");
                                 return -1;
@@ -599,6 +605,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             else {
                                 strncpy(newNode->ip, tok, sizeof(newNode->ip) - 1);
                             }
+
                             temp->next = newNode;
                             temp = temp->next;
                             tok = strtok(NULL, ",;");
@@ -747,7 +754,7 @@ int main(int argc, char *argv[])
 
     /* --- Daemon init phase 2 end --- */
 
-    if (daemon_local.flags.offlineLogstorageDirPath[0]) {
+    if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
                 &daemon,
                 &daemon_local,
@@ -755,7 +762,6 @@ int main(int argc, char *argv[])
                 daemon_local.flags.vflag) == -1)
             dlt_log(LOG_INFO,
                     "Setting up internal offline log storage failed!\n");
-    }
 
     /* create fd for watchdog */
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
@@ -1140,7 +1146,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
     int fd = -1;
     int mask = 0;
-    DltBindAddress_t* head = daemon_local->flags.ipNodes;
+    DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1176,6 +1182,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
         return DLT_RETURN_ERROR;
     }
+
 #else
 
     if (dlt_daemon_init_fifo(daemon_local)) {
@@ -1190,6 +1197,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 
     while (head != NULL) {
         fd = -1;
+
         if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
             if (dlt_connection_create(daemon_local,
                                       &daemon_local->pEvent,
@@ -1204,6 +1212,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
             dlt_log(LOG_ERR, "Could not initialize main socket.\n");
             return DLT_RETURN_ERROR;
         }
+
         head = head->next;
     }
 
@@ -1213,6 +1222,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
 
     fd = -1;
+
     if (dlt_daemon_unix_socket_open(&fd,
                                     daemon_local->flags.ctrlSockPath,
                                     SOCK_STREAM,
@@ -1557,10 +1567,9 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
                      dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, msg.headerbuffer,
                                             sizeof(DltStorageHeader), msg.headerbuffer + sizeof(DltStorageHeader),
                                             msg.headersize - sizeof(DltStorageHeader),
-                                            msg.databuffer, msg.datasize, verbose))) {
+                                            msg.databuffer, msg.datasize, verbose)))
                 if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
                     daemon->overflow_counter++;
-            }
         }
     }
 
@@ -2292,7 +2301,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         dlt_log(LOG_WARNING, local_str);
         return -1;
     }
-    else if (old_pid != application->pid) {
+    else if (old_pid != application->pid)
+    {
         snprintf(local_str,
                  DLT_DAEMON_TEXTBUFSIZE,
                  "ApplicationID '%.4s' registered for PID %d, Description=%s\n",
@@ -2397,9 +2407,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     }
 
     /* Set log level */
-    if (userctxt.log_level == DLT_USER_LOG_LEVEL_NOT_SET) {
+    if (userctxt.log_level == DLT_USER_LOG_LEVEL_NOT_SET)
         userctxt.log_level = DLT_LOG_DEFAULT;
-    }
     else
     /* Plausibility check */
     if ((userctxt.log_level < DLT_LOG_DEFAULT) ||
@@ -2407,9 +2416,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         return -1;
 
     /* Set trace status */
-    if (userctxt.trace_status == DLT_USER_TRACE_STATUS_NOT_SET) {
+    if (userctxt.trace_status == DLT_USER_TRACE_STATUS_NOT_SET)
         userctxt.trace_status = DLT_TRACE_STATUS_DEFAULT;
-    }
     else
     /* Plausibility check */
     if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
@@ -2745,7 +2753,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
     }
-    else if (dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid) == DLT_RETURN_ERROR) {
+    else if (dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid) == DLT_RETURN_ERROR)
+    {
         dlt_log(LOG_WARNING, "Can't set storage header in process user message log\n");
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
@@ -2784,10 +2793,9 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                         sizeof(DltStorageHeader),
                                         daemon_local->msg.headerbuffer + sizeof(DltStorageHeader),
                                         daemon_local->msg.headersize - sizeof(DltStorageHeader),
-                                        daemon_local->msg.databuffer, daemon_local->msg.datasize, verbose))) {
+                                        daemon_local->msg.databuffer, daemon_local->msg.datasize, verbose)))
             if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
                 daemon->overflow_counter++;
-        }
     }
 
     /* keep not read data in buffer */
@@ -2893,7 +2901,8 @@ int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
                 return -1;
             }
         }
-        else if (dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid) == -1) {
+        else if (dlt_set_storageheader(daemon_local->msg.storageheader, daemon->ecuid) == -1)
+        {
             dlt_log(LOG_WARNING, "Can't set storage header in process user message log\n");
             dlt_shm_remove(&(daemon_local->dlt_shm));
             return -1;
@@ -3194,14 +3203,14 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         return -1;
     }
 
-    if (period_sec <= 0 || starts_in <= 0 ) {
+    if ((period_sec <= 0) || (starts_in <= 0)) {
         /* timer not activated via the service file */
         dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
         local_fd = -1;
     }
+
 #ifdef linux
-    else
-    {
+    else {
         struct itimerspec l_timer_spec;
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
 

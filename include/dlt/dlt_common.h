@@ -801,14 +801,14 @@ typedef struct
 } DltBufferBlockHead;
 
 #   ifdef DLT_IPv6
-#   define DLT_IP_SIZE (16)
+#      define DLT_IP_SIZE (16)
 #   else
-#   define DLT_IP_SIZE (40)
+#      define DLT_IP_SIZE (40)
 #   endif
 typedef struct DltBindAddress
 {
     char ip[DLT_IP_SIZE];
-    struct DltBindAddress* next;
+    struct DltBindAddress *next;
 } DltBindAddress_t;
 
 #   define DLT_MESSAGE_ERROR_OK       0
