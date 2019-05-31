@@ -148,6 +148,60 @@
 /* Maximum msg size as per autosar standard */
 #define DLT_LOG_MSG_BUF_MAX_SIZE 65535
 
+
+/* For trace load control */
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+
+/* Default value of trace load budget in bytes/sec
+ *  (Default: 83333 byte/sec = 5 MB/min,  0 - No budget)
+ */
+#define DLT_USER_TRACE_LOAD_BUDGET_DEFAULT     (83333)
+
+/* Default value of trace load limit in bytes/sec (Default: 0 - No limit) */
+#define DLT_USER_TRACE_LOAD_LIMIT_DEFAULT      (0)
+
+/* Number of slots in window for recording trace load (Default: 60)
+ * Average trace load in this window will be used as trace load
+ * Older time data than this size will be removed from trace load
+ */
+#define DLT_USER_TRACE_LOAD_WINDOW_SIZE        (60)
+
+/* Window resolution in unit of timestamp (Default: 10000 x 0.1 msec = 1 sec)
+ * This value is same as size of 1 slot of window.
+ * Actual window size in sec can be calculated by
+ * DLT_USER_TRACE_LOAD_WINDOW_SIZE x DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION / DLT_USER_TIMESTAMP_RESOLUTION.
+ * (Default: 60 x 10000 / 10000 = 60 sec)
+ * NOTE: When timestamp resolution of DLT is changed from 0.1 msec,
+ * then DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION value also has to be updated accordingly.
+ */
+#define DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION  (10000)
+
+/* Special Context ID for output budget/limit over warning message */
+#define DLT_USER_INTERNAL_CONTEXT_ID           ("DLTL")
+
+/* Interval of warning message for trace load budget over.
+ * Unit of this value is Number of slot of window.
+ * NOTE: Size of the slot depends on value of DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION
+ * (Default: 1 slot = 10000 x 0.1 msec = 1 sec)
+ */
+#define DLT_USER_BUDGET_OVER_MSG_INTERVAL      (1)
+
+/* Interval of warning message for trace load limit over.
+ * Unit of this value is Number of slot of window.
+ * NOTE: Size of the slot depends on value of DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION
+ * (Default: 1 slot = 10000 x 0.1 msec = 1 sec)
+ */
+#define DLT_USER_LIMIT_OVER_MSG_INTERVAL       (1)
+
+/* Timestamp resolution of 1 second (Default: 10000 -> 1/10000 = 0.0001sec = 0.1msec)
+ * This value is defined as reciprocal of the resolution (1 / DLT_USER_TIMESTAMP_RESOLUTION)
+ * NOTE: When timestamp resolution of DLT is changed from 0.1 msec,
+ * then DLT_USER_TIMESTAMP_RESOLUTION value also has to be updated accordingly.
+ */
+#define DLT_USER_TIMESTAMP_RESOLUTION          (10000)
+
+#endif
+
 /************************/
 /* Don't change please! */
 /************************/

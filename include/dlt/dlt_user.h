@@ -238,6 +238,10 @@ typedef struct
     int corrupt_message_size;
     int16_t corrupt_message_size_size;
 #   endif
+#   ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    uint32_t trace_load_budget;
+    uint32_t trace_load_limit;
+#   endif
 #   ifdef DLT_USE_UNIX_SOCKET_IPC
     DltUserConnectionState connection_state;
 #   endif

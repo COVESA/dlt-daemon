@@ -141,7 +141,8 @@ typedef struct
 static void dlt_user_receiverthread_function(void *ptr);
 static void dlt_user_atexit_handler(void);
 static DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log);
-static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype);
+inline static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype);
+static DltReturnValue dlt_user_log_send_log_internal(DltContextData *log, int mtype, int *sent_size);
 static DltReturnValue dlt_user_log_send_register_application(void);
 static DltReturnValue dlt_user_log_send_unregister_application(void);
 static DltReturnValue dlt_user_log_send_register_context(DltContextData *log);
@@ -169,6 +170,49 @@ static int dlt_start_threads();
 static void dlt_stop_threads();
 static void dlt_fork_child_fork_handler();
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+/* For trace load control feature */
+
+typedef struct
+{
+    /* Window for recording total bytes for each slots [bytes] */
+    uint64_t window[DLT_USER_TRACE_LOAD_WINDOW_SIZE];
+    uint64_t total_bytes_of_window;     // Grand total bytes of whole window [bytes]
+    uint32_t curr_slot;                 // Current slot No. of window [slot No.]
+    uint32_t last_slot;                 // Last slot No. of window [slot No.]
+    uint32_t curr_abs_slot;             // Current absolute slot No. of window [slot No.]
+    uint32_t last_abs_slot;             // Last absolute slot No. of window [slot No.]
+    uint64_t ave_trace_load;            // Average trace load of whole window [bytes/sec]
+    uint32_t limit_over_counter;        // Discarded message counter due to limit over [msg]
+    uint32_t limit_over_bytes;          // Discarded message bytes due to limit over [msg]
+    uint32_t slot_left_budget_warn;     // Slot left to output next warning of budget over [slot No.]
+    uint32_t slot_left_limit_warn;      // Slot left to output next warning of limit over [slot No.]
+    bool is_budget_over;                // Flag if trace load has been over budget
+    bool is_limit_over;                 // Flag if trace load has been over limit
+} DltTraceLoadStat;
+
+static pthread_mutex_t check_trace_load_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xFFFFFFFF
+#endif
+
+/* Precomputation  */
+static const uint64_t TIMESTAMP_BASED_WINDOW_SIZE = DLT_USER_TRACE_LOAD_WINDOW_SIZE * DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION;
+static const uint32_t ABS_SLOT_NUM_MAX       = UINT32_MAX / DLT_USER_TIMESTAMP_RESOLUTION;
+
+static uint32_t dlt_user_get_trace_budget(void);
+static uint32_t dlt_user_get_trace_limit(void);
+static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, char *text);
+static int dlt_output_budget_over_warning(DltTraceLoadStat *tl_stat);
+static int dlt_output_limit_over_warning(DltTraceLoadStat *tl_stat);
+static bool dlt_user_cleanup_window(DltTraceLoadStat *tl_stat);
+static uint32_t dlt_user_switch_slot_if_needed(DltTraceLoadStat *tl_stat, uint32_t timestamp);
+static void dlt_user_record_trace_load(DltTraceLoadStat *tl_stat, int size);
+static inline bool dlt_user_is_over_trace_load_budget(DltTraceLoadStat *tl_stat);
+static inline bool dlt_user_is_over_trace_load_limit(DltTraceLoadStat *tl_stat, int size);
+static bool dlt_user_check_trace_load(int32_t log_level, uint32_t timestamp, int size);
+#endif
 
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
 {
@@ -393,6 +437,23 @@ DltReturnValue dlt_init(void)
     }
 
 #endif
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    /* initialize for trace load check */
+    dlt_user.trace_load_budget = dlt_user_get_trace_budget();
+    dlt_user.trace_load_limit = dlt_user_get_trace_limit();
+
+    if (dlt_user.trace_load_limit
+            && (dlt_user.trace_load_budget > dlt_user.trace_load_limit))
+    {
+        dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH,
+                  "Trace budget is greater than limit. "
+                  "Limit value: %u bytes/sec is set as budget\n",
+                  dlt_user.trace_load_limit);
+        dlt_user.trace_load_budget = dlt_user.trace_load_limit;
+    }
+#endif
+
 
     /* These will be lazy initialized only when needed */
     dlt_user.dlt_segmented_queue_read_handle = -1;
@@ -2787,10 +2848,16 @@ void dlt_user_trace_network_segmented_thread(void *unused)
     while (1) {
         /* Wait until message queue is initialized */
         dlt_lock_mutex(&mq_mutex);
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        dlt_lock_mutex(&check_trace_load_mutex);
+#endif
 
         if (dlt_user.dlt_segmented_queue_read_handle < 0)
             pthread_cond_wait(&mq_init_condition, &mq_mutex);
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        dlt_unlock_mutex(&check_trace_load_mutex);
+#endif
         dlt_unlock_mutex(&mq_mutex);
 
         ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
@@ -3453,11 +3520,19 @@ DltReturnValue dlt_user_queue_resend(void)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
+inline static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
+{
+    return dlt_user_log_send_log_internal(log, mtype, NULL);
+}
+
+static DltReturnValue dlt_user_log_send_log_internal(DltContextData *log, int mtype, int *sent_size __attribute__((unused)))
 {
     DltMessage msg;
     DltUserHeader userheader;
     int32_t len;
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    uint32_t time_stamp;
+#endif
 
     DltReturnValue ret = DLT_RETURN_OK;
 
@@ -3528,6 +3603,9 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
     dlt_set_id(msg.headerextra.ecu, dlt_user.ecuID);
     /*msg.headerextra.seid = 0; */
     msg.headerextra.tmsp = dlt_uptime();
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    time_stamp = msg.headerextra.tmsp;
+#endif
 
     if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
@@ -3645,6 +3723,23 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
 #   endif
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            /* check trace load before output */
+            if (!sent_size)
+            {
+                if (!dlt_user_check_trace_load(log->log_level, time_stamp,
+                                               sizeof(DltUserHeader)
+                                               + msg.headersize - sizeof(DltStorageHeader)
+                                               + log->size))
+                {
+                    return DLT_RETURN_OK;
+                }
+            }
+            else
+            {
+                *sent_size = (sizeof(DltUserHeader) + msg.headersize - sizeof(DltStorageHeader) + log->size);
+            }
+#endif
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     msg.headerbuffer + sizeof(DltStorageHeader),
@@ -3654,7 +3749,11 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         }
 
         /* store message in ringbuffer, if an error has occured */
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        if (((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0')) && !sent_size)
+#else
         if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
+#endif
             ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbuffer + sizeof(DltStorageHeader),
@@ -4651,3 +4750,354 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
 
     return ret;
 }
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+
+static uint32_t dlt_user_get_trace_budget(void)
+{
+    char *env_trace_budget = getenv("DLT_TRACE_LOAD_BUDGET");
+    int budget = DLT_USER_TRACE_LOAD_BUDGET_DEFAULT;
+    if (env_trace_budget)
+    {
+        budget = atoi(env_trace_budget);
+        if (budget < 0)
+        {
+            dlt_vlog(LOG_INFO,
+                     "Trace budget from environment is invalid: %d, Set to default: %d\n",
+                     budget,
+                     DLT_USER_TRACE_LOAD_BUDGET_DEFAULT);
+            budget = DLT_USER_TRACE_LOAD_BUDGET_DEFAULT;
+        }
+    }
+    return budget;
+}
+
+static uint32_t dlt_user_get_trace_limit(void)
+{
+    char *env_trace_limit = getenv("DLT_TRACE_LOAD_LIMIT");
+    int limit = DLT_USER_TRACE_LOAD_LIMIT_DEFAULT;
+    if (env_trace_limit)
+    {
+        limit = atoi(env_trace_limit);
+        if (limit < 0)
+        {
+            dlt_vlog(LOG_INFO,
+                     "Trace limit from environment is invalid: %d, Set to default: %d\n",
+                     limit,
+                     DLT_USER_TRACE_LOAD_LIMIT_DEFAULT);
+            limit = DLT_USER_TRACE_LOAD_LIMIT_DEFAULT;
+        }
+    }
+    return limit;
+}
+
+static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, char *text)
+{
+    static DltContext handle;
+    DltContextData log;
+    int ret;
+    int sent_size = 0;
+
+    if (!handle.contextID[0])
+    {
+        // Register Special Context ID for output DLT library internal message
+        ret = dlt_register_context(&handle, DLT_USER_INTERNAL_CONTEXT_ID, "DLT user library internal context");
+        if (ret < DLT_RETURN_OK)
+        {
+            return ret;
+        }
+    }
+
+    if (dlt_user.verbose_mode == 0)
+    {
+        return DLT_RETURN_ERROR;
+    }
+
+    if (loglevel < DLT_USER_LOG_LEVEL_NOT_SET || loglevel >= DLT_LOG_MAX)
+    {
+        dlt_vlog(LOG_ERR, "Loglevel %d is outside valid range", loglevel);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (text == NULL)
+    {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    ret = dlt_user_log_write_start(&handle, &log, loglevel);
+    if (ret < DLT_RETURN_OK)
+    {
+        return ret;
+    }
+
+    ret = dlt_user_log_write_string(&log, text);
+    if (ret < DLT_RETURN_OK)
+    {
+        return ret;
+    }
+
+    ret = dlt_user_log_send_log_internal(&log, DLT_TYPE_LOG, &sent_size);
+
+    /* Return number of bytes if message was successfully sent */
+    return (ret == DLT_RETURN_OK)? sent_size:ret;
+}
+
+static int dlt_output_budget_over_warning(DltTraceLoadStat *tl_stat)
+{
+    char local_str[DLT_USER_BUFFER_LENGTH];
+    int sent_size;
+
+    if (!tl_stat || !tl_stat->is_budget_over || tl_stat->slot_left_budget_warn)
+    {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    /* Calculate extra trace load which was over limit */
+    uint64_t extra_trace_load
+            = (tl_stat->limit_over_bytes * DLT_USER_TIMESTAMP_RESOLUTION)
+            / TIMESTAMP_BASED_WINDOW_SIZE;
+    uint64_t curr_trace_load = tl_stat->ave_trace_load + extra_trace_load;
+
+    /* Warning for exceeded budget */
+    snprintf(local_str, sizeof(local_str),
+             "Trace load exceeded trace budget."
+             "(budget: %u bytes/sec, current: %lu bytes/sec",
+             dlt_user.trace_load_budget,
+             curr_trace_load);
+
+    sent_size = dlt_user_output_internal_msg(DLT_LOG_WARN, local_str);
+    if (sent_size < DLT_RETURN_OK)
+    {
+        /* Output warning message via other route for safety */
+        dlt_log(DLT_LOG_WARN, local_str);
+        sent_size = 0;
+    }
+
+    /* Turn off the flag after sending warning message */
+    tl_stat->is_budget_over = false;
+    tl_stat->slot_left_budget_warn = DLT_USER_BUDGET_OVER_MSG_INTERVAL;
+
+    return sent_size;
+}
+
+static int dlt_output_limit_over_warning(DltTraceLoadStat *tl_stat)
+{
+    char local_str[DLT_USER_BUFFER_LENGTH];
+    int sent_size;
+
+    if (!tl_stat || !tl_stat->is_limit_over || tl_stat->slot_left_limit_warn)
+    {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    /* Calculate extra trace load which was over limit */
+    uint64_t extra_trace_load
+            = (tl_stat->limit_over_bytes * DLT_USER_TIMESTAMP_RESOLUTION)
+            / TIMESTAMP_BASED_WINDOW_SIZE;
+    uint64_t curr_trace_load = tl_stat->ave_trace_load + extra_trace_load;
+
+    snprintf(local_str, sizeof(local_str),
+             "Trace load exceeded trace limit."
+             "(limit: %u bytes/sec, current: %lu bytes/sec) %u messages discarded.",
+             dlt_user.trace_load_limit,
+             curr_trace_load,
+             tl_stat->limit_over_counter);
+
+    sent_size = dlt_user_output_internal_msg(DLT_LOG_WARN, local_str);
+    if (sent_size < DLT_RETURN_OK)
+    {
+        /* Output warning message via other route for safety */
+        dlt_log(DLT_LOG_WARN, local_str);
+        sent_size = 0;
+    }
+
+    /* Turn off the flag after sending warning message */
+    tl_stat->is_limit_over = false;
+    tl_stat->limit_over_counter = 0;
+    tl_stat->limit_over_bytes = 0;
+    tl_stat->slot_left_limit_warn = DLT_USER_LIMIT_OVER_MSG_INTERVAL;
+
+    return sent_size;
+}
+
+static bool dlt_user_cleanup_window(DltTraceLoadStat *tl_stat)
+{
+    if (!tl_stat)
+    {
+        return false;
+    }
+
+    uint32_t temp_slot = tl_stat->last_slot;
+
+    /* Get elapsed number of slots by taking uint32_t timestamp overflow into consideration */
+    uint32_t elapsed_slot
+            = (tl_stat->curr_abs_slot >= tl_stat->last_abs_slot) ? 0 : ABS_SLOT_NUM_MAX;
+    elapsed_slot += tl_stat->curr_abs_slot - tl_stat->last_abs_slot;
+
+    if (!elapsed_slot)
+    {
+        /* Same slot can be still used. No need to cleanup slot */
+        return false;
+    }
+
+    /* Slot-Based Count down for next warning messages */
+    tl_stat->slot_left_budget_warn = (tl_stat->slot_left_budget_warn > elapsed_slot) ?
+                (tl_stat->slot_left_budget_warn - elapsed_slot) : 0;
+
+    tl_stat->slot_left_limit_warn = (tl_stat->slot_left_limit_warn > elapsed_slot) ?
+                (tl_stat->slot_left_limit_warn - elapsed_slot) : 0;
+
+    /* Clear whole window when time elapsed longer than window size from last message */
+    if (elapsed_slot >= DLT_USER_TRACE_LOAD_WINDOW_SIZE)
+    {
+        tl_stat->total_bytes_of_window = 0;
+        memset(tl_stat->window, 0, sizeof(tl_stat->window));
+        return true;
+    }
+
+    /* Clear skipped no data slots */
+    while (temp_slot != tl_stat->curr_slot)
+    {
+        temp_slot++;
+        temp_slot %= DLT_USER_TRACE_LOAD_WINDOW_SIZE;
+        tl_stat->total_bytes_of_window -= tl_stat->window[temp_slot];
+        tl_stat->window[temp_slot] = 0;
+    }
+
+    return true;
+}
+
+static uint32_t dlt_user_switch_slot_if_needed(DltTraceLoadStat *tl_stat, uint32_t timestamp)
+{
+    if (!tl_stat)
+    {
+        return 0;
+    }
+
+    uint32_t sent_warn_msg_bytes = 0;
+
+    /* Get new window slot No. */
+    tl_stat->curr_abs_slot = timestamp / DLT_USER_TRACE_LOAD_WINDOW_RESOLUTION;
+    tl_stat->curr_slot = tl_stat->curr_abs_slot % DLT_USER_TRACE_LOAD_WINDOW_SIZE;
+
+    /* Cleanup window */
+    if (!dlt_user_cleanup_window(tl_stat))
+    {
+        /* No need to switch slot because same slot can be still used */
+        return 0;
+    }
+
+    /* If slot is switched and trace load has been over budget/limit
+     * in previous slot, warning messages may be sent.
+     * The warning messages will be also counted as trace load.
+     */
+    sent_warn_msg_bytes += dlt_output_budget_over_warning(tl_stat);
+    sent_warn_msg_bytes += dlt_output_limit_over_warning(tl_stat);
+
+    return sent_warn_msg_bytes;
+}
+
+static void dlt_user_record_trace_load(DltTraceLoadStat *tl_stat, int size)
+{
+    if (!tl_stat)
+    {
+        return;
+    }
+
+    /* Record trace load to current slot by message size of
+     * original message and warning message if it was sent
+     */
+    tl_stat->window[tl_stat->curr_slot] += size;
+    tl_stat->total_bytes_of_window += size;
+
+    /* Keep latest time information */
+    tl_stat->last_abs_slot = tl_stat->curr_abs_slot;
+    tl_stat->last_slot = tl_stat->curr_slot;
+
+    /* Calculate average trace load [bytes/sec] in window */
+    tl_stat->ave_trace_load
+            = (tl_stat->total_bytes_of_window * DLT_USER_TIMESTAMP_RESOLUTION)
+            / TIMESTAMP_BASED_WINDOW_SIZE;
+}
+
+static inline bool dlt_user_is_over_trace_load_budget(DltTraceLoadStat *tl_stat)
+{
+    if (tl_stat
+            && dlt_user.trace_load_budget
+            && (tl_stat->ave_trace_load > dlt_user.trace_load_budget))
+    {
+        /* Mark as budget over */
+        tl_stat->is_budget_over = true;
+        return true;
+    }
+
+    return false;
+}
+
+static inline bool dlt_user_is_over_trace_load_limit(DltTraceLoadStat *tl_stat, int size)
+{
+    if (tl_stat
+            && dlt_user.trace_load_limit
+            && (tl_stat->ave_trace_load > dlt_user.trace_load_limit))
+    {
+        /* Mark as limit over */
+        tl_stat->is_limit_over = true;
+        tl_stat->limit_over_counter++;
+        tl_stat->limit_over_bytes += size;
+
+        /* Delete size of limit over message from window */
+        tl_stat->window[tl_stat->curr_slot] -= size;
+        tl_stat->total_bytes_of_window -= size;
+        return true;
+    }
+
+    return false;
+}
+
+static bool dlt_user_check_trace_load(int32_t log_level, uint32_t timestamp, int size)
+{
+    bool allow_output;
+    uint32_t sent_warn_msg_bytes = 0;
+    static DltTraceLoadStat tl_stat = {0};
+
+    /* Unconditionally allow message which has log level: Debug/Verbose to be output */
+    if (log_level == DLT_LOG_DEBUG || log_level == DLT_LOG_VERBOSE)
+    {
+        return true;
+    }
+
+    if (size < 0)
+    {
+        dlt_vlog(LOG_ERR, "Invalid size: %d", size);
+        return false;
+    }
+
+    dlt_lock_mutex(&check_trace_load_mutex);
+
+    /* Switch window slot according to timestamp
+     * If warning messages for budget/limit over are sent,
+     * the message size will be returned.
+     */
+    sent_warn_msg_bytes = dlt_user_switch_slot_if_needed(&tl_stat, timestamp);
+
+    /* Record trace load */
+    dlt_user_record_trace_load(&tl_stat, size + sent_warn_msg_bytes);
+
+    /* Check if trace load is over budget.
+     * Even if trace load is over the budget, message will not be discarded.
+     * Only the warning message will be output
+     */
+    dlt_user_is_over_trace_load_budget(&tl_stat);
+
+    /* Check if trace load is over limit.
+     * If trace load is over the limit, message will be discarded.
+     */
+    allow_output = !dlt_user_is_over_trace_load_limit(&tl_stat, size);
+
+    dlt_unlock_mutex(&check_trace_load_mutex);
+
+    return allow_output;
+}
+#endif
