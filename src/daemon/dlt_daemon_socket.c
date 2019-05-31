@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 
 #ifdef linux
 #   include <sys/timerfd.h>
@@ -60,16 +59,12 @@
 
 #include "dlt_daemon_socket.h"
 
-/** Global text output buffer, mainly used for creation of error/warning strings */
-static char str[DLT_DAEMON_TEXTBUFSIZE];
-
 int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 {
     int yes = 1;
-    char portnumbuffer[33];
-    snprintf(portnumbuffer, 32, "%d", servPort);
+    int result = 0;
 
-#ifdef DLT_IPv6
+#ifdef DLT_USE_IPv6
 
     /* create socket */
     if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
@@ -86,10 +81,9 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
 #endif
 
-    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Socket created\n", __FUNCTION__);
-    dlt_log(LOG_INFO, str);
+    dlt_vlog(LOG_INFO, "%s: Socket created\n", __FUNCTION__);
 
-    /*setsockpt SO_REUSEADDR */
+    /* setsockpt SO_REUSEADDR */
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
         const int lastErrno = errno;
         dlt_vlog(LOG_WARNING,
@@ -99,19 +93,29 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     }
 
     /* bind */
-#ifdef DLT_IPv6
+#ifdef DLT_USE_IPv6
     struct sockaddr_in6 forced_addr;
     memset(&forced_addr, 0, sizeof(forced_addr));
     forced_addr.sin6_family = AF_INET6;
     forced_addr.sin6_port = htons(servPort);
-    inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
+    result = inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
 #else
     struct sockaddr_in forced_addr;
     memset(&forced_addr, 0, sizeof(forced_addr));
     forced_addr.sin_family = AF_INET;
     forced_addr.sin_port = htons(servPort);
-    inet_pton(AF_INET, ip, &forced_addr.sin_addr);
+    result = inet_pton(AF_INET, ip, &forced_addr.sin_addr);
 #endif
+
+    /* inet_pton returns 1 on success */
+    if (result != 1) {
+        dlt_vlog(LOG_WARNING,
+                 "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
+                 errno,
+                 strerror(errno),
+                 ip);
+        return -1;
+    }
 
     if (bind(*sock, (struct sockaddr *)&forced_addr, sizeof(forced_addr)) == -1) {
         const int lastErrno = errno; /*close() may set errno too */
@@ -120,15 +124,11 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     }
 
     /*listen */
-    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "%s: Listening on ip %s and port: %u\n", __FUNCTION__, ip, servPort);
-    dlt_log(LOG_INFO, str);
+    dlt_vlog(LOG_INFO, "%s: Listening on ip %s and port: %u\n", __FUNCTION__, ip, servPort);
 
     /* get socket buffer size */
-    snprintf(str,
-             DLT_DAEMON_TEXTBUFSIZE,
-             "dlt_daemon_socket_open: Socket send queue size: %d\n",
+    dlt_vlog(LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
              dlt_daemon_socket_get_send_qeue_max_size(*sock));
-    dlt_log(LOG_INFO, str);
 
     if (listen(*sock, 3) < 0) {
         const int lastErrno = errno;

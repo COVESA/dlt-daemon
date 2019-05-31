@@ -1196,8 +1196,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     daemon_local->client_connections = 0;
 
     while (head != NULL) {
-        fd = -1;
-
         if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
             if (dlt_connection_create(daemon_local,
                                       &daemon_local->pEvent,
@@ -1220,8 +1218,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
      * control application
      * socket access permission set to srw-rw---- (660)  */
     mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
-
-    fd = -1;
 
     if (dlt_daemon_unix_socket_open(&fd,
                                     daemon_local->flags.ctrlSockPath,
@@ -1561,7 +1557,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
         }
 
         /* look if TCP connection to client is available */
-        if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) {
+        if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
 
             if ((ret =
                      dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, msg.headerbuffer,
@@ -1570,7 +1566,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
                                             msg.databuffer, msg.datasize, verbose)))
                 if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
                     daemon->overflow_counter++;
-        }
     }
 
     free(msg.databuffer);
