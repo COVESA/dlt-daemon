@@ -1684,6 +1684,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, null)
 
 int connectServer(void)
 {
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     int sockfd, portno;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -1702,6 +1703,17 @@ int connectServer(void)
         close(sockfd);
         return -1;
     }
+#else
+    char filename[1024];
+    int sockfd;
+    snprintf(filename, 1024, "/tmp/dltpipes/dlt%d", getpid());
+    /* Try to delete existing pipe, ignore result of unlink */
+    unlink(filename);
+
+    mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    sockfd = open(filename, O_RDWR | O_CLOEXEC);
+#endif
 
     return sockfd;
 }
