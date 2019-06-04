@@ -1684,6 +1684,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, null)
 
 int connectServer(void)
 {
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     int sockfd, portno;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -1702,6 +1703,17 @@ int connectServer(void)
         close(sockfd);
         return -1;
     }
+#else
+    char filename[1024];
+    int sockfd;
+    snprintf(filename, 1024, "/tmp/dltpipes/dlt%d", getpid());
+    /* Try to delete existing pipe, ignore result of unlink */
+    unlink(filename);
+
+    mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    sockfd = open(filename, O_RDWR | O_CLOEXEC);
+#endif
 
     return sockfd;
 }
@@ -1710,6 +1722,7 @@ int connectServer(void)
 
 int main(int argc, char **argv)
 {
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     pid_t cpid;
     cpid = fork();
 
@@ -1775,12 +1788,14 @@ int main(int argc, char **argv)
         close(sockfd);
     }
     else {
-
+#endif
         ::testing::InitGoogleTest(&argc, argv);
         ::testing::FLAGS_gtest_break_on_failure = false;
 /*        ::testing::FLAGS_gtest_filter = "t_dlt_event_handler_register_connection*"; */
         return RUN_ALL_TESTS();
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     }
+#endif
 
     return 0;
 }
