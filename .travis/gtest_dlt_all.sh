@@ -34,10 +34,11 @@ function gtest_run_test()
     ./$1 > $LOG
 
     # Check for result
-    grep "FAILED TESTS" $LOG
+    grep "FAILED TEST" $LOG
     if [ $? -eq 0 ]
     then
         cat $LOG
+        exit 1
     fi
 }
 
