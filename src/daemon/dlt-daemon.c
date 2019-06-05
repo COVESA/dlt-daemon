@@ -265,17 +265,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
     daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
     daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
-
-    daemon_local->flags.ipNodes = malloc(sizeof(DltBindAddress_t));
-
-    if (daemon_local->flags.ipNodes == NULL) {
-        dlt_log(LOG_ERR, "Could not allocate default IP node\n");
-        return -1;
-    }
-    else {
-        strncpy(daemon_local->flags.ipNodes->ip, "0.0.0.0", sizeof(daemon_local->flags.ipNodes->ip) - 1);
-        daemon_local->flags.ipNodes->next = NULL;
-    }
+    daemon_local->flags.ipNodes = NULL;
 
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
@@ -580,35 +570,46 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "BindAddress") == 0)
                     {
-                        DltBindAddress_t *head = daemon_local->flags.ipNodes;
                         DltBindAddress_t *newNode = NULL;
                         DltBindAddress_t *temp = NULL;
 
-                        /* update first IP node with address from configuration file */
                         char *tok = strtok(value, ",;");
 
                         if (tok != NULL) {
-                            /* set first IP address */
-                            strncpy(head->ip, tok, sizeof(head->ip) - 1);
-                            temp = head; /* head->next is by default NULL, no need to set it */
-                        }
+                            daemon_local->flags.ipNodes = calloc(1, sizeof(DltBindAddress_t));
 
-                        tok = strtok(NULL, ",;");
-
-                        while (tok != NULL) {
-                            newNode = malloc(sizeof(DltBindAddress_t));
-
-                            if (newNode == NULL) {
-                                dlt_log(LOG_ERR, "Could not allocate for IP list\n");
+                            if (daemon_local->flags.ipNodes == NULL) {
+                                dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
                                 return -1;
                             }
                             else {
-                                strncpy(newNode->ip, tok, sizeof(newNode->ip) - 1);
-                            }
+                                strncpy(daemon_local->flags.ipNodes->ip,
+                                        tok,
+                                        sizeof(daemon_local->flags.ipNodes->ip) - 1);
+                                daemon_local->flags.ipNodes->next = NULL;
+                                temp = daemon_local->flags.ipNodes;
 
-                            temp->next = newNode;
-                            temp = temp->next;
-                            tok = strtok(NULL, ",;");
+                                tok = strtok(NULL, ",;");
+
+                                while (tok != NULL) {
+                                    newNode = calloc(1, sizeof(DltBindAddress_t));
+
+                                    if (newNode == NULL) {
+                                        dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
+                                        return -1;
+                                    }
+                                    else {
+                                        strncpy(newNode->ip, tok, sizeof(newNode->ip) - 1);
+                                    }
+
+                                    temp->next = newNode;
+                                    temp = temp->next;
+                                    tok = strtok(NULL, ",;");
+                                }
+                            }
+                        }
+                        else {
+                            dlt_vlog(LOG_WARNING, "BindAddress option is empty\n");
                         }
                     }
                     else {
@@ -1195,8 +1196,9 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     /* create and open socket to receive incoming connections from client */
     daemon_local->client_connections = 0;
 
-    while (head != NULL) {
-        if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
+    if (head == NULL) { /* no IP set in BindAddress option, will use "0.0.0.0" as default */
+
+        if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, "0.0.0.0") == DLT_RETURN_OK) {
             if (dlt_connection_create(daemon_local,
                                       &daemon_local->pEvent,
                                       fd,
@@ -1210,8 +1212,27 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
             dlt_log(LOG_ERR, "Could not initialize main socket.\n");
             return DLT_RETURN_ERROR;
         }
+    }
+    else {
+        while (head != NULL) { /* open socket for each IP in the bindAddress list */
 
-        head = head->next;
+            if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
+                if (dlt_connection_create(daemon_local,
+                                          &daemon_local->pEvent,
+                                          fd,
+                                          POLLIN,
+                                          DLT_CONNECTION_CLIENT_CONNECT)) {
+                    dlt_log(LOG_ERR, "Could not initialize main socket.\n");
+                    return DLT_RETURN_ERROR;
+                }
+            }
+            else {
+                dlt_log(LOG_ERR, "Could not initialize main socket.\n");
+                return DLT_RETURN_ERROR;
+            }
+
+            head = head->next;
+        }
     }
 
     /* create and open unix socket to receive incoming connections from
