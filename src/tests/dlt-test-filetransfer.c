@@ -27,7 +27,7 @@
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-client.c                                             **
+**  SRC-MODULE: dlt-test-filetransfer.c                                       **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -375,9 +375,25 @@ int testFile3Run3()
     return 0;
 }
 
-/*!Main program dlt-test-filestransfer starts here */
-int main(void)
+void usage()
 {
+    char version[255];
+
+    dlt_get_version(version, 255);
+
+    printf("Usage: dlt-test-filestransfer [options]\n");
+    printf("Test filestransfer application by transfering files.\n");
+    printf("%s \n", version);
+    printf("Options:\n");
+    printf("    -h          display help information\n");
+    printf("    -t <path>   absolute path to a text file\n");
+    printf("    -i <path>   absolute path to an image file\n");
+}
+
+/*!Main program dlt-test-filestransfer starts here */
+int main(int argc, char* argv[])
+{
+    int c;
     /*First file contains some text */
     file1 = "/usr/local/share/dlt-filetransfer/dlt-test-filetransfer-file";
     /*Second file is a picture */
@@ -388,6 +404,33 @@ int main(void)
     file3_2 = "dlt-test-filetransfer-doesntExist_2";
     /*Third file doesn't exist. Just to test the reaction when the file isn't available. */
     file3_3 = "dlt-test-filetransfer-doesntExist_3";
+
+    while((c = getopt(argc, argv, "ht:i:")) != -1)
+    {
+        switch (c)
+        {
+            case 't':
+            {
+                file1 = optarg;
+                break;
+            }
+            case 'i':
+            {
+                file2 = optarg;
+                break;
+            }
+            case 'h':
+            {
+                usage();
+                return 0;
+            }
+            default:
+            {
+                usage();
+                return -1;
+            }
+        }
+    }
 
     /*Register the application at the dlt-daemon */
     DLT_REGISTER_APP("FLTR", "Test Application filetransfer");
