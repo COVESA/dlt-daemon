@@ -3205,8 +3205,10 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) > 0) {
-        if ((ret = dlt_user_log_write_raw(&log, data, length)) < DLT_RETURN_OK)
+        if ((ret = dlt_user_log_write_raw(&log, data, length)) < DLT_RETURN_OK) {
+            dlt_user_free_buffer(&(log.buffer));
             return ret;
+        }
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;

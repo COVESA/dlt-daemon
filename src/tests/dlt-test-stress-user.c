@@ -164,8 +164,8 @@ int main(int argc, char *argv[])
         }
         case '?':
         {
-            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') || (optopt == 'r') || (optopt == 'd') ||
-                (optopt == 's'))
+            if ((optopt == 'f') || (optopt == 'n') || (optopt == 'r') ||
+                (optopt == 'd') || (optopt == 's'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);

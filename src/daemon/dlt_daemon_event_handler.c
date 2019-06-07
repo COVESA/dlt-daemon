@@ -393,16 +393,8 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
                                   DltConnection *con,
                                   int activation_type)
 {
-    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-
     if (!evhdl || !con || !con->receiver) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: wrong parameters (%p %p).\n",
-                 __func__,
-                 evhdl,
-                 con);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: wrong parameters.\n", __func__);
         return -1;
     }
 
@@ -410,11 +402,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case ACTIVE:
 
         if (activation_type == DEACTIVATE) {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Deactivate connection type: %d\n",
-                     con->type);
-            dlt_log(LOG_INFO, local_str);
+            dlt_vlog(LOG_INFO, "Deactivate connection type: %d\n", con->type);
 
             dlt_event_handler_disable_fd(evhdl, con->receiver->fd);
 
@@ -428,11 +416,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case INACTIVE:
 
         if (activation_type == ACTIVATE) {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Activate connection type: %d\n",
-                     con->type);
-            dlt_log(LOG_INFO, local_str);
+            dlt_vlog(LOG_INFO, "Activate connection type: %d\n", con->type);
 
             dlt_event_handler_enable_fd(evhdl,
                                         con->receiver->fd,
@@ -443,11 +427,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
 
         break;
     default:
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "Unknown connection status: %d\n",
-                 con->status);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "Unknown connection status: %d\n", con->status);
         return -1;
     }
 
