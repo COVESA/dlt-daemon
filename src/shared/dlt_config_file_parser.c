@@ -76,18 +76,11 @@ static void dlt_config_file_trim_line(char *line)
  */
 static int dlt_config_file_ignore_line(char *line)
 {
-    int i = 0;
-    int len = strlen(line);
-
-    for (i = 0; i < len; i++) {
-        if ((line[i] == '#') || (line[i] == ';') || (line[i] == '\n') || (line[i] == '\0'))
-            return 0; /* ignore */
-        else
-            return -1; /* do not ignore */
-
-    }
-
-    return -1;
+    if ((line[0] == '#') || (line[0] == ';') || (line[0] == '\n') ||
+        (line[0] == '\0'))
+        return 0; /* ignore */
+    else
+        return -1; /* do not ignore */
 }
 
 /**

@@ -215,6 +215,11 @@ int dlt_daemon_client_send(int sock,
 {
     int sent, ret;
 
+    if ((daemon == NULL) || (daemon_local == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid arguments\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
     if ((sock != DLT_DAEMON_SEND_TO_ALL) && (sock != DLT_DAEMON_SEND_FORCE)) {
         /* Send message to specific socket */
         if (isatty(sock)) {

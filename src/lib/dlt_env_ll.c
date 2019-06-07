@@ -86,7 +86,7 @@ int dlt_env_extract_id(char **const env, char *id)
 int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 {
     int count = 0;
-    char ch = *(*env);
+    char ch;
 
     if (!env || !result)
         return -1;
@@ -94,7 +94,6 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
     if (!(*env))
         return -1;
 
-    count = 0;
     ch = *(*env);
 
     while (ch && (count < res_len - 1) && (ch != ';')) {

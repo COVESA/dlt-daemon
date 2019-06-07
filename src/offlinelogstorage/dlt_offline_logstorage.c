@@ -395,7 +395,7 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 
     /* check if string consists of digits only */
     for (i = 0; i < len; i++)
-        if (isdigit(value[i] == 0)) {
+        if (!isdigit(value[i])) {
             dlt_log(LOG_ERR, "Invalid, is not a number \n");
             return -1;
         }

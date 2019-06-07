@@ -424,7 +424,7 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
     int (*callback)(DltMessage *message, void *data) = cb;
 
     if (!cb || !client) {
-        pr_error("%s Invalid parameters (%p, %p)\n", __func__, client, cb);
+        pr_error("%s: Invalid parameters\n", __func__);
         return -1;
     }
 
@@ -541,7 +541,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     DltMessage *msg = NULL;
 
     if (!body) {
-        pr_error("Invalid input (%p).\n", body);
+        pr_error("%s: Invalid input.\n", __func__);
         return -1;
     }
 
@@ -601,7 +601,7 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
                      int verbosity)
 {
     if (!response_analyzer || !ecuid) {
-        pr_error("Invalid input (%p %p).\n", response_analyzer, ecuid);
+        pr_error("%s: Invalid input.\n", __func__);
         return -1;
     }
 
