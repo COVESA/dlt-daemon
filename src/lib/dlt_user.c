@@ -4207,8 +4207,10 @@ DltReturnValue dlt_user_log_check_user_message(void)
 
     /* Ensure that callback is null before searching for it */
     delayed_injection_callback.injection_callback = 0;
+    delayed_injection_callback.injection_callback_with_id = 0;
     delayed_injection_callback.service_id = 0;
     delayed_log_level_changed_callback.log_level_changed_callback = 0;
+    delayed_injection_callback.data = 0;
 
 #ifdef DLT_USE_UNIX_SOCKET_IPC
     fd = dlt_user.dlt_log_handle;
