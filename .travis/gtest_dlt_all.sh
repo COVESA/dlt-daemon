@@ -40,6 +40,7 @@ function gtest_run_test()
         cat $LOG
         exit 1
     fi
+    echo "$1 passed"
 }
 
 pushd tests > /dev/null
