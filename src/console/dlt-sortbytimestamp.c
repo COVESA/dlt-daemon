@@ -93,7 +93,8 @@ void verbose(int level, char *msg, ...)
             time_t tnow = time((time_t *)0);
 
             if (tnow != -1) {
-                char *snow = ctime(&tnow);
+                char snow[50];
+                ctime_r(&tnow, snow);
                 /* suppress newline char */
                 snow[strlen(snow) - 1] = 0;
                 printf("%s: ", snow);
@@ -340,7 +341,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if ((end < 0) || (end < begin) || (end >= file.counter)) {
+    if (end >= file.counter) {
         fprintf(stderr, "ERROR: Selected end message %d is out of range!\n", end);
         return -1;
     }

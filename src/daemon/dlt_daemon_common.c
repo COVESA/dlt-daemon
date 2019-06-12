@@ -1120,9 +1120,8 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
              * We need to check here if there was an error or was it feof.*/
             if (ferror(fd)) {
                 dlt_vlog(LOG_WARNING,
-                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. %s\n",
+                         "%s fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
                          __func__,
-                         fd,
                          strerror(errno));
                 fclose(fd);
                 return -1;
@@ -1134,9 +1133,8 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
             }
             else {
                 dlt_vlog(LOG_WARNING,
-                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. Unknown error.\n",
-                         __func__,
-                         fd);
+                         "%s fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n",
+                         __func__);
                 fclose(fd);
                 return -1;
             }

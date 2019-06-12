@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>   /* for malloc(), free() */
 #include <string.h>   /* for strlen(), memcmp(), memmove() */
-#include <time.h>     /* for localtime(), strftime() */
+#include <time.h>     /* for localtime_r(), strftime() */
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
 #include <stdarg.h>
@@ -82,7 +82,7 @@ char *log_info[] = { "", "fatal", "error", "warn", "info", "debug", "verbose", "
 char *trace_type[] = { "", "variable", "func_in", "func_out", "state", "vfb", "", "", "", "", "", "", "", "", "", "" };
 char *nw_trace_type[] = { "", "ipc", "can", "flexray", "most", "vfb", "", "", "", "", "", "", "", "", "", "" };
 char *control_type[] = { "", "request", "response", "time", "", "", "", "", "", "", "", "", "", "", "", "" };
-static char *service_id[] =
+static char *service_id_name[] =
 { "", "set_log_level", "set_trace_status", "get_log_info", "get_default_log_level", "store_config",
   "reset_to_factory_default",
   "set_com_interface_status", "set_com_interface_max_bandwidth", "set_verbose_mode",
@@ -630,7 +630,7 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, i
 
 DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlength, int flags, int verbose)
 {
-    struct tm *timeinfo;
+    struct tm timeinfo;
     char buffer [DLT_COMMON_BUFFER_LENGTH];
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -646,12 +646,9 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlen
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
         /* print received time */
         time_t tt = msg->storageheader->seconds;
-        timeinfo = localtime (&tt);
-
-        if (timeinfo != NULL) {
-            strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", timeinfo);
-            snprintf(text, textlength, "%s.%.6d ", buffer, msg->storageheader->microseconds);
-        }
+        localtime_r(&tt, &timeinfo);
+        strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
+        snprintf(text, textlength, "%s.%.6d ", buffer, msg->storageheader->microseconds);
     }
 
     if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
@@ -822,7 +819,8 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
         /* process message id / service id */
         if (DLT_MSG_IS_CONTROL(msg)) {
             if ((id > 0) && (id < DLT_SERVICE_ID_LAST_ENTRY)) {
-                snprintf(text + strlen(text), textlength - strlen(text), "%s", service_id[id]); /* service id */
+                snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                         service_id_name[id]); /* service id */
             }
             else if (!(DLT_MSG_IS_CONTROL_TIME(msg)))
                 snprintf(text + strlen(text), textlength - strlen(text), "service(%u)", id); /* service id */

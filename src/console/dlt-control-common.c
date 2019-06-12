@@ -83,7 +83,7 @@
 static int (*response_analyzer_cb)(char *, void *, int);
 
 static pthread_t daemon_connect_thread;
-static DltClient client;
+static DltClient g_client;
 static int callback_return = -1;
 static pthread_mutex_t answer_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
@@ -466,7 +466,7 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
 static void *dlt_control_listen_to_daemon(void *data)
 {
     pr_verbose("Ready to receive DLT answers.\n");
-    dlt_client_main_loop(&client, NULL, get_verbosity());
+    dlt_client_main_loop(&g_client, NULL, get_verbosity());
     return data;
 }
 
@@ -567,7 +567,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* Re-init the return value */
     callback_return = -1;
 
-    if (dlt_control_send_message_to_socket(client.sock, msg) != 0) {
+    if (dlt_control_send_message_to_socket(g_client.sock, msg) != 0) {
         pr_error("Sending message to daemon failed\n");
         free(msg);
         return -1;
@@ -611,9 +611,9 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     set_ecuid(ecuid);
     set_verbosity(verbosity);
 
-    if (dlt_control_init_connection(&client, dlt_control_callback) != 0) {
+    if (dlt_control_init_connection(&g_client, dlt_control_callback) != 0) {
         pr_error("Connection initialization failed\n");
-        dlt_client_cleanup(&client, get_verbosity());
+        dlt_client_cleanup(&g_client, get_verbosity());
         return -1;
     }
 
@@ -640,5 +640,5 @@ int dlt_control_deinit(void)
     /* Stopping the listener thread */
     pthread_cancel(daemon_connect_thread);
     /* Closing the socket */
-    return dlt_client_cleanup(&client, get_verbosity());
+    return dlt_client_cleanup(&g_client, get_verbosity());
 }

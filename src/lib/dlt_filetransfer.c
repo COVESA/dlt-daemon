@@ -167,18 +167,19 @@ time_t getFileCreationDate(const char *file, int *ok)
  * @param file Absolute file path
  * @return Returns the creation date of a file
  */
-char *getFileCreationDate2(const char *file, int *ok)
+void getFileCreationDate2(const char *file, int *ok, char *date)
 {
     struct stat st;
+    struct tm ts;
 
     if (-1 == stat(file, &st)) {
         *ok = 0;
-        return 0;
+        date = 0;
     }
 
     *ok = 1;
-    struct tm *ts = localtime(&st.st_ctime);
-    return asctime(ts);
+    localtime_r(&st.st_ctime, &ts);
+    asctime_r(&ts, date);
 }
 
 /*!Checks if the file exists */
@@ -249,7 +250,8 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
                     DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),
                     DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext,
@@ -313,7 +315,8 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
                     DLT_STRING("dlt_user_log_file_infoAbout, Error getting serial number of file:"),
                     DLT_STRING(filename));
 
-        char *creationdate = getFileCreationDate2(filename, &ok);
+        char creationdate[50];
+        getFileCreationDate2(filename, &ok, creationdate);
 
         if (!ok)
             DLT_LOG(*fileContext,
@@ -448,7 +451,8 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
                     DLT_STRING("dlt_user_log_file_header_alias, Error getting size of file:"), DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -503,7 +507,8 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
                     DLT_STRING("dlt_user_log_file_header, Error getting size of file:"),
                     DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext, DLT_LOG_ERROR,

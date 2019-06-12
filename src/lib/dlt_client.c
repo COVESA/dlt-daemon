@@ -801,7 +801,7 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
     payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
 
     if (payload == 0) {
-        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %d\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
+        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %zu\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
         return DLT_RETURN_ERROR;
     }
 

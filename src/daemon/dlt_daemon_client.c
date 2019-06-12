@@ -1505,7 +1505,8 @@ void dlt_daemon_control_callsw_cinjection(int sock,
     DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t); /* Get service id */
     id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
-    if ((id >= DLT_DAEMON_INJECTION_MIN) && (id <= DLT_DAEMON_INJECTION_MAX)) {
+    /* id is always less than DLT_DAEMON_INJECTION_MAX since its type is uinit32_t */
+    if (id >= DLT_DAEMON_INJECTION_MIN) {
         /* This a a real SW-C injection call */
         data_length_inject = 0;
         data_length_inject_tmp = 0;
@@ -2123,7 +2124,6 @@ void dlt_daemon_control_set_timing_packets(int sock,
 
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    int ret;
     DltMessage msg;
     int32_t len;
 
@@ -2185,12 +2185,12 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
 
     msg.standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
-    /* Send message */
-    if ((ret =
-             dlt_daemon_client_send(sock, daemon, daemon_local, msg.headerbuffer, sizeof(DltStorageHeader),
-                                    msg.headerbuffer + sizeof(DltStorageHeader),
-                                    msg.headersize - sizeof(DltStorageHeader),
-                                    msg.databuffer, msg.datasize, verbose))) {}
+    /* Send message, ignore return value */
+    dlt_daemon_client_send(sock, daemon, daemon_local, msg.headerbuffer,
+                           sizeof(DltStorageHeader),
+                           msg.headerbuffer + sizeof(DltStorageHeader),
+                           msg.headersize - sizeof(DltStorageHeader),
+                           msg.databuffer, msg.datasize, verbose);
 
     /* free message */
     dlt_message_free(&msg, 0);

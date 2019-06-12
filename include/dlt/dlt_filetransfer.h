@@ -24,6 +24,9 @@
  * \file dlt_filetransfer.h
  */
 
+#ifndef DLT_FILETRANSFER_H
+#define DLT_FILETRANSFER_H
+
 #include <limits.h>    /* Needed for LONG_MAX */
 #include <sys/stat.h>  /* Needed for struct stat st*/
 #include "dlt.h"       /* Needed for DLT Logs */
@@ -135,3 +138,5 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
 extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);
+
+#endif /* DLT_FILETRANSFER_H */

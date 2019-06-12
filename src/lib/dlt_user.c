@@ -2065,7 +2065,7 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%user_initialised false\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
 
@@ -2815,7 +2815,7 @@ void dlt_user_trace_network_segmented_thread(void *unused)
             /* This case will not happen. */
             /* When this thread is interrupted by signal, mq_receive() will not return */
             /* partial read length and will return -1. And also no data is removed from mq. */
-            dlt_vlog(LOG_WARNING, "NWTSegmented: Could not read data fully from queue: %d\n", read);
+            dlt_vlog(LOG_WARNING, "NWTSegmented: Could not read data fully from queue: %zd\n", read);
             continue;
         }
 

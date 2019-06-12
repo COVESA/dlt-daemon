@@ -178,7 +178,7 @@ unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
 DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
 {
     time_t t;
-    struct tm *tmp;
+    struct tm tmp;
     char outstr[200];
     char newest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
     char oldest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
@@ -188,14 +188,9 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
     if (trace->filenameTimestampBased) {
         int ret = 0;
         t = time(NULL);
-        tmp = localtime(&t);
+        localtime_r(&t, &tmp);
 
-        if (NULL == tmp) {
-            printf("dlt_offline_trace_create_new_file: pointer to tmp is NULL!");
-            return DLT_RETURN_ERROR;
-        }
-
-        if (strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", tmp) == 0) {}
+        strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", &tmp);
 
         ret = snprintf(trace->filename, NAME_MAX, "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
 
