@@ -15,60 +15,36 @@
 # @licence end@
 #######
 
-set(dlt_test_multi_process_SRCS dlt-test-multi-process.c)
-add_executable(dlt-test-multi-process ${dlt_test_multi_process_SRCS})
-target_link_libraries(dlt-test-multi-process dlt)
-set_target_properties(dlt-test-multi-process PROPERTIES LINKER_LANGUAGE C)
+set(dlt-test-multi-process_SRCS dlt-test-multi-process.c)
+set(dlt-test-multi-process-client_SRCS dlt-test-multi-process-client.c)
+set(dlt-test-user_SRCS dlt-test-user.c)
+set(dlt-test-client_SRCS dlt-test-client.c)
+set(dlt-test-stress-user_SRCS dlt-test-stress-user.c)
+set(dlt-test-stress-client_SRCS dlt-test-stress-client.c)
+set(dlt-test-stress_SRCS dlt-test-stress.c)
+set(dlt-test-filetransfer_SRCS dlt-test-filetransfer.c)
+set(dlt-test-fork-handler_SRCS dlt-test-fork-handler.c)
+set(dlt-test-init-free_SRCS dlt-test-init-free.c)
 
-set(dlt_test_multi_process_client_SRCS dlt-test-multi-process-client.c)
-add_executable(dlt-test-multi-process-client ${dlt_test_multi_process_client_SRCS})
-target_link_libraries(dlt-test-multi-process-client dlt)
-set_target_properties(dlt-test-multi-process-client PROPERTIES LINKER_LANGUAGE C)
+foreach(target
+        dlt-test-multi-process
+        dlt-test-multi-process-client
+        dlt-test-user
+        dlt-test-client
+        dlt-test-stress-user
+        dlt-test-stress-client
+        dlt-test-stress
+        dlt-test-filetransfer
+        dlt-test-fork-handler
+        dlt-test-init-free
+        )
+    add_executable(${target} ${${target}_SRCS})
+    target_link_libraries(${target} dlt)
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
+    install(TARGETS ${target}
+            RUNTIME DESTINATION bin
+            COMPONENT base)
+endforeach()
 
-set(dlt_test_user_SRCS dlt-test-user.c)
-add_executable(dlt-test-user ${dlt_test_user_SRCS})
-target_link_libraries(dlt-test-user dlt)
-set_target_properties(dlt-test-user PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_client_SRCS dlt-test-client.c)
-add_executable(dlt-test-client ${dlt_test_client_SRCS})
-target_link_libraries(dlt-test-client dlt)
-set_target_properties(dlt-test-client PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_stress_user_SRCS dlt-test-stress-user.c)
-add_executable(dlt-test-stress-user ${dlt_test_stress_user_SRCS})
-target_link_libraries(dlt-test-stress-user dlt)
-set_target_properties(dlt-test-stress-user PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_stress_client_SRCS dlt-test-stress-client.c)
-add_executable(dlt-test-stress-client ${dlt_test_stress_client_SRCS})
-target_link_libraries(dlt-test-stress-client dlt)
-set_target_properties(dlt-test-stress-client PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_stress_SRCS dlt-test-stress.c)
-add_executable(dlt-test-stress ${dlt_test_stress_SRCS})
-target_link_libraries(dlt-test-stress dlt)
-set_target_properties(dlt-test-stress PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_filetransfer_SRCS dlt-test-filetransfer.c)
-add_executable(dlt-test-filetransfer ${dlt_test_filetransfer_SRCS})
-target_link_libraries(dlt-test-filetransfer dlt)
-set_target_properties(dlt-test-filetransfer PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_fork_handler_SRCS dlt-test-fork-handler.c)
-add_executable(dlt-test-fork-handler ${dlt_test_fork_handler_SRCS})
-target_link_libraries(dlt-test-fork-handler dlt)
-set_target_properties(dlt-test-fork-handler PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_test_init_free_SRCS dlt-test-init-free.c)
-add_executable(dlt-test-init-free ${dlt_test_init_free_SRCS})
-target_link_libraries(dlt-test-init-free dlt)
-set_target_properties(dlt-test-init-free PROPERTIES LINKER_LANGUAGE C)
-
-install(TARGETS dlt-test-multi-process dlt-test-multi-process-client dlt-test-user dlt-test-client dlt-test-stress-user dlt-test-stress-client dlt-test-stress dlt-test-filetransfer dlt-test-fork-handler dlt-test-init-free
-	RUNTIME DESTINATION bin
-	COMPONENT base)
-
-INSTALL(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
-	DESTINATION share/dlt-filetransfer
-)
+install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
+        DESTINATION share/dlt-filetransfer)

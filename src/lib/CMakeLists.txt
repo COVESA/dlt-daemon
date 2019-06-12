@@ -15,11 +15,19 @@
 # @licence end@
 #######
 
-set(dlt_LIB_SRCS dlt_user dlt_client dlt_filetransfer dlt_env_ll ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_protocol.c)
+set(dlt_LIB_SRCS
+    dlt_user.c
+    dlt_client.c
+    dlt_filetransfer.c
+    dlt_env_ll.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_protocol.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_user_shared.c
+    )
 
 if(WITH_DLT_SHM_ENABLE)
-    set(dlt_LIB_SRCS ${dlt_LIB_SRCS} ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
-endif(WITH_DLT_SHM_ENABLE)
+    set(dlt_LIB_SRCS ${dlt_LIB_SRCS} ${PROJECT_SOURCE_DIR}/src/shared/dlt_shm.c)
+endif()
 
 add_library(dlt ${dlt_LIB_SRCS})
 
@@ -31,14 +39,18 @@ else()
     set(SOCKET_LIBRARY socket)
 endif()
 
-target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+if(HAVE_FUNC_PTHREAD_SETNAME_NP)
+    add_definitions(-DDLT_USE_PTHREAD_SETNAME_NP)
+    message(STATUS "Using pthread_setname_np API to set thread name")
+else()
+    message(STATUS "pthread_setname_np API not available on this platform")
+endif()
 
+target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 set_target_properties(dlt PROPERTIES VERSION ${DLT_VERSION} SOVERSION ${DLT_MAJOR_VERSION})
 
 install(TARGETS dlt
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
-	COMPONENT base)
-
-
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+        COMPONENT base)
