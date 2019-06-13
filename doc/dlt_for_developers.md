@@ -535,6 +535,37 @@ DLT_VERBOSE_MODE();
 DLT_NONVERBOSE_MODE();
 ```
 
+#### Using custom timestamps
+
+The timestamp that is transmitted in the header of a DLT message is usually generated automatically by the library itself right before the message is sent. If you wish to change this, e.g. because you want to indicate when an event occured, rather than when the according message was assembled, you can supply a custom timestamp. Compared to the example above, two macros are defined for convenience:
+
+```
+uint32_t timestamp = 1234567; /* uptime in 0.1 milliseconds */
+if (gflag) {
+    /* Non-verbose mode */
+    DLT_LOG_ID_TS(ctx, DLT_LOG_INFO, 42, timestamp,
+                  DLT_INT(num), DLT_STRING(text));
+}
+else {
+    /* Verbose mode */
+    DLT_LOG_TS(ctx, DLT_LOG_INFO, timestamp,
+               DLT_INT(num), DLT_STRING(text));
+}
+```
+
+If you wish to (or have to) use the function interface, you need to set the flag to make use of the user-supplied timestamp manually after calling dlt_user_log_write_start():
+
+
+```
+if (dlt_user_log_write_start(&ctx, &ctxdata, DLT_LOG_INFO) > 0) {
+    ctxdata.use_timestamp = DLT_USER_TIMESTAMP;
+    ctxdata.user_timestamp = (uint32_t) 1234567;
+    dlt_user_log_write_string(&myctxdata, "ID: ");
+    dlt_user_log_write_uint32(&myctxdata, 123);
+    dlt_user_log_write_finish(&myctxdata);
+}
+```
+
 ### Logging parameters
 
 The following parameter types can be used. Multiple parameters can be added to
