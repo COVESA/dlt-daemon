@@ -17,5 +17,4 @@ addons:
       - libdbus-1-dev
       - build-essential
       - systemd
-      - libsystemd-daemon-dev
-      - libsystemd-journal-dev
+      - libsystemd-dev
