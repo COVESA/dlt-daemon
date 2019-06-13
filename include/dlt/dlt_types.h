@@ -188,4 +188,13 @@ typedef enum
 } DltUserConnectionState;
 #endif
 
+/**
+ * Definition of timestamp types
+ */
+typedef enum
+{
+	DLT_AUTO_TIMESTAMP = 0,
+	DLT_USER_TIMESTAMP
+} DltTimestampType;
+
 #endif  /* DLT_TYPES_H */

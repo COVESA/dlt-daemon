@@ -202,6 +202,7 @@ void journal_thread(void *v_conf)
     sd_journal *j;
     char match[DLT_SYSTEM_JOURNAL_BOOT_ID_MAX_LENGTH] = "_BOOT_ID=";
     sd_id128_t boot_id;
+    uint32_t ts;
 
     char buffer_process[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
          buffer_priority[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 },
@@ -345,13 +346,26 @@ void journal_thread(void *v_conf)
                 snprintf(buffer_priority, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "prio_unknown:");
 
             /* write log entry */
-            DLT_LOG(journalContext, loglevel,
-                    DLT_STRING(timestamp.real),
-                    DLT_STRING(timestamp.monotonic),
-                    DLT_STRING(buffer_process),
-                    DLT_STRING(buffer_priority),
-                    DLT_STRING(buffer_message)
-                    );
+            if (conf->Journal.UseOriginalTimestamp == 0) {
+                DLT_LOG(journalContext, loglevel,
+                        DLT_STRING(timestamp.real),
+                        DLT_STRING(timestamp.monotonic),
+                        DLT_STRING(buffer_process),
+                        DLT_STRING(buffer_priority),
+                        DLT_STRING(buffer_message)
+                        );
+
+            }
+            else {
+                /* since we are talking about points in time, I'd prefer truncating over arithmetic rounding */
+                ts = (uint32_t)(atof(timestamp.monotonic) * 10000);
+                DLT_LOG_TS(journalContext, loglevel, ts,
+                           DLT_STRING(timestamp.real),
+                           DLT_STRING(buffer_process),
+                           DLT_STRING(buffer_priority),
+                           DLT_STRING(buffer_message)
+                           );
+            }
         }
         else {
             r = sd_journal_wait(j, 1000000);

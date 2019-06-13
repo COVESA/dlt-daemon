@@ -122,6 +122,8 @@ typedef struct
     int32_t trace_status;                         /**< trace status */
     int32_t args_num;                             /**< number of arguments for extended header*/
     char *context_description;                    /**< description of context */
+    DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
+    uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
 } DltContextData;
 
 typedef struct

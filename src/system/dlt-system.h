@@ -107,6 +107,7 @@ typedef struct {
     int CurrentBoot;
     int Follow;
     int MapLogLevels;
+    int UseOriginalTimestamp;
 } JournalOptions;
 
 typedef struct {

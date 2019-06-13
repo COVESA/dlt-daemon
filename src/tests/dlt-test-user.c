@@ -74,7 +74,9 @@
 
 #include "dlt.h"
 
-#define DLT_TEST_NUM_CONTEXT 9
+#define DLT_TEST_NUM_CONTEXT 10
+
+#define DLT_MAX_TIMESTAMP 0xFFFFFFFF
 
 /* LogLevel string representation */
 static const char *loglevelstr[DLT_LOG_MAX] = {
@@ -99,6 +101,7 @@ int test6m(void);
 int test7m(void);
 int test8m(void);
 int test9m(void);
+int test10m(void);
 
 /* for function interface */
 int test1f(void);
@@ -110,6 +113,7 @@ int test6f(void);
 int test7f(void);
 int test8f(void);
 int test9f(void);
+int test10f(void);
 
 /* Declaration of callback functions */
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length);
@@ -154,6 +158,7 @@ void usage()
     printf("  7m: (Macro IF)    Test network trace\n");
     printf("  8m: (Macro IF)    Test truncated network trace\n");
     printf("  9m: (Macro IF)    Test segmented network trace\n");
+    printf(" 10m: (Macro IF)    Test user-specified timestamps\n");
     printf("  1f: (Function IF) Test all log levels\n");
     printf("  2f: (Function IF) Test all variable types (verbose) \n");
     printf("  3f: (Function IF) Test all variable types (non-verbose) \n");
@@ -163,6 +168,7 @@ void usage()
     printf("  7f: (Function IF) Test network trace\n");
     printf("  8f: (Function IF) Test truncated network trace\n");
     printf("  9f: (Function IF) Test segmented network trace\n");
+    printf(" 10f: (Function IF) Test user-specified timestamps\n");
 }
 
 /**
@@ -177,7 +183,7 @@ int main(int argc, char *argv[])
     int c;
 
     int i;
-    char ctid[4], ctdesc[255];
+    char ctid[5], ctdesc[255];
 
     int num, maxnum;
 
@@ -243,7 +249,7 @@ int main(int argc, char *argv[])
     DLT_REGISTER_CONTEXT(context_macro_callback, "CBM", "Callback Test context for macro interface");
 
     for (i = 0; i < DLT_TEST_NUM_CONTEXT; i++) {
-        snprintf(ctid, 4, "TM%d", i + 1);
+        snprintf(ctid, 5, "TM%02d", i + 1);
         snprintf(ctdesc, 255, "Test %d context for macro interface", i + 1);
         DLT_REGISTER_CONTEXT(context_macro_test[i], ctid, ctdesc);
     }
@@ -252,7 +258,7 @@ int main(int argc, char *argv[])
     dlt_register_context(&context_function_callback, "CBF", "Callback Test context for function interface");
 
     for (i = 0; i < DLT_TEST_NUM_CONTEXT; i++) {
-        snprintf(ctid, 4, "TF%d", i + 1);
+        snprintf(ctid, 5, "TF%02d", i + 1);
         snprintf(ctdesc, 255, "Test %d context for function interface", i + 1);
         dlt_register_context(&(context_function_test[i]), ctid, ctdesc);
     }
@@ -292,6 +298,7 @@ int main(int argc, char *argv[])
         test7m();
         test8m();
         test9m();
+        test10m();
 
         /* with function interface */
         test1f();
@@ -303,6 +310,7 @@ int main(int argc, char *argv[])
         test7f();
         test8f();
         test9f();
+        test10f();
 
         /* wait 1 second before next repeat of tests */
         sleep(1);
@@ -639,6 +647,34 @@ int test9m(void)
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+
+    return 0;
+}
+
+int test10m(void)
+{
+    unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
+    /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
+
+    printf("Test10m: (Macro IF) Test user-supplied time stamps\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test10: (Macro IF) Test user-supplied timestamps");
+
+    for (int i = 0; i < 3; i++) {
+        char s[12];
+        snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
+
+        DLT_VERBOSE_MODE();
+        DLT_LOG_TS(context_macro_test[9], DLT_LOG_INFO, timestamp[i], DLT_STRING("Tested Timestamp:"), DLT_STRING(s));
+
+        DLT_NONVERBOSE_MODE();
+        DLT_LOG_ID_TS(context_macro_test[9], DLT_LOG_INFO, 16, timestamp[i], DLT_STRING(s));
+    }
+
+    DLT_VERBOSE_MODE();
+
+    /* wait 2 second before next test */
+    sleep(2);
+    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
 
     return 0;
 }
@@ -1176,6 +1212,48 @@ int test9f(void)
 
     dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+
+    return 0;
+}
+
+int test10f(void)
+{
+    unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
+    /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
+
+    printf("Test10f: (Function IF) Test user-supplied timestamps\n");
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test10: (Function IF) Test user-supplied time stamps");
+        dlt_user_log_write_finish(&context_data);
+    }
+
+    for (int i = 0; i < 3; i++) {
+        char s[12];
+        snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
+
+        dlt_verbose_mode();
+        if (dlt_user_log_write_start(&context_function_test[9], &context_data, DLT_LOG_INFO) > 0) {
+            context_data.use_timestamp = DLT_USER_TIMESTAMP;
+            context_data.user_timestamp = (uint32_t) timestamp[i];
+            dlt_user_log_write_string(&context_data, "Tested Timestamp:");
+            dlt_user_log_write_string(&context_data, s);
+            dlt_user_log_write_finish(&context_data);
+        }
+
+        dlt_nonverbose_mode();
+        if (dlt_user_log_write_start_id(&(context_function_test[9]), &context_data, DLT_LOG_INFO, 16) > 0) {
+            context_data.use_timestamp = DLT_USER_TIMESTAMP;
+            context_data.user_timestamp = (uint32_t) timestamp[i];
+            dlt_user_log_write_string(&context_data, s);
+            dlt_user_log_write_finish(&context_data);
+        }
+    }
+
+    dlt_verbose_mode();
+
+    /* wait 2 second before next test */
+    sleep(2);
+    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
 
     return 0;
 }

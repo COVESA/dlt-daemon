@@ -148,6 +148,7 @@ void init_configuration(DltSystemConfiguration *config)
     config->Journal.CurrentBoot = 1;
     config->Journal.Follow = 0;
     config->Journal.MapLogLevels = 1;
+    config->Journal.UseOriginalTimestamp = 1;
 
     /* File transfer */
     config->Filetransfer.Enable = 0;
@@ -288,6 +289,10 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             else if (strcmp(token, "JournalMapLogLevels") == 0)
             {
                 config->Journal.MapLogLevels = atoi(value);
+            }
+            else if (strcmp(token, "JournalUseOriginalTimestamp") == 0)
+            {
+                config->Journal.UseOriginalTimestamp = atoi(value);
             }
 
             /* File transfer */

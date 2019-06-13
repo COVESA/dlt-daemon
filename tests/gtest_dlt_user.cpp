@@ -452,6 +452,26 @@ TEST(t_dlt_user_log_write_finish, finish)
 }
 
 /*/////////////////////////////////////// */
+/* t_dlt_user_log_write_finish */
+TEST(t_dlt_user_log_write_finish, finish_with_timestamp)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_finish finish"));
+
+    /* finish with start and initialized context */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    contextData.use_timestamp = DLT_USER_TIMESTAMP;
+    contextData.user_timestamp = UINT32_MAX;
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/*/////////////////////////////////////// */
 /* t_dlt_user_log_write_bool */
 TEST(t_dlt_user_log_write_bool, normal)
 {

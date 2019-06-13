@@ -69,6 +69,7 @@
 #define DLT_USER_MACROS_H
 
 #include "dlt_version.h"
+#include "dlt_types.h"
 
 /**
  * \defgroup userapi DLT User API
@@ -217,6 +218,35 @@
 #endif
 
 /**
+ * Send log message with variable list of messages (intended for verbose mode)
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TS timestamp to be used for log message
+ * @param ARGS variable list of arguments
+ * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
+ *       use a semicolon instead of a comma to separate the ARGS.
+ *       Example: DLT_LOG_TS(hContext, DLT_LOG_INFO, timestamp, DLT_STRING("Hello world"); DLT_INT(123));
+ */
+#ifdef _MSC_VER
+/* DLT_LOG_TS is not supported by MS Visual C++ */
+/* use function interface instead            */
+#else
+#   define DLT_LOG_TS(CONTEXT, LOGLEVEL, TS, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            log_local.use_timestamp = DLT_USER_TIMESTAMP; \
+            log_local.user_timestamp = (uint32_t) TS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
+#endif
+
+/**
  * Send log message with variable list of messages (intended for non-verbose mode)
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -240,6 +270,38 @@
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             ARGS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
+#endif
+
+/**
+ * Send log message with variable list of messages (intended for non-verbose mode)
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param MSGID the message id of log message
+ * @param TS timestamp to be used for log message
+ * @param ARGS variable list of arguments:
+ * calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
+ * DLT_INT(), DLT_UINT(), DLT_RAW()
+ * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
+ *       use a semicolon instead of a comma to separate the ARGS.
+ *       Example: DLT_LOG_ID_TS(hContext, DLT_LOG_INFO, 0x1234, timestamp, DLT_STRING("Hello world"); DLT_INT(123));
+ */
+#ifdef _MSC_VER
+/* DLT_LOG_ID_TS is not supported by MS Visual C++ */
+/* use function interface instead               */
+#else
+#   define DLT_LOG_ID_TS(CONTEXT, LOGLEVEL, MSGID, TS, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            log_local.use_timestamp = DLT_USER_TIMESTAMP; \
+            log_local.user_timestamp = (uint32_t) TS; \
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)

@@ -1538,6 +1538,7 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
     log->args_num = 0;
     log->log_level = loglevel;
     log->size = 0;
+    log->use_timestamp = DLT_AUTO_TIMESTAMP;
 
     /* In non-verbose mode, insert message id */
     if (dlt_user.verbose_mode == 0) {
@@ -3584,8 +3585,14 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 
     /* Set header extra parameters */
     dlt_set_id(msg.headerextra.ecu, dlt_user.ecuID);
+
     /*msg.headerextra.seid = 0; */
-    msg.headerextra.tmsp = dlt_uptime();
+    if (log->use_timestamp == DLT_AUTO_TIMESTAMP) {
+        msg.headerextra.tmsp = dlt_uptime();
+    }
+    else {
+        msg.headerextra.tmsp = log->user_timestamp;
+    }
 
     if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
