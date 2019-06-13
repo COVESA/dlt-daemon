@@ -52,6 +52,7 @@
 #include <sys/wait.h>
 #include <syslog.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "dlt.h"
 #include "dlt_common.h"
@@ -60,6 +61,7 @@
 /* Constants */
 #define MAX_PROCS 100
 #define MAX_THREADS 100
+#define MAX_LOG_LENGTH 1024
 
 #ifndef WAIT_ANY
 #   define WAIT_ANY -1
@@ -70,6 +72,7 @@ typedef struct {
     int nmsgs;            /* Number of messages to send */
     int nprocs;            /* Number of processes to start */
     int nthreads;        /* Number of threads to start */
+    int nloglength;     /* Length of Log message */
     int delay;            /* Delay between logs messages for each process */
     int delay_fudge;    /* Fudge the delay by 0-n to cause desynchronization */
     bool generate_ctid;   /* true: To generate context Id from App Id + Thread Number */
@@ -115,6 +118,7 @@ void usage(char *prog_name)
     printf(" -m number      Number of messages per thread to send. (%d)\n", defaults.nmsgs);
     printf(" -p number      Number of processes to start. (%d), Max %d.\n", defaults.nprocs, MAX_PROCS);
     printf(" -t number      Number of threads per process. (%d), Max %d.\n", defaults.nthreads, MAX_THREADS);
+    printf(" -l number      Length of log message. (%d)\n", defaults.nloglength);
     printf(" -d delay       Delay in milliseconds to wait between log messages. (%d)\n", defaults.delay);
     printf(" -f delay       Random fudge in milliseconds to add to delay. (%d)\n", defaults.delay_fudge);
     printf(" -g             Generate Context IDs from Application ID and thread number \n");
@@ -128,6 +132,7 @@ void init_params(s_parameters *params)
     params->nmsgs = 100;
     params->nprocs = 10;
     params->nthreads = 2;
+    params->nloglength = 40;
     params->delay = 1000;
     params->delay_fudge = 100;
     params->generate_ctid = false;
@@ -141,7 +146,7 @@ int read_cli(s_parameters *params, int argc, char **argv)
     int c;
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "m:p:t:d:f:g")) != -1)
+    while ((c = getopt (argc, argv, "m:p:t:l:d:f:g")) != -1)
         switch (c) {
         case 'm':
             params->nmsgs = atoi(optarg);
@@ -158,12 +163,21 @@ int read_cli(s_parameters *params, int argc, char **argv)
         case 't':
             params->nthreads = atoi(optarg);
 
-            if (params->nprocs > MAX_PROCS) {
+            if (params->nthreads > MAX_THREADS) {
                 fprintf(stderr, "Too many threads selected.\n");
                 return -1;
             }
 
             break;
+        case 'l':
+           params->nloglength = atoi(optarg);
+
+           if(params->nloglength > MAX_LOG_LENGTH) {
+               fprintf(stderr, "Too long log message selected.\n");
+               return -1;
+           }
+
+           break;
         case 'd':
             params->delay = atoi(optarg);
             break;
@@ -175,7 +189,7 @@ int read_cli(s_parameters *params, int argc, char **argv)
             break;
         case '?':
 
-            if ((optopt == 'n') || (optopt == 'd') || (optopt == 'f'))
+            if ((optopt == 'l') || (optopt == 'd') || (optopt == 'f'))
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint(optopt))
                 fprintf(stderr, "Unknown option '-%c'.\n", optopt);
@@ -314,6 +328,9 @@ void do_logging(s_thread_data *data)
     char ctid_name[256];
     struct timespec ts;
     time_t sleep_time;
+    int i = 0;
+    int n = 0;
+    char *logmsg = NULL;
 
     if(data->params.generate_ctid)
         snprintf(ctid, 5, "%02u%02u", data->pidcount, data->tidcount);
@@ -326,13 +343,36 @@ void do_logging(s_thread_data *data)
 
     int msgs_left = data->params.nmsgs;
 
+    logmsg = calloc(1, data->params.nloglength + 1);
+    if (logmsg == NULL) {
+        printf("Error allocate memory for message.\n");
+        DLT_UNREGISTER_CONTEXT(mycontext);
+        abort();
+    }
+
+    for(i = 0; i < data->params.nloglength; i++) {
+        n = 'A' + i;
+        if(n > 90)
+        {
+            n = 'A' + (n - 91) % 26;
+        }
+        logmsg[i] = n;
+    }
+
     while (msgs_left-- > 0) {
-        DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(PAYLOAD_DATA));
+        DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(logmsg));
+
         sleep_time = mksleep_time(data->params.delay, data->params.delay_fudge);
         ts.tv_sec = sleep_time / 1000000000;
         ts.tv_nsec = sleep_time % 1000000000;
         nanosleep(&ts, NULL);
     }
+
+    if (logmsg) {
+        free(logmsg);
+        logmsg = NULL;
+    }
+
     DLT_UNREGISTER_CONTEXT(mycontext);
 }
 
