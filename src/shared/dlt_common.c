@@ -67,7 +67,7 @@
 
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
-char dltFifoBaseDir[PATH_MAX + 1] = "/tmp";
+char dltFifoBaseDir[DLT_PATH_MAX] = "/tmp";
 
 /* internal logging parameters */
 static int logging_mode = DLT_LOG_TO_CONSOLE;
@@ -1701,8 +1701,8 @@ void dlt_log_set_filename(const char *filename)
 
 void dlt_log_set_fifo_basedir(const char *env_pipe_dir)
 {
-    strncpy(dltFifoBaseDir, env_pipe_dir, PATH_MAX);
-    dltFifoBaseDir[PATH_MAX] = 0;
+    strncpy(dltFifoBaseDir, env_pipe_dir, DLT_PATH_MAX);
+    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
 }
 
 void dlt_log_init(int mode)
@@ -2495,7 +2495,7 @@ int dlt_buffer_push3(DltBuffer *buf,
     }
 
     /* set header */
-    strncpy(head.head, DLT_BUFFER_HEAD, 3);
+    strncpy(head.head, DLT_BUFFER_HEAD, 4);
     head.head[3] = 0;
     head.status = 2;
     head.size = size1 + size2 + size3;

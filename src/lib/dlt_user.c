@@ -83,8 +83,8 @@ static bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
 
 #ifndef DLT_USE_UNIX_SOCKET_IPC
-static char dlt_user_dir[NAME_MAX + 1];
-static char dlt_daemon_fifo[NAME_MAX + 1];
+static char dlt_user_dir[DLT_PATH_MAX];
+static char dlt_daemon_fifo[DLT_PATH_MAX];
 #endif
 
 static sem_t dlt_mutex;
@@ -230,7 +230,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 
     remote.sun_family = AF_UNIX;
     snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
-    strncpy(remote.sun_path, dltSockBaseDir, sizeof(dltSockBaseDir));
+    strncpy(remote.sun_path, dltSockBaseDir, sizeof(remote.sun_path));
 
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
         dlt_vlog(LOG_INFO,
@@ -267,11 +267,11 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 #else /* setup fifo*/
 static DltReturnValue dlt_initialize_fifo_connection(void)
 {
-    char filename[DLT_USER_MAX_FILENAME_LENGTH];
+    char filename[DLT_PATH_MAX];
     int ret;
 
-    snprintf(dlt_user_dir, NAME_MAX, "%s/dltpipes", dltFifoBaseDir);
-    snprintf(dlt_daemon_fifo, NAME_MAX, "%s/dlt", dltFifoBaseDir);
+    snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
+    snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     ret = mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
 
     if ((ret == -1) && (errno != EEXIST)) {
@@ -293,7 +293,7 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     }
 
     /* create and open DLT user FIFO */
-    snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%d", dlt_user_dir, getpid());
+    snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
 
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
@@ -354,7 +354,9 @@ DltReturnValue dlt_init(void)
         return DLT_RETURN_ERROR;
     }
 
-    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, sizeof(DLT_USER_IPC_PATH));
+    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
+    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
+
     /* check environment variables */
     dlt_check_envvar();
 
@@ -775,7 +777,7 @@ DltReturnValue dlt_free(void)
     uint32_t i;
     int ret = 0;
 #ifndef DLT_USE_UNIX_SOCKET_IPC
-    char filename[DLT_USER_MAX_FILENAME_LENGTH];
+    char filename[DLT_PATH_MAX];
 #endif
 
     if (dlt_user_freeing != 0)
@@ -799,7 +801,7 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_USER_MAX_FILENAME_LENGTH, "%s/dlt%d", dlt_user_dir, getpid());
+        snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
         unlink(filename);
     }
 
