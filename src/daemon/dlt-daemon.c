@@ -130,7 +130,8 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
     /* default values */
     daemon_local->flags.port = DLT_DAEMON_TCP_PORT;
-    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, sizeof(DLT_USER_IPC_PATH));
+    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
+    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
 
     opterr = 0;
 
@@ -148,7 +149,8 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
         }
         case 't':
         {
-            strncpy(dltFifoBaseDir, optarg, NAME_MAX);
+            strncpy(dltFifoBaseDir, optarg, DLT_PATH_MAX);
+            dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
             break;
         }
         case 'p':
@@ -189,9 +191,11 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
 
 #ifndef DLT_USE_UNIX_SOCKET_IPC
-    snprintf(daemon_local->flags.userPipesDir, NAME_MAX + 1, "%s/dltpipes", dltFifoBaseDir);
+    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+             "%s/dltpipes", dltFifoBaseDir);
 #endif
-    snprintf(daemon_local->flags.daemonFifoName, NAME_MAX + 1, "%s/dlt", dltFifoBaseDir);
+    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+             "%s/dlt", dltFifoBaseDir);
 
     return 0;
 
@@ -220,10 +224,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
     snprintf(daemon_local->flags.loggingFilename,
-             sizeof(daemon_local->flags.loggingFilename) - 1,
+             sizeof(daemon_local->flags.loggingFilename),
              "%s/dlt.log",
              dltFifoBaseDir);
-    daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename) - 1] = 0;
     daemon_local->timeoutOnSend = 4;
     daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
     daemon_local->RingbufferMaxSize = DLT_DAEMON_RINGBUFFER_MAX_SIZE;
@@ -1296,9 +1299,9 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 void dlt_daemon_exit_trigger()
 {
-    char tmp[PATH_MAX + 1] = { 0 };
+    char tmp[DLT_PATH_MAX] = { 0 };
 
-    snprintf(tmp, PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     (void)unlink(tmp);
 
     /* stop event loop */

@@ -122,9 +122,9 @@ typedef struct
 #ifdef DLT_USE_UNIX_SOCKET_IPC
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
 #else
-    char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
+    char userPipesDir[DLT_PATH_MAX]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
 #endif
-    char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
+    char daemonFifoName[DLT_PATH_MAX]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     unsigned int port;  /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
     int gatewayMode; /**< (Boolean) Gateway Mode */

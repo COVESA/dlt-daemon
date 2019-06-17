@@ -350,6 +350,14 @@ enum {
 #   define DLT_RCV_REMOVE      (1 << 1)
 
 /**
+ * Maximal length of path in DLT
+ * DLT limits the path length and does not do anything else to determine
+ * the actual value, because the least that is supported on any system
+ * that DLT runs on is 1024 bytes.
+ */
+#   define DLT_PATH_MAX 1024
+
+/**
  * Maximal length of mounted path
  */
 #   define DLT_MOUNT_PATH_MAX  1024
@@ -413,7 +421,7 @@ extern char dltSerialHeaderChar[DLT_ID_SIZE];
 /**
  * The common base-path of the dlt-daemon-fifo and application-generated fifos
  */
-extern char dltFifoBaseDir[PATH_MAX + 1];
+extern char dltFifoBaseDir[DLT_PATH_MAX];
 
 /**
  * The type of a DLT ID (context id, application id, etc.)
