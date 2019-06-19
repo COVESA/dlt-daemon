@@ -343,7 +343,10 @@ int main(int argc, char *argv[])
 
                         if (end == (file.counter - 1)) {
                             /* Sleep if no new message was received */
-                            sleep(0.1);
+                            struct timespec req;
+                            req.tv_sec = 0;
+                            req.tv_nsec = 100000000;
+                            nanosleep(&req, NULL);
                         }
                         else {
                             /* set new end of log file and continue reading */
