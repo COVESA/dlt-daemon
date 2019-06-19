@@ -239,7 +239,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
  */
 static int dlt_config_file_line_has_section(char *line)
 {
-    line = line; /* avoid compiler warnings */
+    (void)line; /* avoid compiler warnings */
 
     if (line[0] == '[') /* section found */
         return 0;

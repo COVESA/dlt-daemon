@@ -670,7 +670,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         return -1;
 
     /* to avoid warning */
-    data = data;
+    (void)data;
 
     /* prepare storage header */
     if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
