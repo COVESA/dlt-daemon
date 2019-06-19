@@ -829,8 +829,8 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
 {
     int ret;
 
-    file_config = file_config;  /* satisfy compiler */
-    dev_path = dev_path;
+    (void)file_config;  /* satisfy compiler */
+    (void)dev_path;
 
     if (config == NULL)
         return -1;
@@ -877,7 +877,7 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
         return -1;
     }
 
-    log_msg_size = log_msg_size; /* satisfy compiler */
+    (void)log_msg_size; /* satisfy compiler */
 
     /* check specific size is smaller than file size */
     if ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,

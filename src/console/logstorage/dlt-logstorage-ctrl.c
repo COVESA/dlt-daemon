@@ -163,8 +163,8 @@ static int analyze_response(char *data, void *payload, int len)
         return -1;
 
     /* satisfy compiler */
-    payload = payload;
-    len = len;
+    (void)payload;
+    (void)len;
 
     snprintf(resp_ok,
              MAX_RESPONSE_LENGTH,
