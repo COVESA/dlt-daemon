@@ -147,10 +147,10 @@ void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int i
 
     /* create log file name */
     memset(log_file_name, 0, DLT_OFFLINETRACE_FILENAME_MAX_SIZE * sizeof(char));
-    strncat(log_file_name, name, sizeof(DLT_OFFLINETRACE_FILENAME_BASE));
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI, sizeof(DLT_OFFLINETRACE_FILENAME_DELI));
-    strncat(log_file_name, file_index, sizeof(file_index));
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT, sizeof(DLT_OFFLINETRACE_FILENAME_EXT));
+    strncat(log_file_name, name, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, file_index, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT, sizeof(log_file_name) - strlen(log_file_name) - 1);
 }
 
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
