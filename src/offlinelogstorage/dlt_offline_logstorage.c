@@ -237,13 +237,17 @@ DLT_STATIC int dlt_logstorage_list_find(char *key,
 {
     int i = 0;
     int num = 0;
+    int key_length = strlen(key);
+    if (key_length > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) {
+        key_length = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN;
+    }
 
     while (*(list) != NULL) {
         for (i = 0; i < (*list)->num_keys; i++)
         {
             if (strncmp(((*list)->key_list
                         + (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
-                        key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0)
+                        key, key_length) == 0)
             {
                 config[num] = (*list)->data;
                 num++;
