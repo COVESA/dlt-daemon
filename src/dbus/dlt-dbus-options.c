@@ -82,21 +82,21 @@ int read_command_line(DltDBusCliOptions *options, int argc, char *argv[])
         {
             options->BusType = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->BusType);
-            strcpy(options->BusType, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->BusType, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'a':
         {
             options->ApplicationId = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ApplicationId);
-            strcpy(options->ApplicationId, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->ApplicationId, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'c':
         {
             options->ConfigurationFileName = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ConfigurationFileName);
-            strcpy(options->ConfigurationFileName, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->ConfigurationFileName, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'h':
