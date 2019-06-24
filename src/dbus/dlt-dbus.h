@@ -31,7 +31,7 @@
 #include "dlt.h"
 #include "dlt_common.h"
 
-#define DEFAULT_CONF_FILE "/etc/dlt-dbus.conf"
+#define DEFAULT_CONF_FILE CONFIGURATION_FILES_DIR "/dlt-dbus.conf"
 
 #define DLT_DBUS_FILTER_MAX 32
 

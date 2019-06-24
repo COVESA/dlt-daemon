@@ -357,7 +357,7 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
         strncpy((*names + y), tok, len);
 
         if ((num > 1) && (i < num))
-            strncpy((*names + y + len), ",", 1);
+            strncpy((*names + y + len), ",", 2);
 
         y += len + 1;
 
@@ -1554,7 +1554,7 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
  */
 DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
 {
-    char config_file_name[PATH_MAX + 1] = { '\0' };
+    char config_file_name[PATH_MAX] = {0};
     int ret = 0;
 
     /* Check if handle is NULL or already initialized or already configured  */
@@ -1579,7 +1579,7 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
                 "Creating configuration file path string failed\n");
         return -1;
     }
-
+    config_file_name[PATH_MAX - 1] = 0;
     ret = dlt_logstorage_store_filters(handle, config_file_name);
 
     if (ret == 1) {
@@ -1624,6 +1624,7 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
     }
 
     strncpy(handle->device_mount_point, mount_point, DLT_MOUNT_PATH_MAX);
+    handle->device_mount_point[DLT_MOUNT_PATH_MAX] = 0;
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
@@ -1653,7 +1654,7 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
         dlt_logstorage_free(handle, reason);
 
     /* Reset all device status */
-    memset(handle->device_mount_point, '\0', sizeof(char) * DLT_MOUNT_PATH_MAX);
+    memset(handle->device_mount_point, 0, sizeof(char) * (DLT_MOUNT_PATH_MAX + 1));
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;

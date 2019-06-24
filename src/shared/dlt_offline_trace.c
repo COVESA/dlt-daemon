@@ -143,7 +143,7 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
 void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
-    sprintf(file_index, "%010u", idx);
+    snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
     memset(log_file_name, 0, DLT_OFFLINETRACE_FILENAME_MAX_SIZE * sizeof(char));
