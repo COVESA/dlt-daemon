@@ -2798,8 +2798,12 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
         if (read < 0) {
             if (errno != EINTR) {
+                struct timespec req;
+                long sec = (DLT_USER_MQ_ERROR_RETRY_INTERVAL / 1000000);
                 dlt_vlog(LOG_WARNING, "NWTSegmented: Error while reading queue: %s\n", strerror(errno));
-                usleep(DLT_USER_MQ_ERROR_RETRY_INTERVAL);
+                req.tv_sec = sec;
+                req.tv_nsec = (DLT_USER_MQ_ERROR_RETRY_INTERVAL - sec * 1000000) * 1000;
+                nanosleep(&req, NULL);
             }
 
             continue;
@@ -2816,8 +2820,11 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         /* Indicator just to try to flush the buffer */
         /* DLT_NW_TRACE_RESEND custom type is used to mark a resend */
         if(data->nw_trace_type == DLT_NW_TRACE_RESEND) {
+            struct timespec req;
             /* Sleep 100ms, to allow other process to read FIFO */
-            usleep(100 * 1000);
+            req.tv_sec = 0;
+            req.tv_nsec = 100 * 1000 * 1000;
+            nanosleep(&req, NULL);
 
             if (dlt_user_log_resend_buffer() < 0) {
                 /* Requeue if still not empty */
