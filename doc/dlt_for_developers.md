@@ -88,9 +88,9 @@ ${DLT_LIBRARIES}
 Before implementing logging in code one should take a second to think about a
 concept first. Often strategic places in the software can be used as a central
 place for logging. Such places are often interfaces to other SW components. Use
-the solution with the smallest impact. Avoid logging the “good cases” but log
+the solution with the smallest impact. Avoid logging the "good cases" but log
 e.g. in your error handling sections – you will need error handling anyway. In
-case an error occurred more logs don’t matter as long as your regular code
+case an error occurred more logs don't matter as long as your regular code
 produces little logs. Keep in mind that tracing comes with a price tag – you
 are working in an embedded environment where CPU, memory and Bandwidth are
 sparse.
@@ -113,7 +113,7 @@ different values, be consistent with separators. This helps to work with the
 data, especially when log messages are processed by scripts. Such scripts
 often use regular expressions – make the job easier!
 
-For example don’t write log entries like this:
+For example don't write log entries like this:
 
 > Total frames:  1000
 >
@@ -131,8 +131,8 @@ Better aggregate Information into a single message:
 
 ### Do not use ASCII-art
 
-Information should be “on your fingertips”. Logging is a tool to ease crushing
-bugs, not to win a computer art contest. → Don’t use ASCII Art!
+Information should be "on your fingertips". Logging is a tool to ease crushing
+bugs, not to win a computer art contest. → Don't use ASCII Art!
 
 ### Do not create charts using ASCII
 
@@ -173,9 +173,9 @@ Avoid high logging at startup | Especially the system startup is always a high l
 Remove old log messages | If certain long log messages are not necessary anymore because the problem has been resolved, please remove them from your code.
 Do use constant separators | Use consistent field separators and delimiters between different variables and information in order to facilitate automatic log analysis.
 Do use proper logs | The logs should contain the information that you require to identify a problem. If you find yourself producing a new binary to identify a problem every time somebody reports an error something may be wrong.
-Avoid eye catchers | Please don’t use custom highlighting for marking the messages which are important for you. The best way is to write a clear identifier in the front of your trace message. This can than (in the viewer) be easily used for filter sets or even for coloring. An example for messages informing about the frame rate could be: **Frame rate**: low: 12, high: 34, avr: 28
+Avoid eye catchers | Please don't use custom highlighting for marking the messages which are important for you. The best way is to write a clear identifier in the front of your trace message. This can than (in the viewer) be easily used for filter sets or even for coloring. An example for messages informing about the frame rate could be: **Frame rate**: low: 12, high: 34, avr: 28
 Do not log to the console | Do not use \_printf()\_ or similar statements to trace to the console. Such behavior can make it problematic to work e.g. with the serial console or even might slow down the execution of the program. In a vehicle based test system the console messages are not recorded and will not help you.
-Do NOT "macrotize" dlt macros | Don’t write your own macros to capsulate DLT macros.
+Do NOT "macrotize" dlt macros | Don't write your own macros to capsulate DLT macros.
 
 ## The use of Log Levels
 
@@ -242,7 +242,7 @@ phones should be logged at INFO level. Error level logs may be:
 
 - A non-critical component is failing or cannot be found
 - A system component is crashing
-- A system essential file can’t be read or written
+- A system essential file can't be read or written
 - Detection of corrupted network messages, files, etc. when these impact correct
 - Some major functionality could not be provided (e.g. the route in the
   navigation could not be calculated)
@@ -326,11 +326,23 @@ In this case DLT\_INITIAL\_LOG\_LEVEL can be exported. Using this environment
 variable, the user can specify log level for contexts that will be used on
 library startup.
 
-For example, an application “EXA1” has two contexts “CON1” and “CON2”. For
-“CON1” log level DEBUG and for “CON2” log level VERBOSE shall be used. The
+For example, an application "EXA1" has two contexts "CON1" and "CON2". For
+"CON1" log level DEBUG and for "CON2" log level VERBOSE shall be used. The
 following has to be exported to configure the library:
 
-> export DLT\_INITIAL\_LOG\_LEVEL=”EXA1:CON1:5;EXA1:CON2:6”
+> export DLT\_INITIAL\_LOG\_LEVEL="EXA1:CON1:5;EXA1:CON2:6"
+
+If the log level of all applications and contexts shall be initialized, then:
+
+> export DLT\_INITIAL\_LOG\_LEVEL="::2"
+
+If the log level for all contexts of application "EXA1" shall be initialized, then:
+
+> export DLT\_INITIAL\_LOG\_LEVEL="EXA1::2"
+
+If the log level of context "CON1" shall be initialized, then:
+
+> export DLT\_INITIAL\_LOG\_LEVEL=":CON1:2"
 
 ### Local print mode
 
@@ -669,7 +681,7 @@ DLT_REGISTER_INJECTION_CALLBACK(mycontext, 0x1000, injection_callback);
 ```
 
 From DLT Viewer, an injection message can be sent by right-clicking the
-corresponding context in the project view (“Send injection”). A dialog will pop
+corresponding context in the project view ("Send injection"). A dialog will pop
 up to specify the injection data as shown below.
 
 ![alt text](images/dlt-viewer-send-injection-dialog.png "DLT Viewer Send Injection Callback")
