@@ -40,11 +40,15 @@ if(WITH_DOC)
         COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals/images
         COMMAND cp ${PROJECT_SOURCE_DIR}/doc/images/* ${PROJECT_BINARY_DIR}/doc/manuals/images
         COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/README.html ${PROJECT_SOURCE_DIR}/README.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${PROJECT_SOURCE_DIR}/doc/dlt_user_manual.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${PROJECT_SOURCE_DIR}/doc/dlt_cheatsheet.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_glossary.html ${CMAKE_SOURCE_DIR}/doc/dlt_glossary.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_for_developers.html ${CMAKE_SOURCE_DIR}/doc/dlt_for_developers.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_offline_logstorage.html ${CMAKE_SOURCE_DIR}/doc/dlt_offline_logstorage.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_multinode.html ${CMAKE_SOURCE_DIR}/doc/dlt_multinode.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_extended_network_trace.html ${CMAKE_SOURCE_DIR}/doc/dlt_extended_network_trace.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_filetransfer.html ${CMAKE_SOURCE_DIR}/doc/dlt_filetransfer.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_kpi.html ${CMAKE_SOURCE_DIR}/doc/dlt_kpi.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_cdh.html ${CMAKE_SOURCE_DIR}/doc/dlt_cdh.md
         COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${PROJECT_SOURCE_DIR}/doc/dlt_design_specification.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_book.html ${PROJECT_SOURCE_DIR}/doc/dlt_book.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${PROJECT_SOURCE_DIR}/doc/dlt_howto_debug.txt
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
     )
 

@@ -14,6 +14,14 @@ Table of Contents
 
 ## DLT Example Application
 
+To use DLT from an application, it has to be linked against the DLT library.
+When the DLT daemon is installed on the system, there will be a shared library
+with the name libdlt.so which provides the interface for applications to get a
+connection to the DLT daemon. The library path and include path must be set in
+the build environment prior to building a program using the shared dlt library.
+By default, the header file "dlt.h" is located in a directory called "dlt/"
+within the standard include directory.
+
 This example gives an overview of DLT usage inside an application by using a
 minimal code example. Detailed information about the API can be found later in
 this document.
@@ -52,6 +60,26 @@ have to be specified. DLT requires each parameter to be strongly typed using
 DLT type macros. In this example, DLT\_CSTRING  is used to specify a constant
 string. On application cleanup, all DLT contexts, as well as the DLT
 application have to be unregistered.
+
+### DLT with cmake
+To use DLT with cmake, the following lines are the important ones:
+
+```
+find_package(PkgConfig)
+pkg_check_modules(DLT REQUIRED automotive-dlt)
+```
+
+to INCLUDE\_DIRECTORIES, add
+
+```
+${DLT_INCLUDE_DIRS}
+```
+
+and to TARGET\_LINK\_LIBRARIES:
+
+```
+${DLT_LIBRARIES}
+```
 
 ## General Rules for Logging
 
@@ -168,6 +196,31 @@ Please be aware the the default Log Level is set to INFO; this means message
 which are logged in INFO, WARN, ERROR and FATAL will logged. Hint: The default
 Log Level can be changed by setting an environment variable (see DLT Library -
 runtime configuration).
+
+### Methods to set the log level for applications and contexts
+
+- dlt-daemon sets initial application log level
+    -  There is a configuration parameter (see /etc/dlt.conf) `ContextLogLevel`.
+       When a new application registers itself at the daemon, the daemon sets
+       the application's log level to the value defined by the parameter.
+    - This happens when the application registers itself with
+      `DLT_REGISTER_CONTEXT()` or `dlt_register_context()`
+
+- Environment variable `DLT_INITIAL_LOG_LEVEL`
+    - There is an environment variable which is called `DLT_INITIAL_LOG_LEVEL`.
+      It allows to set a per-application-context log level. Refer to
+      [Initial Log level](#initial-log-level) for more detail.
+
+- Application registers itself at daemon with self defined log level
+    - In this case no log level is set by the daemon but by the application
+      itself.
+    - This happens when the application registers itself with
+      `DLT_REGISTER_CONTEXT_LL_TS()` or `dlt_register_context_ll_ts()`
+
+- Client (e.g. DLT Viewer) changes the log level of a particular application
+  context at runtime.
+    - The context's initial log level is set by one of the two methods described
+      above.
 
 ### What to log at FATAL level
 
@@ -313,8 +366,13 @@ be exported:
 
 ### Register application
 
-**Important note**: * DLT may not be used in a forked child until a variant of
-exec() is called, because DLT is using non async-signal-safe functions.
+**Important note**
+- DLT may not be used in a forked child until a variant of exec() is called,
+  because DLT is using non async-signal-safe functions.
+- DLT\_REGISTER\_APP is asynchronous. It may take some milliseconds to establish
+  the IPC channel. Because of this, you might lose messages if you log
+  immediately after registration. Typically this is not a problem, but may arise
+  especially with simple examples.
 
 The DLT application has to be registered as early as possible during the
 initialization of the application by calling DLT\_REGISTER\_APP(). It is only
@@ -509,6 +567,18 @@ DLT\_HEX64(UINT\_VAR) | 64 Bit hex value
 DLT\_BIN8(UINT\_VAR) | 8 Bit binary value
 DLT\_BIN16(UINT\_VAR | 16 Bit binary value
 DLT\_PTR(PTR\_VAR) | Architecture independent macro to print pointers
+
+### Network Trace
+
+It is also possible to trace network messages. The interface, here
+DLT\_NW\_TRACE\_CAN, the length of the header data and a pointer to the header
+data, the length of the payload data and a pointer to the payload data, must be
+specified. If no header or payload is available, the corresponding length must
+be set to 0, and the corresponding pointer must be set to NULL.
+
+```
+DLT_TRACE_NETWORK(mycontext, DLT_NW_TRACE_CAN, headerlen, header, payloadlen, payload);
+```
 
 ### DLT C++ Extension
 
