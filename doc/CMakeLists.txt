@@ -87,8 +87,11 @@ if(WITH_MAN)
         ${MAN_SRC_DIR}/dlt-daemon.1.md
         ${MAN_SRC_DIR}/dlt-receive.1.md
         ${MAN_SRC_DIR}/dlt-system.1.md
+        ${MAN_SRC_DIR}/dlt-control.1.md
         ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md
-        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md)
+        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md
+        ${MAN_SRC_DIR}/dlt-adaptor-stdin.1.md
+        ${MAN_SRC_DIR}/dlt-adaptor-udp.1.md)
 
     set(MAN_SRC
         ${MAN_SRC_DIR}/dlt.conf.5
@@ -98,8 +101,11 @@ if(WITH_MAN)
         ${MAN_SRC_DIR}/dlt-daemon.1
         ${MAN_SRC_DIR}/dlt-receive.1
         ${MAN_SRC_DIR}/dlt-system.1
+        ${MAN_SRC_DIR}/dlt-control.1
         ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1
-        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1)
+        ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1
+        ${MAN_SRC_DIR}/dlt-adaptor-stdin.1
+        ${MAN_SRC_DIR}/dlt-adaptor-udp.1)
 
     set(MAN_BUILD_SRC
         ${MAN_BUILD_DIR}/dlt.conf.5
@@ -109,8 +115,11 @@ if(WITH_MAN)
         ${MAN_BUILD_DIR}/dlt-daemon.1
         ${MAN_BUILD_DIR}/dlt-receive.1
         ${MAN_BUILD_DIR}/dlt-system.1
+        ${MAN_BUILD_DIR}/dlt-control.1
         ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
-        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1)
+        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1
+        ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1
+        ${MAN_BUILD_DIR}/dlt-adaptor-udp.1)
 
     set(MAN_BUILD_GZ
         ${MAN_BUILD_DIR}/dlt.conf.5.gz
@@ -120,8 +129,11 @@ if(WITH_MAN)
         ${MAN_BUILD_DIR}/dlt-daemon.1.gz
         ${MAN_BUILD_DIR}/dlt-receive.1.gz
         ${MAN_BUILD_DIR}/dlt-system.1.gz
+        ${MAN_BUILD_DIR}/dlt-control.1.gz
         ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
-        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
+        ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
+        ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1.gz
+        ${MAN_BUILD_DIR}/dlt-adaptor-udp.1.gz)
 
     add_custom_target(generate_man ALL
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt.conf.5.md -o ${MAN_BUILD_DIR}/dlt.conf.5
@@ -131,8 +143,11 @@ if(WITH_MAN)
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-daemon.1.md -o ${MAN_BUILD_DIR}/dlt-daemon.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-receive.1.md -o ${MAN_BUILD_DIR}/dlt-receive.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.1.md -o ${MAN_BUILD_DIR}/dlt-system.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-control.1.md -o ${MAN_BUILD_DIR}/dlt-control.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-logstorage-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-passive-node-ctrl.1.md -o ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-adaptor-stdin.1.md -o ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-adaptor-udp.1.md -o ${MAN_BUILD_DIR}/dlt-adaptor-udp.1
 
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
@@ -141,8 +156,11 @@ if(WITH_MAN)
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-control.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
-        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz)
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1 > ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-adaptor-udp.1 > ${MAN_BUILD_DIR}/dlt-adaptor-udp.1.gz)
 
     # If user has not set the base dir for man pages, use a default location
     set(MAN_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/share/man)
@@ -159,8 +177,11 @@ if(WITH_MAN)
         ${MAN_BUILD_DIR}/dlt-daemon.1.gz
         ${MAN_BUILD_DIR}/dlt-receive.1.gz
         ${MAN_BUILD_DIR}/dlt-system.1.gz
+        ${MAN_BUILD_DIR}/dlt-control.1.gz
         ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
         ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
+        ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1.gz
+        ${MAN_BUILD_DIR}/dlt-adaptor-udp.1.gz
         DESTINATION ${MAN_INSTALL_DIR}/man1
     )
 endif(WITH_MAN)
