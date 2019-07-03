@@ -17,14 +17,37 @@
 
 
 if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
-    message( STATUS "Added ${systemd_SRCS} to dlt-daemon")
-endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+    message(STATUS "Added ${systemd_SRCS} to dlt-daemon")
+endif()
 
-set(dlt_daemon_SRCS dlt-daemon.c dlt_daemon_common.c dlt_daemon_connection.c dlt_daemon_event_handler.c ${CMAKE_SOURCE_DIR}/src/gateway/dlt_gateway.c dlt_daemon_socket.c dlt_daemon_unix_socket.c dlt_daemon_serial.c dlt_daemon_client.c dlt_daemon_offline_logstorage.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_user_shared.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_common.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_offline_trace.c ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c ${CMAKE_SOURCE_DIR}/src/lib/dlt_client.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_config_file_parser.c ${CMAKE_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage_behavior.c ${CMAKE_SOURCE_DIR}/src/shared/dlt_protocol.c)
+set(dlt_daemon_SRCS
+    dlt-daemon.c
+    dlt_daemon_client.c
+    dlt_daemon_common.c
+    dlt_daemon_connection.c
+    dlt_daemon_event_handler.c
+    dlt_daemon_offline_logstorage.c
+    dlt_daemon_serial.c
+    dlt_daemon_socket.c
+    dlt_daemon_unix_socket.c
+    ${PROJECT_SOURCE_DIR}/src/gateway/dlt_gateway.c
+    ${PROJECT_SOURCE_DIR}/src/lib/dlt_client.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_config_file_parser.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_offline_trace.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_protocol.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_user_shared.c
+    ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c
+    ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage_behavior.c
+    )
 
 if(WITH_DLT_SHM_ENABLE)
-    set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${CMAKE_SOURCE_DIR}/src/shared/dlt_shm.c)
+    set(dlt_daemon_SRCS
+        ${dlt_daemon_SRCS}
+        ${PROJECT_SOURCE_DIR}/src/shared/dlt_shm.c)
 endif()
+
+add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(RT_LIBRARY rt)
@@ -34,19 +57,26 @@ else()
     set(SOCKET_LIBRARY socket)
 endif()
 
-add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
 target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS dlt-daemon
-	RUNTIME DESTINATION bin
-	PERMISSIONS 	OWNER_EXECUTE OWNER_WRITE OWNER_READ
-			GROUP_EXECUTE GROUP_READ
-			WORLD_EXECUTE WORLD_READ
-	COMPONENT base)
+        RUNTIME DESTINATION bin
+        PERMISSIONS
+            OWNER_EXECUTE OWNER_WRITE OWNER_READ
+            GROUP_EXECUTE GROUP_READ
+            WORLD_EXECUTE WORLD_READ
+        COMPONENT base)
 
 if (WITH_DLT_UNIT_TESTS)
-    add_library(dlt_daemon ${dlt_daemon_SRCS})
+    set(library_SRCS ${dlt_daemon_SRCS})
+
+    if (WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+        set(library_SRCS ${library_SRCS} ${systemd_SRCS})
+    endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+
+    add_library(dlt_daemon ${library_SRCS})
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+
     install(TARGETS dlt_daemon
             RUNTIME DESTINATION bin
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

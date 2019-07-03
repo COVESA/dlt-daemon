@@ -1,15 +1,10 @@
 # Setup testing
 enable_testing()
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
+#add_compile_options(-g -fsanitize=address)
+add_compile_options(-isystem ${gtest_SOURCE_DIR}/include)
 
-#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g")
-#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fsanitize=address")
-
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=gnu++0x")
-
-configure_file(${CMAKE_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
-configure_file(${CMAKE_SOURCE_DIR}/tests/testfilter.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(LIBRARIES gtest gtest_main)
@@ -43,8 +38,7 @@ target_link_libraries(gtest_dlt_daemon_gateway ${DLT_DAEMON_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_event_handler ${DLT_DAEMON_LIBRARIES})
 target_link_libraries(gtest_dlt_daemon_offline_log ${DLT_DAEMON_LIBRARIES})
 
-if(${WITH_DLT_CXX11_EXT})
+if(WITH_DLT_CXX11_EXT)
   add_executable(dlt-test-cpp-extension dlt-test-cpp-extension.cpp)
-  set_target_properties(dlt-test-cpp-extension PROPERTIES COMPILE_FLAGS "-std=gnu++0x")
   target_link_libraries(dlt-test-cpp-extension ${DLT_LIBRARIES})
 endif()
