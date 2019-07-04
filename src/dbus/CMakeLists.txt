@@ -16,8 +16,8 @@
 #######
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/
-    ${CMAKE_SOURCE_DIR}/include/dlt
+    ${PROJECT_SOURCE_DIR}/
+    ${PROJECT_SOURCE_DIR}/include/dlt
     ${DBUS_INCLUDE_DIRS}
 )
 

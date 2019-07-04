@@ -18,11 +18,11 @@
 if(WITH_DOC)
     find_package(Doxygen)
 
-    configure_file(${CMAKE_SOURCE_DIR}/doc/doxygen.cfg.cmake ${CMAKE_BINARY_DIR}/doc/doxygen.cfg @ONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen.cfg.cmake ${PROJECT_BINARY_DIR}/doc/doxygen.cfg @ONLY)
 
     add_custom_target (doc ALL
-        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doc/doxygen.cfg
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+        COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/doxygen.cfg
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
     )
 
     FIND_PROGRAM(ASCIIDOC_TOOL
@@ -36,16 +36,16 @@ if(WITH_DOC)
     endif(NOT ASCIIDOC_TOOL)
 
     add_custom_target (doc-manuals ALL
-        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals
-        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/doc/manuals/images
-        COMMAND cp ${CMAKE_SOURCE_DIR}/doc/images/* ${CMAKE_BINARY_DIR}/doc/manuals/images
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/README.html ${CMAKE_SOURCE_DIR}/README.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${CMAKE_SOURCE_DIR}/doc/dlt_user_manual.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${CMAKE_SOURCE_DIR}/doc/dlt_cheatsheet.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${CMAKE_SOURCE_DIR}/doc/dlt_design_specification.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_book.html ${CMAKE_SOURCE_DIR}/doc/dlt_book.txt
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${CMAKE_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${CMAKE_SOURCE_DIR}/doc/dlt_howto_debug.txt
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+        COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals
+        COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals/images
+        COMMAND cp ${PROJECT_SOURCE_DIR}/doc/images/* ${PROJECT_BINARY_DIR}/doc/manuals/images
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/README.html ${PROJECT_SOURCE_DIR}/README.md
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_user_manual.html ${PROJECT_SOURCE_DIR}/doc/dlt_user_manual.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_cheatsheet.html ${PROJECT_SOURCE_DIR}/doc/dlt_cheatsheet.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${PROJECT_SOURCE_DIR}/doc/dlt_design_specification.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_book.html ${PROJECT_SOURCE_DIR}/doc/dlt_book.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_howto_debug.html ${PROJECT_SOURCE_DIR}/doc/dlt_howto_debug.txt
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
     )
 
 endif(WITH_DOC)
@@ -73,7 +73,7 @@ if(WITH_MAN)
     endif(NOT PANDOC_TOOL)
 
     set(MAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-    set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR}/doc)
+    set(MAN_BUILD_DIR ${PROJECT_BINARY_DIR}/doc)
 
     set(MD_SRC
         ${MAN_SRC_DIR}/dlt.conf.5.md
