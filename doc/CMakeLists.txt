@@ -16,6 +16,32 @@
 #######
 
 if(WITH_DOC)
+    # Markdown
+    FIND_PROGRAM(PANDOC_TOOL
+             NAMES pandoc
+             PATHS /bin
+                   /usr/bin
+                   /usr/local/bin)
+
+    if(NOT PANDOC_TOOL)
+        MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
+    endif(NOT PANDOC_TOOL)
+
+    set(MAN_SRC_DIR ${CMAKE_SOURCE_DIR})
+    set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR})
+
+    add_custom_target(generate_doc ALL
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/README.md -o ${MAN_BUILD_DIR}/README.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_for_developers.md -o ${MAN_BUILD_DIR}/doc/dlt_for_developers.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_glossary.md -o ${MAN_BUILD_DIR}/doc/dlt_glossary.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_offline_logstorage.md -o ${MAN_BUILD_DIR}/doc/dlt_offline_logstorage.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_multinode.md -o ${MAN_BUILD_DIR}/doc/dlt_multinode.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_extended_network_trace.md -o ${MAN_BUILD_DIR}/doc/dlt_extended_network_trace.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_filetransfer.md -o ${MAN_BUILD_DIR}/doc/dlt_filetransfer.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_kpi.md -o ${MAN_BUILD_DIR}/doc/dlt_kpi.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_cdh.md -o ${MAN_BUILD_DIR}/doc/dlt_cdh.html)
+
+    # Doxygen
     find_package(Doxygen)
 
     configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen.cfg.cmake ${PROJECT_BINARY_DIR}/doc/doxygen.cfg @ONLY)
