@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -18,7 +17,6 @@
  *
  * \file dlt-control-common.h
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 #ifndef _DLT_CONTROL_COMMON_H_

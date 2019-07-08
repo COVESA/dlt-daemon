@@ -263,7 +263,6 @@ Back to [README.md](../README.md)
   * Use the best possible timestamp for all system journal entries
   * Make timeout in at_exit handler configurable
   * Allow multiple instances of dlt-daemon
-  * Fixed whitespace, formatting and licence headers of new code
   * Add C++ extension which uses variadic templates from C++ 11 (disabled by default)
   * Allow registration of contexts before application is registered
   * Add env-var to set initial log-levels
@@ -277,7 +276,6 @@ Back to [README.md](../README.md)
   * Replaced all tabs with spaces in all files in include folder
   * Rework of addon tests filtetransfer, systemd-journal and system-logger
   * Fix compilation warnings and possible misuse of snprint
-  * Added licence and Doxygen headers
   * Rework of unit tests
   * Fix installation paths on x86_64 (lib64 instead of lib)
 
