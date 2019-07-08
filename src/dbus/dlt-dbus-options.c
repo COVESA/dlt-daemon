@@ -43,7 +43,7 @@ void usage(char *prog_name)
     printf("Options:\n");
     printf(" -d             Daemonize. Detach from terminal and run in background.\n");
     printf(" -c filename    Use configuration file. \n");
-    printf(" -a appid       Used application id. \n");
+    printf(" -a apid        Used application id. \n");
     printf("                Default: %s\n", DEFAULT_CONF_FILE);
     printf(" -b type        Used bus type. \n");
     printf("                Session = 0, System = 1.\n");

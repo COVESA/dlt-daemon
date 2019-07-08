@@ -72,7 +72,7 @@ typedef struct {
     int nthreads;        /* Number of threads to start */
     int delay;            /* Delay between logs messages for each process */
     int delay_fudge;    /* Fudge the delay by 0-n to cause desynchronization */
-    bool generate_ctxid;   /* true: To generate context Id from App Id + Thread Number */
+    bool generate_ctid;   /* true: To generate context Id from App Id + Thread Number */
 } s_parameters;
 
 typedef struct {
@@ -130,7 +130,7 @@ void init_params(s_parameters *params)
     params->nthreads = 2;
     params->delay = 1000;
     params->delay_fudge = 100;
-    params->generate_ctxid = false;
+    params->generate_ctid = false;
 }
 
 /**
@@ -171,7 +171,7 @@ int read_cli(s_parameters *params, int argc, char **argv)
             params->delay_fudge = atoi(optarg);
             break;
         case 'g':
-            params->generate_ctxid = true;
+            params->generate_ctid = true;
             break;
         case '?':
 
@@ -315,7 +315,7 @@ void do_logging(s_thread_data *data)
     struct timespec ts;
     time_t sleep_time;
 
-    if(data->params.generate_ctxid)
+    if(data->params.generate_ctid)
         snprintf(ctid, 5, "%02u%02u", data->pidcount, data->tidcount);
     else
         snprintf(ctid, 5, "CT%02u", data->tidcount);

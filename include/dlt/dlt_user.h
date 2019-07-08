@@ -514,11 +514,11 @@ DltReturnValue dlt_check_library_version(const char *user_major_version, const c
 
 /**
  * Register an application in the daemon.
- * @param appid four byte long character array with the application id
+ * @param apid four byte long character array with the application id
  * @param description long name of the application
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_app(const char *appid, const char *description);
+DltReturnValue dlt_register_app(const char *apid, const char *description);
 
 /**
  * Unregister an application in the daemon.

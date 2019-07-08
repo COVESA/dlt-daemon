@@ -104,8 +104,8 @@ int dlt_daemon_client_send(int sock,
  * @param daemon pointer to dlt daemon structure
  * @param daemon_local pointer to dlt daemon local structure
  * @param msg pointer to response message
- * @param appid pointer to application id to be used in response message
- * @param contid pointer to context id to be used in response message
+ * @param apid pointer to application id to be used in response message
+ * @param ctid pointer to context id to be used in response message
  * @param verbose if set to true verbose information is printed out.
  * @return -1 if there is an error or buffer is full
  */
@@ -113,8 +113,8 @@ int dlt_daemon_client_send_control_message(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
                                            DltMessage *msg,
-                                           char *appid,
-                                           char *contid,
+                                           char *apid,
+                                           char *ctid,
                                            int verbose);
 /**
  * Process and generate response to received get log info control message

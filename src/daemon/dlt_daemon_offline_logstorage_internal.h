@@ -49,8 +49,8 @@
 #define DLT_DAEMON_OFFLINE_LOGSTORAGE_INTERNAL_H
 
 DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key,
-                                                   char *appid,
-                                                   char *ctxid,
+                                                   char *apid,
+                                                   char *ctid,
                                                    char *ecuid);
 
 DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
@@ -64,7 +64,7 @@ DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
 DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              DltDaemonLocal *daemon_local,
                                              char *apid,
-                                             char *ctxid,
+                                             char *ctid,
                                              char *ecuid,
                                              int curr_log_level,
                                              int verbose);

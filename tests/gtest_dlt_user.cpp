@@ -79,7 +79,7 @@ extern "C" {
  */
 
 /*
- * int dlt_register_app(const char *appid, const char * description);
+ * int dlt_register_app(const char *apid, const char * description);
  * int dlt_unregister_app(void);
  * int dlt_register_context(DltContext *handle, const char *contextid, const char * description);
  * int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);

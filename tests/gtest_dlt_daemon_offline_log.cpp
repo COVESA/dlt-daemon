@@ -1029,24 +1029,24 @@ TEST(t_dlt_logstorage_write_msg_cache, null)
 TEST(t_dlt_logstorage_split_key, normal)
 {
     char key[] = "dlt:1020:";
-    char appid[] = ":2345:";
-    char ctxid[] = "::6789";
+    char apid[] = ":2345:";
+    char ctid[] = "::6789";
     char ecuid[] = "ECU1";
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_split_key(key, appid, ctxid, ecuid));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_split_key(key, apid, ctid, ecuid));
 }
 
 TEST(t_dlt_logstorage_split_key, null)
 {
     char key[] = "dlt:1020:";
-    char appid[] = "2345";
-    char ctxid[] = "6789";
+    char apid[] = "2345";
+    char ctid[] = "6789";
     char ecuid[] = "ECU1";
     EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, NULL, NULL, NULL));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, appid, ctxid, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, NULL, ctxid, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, appid, NULL, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, appid, ctxid, NULL));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, apid, ctid, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, NULL, ctid, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, apid, NULL, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, apid, ctid, NULL));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_update_all_contexts*/

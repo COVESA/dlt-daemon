@@ -270,7 +270,7 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle,
  * @param config    Pointer to array of filter configurations
  * @param apid      application id
  * @param ctid      context id
- * @param ecutid    ecu id
+ * @param ecuid     ecu id
  * @return          number of found configurations
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,

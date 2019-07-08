@@ -95,8 +95,8 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
 
 void dlt_logstorage_free(DltLogStorage *handle, int reason);
 
-DLT_STATIC int dlt_logstorage_create_keys(char *appids,
-                                          char *ctxids,
+DLT_STATIC int dlt_logstorage_create_keys(char *apids,
+                                          char *ctids,
                                           char *ecuid,
                                           char **keys,
                                           int *num_keys);

@@ -657,7 +657,7 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
 
     /* obtain key list and number of keys for application ids */
     if (dlt_logstorage_get_keys_list(apids, ",", &apid_list, &num_apids) != 0) {
-        dlt_log(LOG_ERR, "Failed to obtain appid, check configuration file \n");
+        dlt_log(LOG_ERR, "Failed to obtain apid, check configuration file \n");
         return -1;
     }
 

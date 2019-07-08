@@ -81,22 +81,22 @@ is used. See example for detail.
 
     Set the log level (0=off - 6=verbose, default= -1)
     supported options:
-      -l level -a appid -c ctid
+      -l level -a apid -c ctid
       -l level -a abc* (set level for all ctxts of apps name starts with abc)
-      -l level -a appid (set level for all ctxts of this app)
+      -l level -a apid (set level for all ctxts of this app)
       -l level -c xyz* (set level for all ctxts whose name starts with xyz)
-      -l level -c ctxid (set level for the particular ctxt)
+      -l level -c ctid (set level for the particular ctxt)
       -l level (set level for all the registered contexts)
 
 -r
 
 :    Set the trace status (0=off - 1=on, default=255)
      supported options:
-       -r tracestatus -a appid -c ctid
+       -r tracestatus -a apid -c ctid
        -r tracestatus -a abc* (set status for all ctxts of apps name starts with abc)
-       -r tracestatus -a appid (set status for all ctxts of this app)
+       -r tracestatus -a apid (set status for all ctxts of this app)
        -r tracestatus -c xyz* (set status for all ctxts whose name starts with xyz)
-       -r tracestatus -c ctxid (set status for the particular ctxt)
+       -r tracestatus -c ctid (set status for the particular ctxt)
        -r tracestatus (set status for all the registered contexts)
 
 -d
