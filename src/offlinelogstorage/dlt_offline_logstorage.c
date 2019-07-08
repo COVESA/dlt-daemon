@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -17,7 +16,6 @@
  *
  * \file: dlt_offline_logstorage.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 #include <stdio.h>
 #include <string.h>
