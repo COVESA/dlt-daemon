@@ -321,7 +321,7 @@ int dlt_daemon_client_send_control_message(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
                                            DltMessage *msg,
-                                           char *appid,
+                                           char *apid,
                                            char *ctid,
                                            int verbose)
 {
@@ -330,7 +330,7 @@ int dlt_daemon_client_send_control_message(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == 0) || (msg == 0) || (appid == 0) || (ctid == 0))
+    if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     /* prepare storage header */
@@ -366,10 +366,10 @@ int dlt_daemon_client_send_control_message(int sock,
 
     msg->extendedheader->noar = 1; /* number of arguments */
 
-    if (strcmp(appid, "") == 0)
+    if (strcmp(apid, "") == 0)
         dlt_set_id(msg->extendedheader->apid, DLT_DAEMON_CTRL_APID);       /* application id */
     else
-        dlt_set_id(msg->extendedheader->apid, appid);
+        dlt_set_id(msg->extendedheader->apid, apid);
 
     if (strcmp(ctid, "") == 0)
         dlt_set_id(msg->extendedheader->ctid, DLT_DAEMON_CTRL_CTID);       /* context id */
@@ -1665,8 +1665,8 @@ void dlt_daemon_control_set_log_level(int sock,
     char ctid[DLT_ID_SIZE + 1] = { 0 };
     DltServiceSetLogLevel *req = NULL;
     DltDaemonContext *context = NULL;
-    int8_t appid_length = 0;
-    int8_t ctxtid_length = 0;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
@@ -1681,31 +1681,31 @@ void dlt_daemon_control_set_log_level(int sock,
 
     dlt_set_id(apid, req->apid);
     dlt_set_id(ctid, req->ctid);
-    appid_length = strlen(apid);
-    ctxtid_length = strlen(ctid);
+    apid_length = strlen(apid);
+    ctid_length = strlen(ctid);
 
-    if ((appid_length != 0) && (apid[appid_length - 1] == '*') && (ctid[0] == 0)) { /*appid provided having '*' in it and ctid is null*/
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid[0] == 0)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
                                                             daemon_local,
                                                             1,
                                                             apid,
-                                                            appid_length - 1,
+                                                            apid_length - 1,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and appid is null*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and apid is null*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
                                                             daemon_local,
                                                             0,
                                                             ctid,
-                                                            ctxtid_length - 1,
+                                                            ctid_length - 1,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((appid_length != 0) && (apid[appid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
@@ -1716,7 +1716,7 @@ void dlt_daemon_control_set_log_level(int sock,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
@@ -1838,8 +1838,8 @@ void dlt_daemon_control_set_trace_status(int sock,
     char ctid[DLT_ID_SIZE + 1] = { 0 };
     DltServiceSetLogLevel *req = NULL;
     DltDaemonContext *context = NULL;
-    int8_t appid_length = 0;
-    int8_t ctxtid_length = 0;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
@@ -1854,20 +1854,20 @@ void dlt_daemon_control_set_trace_status(int sock,
 
     dlt_set_id(apid, req->apid);
     dlt_set_id(ctid, req->ctid);
-    appid_length = strlen(apid);
-    ctxtid_length = strlen(ctid);
+    apid_length = strlen(apid);
+    ctid_length = strlen(ctid);
 
-    if ((appid_length != 0) && (apid[appid_length - 1] == '*') && (ctid[0] == 0)) { /*appid provided having '*' in it and ctid is null*/
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid[0] == 0)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,
                                                                daemon_local,
                                                                1,
                                                                apid,
-                                                               appid_length - 1,
+                                                               apid_length - 1,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and appid is null*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and apid is null*/
 
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
@@ -1875,11 +1875,11 @@ void dlt_daemon_control_set_trace_status(int sock,
                                                                daemon_local,
                                                                0,
                                                                ctid,
-                                                               ctxtid_length - 1,
+                                                               ctid_length - 1,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((appid_length != 0) && (apid[appid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,
@@ -1890,7 +1890,7 @@ void dlt_daemon_control_set_trace_status(int sock,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,

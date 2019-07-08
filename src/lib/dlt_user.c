@@ -146,7 +146,7 @@ static DltReturnValue dlt_user_log_send_register_application(void);
 static DltReturnValue dlt_user_log_send_unregister_application(void);
 static DltReturnValue dlt_user_log_send_register_context(DltContextData *log);
 static DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log);
-static DltReturnValue dlt_send_app_ll_ts_limit(const char *appid,
+static DltReturnValue dlt_send_app_ll_ts_limit(const char *apid,
                                                DltLogLevelType loglevel,
                                                DltTraceStatusType tracestatus);
 static DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode);
@@ -930,7 +930,7 @@ DltReturnValue dlt_check_library_version(const char *user_major_version, const c
     return dlt_user_check_library_version(user_major_version, user_minor_version);
 }
 
-DltReturnValue dlt_register_app(const char *appid, const char *description)
+DltReturnValue dlt_register_app(const char *apid, const char *description)
 {
     DltReturnValue ret = DLT_RETURN_OK;
 
@@ -945,38 +945,38 @@ DltReturnValue dlt_register_app(const char *appid, const char *description)
         }
     }
 
-    if ((appid == NULL) || (appid[0] == '\0'))
+    if ((apid == NULL) || (apid[0] == '\0'))
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* check if application already registered */
     /* if yes do not register again */
-    if (appid[1] == 0) {
-        if (appid[0] == dlt_user.appID[0])
+    if (apid[1] == 0) {
+        if (apid[0] == dlt_user.appID[0])
             return DLT_RETURN_OK;
     }
-    else if (appid[2] == 0)
+    else if (apid[2] == 0)
     {
-        if ((appid[0] == dlt_user.appID[0]) &&
-            (appid[1] == dlt_user.appID[1]))
+        if ((apid[0] == dlt_user.appID[0]) &&
+            (apid[1] == dlt_user.appID[1]))
             return DLT_RETURN_OK;
     }
-    else if (appid[3] == 0)
+    else if (apid[3] == 0)
     {
-        if ((appid[0] == dlt_user.appID[0]) &&
-            (appid[1] == dlt_user.appID[1]) &&
-            (appid[2] == dlt_user.appID[2]))
+        if ((apid[0] == dlt_user.appID[0]) &&
+            (apid[1] == dlt_user.appID[1]) &&
+            (apid[2] == dlt_user.appID[2]))
             return DLT_RETURN_OK;
     }
-    else if ((appid[0] == dlt_user.appID[0]) &&
-             (appid[1] == dlt_user.appID[1]) &&
-             (appid[2] == dlt_user.appID[2]) &&
-             (appid[3] == dlt_user.appID[3]))
+    else if ((apid[0] == dlt_user.appID[0]) &&
+             (apid[1] == dlt_user.appID[1]) &&
+             (apid[2] == dlt_user.appID[2]) &&
+             (apid[3] == dlt_user.appID[3]))
         return DLT_RETURN_OK;
 
     DLT_SEM_LOCK();
 
     /* Store locally application id and application description */
-    dlt_set_id(dlt_user.appID, appid);
+    dlt_set_id(dlt_user.appID, apid);
 
     if (dlt_user.application_description != NULL)
         free(dlt_user.application_description);
@@ -3896,7 +3896,7 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType loglevel, DltTraceStatusType tracestatus)
+DltReturnValue dlt_send_app_ll_ts_limit(const char *apid, DltLogLevelType loglevel, DltTraceStatusType tracestatus)
 {
     DltUserHeader userheader;
     DltUserControlMsgAppLogLevelTraceStatus usercontext;
@@ -3912,7 +3912,7 @@ DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType logle
         return DLT_RETURN_ERROR;
     }
 
-    if ((appid == NULL) || (appid[0] == '\0'))
+    if ((apid == NULL) || (apid[0] == '\0'))
         return DLT_RETURN_ERROR;
 
     /* set userheader */
@@ -3920,7 +3920,7 @@ DltReturnValue dlt_send_app_ll_ts_limit(const char *appid, DltLogLevelType logle
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id(usercontext.apid, appid);       /* application id */
+    dlt_set_id(usercontext.apid, apid);       /* application id */
     usercontext.log_level = loglevel;
     usercontext.trace_status = tracestatus;
 
