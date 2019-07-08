@@ -79,6 +79,7 @@ unsigned char buffer[BUFFER_SIZE];
 /*!Get some information about the file size of a file */
 /**See stat(2) for more informations.
  * @param file Absolute file path
+ * @param ok Result of stat
  * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
  */
 uint32_t getFilesize(const char *file, int *ok)
@@ -120,7 +121,7 @@ void stringHash(const char *str, uint32_t *hash)
 /*!Get some information about the file serial number of a file */
 /** See stat(2) for more informations.
  * @param file Absolute file path
- * @param value *ok == 0 -> error; *ok == 1 -> ok
+ * @param ok *ok == 0 -> error; *ok == 1 -> ok
  * @return Returns a unique number associated with each filename
  */
 uint32_t getFileSerialNumber(const char *file, int *ok)
@@ -147,6 +148,7 @@ uint32_t getFileSerialNumber(const char *file, int *ok)
 /*!Returns the creation date of a file */
 /** See stat(2) for more informations.
  * @param file Absolute file path
+ * @param ok Result of stat
  * @return Returns the creation date of a file
  */
 time_t getFileCreationDate(const char *file, int *ok)
@@ -165,6 +167,8 @@ time_t getFileCreationDate(const char *file, int *ok)
 /*!Returns the creation date of a file */
 /** Format of the creation date is Day Mon dd hh:mm:ss yyyy
  * @param file Absolute file path
+ * @param ok Result of stat
+ * @param date Local time
  * @return Returns the creation date of a file
  */
 void getFileCreationDate2(const char *file, int *ok, char *date)
@@ -206,7 +210,7 @@ void doTimeout(int timeout)
 
 /*!Checks free space of the user buffer */
 /**
- * @param returns -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
+ * @return -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
  */
 int checkUserBufferForFreeSpace()
 {

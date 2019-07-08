@@ -240,7 +240,7 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
 /**
  * Loads the user saved configurations to daemon
  * @param daemon pointer to dlt daemon structure
- * @param runtime directory path
+ * @param runtime_directory directory path
  * @param verbose if set to true verbose information is printed out
  * @return DLT_RETURN_OK on success, DLT_RETURN_ERROR otherwise
  */
@@ -488,7 +488,7 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
  * @param filename1 name of file containing the runtime defaults for contexts
  * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
  * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
- * @param ForceLLTS force default log-level
+ * @param InitialEnforceLlTsStatus force default log-level
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,

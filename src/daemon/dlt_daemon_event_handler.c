@@ -59,7 +59,7 @@
  *
  * That ensures that no event will be mis-watched.
  *
- * @param pfd: The element to initialize
+ * @param pfd The element to initialize
  */
 static void init_poll_fd(struct pollfd *pfd)
 {
@@ -104,9 +104,9 @@ int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
  * Adds a file descriptor to the descriptor list. If the list is to small,
  * increase its size.
  *
- * @param ev: The event handler structure, containing the list
- * @param fd: The file descriptor to add
- * @param mask: The mask of event to be watched
+ * @param ev The event handler structure, containing the list
+ * @param fd The file descriptor to add
+ * @param mask The mask of event to be watched
  */
 static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
 {
@@ -138,8 +138,8 @@ static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
  * The file descriptor is removed from the descriptor list, the list is
  * compressed during the process.
  *
- * @param ev: The event handler structure containing the list
- * @param fd: The file descriptor to be removed
+ * @param ev The event handler structure containing the list
+ * @param fd The file descriptor to be removed
  */
 static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
 {

@@ -21,13 +21,13 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-receive.cpp
+ * \file dlt-receive.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-receive.cpp                                               **
+**  SRC-MODULE: dlt-receive.c                                                 **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **

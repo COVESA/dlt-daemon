@@ -117,7 +117,7 @@ void dlt_config_file_release(DltConfigFile *file);
  *
  * @param[in]  file      DltConfigFile
  * @param[in]  num       Number of section
- * @param[out] section   Section name
+ * @param[out] name      Section name
  * @return     0 on success, else -1
  */
 int dlt_config_file_get_section_name(const DltConfigFile *file,

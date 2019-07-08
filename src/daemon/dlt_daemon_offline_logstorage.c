@@ -38,7 +38,7 @@
  * @param key            Key
  * @param len            Key length
  * @param ecuid          ECU ID from key stored here
- * @param apid           Application ID as .* stored here
+ * @param appid           Application ID as .* stored here
  * @param ctxid          Context id as .* stored here
  * @return               0 on success -1 on error
  */
@@ -196,9 +196,11 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
  * Prepares keys with application ID alone, will use ecuid if provided
  * (ecuid:apid::) or (:apid::)
  *
- * @param ecuid          ECU ID
- * @param apid           Application ID
  * @param key            Prepared key stored here
+ * @param len            Key length
+ * @param ecuid          ECU ID
+ * @param appid          Application ID
+ * @param ctxid          Context ID
  * @return               None
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
@@ -251,6 +253,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
  * @param key      Given key of filter hash map
  * @param appid    Application id
  * @param ctxid    Context id
+ * @param ecuid    ECU id
  * @return         0 on success, -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctxid, char *ecuid)
@@ -416,6 +419,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon
  *
  * @param daemon            DltDaemon structure
  * @param daemon_local      DltDaemonLocal structure
+ * @param context           DltDaemonContext structure
  * @param ecuid             ECU ID
  * @param loglevel          log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -466,6 +470,8 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemo
  *
  * @param daemon            DltDaemon structure
  * @param daemon_local      DltDaemonLocal structure
+ * @param apid              Application ID
+ * @param ctxid             Context ID
  * @param ecuid             ECU ID
  * @param loglevel          log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -668,6 +674,7 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
  * Update all contexts or particular context depending provided key
  *
  * @param daemon            Pointer to DLT Daemon structure
+ * @param daemon_local      Pointer to DLT Daemon Local structure
  * @param key               Filter key stored in Hash Map
  * @param curr_log_level    log level to be set to context
  * @param verbose           If set to true verbose information is printed out

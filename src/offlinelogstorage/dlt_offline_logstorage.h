@@ -270,8 +270,9 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle,
  *
  * @param handle    DltLogStorage handle
  * @param config    Pointer to array of filter configurations
- * @param appid     application id
- * @param ctxid     context id
+ * @param apid      application id
+ * @param ctid      context id
+ * @param ecutid    ecu id
  * @return          number of found configurations
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
@@ -303,8 +304,10 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param uconfig   User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
- * @param data2     Data buffer of message body
- * @param size2     Size of message body
+ * @param data2     Data buffer of extended message body
+ * @param size2     Size of extended message body
+ * @param data3     Data buffer of message body
+ * @param size3     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,

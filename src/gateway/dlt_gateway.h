@@ -123,7 +123,8 @@ int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
  * Process gateway timer
  *
  * @param daemon          DltDaemon
- * @param daemon_loocal   DltDaemonLocal
+ * @param daemon_local    DltDaemonLocal
+ * @param rec             DltReceiver
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise
  */
@@ -152,8 +153,10 @@ int dlt_gateway_forward_control_message(DltGateway *g,
  * Process on demand connect/disconnect of passive nodes
  *
  * @param g                 DltGateway
+ * @param daemon_local      DltDaemonLocal
  * @param node_id           Passive Node identifier
  * @param connection_status Connection status
+ * @param verbose           verbose flag
  * @return 0 on success, -1 otherwise
  */
 int dlt_gateway_process_on_demand_request(DltGateway *g,
@@ -167,7 +170,7 @@ int dlt_gateway_process_on_demand_request(DltGateway *g,
  *
  * @param con           DltGatewayConnection
  * @param control_msg   DltPassiveControlMessage
- * @param msg           DltMessage
+ * @param data          DltMessage
  * @param verbose       verbose flag
  * @return 0 on success, -1 otherwise
  */

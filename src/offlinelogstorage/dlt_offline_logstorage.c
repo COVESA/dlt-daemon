@@ -85,6 +85,8 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
  * Destroy Filter configurations list.
  *
  * @param list List of the filter configurations will be destroyed.
+ * @param uconfig User configurations for log file
+ * @param dev_path Path to the device
  * @param reason Reason for the destroying of Filter configurations list
  * @return 0 on success, -1 on error
  */
@@ -377,7 +379,7 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
  * Non-digit characters including spaces and out of boundary will lead to an
  * error -1.
  *
- * @param file_name    string to store the file name
+ * @param number       Number to be read
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
@@ -476,7 +478,7 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
  * dlt_logstorage_create_keys_only_ctid
  *
  * Prepares keys with context ID alone, will use ecuid if provided
- * (ecuid::ctid) or (::ctid)
+ * (ecuid\:\:ctid) or (\:\:ctid)
  *
  * @param ecuid          ECU ID
  * @param ctid           Context ID
@@ -609,15 +611,15 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
  * wildcard. This will be rejected.
  *
  * If lists given for application and/or context id, all possible combinations
- * are returned as keys in a form "[apid][ctid], e.g. "APP1:CTX1".
- * If wildcards are used, the non-wildcard value becomes the key, e.g. "APP1:"
- * or ":CTX2".
+ * are returned as keys in a form "[apid][ctid], e.g. "APP1\:CTX1".
+ * If wildcards are used, the non-wildcard value becomes the key, e.g. "APP1\:"
+ * or "\:CTX2".
  *
- * @param[in]: apids: string given from filter configuration
- * @param[in]: ctids: string given from filter configuration
- * @param[in]: ecuid: string given from filter configuration
- * @param[out]: keys: keys to fill into hash table
- * @param[out]: num_keys: number of keys
+ * @param[in] apids string given from filter configuration
+ * @param[in] ctids string given from filter configuration
+ * @param[in] ecuid string given from filter configuration
+ * @param[out] keys keys to fill into hash table
+ * @param[out] num_keys number of keys
  * @return: 0 on success, error on failure*
  */
 DLT_STATIC int dlt_logstorage_create_keys(char *apids,
@@ -713,7 +715,7 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
  * Prepares hash table with keys and data
  *
  * @param handle         DLT Logstorage handle
- * @param tmp_data       Holds all other configuration values
+ * @param data           Holds all other configuration values
  * @return               0 on success, -1 on error
  */
 DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
@@ -1549,7 +1551,7 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
  *
  * Combination of two wildcards is not allowed.
  *
- * @param input_file    pointer to configuration file stored on device
+ * @param handle        DLT Logstorage handle
  * @return              0 on success, -1 on error, 1 on warning
  */
 DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
@@ -1732,6 +1734,7 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
  * @param config    [out] Pointer to array of filter configurations
  * @param apid      application id
  * @param ctid      context id
+ * @param ecuid     ecu id
  * @return          number of configurations found
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
@@ -1916,11 +1919,13 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
  * configuration.
  *
  * @param handle    DltLogStorage handle
- * @param config    User configurations for log file
+ * @param uconfig    User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
- * @param data2     Data buffer of message body
- * @param size2     Size of message body
+ * @param data2     Data buffer of extended message body
+ * @param size2     Size of extended message body
+ * @param data3     Data buffer of message body
+ * @param size3     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,

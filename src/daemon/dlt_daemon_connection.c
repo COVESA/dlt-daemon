@@ -184,7 +184,7 @@ DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
  * Based on the connection type provided, this function returns the pointer
  * to the DltReceiver structure corresponding.
  *
- * @param dameon_local Structure where to take the DltReceiver pointer from.
+ * @param daemon_local Structure where to take the DltReceiver pointer from.
  * @param type Type of the connection.
  * @param fd File descriptor
  *

@@ -72,7 +72,7 @@ int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int si
 /**
  * @brief dlt_daemon_socket_sendreliable - sends data to socket with additional checks and resending functionality - trying to be reliable
  * @param sock
- * @param buffer
+ * @param data_buffer
  * @param message_size
  * @return on sucess: DLT_DAEMON_ERROR_OK, on error: DLT_DAEMON_ERROR_SEND_FAILED
  */

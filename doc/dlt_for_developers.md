@@ -211,7 +211,7 @@ runtime configuration).
       It allows to set a per-application-context log level. Refer to
       [Initial Log level](#initial-log-level) for more detail.
 
-- Application registers itself at daemon with self defined log level
+- Application registers itself at daemon with self-defined log level
     - In this case no log level is set by the daemon but by the application
       itself.
     - This happens when the application registers itself with

@@ -499,10 +499,10 @@ DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] = {
 /**
  * Check if gateway connection configuration parameter is valid.
  *
- * @param g     DltGateway
- * @param c     DltGatewayConnection
- * @param key   DltGatwayConnection property
- * @param value specified property value from configuration file
+ * @param gateway    DltGateway
+ * @param con        DltGatewayConnection
+ * @param ctype      DltGatwayConnection property
+ * @param value      specified property value from configuration file
  * @return Value from DltReturnValue enum
  */
 DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
@@ -524,9 +524,9 @@ DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
 /**
  * Store gateway connection in internal data structure
  *
- * @param g     DltGatway
- * @param tmp   DltGatewayConnection
- * @param verbose verbose flag
+ * @param gateway    DltGatway
+ * @param tmp        DltGatewayConnection
+ * @param verbose    verbose flag
  * @return 0 on success, -1 otherwise
  */
 int dlt_gateway_store_connection(DltGateway *gateway,
@@ -947,7 +947,7 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
  * Parse GET_LOG_INFO
  *
  * @param daemon          DltDaemon
- * @param daemon_local    DltDaemonLocal
+ * @param ecu             Ecu ID
  * @param msg             DltMessage
  * @param req             1 if requested from gateway, 0 otherwise
  * @param verbose verbose flag
@@ -1074,6 +1074,7 @@ DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
  *
  * @param daemon          DltDaemon
  * @param daemon_local    DltDaemonLocal
+ * @param ecu             Ecu ID
  * @param msg             DltMessage
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise
