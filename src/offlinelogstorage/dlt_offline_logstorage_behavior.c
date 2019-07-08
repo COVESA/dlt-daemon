@@ -38,7 +38,7 @@
  * dlt_logstorage_log_file_name
  *
  * Create log file name in the form configured by the user
- *      <filename><delimiter><index><delimiter><timestamp>.dlt
+ *      \<filename\>\<delimiter\>\<index\>\<delimiter\>\<timestamp\>.dlt
  *
  *      filename:       given in configuration file
  *      delimiter:      Punctuation characters (configured in dlt.conf)
@@ -767,6 +767,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
  * Write the log message.
  *
  * @param config        DltLogStorageFilterConfig
+ * @param file_config   DltLogStorageUserConfig
+ * @param dev_path      Path to device
  * @param data1         header
  * @param size1         header size
  * @param data2         storage header

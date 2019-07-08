@@ -105,7 +105,7 @@ extern DltReturnValue dlt_offline_trace_init(DltOfflineTrace *trace,
  * Uninitialise the offline trace
  * This function call closes currently used log file.
  * This function must be called after usage of offline trace
- * @param trace pointer to offline trace structure
+ * @param buf pointer to offline trace structure
  * @return negative value if there was an error
  */
 extern DltReturnValue dlt_offline_trace_free(DltOfflineTrace *buf);
@@ -140,25 +140,25 @@ extern unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace);
 
 /**
  * Provides info about the offline logs storage directory
- * @param path of the storage directory
- * @param filename to search for
- * @param pointer to store newest filename
- * @param pointer to store oldest filename
+ * @param path path of the storage directory
+ * @param file_name filename to search for
+ * @param newest pointer to store newest filename
+ * @param oldest pointer to store oldest filename
  * @return num of files in the directory
  */
 unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, char *newest, char *oldest);
 
 /**
  * creates filename with index
- * @param log file name created with index
- * @param filename base
- * @param index to be used for file name creation
+ * @param log_file_name file name created with index
+ * @param name filename base
+ * @param idx index to be used for file name creation
  */
 void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx);
 
 /**
  * generates index for log file name
- * @param filename supplied to create index
+ * @param file filename supplied to create index
  * @return the index to be used for log file name
  */
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file);

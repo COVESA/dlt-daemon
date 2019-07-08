@@ -21,13 +21,13 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-control.cpp
+ * \file dlt-control.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-control.cpp                                               **
+**  SRC-MODULE: dlt-control.c                                                 **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **

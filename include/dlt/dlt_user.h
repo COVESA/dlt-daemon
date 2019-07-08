@@ -570,7 +570,7 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
  * @param handle pointer to an object containing information about one special logging context
  * @param contextid four byte long character array with the context id
  * @param description long name of the context
- * @param callback fn This is the fn which will be called when log level is changed
+ * @param *dlt_log_level_changed_callback This is the fn which will be called when log level is changed
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_register_context_llccb(DltContext *handle,
@@ -631,6 +631,7 @@ DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t serv
  * @param handle pointer to an object containing information about one special logging context
  * @param service_id the service id to be waited for
  * @param (*dlt_injection_callback) function pointer to callback function
+ * @param priv private data
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
@@ -659,8 +660,8 @@ DltReturnValue dlt_verbose_mode(void);
 
 /**
  * Check the version of dlt library with library version used of the application.
- * @param Major version number of application - see dlt_version.h
- * @param Minor version number of application - see dlt_version.h
+ * @param user_major_version version number of application - see dlt_version.h
+ * @param user_minor_version version number of application - see dlt_version.h
  *  @return Value from DltReturnValue enum, DLT_RETURN_ERROR if there is a mismatch
  */
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version);
@@ -726,6 +727,10 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
  * - no ctid, apid matches: use ll with prio 3
  * - apid, ctid matches: use ll with prio 4
  *
+ * @param ll_set
+ * @param apid
+ * @param ctid
+ * @param ll
  * If no item matches or in case of error, the original log-level (\param ll) is returned
  */
 int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,

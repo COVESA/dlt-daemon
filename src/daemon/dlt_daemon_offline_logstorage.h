@@ -121,13 +121,12 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
  *
  * @param daemon        Pointer to Dlt Daemon structure
  * @param user_config   DltDaemon configuration
- * @param apid          application id
- * @param ctid          context id
- * @param log_level     log level
  * @param data1         message header buffer
  * @param size1         message header buffer size
- * @param data2         message data buffer
- * @param size2         message data size
+ * @param data2         message extended data buffer
+ * @param size2         message extended data size
+ * @param data3         message data buffer
+ * @param size3         message data size
  */
 void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  DltDaemonFlags *user_config,
@@ -176,7 +175,7 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
  *
  * @param daemon        Pointer to Dlt Daemon structure
  * @param daemon_local  Pointer to Dlt Daemon Local structure
- * @param mount_point   Logstorage device mount point
+ * @param mnt_point     Logstorage device mount point
  * @param verbose       If set to true verbose information is printed out
  * @return 0 on success, -1 otherwise
  */
@@ -192,7 +191,7 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
  *
  * @param daemon        Pointer to Dlt Daemon structure
  * @param daemon_local  Pointer to Dlt Daemon Local structure
- * @param mount_point   Logstorage device mount point
+ * @param mnt_point     Logstorage device mount point
  * @param verbose       If set to true verbose information is printed out
  * @return handle to Logstorage device on success, NULL otherwise
  */

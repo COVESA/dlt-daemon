@@ -157,11 +157,13 @@ static void dlt_print_passive_node_status(
  * @brief Analyze received DLT Daemon response
  *
  * This function checks the received message. In particular, it checks the
- * answer string 'service(<ID>, {ok, error, perm_denied})'. In any case the
+ * answer string 'service(\<ID\>, {ok, error, perm_denied})'. In any case the
  * g_callback_return variable will be set as well which is evaluated in the
  * main function after the communication thread returned.
  *
- * @param message   Received DLT Message
+ * @param answer Recieved response
+ * @param payload Received DLT Message
+ * @param len Length of received DLT message
  * @return 0 if daemon returns 'ok' message, -1 otherwise
  */
 static int dlt_passive_node_analyze_response(char *answer,

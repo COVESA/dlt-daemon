@@ -483,7 +483,7 @@ static void *dlt_control_listen_to_daemon(void *data)
  * New values are signaled using a dedicated condition variable.
  *
  * @param message The DLT answer
- * @data Unused
+ * @param data Unused
  *
  * @return The analyzer return value or -1 on early errors.
  */

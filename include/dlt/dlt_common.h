@@ -192,7 +192,7 @@ enum {
 };
 
 /**
- * The standard TCP Port used for DLT daemon, can be overwritten via -p <port> when starting dlt-daemon
+ * The standard TCP Port used for DLT daemon, can be overwritten via -p \<port\> when starting dlt-daemon
  */
 #   define DLT_DAEMON_TCP_PORT 3490
 
@@ -1218,7 +1218,7 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver);
  * @param receiver pointer to dlt receiver structure
  * @param dest pointer to the destination buffer
  * @param to_get size of the data to copy in dest
- * @skip_header whether if the DltUserHeader must be skipped.
+ * @param skip_header whether if the DltUserHeader must be skipped.
  */
 int dlt_receiver_check_and_get(DltReceiver *receiver,
                                void *dest,
@@ -1293,6 +1293,7 @@ DltReturnValue dlt_buffer_free_dynamic(DltBuffer *buf);
 /**
  * Check if message fits into buffer.
  * @param buf Pointer to buffer structure
+ * @param needed Needed size
  * @return DLT_RETURN_OK if enough space, DLT_RETURN_ERROR otherwise
  */
 DltReturnValue dlt_buffer_check_size(DltBuffer *buf, int needed);
@@ -1309,7 +1310,7 @@ DltReturnValue dlt_buffer_push(DltBuffer *buf, const unsigned char *data, unsign
 /**
  * Write up to three entries to ringbuffer.
  * Entries are joined to one block.
- * @param dlt Pointer to ringbuffer structure
+ * @param buf Pointer to ringbuffer structure
  * @param data1 Pointer to data to be written to ringbuffer
  * @param size1 Size of data in bytes to be written to ringbuffer
  * @param data2 Pointer to data to be written to ringbuffer
@@ -1552,7 +1553,7 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
  * @param rp        char
  * @param rp_count  int
  * @param wp        char
- * @param length        int
+ * @param len       int
  */
 void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
 
@@ -1567,7 +1568,7 @@ void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
 #   ifndef DLT_USE_UNIX_SOCKET_IPC
 /**
  * Create the specified path, recursive if necessary
- * behaves like calling mkdir -p <dir> on the console
+ * behaves like calling mkdir -p \<dir\> on the console
  */
 int dlt_mkdir_recursive(const char *dir);
 #   endif

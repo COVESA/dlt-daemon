@@ -53,6 +53,8 @@
  * assert(*tmp == ':');
  * assert(res[3] == 'd');
  *
+ * @param env    Environment variable
+ * @param id     Extracted ID
  * @return 0 if successful, -1 else
  */
 int dlt_env_extract_id(char **const env, char *id)
@@ -181,6 +183,8 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
  * assert(*tmp == NULL);
  * assert(ll == 6);
  *
+ * @param env    Environment variable
+ * @param ll     Extracted log level
  * @return 0 if successful, -1 else
  */
 int dlt_env_extract_ll(char **const env, int8_t *ll)

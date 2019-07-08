@@ -253,6 +253,7 @@ static int dlt_config_file_line_has_section(char *line)
  * Extract section name from line
  *
  * @param line  Line in configuration file containing a section header
+ * @param name  Section name
  * @return 0 on success, else -1
  */
 static int dlt_config_file_get_section_name_from_string(char *line, char *name)

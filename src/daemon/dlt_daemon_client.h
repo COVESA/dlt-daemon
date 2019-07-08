@@ -152,6 +152,8 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDa
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
  * @param daemon_local pointer to dlt daemon local structure
+ * @param overflow_counter Overflow counter
+ * @param apid Application ID
  * @param verbose if set to true verbose information is printed out.
  * @return -1 if there is an error or buffer overflow, else 0
  */

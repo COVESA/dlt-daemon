@@ -132,8 +132,8 @@ static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
  * Check if the device was on the list, remove it and send the message
  * to the daemon.
  *
- * @event The kind of event happening
- * @part The device partition to be checked
+ * @param event The kind of event happening
+ * @param part The device partition to be checked
  *
  * @return 0 on success, -1 if an error occured.
  */
@@ -268,7 +268,7 @@ static int logstorage_udev_udevd_callback(void)
  * The function looks for block devices that are of "partition" type.
  * Then, it gets the node, and call check_mountpoint_from_partition with it.
  *
- * @udev The udev device used to find all the nodes
+ * @param udev The udev device used to find all the nodes
  *
  * @return 0 on success, -1 otherwise.
  */

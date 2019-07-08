@@ -174,7 +174,7 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client,
  * @param client pointer to dlt client structure
  * @param apid application id
  * @param ctid context id
- * @param SendLogLevel Log Level
+ * @param logLevel Log Level
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
@@ -198,13 +198,11 @@ DltReturnValue dlt_client_get_default_log_level(DltClient *client);
 int dlt_client_get_software_version(DltClient *client);
 /**
  * Initialise get log info structure
- * @param void
  * @return void
  */
 void dlt_getloginfo_init(void);
 /**
  * To free the memory allocated for app description in get log info
- * @param void
  * @return void
  */
 void dlt_getloginfo_free(void);
@@ -213,7 +211,7 @@ void dlt_getloginfo_free(void);
  * @param client pointer to dlt client structure
  * @param apid application id
  * @param ctid context id
- * @param defaultTraceStatus Default Trace Status
+ * @param traceStatus Default Trace Status
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus);
@@ -276,23 +274,23 @@ DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate);
 /**
  * Set server ip
  * @param client pointer to dlt client structure
- * @param pointer to command line argument
+ * @param ipaddr pointer to command line argument
  * @return negative value if there was an error
  */
 int dlt_client_set_server_ip(DltClient *client, char *ipaddr);
 
 /**
  * Set serial device
- * @client pointer to dlt client structure
- * @param param pointer to command line argument
+ * @param client pointer to dlt client structure
+ * @param serial_device pointer to command line argument
  * @return negative value if there was an error
  */
 int dlt_client_set_serial_device(DltClient *client, char *serial_device);
 
 /**
  * Set socket path
- * @client pointer to dlt client structure
- * @param param pointer to socket path string
+ * @param client pointer to dlt client structure
+ * @param socket_path pointer to socket path string
  * @return negative value if there was an error
  */
 int dlt_client_set_socket_path(DltClient *client, char *socket_path);
