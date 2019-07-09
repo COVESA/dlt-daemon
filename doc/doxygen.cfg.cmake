@@ -590,9 +590,9 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT = @CMAKE_SOURCE_DIR@/doc/mainpage.h \
-        @CMAKE_SOURCE_DIR@/src/ \
-        @CMAKE_SOURCE_DIR@/include
+INPUT = @PROJECT_SOURCE_DIR@/doc/mainpage.h \
+        @PROJECT_SOURCE_DIR@/src/ \
+        @PROJECT_SOURCE_DIR@/include
 
 
 # This tag can be used to specify the character encoding of the source files
@@ -689,7 +689,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = @CMAKE_SOURCE_DIR@/doc/images
+IMAGE_PATH             = @PROJECT_SOURCE_DIR@/doc/images
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
