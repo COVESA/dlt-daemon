@@ -258,7 +258,7 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
     DltServiceOfflineLogstorage *serv = NULL;
 
     if (path == NULL) {
-        pr_error("Mount path is uninitialized: %s\n", path);
+        pr_error("Mount path is uninitialized.\n");
         return NULL;
     }
 
