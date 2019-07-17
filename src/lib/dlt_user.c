@@ -103,9 +103,6 @@ enum StringType
     UTF8_STRING = 1
 };
 
-/*Max DLT message size is 1390 bytes plus some extra header space  to accomidate the resend buffer*/
-#define DLT_USER_EXTRA_BUFF_SIZE 100
-
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
@@ -519,9 +516,10 @@ DltReturnValue dlt_init_common(void)
     uint32_t buffer_max = DLT_USER_RINGBUFFER_MAX_SIZE;
     char *env_buffer_step;
     uint32_t buffer_step = DLT_USER_RINGBUFFER_STEP_SIZE;
-    char *env_nonverbose_extended_header;
+    char *env_disable_extended_header_for_nonverbose;
     char *env_log_buffer_len;
     uint32_t buffer_max_configured = 0;
+    uint32_t header_size = 0;
 
     /* Binary semaphore for threads */
     if (sem_init(&dlt_mutex, 0, 1) == -1) {
@@ -543,20 +541,31 @@ DltReturnValue dlt_init_common(void)
     /* Verbose mode is enabled by default */
     dlt_user.verbose_mode = 1;
 
+    /* header_size is used for resend buffer
+     * so it won't include DltStorageHeader
+     */
+    header_size = sizeof(DltUserHeader) + sizeof(DltStandardHeader) +
+                sizeof(DltStandardHeaderExtra);
+
     /* Use extended header for non verbose is enabled by default */
-    dlt_user.use_extende_header_for_non_verbose = DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
+    dlt_user.use_extended_header_for_non_verbose =
+            DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
 
     /* Use extended header for non verbose is modified as per environment variable */
-    env_nonverbose_extended_header = getenv(DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE);
-    if (env_nonverbose_extended_header)
-    {
-        if (strcmp(env_nonverbose_extended_header, "1") == 0)
-        {
-            dlt_user.use_extende_header_for_non_verbose = DLT_USER_NO_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
-        }
+    env_disable_extended_header_for_nonverbose =
+            getenv(DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE);
+
+    if (env_disable_extended_header_for_nonverbose) {
+        if (strcmp(env_disable_extended_header_for_nonverbose, "1") == 0)
+            dlt_user.use_extended_header_for_non_verbose =
+                    DLT_USER_NO_USE_EXTENDED_HEADER_FOR_NONVERBOSE;
     }
 
-    /* WIth session id is enabled by default */
+    if (dlt_user.use_extended_header_for_non_verbose ==
+            DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE)
+        header_size += sizeof(DltExtendedHeader);
+
+    /* With session id is enabled by default */
     dlt_user.with_session_id = DLT_USER_WITH_SESSION_ID;
 
     /* With timestamp is enabled by default */
@@ -657,7 +666,8 @@ DltReturnValue dlt_init_common(void)
     }
 
     if (dlt_user.resend_buffer == NULL) {
-        dlt_user.resend_buffer = calloc(sizeof(unsigned char), (dlt_user.log_buf_len + DLT_USER_EXTRA_BUFF_SIZE));
+        dlt_user.resend_buffer = calloc(sizeof(unsigned char),
+                                        (dlt_user.log_buf_len + header_size));
 
         if (dlt_user.resend_buffer == NULL) {
             dlt_user_initialised = false;
@@ -3332,7 +3342,7 @@ DltReturnValue dlt_nonverbose_mode(void)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_verbose)
+DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_header_for_non_verbose)
 {
     if (!dlt_user_initialised) {
         if (dlt_init() < DLT_RETURN_OK) {
@@ -3341,8 +3351,8 @@ DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extende_header
         }
     }
 
-    /* Set use_extende_header_for_non_verbose */
-    dlt_user.use_extende_header_for_non_verbose = use_extende_header_for_non_verbose;
+    /* Set use_extended_header_for_non_verbose */
+    dlt_user.use_extended_header_for_non_verbose = use_extended_header_for_non_verbose;
 
     return DLT_RETURN_OK;
 }
@@ -3356,7 +3366,7 @@ DltReturnValue dlt_with_session_id(int8_t with_session_id)
         }
     }
 
-    /* Set use_extende_header_for_non_verbose */
+    /* Set use_extended_header_for_non_verbose */
     dlt_user.with_session_id = with_session_id;
 
     return DLT_RETURN_OK;
@@ -3581,7 +3591,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
     else
         /* In non-verbose, send extended header if desired */
-        if (dlt_user.use_extende_header_for_non_verbose)
+        if (dlt_user.use_extended_header_for_non_verbose)
             msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
 
 #if (BYTE_ORDER == BIG_ENDIAN)

@@ -212,7 +212,7 @@ typedef struct
     DltReceiver receiver;                      /**< Receiver for internal user-defined messages from daemon */
 
     int8_t verbose_mode;                       /**< Verbose mode enabled: 1 enabled, 0 disabled */
-    int8_t use_extende_header_for_non_verbose; /**< Use extended header for non verbose: 1 enabled, 0 disabled */
+    int8_t use_extended_header_for_non_verbose; /**< Use extended header for non verbose: 1 enabled, 0 disabled */
     int8_t with_session_id;                    /**< Send always session id: 1 enabled, 0 disabled */
     int8_t with_timestamp;                     /**< Send always timestamp: 1 enabled, 0 disabled */
     int8_t with_ecu_id;                        /**< Send always ecu id: 1 enabled, 0 disabled */
@@ -675,10 +675,10 @@ DltReturnValue dlt_nonverbose_mode(void);
 /**
  * Use extended header in non verbose mode.
  * Enabled by default.
- * @param use_extende_header_for_non_verbose Use extended header for non verbose mode if true
+ * @param use_extended_header_for_non_verbose Use extended header for non verbose mode if true
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extende_header_for_non_verbose);
+DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_header_for_non_verbose);
 
 /**
  * Send session id configuration.
