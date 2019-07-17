@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-convert** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-o** filename\] \[**-v**\] \[**-c**\] \[**-f** filterfile\] \[**-b** number\] \[**-e** number\] \[**-w**\] file1 \[file2\] \[file3\]
+**dlt-convert** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-t**\] \[**-o** filename\] \[**-v**\] \[**-c**\] \[**-f** filterfile\] \[**-b** number\] \[**-e** number\] \[**-w**\] file1 \[file2\] \[file3\]
 
 # DESCRIPTION
 
@@ -63,6 +63,10 @@ Use two files and Output file to join DLT files.
 
 :   Follow dlt file while file is increasing.
 
+-t
+
+:   Handling the compressed input files (tar.gz).
+
 # EXAMPLES
 
 Convert DLT file into ASCII:
@@ -71,8 +75,11 @@ Convert DLT file into ASCII:
 Cut a specific range, e.g. from message 1 to message 3 from a file called log.dlt and store the result to a file called newlog.dlt:
     **dlt-convert -b 1 -e 3 -o newlog.dlt log.dlt**
 
-Paste two dlt files log1.dlt and log2.dlt to a new file called newlog.dlt::
+Paste two dlt files log1.dlt and log2.dlt to a new file called newlog.dlt:
     **dlt-convert -o newlog.dlt log1.dlt log2.dlt**
+
+Handle the compressed input files and join inputs into a new file called newlog.dlt:
+    **dlt-convert -t -o newlog.dlt log1.dlt compressed_log2.tar.gz**
 
 # EXIT STATUS
 

@@ -2,7 +2,7 @@
 
 # NAME
 
-**dlt-sortbytimestamp** - Re-order DLT Logging files according to message creation time
+**dlt-sortbytimestamp** - Re-order DLT Logging files according to message creation time and timestamp.
 
 # SYNOPSIS
 
@@ -12,13 +12,11 @@
 
 By default messages in DLT files are ordered according to the time the logger received them. This can unhelpful when tracing a sequence of events on a busy multi-threaded/multi-core system, because thread pre-emption combined with multiple processes attempting to log messages simultaneously means that the order in which the messages are received may vary significantly from the order in which they were created.
 
-*dlt-sortbytimestamp* re-orders a DLT input file's messages according their creation timestamp, and writes them to an output DLT file.
+*dlt-sortbytimestamp* is able to re-order a DLT input file's messages according both their creation time and timestamp, and writes them to an output DLT file.
 
-# IMPORTANT NOTE
+# NOTE
 
-Message timestamps are recorded relative to boot time. DLT files can contain messages from more than one reboot cycle. Because timestamping is reset to zero at each boot, simply running *dlt-sortbytimestamp* against a multi-boot-cycle DLT input file will produce a tangled mess.
-
-Use the *-b* and/or *-e* options to specify a range of messages within a single reboot cycle and all will be well.
+Use the \*-b\* and/or \*-e\* options to specify a range of messages within a single reboot cycle and all will be well.
 
 Hint: use *dlt-viewer* to ascertain the endpoints of the range in question.
 
