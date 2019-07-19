@@ -1519,8 +1519,6 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
         return DLT_RETURN_WRONG_PARAMETER;
     else if (ret == DLT_RETURN_LOGGING_DISABLED)
         return DLT_RETURN_OK;
-    else
-    /* Do nothing */
 
     /* initialize values */
     if ((dlt_user_log_init(handle, log) < DLT_RETURN_OK) || (dlt_user.dlt_ll_ts == NULL))
