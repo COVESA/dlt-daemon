@@ -164,7 +164,7 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
     }
 
     time_secs = time_usecs / 1000000;
-    localtime((const time_t *)(&time_secs), timeinfo);
+    localtime_r((const time_t *)(&time_secs), timeinfo);
     strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
 
     snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06" PRIu64, buffer_realtime_formatted,
