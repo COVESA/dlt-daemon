@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015, Advanced Driver Information Technology
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -78,18 +76,11 @@ static void dlt_config_file_trim_line(char *line)
  */
 static int dlt_config_file_ignore_line(char *line)
 {
-    int i = 0;
-    int len = strlen(line);
-
-    for (i = 0; i < len; i++) {
-        if ((line[i] == '#') || (line[i] == ';') || (line[i] == '\n') || (line[i] == '\0'))
-            return 0; /* ignore */
-        else
-            return -1; /* do not ignore */
-
-    }
-
-    return -1;
+    if ((line[0] == '#') || (line[0] == ';') || (line[0] == '\n') ||
+        (line[0] == '\0'))
+        return 0; /* ignore */
+    else
+        return -1; /* do not ignore */
 }
 
 /**
@@ -239,7 +230,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
  */
 static int dlt_config_file_line_has_section(char *line)
 {
-    line = line; /* avoid compiler warnings */
+    (void)line; /* avoid compiler warnings */
 
     if (line[0] == '[') /* section found */
         return 0;
@@ -253,6 +244,7 @@ static int dlt_config_file_line_has_section(char *line)
  * Extract section name from line
  *
  * @param line  Line in configuration file containing a section header
+ * @param name  Section name
  * @return 0 on success, else -1
  */
 static int dlt_config_file_get_section_name_from_string(char *line, char *name)
@@ -357,7 +349,6 @@ static int dlt_config_file_read_line(char *line, char *str1, char *str2)
 static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
 {
     int ret = 0;
-    char error_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = { '\0' };
     char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
     char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
@@ -393,8 +384,8 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
 
             break;
         default:     /* something is wrong with the line */
-            snprintf(error_str, DLT_DAEMON_TEXTBUFSIZE, "Line (%d) \"%s\" is invalid\n", line_number, line);
-            dlt_log(LOG_WARNING, error_str);
+            dlt_vlog(LOG_WARNING, "Line (%d) \"%s\" is invalid\n", line_number,
+                     line);
         }
     }
 }

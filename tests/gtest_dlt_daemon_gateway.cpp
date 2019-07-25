@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2016 Advanced Driver Information Technology.
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -337,6 +335,8 @@ TEST(t_dlt_gateway_check_timeout, nullpointer)
 /* Begin Method: dlt_gateway::t_dlt_gateway_establish_connections*/
 TEST(t_dlt_gateway_establish_connections, normal)
 {
+    char ip[] = "127.0.0.1";
+    int port = 3491;
     DltDaemonLocal daemon_local;
     DltGateway *gateway = &daemon_local.pGateway;
     DltGatewayConnection connections;
@@ -344,6 +344,10 @@ TEST(t_dlt_gateway_establish_connections, normal)
     gateway->connections = &connections;
     gateway->connections->status = DLT_GATEWAY_INITIALIZED;
     gateway->connections->trigger = DLT_GATEWAY_ON_STARTUP;
+    gateway->connections->client.mode = DLT_CLIENT_MODE_TCP;
+    gateway->connections->client.servIP = ip;
+    gateway->connections->client.port = port;
+
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_establish_connections(gateway, &daemon_local, 0));
 }
@@ -536,6 +540,8 @@ TEST(t_dlt_gateway_process_passive_node_messages, nullpointer)
 TEST(t_dlt_gateway_process_gateway_timer, normal)
 {
     char ECUVersionString[] = "12.34";
+    char ip[] = "127.0.0.1";
+    int port = 3491;
     DltDaemon daemon;
     DltDaemonLocal daemon_local;
     DltReceiver receiver;
@@ -546,6 +552,10 @@ TEST(t_dlt_gateway_process_gateway_timer, normal)
     DltLogStorage storage_handle;
     daemon_local.pGateway.connections->status = DLT_GATEWAY_INITIALIZED;
     daemon_local.pGateway.connections->trigger = DLT_GATEWAY_ON_STARTUP;
+    daemon_local.pGateway.connections->client.mode = DLT_CLIENT_MODE_TCP;
+    daemon_local.pGateway.connections->client.servIP = ip;
+    daemon_local.pGateway.connections->client.port = port;
+
 
     daemon_local.pEvent.connections = &connections1;
     daemon_local.pEvent.connections->receiver = &receiver;

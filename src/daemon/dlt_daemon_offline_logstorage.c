@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2018  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -17,7 +16,6 @@
  *
  * \file: dlt_daemon_offline_logstorage.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 #include <stdio.h>
@@ -39,21 +37,21 @@
  * @param len            Key length
  * @param ecuid          ECU ID from key stored here
  * @param apid           Application ID as .* stored here
- * @param ctxid          Context id as .* stored here
+ * @param ctid           Context id as .* stored here
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
                                                      int len,
                                                      char *ecuid,
-                                                     char *appid,
-                                                     char *ctxid)
+                                                     char *apid,
+                                                     char *ctid)
 {
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
         return DLT_RETURN_ERROR;
 
     strncpy(ecuid, key, (len - 2));
-    strncpy(appid, ".*", 2);
-    strncpy(ctxid, ".*", 2);
+    strncpy(apid, ".*", 2);
+    strncpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -65,20 +63,20 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
  *
  * @param key            Key
  * @param len            Key length
- * @param appid          Application ID as .* stored here
- * @param ctxid          Context id from key stored here
+ * @param apid           Application ID as .* stored here
+ * @param ctid           Context id from key stored here
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
                                                     int len,
-                                                    char *appid,
-                                                    char *ctxid)
+                                                    char *apid,
+                                                    char *ctid)
 {
     if ((len > (DLT_ID_SIZE + 2)) || (len < 1))
         return DLT_RETURN_ERROR;
 
-    strncpy(ctxid, (key + 2), (len - 1));
-    strncpy(appid, ".*", 2);
+    strncpy(ctid, (key + 2), (len - 1));
+    strncpy(apid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -90,20 +88,20 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
  *
  * @param key            Key
  * @param len            Key length
- * @param appid          Application ID from key is stored here
- * @param ctxid          Context id as .* stored here
+ * @param apid           Application ID from key is stored here
+ * @param ctid           Context id as .* stored here
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
                                                     int len,
-                                                    char *appid,
-                                                    char *ctxid)
+                                                    char *apid,
+                                                    char *ctid)
 {
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
         return DLT_RETURN_ERROR;
 
-    strncpy(appid, key + 1, (len - 2));
-    strncpy(ctxid, ".*", 2);
+    strncpy(apid, key + 1, (len - 2));
+    strncpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -115,32 +113,32 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
  *
  * @param key            Key
  * @param len            Key length
- * @param appid          Application ID from key is stored here
- * @param ctxid          CContext id from key is stored here
+ * @param apid           Application ID from key is stored here
+ * @param ctid           CContext id from key is stored here
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
                                                          int len,
-                                                         char *appid,
-                                                         char *ctxid)
+                                                         char *apid,
+                                                         char *ctid)
 {
     char *tok = NULL;
 
     if (len > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)
         return DLT_RETURN_ERROR;
 
-    /* copy appid and ctxid */
+    /* copy apid and ctid */
     tok = strtok(key, ":");
 
     if (tok != NULL)
-        strncpy(appid, tok, DLT_ID_SIZE);
+        strncpy(apid, tok, DLT_ID_SIZE);
     else
         return DLT_RETURN_ERROR;
 
     tok = strtok(NULL, ":");
 
     if (tok != NULL)
-        strncpy(ctxid, tok, DLT_ID_SIZE);
+        strncpy(ctid, tok, DLT_ID_SIZE);
     else
         return DLT_RETURN_ERROR;
 
@@ -155,22 +153,22 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid_ctid(char *key,
  * @param key            Key
  * @param len            Key length
  * @param ecuid          ECU ID from key stored here
- * @param appid          Application ID from key is stored here
- * @param ctxid          CContext id as .* stored here
+ * @param apid           Application ID from key is stored here
+ * @param ctid           Context id as .* stored here
  * @return               0 on success -1 on error
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
                                                           int len,
                                                           char *ecuid,
-                                                          char *appid,
-                                                          char *ctxid)
+                                                          char *apid,
+                                                          char *ctid)
 {
     char *tok = NULL;
 
     if (len > DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)
         return DLT_RETURN_ERROR;
 
-    /* copy appid and ctxid */
+    /* copy apid and ctid */
     tok = strtok(key, ":");
 
     if (tok != NULL)
@@ -181,11 +179,11 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
     tok = strtok(NULL, ":");
 
     if (tok != NULL)
-        strncpy(appid, tok, DLT_ID_SIZE);
+        strncpy(apid, tok, DLT_ID_SIZE);
     else
         return DLT_RETURN_ERROR;
 
-    strncpy(ctxid, ".*", 2);
+    strncpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -194,18 +192,20 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
  * dlt_logstorage_split_multi
  *
  * Prepares keys with application ID alone, will use ecuid if provided
- * (ecuid:apid::) or (:apid::)
+ * (ecuid\:apid\:\:) or (\:apid\:\:)
  *
+ * @param key            Prepared key stored here
+ * @param len            Key length
  * @param ecuid          ECU ID
  * @param apid           Application ID
- * @param key            Prepared key stored here
+ * @param ctid           Context ID
  * @return               None
  */
 DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
                                                      int len,
                                                      char *ecuid,
-                                                     char *appid,
-                                                     char *ctxid)
+                                                     char *apid,
+                                                     char *ctid)
 {
     char *tok = NULL;
 
@@ -225,16 +225,16 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
         tok = strtok(NULL, ":");
 
         if (tok != NULL)
-            strncpy(ctxid, tok, DLT_ID_SIZE);
+            strncpy(ctid, tok, DLT_ID_SIZE);
 
-        strncpy(appid, ".*", 2);
+        strncpy(apid, ".*", 2);
     }
     else {
         strncpy(ecuid, tok, DLT_ID_SIZE);
         tok = strtok(NULL, ":");
-        strncpy(appid, tok, DLT_ID_SIZE);
+        strncpy(apid, tok, DLT_ID_SIZE);
         tok = strtok(NULL, ":");
-        strncpy(ctxid, tok, DLT_ID_SIZE);
+        strncpy(ctid, tok, DLT_ID_SIZE);
     }
 
     return DLT_RETURN_OK;
@@ -243,22 +243,24 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
 /**
  * dlt_logstorage_split_key
  *
- * Split a given key into appid and ctxid.
- * If APID: - appid = APID and ctxid = .*
- * If :CTID - ctxid = CTID and appid = .*
- * Else appid = APID and ctxid = CTID
+ * Split a given key into apid and ctid.
+ * If APID\: - apid = APID and ctid = .*
+ * If \:CTID - ctid = CTID and apid = .*
+ * Else apid = APID and ctid = CTID
  *
  * @param key      Given key of filter hash map
- * @param appid    Application id
- * @param ctxid    Context id
+ * @param apid     Application id
+ * @param ctid     Context id
+ * @param ecuid    ECU id
  * @return         0 on success, -1 on error
  */
-DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char *ctxid, char *ecuid)
+DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *apid,
+                                                   char *ctid, char *ecuid)
 {
     int len = 0;
     char *sep = NULL;
 
-    if ((key == NULL) || (appid == NULL) || (ctxid == NULL) || (ecuid == NULL))
+    if ((key == NULL) || (apid == NULL) || (ctid == NULL) || (ecuid == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     len = strlen(key);
@@ -270,22 +272,22 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *appid, char 
 
     /* key is ecuid only ecuid::*/
     if ((key[len - 1] == ':') && (key[len - 2] == ':'))
-        return dlt_logstorage_split_ecuid(key, len, ecuid, appid, ctxid);
+        return dlt_logstorage_split_ecuid(key, len, ecuid, apid, ctid);
     /* key is context id only  ::apid*/
     else if ((key[0] == ':') && (key[1] == ':'))
-        return dlt_logstorage_split_ctid(key, len, appid, ctxid);
+        return dlt_logstorage_split_ctid(key, len, apid, ctid);
     /* key is application id only :apid: */
     else if ((key[0] == ':') && (key[len - 1] == ':'))
-        return dlt_logstorage_split_apid(key, len, appid, ctxid);
+        return dlt_logstorage_split_apid(key, len, apid, ctid);
     /* key is :apid:ctid */
     else if ((key[0] == ':') && (key[len - 1] != ':'))
-        return dlt_logstorage_split_apid_ctid(key, len, appid, ctxid);
+        return dlt_logstorage_split_apid_ctid(key, len, apid, ctid);
     /* key is ecuid:apid: */
     else if ((key[0] != ':') && (key[len - 1] == ':'))
-        return dlt_logstorage_split_ecuid_apid(key, len, ecuid, appid, ctxid);
+        return dlt_logstorage_split_ecuid_apid(key, len, ecuid, apid, ctid);
     /* key is either ecuid::ctid or ecuid:apid:ctid */
     else
-        return dlt_logstorage_split_multi(key, len, ecuid, appid, ctxid);
+        return dlt_logstorage_split_multi(key, len, ecuid, apid, ctid);
 }
 
 /**
@@ -416,6 +418,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon
  *
  * @param daemon            DltDaemon structure
  * @param daemon_local      DltDaemonLocal structure
+ * @param context           DltDaemonContext structure
  * @param ecuid             ECU ID
  * @param loglevel          log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -466,6 +469,8 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemo
  *
  * @param daemon            DltDaemon structure
  * @param daemon_local      DltDaemonLocal structure
+ * @param apid              Application ID
+ * @param ctid              Context ID
  * @param ecuid             ECU ID
  * @param loglevel          log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -474,7 +479,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_reset_log_level(DltDaemon *daemo
 DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *daemon,
                                                                   DltDaemonLocal *daemon_local,
                                                                   char *apid,
-                                                                  char *ctxid,
+                                                                  char *ctid,
                                                                   char *ecuid,
                                                                   int loglevel,
                                                                   int verbose)
@@ -485,13 +490,13 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
     DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
 
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
-        (apid == NULL) || (ctxid == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
+        (apid == NULL) || (ctid == NULL) || (loglevel > DLT_LOG_VERBOSE) || (loglevel < DLT_LOG_DEFAULT)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
-        num = dlt_logstorage_get_config(&(daemon->storage_handle[i]), config, apid, ctxid, ecuid);
+        num = dlt_logstorage_get_config(&(daemon->storage_handle[i]), config, apid, ctid, ecuid);
 
         if (num > 0)
             break; /* found config */
@@ -500,7 +505,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
     if ((num == 0) || (config[0] == NULL)) {
         dlt_vlog(LOG_ERR,
                  "%s: No information about APID: %s, CTID: %s, ECU: %s in Logstorage configuration\n",
-                 __func__, apid, ctxid, ecuid);
+                 __func__, apid, ctid, ecuid);
         return DLT_RETURN_ERROR;
     }
 
@@ -510,7 +515,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
         ll = config[0]->log_level;
 
     return dlt_daemon_logstorage_update_passive_node_context(daemon_local, apid,
-                                                             ctxid, ecuid, ll, verbose);
+                                                             ctid, ecuid, ll, verbose);
 
 }
 
@@ -528,7 +533,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
  * @param daemon_local      DltDaemonLocal structure
  * @param id                application id or context id
  * @param curr_log_level    log level to be set to context
- * @param cmp_flag          compare flag (1 id is apid, 2 id is ctxid)
+ * @param cmp_flag          compare flag (1 id is apid, 2 id is ctid)
  * @param ecuid             ecu id where application runs
  * @param verbose           If set to true verbose information is printed out
  * @return                  0 on success, -1 on error
@@ -595,7 +600,7 @@ DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
  * @param daemon            DltDaemon structure
  * @param daemon_local      DltDaemonLocal structure
  * @param apid              application id
- * @param ctxid             context id
+ * @param ctid              context id
  * @param ecuid             ecu id
  * @param curr_log_level    log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -604,7 +609,7 @@ DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
 DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              DltDaemonLocal *daemon_local,
                                              char *apid,
-                                             char *ctxid,
+                                             char *ctid,
                                              char *ecuid,
                                              int curr_log_level,
                                              int verbose)
@@ -612,12 +617,12 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
     DltDaemonContext *context = NULL;
 
     if ((daemon == NULL) || (daemon_local == NULL) || (apid == NULL)
-        || (ctxid == NULL) || (ecuid == NULL)) {
+        || (ctid == NULL) || (ecuid == NULL)) {
         dlt_vlog(LOG_ERR, "Wrong parameter in function %s\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    context = dlt_daemon_context_find(daemon, apid, ctxid, ecuid, verbose);
+    context = dlt_daemon_context_find(daemon, apid, ctid, ecuid, verbose);
 
     if (context != NULL) {
         if (curr_log_level > 0)
@@ -642,7 +647,7 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
             return dlt_daemon_logstorage_force_reset_level(daemon,
                                                            daemon_local,
                                                            apid,
-                                                           ctxid,
+                                                           ctid,
                                                            ecuid,
                                                            curr_log_level,
                                                            verbose);
@@ -652,7 +657,7 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                      "%s: No information about APID: %s, CTID: %s, ECU: %s\n",
                      __func__,
                      apid,
-                     ctxid,
+                     ctid,
                      ecuid);
             return DLT_RETURN_ERROR;
 
@@ -668,6 +673,7 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
  * Update all contexts or particular context depending provided key
  *
  * @param daemon            Pointer to DLT Daemon structure
+ * @param daemon_local      Pointer to DLT Daemon Local structure
  * @param key               Filter key stored in Hash Map
  * @param curr_log_level    log level to be set to context
  * @param verbose           If set to true verbose information is printed out
@@ -680,8 +686,8 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
                                                       int verbose)
 {
     int cmp_flag = 0;
-    char appid[DLT_ID_SIZE + 1] = { '\0' };
-    char ctxid[DLT_ID_SIZE + 1] = { '\0' };
+    char apid[DLT_ID_SIZE + 1] = { '\0' };
+    char ctid[DLT_ID_SIZE + 1] = { '\0' };
     char ecuid[DLT_ID_SIZE + 1] = { '\0' };
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -689,7 +695,7 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
     if ((daemon == NULL) || (daemon_local == NULL) || (key == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (dlt_logstorage_split_key(key, appid, ctxid, ecuid) != 0) {
+    if (dlt_logstorage_split_key(key, apid, ctid, ecuid) != 0) {
         dlt_log(LOG_ERR,
                 "Error while updating application log levels (split key)\n");
         return DLT_RETURN_ERROR;
@@ -699,12 +705,12 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
         dlt_set_id(ecuid, daemon->ecuid);
 
     /* wildcard for context id, find all contexts of given application id */
-    if (strcmp(ctxid, ".*") == 0) {
+    if (strcmp(ctid, ".*") == 0) {
         cmp_flag = DLT_DAEMON_LOGSTORAGE_CMP_APID;
 
         if (dlt_logstorage_update_all_contexts(daemon,
                                                daemon_local,
-                                               appid,
+                                               apid,
                                                curr_log_level,
                                                cmp_flag,
                                                ecuid,
@@ -712,13 +718,13 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
             return DLT_RETURN_ERROR;
     }
     /* wildcard for application id, find all contexts with context id */
-    else if (strcmp(appid, ".*") == 0)
+    else if (strcmp(apid, ".*") == 0)
     {
         cmp_flag = DLT_DAEMON_LOGSTORAGE_CMP_CTID;
 
         if (dlt_logstorage_update_all_contexts(daemon,
                                                daemon_local,
-                                               ctxid,
+                                               ctid,
                                                curr_log_level,
                                                cmp_flag,
                                                ecuid,
@@ -729,8 +735,8 @@ DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
      * find function */
     else if (dlt_logstorage_update_context(daemon,
                                            daemon_local,
-                                           appid,
-                                           ctxid,
+                                           apid,
+                                           ctid,
                                            ecuid,
                                            curr_log_level,
                                            verbose) != 0)
@@ -1115,9 +1121,20 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
         /* call disconnect on all currently connected devices */
         if (daemon->storage_handle[i].connection_type ==
             DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
+        {
+            (&daemon->storage_handle[i])->uconfig.logfile_counteridxlen =
+                                        daemon_local->flags.offlineLogstorageMaxCounterIdx;
+            (&daemon->storage_handle[i])->uconfig.logfile_delimiter =
+                                        daemon_local->flags.offlineLogstorageDelimiter;
+            (&daemon->storage_handle[i])->uconfig.logfile_maxcounter =
+                                        daemon_local->flags.offlineLogstorageMaxCounter;
+            (&daemon->storage_handle[i])->uconfig.logfile_timestamp =
+                                        daemon_local->flags.offlineLogstorageTimestamp;
+
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
                 DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT);
+        }
 
     return 0;
 }

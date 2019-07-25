@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -143,14 +141,14 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
 void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
-    sprintf(file_index, "%010u", idx);
+    snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
     memset(log_file_name, 0, DLT_OFFLINETRACE_FILENAME_MAX_SIZE * sizeof(char));
-    strncat(log_file_name, name, sizeof(DLT_OFFLINETRACE_FILENAME_BASE));
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI, sizeof(DLT_OFFLINETRACE_FILENAME_DELI));
-    strncat(log_file_name, file_index, sizeof(file_index));
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT, sizeof(DLT_OFFLINETRACE_FILENAME_EXT));
+    strncat(log_file_name, name, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, file_index, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT, sizeof(log_file_name) - strlen(log_file_name) - 1);
 }
 
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
@@ -178,7 +176,7 @@ unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
 DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
 {
     time_t t;
-    struct tm *tmp;
+    struct tm tmp;
     char outstr[200];
     char newest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
     char oldest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
@@ -188,14 +186,9 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
     if (trace->filenameTimestampBased) {
         int ret = 0;
         t = time(NULL);
-        tmp = localtime(&t);
+        localtime_r(&t, &tmp);
 
-        if (NULL == tmp) {
-            printf("dlt_offline_trace_create_new_file: pointer to tmp is NULL!");
-            return DLT_RETURN_ERROR;
-        }
-
-        if (strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", tmp) == 0) {}
+        strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", &tmp);
 
         ret = snprintf(trace->filename, NAME_MAX, "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
 

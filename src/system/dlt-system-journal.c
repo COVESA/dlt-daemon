@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -166,7 +164,7 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
     }
 
     time_secs = time_usecs / 1000000;
-    timeinfo = localtime((const time_t *)(&time_secs));
+    localtime_r((const time_t *)(&time_secs), timeinfo);
     strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
 
     snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06" PRIu64, buffer_realtime_formatted,

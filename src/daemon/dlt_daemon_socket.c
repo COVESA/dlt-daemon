@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -150,14 +148,12 @@ int dlt_daemon_socket_close(int sock)
 int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int size2, char serialheader)
 {
     int ret = DLT_RETURN_OK;
-    int bytes_sent = 0;
 
     /* Optional: Send serial header, if requested */
     if (serialheader) {
         ret = dlt_daemon_socket_sendreliable(sock,
                                              (void *)dltSerialHeader,
-                                             sizeof(dltSerialHeader),
-                                             &bytes_sent);
+                                             sizeof(dltSerialHeader));
 
         if (ret != DLT_RETURN_OK)
             return ret;
@@ -165,14 +161,14 @@ int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int si
 
     /* Send data */
     if ((data1 != NULL) && (size1 > 0)) {
-        ret = dlt_daemon_socket_sendreliable(sock, data1, size1, &bytes_sent);
+        ret = dlt_daemon_socket_sendreliable(sock, data1, size1);
 
         if (ret != DLT_RETURN_OK)
             return ret;
     }
 
     if ((data2 != NULL) && (size2 > 0))
-        ret = dlt_daemon_socket_sendreliable(sock, data2, size2, &bytes_sent);
+        ret = dlt_daemon_socket_sendreliable(sock, data2, size2);
 
     return ret;
 }
@@ -186,7 +182,7 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
     return n;
 }
 
-int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size, int *bytes_sent)
+int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size)
 {
     int data_sent = 0;
 
@@ -197,7 +193,6 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
             dlt_vlog(LOG_WARNING,
                      "dlt_daemon_socket_sendreliable: socket send failed [errno: %d]!\n",
                      errno);
-            *bytes_sent = data_sent;
             return DLT_DAEMON_ERROR_SEND_FAILED;
         }
         else {
@@ -205,7 +200,6 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
         }
     }
 
-    *bytes_sent = data_sent;
     return DLT_DAEMON_ERROR_OK;
 }
 

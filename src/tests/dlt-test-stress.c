@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -99,6 +97,11 @@ void thread_function(void);
 
 void stress3(void);
 
+/*
+ * This environment variable is used when developer wants to interrupt program manually
+ */
+char *env_manual_interruption = 0;
+
 /**
  * Print usage information of tool.
  */
@@ -115,6 +118,8 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
     printf("  -1            Execute test 1 (register/unregister many contexts)\n");
+    printf("                In order to interrupt test manually (e.g: wait for ENTER key),\n");
+    printf("                set environment variable DLT_TEST_MANUAL_INTERRUPTION=1\n");
     printf("  -2            Execute test 2 (multiple threads logging data)\n");
     printf("  -3            Execute test 3 (logging much data)\n");
 }
@@ -150,6 +155,7 @@ int main(int argc, char *argv[])
         case '1':
         {
             test[0] = 1;
+            env_manual_interruption = getenv("DLT_TEST_MANUAL_INTERRUPTION");
             break;
         }
         case '2':
@@ -229,7 +235,7 @@ void stress1(void)
     char ctid[5];
     struct timespec ts;
 
-    printf("Starting stress test1... (press \"Enter\" to terminate test) \n");
+    printf("Starting stress test1...\n");
 
     printf("* Register   %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
@@ -246,12 +252,18 @@ void stress1(void)
         nanosleep(&ts, NULL);
     }
 
-    while (1) {
-        c = getchar();
-
-        /* if "Return" is pressed, exit loop; */
-        if (c == 10)
-            break;
+    if (env_manual_interruption && (strcmp(env_manual_interruption, "1") == 0))
+    {
+        printf("press \"Enter\" to terminate test");
+        while (1)
+        {
+            c=getchar();
+            /* if "Return" is pressed, exit loop; */
+            if (c==10)
+            {
+                break;
+            }
+        }
     }
 
     printf("* Unregister %d contexts...\n", STRESS1_NUM_CONTEXTS);

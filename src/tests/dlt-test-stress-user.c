@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -166,8 +164,8 @@ int main(int argc, char *argv[])
         }
         case '?':
         {
-            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') || (optopt == 'r') || (optopt == 'd') ||
-                (optopt == 's'))
+            if ((optopt == 'f') || (optopt == 'n') || (optopt == 'r') ||
+                (optopt == 'd') || (optopt == 's'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);

@@ -1,5 +1,4 @@
 #######
-# @licence make begin@
 # SPDX license identifier: MPL-2.0
 #
 # Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.genivi.org/.
-# @licence end@
 #######
 
 # Run CheckIncludeFiles and CheckFunctionExists
@@ -40,7 +38,7 @@ CHECK_INCLUDE_FILES( sys/ioctl.h HAVE_SYSIOCTL_H)
 CHECK_INCLUDE_FILES( sys/socket.h HAVE_SYSSOCKET_H)
 CHECK_INCLUDE_FILES( sys/time.h HAVE_SYSTIME_H)
 if( WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD )
-    set(CMAKE_REQUIRED_INCLUDES "${CMAKE_SOURCE_DIR}/systemd/3rdparty/")
+    set(CMAKE_REQUIRED_INCLUDES "${PROJECT_SOURCE_DIR}/systemd/3rdparty/")
     CHECK_INCLUDE_FILES( sd-daemon.h HAVE_SYSTEMD_H)
 endif ( WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD )
 CHECK_INCLUDE_FILES( unistd.h HAVE_UNISTD_H)
@@ -75,7 +73,7 @@ CHECK_FUNCTION_EXISTS( strstr HAVE_FUNC_STRSTR)
 CHECK_FUNCTION_EXISTS( strtol HAVE_FUNC_STRTOL)
 
 if(WITH_CHECK_CONFIG_FILE)
-  configure_file(${CMAKE_SOURCE_DIR}/cmake/config.h.cmake ${PROJECT_BINARY_DIR}/include/dlt/config.h)
+  configure_file(${PROJECT_SOURCE_DIR}/cmake/config.h.cmake ${PROJECT_BINARY_DIR}/include/dlt/config.h)
 endif(WITH_CHECK_CONFIG_FILE)
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/dlt_version.h.cmake ${CMAKE_SOURCE_DIR}/include/dlt/dlt_version.h @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/dlt_version.h.cmake ${PROJECT_BINARY_DIR}/include/dlt/dlt_version.h @ONLY)

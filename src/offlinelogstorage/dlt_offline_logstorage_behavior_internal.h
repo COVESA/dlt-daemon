@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2018  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -16,7 +15,6 @@
  *
  * \file: dlt_offline_logstorage_behavior_internal.h
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*******************************************************************************
@@ -72,23 +70,19 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  char *dev_path,
                                  int msg_size);
 
-DLT_STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path,
-    unsigned int remain_file_size);
-
-DLT_STATIC DltReturnValue dlt_logstorage_sync_to_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path);
-
-DLT_STATIC DltReturnValue dlt_logstorage_sync_capable_data_to_file(
-    DltLogStorageFilterConfig *config,
-    int index_status);
+DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
+                                           DltLogStorageUserConfig *file_config,
+                                           char *dev_path,
+                                           DltLogStorageCacheFooter *footer,
+                                           unsigned int start_offset,
+                                           unsigned int end_offset);
 
 DLT_STATIC int dlt_logstorage_find_dlt_header(void *ptr,
                                               unsigned int offset,
                                               unsigned int cnt);
+
+DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
+                                                   unsigned int offset,
+                                                   unsigned int cnt);
 
 #endif /* DLT_OFFLINELOGSTORAGE_BEHAVIOR_INTERNAL_H_ */

@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -53,6 +51,7 @@
 #include <pthread.h>
 #include <sys/wait.h>
 #include <syslog.h>
+#include <stdbool.h>
 
 #include "dlt.h"
 #include "dlt_common.h"
@@ -73,11 +72,14 @@ typedef struct {
     int nthreads;        /* Number of threads to start */
     int delay;            /* Delay between logs messages for each process */
     int delay_fudge;    /* Fudge the delay by 0-n to cause desynchronization */
+    bool generate_ctid;   /* true: To generate context Id from App Id + Thread Number */
 } s_parameters;
 
 typedef struct {
     s_parameters params;
     DltContext ctx;
+    unsigned int pidcount;
+    unsigned int tidcount;
 } s_thread_data;
 
 /* Forward declarations */
@@ -110,11 +112,12 @@ void usage(char *prog_name)
     printf("Test application for stress testing the daemon with multiple processes and threads.\n");
     printf("%s\n", version);
     printf("Options (Default):\n");
-    printf(" -m number        Number of messages per thread to send. (%d)\n", defaults.nmsgs);
-    printf(" -p number        Number of processes to start. (%d), Max %d.\n", defaults.nprocs, MAX_PROCS);
-    printf(" -t number        Number of threads per process. (%d), Max %d.\n", defaults.nthreads, MAX_THREADS);
-    printf(" -d delay        Delay in milliseconds to wait between log messages. (%d)\n", defaults.delay);
-    printf(" -f delay        Random fudge in milliseconds to add to delay. (%d)\n", defaults.delay_fudge);
+    printf(" -m number      Number of messages per thread to send. (%d)\n", defaults.nmsgs);
+    printf(" -p number      Number of processes to start. (%d), Max %d.\n", defaults.nprocs, MAX_PROCS);
+    printf(" -t number      Number of threads per process. (%d), Max %d.\n", defaults.nthreads, MAX_THREADS);
+    printf(" -d delay       Delay in milliseconds to wait between log messages. (%d)\n", defaults.delay);
+    printf(" -f delay       Random fudge in milliseconds to add to delay. (%d)\n", defaults.delay_fudge);
+    printf(" -g             Generate Context IDs from Application ID and thread number \n");
 }
 
 /**
@@ -127,6 +130,7 @@ void init_params(s_parameters *params)
     params->nthreads = 2;
     params->delay = 1000;
     params->delay_fudge = 100;
+    params->generate_ctid = false;
 }
 
 /**
@@ -137,7 +141,7 @@ int read_cli(s_parameters *params, int argc, char **argv)
     int c;
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "m:p:t:d:f:")) != -1)
+    while ((c = getopt (argc, argv, "m:p:t:d:f:g")) != -1)
         switch (c) {
         case 'm':
             params->nmsgs = atoi(optarg);
@@ -165,6 +169,9 @@ int read_cli(s_parameters *params, int argc, char **argv)
             break;
         case 'f':
             params->delay_fudge = atoi(optarg);
+            break;
+        case 'g':
+            params->generate_ctid = true;
             break;
         case '?':
 
@@ -308,8 +315,13 @@ void do_logging(s_thread_data *data)
     struct timespec ts;
     time_t sleep_time;
 
-    snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
+    if(data->params.generate_ctid)
+        snprintf(ctid, 5, "%02u%02u", data->pidcount, data->tidcount);
+    else
+        snprintf(ctid, 5, "CT%02u", data->tidcount);
+
     snprintf(ctid_name, 256, "Child %s in dlt-test-multi-process", ctid);
+
     DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
 
     int msgs_left = data->params.nmsgs;
@@ -321,7 +333,6 @@ void do_logging(s_thread_data *data)
         ts.tv_nsec = sleep_time % 1000000000;
         nanosleep(&ts, NULL);
     }
-
     DLT_UNREGISTER_CONTEXT(mycontext);
 }
 
@@ -331,7 +342,7 @@ void do_logging(s_thread_data *data)
 void run_threads(s_parameters params)
 {
     pthread_t thread[params.nthreads];
-    s_thread_data thread_data;
+    s_thread_data *thread_data = NULL;
     char apid[5];
     char apid_name[256];
     int i;
@@ -343,18 +354,28 @@ void run_threads(s_parameters params)
 
     DLT_REGISTER_APP(apid, apid_name);
 
-    thread_data.params = params;
+    thread_data = calloc(params.nthreads, sizeof(s_thread_data));
+    if (thread_data == NULL) {
+        printf("Error allocate memory for thread data.\n");
+        abort();
+    }
 
-    for (i = 0; i < params.nthreads; i++)
-        if (pthread_create(&(thread[i]), NULL, (void *)&do_logging, &thread_data) != 0) {
+    for (i = 0; i < params.nthreads; i++) {
+        thread_data[i].tidcount = i;
+        thread_data[i].params = params;
+        thread_data[i].pidcount = pidcount;
+
+        if (pthread_create(&(thread[i]), NULL, (void *)&do_logging, &thread_data[i]) != 0) {
             printf("Error creating thread.\n");
             abort();
         }
-
-
+    }
 
     for (i = 0; i < params.nthreads; i++)
         pthread_join(thread[i], NULL);
+
+    if(thread_data)
+        free(thread_data);
 
     DLT_UNREGISTER_APP();
     /* We can exit now */

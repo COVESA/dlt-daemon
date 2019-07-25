@@ -1,5 +1,4 @@
 #######
-# @licence make begin@
 # SPDX license identifier: MPL-2.0
 #
 # Copyright (C) 2011-2015, BMW AG
@@ -12,10 +11,9 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.genivi.org/.
-# @licence end@
 #######
 
 if(WITH_TESTSCRIPTS)
-    configure_file(${CMAKE_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Meego/dlt-daemon @ONLY)
-    configure_file(${CMAKE_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/testscripts/Meego/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Meego/dlt-daemon @ONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/testscripts/Ubuntu/dlt-daemon.cmake ${PROJECT_BINARY_DIR}/testscripts/Ubuntu/dlt-daemon @ONLY)
 endif(WITH_TESTSCRIPTS)

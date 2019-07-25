@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -19,7 +18,6 @@
  *
  * \file dlt-logstorage-common.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*******************************************************************************
@@ -260,7 +258,7 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
     DltServiceOfflineLogstorage *serv = NULL;
 
     if (path == NULL) {
-        pr_error("Mount path is uninitialized: %s\n", path);
+        pr_error("Mount path is uninitialized.\n");
         return NULL;
     }
 

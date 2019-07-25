@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2016 Advanced Driver Information Technology.
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -104,10 +102,14 @@ TEST(t_dlt_daemon_handle_event, nullpointer)
 TEST(t_dlt_event_handler_find_connection, normal)
 {
     int fd = 10;
-    DltEventHandler ev = {};
-    DltConnection connections = {};
+    DltEventHandler ev;
+    DltConnection connections;
     DltConnection *ret = nullptr;
-    DltReceiver receiver = {};
+    DltReceiver receiver;
+
+    memset(&ev, 0, sizeof(DltEventHandler));
+    memset(&connections, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     receiver.fd = fd;
 
@@ -121,10 +123,13 @@ TEST(t_dlt_event_handler_find_connection, normal)
 /* Begin Method: dlt_daemon_event_handler::dlt_daemon_add_connection*/
 TEST(t_dlt_daemon_add_connection, normal)
 {
-    DltEventHandler ev1 = {};
+    DltEventHandler ev1;
     DltConnection *head = nullptr;
     DltConnection *connections1 = nullptr;
-    DltReceiver receiver = {};
+    DltReceiver receiver;
+
+    memset(&ev1, 0, sizeof(DltEventHandler));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     ev1.connections = (DltConnection *)malloc(sizeof(DltConnection));
     head = (DltConnection *)ev1.connections;
@@ -152,9 +157,11 @@ TEST(t_dlt_daemon_add_connection, normal)
 /* Begin Method: dlt_daemon_event_handler::dlt_daemon_remove_connection*/
 TEST(t_dlt_daemon_remove_connection, normal)
 {
-    DltEventHandler ev1 = {};
+    DltEventHandler ev1;
     DltConnection *head = nullptr;
     DltConnection *connections1 = nullptr;
+
+    memset(&ev1, 0, sizeof(DltEventHandler));
 
     ev1.connections = (DltConnection *)malloc(sizeof(DltConnection));
     head = (DltConnection *)ev1.connections;
@@ -182,8 +189,11 @@ TEST(t_dlt_daemon_remove_connection, normal)
 /* Begin Method: dlt_daemon_event_handler::dlt_event_handler_cleanup_connections*/
 TEST(t_dlt_event_handler_cleanup_connections, normal)
 {
-    DltEventHandler ev1 = {};
-    DltReceiver receiver1 = {};
+    DltEventHandler ev1;
+    DltReceiver receiver1;
+
+    memset(&ev1, 0, sizeof(DltEventHandler));
+    memset(&receiver1, 0, sizeof(DltReceiver));
 
     ev1.connections = (DltConnection *)malloc(sizeof(DltConnection));
     memset(ev1.connections, 0, sizeof(DltConnection));
@@ -198,9 +208,13 @@ TEST(t_dlt_event_handler_cleanup_connections, normal)
 TEST(t_dlt_connection_check_activate, normal)
 {
     int ret;
-    DltEventHandler evhdl = {};
-    DltReceiver receiver = {};
-    DltConnection con = {};
+    DltEventHandler evhdl;
+    DltReceiver receiver;
+    DltConnection con;
+
+    memset(&evhdl, 0, sizeof(DltEventHandler));
+    memset(&receiver, 0, sizeof(DltReceiver));
+    memset(&con, 0, sizeof(DltConnection));
 
     receiver.fd = 1;
     con.receiver = &receiver;
@@ -227,11 +241,15 @@ TEST(t_dlt_connection_check_activate, nullpointer)
 TEST(t_dlt_event_handler_register_connection, normal)
 {
     int ret = 0;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
     int mask = 0;
-    DltEventHandler ev1 = {};
+    DltEventHandler ev1;
     DltConnection *connections1 = nullptr;
-    DltReceiver receiver = {};
+    DltReceiver receiver;
+
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    memset(&ev1, 0, sizeof(DltEventHandler));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev1));
 
@@ -263,11 +281,15 @@ TEST(t_dlt_event_handler_register_connection, nullpointer)
 TEST(t_dlt_event_handler_unregister_connection, normal)
 {
     int ret = 0;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
     int mask = 0;
-    DltEventHandler ev1 = {};
+    DltEventHandler ev1;
     DltConnection *connections1 = nullptr;
-    DltReceiver receiver = {};
+    DltReceiver receiver;
+
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    memset(&ev1, 0, sizeof(DltEventHandler));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev1));
 
@@ -297,7 +319,9 @@ TEST(t_dlt_connection_create, normal)
 {
     int fd = 100;
     int ret = 0;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
+
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     EXPECT_EQ(DLT_RETURN_OK,
               dlt_daemon_prepare_event_handling(&daemon_local.pEvent));
@@ -337,7 +361,9 @@ TEST(t_dlt_connection_destroy, normal)
 /* Begin Method: dlt_daemon_connections::t_dlt_connection_destroy_receiver*/
 TEST(t_dlt_connection_destroy_receiver, normal)
 {
-    DltConnection to_destroy = {};
+    DltConnection to_destroy;
+
+    memset(&to_destroy, 0, sizeof(DltConnection));
 
     to_destroy.receiver = (DltReceiver *)malloc(sizeof(DltReceiver));
     memset(to_destroy.receiver, 0, sizeof(DltReceiver));
@@ -353,7 +379,9 @@ TEST(t_dlt_connection_get_receiver, normal)
 {
     int fd = 10;
     DltReceiver *ret;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
+
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     ret = dlt_connection_get_receiver(&daemon_local,
                                       DLT_CONNECTION_CLIENT_MSG_TCP,
@@ -369,8 +397,11 @@ TEST(t_dlt_connection_get_next, normal)
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
     DltConnection *ret = nullptr;
-    DltConnection node = {};
-    DltConnection current = {};
+    DltConnection node;
+    DltConnection current;
+
+    memset(&node, 0, sizeof(DltConnection));
+    memset(&current, 0, sizeof(DltConnection));
 
     node.type = DLT_CONNECTION_CLIENT_MSG_TCP;
     current.type = DLT_CONNECTION_ONE_S_TIMER;
@@ -388,8 +419,11 @@ TEST(t_dlt_connection_get_next, abnormal)
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
     DltConnection *ret;
-    DltConnection node = {};
-    DltConnection current = {};
+    DltConnection node;
+    DltConnection current;
+
+    memset(&node, 0, sizeof(DltConnection));
+    memset(&current, 0, sizeof(DltConnection));
 
     node.type = DLT_CONNECTION_CLIENT_MSG_TCP;
     current.type = DLT_CONNECTION_CLIENT_MSG_SERIAL;
@@ -405,11 +439,15 @@ TEST(t_dlt_connection_get_next, abnormal)
 TEST(t_dlt_connection_send, normal_1)
 {
     int ret = 0;
-    DltConnection conn = {};
-    DltReceiver receiver = {};
+    DltConnection conn;
+    DltReceiver receiver;
     void *data1 = nullptr;
     int size1 = 0;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
+
+    memset(&conn, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     receiver.fd = connectServer();
     EXPECT_NE(-1, receiver.fd);
@@ -440,8 +478,11 @@ TEST(t_dlt_connection_send, normal_1)
 TEST(t_dlt_connection_send, normal_2)
 {
     int ret = 0;
-    DltConnection conn = {};
-    DltReceiver receiver = {};
+    DltConnection conn;
+    DltReceiver receiver;
+
+    memset(&conn, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     receiver.fd = 1;
     conn.receiver = &receiver;
@@ -457,8 +498,11 @@ TEST(t_dlt_connection_send, normal_2)
 TEST(t_dlt_connection_send, abnormal)
 {
     int ret = 0;
-    DltConnection conn = {};
-    DltReceiver receiver = {};
+    DltConnection conn;
+    DltReceiver receiver;
+
+    memset(&conn, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
 
     receiver.fd = -1;
     conn.receiver = &receiver;
@@ -478,9 +522,13 @@ TEST(t_dlt_connection_send_multiple, normal_1)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltConnection conn = {};
-    DltReceiver receiver = {};
-    DltDaemonLocal daemon_local = {};
+    DltConnection conn;
+    DltReceiver receiver;
+    DltDaemonLocal daemon_local;
+
+    memset(&conn, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
     size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
@@ -536,9 +584,13 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltConnection conn = {};
-    DltReceiver receiver = {};
-    DltDaemonLocal daemon_local = {};
+    DltConnection conn;
+    DltReceiver receiver;
+    DltDaemonLocal daemon_local;
+
+    memset(&conn, 0, sizeof(DltConnection));
+    memset(&receiver, 0, sizeof(DltReceiver));
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
     size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
@@ -594,7 +646,9 @@ TEST(t_dlt_connection_send_multiple, nullpointer)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltDaemonLocal daemon_local = {};
+    DltDaemonLocal daemon_local;
+
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
     size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
@@ -614,7 +668,7 @@ TEST(t_dlt_connection_send_multiple, nullpointer)
 int connectServer(void)
 {
     int sockfd = 0, portno = 0;
-    struct sockaddr_in serv_addr = {};
+    struct sockaddr_in serv_addr;
     struct hostent *server = nullptr;
 
     portno = 8080;
@@ -655,7 +709,7 @@ int main(int argc, char **argv)
         char buffer[256] = {};
         int sockfd = 0, newsockfd[GTEST_SOCKS_ACCEPTED] = {}, portno = 0;
         socklen_t clilen = {};
-        struct sockaddr_in serv_addr = {}, cli_addr = {};
+        struct sockaddr_in serv_addr, cli_addr;
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
         if (sockfd == -1) {
@@ -664,6 +718,7 @@ int main(int argc, char **argv)
         }
 
         memset((char *) &serv_addr, 0, sizeof(serv_addr));
+        memset((char *) &cli_addr, 0, sizeof(cli_addr));
         portno = 8080;
 
         serv_addr.sin_family = AF_INET;

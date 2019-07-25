@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -106,8 +104,8 @@ int dlt_daemon_client_send(int sock,
  * @param daemon pointer to dlt daemon structure
  * @param daemon_local pointer to dlt daemon local structure
  * @param msg pointer to response message
- * @param appid pointer to application id to be used in response message
- * @param contid pointer to context id to be used in response message
+ * @param apid pointer to application id to be used in response message
+ * @param ctid pointer to context id to be used in response message
  * @param verbose if set to true verbose information is printed out.
  * @return -1 if there is an error or buffer is full
  */
@@ -115,8 +113,8 @@ int dlt_daemon_client_send_control_message(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
                                            DltMessage *msg,
-                                           char *appid,
-                                           char *contid,
+                                           char *apid,
+                                           char *ctid,
                                            int verbose);
 /**
  * Process and generate response to received get log info control message
@@ -152,6 +150,8 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDa
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
  * @param daemon_local pointer to dlt daemon local structure
+ * @param overflow_counter Overflow counter
+ * @param apid Application ID
  * @param verbose if set to true verbose information is printed out.
  * @return -1 if there is an error or buffer overflow, else 0
  */

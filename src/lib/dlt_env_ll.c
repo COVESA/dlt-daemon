@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015  Intel Corporation
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -53,6 +51,8 @@
  * assert(*tmp == ':');
  * assert(res[3] == 'd');
  *
+ * @param env    Environment variable
+ * @param id     Extracted ID
  * @return 0 if successful, -1 else
  */
 int dlt_env_extract_id(char **const env, char *id)
@@ -86,7 +86,7 @@ int dlt_env_extract_id(char **const env, char *id)
 int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 {
     int count = 0;
-    char ch = *(*env);
+    char ch;
 
     if (!env || !result)
         return -1;
@@ -94,7 +94,6 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
     if (!(*env))
         return -1;
 
-    count = 0;
     ch = *(*env);
 
     while (ch && (count < res_len - 1) && (ch != ';')) {
@@ -181,6 +180,8 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
  * assert(*tmp == NULL);
  * assert(ll == 6);
  *
+ * @param env    Environment variable
+ * @param ll     Extracted log level
  * @return 0 if successful, -1 else
  */
 int dlt_env_extract_ll(char **const env, int8_t *ll)

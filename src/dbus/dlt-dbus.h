@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -31,7 +29,7 @@
 #include "dlt.h"
 #include "dlt_common.h"
 
-#define DEFAULT_CONF_FILE "/etc/dlt-dbus.conf"
+#define DEFAULT_CONF_FILE CONFIGURATION_FILES_DIR "/dlt-dbus.conf"
 
 #define DLT_DBUS_FILTER_MAX 32
 

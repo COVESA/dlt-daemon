@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -23,6 +21,9 @@
  *
  * \file dlt_filetransfer.h
  */
+
+#ifndef DLT_FILETRANSFER_H
+#define DLT_FILETRANSFER_H
 
 #include <limits.h>    /* Needed for LONG_MAX */
 #include <sys/stat.h>  /* Needed for struct stat st*/
@@ -135,3 +136,5 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
 extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);
+
+#endif /* DLT_FILETRANSFER_H */

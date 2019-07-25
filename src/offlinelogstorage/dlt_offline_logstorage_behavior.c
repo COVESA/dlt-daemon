@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -17,7 +16,6 @@
  *
  * \file: dlt_offline_logstorage_behavior.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 #include <syslog.h>
@@ -28,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "dlt_offline_logstorage.h"
 #include "dlt_offline_logstorage_behavior.h"
@@ -37,7 +36,7 @@
  * dlt_logstorage_log_file_name
  *
  * Create log file name in the form configured by the user
- *      <filename><delimiter><index><delimiter><timestamp>.dlt
+ *      \<filename\>\<delimiter\>\<index\>\<delimiter\>\<timestamp\>.dlt
  *
  *      filename:       given in configuration file
  *      delimiter:      Punctuation characters (configured in dlt.conf)
@@ -75,8 +74,11 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         snprintf(file_index, 10, "%d", idx);
         digit_idx = strlen(file_index);
 
-        for (i = 0; i < (file_config->logfile_counteridxlen - digit_idx); i++)
-            strcat(log_file_name, "0");
+        if (file_config->logfile_counteridxlen > digit_idx)
+        {
+            for (i = 0 ; i < (file_config->logfile_counteridxlen - digit_idx) ; i++)
+                strcat(log_file_name, "0");
+        }
     }
 
     strcat(log_file_name, file_index);
@@ -85,16 +87,17 @@ void dlt_logstorage_log_file_name(char *log_file_name,
     if (file_config->logfile_timestamp) {
         char stamp[DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + 1] = { 0 };
         time_t t = time(NULL);
-        struct tm *tm_info = localtime(&t);
+        struct tm tm_info;
+        localtime_r(&t, &tm_info);
         sprintf(stamp,
                 "%c%04d%02d%02d-%02d%02d%02d",
                 file_config->logfile_delimiter,
-                1900 + tm_info->tm_year,
-                1 + tm_info->tm_mon,
-                tm_info->tm_mday,
-                tm_info->tm_hour,
-                tm_info->tm_min,
-                tm_info->tm_sec);
+                1900 + tm_info.tm_year,
+                1 + tm_info.tm_mon,
+                tm_info.tm_mday,
+                tm_info.tm_hour,
+                tm_info.tm_min,
+                tm_info.tm_sec);
         strcat(log_file_name, stamp);
     }
 
@@ -528,6 +531,35 @@ DLT_STATIC int dlt_logstorage_find_dlt_header(void *ptr,
 }
 
 /**
+ * dlt_logstorage_find_last_dlt_header
+ *
+ * search for last dlt header in cache
+ *
+ * @param ptr         cache starting position
+ * @param offset      offset
+ * @param cnt         count
+ * @return index on success, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
+                                                   unsigned int offset,
+                                                   unsigned int cnt)
+{
+    char substring[] = {'D', 'L', 'T', 0x01};
+    while(cnt > 0)
+    {
+        if (*((char *)(ptr + offset + cnt)) == 'D')
+        {
+            if (strncmp(ptr + offset + cnt, substring, 4) == 0)
+            {
+                return cnt;
+            }
+        }
+        cnt--;
+    }
+    return -1;
+}
+
+/**
  * dlt_logstorage_check_write_ret
  *
  * check the return value of fwrite
@@ -551,121 +583,12 @@ DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config
             dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
 
         if (fsync(fileno(config->log)) != 0)
-            dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+            /* some filesystem doesn't support fsync() */
+            if (errno != ENOSYS)
+            {
+                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+            }
     }
-}
-
-/**
- * dlt_logstorage_sync_create_new_file
- *
- * Write the log message and open new log file
- *
- * @param config            DltLogStorageFilterConfig
- * @param file_config       DltLogStorageUserConfig
- * @param dev_path          Storage device mount point
- * @param remain_file_size  log file remaining size
- * @return 0 on success, -1 on error
- */
-DLT_STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path,
-    unsigned int remain_file_size)
-{
-    int index = 0;
-    int ret;
-    unsigned int cache_offset = 0;
-    unsigned int count = 0;
-    DltLogStorageCacheFooter *footer = NULL;
-
-    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL)) {
-        dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    footer = (DltLogStorageCacheFooter *)(config->cache +
-                                          config->file_size);
-
-    if (footer == NULL) {
-        dlt_vlog(LOG_ERR, "%s: Cannot retrieve cache information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    /* sync capable data to file */
-    if (footer->offset >= footer->last_sync_offset) {
-        count = config->file_size - footer->offset;
-
-        if (count > remain_file_size)
-            count = remain_file_size;
-
-        index = dlt_logstorage_find_dlt_header(config->cache, footer->offset, count);
-        cache_offset = footer->offset;
-    }
-    else {
-        count = config->file_size - footer->last_sync_offset;
-
-        if (count > remain_file_size)
-            count = remain_file_size;
-
-        index = dlt_logstorage_find_dlt_header(config->cache,
-                                               footer->last_sync_offset,
-                                               count);
-        cache_offset = footer->last_sync_offset;
-
-    }
-
-    if (index >= 0) {
-        ret = fwrite(config->cache + cache_offset + index, count - index, 1, config->log);
-        dlt_logstorage_check_write_ret(config, ret);
-        config->current_write_file_offset += count - index;
-    }
-
-    if (footer->last_sync_offset == 0)
-        footer->last_sync_offset = footer->offset + count;
-    else
-        footer->last_sync_offset += count;
-
-    config->total_write_count -= count;
-
-    /* sync data to current file in case of file is not full */
-    if (config->current_write_file_offset < config->file_size) {
-        count = config->file_size - config->current_write_file_offset;
-
-        if (footer->last_sync_offset < config->file_size) {
-            ret = fwrite(config->cache + footer->last_sync_offset, count, 1, config->log);
-            dlt_logstorage_check_write_ret(config, ret);
-            footer->last_sync_offset += count;
-        }
-        /* sync remaining amount of file from start of cache */
-        else {
-            config->sync_from_start = 1;
-
-            if (count > footer->offset)
-                count = footer->offset;
-
-            ret = fwrite(config->cache, count, 1, config->log);
-            dlt_logstorage_check_write_ret(config, ret);
-            footer->last_sync_offset = count;
-        }
-
-        config->total_write_count -= count;
-    }
-
-    config->current_write_file_offset = 0;
-    fclose(config->log);
-    config->log = NULL;
-
-    /* get always a new file */
-    if (dlt_logstorage_prepare_on_msg(config,
-                                      file_config,
-                                      dev_path,
-                                      config->file_size) != 0) {
-        dlt_vlog(LOG_ERR,
-                 "%s: failed to prepare log file for file_size\n", __func__);
-        return DLT_RETURN_ERROR;
-    }
-
-    return DLT_RETURN_OK;
 }
 
 /**
@@ -676,115 +599,108 @@ DLT_STATIC DltReturnValue dlt_logstorage_sync_create_new_file(
  * @param config        DltLogStorageFilterConfig
  * @param file_config   DltLogStorageUserConfig
  * @param dev_path      Storage device mount point path
+ * @param footer        DltLogStorageCacheFooter
+ * @param start_offset  Start offset of the cache
+ * @param end_offset    End offset of the cache
  * @return 0 on success, -1 on error
  */
-DLT_STATIC DltReturnValue dlt_logstorage_sync_to_file(
-    DltLogStorageFilterConfig *config,
-    DltLogStorageUserConfig *file_config,
-    char *dev_path)
+DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
+                                           DltLogStorageUserConfig *file_config,
+                                           char *dev_path,
+                                           DltLogStorageCacheFooter *footer,
+                                           unsigned int start_offset,
+                                           unsigned int end_offset)
 {
     int ret = 0;
-    unsigned int remain_file_size = 0;
-    unsigned int count = 0;
-    DltLogStorageCacheFooter *footer = NULL;
+    int start_index = 0;
+    int end_index = 0;
+    int count;
+    int remain_file_size;
 
-    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL)) {
+    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL) ||
+        (footer == NULL))
+    {
         dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
+        return -1;
     }
 
-    footer = (DltLogStorageCacheFooter *)(config->cache + config->file_size);
-
-    if (footer == NULL) {
-        dlt_vlog(LOG_ERR, "%s: Cannot retrieve cache information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    count = footer->offset - footer->last_sync_offset;
+    count = end_offset - start_offset;
     remain_file_size = config->file_size - config->current_write_file_offset;
 
-    /* sync data to file if required sync data exceeds remaining file size */
-    if (count > remain_file_size) {
-        ret = fwrite(config->cache + footer->last_sync_offset, remain_file_size, 1, config->log);
-        dlt_logstorage_check_write_ret(config, ret);
-        config->current_write_file_offset += remain_file_size;
-        footer->last_sync_offset += remain_file_size;
+    if (count > remain_file_size)
+    {
+        /* Check if more than one message can fit into the remaining file */
+        start_index = dlt_logstorage_find_dlt_header(config->cache, start_offset,
+                                                     remain_file_size);
+        end_index = dlt_logstorage_find_last_dlt_header(config->cache,
+                                                     start_offset + start_index,
+                                                     remain_file_size - start_index);
+        count = end_index - start_index;
 
-        count = footer->offset - footer->last_sync_offset;
-        config->current_write_file_offset = 0;
-        fclose(config->log);
-        config->log = NULL;
+        if ((start_index >= 0) && (end_index > start_index) &&
+            (count > 0) && (count <= remain_file_size))
+        {
+            /* Prepare log file */
+            if (config->log == NULL)
+            {
+                if (dlt_logstorage_prepare_on_msg(config, file_config, dev_path,
+                                                  config->file_size) != 0)
+                {
+                    dlt_vlog(LOG_ERR, "%s: failed to prepare log file\n",
+                             __func__);
+                    return -1;
+                }
+            }
 
-        /* get always a new file */
-        if (dlt_logstorage_prepare_on_msg(config,
-                                          file_config,
-                                          dev_path,
-                                          config->file_size) != 0) {
-            dlt_vlog(LOG_ERR,
-                     "%s: failed to prepare log file for file_size\n", __func__);
-            return DLT_RETURN_ERROR;
+            ret = fwrite(config->cache + start_offset + start_index, count, 1,
+                         config->log);
+            dlt_logstorage_check_write_ret(config, ret);
+
+            /* Close log file */
+            fclose(config->log);
+            config->log = NULL;
+            config->current_write_file_offset = 0;
+
+            footer->last_sync_offset = start_offset + count;
+            start_offset = footer->last_sync_offset;
+        }
+        else
+        {
+            /* Close log file */
+            fclose(config->log);
+            config->log = NULL;
+            config->current_write_file_offset = 0;
         }
     }
 
-    ret = fwrite(config->cache + footer->last_sync_offset, count, 1, config->log);
-    dlt_logstorage_check_write_ret(config, ret);
-    config->current_write_file_offset += count;
-    footer->last_sync_offset = footer->offset;
-    config->cur_cache_sync = 1;
+    start_index = dlt_logstorage_find_dlt_header(config->cache, start_offset,
+                                                 count);
+    count = end_offset - start_offset - start_index;
 
-    return DLT_RETURN_OK;
-}
+    if ((start_index >= 0) && (count > 0))
+    {
+        /* Prepare log file */
+        if (config->log == NULL)
+        {
+            if (dlt_logstorage_prepare_on_msg(config, file_config, dev_path,
+                                              config->file_size) != 0)
+            {
+                dlt_vlog(LOG_ERR, "%s: failed to prepare log file\n", __func__);
+                return -1;
+            }
+        }
 
-/**
- * dlt_logstorage_sync_capable_data_to_file
- *
- * Write the log message to log file
- *
- * @param config        DltLogStorageFilterConfig
- * @param index_status  check for index is required or not
- * @return 0 on success, -1 on error
- */
-DLT_STATIC DltReturnValue dlt_logstorage_sync_capable_data_to_file(
-    DltLogStorageFilterConfig *config,
-    int index_status)
-{
-    int ret = 0;
-    int index = 0;
-    unsigned int count = 0;
-    DltLogStorageCacheFooter *footer = NULL;
-
-    if (config == NULL) {
-        dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    footer = (DltLogStorageCacheFooter *)(config->cache + config->file_size);
-
-    if (footer == NULL) {
-        dlt_vlog(LOG_ERR, "%s: Cannot retrieve cache information\n", __func__);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    count = config->file_size - footer->last_sync_offset;
-
-    if (index_status == 1)
-        index = dlt_logstorage_find_dlt_header(config->cache,
-                                               footer->last_sync_offset,
-                                               count);
-
-    if ((count > 0) && (index >= 0)) {
-        ret = fwrite(config->cache + footer->last_sync_offset + index,
-                     count - index,
-                     1,
+        ret = fwrite(config->cache + start_offset + start_index, count, 1,
                      config->log);
         dlt_logstorage_check_write_ret(config, ret);
-        config->current_write_file_offset += count - index;
+
+        config->current_write_file_offset += count;
+        footer->last_sync_offset = end_offset;
     }
 
-    config->total_write_count -= count;
-    footer->last_sync_offset = 0;
+    footer->wrap_around_cnt = 0;
 
-    return DLT_RETURN_OK;
+    return 0;
 }
 
 /**
@@ -821,7 +737,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
 
         if (ret == 0) {
             /* check if adding new data do not exceed max file size */
-            if (s.st_size + log_msg_size >= (int)config->file_size) {
+            if (s.st_size + log_msg_size > (int)config->file_size) {
                 fclose(config->log);
                 config->log = NULL;
                 ret = dlt_logstorage_open_log_file(config,
@@ -849,6 +765,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
  * Write the log message.
  *
  * @param config        DltLogStorageFilterConfig
+ * @param file_config   DltLogStorageUserConfig
+ * @param dev_path      Path to device
  * @param data1         header
  * @param size1         header size
  * @param data2         storage header
@@ -858,6 +776,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
  * @return 0 on success, -1 on error
  */
 int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
+                                DltLogStorageUserConfig *file_config,
+                                char *dev_path,
                                 unsigned char *data1,
                                 int size1,
                                 unsigned char *data2,
@@ -867,8 +787,11 @@ int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
 {
     int ret;
 
-    if ((config == NULL) || (data1 == NULL) || (data2 == NULL) || (data3 == NULL))
+    if ((config == NULL) || (data1 == NULL) || (data2 == NULL) || (data3 == NULL) ||
+        (file_config == NULL) || (dev_path == NULL))
+    {
         return -1;
+    }
 
     ret = fwrite(data1, 1, size1, config->log);
 
@@ -906,8 +829,8 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
 {
     int ret;
 
-    file_config = file_config;  /* satisfy compiler */
-    dev_path = dev_path;
+    (void)file_config;  /* satisfy compiler */
+    (void)dev_path;
 
     if (config == NULL)
         return -1;
@@ -954,77 +877,56 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
         return -1;
     }
 
-    log_msg_size = log_msg_size; /* satisfy compiler */
+    (void)log_msg_size; /* satisfy compiler */
 
-    /* create file to sync cache into later */
-    if (config->log == NULL) {
-
-        if ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                    DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) &&
-            (config->specific_size > config->file_size)) {
-            dlt_log(LOG_ERR,
-                    "Cannot prepare log file for ON_DAEMON_SPECIFIC_SIZE sync\n");
-            return -1;
-        }
-        else
-        /* get always a new file */
-        if (dlt_logstorage_prepare_on_msg(config,
-                                          file_config,
-                                          dev_path,
-                                          config->file_size) != 0) {
-            dlt_log(LOG_ERR,
-                    "Cannot prepare log file for ON_DAEMON_EXIT sync\n");
-            return -1;
-        }
+    /* check specific size is smaller than file size */
+    if ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                     DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) &&
+                     (config->specific_size > config->file_size))
+    {
+        dlt_log(LOG_ERR,
+                "Cache size is larger than file size. "
+                "Cannot prepare log file for ON_SPECIFIC_SIZE sync\n");
+        return -1;
     }
 
-    if (config->cache == NULL) {
+    if (config->cache == NULL)
+    {
+        unsigned int cache_size = 0;
 
         /* check for sync_specific_size strategy */
         if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                   DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) {
-            /* check total logstorage cache size */
-            if ((g_logstorage_cache_size +
-                 config->specific_size +
-                 sizeof(DltLogStorageCacheFooter)) >
-                g_logstorage_cache_max) {
-                dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.");
-                return -1;
-            }
-
-            /* create cache */
-            config->cache = calloc(1,
-                                   config->specific_size +
-                                   sizeof(DltLogStorageCacheFooter));
-
-            /* update current used cache size */
-            g_logstorage_cache_size = config->specific_size +
-                sizeof(DltLogStorageCacheFooter);
+               DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
+        {
+            cache_size = config->specific_size;
         }
-        else { /* other cache strategies */
-
-            /* check total logstorage cache size */
-            if ((g_logstorage_cache_size +
-                 config->file_size +
-                 sizeof(DltLogStorageCacheFooter)) >
-                g_logstorage_cache_max) {
-                dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.");
-                return -1;
-            }
-
-            /* create cache */
-            config->cache = calloc(1,
-                                   config->file_size +
-                                   sizeof(DltLogStorageCacheFooter));
-
-            /* update current used cache size */
-            g_logstorage_cache_size = config->file_size +
-                sizeof(DltLogStorageCacheFooter);
+        else  /* other cache strategies */
+        {
+            cache_size = config->file_size;
         }
+
+        /* check total logstorage cache size */
+        if ((g_logstorage_cache_size + cache_size +
+             sizeof(DltLogStorageCacheFooter)) >
+             g_logstorage_cache_max)
+        {
+            dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.");
+            return -1;
+        }
+
+        /* create cache */
+        config->cache = calloc(1, cache_size + sizeof(DltLogStorageCacheFooter));
 
         if (config->cache == NULL)
+        {
             dlt_log(LOG_CRIT,
                     "Cannot allocate memory for filter ring buffer\n");
+        }
+        else
+        {
+            /* update current used cache size */
+            g_logstorage_cache_size = cache_size + sizeof(DltLogStorageCacheFooter);
+        }
     }
 
     return 0;
@@ -1036,6 +938,8 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
  * Write the log message.
  *
  * @param config        DltLogStorageFilterConfig
+ * @param file_config   User configurations for log file
+ * @param dev_path      Storage device path
  * @param data1         header
  * @param size1         header size
  * @param data2         storage header
@@ -1045,6 +949,8 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
  * @return 0 on success, -1 on error
  */
 int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
+                                   DltLogStorageUserConfig *file_config,
+                                   char *dev_path,
                                    unsigned char *data1,
                                    int size1,
                                    unsigned char *data2,
@@ -1053,116 +959,120 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
                                    int size3)
 {
     DltLogStorageCacheFooter *footer = NULL;
-    DltLogStorageUserConfig *uconfig = NULL;
-    char *dev_path = NULL;
     int msg_size;
     int remain_cache_size;
     void *curr_write_addr = NULL;
     int ret = 0;
+    unsigned int cache_size;
 
     if ((config == NULL) || (data1 == NULL) || (size1 < 0) || (data2 == NULL) ||
-        (size2 < 0) || (data3 == NULL) || (size3 < 0) || (config->cache == NULL))
+        (size2 < 0) || (data3 == NULL) || (size3 < 0) || (config->cache == NULL) ||
+        (file_config == NULL) || (dev_path == NULL))
+    {
         return -1;
+    }
 
     if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                               DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) {
-        footer = (DltLogStorageCacheFooter *)(config->cache +
-                                              config->specific_size);
-
-        if (footer == NULL) {
-            dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
-            return -1;
-        }
-
-        msg_size = size1 + size2 + size3;
-        remain_cache_size = config->specific_size - footer->offset;
+                                     DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
+    {
+        cache_size = config->specific_size;
     }
-    else {
-        footer = (DltLogStorageCacheFooter *)(config->cache +
-                                              config->file_size);
-
-        if (footer == NULL) {
-            dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
-            return -1;
-        }
-
-        msg_size = size1 + size2 + size3;
-        remain_cache_size = config->file_size - footer->offset;
+    else
+    {
+        cache_size = config->file_size;
     }
 
-    if (msg_size < remain_cache_size) { /* add at current position */
+    footer = (DltLogStorageCacheFooter *)(config->cache + cache_size);
+    if (footer == NULL)
+    {
+        dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
+        return -1;
+    }
+    msg_size = size1 + size2 + size3;
+    remain_cache_size = cache_size - footer->offset;
+
+    if (msg_size <= remain_cache_size) /* add at current position */
+    {
         curr_write_addr = (void *)(config->cache + footer->offset);
         footer->offset += msg_size;
-    }
-    else if (msg_size > remain_cache_size)
-    {
-        if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                   DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) {
-            /*check for message size exceeds cache size for specific_size strategy */
-            if ((unsigned int)msg_size > config->specific_size) {
-                dlt_log(LOG_WARNING, "Message is larger than cache. Discard.\n");
-                return -1;
-            }
+        if (footer->wrap_around_cnt < 1) {
+            footer->end_sync_offset = footer->offset;
         }
-        else if ((unsigned int)msg_size > config->file_size)
+
+        /* write data to cache */
+        memcpy(curr_write_addr, data1, size1);
+        curr_write_addr += size1;
+        memcpy(curr_write_addr, data2, size2);
+        curr_write_addr += size2;
+        memcpy(curr_write_addr, data3, size3);
+    }
+
+    /*
+     * In case the msg_size is equal to remaining cache size,
+     * the message is still written in cache.
+     * Then whole cache data is synchronized to file.
+     */
+    if (msg_size >= remain_cache_size)
+    {
+        /*check for message size exceeds cache size for specific_size strategy */
+        if ((unsigned int) msg_size > cache_size)
         {
             dlt_log(LOG_WARNING, "Message is larger than cache. Discard.\n");
             return -1;
         }
 
-        /*sync to file for specific_size or file_size  */
-        if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                   DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE) > 0) {
-            ret = config->dlt_logstorage_sync(config,
-                                              uconfig,
-                                              dev_path,
-                                              DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE);
+         /*sync to file for specific_size or file_size  */
+         if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                                                    DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE) > 0)
+         {
+             ret = config->dlt_logstorage_sync(config,
+                                               file_config,
+                                               dev_path,
+                                               DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE);
+             if (ret != 0)
+             {
+                 dlt_log(LOG_ERR,"dlt_logstorage_sync: Unable to sync.\n");
+                 return -1;
+             }
+         }
+         else if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                                                         DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
+         {
 
-            if (ret != 0) {
-                dlt_log(LOG_ERR, "dlt_logstorage_sync: Unable to sync.\n");
-                return -1;
-            }
-        }
-        else if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                        DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
-        {
+             ret = config->dlt_logstorage_sync(config,
+                                               file_config,
+                                               dev_path,
+                                               DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE);
+             if (ret != 0)
+             {
+                 dlt_log(LOG_ERR,"dlt_logstorage_sync: Unable to sync.\n");
+                 return -1;
+             }
+         }
+         else if ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                                                         DLT_LOGSTORAGE_SYNC_ON_DEMAND) > 0) ||
+                  (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                                                         DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT) > 0))
+         {
+             footer->wrap_around_cnt += 1;
+         }
 
-            ret = config->dlt_logstorage_sync(config,
-                                              uconfig,
-                                              dev_path,
-                                              DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE);
+         if (msg_size > remain_cache_size)
+         {
+            /* start writing from beginning */
+            footer->end_sync_offset = footer->offset;
+            curr_write_addr = config->cache;
+            footer->offset = msg_size;
 
-            if (ret != 0) {
-                dlt_log(LOG_ERR, "dlt_logstorage_sync: Unable to sync.\n");
-                return -1;
-            }
-        }
-        else if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                        DLT_LOGSTORAGE_SYNC_ON_DEMAND) > 0)
-        {
-            config->pre_cache_sync = config->cur_cache_sync;
-            config->cur_cache_sync = 0;
-
-            if (config->pre_cache_sync == 0)
-                footer->last_sync_offset = 0;
-        }
-
-        /* start writing from beginning */
-        curr_write_addr = config->cache;
-        footer->offset = msg_size;
-        footer->wrap_around_cnt += 1;
+            /* write data to cache */
+            memcpy(curr_write_addr, data1, size1);
+            curr_write_addr += size1;
+            memcpy(curr_write_addr, data2, size2);
+            curr_write_addr += size2;
+            memcpy(curr_write_addr, data3, size3);
+         }
     }
-    else { /* message just fits into cache */
-        curr_write_addr = (void *)(config->cache + footer->offset);
-        footer->wrap_around_cnt += 1;
-    }
 
-    /* write data to cache */
-    memcpy(curr_write_addr, data1, size1);
-    curr_write_addr += size1;
-    memcpy(curr_write_addr, data2, size2);
-    curr_write_addr += size2;
-    memcpy(curr_write_addr, data3, size3);
 
     return 0;
 }
@@ -1183,187 +1093,88 @@ int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
                                   char *dev_path,
                                   int status)
 {
-    int ret = 0;
-    unsigned int remain_file_size = 0;
-    unsigned int count = 0;
+    unsigned int cache_size;
 
     DltLogStorageCacheFooter *footer = NULL;
 
-    if (config == NULL)
+    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL))
+    {
         return -1;
+    }
 
     /* sync only, if given strategy is set */
-    if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync, status) > 0) {
-        if ((config->log == NULL) || (config->cache == NULL)) {
+    if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync, status) > 0)
+    {
+        if (config->cache == NULL)
+        {
             dlt_log(LOG_ERR,
-                    "Cannot copy cache to file. One of both is NULL\n");
+                    "Cannot copy cache to file. Cache is NULL\n");
             return -1;
         }
 
-        /* sync cache data to file for specific_size strategies */
-
-        if ((status == DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE)
-            || ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                        DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
-                && (status == DLT_LOGSTORAGE_SYNC_ON_DEMAND))
-            || ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                        DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
-                && (status == DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT))) {
-            footer = (DltLogStorageCacheFooter *)(config->cache +
-                                                  config->specific_size);
-
-            if (footer == NULL) {
-                dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
-                return -1;
-            }
-
-            count = footer->offset - footer->last_sync_offset;
-            /* write ring buffer into file */
-            ret = fwrite(config->cache + footer->last_sync_offset, count, 1, config->log);
-            dlt_logstorage_check_write_ret(config, ret);
-            config->current_write_file_offset += footer->offset - footer->last_sync_offset;
-            remain_file_size = config->file_size - config->current_write_file_offset;
-
-            if (status == DLT_LOGSTORAGE_SYNC_ON_DEMAND)
-                footer->last_sync_offset = footer->offset;
-            else
-                footer->last_sync_offset = 0;
-
-            if (remain_file_size < config->specific_size) {
-                config->current_write_file_offset = 0;
-                /* clean ring buffer and reset footer information */
-                memset(config->cache,
-                       0,
-                       config->specific_size + sizeof(DltLogStorageCacheFooter));
-
-                /* close the file, a new one will be created when prepare is
-                 * called again */
-
-                fclose(config->log);
-                config->log = NULL;
-            }
-        }
-        /* sync cache data to file for file size strategies*/
-
-        else if ((status == DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE) ||
-                 (status == DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT) ||
-                 ((DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
-                                                          DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE) > 0)
-                  && (status == DLT_LOGSTORAGE_SYNC_ON_DEMAND)))
+        if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync,
+                                                   DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
         {
-            footer = (DltLogStorageCacheFooter *)(config->cache +
-                                                  config->file_size);
-
-            if (footer == NULL) {
-                dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
-                return -1;
-            }
-
-            count = footer->offset - footer->last_sync_offset;
-            /* write cache to file */
-            ret = fwrite(config->cache + footer->last_sync_offset, count, 1, config->log);
-            dlt_logstorage_check_write_ret(config, ret);
-            config->current_write_file_offset += footer->offset - footer->last_sync_offset;
-            footer->last_sync_offset = footer->offset;
-
-            if ((status != DLT_LOGSTORAGE_SYNC_ON_DAEMON_EXIT)
-                && (status != DLT_LOGSTORAGE_SYNC_ON_DEMAND)) {
-                config->current_write_file_offset = 0;
-                /* clean ring buffer and reset footer information */
-                memset(config->cache,
-                       0,
-                       config->file_size + sizeof(DltLogStorageCacheFooter));
-
-                /* close the file, a new one will be created when prepare is
-                 * called again */
-                fclose(config->log);
-                config->log = NULL;
-            }
+            cache_size = config->specific_size;
         }
-        /* sync cache to file for on_demand strategy  */
-
-        else if (status == DLT_LOGSTORAGE_SYNC_ON_DEMAND)
+        else
         {
-            config->sync_from_start = 0;
+            cache_size = config->file_size;
+        }
 
-            if ((file_config == NULL) || (dev_path == NULL)) {
-                dlt_log(LOG_ERR, "Cannot retrieve user configuration or mount point\n");
-                return -1;
-            }
+        footer = (DltLogStorageCacheFooter *)(config->cache + cache_size);
+        if (footer == NULL)
+        {
+            dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
+            return -1;
+        }
 
-            footer = (DltLogStorageCacheFooter *)(config->cache +
-                                                  config->file_size);
+        /* sync cache data to file */
+        if (footer->wrap_around_cnt < 1)
+        {
+            /* Sync whole cache */
+            dlt_logstorage_sync_to_file(config, file_config, dev_path, footer,
+                                        footer->last_sync_offset, footer->offset);
 
-            if (footer == NULL) {
-                dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
-                return -1;
-            }
+        }
+        else if ((footer->wrap_around_cnt == 1) &&
+                 (footer->offset < footer->last_sync_offset))
+        {
+            /* sync (1) footer->last_sync_offset to footer->end_sync_offset,
+             * and (2) footer->last_sync_offset (= 0) to footer->offset */
+            dlt_logstorage_sync_to_file(config, file_config, dev_path, footer,
+                                        footer->last_sync_offset, footer->end_sync_offset);
+            footer->last_sync_offset = 0;
+            dlt_logstorage_sync_to_file(config, file_config, dev_path, footer,
+                                        footer->last_sync_offset, footer->offset);
+        }
+        else
+        {
+            /* sync (1) footer->offset + index to footer->end_sync_offset,
+             * and (2) footer->last_sync_offset (= 0) to footer->offset */
+            dlt_logstorage_sync_to_file(config, file_config, dev_path, footer,
+                                        footer->offset, footer->end_sync_offset);
+            footer->last_sync_offset = 0;
+            dlt_logstorage_sync_to_file(config, file_config, dev_path, footer,
+                                        footer->last_sync_offset, footer->offset);
+        }
 
-            /* check for wrap around is 0 or cache is synced at least once
-             * in every wrap around */
+        /* Initialize cache if needed */
+        if ((status == DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) ||
+            (status == DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE))
+        {
+            /* clean ring buffer and reset footer information */
+            memset(config->cache, 0,
+                   cache_size + sizeof(DltLogStorageCacheFooter));
+        }
 
-            if ((footer->wrap_around_cnt < 1) || (config->cur_cache_sync == 1)) {
-                ret = dlt_logstorage_sync_to_file(config,
-                                                  file_config,
-                                                  dev_path);
-
-                if (ret != 0)
-                    dlt_vlog(LOG_ERR, "%s: failed to sync data to file \n", __func__);
-            }
-            else {
-                remain_file_size = config->file_size - config->current_write_file_offset;
-
-                /* check for total bytes of data need to sync */
-                if (footer->offset >= footer->last_sync_offset)
-                    config->total_write_count = config->file_size;
-                else
-                    config->total_write_count = config->file_size - footer->last_sync_offset + footer->offset;
-
-                /* sync data to file if required sync data exceeds remaining file size */
-                if (config->total_write_count >= remain_file_size) {
-                    ret = dlt_logstorage_sync_create_new_file(config,
-                                                              file_config,
-                                                              dev_path,
-                                                              remain_file_size);
-
-                    if (ret != 0)
-                        dlt_vlog(LOG_ERR, "%s: failed to sync and open new file\n", __func__);
-
-                    /* sync remaining end of cache data to new file*/
-                    if (config->sync_from_start == 0) {
-                        ret = dlt_logstorage_sync_capable_data_to_file(config, 0);
-
-                        if (ret != 0)
-                            dlt_vlog(LOG_ERR, "%s: failed to sync capable data to file\n", __func__);
-                    }
-                }
-                /* sync data to file if required sync data less than remaining file size */
-                else {
-                    ret = dlt_logstorage_sync_capable_data_to_file(config, 1);
-
-                    if (ret != 0)
-                        dlt_vlog(LOG_ERR, "%s: failed to sync capable data\n", __func__);
-                }
-
-                /* sync data to file from almost the begin of cache
-                 * if still data needs to sync */
-
-                if (config->total_write_count > 0) {
-                    count = footer->offset - footer->last_sync_offset;
-                    ret = fwrite(config->cache + footer->last_sync_offset,
-                                 count,
-                                 1,
-                                 config->log);
-                    dlt_logstorage_check_write_ret(config, ret);
-                    config->current_write_file_offset += count;
-
-                    footer->last_sync_offset += count;
-                }
-
-                config->cur_cache_sync = 1;
-            }
+        if (status == DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE)
+        {
+            /* Close log file */
+            fclose(config->log);
+            config->log = NULL;
+            config->current_write_file_offset = 0;
         }
     }
-
     return 0;
 }

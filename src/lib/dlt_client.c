@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -100,8 +98,6 @@
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
 
-static char str[DLT_CLIENT_TEXTBUFSIZE];
-
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data))
 {
     message_callback_function = registerd_callback;
@@ -184,19 +180,14 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         for (p = servinfo; p != NULL; p = p->ai_next) {
             if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "socket() failed! %s\n",
-                         strerror(errno));
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "socket() failed! %s\n", strerror(errno));
                 continue;
             }
 
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "connect() failed! %s\n",
-                         strerror(errno));
                 close(client->sock);
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "connect() failed! %s\n",
+                         strerror(errno));
                 continue;
             }
 
@@ -801,7 +792,7 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
     payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
 
     if (payload == 0) {
-        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %d\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
+        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %zu\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
         return DLT_RETURN_ERROR;
     }
 
