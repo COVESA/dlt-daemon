@@ -39,6 +39,7 @@
 #include <syslog.h>
 #include <errno.h>
 #include <pthread.h>
+#include <grp.h>
 
 #ifdef linux
 #   include <sys/timerfd.h>
@@ -253,7 +254,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
         fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
                 daemon_local->flags.appSockPath);
-
+#else
+    memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
 #endif
     daemon_local->flags.gatewayMode = 0;
     strncpy(daemon_local->flags.gatewayConfigFile,
@@ -565,6 +567,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                     "Invalid value for ForceContextLogLevelAndTraceStatus: %i. Must be 0, 1\n",
                                     intval);
                         }
+                    }
+                    else if(strcmp(token, "DaemonFifoGroup") == 0)
+                    {
+                        strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
+                        daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
                     }
                     else if (strcmp(token, "BindAddress") == 0)
                     {
@@ -1084,6 +1091,35 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                  tmpFifo, strerror(errno));
         return -1;
     } /* if */
+
+    /* Set group of daemon FIFO */
+    if (daemon_local->flags.daemonFifoGroup[0] != 0)
+    {
+        errno = 0;
+        struct group * group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
+        if (group_dlt)
+        {
+            ret = chown(tmpFifo, -1, group_dlt->gr_gid);
+            if (ret == -1)
+            {
+                dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
+                         tmpFifo, daemon_local->flags.daemonFifoGroup,
+                         strerror(errno));
+            }
+        }
+        else if ((errno == 0) || (errno == ENOENT) || (errno == EBADF) || (errno == EPERM))
+        {
+            dlt_vlog(LOG_ERR, "Group name %s is not found (%s)\n",
+                     daemon_local->flags.daemonFifoGroup,
+                     strerror(errno));
+        }
+        else
+        {
+            dlt_vlog(LOG_ERR, "Failed to get group id of %s (%s)\n",
+                     daemon_local->flags.daemonFifoGroup,
+                     strerror(errno));
+        }
+    }
 
     fd = open(tmpFifo, O_RDWR);
 
