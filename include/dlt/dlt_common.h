@@ -73,6 +73,7 @@
  \{
  */
 
+#   include <netinet/in.h>
 #   include <stdio.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
@@ -816,6 +817,17 @@ typedef struct
     unsigned char status;
     int size;
 } DltBufferBlockHead;
+
+#   ifdef DLT_USE_IPv6
+#      define DLT_IP_SIZE (INET6_ADDRSTRLEN)
+#   else
+#      define DLT_IP_SIZE (INET_ADDRSTRLEN)
+#   endif
+typedef struct DltBindAddress
+{
+    char ip[DLT_IP_SIZE];
+    struct DltBindAddress *next;
+} DltBindAddress_t;
 
 #   define DLT_MESSAGE_ERROR_OK       0
 #   define DLT_MESSAGE_ERROR_UNKNOWN -1
