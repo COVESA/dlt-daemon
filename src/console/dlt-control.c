@@ -63,8 +63,6 @@
 #include "dlt_user.h"
 #include "dlt-control-common.h"
 
-
-
 #define DLT_GLOGINFO_APID_NUM_MAX   150
 #define DLT_GLOGINFO_DATA_MAX       800
 #define DLT_GET_LOG_INFO_HEADER     18      /*Get log info header size in response text */
@@ -73,13 +71,16 @@
 /* Option of GET_LOG_INFO */
 #define DLT_SERVICE_GET_LOG_INFO_OPT7    7    /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
 
+/**
+ * The structure of the DLT Service header
+ */
 typedef struct
 {
     uint32_t service_id;            /**< service ID */
-} PACKED DltServiceGetDefaultLogLevel;
+    uint8_t status;                 /**< response status */
+} PACKED DltServiceHeader;
 
 DltClient g_dltclient;
-DltServiceGetLogInfoResponse *g_resp = NULL;
 
 /* Function prototypes */
 int dlt_receive_message_callback(DltMessage *message, void *data);
@@ -103,6 +104,7 @@ typedef struct {
     int oflag;
     int gflag;
     int jvalue;
+    int kvalue;
     int bvalue;
     char ecuid[4];
     DltFile file;
@@ -129,9 +131,9 @@ void usage()
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("\n");
-    printf("  -a id		    Control message application id\n");
-    printf("  -c id    		Control message context id\n");
-    printf("  -s id    		Control message injection service id\n");
+    printf("  -a id         Control message application id\n");
+    printf("  -c id         Control message context id\n");
+    printf("  -s id         Control message injection service id\n");
     printf("  -m message    Control message injection in ASCII\n");
     printf("  -x message    Control message injection in Hex e.g. 'ad 01 24 ef'\n");
     printf("  -t milliseconds Timeout to terminate application (Default:1000)'\n");
@@ -151,13 +153,14 @@ void usage()
     printf("       -r tracestatus -c xyz* (set status for all ctxts whose name starts with xyz)\n");
     printf("       -r tracestatus -c ctid (set status for the particular ctxt)\n");
     printf("       -r tracestatus (set status for all the registered contexts)\n");
-    printf("  -d loglevel	  Set the default log level (0=off - 5=verbose)\n");
+    printf("  -d loglevel     Set the default log level (0=off - 5=verbose)\n");
     printf("  -f tracestatus  Set the default trace status (0=off - 1=on)\n");
-    printf("  -i enable  	  Enable timing packets (0=off - 1=on)\n");
-    printf("  -o 		  	  Store configuration\n");
-    printf("  -g 		  	  Reset to factory default\n");
-    printf("  -j               Get log info\n");
-    printf("  -u               unix port\n");
+    printf("  -i enable       Enable timing packets (0=off - 1=on)\n");
+    printf("  -o              Store configuration\n");
+    printf("  -g              Reset to factory default\n");
+    printf("  -j              Get log info\n");
+    printf("  -k              Get software version\n");
+    printf("  -u              unix port\n");
 }
 /**
  * Function for sending get log info ctrl msg and printing the response.
@@ -171,54 +174,107 @@ void dlt_process_get_log_info(void)
     int i = 0;
     int j = 0;
 
-    g_resp = (DltServiceGetLogInfoResponse *)calloc(1, sizeof(DltServiceGetLogInfoResponse));
+    DltServiceGetLogInfoResponse *resp =
+        (DltServiceGetLogInfoResponse *)calloc(1,
+        sizeof(DltServiceGetLogInfoResponse));
 
-    if (g_resp == NULL) {
-        fprintf(stderr, "%s: Calloc failed for resp..\n", __func__);
+    if (NULL == resp) {
+        fprintf(stderr, "ERROR: calloc for resp data failed.\n");
         return;
     }
+
+    /* prepare request data */
+    resp->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+    resp->status = DLT_SERVICE_RESPONSE_ERROR;
 
     /* send control message*/
     if (0 != dlt_client_get_log_info(&g_dltclient)) {
         fprintf(stderr, "ERROR: Could not get log info\n");
-        dlt_client_cleanup_get_log_info(g_resp);
+        dlt_client_cleanup_get_log_info(resp);
+        resp = NULL;
         return;
     }
 
-    if (dlt_client_main_loop(&g_dltclient, NULL, 0) == DLT_RETURN_TRUE)
+    if (dlt_client_main_loop(&g_dltclient, (void *)resp, 0) == DLT_RETURN_TRUE)
         fprintf(stdout, "DLT-daemon's response is invalid.\n");
 
-    for (i = 0; i < g_resp->log_info_type.count_app_ids; i++) {
-        app = g_resp->log_info_type.app_ids[i];
+    if (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO &&
+        resp->status >= GET_LOG_INFO_STATUS_MIN &&
+        resp->status <= GET_LOG_INFO_STATUS_MAX) {
+        for (i = 0; i < resp->log_info_type.count_app_ids; i++) {
+            app = resp->log_info_type.app_ids[i];
 
-        dlt_print_id(apid, app.app_id);
+            dlt_print_id(apid, app.app_id);
 
-        if (app.app_description != 0)
-            printf("APID:%4s %s\n", apid, app.app_description);
-        else
-            printf("APID:%4s \n", apid);
-
-        for (j = 0; j < app.count_context_ids; j++) {
-            con = app.context_id_info[j];
-
-            dlt_print_id(ctid, con.context_id);
-
-            if (con.context_description != 0)
-
-                printf("CTID:%4s %2d %2d %s\n",
-                       ctid,
-                       con.log_level,
-                       con.trace_status,
-                       con.context_description);
+            if (app.app_description != 0)
+                printf("APID:%4s %s\n", apid, app.app_description);
             else
-                printf("CTID:%4s %2d %2d\n",
-                       ctid,
-                       con.log_level,
-                       con.trace_status);
+                printf("APID:%4s \n", apid);
+
+            for (j = 0; j < app.count_context_ids; j++) {
+                con = app.context_id_info[j];
+
+                dlt_print_id(ctid, con.context_id);
+
+                if (con.context_description != 0)
+                    printf("CTID:%4s %2d %2d %s\n",
+                        ctid,
+                        con.log_level,
+                        con.trace_status,
+                        con.context_description);
+                else
+                    printf("CTID:%4s %2d %2d\n",
+                        ctid,
+                        con.log_level,
+                        con.trace_status);
+            }
         }
     }
 
-    dlt_client_cleanup_get_log_info(g_resp);
+    dlt_client_cleanup_get_log_info(resp);
+    resp = NULL;
+}
+
+/**
+ * Function for sending get software version ctrl msg and printing the response.
+ */
+void dlt_process_get_software_version(void)
+{
+    DltServiceGetSoftwareVersionResponse *resp =
+        (DltServiceGetSoftwareVersionResponse *)calloc(1,
+        sizeof(DltServiceGetSoftwareVersionResponse));
+
+    if (NULL == resp) {
+        fprintf(stderr, "ERROR: calloc for resp data failed.\n");
+        return;
+    }
+
+    /* prepare request data */
+    resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+    resp->status = DLT_SERVICE_RESPONSE_ERROR;
+
+    /* send control message*/
+    if (0 != dlt_client_get_software_version(&g_dltclient)) {
+        fprintf(stderr, "ERROR: Get software version failed.\n");
+        free(resp);
+        resp = NULL;
+        return;
+    }
+
+    if (dlt_client_main_loop(&g_dltclient, (void *)resp, 0) == DLT_RETURN_TRUE)
+        fprintf(stdout, "DLT-daemon's response is invalid.\n");
+
+    if (resp->service_id == DLT_SERVICE_ID_GET_SOFTWARE_VERSION &&
+        resp->status == DLT_SERVICE_RESPONSE_OK &&
+        resp->payload != NULL)
+    {
+        printf("%s\n", resp->payload);
+        free(resp->payload);
+        resp->payload = NULL;
+    }
+
+    free(resp);
+    resp = NULL;
 }
 
 /**
@@ -252,10 +308,12 @@ int main(int argc, char *argv[])
     dltdata.oflag = -1;
     dltdata.gflag = -1;
     dltdata.jvalue = 0;
+    dltdata.kvalue = 0;
+
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogju")) != -1)
+    while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogjku")) != -1)
         switch (c) {
         case 'v':
         {
@@ -375,6 +433,11 @@ int main(int argc, char *argv[])
         case 'j':
         {
             dltdata.jvalue = 1;
+            break;
+        }
+        case 'k':
+        {
+            dltdata.kvalue = 1;
             break;
         }
         case 'u':
@@ -627,13 +690,19 @@ int main(int argc, char *argv[])
 
             /* send control message in*/
             if (dlt_client_send_reset_to_factory_default(&g_dltclient) != DLT_RETURN_OK)
-                fprintf (stderr, "ERROR: Could send reset to factory default\n");
+                fprintf (stderr, "ERROR: Could not send reset to factory default\n");
         }
         else if (dltdata.jvalue == 1)
         {
             /* get log info */
             printf("Get log info:\n");
             dlt_process_get_log_info();
+        }
+        else if (dltdata.kvalue == 1)
+        {
+            /* Get software version */
+            printf("Get software version:\n");
+            dlt_process_get_software_version();
         }
 
         /* Dlt Client Main Loop */
@@ -661,54 +730,114 @@ int main(int argc, char *argv[])
 int dlt_receive_message_callback(DltMessage *message, void *data)
 {
     static char resp_text[DLT_RECEIVE_BUFSIZE];
-    int ret = DLT_RETURN_ERROR;
+    int ret = DLT_RETURN_OK;
+    uint32_t id = 0;
+    uint32_t uint32_tmp = 0;
+    uint8_t *ptr;
+    int32_t datalength;
+    DltServiceHeader *req_header = NULL;
 
-    /* parameter check */
-    if (message == NULL)
+    if ((message == NULL) || (data == NULL) ||
+        !DLT_MSG_IS_CONTROL_RESPONSE(message))
         return -1;
 
-    /* to avoid warning */
-    (void)data;
+    /* get request service id */
+    req_header = (DltServiceHeader *)data;
 
-    /* prepare storage header */
-    if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-        dlt_set_storageheader(message->storageheader, message->headerextra.ecu);
-    else
-        dlt_set_storageheader(message->storageheader, "LCTL");
+    /* get response service id */
+    ptr = message->databuffer;
+    datalength = message->datasize;
 
-    /* get response data */
-    ret = dlt_message_header(message, resp_text, DLT_RECEIVE_BUFSIZE, 0);
+    DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
+    id = DLT_ENDIAN_GET_32(message->standardheader->htyp, uint32_tmp);
 
-    if (ret < 0) {
-        fprintf(stderr, "GET_LOG_INFO message_header result failed..\n");
-        dlt_client_cleanup(&g_dltclient, 0);
-        return -1;
-    }
+    if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY) &&
+        (id == req_header->service_id)) {
+        switch (id) {
+            case DLT_SERVICE_ID_GET_LOG_INFO:
+            {
+                DltServiceGetLogInfoResponse *resp =
+                    (DltServiceGetLogInfoResponse *)data;
 
-    ret = dlt_message_payload(message, resp_text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, 0);
+                /* prepare storage header */
+                if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
+                    dlt_set_storageheader(message->storageheader,
+                                          message->headerextra.ecu);
+                else
+                    dlt_set_storageheader(message->storageheader, "LCTL");
 
-    if (ret < 0) {
-        fprintf(stderr, "GET_LOG_INFO message_payload result failed..\n");
-        dlt_client_cleanup(&g_dltclient, 0);
-        return -1;
-    }
+                /* get response data */
+                ret = dlt_message_header(message, resp_text,
+                                         DLT_RECEIVE_BUFSIZE, 0);
 
-    /* check service id */
-    if (g_resp == NULL) {
-        fprintf(stderr, "%s: g_resp isn't allocated.\n", __func__);
-        dlt_client_cleanup(&g_dltclient, 0);
-        return -1;
-    }
+                if (ret < 0) {
+                    fprintf(stderr,
+                            "GET_LOG_INFO message_header result failed.\n");
+                    dlt_client_cleanup(&g_dltclient, 0);
+                    return -1;
+                }
 
-    ret = dlt_set_loginfo_parse_service_id(resp_text, &g_resp->service_id, &g_resp->status);
+                ret = dlt_message_payload(message, resp_text,
+                                DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, 0);
 
-    if ((ret == 0) && (g_resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO)) {
-        ret = dlt_client_parse_get_log_info_resp_text(g_resp, resp_text);
+                if (ret < 0) {
+                    fprintf(stderr,
+                            "GET_LOG_INFO message_payload result failed.\n");
+                    dlt_client_cleanup(&g_dltclient, 0);
+                    return -1;
+                }
 
-        if (ret != 0)
-            fprintf(stderr, "GET_LOG_INFO result failed..\n");
+                ret = dlt_set_loginfo_parse_service_id(resp_text,
+                            &resp->service_id, &resp->status);
 
-        dlt_client_cleanup(&g_dltclient, 0);
+                if ((ret == 0) &&
+                    (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO)) {
+                    ret = dlt_client_parse_get_log_info_resp_text(resp,
+                                                                  resp_text);
+
+                    if (ret != 0)
+                    {
+                        fprintf(stderr, "GET_LOG_INFO failed [status=%d]\n",
+                                resp->status);
+                        dlt_client_cleanup(&g_dltclient, 0);
+                        return -1;
+                    }
+
+                    dlt_client_cleanup(&g_dltclient, 0);
+                }
+                break;
+            }
+            case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
+            {
+                DltServiceGetSoftwareVersionResponse *resp =
+                    (DltServiceGetSoftwareVersionResponse *)data;
+
+                resp->service_id = id;
+                DLT_MSG_READ_VALUE(resp->status, ptr, datalength, uint8_t);
+                DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
+                resp->length = DLT_ENDIAN_GET_32(message->standardheader->htyp,
+                                                 uint32_tmp);
+
+                if (resp->status != DLT_SERVICE_RESPONSE_OK) {
+                    fprintf(stderr, "GET_SOFTWARE_VERSION failed [status=%d]\n",
+                            resp->status);
+                    dlt_client_cleanup(&g_dltclient, 0);
+                    return -1;
+                }
+
+                resp->payload = (char *)calloc(resp->length + 1, sizeof(char));
+                if (resp->payload != NULL)
+                    memcpy(resp->payload, message->databuffer +
+                           message->datasize - resp->length, resp->length);
+
+                dlt_client_cleanup(&g_dltclient, 0);
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
     }
 
     return ret;
