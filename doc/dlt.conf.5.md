@@ -172,7 +172,12 @@ Application should have write permission to this group for tracing into dlt. For
 
 ## DaemonFifoGroup
 
-    Default: group of dlt-daemon process
+Owner group of daemon FIFO directory
+(If not set, primary group of dlt-daemon process is used)
+Application should have write permission to this group for tracing into dlt
+For this opton to work, dlt-daemon should have this group in it's Supplementary group
+
+    Default: group of dlt-daemon process (/tmp/dlt)
 
 # CONTROL APPLICATION OPTIONS
 
