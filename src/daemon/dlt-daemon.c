@@ -572,6 +572,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
                         daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
+                    }
                     else if (strcmp(token, "BindAddress") == 0)
                     {
                         DltBindAddress_t *newNode = NULL;
