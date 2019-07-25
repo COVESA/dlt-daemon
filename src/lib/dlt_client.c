@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -100,8 +98,6 @@
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
 
-static char str[DLT_CLIENT_TEXTBUFSIZE];
-
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data))
 {
     message_callback_function = registerd_callback;
@@ -116,13 +112,15 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
         return DLT_RETURN_ERROR;
 
     client->sock = -1;
-    client->servIP = 0;
-    client->serialDevice = 0;
+    client->servIP = NULL;
+    client->serialDevice = NULL;
     client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
     client->port = port;
-    client->socketPath = 0;
+    client->socketPath = NULL;
     client->mode = DLT_CLIENT_MODE_TCP;
-    client->receiver.buffer = 0;
+    client->receiver.buffer = NULL;
+    client->receiver.buf = NULL;
+    client->receiver.backup_buf = NULL;
 
     return DLT_RETURN_OK;
 }
@@ -140,14 +138,14 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
     if (env_daemon_port != NULL) {
         tmp_port = atoi(env_daemon_port);
 
-        if ((tmp_port < IPPORT_RESERVED) || (tmp_port > USHRT_MAX)) {
+        if ((tmp_port < IPPORT_RESERVED) || ((unsigned)tmp_port > USHRT_MAX)) {
             dlt_vlog(LOG_ERR,
                      "Specified port is out of possible range: %d.\n",
                      tmp_port);
             return DLT_RETURN_ERROR;
         }
         else {
-            servPort = tmp_port;
+            servPort = (unsigned short)tmp_port;
         }
     }
 
@@ -182,19 +180,14 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         for (p = servinfo; p != NULL; p = p->ai_next) {
             if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "socket() failed! %s\n",
-                         strerror(errno));
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "socket() failed! %s\n", strerror(errno));
                 continue;
             }
 
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
-                snprintf(str, DLT_CLIENT_TEXTBUFSIZE,
-                         "connect() failed! %s\n",
-                         strerror(errno));
                 close(client->sock);
-                dlt_log(LOG_WARNING, str);
+                dlt_vlog(LOG_WARNING, "connect() failed! %s\n",
+                         strerror(errno));
                 continue;
             }
 
@@ -260,7 +253,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         memcpy(addr.sun_path, client->socketPath, sizeof(addr.sun_path) - 1);
 
         if (connect(client->sock,
-                    (struct sockaddr_un *)&addr,
+                    (struct sockaddr *) &addr,
                     sizeof(addr)) == -1) {
             fprintf(stderr, "ERROR: (unix) connect error: %s\n", strerror(errno));
             return DLT_RETURN_ERROR;
@@ -799,7 +792,7 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
     payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
 
     if (payload == 0) {
-        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %d\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
+        dlt_vlog(LOG_ERR, "%s: Could not allocate memory %zu\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
         return DLT_RETURN_ERROR;
     }
 

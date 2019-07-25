@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -122,10 +120,10 @@ typedef struct
 #ifdef DLT_USE_UNIX_SOCKET_IPC
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
 #else
-    char userPipesDir[NAME_MAX + 1]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
+    char userPipesDir[DLT_PATH_MAX]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
 #endif
-    char daemonFifoName[NAME_MAX + 1]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
-    char daemonFifoGroup[NAME_MAX + 1]; /**< (String: Group name) Owner group of local fifo (Default: Primary Group) */
+    char daemonFifoName[DLT_PATH_MAX]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
+    char daemonFifoGroup[DLT_PATH_MAX]; /**< (String: Group name) Owner group of local fifo (Default: Primary Group) */
     unsigned int port; /**< port number */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
     int gatewayMode; /**< (Boolean) Gateway Mode */
@@ -134,6 +132,7 @@ typedef struct
     int contextLogLevel;  /**< (int) log level sent to context if registered with default log-level or if enforced*/
     int contextTraceStatus;   /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
     int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
+    DltBindAddress_t *ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.

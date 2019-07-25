@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -39,6 +37,9 @@
 #define DEFAULT_CONF_FILE (CONFIGURATION_FILES_DIR "/dlt-kpi.conf")
 
 #define COMMAND_LINE_SIZE 1024
+
+#define NANOSEC_PER_MILLISEC 1000000
+#define NANOSEC_PER_SEC 1000000000
 
 /* STRUCTURES */
 typedef struct

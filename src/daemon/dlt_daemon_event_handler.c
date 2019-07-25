@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015 Advanced Driver Information Technology.
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -59,7 +57,7 @@
  *
  * That ensures that no event will be mis-watched.
  *
- * @param pfd: The element to initialize
+ * @param pfd The element to initialize
  */
 static void init_poll_fd(struct pollfd *pfd)
 {
@@ -104,9 +102,9 @@ int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
  * Adds a file descriptor to the descriptor list. If the list is to small,
  * increase its size.
  *
- * @param ev: The event handler structure, containing the list
- * @param fd: The file descriptor to add
- * @param mask: The mask of event to be watched
+ * @param ev The event handler structure, containing the list
+ * @param fd The file descriptor to add
+ * @param mask The mask of event to be watched
  */
 static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
 {
@@ -138,8 +136,8 @@ static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
  * The file descriptor is removed from the descriptor list, the list is
  * compressed during the process.
  *
- * @param ev: The event handler structure containing the list
- * @param fd: The file descriptor to be removed
+ * @param ev The event handler structure containing the list
+ * @param fd The file descriptor to be removed
  */
 static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
 {
@@ -187,7 +185,6 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 {
     int ret = 0;
     unsigned int i = 0;
-    char str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
     int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
 
     if ((pEvent == NULL) || (daemon == NULL) || (daemon_local == NULL))
@@ -249,11 +246,8 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         callback = dlt_connection_get_callback(con);
 
         if (!callback) {
-            snprintf(str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Unable to find function for %d handle type.\n",
+            dlt_vlog(LOG_CRIT, "Unable to find function for %d handle type.\n",
                      type);
-            dlt_log(LOG_CRIT, str);
             return -1;
         }
 
@@ -262,11 +256,8 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                      daemon_local,
                      con->receiver,
                      daemon_local->flags.vflag) == -1) {
-            snprintf(str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Processing from %d handle type failed!\n",
+            dlt_vlog(LOG_CRIT, "Processing from %d handle type failed!\n",
                      type);
-            dlt_log(LOG_CRIT, str);
             return -1;
         }
     }
@@ -285,14 +276,15 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
  *
  * @return The found connection pointer, NULL otherwise.
  */
-DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev,
-                                                 int fd)
+DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev, int fd)
 {
-
     DltConnection *temp = ev->connections;
 
-    while ((temp != NULL) && (temp->receiver->fd != fd))
+    while (temp != NULL) {
+        if ((temp->receiver != NULL) && (temp->receiver->fd == fd))
+            return temp;
         temp = temp->next;
+    }
 
     return temp;
 }
@@ -401,16 +393,8 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
                                   DltConnection *con,
                                   int activation_type)
 {
-    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-
     if (!evhdl || !con || !con->receiver) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: wrong parameters (%p %p).\n",
-                 __func__,
-                 evhdl,
-                 con);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: wrong parameters.\n", __func__);
         return -1;
     }
 
@@ -418,11 +402,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case ACTIVE:
 
         if (activation_type == DEACTIVATE) {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Deactivate connection type: %d\n",
-                     con->type);
-            dlt_log(LOG_INFO, local_str);
+            dlt_vlog(LOG_INFO, "Deactivate connection type: %d\n", con->type);
 
             dlt_event_handler_disable_fd(evhdl, con->receiver->fd);
 
@@ -436,11 +416,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case INACTIVE:
 
         if (activation_type == ACTIVATE) {
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Activate connection type: %d\n",
-                     con->type);
-            dlt_log(LOG_INFO, local_str);
+            dlt_vlog(LOG_INFO, "Activate connection type: %d\n", con->type);
 
             dlt_event_handler_enable_fd(evhdl,
                                         con->receiver->fd,
@@ -451,11 +427,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
 
         break;
     default:
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "Unknown connection status: %d\n",
-                 con->status);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "Unknown connection status: %d\n", con->status);
         return -1;
     }
 

@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -178,6 +176,7 @@ typedef enum
 typedef float float32_t;
 typedef double float64_t;
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
 /**
  * Definition Library connection state
  */
@@ -187,5 +186,6 @@ typedef enum
     DLT_USER_CONNECTED,
     DLT_USER_RETRY_CONNECT
 } DltUserConnectionState;
+#endif
 
 #endif  /* DLT_TYPES_H */

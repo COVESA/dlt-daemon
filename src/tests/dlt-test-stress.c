@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -99,6 +97,11 @@ void thread_function(void);
 
 void stress3(void);
 
+/*
+ * This environment variable is used when developer wants to interrupt program manually
+ */
+char *env_manual_interruption = 0;
+
 /**
  * Print usage information of tool.
  */
@@ -115,6 +118,8 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
     printf("  -1            Execute test 1 (register/unregister many contexts)\n");
+    printf("                In order to interrupt test manually (e.g: wait for ENTER key),\n");
+    printf("                set environment variable DLT_TEST_MANUAL_INTERRUPTION=1\n");
     printf("  -2            Execute test 2 (multiple threads logging data)\n");
     printf("  -3            Execute test 3 (logging much data)\n");
 }
@@ -150,6 +155,7 @@ int main(int argc, char *argv[])
         case '1':
         {
             test[0] = 1;
+            env_manual_interruption = getenv("DLT_TEST_MANUAL_INTERRUPTION");
             break;
         }
         case '2':
@@ -227,8 +233,9 @@ void stress1(void)
 {
     int i, c;
     char ctid[5];
+    struct timespec ts;
 
-    printf("Starting stress test1... (press \"Enter\" to terminate test) \n");
+    printf("Starting stress test1...\n");
 
     printf("* Register   %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
@@ -240,22 +247,32 @@ void stress1(void)
         /*printf("%i: '%s' \n",i,ctid); */
 
         dlt_register_context(&(mycontext[i]), ctid, ctid);
-        usleep(500);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * 1000;
+        nanosleep(&ts, NULL);
     }
 
-    while (1) {
-        c = getchar();
-
-        /* if "Return" is pressed, exit loop; */
-        if (c == 10)
-            break;
+    if (env_manual_interruption && (strcmp(env_manual_interruption, "1") == 0))
+    {
+        printf("press \"Enter\" to terminate test");
+        while (1)
+        {
+            c=getchar();
+            /* if "Return" is pressed, exit loop; */
+            if (c==10)
+            {
+                break;
+            }
+        }
     }
 
     printf("* Unregister %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
     for (i = 0; i < STRESS1_NUM_CONTEXTS; i++) {
         DLT_UNREGISTER_CONTEXT(mycontext[i]);
-        usleep(500);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     printf("Finished stress test1 \n\n");
@@ -264,6 +281,7 @@ void stress1(void)
 void stress2(void)
 {
     int ret, index;
+    struct timespec ts;
 
     pthread_t thread[STRESS2_MAX_NUM_THREADS];
     thread_data_t thread_data[STRESS2_MAX_NUM_THREADS];
@@ -282,7 +300,9 @@ void stress2(void)
         if (ret != 0)
             printf("Error creating thread %d: %s \n", index, strerror(errno));
 
-        usleep(1000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 1000 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++)
@@ -296,6 +316,7 @@ void thread_function(void)
     /*thread_data_t *data; */
     DLT_DECLARE_CONTEXT(context_thread1);
     char ctid[5];
+    struct timespec ts;
 
     /*data = (thread_data_t *) ptr; */
 
@@ -304,7 +325,9 @@ void thread_function(void)
     /* Create random context id */
     snprintf(ctid, 5, "%.2x", rand() & 0x0000ffff);
 
-    usleep(rand() / 1000);
+    ts.tv_sec = 0;
+    ts.tv_nsec = rand();
+    nanosleep(&ts, NULL);
 
     DLT_REGISTER_CONTEXT(context_thread1, ctid, ctid);
 
@@ -318,6 +341,7 @@ void stress3(void)
     DLT_DECLARE_CONTEXT(context_stress3);
     char buffer[STRESS3_MAX_NUM_MESSAGES];
     int num;
+    struct timespec ts;
 
     /* Performance test */
     DLT_REGISTER_CONTEXT(context_stress3, "TST3", "Stress Test 3 - Performance");
@@ -328,7 +352,9 @@ void stress3(void)
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
         buffer[num] = num;
         DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, num));
-        usleep(10000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 10000 * 1000;
+        nanosleep(&ts, NULL);
     }
 
     printf("Finished stress test3 \n\n");

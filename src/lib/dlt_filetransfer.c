@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -68,6 +66,9 @@
 
 #define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES INT_MAX
 
+#define NANOSEC_PER_MILLISEC 1000000
+#define NANOSEC_PER_SEC 1000000000
+
 
 /*!Buffer for dlt file transfer. The size is defined by BUFFER_SIZE */
 unsigned char buffer[BUFFER_SIZE];
@@ -76,6 +77,7 @@ unsigned char buffer[BUFFER_SIZE];
 /*!Get some information about the file size of a file */
 /**See stat(2) for more informations.
  * @param file Absolute file path
+ * @param ok Result of stat
  * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
  */
 uint32_t getFilesize(const char *file, int *ok)
@@ -117,7 +119,7 @@ void stringHash(const char *str, uint32_t *hash)
 /*!Get some information about the file serial number of a file */
 /** See stat(2) for more informations.
  * @param file Absolute file path
- * @param value *ok == 0 -> error; *ok == 1 -> ok
+ * @param ok *ok == 0 -> error; *ok == 1 -> ok
  * @return Returns a unique number associated with each filename
  */
 uint32_t getFileSerialNumber(const char *file, int *ok)
@@ -144,6 +146,7 @@ uint32_t getFileSerialNumber(const char *file, int *ok)
 /*!Returns the creation date of a file */
 /** See stat(2) for more informations.
  * @param file Absolute file path
+ * @param ok Result of stat
  * @return Returns the creation date of a file
  */
 time_t getFileCreationDate(const char *file, int *ok)
@@ -162,20 +165,23 @@ time_t getFileCreationDate(const char *file, int *ok)
 /*!Returns the creation date of a file */
 /** Format of the creation date is Day Mon dd hh:mm:ss yyyy
  * @param file Absolute file path
+ * @param ok Result of stat
+ * @param date Local time
  * @return Returns the creation date of a file
  */
-char *getFileCreationDate2(const char *file, int *ok)
+void getFileCreationDate2(const char *file, int *ok, char *date)
 {
     struct stat st;
+    struct tm ts;
 
     if (-1 == stat(file, &st)) {
         *ok = 0;
-        return 0;
+        date = 0;
     }
 
     *ok = 1;
-    struct tm *ts = localtime(&st.st_ctime);
-    return asctime(ts);
+    localtime_r(&st.st_ctime, &ts);
+    asctime_r(&ts, date);
 }
 
 /*!Checks if the file exists */
@@ -194,12 +200,15 @@ int isFile (const char *file)
  */
 void doTimeout(int timeout)
 {
-    usleep(timeout * 1000);
+    struct timespec ts;
+    ts.tv_sec = (timeout * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+    ts.tv_nsec = (timeout * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+    nanosleep(&ts, NULL);
 }
 
 /*!Checks free space of the user buffer */
 /**
- * @param returns -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
+ * @return -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
  */
 int checkUserBufferForFreeSpace()
 {
@@ -243,7 +252,8 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
                     DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),
                     DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext,
@@ -307,7 +317,8 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
                     DLT_STRING("dlt_user_log_file_infoAbout, Error getting serial number of file:"),
                     DLT_STRING(filename));
 
-        char *creationdate = getFileCreationDate2(filename, &ok);
+        char creationdate[50];
+        getFileCreationDate2(filename, &ok, creationdate);
 
         if (!ok)
             DLT_LOG(*fileContext,
@@ -442,7 +453,8 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
                     DLT_STRING("dlt_user_log_file_header_alias, Error getting size of file:"), DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -497,7 +509,8 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
                     DLT_STRING("dlt_user_log_file_header, Error getting size of file:"),
                     DLT_STRING(filename));
 
-        char *fcreationdate = getFileCreationDate2(filename, &ok);
+        char fcreationdate[50];
+        getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok)
             DLT_LOG(*fileContext, DLT_LOG_ERROR,

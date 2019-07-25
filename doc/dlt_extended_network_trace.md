@@ -4,23 +4,31 @@ Back to [README.md](../README.md)
 
 ## Introduction
 
-The extended network trace allows the user to send or truncate network trace messages that are larger than the normal maximum size of a DLT message.
+The extended network trace allows the user to send or truncate network trace
+messages that are larger than the normal maximum size of a DLT message.
 
 ## Protocol
 
-When truncation of messages is allowed, the truncated messages will be wrapped into a special message which indicates that a network trace message was truncated and what was the original size of the message.
+When truncation of messages is allowed, the truncated messages will be wrapped
+into a special message which indicates that a network trace message was
+truncated and what was the original size of the message.
 
-Segmented messages are sent in multiple packages. The package stream is prepended with a a start message indicating which contain a unique handle for this stream, size of data to follow, count of segments to follow and segment size.
+Segmented messages are sent in multiple packages. The package stream is
+prepended with a start message indicating which contains a unique handle for
+this stream, size of data to follow, count of segments to follow and segment
+size.
 
-Each segment contains the stream handle, segment sequence number, the data and data length.
+Each segment contains the stream handle, segment sequence number, the data and
+data length.
 
-Finally after sending all the data segments, one more packet is sent to indicate the end of the stream.
+Finally after sending all the data segments, one more packet is sent to indicate
+the end of the stream.
 
 ## Truncated package
 
 Truncated message can be sent using the following function:
 
-` int dlt_user_trace_network_truncated(DltContext *handle,  DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate) `
+` int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate) `
 
 This will send a packet in the following format:
 

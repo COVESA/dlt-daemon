@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -62,7 +60,7 @@
 #include "dlt_common.h"
 #include "dlt_user.h"
 
-int dlt_daemon_socket_open(int *sock, unsigned int servPort);
+int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip);
 int dlt_daemon_socket_close(int sock);
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock);
@@ -72,10 +70,10 @@ int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int si
 /**
  * @brief dlt_daemon_socket_sendreliable - sends data to socket with additional checks and resending functionality - trying to be reliable
  * @param sock
- * @param buffer
+ * @param data_buffer
  * @param message_size
  * @return on sucess: DLT_DAEMON_ERROR_OK, on error: DLT_DAEMON_ERROR_SEND_FAILED
  */
-int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size, int *bytes_sent);
+int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size);
 
 #endif /* DLT_DAEMON_SOCKET_H */

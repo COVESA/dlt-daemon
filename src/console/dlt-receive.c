@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -21,13 +19,13 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-receive.cpp
+ * \file dlt-receive.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-receive.cpp                                               **
+**  SRC-MODULE: dlt-receive.c                                                 **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -188,13 +186,10 @@ int64_t convert_arg_to_byte_size(char *arg)
     min_size += 2048 /* DLT_USER_BUF_MAX_SIZE */;
 
     if (min_size > result) {
-        char tmp[256];
-        snprintf(tmp,
-                 256,
+        dlt_vlog(LOG_ERR,
                  "ERROR: Specified limit: %" PRId64 "is smaller than a the size of a single message: %" PRId64 "!\n",
                  result,
                  min_size);
-        dlt_log(LOG_ERR, tmp);
         result = -2;
     }
 
@@ -212,9 +207,7 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
 
     if (glob(dltdata->ovalue, GLOB_TILDE | GLOB_NOSORT, NULL, &outer) == 0) {
         if (dltdata->vflag) {
-            char tmp[256];
-            snprintf(tmp, 256, "File %s already exists, need to rename first\n", dltdata->ovalue);
-            dlt_log(LOG_INFO, tmp);
+            dlt_vlog(LOG_INFO, "File %s already exists, need to rename first\n", dltdata->ovalue);
         }
 
         if (dltdata->part_num < 0) {
@@ -257,15 +250,12 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
         snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase, dltdata->part_num++);
 
         if (rename(dltdata->ovalue, filename) != 0) {
-            char tmp[256];
-            snprintf(tmp, 256, "ERROR: rename %s to %s failed with error %s\n", dltdata->ovalue, filename,
-                     strerror(errno));
-            dlt_log(LOG_ERR, tmp);
+            dlt_vlog(LOG_ERR, "ERROR: rename %s to %s failed with error %s\n",
+                     dltdata->ovalue, filename, strerror(errno));
         }
         else if (dltdata->vflag) {
-            char tmp[256];
-            snprintf(tmp, 256, "Renaming existing file from %s to %s\n", dltdata->ovalue, filename);
-            dlt_log(LOG_INFO, tmp);
+            dlt_vlog(LOG_INFO, "Renaming existing file from %s to %s\n",
+                     dltdata->ovalue, filename);
         }
     } /* if (file_already_exists) */
 
@@ -483,9 +473,8 @@ int main(int argc, char *argv[])
     /* open DLT output file */
     if (dltdata.ovalue) {
         if (dltdata.climit > -1) {
-            char tmp[256];
-            snprintf(tmp, 256, "Using file size limit of %" PRId64 "bytes\n", dltdata.climit);
-            dlt_log(LOG_INFO, tmp);
+            dlt_vlog(LOG_INFO, "Using file size limit of %" PRId64 "bytes\n",
+                     dltdata.climit);
             dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
         }
         else { /* in case no limit for the output file is given, we simply overwrite any existing file */

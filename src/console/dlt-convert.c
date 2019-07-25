@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -21,12 +19,12 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-convert.cpp
+ * \file dlt-convert.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-convert.cpp                                               **
+**  SRC-MODULE: dlt-convert.c                                                 **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -343,7 +341,10 @@ int main(int argc, char *argv[])
 
                         if (end == (file.counter - 1)) {
                             /* Sleep if no new message was received */
-                            sleep(0.1);
+                            struct timespec req;
+                            req.tv_sec = 0;
+                            req.tv_nsec = 100000000;
+                            nanosleep(&req, NULL);
                         }
                         else {
                             /* set new end of log file and continue reading */

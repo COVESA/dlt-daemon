@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -18,7 +17,6 @@
  *
  * \file dlt-logstorage-udev.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*******************************************************************************
@@ -132,8 +130,8 @@ static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
  * Check if the device was on the list, remove it and send the message
  * to the daemon.
  *
- * @event The kind of event happening
- * @part The device partition to be checked
+ * @param event The kind of event happening
+ * @param part The device partition to be checked
  *
  * @return 0 on success, -1 if an error occured.
  */
@@ -207,6 +205,7 @@ static int logstorage_udev_udevd_callback(void)
     DltLogstorageCtrl *lctrl = get_logstorage_control();
     LogstorageCtrlUdev *prvt = NULL;
     struct udev_device *partition = NULL;
+    struct timespec ts;
 
     if (!lctrl) {
         pr_error("Not able to get logstorage control instance.\n");
@@ -247,7 +246,9 @@ static int logstorage_udev_udevd_callback(void)
          * Then, udev is only interesting to simplify the check on new devices,
          * and/or for hot unplug (without unmount).
          */
-        usleep(500 * 1000);
+        ts.tv_sec = 0;
+        ts.tv_nsec = 500 * NANOSEC_PER_MILLISEC;
+        nanosleep(&ts, NULL);
         ret = check_mountpoint_from_partition(EVENT_MOUNTED, partition);
     }
     else if (strncmp(action, "remove", sizeof("remove")) == 0)
@@ -265,7 +266,7 @@ static int logstorage_udev_udevd_callback(void)
  * The function looks for block devices that are of "partition" type.
  * Then, it gets the node, and call check_mountpoint_from_partition with it.
  *
- * @udev The udev device used to find all the nodes
+ * @param udev The udev device used to find all the nodes
  *
  * @return 0 on success, -1 otherwise.
  */

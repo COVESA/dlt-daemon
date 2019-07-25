@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015  Intel Corporation
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -34,18 +32,22 @@
 int main()
 {
     DltContext mainContext;
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = 200000 * 1000;
+
     DLT_REGISTER_CONTEXT(mainContext, "CTXP", "main context");
 
     DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message before app registered"));
-    usleep(200000);
+    nanosleep(&ts, NULL);
 
     DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Second message before app registered"));
-    usleep(200000);
+    nanosleep(&ts, NULL);
 
     DLT_REGISTER_APP("PRNT", "Sample pre-register application");
 
     DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message after app registered"));
-    usleep(200000);
+    nanosleep(&ts, NULL);
 
     DLT_UNREGISTER_APP()
     ;

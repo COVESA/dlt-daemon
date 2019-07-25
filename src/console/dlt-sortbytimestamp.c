@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2018, Codethink Ltd.
@@ -13,7 +12,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -23,12 +21,12 @@
  * Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-sortbytimestamp.cpp
+ * \file dlt-sortbytimestamp.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-sortbytimestamp.cpp                                       **
+**  SRC-MODULE: dlt-sortbytimestamp.c                                         **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -93,7 +91,8 @@ void verbose(int level, char *msg, ...)
             time_t tnow = time((time_t *)0);
 
             if (tnow != -1) {
-                char *snow = ctime(&tnow);
+                char snow[50];
+                ctime_r(&tnow, snow);
                 /* suppress newline char */
                 snow[strlen(snow) - 1] = 0;
                 printf("%s: ", snow);
@@ -340,7 +339,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if ((end < 0) || (end < begin) || (end >= file.counter)) {
+    if (end >= file.counter) {
         fprintf(stderr, "ERROR: Selected end message %d is out of range!\n", end);
         return -1;
     }

@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015 Advanced Driver Information Technology.
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -71,7 +69,6 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
                                    size_t msg_size)
 {
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
-    int bytes_sent = 0;
     int ret = 0;
 
     if ((conn != NULL) && (conn->receiver != NULL))
@@ -88,9 +85,7 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
     case DLT_CONNECTION_CLIENT_MSG_TCP:
         ret = dlt_daemon_socket_sendreliable(conn->receiver->fd,
                                              msg,
-                                             msg_size,
-                                             &bytes_sent);
-        conn->receiver->bytes_sent += bytes_sent;
+                                             msg_size);
         return ret;
     default:
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -187,7 +182,7 @@ DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
  * Based on the connection type provided, this function returns the pointer
  * to the DltReceiver structure corresponding.
  *
- * @param dameon_local Structure where to take the DltReceiver pointer from.
+ * @param daemon_local Structure where to take the DltReceiver pointer from.
  * @param type Type of the connection.
  * @param fd File descriptor
  *
@@ -232,8 +227,10 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
         }
 
         break;
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     case DLT_CONNECTION_APP_CONNECT:
     /* FALL THROUGH */
+#endif
     case DLT_CONNECTION_ONE_S_TIMER:
     /* FALL THROUGH */
     case DLT_CONNECTION_SIXTY_S_TIMER:
@@ -341,9 +338,6 @@ void dlt_connection_destroy(DltConnection *to_destroy)
     to_destroy->id = 0;
     close(to_destroy->receiver->fd);
     dlt_connection_destroy_receiver(to_destroy);
-    /* connection pointer might be in poll queue and used even after destroying
-     * it. To make sure it is not used anymore, connection type is invalidated */
-    to_destroy->type = DLT_CONNECTION_TYPE_MAX;
     free(to_destroy);
 }
 
@@ -394,13 +388,8 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
     temp->receiver = dlt_connection_get_receiver(daemon_local, type, fd);
 
     if (!temp->receiver) {
-        char local_str[DLT_DAEMON_TEXTBUFSIZE];
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "Unable to get receiver from %d connection.\n",
+        dlt_vlog(LOG_CRIT, "Unable to get receiver from %d connection.\n",
                  type);
-
-        dlt_log(LOG_CRIT, local_str);
         free(temp);
         return -1;
     }

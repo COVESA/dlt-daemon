@@ -4,12 +4,35 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.2 STABLE
+2.18.3 STABLE
 
 ## Changes
 
+### 2.18.3
+
+   * Update ReleaseNotes and version to v2.18.3
+   * Travis CI: Run unit test (#132)
+   * libdlt: Fix compiler warnings
+   * Unit test: Fix compiler warnings
+   * Unit test fix
+   * Do not install systemd service files for binaries that are not built (#129)
+   * lib: unlock buffer on termination
+   * dlt-receive: Fix crash without arguments
+   * dlt-control: Bug fix for broken get log info
+   * Logging: Error message modification
+   * dlt-daemon: fix internal logging to file after daemonize
+   * Offline logstorage: Fix storage handle NULL check during cleanup
+   * Fix compiler warnings
+   * POSIX: Replace usleep with nanosleep
+   * unix socket: IPC code isolation
+   * lib: daemon: Fix sem lock potential issue
+   * socket: Remove unnecessary header
+   * dlt-daemon: unlink application socket
+   * ipc: close socket if connect failed
+
 ### 2.18.2
 
+   * Update ReleaseNotes and version to v2.18.2
    * Size of Resend buffer less than or equal to DLT_USER_BUF_MAX_SIZE res… (#116)
    * Fixed memory leak when receiving network traces of 0xFFFF length
    * Contact information update (#118)
@@ -240,7 +263,6 @@ Back to [README.md](../README.md)
   * Use the best possible timestamp for all system journal entries
   * Make timeout in at_exit handler configurable
   * Allow multiple instances of dlt-daemon
-  * Fixed whitespace, formatting and licence headers of new code
   * Add C++ extension which uses variadic templates from C++ 11 (disabled by default)
   * Allow registration of contexts before application is registered
   * Add env-var to set initial log-levels
@@ -254,7 +276,6 @@ Back to [README.md](../README.md)
   * Replaced all tabs with spaces in all files in include folder
   * Rework of addon tests filtetransfer, systemd-journal and system-logger
   * Fix compilation warnings and possible misuse of snprint
-  * Added licence and Doxygen headers
   * Rework of unit tests
   * Fix installation paths on x86_64 (lib64 instead of lib)
 

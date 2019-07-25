@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -17,7 +16,6 @@
  *
  * \file: dlt_offline_logstorage.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 #include <stdio.h>
 #include <string.h>
@@ -85,15 +83,17 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
  * Destroy Filter configurations list.
  *
  * @param list List of the filter configurations will be destroyed.
+ * @param uconfig User configurations for log file
+ * @param dev_path Path to the device
  * @param reason Reason for the destroying of Filter configurations list
  * @return 0 on success, -1 on error
  */
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
+                                           DltLogStorageUserConfig *uconfig,
+                                           char *dev_path,
                                            int reason)
 {
     DltLogStorageFilterList *tmp = NULL;
-    DltLogStorageUserConfig *uconfig = NULL;
-    char *dev_path = NULL;
 
     while (*(list) != NULL) {
         tmp = *list;
@@ -295,7 +295,8 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
         return;
     }
 
-    dlt_logstorage_list_destroy(&(handle->config_list), reason);
+    dlt_logstorage_list_destroy(&(handle->config_list), &handle->uconfig,
+                                handle->device_mount_point, reason);
 }
 
 
@@ -356,7 +357,7 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
         strncpy((*names + y), tok, len);
 
         if ((num > 1) && (i < num))
-            strncpy((*names + y + len), ",", 1);
+            strncpy((*names + y + len), ",", 2);
 
         y += len + 1;
 
@@ -376,7 +377,7 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
  * Non-digit characters including spaces and out of boundary will lead to an
  * error -1.
  *
- * @param file_name    string to store the file name
+ * @param number       Number to be read
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
@@ -394,7 +395,7 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 
     /* check if string consists of digits only */
     for (i = 0; i < len; i++)
-        if (isdigit(value[i] == 0)) {
+        if (!isdigit(value[i])) {
             dlt_log(LOG_ERR, "Invalid, is not a number \n");
             return -1;
         }
@@ -475,7 +476,7 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
  * dlt_logstorage_create_keys_only_ctid
  *
  * Prepares keys with context ID alone, will use ecuid if provided
- * (ecuid::ctid) or (::ctid)
+ * (ecuid\:\:ctid) or (\:\:ctid)
  *
  * @param ecuid          ECU ID
  * @param ctid           Context ID
@@ -608,15 +609,15 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
  * wildcard. This will be rejected.
  *
  * If lists given for application and/or context id, all possible combinations
- * are returned as keys in a form "[apid][ctid], e.g. "APP1:CTX1".
- * If wildcards are used, the non-wildcard value becomes the key, e.g. "APP1:"
- * or ":CTX2".
+ * are returned as keys in a form "[apid][ctid], e.g. "APP1\:CTX1".
+ * If wildcards are used, the non-wildcard value becomes the key, e.g. "APP1\:"
+ * or "\:CTX2".
  *
- * @param[in]: apids: string given from filter configuration
- * @param[in]: ctids: string given from filter configuration
- * @param[in]: ecuid: string given from filter configuration
- * @param[out]: keys: keys to fill into hash table
- * @param[out]: num_keys: number of keys
+ * @param[in] apids string given from filter configuration
+ * @param[in] ctids string given from filter configuration
+ * @param[in] ecuid string given from filter configuration
+ * @param[out] keys keys to fill into hash table
+ * @param[out] num_keys number of keys
  * @return: 0 on success, error on failure*
  */
 DLT_STATIC int dlt_logstorage_create_keys(char *apids,
@@ -656,7 +657,7 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
 
     /* obtain key list and number of keys for application ids */
     if (dlt_logstorage_get_keys_list(apids, ",", &apid_list, &num_apids) != 0) {
-        dlt_log(LOG_ERR, "Failed to obtain appid, check configuration file \n");
+        dlt_log(LOG_ERR, "Failed to obtain apid, check configuration file \n");
         return -1;
     }
 
@@ -712,7 +713,7 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
  * Prepares hash table with keys and data
  *
  * @param handle         DLT Logstorage handle
- * @param tmp_data       Holds all other configuration values
+ * @param data           Holds all other configuration values
  * @return               0 on success, -1 on error
  */
 DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
@@ -1548,12 +1549,12 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
  *
  * Combination of two wildcards is not allowed.
  *
- * @param input_file    pointer to configuration file stored on device
+ * @param handle        DLT Logstorage handle
  * @return              0 on success, -1 on error, 1 on warning
  */
 DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
 {
-    char config_file_name[PATH_MAX + 1] = { '\0' };
+    char config_file_name[PATH_MAX] = {0};
     int ret = 0;
 
     /* Check if handle is NULL or already initialized or already configured  */
@@ -1578,7 +1579,7 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
                 "Creating configuration file path string failed\n");
         return -1;
     }
-
+    config_file_name[PATH_MAX - 1] = 0;
     ret = dlt_logstorage_store_filters(handle, config_file_name);
 
     if (ret == 1) {
@@ -1623,6 +1624,7 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
     }
 
     strncpy(handle->device_mount_point, mount_point, DLT_MOUNT_PATH_MAX);
+    handle->device_mount_point[DLT_MOUNT_PATH_MAX] = 0;
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
@@ -1652,7 +1654,7 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
         dlt_logstorage_free(handle, reason);
 
     /* Reset all device status */
-    memset(handle->device_mount_point, '\0', sizeof(char) * DLT_MOUNT_PATH_MAX);
+    memset(handle->device_mount_point, 0, sizeof(char) * (DLT_MOUNT_PATH_MAX + 1));
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
@@ -1730,6 +1732,7 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
  * @param config    [out] Pointer to array of filter configurations
  * @param apid      application id
  * @param ctid      context id
+ * @param ecuid     ecu id
  * @return          number of configurations found
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
@@ -1914,11 +1917,13 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
  * configuration.
  *
  * @param handle    DltLogStorage handle
- * @param config    User configurations for log file
+ * @param uconfig    User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
- * @param data2     Data buffer of message body
- * @param size2     Size of message body
+ * @param data2     Data buffer of extended message body
+ * @param size2     Size of extended message body
+ * @param data3     Data buffer of message body
+ * @param size3     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,
@@ -2032,6 +2037,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
         if (ret == 0) { /* log data (write) */
             ret = config[i]->dlt_logstorage_write(config[i],
+                                                  uconfig,
+                                                  handle->device_mount_point,
                                                   data1,
                                                   size1,
                                                   data2,

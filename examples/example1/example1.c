@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -54,13 +52,17 @@ DLT_DECLARE_CONTEXT(con_exa1);
 
 int main()
 {
+    struct timespec ts;
+
     DLT_REGISTER_APP("EXA1", "First Example");
 
     DLT_REGISTER_CONTEXT(con_exa1, "CON", "First context");
 
     DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("Hello world!"));
 
-    usleep(1000);
+    ts.tv_sec = 0;
+    ts.tv_nsec = 1000000;
+    nanosleep(&ts, NULL);
 
     DLT_UNREGISTER_CONTEXT(con_exa1);
 

@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -75,6 +73,7 @@
  \{
  */
 
+#   include <netinet/in.h>
 #   include <stdio.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
@@ -192,7 +191,7 @@ enum {
 };
 
 /**
- * The standard TCP Port used for DLT daemon, can be overwritten via -p <port> when starting dlt-daemon
+ * The standard TCP Port used for DLT daemon, can be overwritten via -p \<port\> when starting dlt-daemon
  */
 #   define DLT_DAEMON_TCP_PORT 3490
 
@@ -244,12 +243,9 @@ enum {
 
 #   define PRINT_FUNCTION_VERBOSE(_verbose)  \
     { \
-        static char _strbuf[255]; \
-    \
         if (_verbose) \
         { \
-            snprintf(_strbuf, 255, "%s()\n", __func__); \
-            dlt_log(LOG_INFO, _strbuf); \
+            dlt_vlog(LOG_INFO, "%s()\n", __func__); \
         } \
     }
 
@@ -353,6 +349,14 @@ enum {
 #   define DLT_RCV_REMOVE      (1 << 1)
 
 /**
+ * Maximal length of path in DLT
+ * DLT limits the path length and does not do anything else to determine
+ * the actual value, because the least that is supported on any system
+ * that DLT runs on is 1024 bytes.
+ */
+#   define DLT_PATH_MAX 1024
+
+/**
  * Maximal length of mounted path
  */
 #   define DLT_MOUNT_PATH_MAX  1024
@@ -376,6 +380,14 @@ enum {
  * Maximal line length
  */
 #   define DLT_LINE_LEN 1024
+
+/**
+ * Macros for network trace
+ */
+#define DLT_TRACE_NW_TRUNCATED "NWTR"
+#define DLT_TRACE_NW_START "NWST"
+#define DLT_TRACE_NW_SEGMENT "NWCH"
+#define DLT_TRACE_NW_END "NWEN"
 
 /**
  * Provision to test static function
@@ -408,7 +420,7 @@ extern char dltSerialHeaderChar[DLT_ID_SIZE];
 /**
  * The common base-path of the dlt-daemon-fifo and application-generated fifos
  */
-extern char dltFifoBaseDir[PATH_MAX + 1];
+extern char dltFifoBaseDir[DLT_PATH_MAX];
 
 /**
  * The type of a DLT ID (context id, application id, etc.)
@@ -769,7 +781,6 @@ typedef struct
     char *buf;            /**< pointer to position within receiver buffer */
     char *backup_buf;     /** pointer to the buffer with partial messages if any **/
     int fd;               /**< connection handle */
-    int32_t bytes_sent;       /**< total bytes sent in a single msg */
     int32_t buffersize;       /**< size of receiver buffer */
 } DltReceiver;
 
@@ -799,6 +810,17 @@ typedef struct
     unsigned char status;
     int size;
 } DltBufferBlockHead;
+
+#   ifdef DLT_USE_IPv6
+#      define DLT_IP_SIZE (INET6_ADDRSTRLEN)
+#   else
+#      define DLT_IP_SIZE (INET_ADDRSTRLEN)
+#   endif
+typedef struct DltBindAddress
+{
+    char ip[DLT_IP_SIZE];
+    struct DltBindAddress *next;
+} DltBindAddress_t;
 
 #   define DLT_MESSAGE_ERROR_OK       0
 #   define DLT_MESSAGE_ERROR_UNKNOWN -1
@@ -1206,7 +1228,7 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver);
  * @param receiver pointer to dlt receiver structure
  * @param dest pointer to the destination buffer
  * @param to_get size of the data to copy in dest
- * @skip_header whether if the DltUserHeader must be skipped.
+ * @param skip_header whether if the DltUserHeader must be skipped.
  */
 int dlt_receiver_check_and_get(DltReceiver *receiver,
                                void *dest,
@@ -1281,6 +1303,7 @@ DltReturnValue dlt_buffer_free_dynamic(DltBuffer *buf);
 /**
  * Check if message fits into buffer.
  * @param buf Pointer to buffer structure
+ * @param needed Needed size
  * @return DLT_RETURN_OK if enough space, DLT_RETURN_ERROR otherwise
  */
 DltReturnValue dlt_buffer_check_size(DltBuffer *buf, int needed);
@@ -1297,7 +1320,7 @@ DltReturnValue dlt_buffer_push(DltBuffer *buf, const unsigned char *data, unsign
 /**
  * Write up to three entries to ringbuffer.
  * Entries are joined to one block.
- * @param dlt Pointer to ringbuffer structure
+ * @param buf Pointer to ringbuffer structure
  * @param data1 Pointer to data to be written to ringbuffer
  * @param size1 Size of data in bytes to be written to ringbuffer
  * @param data2 Pointer to data to be written to ringbuffer
@@ -1540,7 +1563,7 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
  * @param rp        char
  * @param rp_count  int
  * @param wp        char
- * @param length        int
+ * @param len       int
  */
 void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
 
@@ -1555,7 +1578,7 @@ void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
 #   ifndef DLT_USE_UNIX_SOCKET_IPC
 /**
  * Create the specified path, recursive if necessary
- * behaves like calling mkdir -p <dir> on the console
+ * behaves like calling mkdir -p \<dir\> on the console
  */
 int dlt_mkdir_recursive(const char *dir);
 #   endif

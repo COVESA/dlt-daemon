@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -88,7 +86,6 @@
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_serial.h"
 
-static char str[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
 sem_t dlt_daemon_mutex;
 
@@ -240,13 +237,8 @@ int dlt_daemon_init(DltDaemon *daemon,
     dlt_set_id(daemon->ecuid, "");
 
     /* initialize ring buffer for client connection */
-    snprintf(str,
-             DLT_DAEMON_COMMON_TEXTBUFSIZE,
-             "Ringbuffer configuration: %lu/%lu/%lu\n",
-             RingbufferMinSize,
-             RingbufferMaxSize,
-             RingbufferStepSize);
-    dlt_log(LOG_INFO, str);
+    dlt_vlog(LOG_INFO, "Ringbuffer configuration: %lu/%lu/%lu\n",
+             RingbufferMinSize, RingbufferMaxSize, RingbufferStepSize);
 
     if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), RingbufferMinSize, RingbufferMaxSize,
                                 RingbufferStepSize) == DLT_RETURN_ERROR)
@@ -912,6 +904,14 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
     context->log_level_pos = log_level_pos;
     context->user_handle = user_handle;
 
+    /* In case a context is loaded from runtime config file,
+     * the user_handle is 0 and we mark that context as predefined.
+     */
+    if (context->user_handle == 0)
+        context->predefined = true;
+    else
+        context->predefined = false;
+
     /* Sort */
     if (new_context) {
         qsort(user_list->contexts,
@@ -1112,9 +1112,8 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
              * We need to check here if there was an error or was it feof.*/
             if (ferror(fd)) {
                 dlt_vlog(LOG_WARNING,
-                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. %s\n",
+                         "%s fgets(buf,sizeof(buf),fd) returned NULL. %s\n",
                          __func__,
-                         fd,
                          strerror(errno));
                 fclose(fd);
                 return -1;
@@ -1126,9 +1125,8 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
             }
             else {
                 dlt_vlog(LOG_WARNING,
-                         "%s fgets(buf,sizeof(buf),fd[%d]) returned NULL. Unknown error.\n",
-                         __func__,
-                         fd);
+                         "%s fgets(buf,sizeof(buf),fd) returned NULL. Unknown error.\n",
+                         __func__);
                 fclose(fd);
                 return -1;
             }
@@ -1306,12 +1304,12 @@ int dlt_daemon_configuration_load(DltDaemon *daemon, const char *filename, int v
                     /* parse arguments here */
                     if (strcmp(token, "LoggingMode") == 0) {
                         daemon->mode = atoi(value);
-                        snprintf(str, DLT_DAEMON_COMMON_TEXTBUFSIZE, "Runtime Option: %s=%d\n", token, daemon->mode);
-                        dlt_log(LOG_INFO, str);
+                        dlt_vlog(LOG_INFO, "Runtime Option: %s=%d\n", token,
+                                 daemon->mode);
                     }
                     else {
-                        snprintf(str, DLT_DAEMON_COMMON_TEXTBUFSIZE, "Unknown option: %s=%s\n", token, value);
-                        dlt_log(LOG_WARNING, str);
+                        dlt_vlog(LOG_WARNING, "Unknown option: %s=%s\n", token,
+                                 value);
                     }
                 }
             }

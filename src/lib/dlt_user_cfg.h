@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -128,8 +126,8 @@
 /* default message id for non-verbose mode, if no message id was provided */
 #define DLT_USER_DEFAULT_MSGID 0xffff
 
-/* delay in receiver routine in usec (100000 usec = 100ms) */
-#define DLT_USER_RECEIVE_DELAY 100000
+/* delay for receiver thread (nsec) */
+#define DLT_USER_RECEIVE_NDELAY (100000000)
 
 /* Name of environment variable for local print mode */
 #define DLT_USER_ENV_LOCAL_PRINT_MODE "DLT_LOCAL_PRINT_MODE"
@@ -137,8 +135,8 @@
 /* Timeout offset for resending user buffer at exit in 10th milliseconds (10000 = 1s)*/
 #define DLT_USER_ATEXIT_RESEND_BUFFER_EXIT_TIMEOUT 100000
 
-/* Sleeps between resending user buffer at exit in usec (1000 usec = 1ms)*/
-#define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 100000
+/* Sleeps between resending user buffer at exit in nsec (1000000 nsec = 1ms)*/
+#define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 100000000
 
 /* Retry interval for mq error in usec */
 #define DLT_USER_MQ_ERROR_RETRY_INTERVAL 100000

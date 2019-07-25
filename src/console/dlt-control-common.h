@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -18,7 +17,6 @@
  *
  * \file dlt-control-common.h
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 #ifndef _DLT_CONTROL_COMMON_H_
@@ -49,6 +47,9 @@
     ({ if (get_verbosity()) { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } })
 
 #define DLT_CTRL_DEFAULT_ECUID "ECU1"
+
+#define NANOSEC_PER_MILLISEC 1000000
+#define NANOSEC_PER_SEC 1000000000
 
 /* To be used as Dlt Message body when sending to DLT daemon */
 typedef struct

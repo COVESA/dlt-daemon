@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -64,12 +62,10 @@
 
 #include "dlt_daemon_client.h"
 #include "dlt_daemon_connection.h"
+#include "dlt_daemon_event_handler.h"
 
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
-
-/** Global text output buffer, mainly used for creation of error/warning strings */
-static char str[DLT_DAEMON_TEXTBUFSIZE];
 
 /** Inline function to calculate/set the requested log level or traces status
  *  with default log level or trace status when "ForceContextLogLevelAndTraceStatus"
@@ -109,28 +105,32 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                int size2,
                                                int verbose)
 {
-    int j, sent = 0;
+    int sent = 0;
+    unsigned int i = 0;
+    int ret = 0;
     DltConnection *temp = NULL;
     int type_mask =
         (DLT_CON_MASK_CLIENT_MSG_TCP | DLT_CON_MASK_CLIENT_MSG_SERIAL);
-    uint8_t *tmp_buffer = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return 0;
     }
 
-    temp = daemon_local->pEvent.connections;
-    temp = dlt_connection_get_next(temp, type_mask);
+    for (i = 0; i < daemon_local->pEvent.nfds; i++)
+    {
+        temp = dlt_event_handler_find_connection(&(daemon_local->pEvent),
+                                        daemon_local->pEvent.pfd[i].fd);
 
-    /* FIXME: the lock shall include the for loop as data
-     * can be affect between each iteration, but
-     * dlt_daemon_close_socket may call us too ...
-     */
-    for (j = 0; ((j < daemon_local->client_connections) && (temp != NULL)); j++) {
-        int ret = 0;
+        if ((temp == NULL) || (temp->receiver == NULL) ||
+            !((1 << temp->type) & type_mask)) {
+            dlt_vlog(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
+            continue;
+        }
+
         DLT_DAEMON_SEM_LOCK();
-        DltConnection *next = dlt_connection_get_next(temp->next, type_mask);
 
         ret = dlt_connection_send_multiple(temp,
                                            data1,
@@ -142,33 +142,6 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
         if ((ret != DLT_DAEMON_ERROR_OK) &&
             (DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)) {
-            if (daemon->state != DLT_DAEMON_STATE_BUFFER_FULL) {
-                if (temp->receiver->bytes_sent < (size1 + size2)) {
-                    tmp_buffer = (uint8_t *)calloc(size1 + size2, sizeof(uint8_t));
-
-                    if (tmp_buffer == NULL) {
-                        dlt_vlog(LOG_ERR, "%s: Memory allocation failed.\n", __func__);
-                        return 0;
-                    }
-
-                    memcpy(tmp_buffer, data1, size1);
-                    memcpy(tmp_buffer + size1, data2, size2);
-                    DLT_DAEMON_SEM_LOCK();
-
-                    /* Store message in history buffer */
-                    if (dlt_buffer_push3(&(daemon->client_ringbuffer),
-                                         tmp_buffer + temp->receiver->bytes_sent,
-                                         (size1 + size2 - temp->receiver->bytes_sent),
-                                         0, 0, 0, 0) < DLT_RETURN_OK) {
-                        dlt_vlog(LOG_DEBUG, "%s: Buffer is full! Message discarded.\n", __func__);
-                        dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER_FULL);
-                    }
-
-                    free(tmp_buffer);
-                    DLT_DAEMON_SEM_FREE();
-                }
-            }
-
             dlt_daemon_close_socket(temp->receiver->fd,
                                     daemon,
                                     daemon_local,
@@ -182,8 +155,6 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
              * then do not store in ring buffer
              */
             sent = 1;
-
-        temp = next;
     } /* for */
 
     return sent;
@@ -204,14 +175,9 @@ int dlt_daemon_client_send_all(DltDaemon *daemon,
     void *msg1, *msg2;
     int msg1_sz, msg2_sz;
     int ret = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Invalid parameters\n",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return 0;
     }
 
@@ -248,6 +214,11 @@ int dlt_daemon_client_send(int sock,
                            int verbose)
 {
     int sent, ret;
+
+    if ((daemon == NULL) || (daemon_local == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid arguments\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
 
     if ((sock != DLT_DAEMON_SEND_TO_ALL) && (sock != DLT_DAEMON_SEND_FORCE)) {
         /* Send message to specific socket */
@@ -355,7 +326,7 @@ int dlt_daemon_client_send_control_message(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
                                            DltMessage *msg,
-                                           char *appid,
+                                           char *apid,
                                            char *ctid,
                                            int verbose)
 {
@@ -364,7 +335,7 @@ int dlt_daemon_client_send_control_message(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == 0) || (msg == 0) || (appid == 0) || (ctid == 0))
+    if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     /* prepare storage header */
@@ -400,10 +371,10 @@ int dlt_daemon_client_send_control_message(int sock,
 
     msg->extendedheader->noar = 1; /* number of arguments */
 
-    if (strcmp(appid, "") == 0)
+    if (strcmp(apid, "") == 0)
         dlt_set_id(msg->extendedheader->apid, DLT_DAEMON_CTRL_APID);       /* application id */
     else
-        dlt_set_id(msg->extendedheader->apid, appid);
+        dlt_set_id(msg->extendedheader->apid, apid);
 
     if (strcmp(ctid, "") == 0)
         dlt_set_id(msg->extendedheader->ctid, DLT_DAEMON_CTRL_CTID);       /* context id */
@@ -1035,8 +1006,7 @@ void dlt_daemon_control_get_log_info(int sock,
         offset += sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "#apid: %d \n", count_app_ids);
-        dlt_log(LOG_DEBUG, str);
+        dlt_vlog(LOG_DEBUG, "#apid: %d \n", count_app_ids);
 #endif
 
         for (i = 0; i < count_app_ids; i++) {
@@ -1068,8 +1038,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
                 dlt_print_id(buf, apid);
-                snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "apid: %s\n", buf);
-                dlt_log(LOG_DEBUG, str);
+                dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
 #endif
 
                 if (req->apid[0] != '\0')
@@ -1081,14 +1050,12 @@ void dlt_daemon_control_get_log_info(int sock,
                 offset += sizeof(uint16_t);
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "#ctid: %d \n", count_con_ids);
-                dlt_log(LOG_DEBUG, str);
+                dlt_vlog(LOG_DEBUG, "#ctid: %d \n", count_con_ids);
 #endif
 
                 for (j = 0; j < count_con_ids; j++) {
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                    snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "j: %d \n", j);
-                    dlt_log(LOG_DEBUG, str);
+                    dlt_vlog(LOG_DEBUG, "j: %d \n", j);
 #endif
 
                     if (!((count_con_ids == 1) && (req->apid[0] != '\0') &&
@@ -1107,8 +1074,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
                         dlt_print_id(buf, context->ctid);
-                        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ctid: %s \n", buf);
-                        dlt_log(LOG_DEBUG, str);
+                        dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
 #endif
 
                         /* Mode 4, 6, 7 */
@@ -1143,8 +1109,8 @@ void dlt_daemon_control_get_log_info(int sock,
                         }
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                        snprintf(str, DLT_DAEMON_TEXTBUFSIZE, "ll=%d ts=%d \n", (int32_t)ll, (int32_t)ts);
-                        dlt_log(LOG_DEBUG, str);
+                        dlt_vlog(LOG_DEBUG, "ll=%d ts=%d \n", (int32_t)ll,
+                                 (int32_t)ts);
 #endif
                     }
 
@@ -1529,7 +1495,8 @@ void dlt_daemon_control_callsw_cinjection(int sock,
     DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t); /* Get service id */
     id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
-    if ((id >= DLT_DAEMON_INJECTION_MIN) && (id <= DLT_DAEMON_INJECTION_MAX)) {
+    /* id is always less than DLT_DAEMON_INJECTION_MAX since its type is uinit32_t */
+    if (id >= DLT_DAEMON_INJECTION_MIN) {
         /* This a a real SW-C injection call */
         data_length_inject = 0;
         data_length_inject_tmp = 0;
@@ -1703,8 +1670,8 @@ void dlt_daemon_control_set_log_level(int sock,
     char ctid[DLT_ID_SIZE + 1] = { 0 };
     DltServiceSetLogLevel *req = NULL;
     DltDaemonContext *context = NULL;
-    int8_t appid_length = 0;
-    int8_t ctxtid_length = 0;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
@@ -1719,31 +1686,31 @@ void dlt_daemon_control_set_log_level(int sock,
 
     dlt_set_id(apid, req->apid);
     dlt_set_id(ctid, req->ctid);
-    appid_length = strlen(apid);
-    ctxtid_length = strlen(ctid);
+    apid_length = strlen(apid);
+    ctid_length = strlen(ctid);
 
-    if ((appid_length != 0) && (apid[appid_length - 1] == '*') && (ctid[0] == 0)) { /*appid provided having '*' in it and ctid is null*/
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid[0] == 0)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
                                                             daemon_local,
                                                             1,
                                                             apid,
-                                                            appid_length - 1,
+                                                            apid_length - 1,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and appid is null*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and apid is null*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
                                                             daemon_local,
                                                             0,
                                                             ctid,
-                                                            ctxtid_length - 1,
+                                                            ctid_length - 1,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((appid_length != 0) && (apid[appid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
@@ -1754,7 +1721,7 @@ void dlt_daemon_control_set_log_level(int sock,
                                                             req->log_level,
                                                             verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
     {
         dlt_daemon_find_multiple_context_and_send_log_level(sock,
                                                             daemon,
@@ -1876,8 +1843,8 @@ void dlt_daemon_control_set_trace_status(int sock,
     char ctid[DLT_ID_SIZE + 1] = { 0 };
     DltServiceSetLogLevel *req = NULL;
     DltDaemonContext *context = NULL;
-    int8_t appid_length = 0;
-    int8_t ctxtid_length = 0;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
@@ -1892,20 +1859,20 @@ void dlt_daemon_control_set_trace_status(int sock,
 
     dlt_set_id(apid, req->apid);
     dlt_set_id(ctid, req->ctid);
-    appid_length = strlen(apid);
-    ctxtid_length = strlen(ctid);
+    apid_length = strlen(apid);
+    ctid_length = strlen(ctid);
 
-    if ((appid_length != 0) && (apid[appid_length - 1] == '*') && (ctid[0] == 0)) { /*appid provided having '*' in it and ctid is null*/
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid[0] == 0)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,
                                                                daemon_local,
                                                                1,
                                                                apid,
-                                                               appid_length - 1,
+                                                               apid_length - 1,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and appid is null*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid[0] == 0)) /*ctid provided is having '*' in it and apid is null*/
 
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
@@ -1913,11 +1880,11 @@ void dlt_daemon_control_set_trace_status(int sock,
                                                                daemon_local,
                                                                0,
                                                                ctid,
-                                                               ctxtid_length - 1,
+                                                               ctid_length - 1,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((appid_length != 0) && (apid[appid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid[0] == 0)) /*only app id case*/
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,
@@ -1928,7 +1895,7 @@ void dlt_daemon_control_set_trace_status(int sock,
                                                                req->log_level,
                                                                verbose);
     }
-    else if ((ctxtid_length != 0) && (ctid[ctxtid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid[0] == 0)) /*only context id case*/
     {
         dlt_daemon_find_multiple_context_and_send_trace_status(sock,
                                                                daemon,
@@ -2147,7 +2114,6 @@ void dlt_daemon_control_set_timing_packets(int sock,
 
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
-    int ret;
     DltMessage msg;
     int32_t len;
 
@@ -2209,12 +2175,12 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
 
     msg.standardheader->len = DLT_HTOBE_16(((uint16_t)len));
 
-    /* Send message */
-    if ((ret =
-             dlt_daemon_client_send(sock, daemon, daemon_local, msg.headerbuffer, sizeof(DltStorageHeader),
-                                    msg.headerbuffer + sizeof(DltStorageHeader),
-                                    msg.headersize - sizeof(DltStorageHeader),
-                                    msg.databuffer, msg.datasize, verbose))) {}
+    /* Send message, ignore return value */
+    dlt_daemon_client_send(sock, daemon, daemon_local, msg.headerbuffer,
+                           sizeof(DltStorageHeader),
+                           msg.headerbuffer + sizeof(DltStorageHeader),
+                           msg.headersize - sizeof(DltStorageHeader),
+                           msg.databuffer, msg.datasize, verbose);
 
     /* free message */
     dlt_message_free(&msg, 0);
@@ -2227,26 +2193,19 @@ int dlt_daemon_process_one_s_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return -1;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "%s: Fail to read timer (%s)\n", __func__,
+                 strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }
@@ -2279,26 +2238,19 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = 0;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return -1;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        dlt_log(LOG_WARNING, str);
+        dlt_vlog(LOG_WARNING, "%s: Fail to read timer (%s)\n", __func__,
+                 strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }
@@ -2337,27 +2289,18 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
 {
     uint64_t expir = 0;
     ssize_t res = -1;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "%s: invalid parameters",
-                 __func__);
-        dlt_log(LOG_ERR, local_str);
+        dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
         return res;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));
 
     if (res < 0) {
-        snprintf(local_str,
-                 DLT_DAEMON_TEXTBUFSIZE,
-                 "Failed to read timer_wd; %s\n",
-                 strerror(errno));
-        dlt_log(LOG_WARNING, local_str);
+        dlt_vlog(LOG_WARNING, "Failed to read timer_wd; %s\n", strerror(errno));
         /* Activity received on timer_wd, but unable to read the fd:
          * let's go on sending notification */
     }

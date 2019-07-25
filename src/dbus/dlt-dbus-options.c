@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -45,7 +43,7 @@ void usage(char *prog_name)
     printf("Options:\n");
     printf(" -d             Daemonize. Detach from terminal and run in background.\n");
     printf(" -c filename    Use configuration file. \n");
-    printf(" -a appid       Used application id. \n");
+    printf(" -a apid        Used application id. \n");
     printf("                Default: %s\n", DEFAULT_CONF_FILE);
     printf(" -b type        Used bus type. \n");
     printf("                Session = 0, System = 1.\n");
@@ -82,21 +80,21 @@ int read_command_line(DltDBusCliOptions *options, int argc, char *argv[])
         {
             options->BusType = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->BusType);
-            strcpy(options->BusType, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->BusType, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'a':
         {
             options->ApplicationId = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ApplicationId);
-            strcpy(options->ApplicationId, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->ApplicationId, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'c':
         {
             options->ConfigurationFileName = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ConfigurationFileName);
-            strcpy(options->ConfigurationFileName, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->ConfigurationFileName, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
             break;
         }
         case 'h':

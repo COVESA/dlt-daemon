@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -142,6 +140,7 @@ int main(int argc, char *argv[])
     char *text;
     int num, maxnum;
     int delay;
+    struct timespec ts;
 
     int state = -1, newstate;
 
@@ -311,9 +310,9 @@ int main(int argc, char *argv[])
         maxnum = 10;
 
     if (dvalue)
-        delay = atoi(dvalue) * 1000;
+        delay = atoi(dvalue) * 1000000;
     else
-        delay = 500 * 1000;
+        delay = 500 * 1000000;
 
     if (tvalue)
         dlt_set_resend_timeout_atexit(atoi(tvalue));
@@ -378,8 +377,11 @@ int main(int argc, char *argv[])
                 DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
         }
 
-        if (delay > 0)
-            usleep(delay);
+        if (delay > 0) {
+            ts.tv_sec = delay / 1000000000;
+            ts.tv_nsec = delay % 1000000000;
+            nanosleep(&ts, NULL);
+        }
     }
 
     sleep(1);

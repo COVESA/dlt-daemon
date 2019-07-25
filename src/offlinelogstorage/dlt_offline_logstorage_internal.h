@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2017 Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -16,7 +15,6 @@
  *
  * \file: dlt_offline_logstorage_internal.h
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*******************************************************************************
@@ -51,6 +49,8 @@
 #define DLT_OFFLINE_LOGSTORAGE_INTERNAL_H
 
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
+                                           DltLogStorageUserConfig *uconfig,
+                                           char *dev_path,
                                            int reason);
 
 DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
@@ -95,8 +95,8 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
 
 void dlt_logstorage_free(DltLogStorage *handle, int reason);
 
-DLT_STATIC int dlt_logstorage_create_keys(char *appids,
-                                          char *ctxids,
+DLT_STATIC int dlt_logstorage_create_keys(char *apids,
+                                          char *ctids,
                                           char *ecuid,
                                           char **keys,
                                           int *num_keys);

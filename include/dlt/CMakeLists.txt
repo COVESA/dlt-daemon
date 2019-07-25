@@ -1,5 +1,4 @@
 #######
-# @licence make begin@
 # SPDX license identifier: MPL-2.0
 #
 # Copyright (C) 2011-2015, BMW AG
@@ -12,16 +11,18 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.genivi.org/.
-# @licence end@
 #######
 
-install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h dlt_common.h dlt_types.h dlt_version.h dlt_shm.h dlt_offline_trace.h dlt_filetransfer.h dlt_common_api.h
+install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h
+              dlt_common.h dlt_types.h dlt_shm.h dlt_offline_trace.h
+              dlt_filetransfer.h dlt_common_api.h
+              ${PROJECT_BINARY_DIR}/include/dlt/dlt_version.h
         DESTINATION include/dlt
         COMPONENT devel)
 
-
-if(${WITH_DLT_CXX11_EXT})
-  install(FILES dlt_cpp_extension.hpp
-          DESTINATION include/dlt
-          COMPONENT devel)
+if(WITH_DLT_CXX11_EXT)
+    install(FILES dlt_cpp_extension.hpp
+            DESTINATION include/dlt
+            COMPONENT devel)
 endif()
+

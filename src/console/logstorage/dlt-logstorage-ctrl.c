@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO. *
@@ -18,7 +17,6 @@
  *
  * \file dlt-logstorage-ctrl.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 /*******************************************************************************
 **                                                                            **
@@ -163,8 +161,8 @@ static int analyze_response(char *data, void *payload, int len)
         return -1;
 
     /* satisfy compiler */
-    payload = payload;
-    len = len;
+    (void)payload;
+    (void)len;
 
     snprintf(resp_ok,
              MAX_RESPONSE_LENGTH,

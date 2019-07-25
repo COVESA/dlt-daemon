@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -1175,7 +1173,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWTR") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_macro[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1280,7 +1278,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWST") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
                                 dltdata->test_counter_macro[8]++;
 
                             /* Streahandle */
@@ -1377,7 +1375,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWCH") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
                                 dltdata->test_counter_macro[8]++;
 
                             /* handle */
@@ -1439,7 +1437,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWEN") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
                                 dltdata->test_counter_macro[8]++;
 
                             /* handle */
@@ -2199,7 +2197,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWTR") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_function[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2304,7 +2302,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWST") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
                                 dltdata->test_counter_function[8]++;
 
                             /* Streahandle */
@@ -2401,7 +2399,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWCH") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
                                 dltdata->test_counter_function[8]++;
 
                             /* handle */
@@ -2463,7 +2461,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
 
-                            if (strcmp((char *)chdr, "NWEN") == 0)
+                            if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
                                 dltdata->test_counter_function[8]++;
 
                             /* handle */

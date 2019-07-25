@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015 Advanced Driver Information Technology.
@@ -14,7 +13,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -96,18 +94,25 @@ DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *
 DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
                                                  char *value)
 {
-    int tmp = -1;
+    long int tmp = -1;
 
     if ((con == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    tmp = (int)strtol(value, NULL, 10);
+    errno = 0;
+    tmp = strtol(value, NULL, 10);
+    if ((errno == ERANGE && (tmp == LONG_MAX || tmp == LONG_MIN))
+         || (errno != 0 && tmp == 0)) {
+        dlt_vlog(LOG_ERR, "%s: cannot convert port number\n", __func__);
+        return DLT_RETURN_ERROR;
+    }
 
     /* port ranges for unprivileged applications */
-    if ((tmp > IPPORT_RESERVED) && (tmp <= USHRT_MAX)) {
-        con->port = tmp;
+    if ((tmp > IPPORT_RESERVED) && ((unsigned)tmp <= USHRT_MAX))
+    {
+        con->port = (int)tmp;
         return DLT_RETURN_OK;
     }
     else {
@@ -492,10 +497,10 @@ DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] = {
 /**
  * Check if gateway connection configuration parameter is valid.
  *
- * @param g     DltGateway
- * @param c     DltGatewayConnection
- * @param key   DltGatwayConnection property
- * @param value specified property value from configuration file
+ * @param gateway    DltGateway
+ * @param con        DltGatewayConnection
+ * @param ctype      DltGatwayConnection property
+ * @param value      specified property value from configuration file
  * @return Value from DltReturnValue enum
  */
 DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
@@ -517,9 +522,9 @@ DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
 /**
  * Store gateway connection in internal data structure
  *
- * @param g     DltGatway
- * @param tmp   DltGatewayConnection
- * @param verbose verbose flag
+ * @param gateway    DltGatway
+ * @param tmp        DltGatewayConnection
+ * @param verbose    verbose flag
  * @return 0 on success, -1 otherwise
  */
 int dlt_gateway_store_connection(DltGateway *gateway,
@@ -940,7 +945,7 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
  * Parse GET_LOG_INFO
  *
  * @param daemon          DltDaemon
- * @param daemon_local    DltDaemonLocal
+ * @param ecu             Ecu ID
  * @param msg             DltMessage
  * @param req             1 if requested from gateway, 0 otherwise
  * @param verbose verbose flag
@@ -1067,6 +1072,7 @@ DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
  *
  * @param daemon          DltDaemon
  * @param daemon_local    DltDaemonLocal
+ * @param ecu             Ecu ID
  * @param msg             DltMessage
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise

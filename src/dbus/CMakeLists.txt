@@ -1,5 +1,4 @@
 #######
-# @licence make begin@
 # SPDX license identifier: MPL-2.0
 #
 # Copyright (C) 2011-2015, BMW AG
@@ -12,12 +11,11 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.genivi.org/.
-# @licence end@
 #######
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/
-    ${CMAKE_SOURCE_DIR}/include/dlt
+    ${PROJECT_SOURCE_DIR}/
+    ${PROJECT_SOURCE_DIR}/include/dlt
     ${DBUS_INCLUDE_DIRS}
 )
 

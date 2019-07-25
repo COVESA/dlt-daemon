@@ -1,5 +1,4 @@
 #######
-# @licence make begin@
 # SPDX license identifier: MPL-2.0
 #
 # Copyright (C) 2015, ADIT GmbH
@@ -12,7 +11,6 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.genivi.org/.
-# @licence end@
 #######
 add_definitions( -Werror )
 
@@ -23,7 +21,7 @@ if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
 endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
 
 if(WITH_SYSTEMD)
- set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} ${CMAKE_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
+ set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
 endif(WITH_SYSTEMD)
 
 add_executable(dlt-logstorage-ctrl ${dlt_logstorage_ctrl_SRCS} ${dlt_control_common_SRCS} ${dlt_most_SRCS})

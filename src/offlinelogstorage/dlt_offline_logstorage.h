@@ -1,5 +1,4 @@
 /**
- * @licence app begin@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
@@ -17,7 +16,6 @@
  *
  * \file: dlt_offline_logstorage.h
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*******************************************************************************
@@ -54,7 +52,6 @@
 #define DLT_OFFLINE_LOGSTORAGE_H
 
 #include <search.h>
-#include <stdbool.h>
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_config_file_parser.h"
@@ -125,6 +122,7 @@ typedef struct
     unsigned int offset;          /* current write offset */
     unsigned int wrap_around_cnt; /* wrap around counter */
     unsigned int last_sync_offset; /* last sync position */
+    unsigned int end_sync_offset; /* end position of previous round */
 } DltLogStorageCacheFooter;
 
 typedef struct
@@ -164,6 +162,8 @@ struct DltLogStorageFilterConfig
                                   char *dev_path,
                                   int log_msg_size);
     int (*dlt_logstorage_write)(DltLogStorageFilterConfig *config,
+                                DltLogStorageUserConfig *file_config,
+                                char *dev_path,
                                 unsigned char *data1,
                                 int size1,
                                 unsigned char *data2,
@@ -180,10 +180,6 @@ struct DltLogStorageFilterConfig
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
-    unsigned int total_write_count; /* total count of data need to sync to file */
-    bool pre_cache_sync;            /* sync done in previous wrap around */
-    bool cur_cache_sync;            /* sync done in present cache */
-    bool sync_from_start;           /* sync done from start of cache */
     DltLogStorageFileList *records; /* File name list */
 };
 
@@ -272,8 +268,9 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle,
  *
  * @param handle    DltLogStorage handle
  * @param config    Pointer to array of filter configurations
- * @param appid     application id
- * @param ctxid     context id
+ * @param apid      application id
+ * @param ctid      context id
+ * @param ecuid     ecu id
  * @return          number of found configurations
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
@@ -305,8 +302,10 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param uconfig   User configurations for log file
  * @param data1     Data buffer of message header
  * @param size1     Size of message header buffer
- * @param data2     Data buffer of message body
- * @param size2     Size of message body
+ * @param data2     Data buffer of extended message body
+ * @param size2     Size of extended message body
+ * @param data3     Data buffer of message body
+ * @param size3     Size of message body
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,

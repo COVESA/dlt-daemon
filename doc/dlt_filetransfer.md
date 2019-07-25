@@ -4,21 +4,27 @@ Back to [README.md](../README.md)
 
 ## Overview
 
-DLT is a reusable open source software component for standardized logging and tracing in infotainment ECUs based on the AUTOSAR 4.0 standard.
+DLT is a reusable open source software component for standardized logging and
+tracing in infotainment ECUs based on the AUTOSAR 4.0 standard.
 
-The goal of DLT is the consolidation of the existing variety of logging and tracing protocols on one format.
+The goal of DLT is the consolidation of the existing variety of logging and
+tracing protocols on one format.
 
 ## Introduction to DLT Filetransfer
 
-With DLT Filetransfer it is possible store the binary data of a file to the automotive dlt log.
+With DLT Filetransfer it is possible store the binary data of a file to the
+automotive dlt log.
 
-The file will be read in binary mode and put as several chunks to a DLT_INFO log. With a special plugin of the dlt viewer, you can extract the embedded files from the trace and save them.
+The file will be read in binary mode and put as several chunks to a DLT\_INFO
+log. With a special plugin of the dlt viewer, you can extract the embedded files
+from the trace and save them.
 
 It can be used for smaller files, e.g. HMI screenshots or little coredumps.
 
 ## Protocol
 
-The file transfer is at least one single transaction. This transaction consist of three main types of packages:
+The file transfer is at least one single transaction. This transaction consist
+of three main types of packages:
 
 - header package
 - one or more data packages
@@ -45,7 +51,8 @@ FLST | Package flag
 
 ## Data Package
 
-After the header package was sent, at least one or more data packages can be send using:
+After the header package was sent, at least one or more data packages can be
+sent using:
 
 ` int dlt_user_log_file_data(DltContext *fileContext,const char *filename,int packageToTransfer, int timeout) `
 
@@ -61,7 +68,8 @@ FLDA | Package flag
 
 ## End Package
 
-After all data packages were sent, the end package must be sent to indicate that the filetransfer is over using:
+After all data packages were sent, the end package must be sent to indicate that
+the filetransfer is over using:
 
 ` int dlt_user_log_file_end(DltContext *fileContext,const char *filename,int deleteFlag) `
 
@@ -75,7 +83,8 @@ FLFI | Package flag
 
 ## File information
 
-The library offers the user the possibility to log informations about a file using the following method without transferring the file itself using:
+The library offers the user the possibility to log informations about a file
+using the following method without transferring the file itself using:
 
 ` dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename) `
 
@@ -116,7 +125,7 @@ FLIF | Package flag
 #define ERROR_PACKAGE_COUNT -800
 ```
 
-If an error happens during file transfer, the library will execute the mehtod:
+If an error happens during file transfer, the library will execute the method:
 
 ` void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode) `
 
@@ -134,7 +143,8 @@ file creation date | Creation date of the file
 number of packages | Counted packages which will be transferred in the data packages
 FLER | Package flag
 
-If the file doesn't exist, the conent of the error package is a little bit different:
+If the file doesn't exist, the content of the error package is a little bit
+different:
 
 Value | Description
 :--- | :---
@@ -155,7 +165,7 @@ There are two ways to use the filetransfer
 
 Call
 
-- dlt_user_log_file_complete
+- dlt\_user\_log\_file\_complete
 
 The method needs the following arguments:
 
@@ -164,33 +174,39 @@ The method needs the following arguments:
 - deleteFlag -> Flag if the file will be deleted after transfer. 1->delete, 0->notDelete
 - timeout -> Deprecated.
 
-The order of the packages is to send at first the header, then one or more data packages (depends on the filesize) and in the end the end package.
-The advantage of this method is, that you must not handle the package ordering by your own.
+The order of the packages is to send at first the header, then one or more data
+packages (depends on the filesize) and in the end the end package. The advantage
+of this method is, that you must not handle the package ordering by your own.
 
-Within dlt_user_log_file_complete the free space of the user buffer will be checked. If the free space of the user buffer < 50% then the
-actual package won't be transferred and a timeout will be executed.
+Within dlt\_user\_log\_file\_complete the free space of the user buffer will be
+checked. If the free space of the user buffer < 50% then the actual package
+won't be transferred and a timeout will be executed.
 
-If the daemon crashes and the user buffer is full -> the automatic method is in an endless loop.
+If the daemon crashes and the user buffer is full, the automatic method is in an
+endless loop.
 
 ### Manual
 
 Manual starting filetransfer with the following commands:
 
-- dlt_user_log_file_head | Transfers only the header of the file
-- dlt_user_log_file_data | Transfers only one single package of a file
-- dlt_user_log_file_end | Tranfers only the end of the file
+- dlt\_user\_log\_file\_head | Transfers only the header of the file
+- dlt\_user\_log\_file\_data | Transfers only one single package of a file
+- dlt\_user\_log\_file\_end | Tranfers only the end of the file
 
-This ordering is very important, so that you can save the transferred files to hard disk on client side with a dlt viewer plugin.
-The advantage of using several steps to transfer files by your own is, that you are very flexible to integrate the filetransfer
-in your code.
+This ordering is very important, so that you can save the transferred files to
+hard disk on client side with a dlt viewer plugin. The advantage of using
+several steps to transfer files by your own is, that you are very flexible to
+integrate the filetransfer in your code.
 
-An other difference to the automatic method is, that only a timeout will be done. There is no check of the user buffer.
+An other difference to the automatic method is, that only a timeout will be
+done. There is no check of the user buffer.
 
 ## Important for integration
 
-You should care about blocking the main program when you intergrate filetransfer in your code.
-Maybe it's useful to extract the filetransfer in an extra thread.
-Another point is the filesize. The bigger the file is, the longer takes it to log the file to dlt.
+You should care about blocking the main program when you intergrate filetransfer
+in your code. Maybe it's useful to extract the filetransfer in an extra thread.
+Another point is the filesize. The bigger the file is, the longer takes it to
+log the file to dlt.
 
 ## Example dlt filetransfer
 
@@ -212,17 +228,21 @@ Options:
 
 ## Testing dlt filetransfer
 
-When you call "sudo make install", some automatic tests will be installed. Start the test using the following command from bash:
+When you call "sudo make install", some automatic tests will be installed. Start
+the test using the following command from bash:
 
 ` dlt-test-filetransfer `
 
-It's important that the dlt-filetransfer example files are installed in /usr/share/dlt-filetransfer which will be done automatically by using "sudo make install".
+It's important that the dlt-filetransfer example files are installed in
+/usr/share/dlt-filetransfer which will be done automatically by using
+"sudo make install". If not, use -t and -i options to specify the path to a text
+file and an image file.
 
-- testFile1Run1: Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using dlt_user_log_file_complete.
+- testFile1Run1: Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using dlt\_user\_log\_file\_complete.
 - testFile1Run2: Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer
-- testFile2Run1: Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using dlt_user_log_file_complete.
+- testFile2Run1: Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using dlt\_user\_log\_file\_complete.
 - testFile2Run2: Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer
-- testFile3Run1: Test the file transfer with the condition that the transferred file does not exist using dlt_user_log_file_complete.
+- testFile3Run1: Test the file transfer with the condition that the transferred file does not exist using dlt\_user\_log\_file\_complete.
 - testFile3Run2: Test the file transfer with the condition that the transferred file does not exist using single package transfer
 - testFile3Run3: Test which logs some information about the file.
 

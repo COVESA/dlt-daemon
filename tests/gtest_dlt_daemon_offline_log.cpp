@@ -37,6 +37,8 @@ TEST(t_dlt_logstorage_list_add, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     char key = 1;
     int num_keys = 1;
 
@@ -46,7 +48,7 @@ TEST(t_dlt_logstorage_list_add, normal)
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
 }
 
@@ -71,6 +73,8 @@ TEST(t_dlt_logstorage_list_destroy, normal)
 {
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     char key = 1;
     int num_keys = 1;
 
@@ -80,7 +84,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
 }
 
@@ -90,6 +94,8 @@ TEST(t_dlt_logstorage_list_find, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     int num_configs = 0;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     char key[] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
@@ -113,7 +119,7 @@ TEST(t_dlt_logstorage_list_find, normal)
         EXPECT_STREQ(apid, config[0]->apids);
         EXPECT_STREQ(ctid, config[0]->ctids);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, 0));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
 }
 
@@ -189,6 +195,8 @@ TEST(t_dlt_logstorage_prepare_table, normal)
 {
     DltLogStorage handle;
     DltLogStorageFilterConfig data;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     memset(&handle, 0, sizeof(DltLogStorage));
     memset(&data, 0, sizeof(DltLogStorageFilterConfig));
     char apids[] = "1234";
@@ -202,7 +210,7 @@ TEST(t_dlt_logstorage_prepare_table, normal)
     dlt_logstorage_filter_set_strategy(&data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_table(&handle, &data));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, 0));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, &file_config, path, 0));
 }
 
 TEST(t_dlt_logstorage_prepare_table, null)
@@ -438,6 +446,8 @@ TEST(t_dlt_logstorage_check_param, null)
 TEST(t_dlt_logstorage_store_filters, normal)
 {
     DltLogStorage handle;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     char config_file_name[] = "/tmp/dlt_logstorage.conf";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
@@ -446,7 +456,7 @@ TEST(t_dlt_logstorage_store_filters, normal)
     handle.config_list = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_store_filters(&handle, config_file_name));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, 0));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, &file_config, path, 0));
 }
 
 TEST(t_dlt_logstorage_store_filters, null)
@@ -458,6 +468,8 @@ TEST(t_dlt_logstorage_store_filters, null)
 TEST(t_dlt_logstorage_load_config, normal)
 {
     DltLogStorage handle;
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
@@ -465,7 +477,7 @@ TEST(t_dlt_logstorage_load_config, normal)
     strncpy(handle.device_mount_point, "/tmp", DLT_MOUNT_PATH_MAX);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_load_config(&handle));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, 0));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, &file_config, path, 0));
 }
 
 TEST(t_dlt_logstorage_load_config, null)
@@ -920,12 +932,13 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     unsigned char data3[] = "dlt_data";
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, data1, size, data2, size, data3, size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
+              data1, size, data2, size, data3, size));
 }
 
 TEST(t_dlt_logstorage_write_on_msg, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_write_on_msg(NULL, NULL, 0, NULL, 0, NULL, 0));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_write_on_msg(NULL, NULL, NULL, NULL, 0, NULL, 0, NULL, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_on_msg*/
@@ -992,12 +1005,15 @@ TEST(t_dlt_logstorage_write_msg_cache, normal)
     unsigned char data3[10] = "dlt_dat3";
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
+    DltLogStorageUserConfig file_config;
+    char *path = (char*)"/tmp";
 
     config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
 
     if (config.cache != NULL) {
         config.file_size = 50;
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, data1, size, data2, size, data3, size));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path,
+                  data1, size, data2, size, data3, size));
 
         free(config.cache);
         config.cache = NULL;
@@ -1006,31 +1022,31 @@ TEST(t_dlt_logstorage_write_msg_cache, normal)
 
 TEST(t_dlt_logstorage_write_msg_cache, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_write_msg_cache(NULL, NULL, 0, NULL, 0, NULL, 0));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_write_msg_cache(NULL, NULL, NULL, NULL, 0, NULL, 0, NULL, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_split_key*/
 TEST(t_dlt_logstorage_split_key, normal)
 {
     char key[] = "dlt:1020:";
-    char appid[] = ":2345:";
-    char ctxid[] = "::6789";
+    char apid[] = ":2345:";
+    char ctid[] = "::6789";
     char ecuid[] = "ECU1";
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_split_key(key, appid, ctxid, ecuid));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_split_key(key, apid, ctid, ecuid));
 }
 
 TEST(t_dlt_logstorage_split_key, null)
 {
     char key[] = "dlt:1020:";
-    char appid[] = "2345";
-    char ctxid[] = "6789";
+    char apid[] = "2345";
+    char ctid[] = "6789";
     char ecuid[] = "ECU1";
     EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, NULL, NULL, NULL));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, appid, ctxid, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, NULL, ctxid, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, appid, NULL, ecuid));
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, appid, ctxid, NULL));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(NULL, apid, ctid, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, NULL, ctid, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, apid, NULL, ecuid));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_split_key(key, apid, ctid, NULL));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_update_all_contexts*/
@@ -1491,55 +1507,35 @@ TEST(t_dlt_logstorage_find_dlt_header, null)
     }
 }
 
-/* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_create_new_file*/
-TEST(t_dlt_logstorage_sync_create_new_file, normal)
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_find_last_dlt_header*/
+TEST(t_dlt_logstorage_find_last_dlt_header, normal)
 {
-    DltLogStorageUserConfig file_config;
-    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
-    file_config.logfile_delimiter = { '_' };
-    file_config.logfile_maxcounter = 5;
-    file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char data[] = {'a','b','D','L','T',0x01};
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
-    char apids;
-    char ctids;
-    config.apids = &apids;
-    config.ctids = &ctids;
-    config.file_name = (char *)"Test";
-    config.records = NULL;
-    config.log = NULL;
-    config.cache = NULL;
-    config.file_size = 50;
-    config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
-    config.num_files = 5;
-    g_logstorage_cache_max = 16;
-    unsigned int size = 10;
-    unsigned char data1[10] = "dlt_data1";
-    unsigned char data2[10] = "dlt_data2";
-    unsigned char data3[10] = "dlt_data3";
-    DltLogStorageCacheFooter *footer = NULL;
-
-    config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
+    config.cache = calloc(1, sizeof(data));
 
     if (config.cache != NULL) {
-        footer = (DltLogStorageCacheFooter *)((unsigned char *)config.cache + 50);
+        strncpy((char *)config.cache, data, sizeof(data));
 
-        if (footer != NULL) {
-            EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
-            EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, data1, size, data2, size, data3, size));
-            footer->offset = 0;
-            EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_create_new_file(&config, &file_config, path, 0));
-            free(config.cache);
-            config.cache = NULL;
-        }
+        /* DLT header starts from index 2 */
+        EXPECT_EQ(2, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
+        free(config.cache);
     }
 }
-
-TEST(t_dlt_logstorage_sync_create_new_file, null)
+TEST(t_dlt_logstorage_find_last_dlt_header, null)
 {
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_sync_create_new_file(NULL, NULL, NULL, 0));
+    char data[] = {'N','o','H','e','a','d','e','r'};
+    DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
+    config.cache = calloc(1, sizeof(data));
+    if (config.cache != NULL)
+    {
+        /* config.cache =(void *) "a,b,D,L,T,0x01"; */
+        strncpy((char *)config.cache, data, sizeof(data));
+        EXPECT_EQ(-1, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
+        free(config.cache);
+    }
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_to_file*/
@@ -1562,7 +1558,6 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     config.records = NULL;
     config.log = NULL;
     config.cache = NULL;
-    config.file_size = 0;
     config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
     config.num_files = 6;
     config.file_size = 50;
@@ -1571,13 +1566,19 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     unsigned char data1[10] = "dlt_data0";
     unsigned char data2[10] = "dlt_data1";
     unsigned char data3[10] = "dlt_data2";
+    DltLogStorageCacheFooter *footer = NULL;
 
-    config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
+    config.cache = calloc(1, config.file_size + sizeof(DltLogStorageCacheFooter));
 
     if (config.cache != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, data1, size, data2, size, data3, size));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path,
+                  data1, size, data2, size, data3, size));
+
+        footer = (DltLogStorageCacheFooter *)((uint8_t*)config.cache + config.file_size);
+
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path,
+                  footer, footer->last_sync_offset, footer->offset));
         free(config.cache);
         config.cache = NULL;
     }
@@ -1585,53 +1586,8 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
 
 TEST(t_dlt_logstorage_sync_to_file, null)
 {
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_sync_to_file(NULL, NULL, NULL));
-}
+    EXPECT_EQ(-1, dlt_logstorage_sync_to_file(NULL, NULL, NULL, NULL, 0, 1));
 
-/* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_capable_data_to_file*/
-TEST(t_dlt_logstorage_sync_capable_data_to_file, normal)
-{
-    DltLogStorageUserConfig file_config;
-    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
-    file_config.logfile_delimiter = { '_' };
-    file_config.logfile_maxcounter = 7;
-    file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
-    DltLogStorageFilterConfig config;
-    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
-    char apids;
-    char ctids;
-    config.apids = &apids;
-    config.ctids = &ctids;
-    config.file_name = (char *)"Test";
-    config.records = NULL;
-    config.log = NULL;
-    config.cache = NULL;
-    config.file_size = 0;
-    config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
-    config.num_files = 7;
-    config.file_size = 50;
-    g_logstorage_cache_max = 16;
-    unsigned int size = 10;
-    unsigned char data1[10] = "Dlt_data0";
-    unsigned char data2[10] = "Dlt_data1";
-    unsigned char data3[10] = "Dlt_data2";
-
-    config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
-
-    if (config.cache != NULL) {
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, data1, size, data2, size, data3, size));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_capable_data_to_file(&config, 0));
-        free(config.cache);
-        config.cache = NULL;
-    }
-}
-
-TEST(t_dlt_logstorage_sync_capable_data_to_file, null)
-{
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_logstorage_sync_capable_data_to_file(NULL, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_msg_cache*/
@@ -1669,7 +1625,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
 
     if (config.cache != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, data1, size, data2, size, data3, size));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path, data1, size, data2, size, data3, size));
         EXPECT_EQ(DLT_RETURN_OK,
                   dlt_logstorage_sync_msg_cache(&config, &file_config, path, DLT_LOGSTORAGE_SYNC_ON_DEMAND));
         free(config.cache);
@@ -1684,13 +1640,14 @@ TEST(t_dlt_logstorage_sync_msg_cache, null)
 
 int connectServer(void)
 {
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     int sockfd, portno;
     struct sockaddr_in serv_addr;
     struct hostent *server;
     portno = 8080;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server = gethostbyname("127.0.0.1");
-    bzero((char *)&serv_addr, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     memcpy((char *)&serv_addr.sin_addr.s_addr,
            (char *)server->h_addr,
@@ -1702,6 +1659,17 @@ int connectServer(void)
         close(sockfd);
         return -1;
     }
+#else
+    char filename[1024];
+    int sockfd;
+    snprintf(filename, 1024, "/tmp/dltpipes/dlt%d", getpid());
+    /* Try to delete existing pipe, ignore result of unlink */
+    unlink(filename);
+
+    mkfifo(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    chmod(filename, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP);
+    sockfd = open(filename, O_RDWR | O_CLOEXEC);
+#endif
 
     return sockfd;
 }
@@ -1710,6 +1678,7 @@ int connectServer(void)
 
 int main(int argc, char **argv)
 {
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     pid_t cpid;
     cpid = fork();
 
@@ -1732,7 +1701,7 @@ int main(int argc, char **argv)
             return -1;
         }
 
-        bzero((char *)&serv_addr, sizeof(serv_addr));
+        memset((char *) &serv_addr, 0, sizeof(serv_addr));
         portno = 8080;
 
         serv_addr.sin_family = AF_INET;
@@ -1775,12 +1744,14 @@ int main(int argc, char **argv)
         close(sockfd);
     }
     else {
-
+#endif
         ::testing::InitGoogleTest(&argc, argv);
         ::testing::FLAGS_gtest_break_on_failure = false;
 /*        ::testing::FLAGS_gtest_filter = "t_dlt_event_handler_register_connection*"; */
         return RUN_ALL_TESTS();
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     }
+#endif
 
     return 0;
 }

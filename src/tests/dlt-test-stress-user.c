@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -166,8 +164,8 @@ int main(int argc, char *argv[])
         }
         case '?':
         {
-            if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') || (optopt == 'r') || (optopt == 'd') ||
-                (optopt == 's'))
+            if ((optopt == 'f') || (optopt == 'n') || (optopt == 'r') ||
+                (optopt == 'd') || (optopt == 's'))
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -232,6 +230,7 @@ int testall(int count, int repeat, int delay, int size)
 {
     char buffer[size];
     int num, rnum;
+    struct timespec ts;
 
     for (num = 0; num < size; num++)
         buffer[num] = num;
@@ -243,7 +242,9 @@ int testall(int count, int repeat, int delay, int size)
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
             DLT_LOG(context_info, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, size));
-            usleep(delay);
+            ts.tv_sec = (delay * 1000) / 1000000000;
+            ts.tv_nsec = (delay * 1000) % 1000000000;
+            nanosleep(&ts, NULL);
         }
 
     /* wait 5 seconds after test */

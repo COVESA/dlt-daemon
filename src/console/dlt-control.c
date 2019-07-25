@@ -1,5 +1,4 @@
 /*
- * @licence app begin@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
@@ -12,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 /*!
@@ -21,13 +19,13 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-control.cpp
+ * \file dlt-control.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-control.cpp                                               **
+**  SRC-MODULE: dlt-control.c                                                 **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -139,19 +137,19 @@ void usage()
     printf("  -t milliseconds Timeout to terminate application (Default:1000)'\n");
     printf("  -l loglevel      Set the log level (0=off - 6=verbose default= -1)\n");
     printf("      supported options:\n");
-    printf("       -l level -a appid -c ctid\n");
+    printf("       -l level -a apid -c ctid\n");
     printf("       -l level -a abc* (set level for all ctxts of apps name starts with abc)\n");
-    printf("       -l level -a appid (set level for all ctxts of this app)\n");
+    printf("       -l level -a apid (set level for all ctxts of this app)\n");
     printf("       -l level -c xyz* (set level for all ctxts whose name starts with xyz)\n");
-    printf("       -l level -c ctxid (set level for the particular ctxt)\n");
+    printf("       -l level -c ctid (set level for the particular ctxt)\n");
     printf("       -l level (set level for all the registered contexts)\n");
     printf("  -r tracestatus   Set the trace status (0=off - 1=on,255=default)\n");
     printf("      supported options:\n");
-    printf("       -r tracestatus -a appid -c ctid\n");
+    printf("       -r tracestatus -a apid -c ctid\n");
     printf("       -r tracestatus -a abc* (set status for all ctxts of apps name starts with abc)\n");
-    printf("       -r tracestatus -a appid (set status for all ctxts of this app)\n");
+    printf("       -r tracestatus -a apid (set status for all ctxts of this app)\n");
     printf("       -r tracestatus -c xyz* (set status for all ctxts whose name starts with xyz)\n");
-    printf("       -r tracestatus -c ctxid (set status for the particular ctxt)\n");
+    printf("       -r tracestatus -c ctid (set status for the particular ctxt)\n");
     printf("       -r tracestatus (set status for all the registered contexts)\n");
     printf("  -d loglevel	  Set the default log level (0=off - 5=verbose)\n");
     printf("  -f tracestatus  Set the default trace status (0=off - 1=on)\n");
@@ -232,6 +230,7 @@ int main(int argc, char *argv[])
     int c;
     int index;
     char *endptr = NULL;
+    struct timespec ts;
 
     /* Initialize dltdata */
     dltdata.vflag = 0;
@@ -289,7 +288,7 @@ int main(int argc, char *argv[])
             dltdata.avalue = optarg;
 
             if (strlen(dltdata.avalue) > DLT_ID_SIZE) {
-                fprintf (stderr, "Invalid appid\n");
+                fprintf (stderr, "Invalid application id\n");
                 return -1;
             }
 
@@ -641,7 +640,9 @@ int main(int argc, char *argv[])
         /*dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag); */
 
         /* Wait timeout */
-        usleep(dltdata.tvalue * 1000);
+        ts.tv_sec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        nanosleep(&ts, NULL);
     }
 
     /* Dlt Client Cleanup */
@@ -667,7 +668,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         return -1;
 
     /* to avoid warning */
-    data = data;
+    (void)data;
 
     /* prepare storage header */
     if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
