@@ -57,66 +57,72 @@
 
 #include "dlt_daemon_socket.h"
 
-int dlt_daemon_socket_open(int *sock, unsigned int servPort)
+int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 {
     int yes = 1;
-    char portnumbuffer[33];
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
+    int ret_inet_pton = 0;
 
-    memset(&hints, 0, sizeof hints);
 #ifdef DLT_USE_IPv6
-    hints.ai_family = AF_INET6; /* force IPv6 - will still work with IPv4 */
+
+    /* create socket */
+    if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
+        const int lastErrno = errno;
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+    }
+
 #else
-    hints.ai_family = AF_INET;
+
+    if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        const int lastErrno = errno;
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+    }
+
 #endif
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; /* use my IP address */
 
-    snprintf(portnumbuffer, 32, "%d", servPort);
+    dlt_vlog(LOG_INFO, "%s: Socket created\n", __FUNCTION__);
 
-    if ((rv = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
-        dlt_vlog(LOG_WARNING, "getaddrinfo error %d: %s\n", rv, gai_strerror(rv));
+    /* setsockpt SO_REUSEADDR */
+    if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+        const int lastErrno = errno;
+        dlt_vlog(LOG_WARNING,
+                 "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
+                 lastErrno,
+                 strerror(lastErrno));
+    }
+
+    /* bind */
+#ifdef DLT_USE_IPv6
+    struct sockaddr_in6 forced_addr;
+    memset(&forced_addr, 0, sizeof(forced_addr));
+    forced_addr.sin6_family = AF_INET6;
+    forced_addr.sin6_port = htons(servPort);
+    ret_inet_pton = inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
+#else
+    struct sockaddr_in forced_addr;
+    memset(&forced_addr, 0, sizeof(forced_addr));
+    forced_addr.sin_family = AF_INET;
+    forced_addr.sin_port = htons(servPort);
+    ret_inet_pton = inet_pton(AF_INET, ip, &forced_addr.sin_addr);
+#endif
+
+    /* inet_pton returns 1 on success */
+    if (ret_inet_pton != 1) {
+        dlt_vlog(LOG_WARNING,
+                 "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
+                 errno,
+                 strerror(errno),
+                 ip);
         return -1;
     }
 
-    for (p = servinfo; p != NULL; p = p->ai_next) {
-        if ((*sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            const int lastErrno = errno;
-            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
-            continue;
-        }
-
-        dlt_vlog(LOG_INFO, "%s: Socket created - socket_family:%i, socket_type:%i, protocol:%i\n",
-                 __FUNCTION__, p->ai_family, p->ai_socktype, p->ai_protocol);
-
-        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-            const int lastErrno = errno;
-            dlt_vlog(LOG_WARNING,
-                     "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
-                     lastErrno,
-                     strerror(lastErrno));
-            continue;
-        }
-
-        if (bind(*sock, p->ai_addr, p->ai_addrlen) == -1) {
-            const int lastErrno = errno; /*close() may set errno too */
-            close(*sock);
-            dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
-            continue;
-        }
-
-        break;
+    if (bind(*sock, (struct sockaddr *)&forced_addr, sizeof(forced_addr)) == -1) {
+        const int lastErrno = errno;     /*close() may set errno too */
+        close(*sock);
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
     }
 
-    if (p == NULL) {
-        dlt_log(LOG_WARNING, "failed to bind socket\n");
-        return -1;
-    }
-
-    freeaddrinfo(servinfo);
-
-    dlt_vlog(LOG_INFO, "%s: Listening on port: %u\n", __func__, servPort);
+    /*listen */
+    dlt_vlog(LOG_INFO, "%s: Listening on ip %s and port: %u\n", __FUNCTION__, ip, servPort);
 
     /* get socket buffer size */
     dlt_vlog(LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
