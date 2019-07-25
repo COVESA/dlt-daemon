@@ -243,7 +243,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
     daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
     daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
-    memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
     dlt_daemon_logstorage_set_logstorage_cache_size(
         daemon_local->flags.offlineLogstorageCacheSize);
     strncpy(daemon_local->flags.ctrlSockPath,
@@ -255,7 +254,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
         fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
                 daemon_local->flags.appSockPath);
-
+#else
+    memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
 #endif
     daemon_local->flags.gatewayMode = 0;
     strncpy(daemon_local->flags.gatewayConfigFile,
@@ -1101,29 +1101,22 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
             ret = chown(tmpFifo, -1, group_dlt->gr_gid);
             if (ret == -1)
             {
-                snprintf(str, DLT_DAEMON_TEXTBUFSIZE,
-                         "FIFO user %s cannot be chowned to group %s (%s)\n",
-                         tmpFifo,
-                         daemon_local->flags.daemonFifoGroup,
+                dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
+                         tmpFifo, daemon_local->flags.daemonFifoGroup,
                          strerror(errno));
-                dlt_log(LOG_ERR, str);
             }
         }
         else if ((errno == 0) || (errno == ENOENT) || (errno == EBADF) || (errno == EPERM))
         {
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE,
-                     "Group name %s is not found (%s)\n",
+            dlt_vlog(LOG_ERR, "Group name %s is not found (%s)\n",
                      daemon_local->flags.daemonFifoGroup,
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
         else
         {
-            snprintf(str, DLT_DAEMON_TEXTBUFSIZE,
-                     "Failed to get group id of %s (%s)\n",
+            dlt_vlog(LOG_ERR, "Failed to get group id of %s (%s)\n",
                      daemon_local->flags.daemonFifoGroup,
                      strerror(errno));
-            dlt_log(LOG_ERR, str);
         }
     }
 
