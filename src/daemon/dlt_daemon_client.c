@@ -708,7 +708,8 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
     /* prepare payload of data */
     len = strlen(daemon->ECUVersionString);
 
-    msg.datasize = sizeof(DltServiceGetSoftwareVersionResponse) + len;
+    /* msg.datasize = sizeof(serviceID) + sizeof(status) + sizeof(length) + len */
+    msg.datasize = sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t) + len;
 
     if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
         free(msg.databuffer);
@@ -734,7 +735,7 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
     resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
     resp->status = DLT_SERVICE_RESPONSE_OK;
     resp->length = len;
-    memcpy(msg.databuffer + sizeof(DltServiceGetSoftwareVersionResponse), daemon->ECUVersionString, len);
+    memcpy(msg.databuffer + msg.datasize - len, daemon->ECUVersionString, len);
 
     /* send message */
     dlt_daemon_client_send_control_message(sock, daemon, daemon_local, &msg, "", "", verbose);
