@@ -60,7 +60,7 @@
 int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 {
     int yes = 1;
-    int ret_inet_pton = 0;
+    int ret_inet_pton = 1;
 
 #ifdef DLT_USE_IPv6
 
@@ -96,7 +96,10 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     memset(&forced_addr, 0, sizeof(forced_addr));
     forced_addr.sin6_family = AF_INET6;
     forced_addr.sin6_port = htons(servPort);
-    ret_inet_pton = inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
+    if (0 == strcmp(ip, "0.0.0.0"))
+        forced_addr.sin6_addr = in6addr_any;
+    else
+        ret_inet_pton = inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
 #else
     struct sockaddr_in forced_addr;
     memset(&forced_addr, 0, sizeof(forced_addr));
