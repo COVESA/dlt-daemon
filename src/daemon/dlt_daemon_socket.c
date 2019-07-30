@@ -61,19 +61,20 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 {
     int yes = 1;
     int ret_inet_pton = 1;
+    int lastErrno = 0;
 
 #ifdef DLT_USE_IPv6
 
     /* create socket */
     if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-        const int lastErrno = errno;
+        lastErrno = errno;
         dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
     }
 
 #else
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        const int lastErrno = errno;
+        lastErrno = errno;
         dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
     }
 
@@ -83,7 +84,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
     /* setsockpt SO_REUSEADDR */
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-        const int lastErrno = errno;
+        lastErrno = errno;
         dlt_vlog(LOG_WARNING,
                  "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
                  lastErrno,
@@ -110,16 +111,17 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
     /* inet_pton returns 1 on success */
     if (ret_inet_pton != 1) {
+        lastErrno = errno;
         dlt_vlog(LOG_WARNING,
                  "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
-                 errno,
-                 strerror(errno),
+                 lastErrno,
+                 strerror(lastErrno),
                  ip);
         return -1;
     }
 
     if (bind(*sock, (struct sockaddr *)&forced_addr, sizeof(forced_addr)) == -1) {
-        const int lastErrno = errno;     /*close() may set errno too */
+        lastErrno = errno;     /*close() may set errno too */
         close(*sock);
         dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
     }
@@ -132,7 +134,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
              dlt_daemon_socket_get_send_qeue_max_size(*sock));
 
     if (listen(*sock, 3) < 0) {
-        const int lastErrno = errno;
+        lastErrno = errno;
         dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno,
                  strerror(lastErrno));
         return -1;
