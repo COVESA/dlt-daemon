@@ -591,11 +591,13 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                     intval);
                         }
                     }
+#ifndef DLT_USE_UNIX_SOCKET_IPC
                     else if(strcmp(token, "DaemonFifoGroup") == 0)
                     {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
                         daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
                     }
+#endif
                     else {
                         fprintf(stderr, "Unknown option: %s=%s\n", token, value);
                     }
