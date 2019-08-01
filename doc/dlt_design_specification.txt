@@ -173,7 +173,7 @@ During unregister of application, the following things occur:
 
 ==== Handling of messages received from DLT daemon
 
-During receiver thread within the DLT user library checks for newly received messages from the DLT daemon, and handles them in the following way:
+During housekeeper thread within the DLT user library checks for newly received messages from the DLT daemon, and handles them in the following way:
 
 * DLT_USER_MESSAGE_LOG_LEVEL
 ** Store received log level and trace status for the received context to the context array

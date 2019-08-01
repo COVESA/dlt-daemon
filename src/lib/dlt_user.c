@@ -43,6 +43,7 @@
 #include <errno.h>
 
 #include <sys/uio.h> /* writev() */
+#include <sys/poll.h>
 
 #include <limits.h>
 #ifdef linux
@@ -86,7 +87,7 @@ static char dlt_daemon_fifo[DLT_PATH_MAX];
 #endif
 
 static sem_t dlt_mutex;
-static pthread_t dlt_receiverthread_handle;
+static pthread_t dlt_housekeeperthread_handle;
 
 /* calling dlt_user_atexit_handler() second time fails with error message */
 static int atexit_registered = 0;
@@ -142,7 +143,7 @@ typedef struct
 } s_segmented_data;
 
 /* Function prototypes for internally used functions */
-static void dlt_user_receiverthread_function(void *ptr);
+static void dlt_user_housekeeperthread_function(void *ptr);
 static void dlt_user_atexit_handler(void);
 static DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log);
 static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype);
@@ -161,7 +162,6 @@ static void dlt_user_log_reattach_to_daemon(void);
 static DltReturnValue dlt_user_log_send_overflow(void);
 static void dlt_user_trace_network_segmented_thread(void *unused);
 static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
-static DltReturnValue dlt_user_queue_resend(void);
 static DltReturnValue dlt_user_log_out_error_handling(void *ptr1,
                                                       size_t len1,
                                                       void *ptr2,
@@ -316,7 +316,7 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
         return DLT_RETURN_ERROR;
     }
 
-    dlt_user.dlt_user_handle = open(filename, O_RDWR | O_CLOEXEC);
+    dlt_user.dlt_user_handle = open(filename, O_RDWR | O_NONBLOCK | O_CLOEXEC);
 
     if (dlt_user.dlt_user_handle == DLT_FD_INIT) {
         dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Logging disabled, FIFO user %s cannot be opened!\n", filename);
@@ -2896,26 +2896,6 @@ void dlt_user_trace_network_segmented_thread(void *unused)
             continue;
         }
 
-        /* Indicator just to try to flush the buffer */
-        /* DLT_NW_TRACE_RESEND custom type is used to mark a resend */
-        if (data->nw_trace_type == DLT_NW_TRACE_RESEND) {
-            struct timespec req;
-            /* Sleep 100ms, to allow other process to read FIFO */
-            req.tv_sec = 0;
-            req.tv_nsec = 100 * 1000 * 1000;
-            nanosleep(&req, NULL);
-
-            if (dlt_user_log_resend_buffer() < 0) {
-                /* Requeue if still not empty */
-                if (dlt_user_queue_resend() < 0) {
-                    /*dlt_log(LOG_WARNING, "Failed to queue resending in dlt_user_trace_network_segmented_thread.\n"); */
-                }
-            }
-
-            free(data);
-            continue;
-        }
-
         dlt_user_trace_network_segmented_thread_segmenter(data);
 
         /* Send the end message */
@@ -3440,11 +3420,11 @@ static void dlt_user_cleanup_handler(void *arg)
     DLT_SEM_FREE();
 }
 
-void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
+void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
 {
     struct timespec ts;
 #ifdef linux
-    prctl(PR_SET_NAME, "dlt_receiver", 0, 0, 0);
+    prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
 #endif
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
@@ -3453,8 +3433,14 @@ void dlt_user_receiverthread_function(__attribute__((unused)) void *ptr)
         /* Check for new messages from DLT daemon */
         if (dlt_user_log_check_user_message() < DLT_RETURN_OK)
             /* Critical error */
-            dlt_log(LOG_CRIT, "Receiver thread encountered error condition\n");
+            dlt_log(LOG_CRIT, "Housekeeper thread encountered error condition\n");
 
+        /* Reattach to daemon if neccesary */
+        dlt_user_log_reattach_to_daemon();
+
+        /* flush buffer to DLT daemon if possible */
+        if (dlt_user.dlt_log_handle != DLT_FD_INIT)
+            dlt_user_log_resend_buffer();
         /* delay */
         ts.tv_sec = 0;
         ts.tv_nsec = DLT_USER_RECEIVE_NDELAY;
@@ -3487,54 +3473,6 @@ DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log)
     log->handle = handle;
     log->buffer = NULL;
     return ret;
-}
-
-DltReturnValue dlt_user_queue_resend(void)
-{
-    static unsigned char dlt_user_queue_resend_error_counter = 0;
-
-    if (dlt_user.dlt_log_handle < 0)
-        /* Fail silenty. FIFO is not open yet */
-        return DLT_RETURN_ERROR;
-
-    /**
-     * Ask segmented thread to try emptying the buffer soon.
-     * This will be freed in dlt_user_trace_network_segmented_thread
-     * */
-    s_segmented_data *resend_data = malloc(sizeof(s_segmented_data));
-
-    if (resend_data == NULL)
-        return DLT_RETURN_ERROR;
-
-    /* DLT_NW_TRACE_RESEND custom type is used to mark a resend */
-    resend_data->nw_trace_type = DLT_NW_TRACE_RESEND;
-
-    /* Open queue if it is not open */
-    if (dlt_init_message_queue() < DLT_RETURN_OK) {
-        if (!dlt_user_queue_resend_error_counter)
-            /* log error only when problem occurred first time */
-            dlt_log(LOG_WARNING, "NWTSegmented: Could not open queue.\n");
-
-        dlt_user_queue_resend_error_counter = 1;
-        free(resend_data);
-        return DLT_RETURN_ERROR;
-    }
-
-    if (mq_send(dlt_user.dlt_segmented_queue_write_handle, (char *)&resend_data, sizeof(s_segmented_data *), 1) < 0) {
-        if (!dlt_user_queue_resend_error_counter)
-            /* log error only when problem occurred first time */
-            dlt_vnlog(LOG_DEBUG, 256, "Could not request resending.: %s \n", strerror(errno));
-
-        dlt_user_queue_resend_error_counter = 1;
-        free(resend_data);
-        return DLT_RETURN_ERROR;
-    }
-
-    dlt_user_queue_resend_error_counter = 0;
-
-    /*thread_data will be freed by the receiver function */
-    /*coverity[leaked_storage] */
-    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
@@ -3682,9 +3620,6 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         return ret;
     }
     else {
-        /* Reattach to daemon if neccesary */
-        dlt_user_log_reattach_to_daemon();
-
         if (dlt_user.overflow_counter) {
             if (dlt_user_log_send_overflow() == DLT_RETURN_OK) {
                 dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "%u messages discarded!\n", dlt_user.overflow_counter);
@@ -4130,9 +4065,12 @@ DltReturnValue dlt_user_log_check_user_message(void)
 {
     int offset = 0;
     int leave_while = 0;
+    int ret = 0;
 
     uint32_t i;
     int fd;
+    DltReceiverType from_src_type = DLT_RECEIVE_FD;
+    struct pollfd nfd[1];
 
     DltUserHeader *userheader;
     DltReceiver *receiver = &(dlt_user.receiver);
@@ -4157,13 +4095,28 @@ DltReturnValue dlt_user_log_check_user_message(void)
 
 #ifdef DLT_USE_UNIX_SOCKET_IPC
     fd = dlt_user.dlt_log_handle;
+    from_src_type = DLT_RECEIVE_SOCKET;
 #else
     fd = dlt_user.dlt_user_handle;
+    from_src_type = DLT_RECEIVE_FD;
 #endif
+    nfd[0].events = POLLIN;
+    nfd[0].fd = fd;
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
     if (fd != DLT_FD_INIT) {
-        while (1) {
-            if (dlt_receiver_receive(receiver, DLT_RECEIVE_FD) <= 0)
+        ret = poll(nfd, 1, -1);
+#else
+    if (fd != DLT_FD_INIT && dlt_user.dlt_log_handle > 0) {
+        ret = poll(nfd, 1, DLT_USER_RECEIVE_NDELAY);
+#endif
+        if (ret) {
+            if (nfd[0].revents & (POLLHUP | POLLNVAL | POLLERR)) {
+                dlt_user.dlt_log_handle = DLT_FD_INIT;
+                return DLT_RETURN_ERROR;
+            }
+
+            if (dlt_receiver_receive(receiver, from_src_type) <= 0)
                 /* No new message available */
                 return DLT_RETURN_OK;
 
@@ -4213,7 +4166,6 @@ DltReturnValue dlt_user_log_check_user_message(void)
 
                         if ((usercontextll->log_level_pos >= 0) &&
                             (usercontextll->log_level_pos < (int32_t)dlt_user.dlt_ll_ts_num_entries)) {
-                            /* printf("Store ll, ts\n"); */
                             if (dlt_user.dlt_ll_ts) {
                                 dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level = usercontextll->log_level;
                                 dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status =
@@ -4486,12 +4438,12 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 
 void dlt_user_log_reattach_to_daemon(void)
 {
-    uint32_t num, reregistered = 0;
+    uint32_t num;
     DltContext handle;
     DltContextData log_new;
 
     if (dlt_user.dlt_log_handle < 0) {
-        dlt_user.dlt_log_handle = -1;
+        dlt_user.dlt_log_handle = DLT_FD_INIT;
 
 #ifdef DLT_USE_UNIX_SOCKET_IPC
         /* try to open connection to dlt daemon */
@@ -4550,18 +4502,11 @@ void dlt_user_log_reattach_to_daemon(void)
                 if (dlt_user_log_send_register_context(&log_new) < DLT_RETURN_ERROR)
                     return;
 
-                reregistered = 1;
-
                 /* Lock again the mutex */
                 /* it is necessary in the for(;;) test, in order to have coherent dlt_user data all over the critical section. */
                 DLT_SEM_LOCK();
-
             }
-
         DLT_SEM_FREE();
-
-        if (reregistered == 1)
-            dlt_user_log_resend_buffer();
     }
 }
 
@@ -4620,12 +4565,12 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 
 int dlt_start_threads()
 {
-    /* Start receiver thread */
-    if (pthread_create(&(dlt_receiverthread_handle),
+    /* Start housekeeper thread */
+    if (pthread_create(&(dlt_housekeeperthread_handle),
                        0,
-                       (void *)&dlt_user_receiverthread_function,
+                       (void *)&dlt_user_housekeeperthread_function,
                        0) != 0) {
-        dlt_log(LOG_CRIT, "Can't create receiver thread!\n");
+        dlt_log(LOG_CRIT, "Can't create housekeeper thread!\n");
         return -1;
     }
 
@@ -4641,17 +4586,20 @@ int dlt_start_threads()
 
 void dlt_stop_threads()
 {
-    int dlt_receiverthread_result = 0;
+    int dlt_housekeeperthread_result = 0;
     int dlt_segmented_nwt_result = 0;
+    int tmp_errno = 0;
+    int joined = 0;
 
-    if (dlt_receiverthread_handle) {
+    if (dlt_housekeeperthread_handle) {
         /* do not ignore return value */
-        dlt_receiverthread_result = pthread_cancel(dlt_receiverthread_handle);
+        dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
+        tmp_errno = errno;
 
-        if (dlt_receiverthread_result != 0)
+        if (dlt_housekeeperthread_result != 0)
             dlt_vlog(LOG_ERR,
-                     "ERROR pthread_cancel(dlt_receiverthread_handle): %s\n",
-                     strerror(errno));
+                     "ERROR pthread_cancel(dlt_housekeeperthread_handle): %s\n",
+                     strerror(tmp_errno));
     }
 
     if (dlt_user.dlt_segmented_nwt_handle) {
@@ -4660,32 +4608,35 @@ void dlt_stop_threads()
         dlt_unlock_mutex(&mq_mutex);
 
         dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
+        tmp_errno = errno;
 
         if (dlt_segmented_nwt_result != 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
-                     strerror(errno));
+                     strerror(tmp_errno));
     }
 
     /* make sure that the threads really finished working */
-    if ((dlt_receiverthread_result == 0) && dlt_receiverthread_handle) {
-        int joined = pthread_join(dlt_receiverthread_handle, NULL);
+    if ((dlt_housekeeperthread_result == 0) && dlt_housekeeperthread_handle) {
+        joined = pthread_join(dlt_housekeeperthread_handle, NULL);
+        tmp_errno = errno;
 
         if (joined < 0)
             dlt_vlog(LOG_ERR,
-                     "ERROR pthread_join(dlt_receiverthread_handle, NULL): %s\n",
-                     strerror(errno));
+                     "ERROR pthread_join(dlt_housekeeperthread_handle, NULL): %s\n",
+                     strerror(tmp_errno));
 
-        dlt_receiverthread_handle = 0; /* set to invalid */
+        dlt_housekeeperthread_handle = 0; /* set to invalid */
     }
 
     if ((dlt_segmented_nwt_result == 0) && dlt_user.dlt_segmented_nwt_handle) {
-        int joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
+        joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
+        tmp_errno = errno;
 
         if (joined < 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n",
-                     strerror(errno));
+                     strerror(tmp_errno));
 
         dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
     }
