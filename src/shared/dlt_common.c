@@ -67,6 +67,10 @@ const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltFifoBaseDir[DLT_PATH_MAX] = "/tmp";
 
+#ifdef DLT_SHM_ENABLE
+char dltShmName[NAME_MAX + 1] = "/dlt-shm";
+#endif
+
 /* internal logging parameters */
 static int logging_mode = DLT_LOG_TO_CONSOLE;
 static int logging_level = LOG_INFO;
@@ -1702,6 +1706,14 @@ void dlt_log_set_fifo_basedir(const char *env_pipe_dir)
     strncpy(dltFifoBaseDir, env_pipe_dir, DLT_PATH_MAX);
     dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
 }
+
+#ifdef DLT_SHM_ENABLE
+void dlt_log_set_shm_name(const char * env_shm_name)
+{
+    strncpy(dltShmName, env_shm_name, NAME_MAX);
+    dltShmName[NAME_MAX] = 0;
+}
+#endif
 
 void dlt_log_init(int mode)
 {
@@ -3704,6 +3716,14 @@ void dlt_check_envvar()
 
     if (env_pipe_dir != NULL)
         dlt_log_set_fifo_basedir(env_pipe_dir);
+
+#ifdef DLT_SHM_ENABLE
+    char* env_shm_name = getenv("DLT_SHM_NAME");
+    if (env_shm_name != NULL)
+    {
+        dlt_log_set_shm_name(env_shm_name);
+    }
+#endif
 }
 
 int dlt_set_loginfo_parse_service_id(char *resp_text,

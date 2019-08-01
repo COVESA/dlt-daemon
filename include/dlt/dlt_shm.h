@@ -55,28 +55,20 @@
 #ifndef DLT_SHM_H
 #define DLT_SHM_H
 
+#include <semaphore.h>
 #include "dlt_common.h"
 
-/* shared memory key */
-/* must be the same for server and cleint */
-#define DLT_SHM_KEY    11771
-
-/* default size of shared memory */
-/* size is extended during creation to fit segment size */
-/* client retreives real size from shm buffer */
+/**
+ * Default size of shared memory.
+ * size is extended during creation to fit segment size.
+ * client retrieves real size from file descriptor of shared memory.
+ */
 #define DLT_SHM_SIZE   100000
-
-/* Id of the used semaphore */
-/* used for synchronisation of write and read access of multiple clients and server */
-/* must be the same for server and client */
-#define DLT_SHM_SEM    22771
-
-#define DLT_SHM_HEAD   "SHM"
 
 typedef struct
 {
-    int shmid;        /* Id of shared memory */
-    int semid;        /* Id of semaphore */
+    int shmfd;         /* file descriptor of shared memory */
+    sem_t *sem;        /* pointer to semaphore */
     DltBuffer buffer;
 } DltShm;
 
@@ -87,27 +79,27 @@ typedef struct
     int size;
 } DltShmBlockHead;
 
-#define DLT_SHM_SEM_GET(id) dlt_shm_pv(id, -1)
-#define DLT_SHM_SEM_FREE(id) dlt_shm_pv(id, 1)
+#define DLT_SHM_SEM_GET(id) sem_wait(id)
+#define DLT_SHM_SEM_FREE(id) sem_post(id)
 
 /**
  * Initialise the shared memory on the client side.
  * This function must be called before using further shm functions.
  * @param buf pointer to shm structure
- * @param key the identifier of the shm, must be the same for server and client
+ * @param name the name of the shm, must be the same for server and client
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_client(DltShm *buf, int key);
+extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
 
 /**
  * Initialise the shared memory on the server side.
  * This function must be called before using further shm functions.
  * @param buf pointer to shm structure
- * @param key the identifier of the shm, must be the same for server and client
+ * @param name the name of the shm, must be the same for server and client
  * @param size the requested size of the shm
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_server(DltShm *buf, int key, int size);
+extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size);
 
 /**
  * Push data from client onto the shm.
@@ -216,8 +208,9 @@ extern int dlt_shm_recover(DltShm *buf);
 /**
  * Deinitialise the shared memory on the server side.
  * @param buf pointer to shm structure
+ * @param name name of the shared memory
  * @return negative value if there was an error
  */
-extern int dlt_shm_free_server(DltShm *buf);
+extern DltReturnValue dlt_shm_free_server(DltShm *buf, const char *name);
 
 #endif /* DLT_SHM_H */
