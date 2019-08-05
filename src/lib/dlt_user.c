@@ -3537,14 +3537,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* also for Trace messages */
-#ifdef DLT_SHM_ENABLE
-
-    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_SHM) < DLT_RETURN_OK)
-#else
-
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK)
-#endif
-
         return DLT_RETURN_ERROR;
 
     if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)

@@ -65,15 +65,6 @@
 #include <sys/time.h>
 
 /**
- * Send out message to all the clients.
- * @param daemon pointer to dlt daemon structure
- * @param daemon_local pointer to dlt daemon local structure
- * @param verbose if set to true verbose information is printed out.
- * @return 1 if transfer succeed, 0 otherwise.
- */
-int dlt_daemon_client_send_all(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-
-/**
  * Send out message to client or store message in offline trace.
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
@@ -97,7 +88,16 @@ int dlt_daemon_client_send(int sock,
                            void *data2,
                            int size2,
                            int verbose);
-
+/**
+ * Send out message to all client or store message in offline trace.
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ * @return 0 if success, less than 0 if there is an error or buffer is full
+ */
+int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
+                                       DltDaemonLocal *daemon_local,
+                                       int verbose);
 /**
  * Send out response message to dlt client
  * @param sock connection handle used for sending response
