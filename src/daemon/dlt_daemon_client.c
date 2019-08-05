@@ -164,48 +164,6 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
     return sent;
 }
 
-/** @brief Send out message to all the clients.
- *
- * @param daemon pointer to dlt daemon structure
- * @param daemon_local pointer to dlt daemon local structure
- * @param verbose if set to true verbose information is printed out.
- *
- * @return 1 if transfer succeed, 0 otherwise.
- */
-int dlt_daemon_client_send_all(DltDaemon *daemon,
-                               DltDaemonLocal *daemon_local,
-                               int verbose)
-{
-    void *msg1, *msg2;
-    int msg1_sz, msg2_sz;
-    int ret = 0;
-
-    if ((daemon == NULL) || (daemon_local == NULL)) {
-        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
-        return 0;
-    }
-
-    /* FIXME: the lock shall include the for loop but
-     * dlt_daemon_close_socket may call us too ...
-     */
-    DLT_DAEMON_SEM_LOCK();
-    msg1 = daemon_local->msg.headerbuffer + sizeof(DltStorageHeader);
-    msg1_sz = daemon_local->msg.headersize - sizeof(DltStorageHeader);
-    msg2 = daemon_local->msg.databuffer;
-    msg2_sz = daemon_local->msg.datasize;
-    DLT_DAEMON_SEM_FREE();
-
-    ret = dlt_daemon_client_send_all_multiple(daemon,
-                                              daemon_local,
-                                              msg1,
-                                              msg1_sz,
-                                              msg2,
-                                              msg2_sz,
-                                              verbose);
-
-    return ret;
-}
-
 int dlt_daemon_client_send(int sock,
                            DltDaemon *daemon,
                            DltDaemonLocal *daemon_local,
@@ -335,6 +293,95 @@ int dlt_daemon_client_send(int sock,
 
     return DLT_DAEMON_ERROR_OK;
 
+}
+
+int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
+                                       DltDaemonLocal *daemon_local,
+                                       int verbose)
+{
+    int ret = DLT_DAEMON_ERROR_OK;
+    static char text[DLT_DAEMON_TEXTSIZE];
+    char * ecu_ptr = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: invalid arguments\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* set overwrite ecu id */
+    if ((daemon_local->flags.evalue[0]) &&
+        (strncmp(daemon_local->msg.headerextra.ecu,
+                 DLT_DAEMON_ECU_ID, DLT_ID_SIZE) == 0)) {
+        /* Set header extra parameters */
+        dlt_set_id(daemon_local->msg.headerextra.ecu, daemon->ecuid);
+
+        /*msg.headerextra.seid = 0; */
+        if (dlt_message_set_extraparameters(&(daemon_local->msg), 0)) {
+            dlt_vlog(LOG_WARNING,
+                     "%s: failed to set message extra parameters.\n", __func__);
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
+
+        /* Correct value of timestamp, this was changed by dlt_message_set_extraparameters() */
+        daemon_local->msg.headerextra.tmsp =
+                        DLT_BETOH_32(daemon_local->msg.headerextra.tmsp);
+    }
+
+    /* prepare storage header */
+    if (DLT_IS_HTYP_WEID(daemon_local->msg.standardheader->htyp)) {
+        ecu_ptr = daemon_local->msg.headerextra.ecu;
+    } else {
+        ecu_ptr = daemon->ecuid;
+    }
+
+    if (dlt_set_storageheader(daemon_local->msg.storageheader, ecu_ptr)) {
+        dlt_vlog(LOG_WARNING,
+                 "%s: failed to set storage header with header type: 0x%x\n",
+                 __func__, daemon_local->msg.standardheader->htyp);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* if no filter set or filter is matching display message */
+    if (daemon_local->flags.xflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_hex(&(daemon_local->msg), text,
+                                  DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_hex() failed!\n");
+    } else if (daemon_local->flags.aflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_ascii(&(daemon_local->msg), text,
+                                    DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_ascii() failed!\n");
+    } else if (daemon_local->flags.sflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_header(&(daemon_local->msg), text,
+                                     DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_header() failed!\n");
+    }
+
+    /* check if overflow occurred */
+    if (daemon->overflow_counter) {
+        ret = dlt_daemon_send_message_overflow(daemon, daemon_local, verbose);
+        if (DLT_DAEMON_ERROR_OK == ret) {
+            dlt_vlog(LOG_WARNING, "%u messages discarded!\n",
+                     daemon->overflow_counter);
+            daemon->overflow_counter = 0;
+        }
+    }
+
+    /* send message to client or write to log file */
+    ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
+            daemon_local->msg.headerbuffer, sizeof(DltStorageHeader),
+            daemon_local->msg.headerbuffer + sizeof(DltStorageHeader),
+            daemon_local->msg.headersize - sizeof(DltStorageHeader),
+            daemon_local->msg.databuffer, daemon_local->msg.datasize, verbose);
+
+    if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
+        daemon->overflow_counter++;
+
+    return ret;
 }
 
 int dlt_daemon_client_send_control_message(int sock,

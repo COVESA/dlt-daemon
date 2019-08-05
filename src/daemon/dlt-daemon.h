@@ -151,6 +151,7 @@ typedef struct
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;                /**< Shared memory handling */
+    unsigned char *recv_buf_shm;   /**< buffer for receive message from shm */
 #endif
     DltOfflineTrace offlineTrace; /**< Offline trace handling */
     int timeoutOnSend;
@@ -237,13 +238,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                        DltDaemonLocal *daemon_local,
                                                        DltReceiver *rec,
                                                        int verbose);
-int dlt_daemon_process_user_message_log(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *rec, int verbose);
-#ifdef DLT_SHM_ENABLE
-int dlt_daemon_process_user_message_log_shm(DltDaemon *daemon,
-                                            DltDaemonLocal *daemon_local,
-                                            DltReceiver *rec,
-                                            int verbose);
-#endif
+int dlt_daemon_process_user_message_log(DltDaemon *daemon,
+                                        DltDaemonLocal *daemon_local,
+                                        DltReceiver *rec,
+                                        int verbose);
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   DltReceiver *rec,
