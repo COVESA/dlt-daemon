@@ -28,5 +28,5 @@ DLT is a reusable open source software component for standardized logging and tr
 The goal of DLT is the consolidation of the existing variety of logging and tracing protocols on one format.
 
 
-\image html genivi_chrome_1_transparent.png
+\image html genivilogo.png
 */

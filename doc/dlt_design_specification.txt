@@ -18,7 +18,7 @@ DLT Design Specification
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 0.0.1, 2012/10/10: Initial version
 
-image::images/genivi_chrome_1_transparent.png[width=128]
+image::images/genivilogo.png[width=128]
 
 *This document is not up to date*
 
