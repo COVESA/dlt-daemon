@@ -14,6 +14,11 @@
 #######
 
 
+if(WITH_UDP_CONNECTION)
+    include_directories(${CMAKE_SOURCE_DIR}/src/daemon/udp_connection)
+    add_definitions(-DUDP_CONNECTION_SUPPORT)
+endif(WITH_UDP_CONNECTION)
+
 if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
     message(STATUS "Added ${systemd_SRCS} to dlt-daemon")
 endif()
@@ -45,8 +50,6 @@ if(WITH_DLT_SHM_ENABLE)
         ${PROJECT_SOURCE_DIR}/src/shared/dlt_shm.c)
 endif()
 
-add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
-
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(RT_LIBRARY rt)
     set(SOCKET_LIBRARY "")
@@ -55,6 +58,11 @@ else()
     set(SOCKET_LIBRARY socket)
 endif()
 
+if(WITH_UDP_CONNECTION)
+    set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${CMAKE_SOURCE_DIR}/src/daemon/udp_connection/dlt_daemon_udp_socket.c)
+endif(WITH_UDP_CONNECTION)
+
+add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
 target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS dlt-daemon

@@ -33,7 +33,14 @@ add_executable(	dlt-example-filetransfer ${dlt_example_filetransfer_SRCS})
 target_link_libraries(dlt-example-filetransfer dlt )
 set_target_properties(dlt-example-filetransfer PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api dlt-example-filetransfer
+set(dlt-example-multicast-clientmsg-view_SRCS dlt-example-multicast-clientmsg-view.c)
+add_executable(dlt-example-multicast-clientmsg-view
+${dlt-example-multicast-clientmsg-view_SRCS} ${dlt_most_SRCS})
+target_link_libraries(dlt-example-multicast-clientmsg-view dlt )
+set_target_properties(dlt-example-multicast-clientmsg-view PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api
+dlt-example-filetransfer dlt-example-multicast-clientmsg-view
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 

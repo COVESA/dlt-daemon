@@ -81,6 +81,10 @@ static inline int8_t getStatus(uint8_t request_log, int context_log)
     return (request_log <= context_log) ? request_log : context_log;
 }
 
+#ifdef UDP_CONNECTION_SUPPORT
+#   include "dlt_daemon_udp_socket.h"
+#endif
+
 /** @brief Sends up to 2 messages to all the clients.
  *
  * Runs through the client list and sends the messages to them. If the message
@@ -284,6 +288,15 @@ int dlt_daemon_client_send(int sock,
 
     /* send messages to daemon socket */
     if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) {
+#ifdef UDP_CONNECTION_SUPPORT
+        if(daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED){
+            dlt_daemon_udp_dltmsg_multicast(data1,
+                                            size1,
+                                            data2,
+                                            size2,
+                                            verbose);
+        }
+#endif
         if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)) {
             sent = dlt_daemon_client_send_all_multiple(daemon,
                                                        daemon_local,
