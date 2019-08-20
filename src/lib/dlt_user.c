@@ -93,6 +93,15 @@ static int atexit_registered = 0;
 
 /* used to disallow DLT usage in fork() child */
 static int g_dlt_is_child = 0;
+/* String truncate message */
+static const char* STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
+
+/* Enum for type of string */
+enum StringType
+{
+    ASCII_STRING    = 0,
+    UTF8_STRING     = 1
+};
 
 /*Max DLT message size is 1390 bytes plus some extra header space  to accomidate the resend buffer*/
 #define DLT_USER_EXTRA_BUFF_SIZE 100
@@ -169,6 +178,7 @@ static int dlt_start_threads();
 static void dlt_stop_threads();
 static void dlt_fork_child_fork_handler();
 
+static DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type);
 
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
 {
@@ -847,6 +857,7 @@ DltReturnValue dlt_free(void)
 
     /* Ignore return value */
     DLT_SEM_LOCK();
+
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
     DLT_SEM_FREE();
@@ -2283,46 +2294,7 @@ DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
 {
-    uint16_t arg_size = 0;
-    uint32_t type_info = 0;
-    size_t new_log_size = 0;
-
-    if ((log == NULL) || (text == NULL))
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    arg_size = strlen(text) + 1;
-
-    new_log_size = log->size + arg_size + sizeof(uint16_t);
-
-    if (new_log_size > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        new_log_size = log->size + arg_size + sizeof(uint32_t) + sizeof(uint16_t);
-
-        if (new_log_size > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
-    log->size += sizeof(uint16_t);
-
-    memcpy((log->buffer) + log->size, text, arg_size);
-    log->size += arg_size;
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    return dlt_user_log_write_string_utils(log, text, ASCII_STRING);
 }
 
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
@@ -2333,12 +2305,23 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
 
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
-    uint16_t arg_size;
-    uint32_t type_info;
+    return dlt_user_log_write_string_utils(log, text, UTF8_STRING);
+}
+
+DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type)
+{
+    uint16_t arg_size = 0;
+    uint32_t type_info = 0;
     size_t new_log_size = 0;
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    size_t str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    size_t max_payload_str_msg;
 
     if ((log == NULL) || (text == NULL))
+    {
         return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     if (!dlt_user_initialised) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
@@ -2346,18 +2329,95 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     }
 
     arg_size = strlen(text) + 1;
+
     new_log_size = log->size + arg_size + sizeof(uint16_t);
 
+    if (dlt_user.verbose_mode)
+    {
+        new_log_size += sizeof(uint32_t);
+    }
+
+    /* Check log size condition */
     if (new_log_size > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
+    {
+        ret = DLT_RETURN_USER_BUFFER_FULL;
 
+        /* Re-calculate arg_size */
+        arg_size = dlt_user.log_buf_len - log->size - sizeof(uint16_t);
+
+        size_t min_payload_str_truncate_msg = log->size + str_truncate_message_length + sizeof(uint16_t);
     if (dlt_user.verbose_mode) {
-        new_log_size = log->size + arg_size + sizeof(uint32_t) + sizeof(uint16_t);
+            min_payload_str_truncate_msg += sizeof(uint32_t);
+            arg_size -= sizeof(uint32_t);
+        }
 
-        if (new_log_size > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
+        /* Return when dlt_user.log_buf_len does not have enough space for min_payload_str_truncate_msg */
+        if (min_payload_str_truncate_msg > dlt_user.log_buf_len)
+        {
+            dlt_vlog(LOG_WARNING, "%s not enough minimum space to store data\n", __FUNCTION__);
+            return ret;
+        }
 
-        type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
+        /* Calculate the maximum size of string will be copied after truncate */
+        max_payload_str_msg = dlt_user.log_buf_len - min_payload_str_truncate_msg;
+
+        if (type == UTF8_STRING)
+        {
+            /**
+             * Adjust the lengh to truncate one utf8 character corectly
+             * refer: https://en.wikipedia.org/wiki/UTF-8
+             * one utf8 character will have maximum 4 bytes then maximum bytes will be truncate additional is 3
+             */
+            const char *tmp = (text + max_payload_str_msg - 3);
+            uint16_t reduce_size = 0;
+            if (tmp[2] & 0x80)
+            {
+                /* Is the last byte of truncated text is the first byte in multi-byte sequence (utf8 2 bytes) */
+                if (tmp[2] & 0x40)
+                {
+                    reduce_size = 1;
+                }
+                /* Is the next to last byte of truncated text is the first byte in multi-byte sequence (utf8 3 bytes) */
+                else if ((tmp[1] & 0xe0) == 0xe0)
+                {
+                    reduce_size = 2;
+                }
+                /* utf8 4 bytes */
+                else if ((tmp[0] & 0xf0) == 0xf0)
+                {
+                    reduce_size = 3;
+                }
+            }
+            else
+            {
+                /* one byte utf8, do-nothing */
+            }
+
+            max_payload_str_msg -= reduce_size;
+            arg_size -= reduce_size;
+        }
+    }
+
+    if (dlt_user.verbose_mode)
+    {
+        switch (type)
+        {
+            case ASCII_STRING:
+            {
+                type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
+                break;
+            }
+            case UTF8_STRING:
+            {
+                type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
+                break;
+            }
+            default:
+            {
+                /* Do nothing */
+                break;
+            }
+        }
 
         memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
         log->size += sizeof(uint32_t);
@@ -2366,12 +2426,36 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer) + log->size, text, arg_size);
-    log->size += arg_size;
+    switch(ret)
+    {
+        case DLT_RETURN_OK:
+        {
+            /* Whole string will be copied */
+            memcpy((log->buffer) + log->size, text, arg_size);
+            log->size += arg_size;
+            break;
+        }
+        case DLT_RETURN_USER_BUFFER_FULL:
+        {
+            /* Only copy partial string */
+            memcpy((log->buffer) + log->size, text, max_payload_str_msg);
+            log->size += max_payload_str_msg;
+
+            /* Append string truncate the input string */
+            memcpy((log->buffer) + log->size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+            log->size += str_truncate_message_length;
+            break;
+        }
+        default:
+        {
+            /* Do nothing */
+            break;
+        }
+    }
 
     log->args_num++;
 
-    return DLT_RETURN_OK;
+    return ret;
 }
 
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,

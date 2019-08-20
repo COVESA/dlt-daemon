@@ -26,12 +26,12 @@
 #include <stdio.h>
 #include "gtest/gtest.h"
 #include <limits.h>
+#include <stdlib.h>
 
 extern "C" {
 #include "dlt_user.h"
+#include "dlt_user_cfg.h"
 }
-
-
 
 /* TEST COMMENTED OUT WITH */
 /* TODO: */
@@ -188,10 +188,17 @@ extern "C" {
 #   define INT_MAX INT32_MAX
 #endif
 
+static const char *STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
+
 /*/////////////////////////////////////// */
 /* start initial dlt */
 TEST(t_dlt_init, onetime)
 {
+    /**
+     * Unset DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to make sure the dlt user buffer initialized with default value
+     */
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 }
 
@@ -1525,12 +1532,311 @@ TEST(t_dlt_user_log_write_string, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
 
+/**
+ *  Send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message exceed buffer length 10 bytes */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ *  In Non-Verbose mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message exceed buffer length 10 bytes */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Non-Verbose Mode:
+     * package_description_size = Message ID (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
+/**
+ *  Set the DLT_USER_ENV_LOG_MSG_BUF_LEN to 46, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
+ */
+TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    const char *message = "$$$$###############################################";
+    char *expected_message = NULL;
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     */
+    user_message_after_truncated_size = 4;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "46", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    expected_message_length = user_message_after_truncated_size + str_truncate_message_length;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '$';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
+/**
+ *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 35 bytes and send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL because the DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *               does not have enough space to store truncate message STR_TRUNCATED_MESSAGE
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
+ */
+TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_enough_space_for_truncated_message)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t package_description_size = 0;
+    const char *message = "################################################################################";
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size not enough minimum space to store data even the truncate notice message.
+     * Note: The minimum buffer to store the truncate notice message is 42 bytes.
+     */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "35", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_enough_space_for_truncated_message"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    ASSERT_STREQ("", (char *)(contextData.buffer + package_description_size));
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
+/**
+ *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 42 bytes and send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               receive message will be STR_TRUNCATED_MESSAGE
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
+ */
+TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_truncate_message)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t package_description_size = 0;
+    const char *message = "################################################################################";
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size just fixed to truncate message STR_TRUNCATED_MESSAGE
+     * Note: 42 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 1 byte NULL terminator.
+     */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "42", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_truncate_message"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    ASSERT_STREQ(STR_TRUNCATED_MESSAGE, (char *)(contextData.buffer + package_description_size));
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
 TEST(t_dlt_user_log_write_string, nullpointer)
 {
     DltContext context;
     DltContextData contextData;
-
-
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK,
@@ -1573,12 +1879,105 @@ TEST(t_dlt_user_log_write_constant_string, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
 
+/**
+ *  Send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_constant_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_constant_string, normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the message exceed DLT_USER_ENV_LOG_MSG_BUF_LEN 10 bytes */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_constant_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ * In Non-Verbose Mode
+ * Expectation: dlt_user_log_write_constant_string() will not package and send message. Return DLT_RETURN_OK
+ */
+TEST(t_dlt_user_log_write_constant_string, normal_do_nothing_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    const char *message = "message";
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal_do_nothing_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_constant_string(&contextData, message));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
 TEST(t_dlt_user_log_write_constant_string, nullpointer)
 {
     DltContext context;
     DltContextData contextData;
-
-
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK,
@@ -1621,12 +2020,922 @@ TEST(t_dlt_user_log_write_utf8_string, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
 
+/**
+ *  Send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at one byte utf-8 and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate position */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /* Fill '$' before truncate position */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - 1);
+    message[index] = '$';
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length;
+
+    for (index = 0; index < (user_message_after_truncated_size - 1); index++)
+    {
+        expected_message[index] = '#';
+    }
+    expected_message[user_message_after_truncated_size - 1] = '$';
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at one byte utf-8 and appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate position */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /**
+     * In Non-Verbose Mode:
+     * package_description_size = Message ID (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /* Fill '$' before truncate position */
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - 1);
+    message[index] = '$';
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length;
+
+    for (index = 0; index < (user_message_after_truncated_size - 1); index++)
+    {
+        expected_message[index] = '#';
+    }
+    expected_message[user_message_after_truncated_size - 1] = '$';
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
+/**
+ *  Set the DLT_USER_ENV_LOG_MSG_BUF_LEN to 46, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the whole utf-8 1 bytes and appended
+ *               STR_TRUNCATED_MESSAGE at the end of received message.
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other testcases
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_and_reduce_msg_buf_len_by_env_variable)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    const char *message = "$$$$###############################################";
+    char *expected_message = NULL;
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     */
+    user_message_after_truncated_size = 4;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "46", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1bytes_and_reduce_msg_buf_len_by_env_variable"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    expected_message_length = user_message_after_truncated_size + str_truncate_message_length;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '$';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 2 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_2byte_character = "¢";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "¢" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 1 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 1;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 2 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_2byte_character = "¢";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Non-Verbose Mode:
+     * package_description_size = Message ID (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "¢" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 1 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 1;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(DLT_USER_BUF_MAX_SIZE));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
+/**
+ *  Set the DLT_USER_ENV_LOG_MSG_BUF_LEN to 46, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 2 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other testcases
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_and_reduce_msg_buf_len_by_env_variable)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *message = "$$$¢###############################################";
+    char *expected_message = NULL;
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     */
+    user_message_after_truncated_size = 4;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "46", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_and_reduce_msg_buf_len_by_env_variable"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    remaining_byte_truncated_utf8_character = 1;
+    expected_message_length = user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size -= remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '$';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 3 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_3byte_character = "€";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_verbose_mode"));
+
+    /* normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "€" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 2 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 2;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 3 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_3byte_character = "€";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "€" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 2 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 2;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
+/**
+ *  Set the DLT_USER_ENV_LOG_MSG_BUF_LEN to 46, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 3 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other testcases
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_and_reduce_msg_buf_len_by_env_variable)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *message = "$$€###############################################";
+    char *expected_message = NULL;
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     */
+    user_message_after_truncated_size = 4;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "46", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_and_reduce_msg_buf_len_by_env_variable"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    remaining_byte_truncated_utf8_character = 2;
+    expected_message_length = user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size -= remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '$';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 4 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_in_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_4byte_character = "𐍈";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "𐍈" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 3 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 3;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/**
+ *  In Non-Verbose Mode, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 4 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_in_non_verbose_mode)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t index = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t send_message_length = 0;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *utf8_4byte_character = "𐍈";
+    char *message = NULL;
+    char *expected_message = NULL;
+
+    dlt_nonverbose_mode();
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_non_verbose_mode"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
+    message = (char *)(malloc(send_message_length));
+    ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
+
+    for (index = 0; index < send_message_length; index++)
+    {
+        message[index] = '#';
+    }
+    message[send_message_length - 1] = '\0';
+
+    /**
+     * In Non-Verbose Mode:
+     * package_description_size = Message ID (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "𐍈" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 3 more bytes in the character sequence
+     */
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    remaining_byte_truncated_utf8_character = 3;
+    index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    strncpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+
+    /* Create the expected message */
+    expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+    user_message_after_truncated_size = expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character;
+
+    for (index = 0; index < user_message_after_truncated_size; index++)
+    {
+        expected_message[index] = '#';
+    }
+    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+
+    free(message);
+    message = NULL;
+    free(expected_message);
+    expected_message = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore verbose mode */
+    dlt_verbose_mode();
+}
+
+/**
+ *  Set the DLT_USER_ENV_LOG_MSG_BUF_LEN to 46, send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
+ *  Expectation: dlt_user_log_write_utf8_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
+ *               message will be truncated at the middle of utf-8 4 bytes, the rest of this utf-8 character will
+ *               be removed completely, after that appended STR_TRUNCATED_MESSAGE at
+ *               the end of received message.
+ *  Note: dlt_init() will be called after testcase is finished to restore environment for other testcases
+ */
+TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_and_reduce_msg_buf_len_by_env_variable)
+{
+    DltContext context;
+    DltContextData contextData;
+    uint16_t str_truncate_message_length = 0;
+    uint16_t expected_message_length = 0;
+    uint16_t package_description_size = 0;
+    uint16_t user_message_after_truncated_size = 0;
+    uint16_t remaining_byte_truncated_utf8_character = 0;
+    const char *message = "$𐍈###############################################";
+    char *expected_message = NULL;
+
+    /**
+     * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
+     * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     */
+    user_message_after_truncated_size = 4;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "46", 1);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_and_reduce_msg_buf_len_by_env_variable"));
+
+    /* Normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+
+    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
+
+    /**
+     * In Verbose Mode:
+     * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
+     */
+    package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+    str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+
+    /* Create the expected message */
+    remaining_byte_truncated_utf8_character = 3;
+    expected_message_length = user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length;
+    expected_message = (char *)(malloc(expected_message_length));
+    ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
+
+    expected_message[0] = '$';
+    strncpy(expected_message + 1, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+
+    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
+
+    /* Restore the dlt with dlt user buffer size as default */
+    EXPECT_EQ(DLT_RETURN_OK, dlt_free());
+    unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+}
+
 TEST(t_dlt_user_log_write_utf8_string, nullpointer)
 {
     DltContext context;
     DltContextData contextData;
-
-
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK,
