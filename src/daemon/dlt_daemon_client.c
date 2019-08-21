@@ -289,14 +289,16 @@ int dlt_daemon_client_send(int sock,
     /* send messages to daemon socket */
     if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) {
 #ifdef UDP_CONNECTION_SUPPORT
-        if(daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED){
+
+        if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED)
             dlt_daemon_udp_dltmsg_multicast(data1,
                                             size1,
                                             data2,
                                             size2,
                                             verbose);
-        }
+
 #endif
+
         if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)) {
             sent = dlt_daemon_client_send_all_multiple(daemon,
                                                        daemon_local,

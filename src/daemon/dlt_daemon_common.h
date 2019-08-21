@@ -104,14 +104,14 @@ extern "C" {
 #define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
 extern sem_t dlt_daemon_mutex;
 
-// UDPMulticart Default IP and Port
-#ifdef UDP_CONNECTION_SUPPORT
-    #define MULTICASTIPADDRESS "225.0.0.37"
-    #define MULTICASTIPPORT 3491
-    #define MUlticastIP_MAX_SIZE 256
-    #define MULTICAST_CONNECTION_DISABLED 0
-    #define MULTICAST_CONNECTION_ENABLED 1
-#endif
+/* UDPMulticart Default IP and Port */
+#   ifdef UDP_CONNECTION_SUPPORT
+    #      define MULTICASTIPADDRESS "225.0.0.37"
+    #      define MULTICASTIPPORT 3491
+    #      define MULTICASTIP_MAX_SIZE 256
+    #      define MULTICAST_CONNECTION_DISABLED 0
+    #      define MULTICAST_CONNECTION_ENABLED 1
+#   endif
 
 /**
  * Definitions of DLT daemon logging states

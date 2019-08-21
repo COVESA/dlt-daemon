@@ -294,9 +294,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
 #ifdef UDP_CONNECTION_SUPPORT
     daemon_local->UDPConnectionSetup = MULTICAST_CONNECTION_ENABLED;
-    strncpy(daemon_local->UDPMulticastIPAddress, MULTICASTIPADDRESS, MUlticastIP_MAX_SIZE-1);
+    strncpy(daemon_local->UDPMulticastIPAddress, MULTICASTIPADDRESS, MULTICASTIP_MAX_SIZE - 1);
     daemon_local->UDPMulticastIPPort = MULTICASTIPPORT;
 #endif
+
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
         filename = daemon_local->flags.cvalue;
@@ -606,9 +607,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
 #endif
 #ifdef UDP_CONNECTION_SUPPORT
-                    else if(strcmp(token, "UDPConnectionSetup") == 0)
+                    else if (strcmp(token, "UDPConnectionSetup") == 0)
                     {
                         const long longval = strtol(value, NULL, 10);
+
                         if ((longval == MULTICAST_CONNECTION_DISABLED)
                             || (longval == MULTICAST_CONNECTION_ENABLED)) {
                             daemon_local->UDPConnectionSetup = longval;
@@ -617,16 +619,16 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         else {
                             daemon_local->UDPConnectionSetup = MULTICAST_CONNECTION_DISABLED;
                             fprintf(stderr,
-                                    "Invalid value for UDPConnectionSetup setto default %ld\n",
+                                    "Invalid value for UDPConnectionSetup set to default %ld\n",
                                     longval);
                         }
                     }
-                    else if(strcmp(token, "UDPMulticastIPAddress") == 0)
+                    else if (strcmp(token, "UDPMulticastIPAddress") == 0)
                     {
                         strncpy(daemon_local->UDPMulticastIPAddress, value,
-                            MUlticastIP_MAX_SIZE-1);
+                                MULTICASTIP_MAX_SIZE - 1);
                     }
-                    else if(strcmp(token, "UDPMulticastIPPort") == 0)
+                    else if (strcmp(token, "UDPMulticastIPPort") == 0)
                     {
                         daemon_local->UDPMulticastIPPort = strtol(value, NULL, 10);
                     }
@@ -1238,14 +1240,17 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     }
 
 #ifdef UDP_CONNECTION_SUPPORT
-    if(daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
-        if(dlt_daemon_udp_connection_setup(daemon_local) < 0) {
-            dlt_log(LOG_ERR,"UDP fd creation and register in epoll failed\n");
+
+    if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
+        if (dlt_daemon_udp_connection_setup(daemon_local) < 0) {
+            dlt_log(LOG_ERR, "UDP fd creation and register in epoll failed\n");
             return DLT_RETURN_ERROR;
-        } else {
-            dlt_log(LOG_INFO,"UDP fd creation and register in epoll success\n");
+        }
+        else {
+            dlt_log(LOG_INFO, "UDP fd creation and register in epoll success\n");
         }
     }
+
 #endif
 
     /* create and open unix socket to receive incoming connections from

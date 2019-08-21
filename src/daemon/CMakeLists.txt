@@ -14,11 +14,6 @@
 #######
 
 
-if(WITH_UDP_CONNECTION)
-    include_directories(${CMAKE_SOURCE_DIR}/src/daemon/udp_connection)
-    add_definitions(-DUDP_CONNECTION_SUPPORT)
-endif(WITH_UDP_CONNECTION)
-
 if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
     message(STATUS "Added ${systemd_SRCS} to dlt-daemon")
 endif()
@@ -59,7 +54,9 @@ else()
 endif()
 
 if(WITH_UDP_CONNECTION)
-    set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${CMAKE_SOURCE_DIR}/src/daemon/udp_connection/dlt_daemon_udp_socket.c)
+    include_directories(${PROJECT_SOURCE_DIR}/src/daemon/udp_connection)
+    add_definitions(-DUDP_CONNECTION_SUPPORT)
+    set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/udp_connection/dlt_daemon_udp_socket.c)
 endif(WITH_UDP_CONNECTION)
 
 add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})

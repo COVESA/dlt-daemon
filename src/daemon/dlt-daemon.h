@@ -158,9 +158,9 @@ typedef struct
     unsigned long RingbufferStepSize;
     unsigned long daemonFifoSize;
 #ifdef UDP_CONNECTION_SUPPORT
-    int UDPConnectionSetup; // enable/disable the UDP connection
-    char UDPMulticastIPAddress[MUlticastIP_MAX_SIZE]; // multicast ip addres
-    int UDPMulticastIPPort; // multicast port
+    int UDPConnectionSetup; /* enable/disable the UDP connection */
+    char UDPMulticastIPAddress[MULTICASTIP_MAX_SIZE]; /* multicast ip addres */
+    int UDPMulticastIPPort; /* multicast port */
 #endif
 } DltDaemonLocal;
 

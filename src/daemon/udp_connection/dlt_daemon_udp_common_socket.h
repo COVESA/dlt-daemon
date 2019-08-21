@@ -1,25 +1,25 @@
 /*
-Copyright (c) 2019 LG Electronics Inc.
-SPDX-License-Identifier: MPL-2.0
-
-This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
-If a copy of the MPL was not distributed with this file,
-You can obtain one at http://mozilla.org/MPL/2.0/.
-
-For further information see http://www.genivi.org/.
-*/
+ * Copyright (c) 2019 LG Electronics Inc.
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * For further information see http://www.genivi.org/.
+ */
 
 /*!
-* \author
-* Guruprasad KN <guruprasad.kn@lge.com>
-* Sachin Sudhakar Shetty <sachin.shetty@lge.com>
-* Sunil Kovila Sampath <sunil.s@lge.com>
-*
-* \Copyright (c) 2019 LG Electronics Inc.
-* License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
-*
-* \file dlt_daemon_udp_common_socket.h
-*/
+ * \author
+ * Guruprasad KN <guruprasad.kn@lge.com>
+ * Sachin Sudhakar Shetty <sachin.shetty@lge.com>
+ * Sunil Kovila Sampath <sunil.s@lge.com>
+ *
+ * \Copyright (c) 2019 LG Electronics Inc.
+ * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ *
+ * \file dlt_daemon_udp_common_socket.h
+ */
 
 #ifndef DLT_DAEMON_UDP_COMMON_SOCKET_H
 #define DLT_DAEMON_UDP_COMMON_SOCKET_H
@@ -45,10 +45,10 @@ For further information see http://www.genivi.org/.
 #include "dlt_daemon_udp_socket.h"
 #include "dlt_types.h"
 
-// #define variables
+/* #define variables */
 #define ADDRESS_VALID 1
 #define ADDRESS_INVALID 0
-#define SOCKPORT_MAX_LEN 6 // port range 0-65535
+#define SOCKPORT_MAX_LEN 6 /* port range 0-65535 */
 #define SYSTEM_CALL_ERROR -1
 #define ZERO_BYTE_RECIEVED 0
 #define ONE_BYTE_RECIEVED 0
@@ -56,7 +56,7 @@ For further information see http://www.genivi.org/.
 typedef struct sockaddr_storage CLIENT_ADDR_STRUCT;
 typedef socklen_t CLIENT_ADDR_STRUCT_SIZE;
 
-// udp strutures
+/* udp strutures */
 typedef struct
 {
     CLIENT_ADDR_STRUCT clientaddr;
@@ -64,12 +64,10 @@ typedef struct
     int isvalidflag;
 } DltDaemonClientSockInfo;
 
-// Function prototype declaration
+/* Function prototype declaration */
 void dlt_daemon_udp_init_clientstruct(DltDaemonClientSockInfo *clientinfo_struct);
 DltReturnValue dlt_daemon_udp_socket_open(int *sock, unsigned int servPort);
-void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo* clientinfo, void* data1,
-                                    int size1, void* data2, int size2, int verbose);
-void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal* daemon_local);
+void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal *daemon_local);
 
 #endif /* DLT_DAEMON_UDP_COMMON_SOCKET_H */
 
