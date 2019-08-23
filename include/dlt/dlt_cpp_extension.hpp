@@ -29,6 +29,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <array>
 
 #include "dlt.h"
 
@@ -123,6 +124,20 @@ int32_t logToDlt(DltContextData &log, std::string const &value);
 
 template<typename _Tp, typename _Alloc = std::allocator<_Tp>>
 static inline int32_t logToDlt(DltContextData &log, std::vector<_Tp, _Alloc> const & value)
+{
+    int result = 0;
+
+    for (auto elem : value)
+        result += logToDlt(log, elem);
+
+    if (result != 0)
+        result = -1;
+
+    return result;
+}
+
+template<typename _Tp, size_t _N>
+static inline int32_t logToDlt(DltContextData &log, std::array<_Tp, _N> const & value)
 {
     int result = 0;
 

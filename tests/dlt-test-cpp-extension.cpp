@@ -110,6 +110,12 @@ int main()
     testMap["orange"] = 300;
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, "map", testMap);
 
+    std::array<int, 3> intArray;
+    intArray[0] = 0;
+    intArray[1] = 1;
+    intArray[2] = 2;
+    DLT_LOG_CXX(ctx, DLT_LOG_WARN, "array", intArray);
+
     dlt_unregister_context(&ctx);
     dlt_unregister_app();
 
