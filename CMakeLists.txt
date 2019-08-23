@@ -78,6 +78,7 @@ option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage c
 option(WITH_DLT_USE_IPv6      "Set to ON for IPv6 support"                                                       ON)
 option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"                                              OFF)
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
+option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   ON)
 
 # RPM settings
 set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
@@ -262,6 +263,7 @@ message(STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "WITH_DLT_LOGSTORAGE_CTRL_UDEV = ${WITH_DLT_LOGSTORAGE_CTRL_UDEV}")
 message(STATUS "DLT_IPC = ${DLT_IPC}(Path: ${DLT_USER_IPC_PATH})")
+message(STATUS "WITH_UDP_CONNECTION = ${WITH_UDP_CONNECTION}")
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)

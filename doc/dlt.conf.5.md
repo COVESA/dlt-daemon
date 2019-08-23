@@ -321,6 +321,18 @@ Maximal used memory for log storage cache in KB.
 
     Default: 30000 KB
 
+## UDPConnectionSetup
+
+Enable or disable UDP connection. 0 = disabled, 1 = enabled
+
+## UDPMulticastIPAddress
+
+The address on which daemon multicasts the log messages
+
+## UDPMulticastIPPort
+
+The Multicase IP port. Default: 3491
+
 # AUTHOR
 
 Alexander Wenzel (alexander.aw.wenzel (at) bmw (dot) de)

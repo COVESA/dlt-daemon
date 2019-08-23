@@ -65,6 +65,9 @@
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
 
+#ifdef UDP_CONNECTION_SUPPORT
+#   include "dlt_daemon_udp_socket.h"
+#endif
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #   include "sd-daemon.h"
 #endif
@@ -289,6 +292,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
     daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
     daemon_local->flags.enforceContextLLAndTS = 0; /* default is off */
+#ifdef UDP_CONNECTION_SUPPORT
+    daemon_local->UDPConnectionSetup = MULTICAST_CONNECTION_ENABLED;
+    strncpy(daemon_local->UDPMulticastIPAddress, MULTICASTIPADDRESS, MULTICASTIP_MAX_SIZE - 1);
+    daemon_local->UDPMulticastIPPort = MULTICASTIPPORT;
+#endif
 
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
@@ -596,6 +604,33 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
                         daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
+                    }
+#endif
+#ifdef UDP_CONNECTION_SUPPORT
+                    else if (strcmp(token, "UDPConnectionSetup") == 0)
+                    {
+                        const long longval = strtol(value, NULL, 10);
+
+                        if ((longval == MULTICAST_CONNECTION_DISABLED)
+                            || (longval == MULTICAST_CONNECTION_ENABLED)) {
+                            daemon_local->UDPConnectionSetup = longval;
+                            printf("Option: %s=%s\n", token, value);
+                        }
+                        else {
+                            daemon_local->UDPConnectionSetup = MULTICAST_CONNECTION_DISABLED;
+                            fprintf(stderr,
+                                    "Invalid value for UDPConnectionSetup set to default %ld\n",
+                                    longval);
+                        }
+                    }
+                    else if (strcmp(token, "UDPMulticastIPAddress") == 0)
+                    {
+                        strncpy(daemon_local->UDPMulticastIPAddress, value,
+                                MULTICASTIP_MAX_SIZE - 1);
+                    }
+                    else if (strcmp(token, "UDPMulticastIPPort") == 0)
+                    {
+                        daemon_local->UDPMulticastIPPort = strtol(value, NULL, 10);
                     }
 #endif
                     else {
@@ -1203,6 +1238,20 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_log(LOG_ERR, "Could not initialize main socket.\n");
         return DLT_RETURN_ERROR;
     }
+
+#ifdef UDP_CONNECTION_SUPPORT
+
+    if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
+        if (dlt_daemon_udp_connection_setup(daemon_local) < 0) {
+            dlt_log(LOG_ERR, "UDP fd creation and register in epoll failed\n");
+            return DLT_RETURN_ERROR;
+        }
+        else {
+            dlt_log(LOG_INFO, "UDP fd creation and register in epoll success\n");
+        }
+    }
+
+#endif
 
     /* create and open unix socket to receive incoming connections from
      * control application

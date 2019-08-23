@@ -63,6 +63,7 @@ DLT\_USER                         | genivi         | Set user for process not ru
 WITH\_CHECK\_CONFIG\_FILE         | OFF            | Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists
 CMAKE\_INSTALL\_PREFIX            | /usr/local
 CMAKE\_BUILD\_TYPE                | RelWithDebInfo
+WITH\_UDP\_CONNECTION             | ON             | Set to ON to enable dlt UDP multicast SUPPORT
 
 #### Command Line Tool Options
 
