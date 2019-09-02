@@ -453,7 +453,7 @@ int dlt_daemon_client_process_control(int sock,
     id_tmp = *((uint32_t *)(msg->databuffer));
     id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
-    if ((id > 0) && (id < DLT_SERVICE_ID_CALLSW_CINJECTION)) {
+    if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_CALLSW_CINJECTION)) {
         /* Control message handling */
         switch (id) {
         case DLT_SERVICE_ID_SET_LOG_LEVEL:
@@ -631,16 +631,6 @@ int dlt_daemon_client_process_control(int sock,
                                                        verbose);
             break;
         }
-        case DLT_SERVICE_ID_SET_ALL_LOG_LEVEL:
-        {
-            dlt_daemon_control_set_all_log_level(sock, daemon, daemon_local, msg, verbose);
-            break;
-        }
-        case DLT_SERVICE_ID_SET_ALL_TRACE_STATUS:
-        {
-            dlt_daemon_control_set_all_trace_status(sock, daemon, daemon_local, msg, verbose);
-            break;
-        }
         case DLT_SERVICE_ID_OFFLINE_LOGSTORAGE:
         {
             dlt_daemon_control_service_logstorage(sock, daemon, daemon_local, msg, verbose);
@@ -661,6 +651,16 @@ int dlt_daemon_client_process_control(int sock,
                                                            daemon,
                                                            daemon_local,
                                                            verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_ALL_LOG_LEVEL:
+        {
+            dlt_daemon_control_set_all_log_level(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_ALL_TRACE_STATUS:
+        {
+            dlt_daemon_control_set_all_trace_status(sock, daemon, daemon_local, msg, verbose);
             break;
         }
         default:
