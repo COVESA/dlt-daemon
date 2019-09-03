@@ -4,9 +4,65 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.3 STABLE
+2.18.4 STABLE
 
 ## Changes
+
+### 2.18.4
+
+   * Update ReleaseNotes and version to v2.18.4
+   * dlt-daemon: correct errno usage
+   * dlt-daemon: fix bug binding invalid ipv6 address as default
+   * Add option in dlt.conf for bindAddress to specific IPs (#130)
+   * protocol: Remove non supported user service ID (#159)
+   * libdlt: truncate the log message if it is too long (#156) (#157)
+   * UDP Multicast implementation (#155)
+   * doc: Remove unused images
+   * daemon: fix compile error with DLT_IPC="UNIX_SOCKET" (#153)
+   * using POSIX shared memory APIs (#90) (#151)
+   * Revert "Add option in dlt.conf for bindAddress to specific IPs (#130)"
+   * Add option to set owner group of daemon FIFO (#122)
+   * Add option in dlt.conf for bindAddress to specific IPs (#130)
+   * dlt-system-journal: fixed localtime compile error
+   * Correct sa findings
+   * logstorage: fix compile error
+   * doxygen: Align variable for apid and ctid
+   * doxygen: Remove licence
+   * doxygen: Get rid of warnings
+   * doc: Use pandoc to generate HTML from markdown
+   * doc: Improve README.md
+   * doc: Create missing markdown documents
+   * doc: Documentation update
+   * cmake: Allow build as a subproject (#145)
+   * fix config path for dlt-dbus
+   * define DLT_PATH_MAX for max path buffer length
+   * cmake-improvements (#135)
+   * libdlt: Use posix nanosleep (#144)
+   * doc: Improve markdown documents
+   * doc: Improve dlt_for_developers.md
+   * fix the warning of strncat size
+   * fix warning of self assign
+   * dlt-convert: fix warning of wrong conversion
+   * Travis: Run Travis on Xenial 16.04
+   * Travis: Modify install package
+   * cleanup: Use dlt_vlog()
+   * Fix alerts from lgtm
+   * lgtm: Add code analysis platform
+   * dlt-test: Improve context ID
+   * dlt-test: Add options
+   * libdlt: Remove commented out code
+   * Remove dlt_forward_msg
+   * libdlt: compare dlt_ll_ts to NULL
+   * network trace: Define package ID macro
+   * daemon: Loop for client fds
+   * daemon: Remove bytes_sent
+   * daemon: Don't remove unregistered context
+   * daemon: Don't assign fd after free
+   * test: Add manual interruption in dlt-test-stress
+   * gtest: Logstorage unit test update
+   * Logstorage: Correct behavior in sync message cache
+   * Logstorage: Sync behavior bug fix
+   * Logstorage: Fix write msg cache
 
 ### 2.18.3
 
