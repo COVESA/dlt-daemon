@@ -78,7 +78,7 @@ option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage c
 option(WITH_DLT_USE_IPv6      "Set to ON for IPv6 support"                                                       ON)
 option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"                                              OFF)
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
-option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   ON)
+option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   OFF)
 
 # RPM settings
 set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
