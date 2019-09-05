@@ -25,19 +25,16 @@ if(WITH_DOC)
         MESSAGE(FATAL_ERROR "Could not find pandoc for man page generation.")
     endif(NOT PANDOC_TOOL)
 
-    set(MAN_SRC_DIR ${CMAKE_SOURCE_DIR})
-    set(MAN_BUILD_DIR ${CMAKE_BINARY_DIR})
-
     add_custom_target(generate_doc ALL
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/README.md -o ${MAN_BUILD_DIR}/README.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_for_developers.md -o ${MAN_BUILD_DIR}/doc/dlt_for_developers.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_glossary.md -o ${MAN_BUILD_DIR}/doc/dlt_glossary.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_offline_logstorage.md -o ${MAN_BUILD_DIR}/doc/dlt_offline_logstorage.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_multinode.md -o ${MAN_BUILD_DIR}/doc/dlt_multinode.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_extended_network_trace.md -o ${MAN_BUILD_DIR}/doc/dlt_extended_network_trace.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_filetransfer.md -o ${MAN_BUILD_DIR}/doc/dlt_filetransfer.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_kpi.md -o ${MAN_BUILD_DIR}/doc/dlt_kpi.html
-        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${MAN_SRC_DIR}/doc/dlt_cdh.md -o ${MAN_BUILD_DIR}/doc/dlt_cdh.html)
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/README.md -o ${PROJECT_BINARY_DIR}/README.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_for_developers.md -o ${PROJECT_BINARY_DIR}/doc/dlt_for_developers.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_glossary.md -o ${PROJECT_BINARY_DIR}/doc/dlt_glossary.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_offline_logstorage.md -o ${PROJECT_BINARY_DIR}/doc/dlt_offline_logstorage.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_multinode.md -o ${PROJECT_BINARY_DIR}/doc/dlt_multinode.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_extended_network_trace.md -o ${PROJECT_BINARY_DIR}/doc/dlt_extended_network_trace.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_filetransfer.md -o ${PROJECT_BINARY_DIR}/doc/dlt_filetransfer.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_kpi.md -o ${PROJECT_BINARY_DIR}/doc/dlt_kpi.html
+        COMMAND ${PANDOC_TOOL} -s -f markdown -t html5 ${PROJECT_SOURCE_DIR}/doc/dlt_cdh.md -o ${PROJECT_BINARY_DIR}/doc/dlt_cdh.html)
 
     # Doxygen
     find_package(Doxygen)
@@ -63,15 +60,6 @@ if(WITH_DOC)
         COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals
         COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals/images
         COMMAND cp ${PROJECT_SOURCE_DIR}/doc/images/* ${PROJECT_BINARY_DIR}/doc/manuals/images
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/README.html ${PROJECT_SOURCE_DIR}/README.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_glossary.html ${CMAKE_SOURCE_DIR}/doc/dlt_glossary.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_for_developers.html ${CMAKE_SOURCE_DIR}/doc/dlt_for_developers.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_offline_logstorage.html ${CMAKE_SOURCE_DIR}/doc/dlt_offline_logstorage.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_multinode.html ${CMAKE_SOURCE_DIR}/doc/dlt_multinode.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_extended_network_trace.html ${CMAKE_SOURCE_DIR}/doc/dlt_extended_network_trace.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_filetransfer.html ${CMAKE_SOURCE_DIR}/doc/dlt_filetransfer.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_kpi.html ${CMAKE_SOURCE_DIR}/doc/dlt_kpi.md
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_cdh.html ${CMAKE_SOURCE_DIR}/doc/dlt_cdh.md
         COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${PROJECT_SOURCE_DIR}/doc/dlt_design_specification.txt
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
     )
