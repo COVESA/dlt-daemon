@@ -15,7 +15,7 @@
  * Sachin Sudhakar Shetty <sachin.shetty@lge.com>
  * Sunil Kovila Sampath <sunil.s@lge.com>
  *
- * \Copyright (c) 2019 LG Electronics Inc.
+ * \copyright Copyright (c) 2019 LG Electronics Inc.
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_udp_common_socket.h
