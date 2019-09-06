@@ -698,20 +698,6 @@ typedef struct
 } PACKED DltServiceOfflineLogstorage;
 
 /**
- * The structure of DLT Service Get Filter Config
- */
-typedef struct
-{
-    uint32_t service_id;                      /**< service ID */
-    uint8_t status;                           /**< response status */
-    char name[DLT_ENTRY_MAX];                 /**< config name */
-    uint32_t level;                           /**< filter level */
-    uint32_t client_mask;                     /**< client mask */
-    uint32_t ctrl_mask;                       /**< control message mask */
-    char injections[DLT_ENTRY_MAX];           /**< list of injections */
-} PACKED DltServiceGetCurrentFilterInfo;
-
-/**
  * The structure of DLT Service Passive Node Connect
  */
 typedef struct
