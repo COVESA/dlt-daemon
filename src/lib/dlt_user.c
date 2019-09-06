@@ -253,6 +253,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
         }
 
         close(sockfd);
+        dlt_user.dlt_log_handle = -1;
     }
     else {
         dlt_user.dlt_log_handle = sockfd;
