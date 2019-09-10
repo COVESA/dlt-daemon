@@ -12,28 +12,31 @@
 #
 # For further information see http://www.genivi.org/.
 #######
-add_definitions( -Werror )
+add_definitions(-Werror)
 
-set(dlt_logstorage_ctrl_SRCS dlt-logstorage-ctrl.c dlt-logstorage-common.c dlt-logstorage-list.c)
+set(dlt-logstorage-ctrl_SRCS
+    dlt-logstorage-ctrl.c
+    dlt-logstorage-common.c
+    dlt-logstorage-list.c)
 
 if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} dlt-logstorage-udev.c)
-endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
+    set(dlt-logstorage-ctrl_SRCS
+        ${dlt-logstorage-ctrl_SRCS}
+        dlt-logstorage-udev.c)
+    set(LOGSTORAGE_LIBRARY udev)
+endif()
 
 if(WITH_SYSTEMD)
- set(dlt_logstorage_ctrl_SRCS ${dlt_logstorage_ctrl_SRCS} ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
-endif(WITH_SYSTEMD)
+    set(dlt-logstorage-ctrl_SRCS
+        ${dlt-logstorage-ctrl_SRCS}
+        ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
+endif()
 
-add_executable(dlt-logstorage-ctrl ${dlt_logstorage_ctrl_SRCS} ${dlt_control_common_SRCS} ${dlt_most_SRCS})
+add_executable(dlt-logstorage-ctrl
+               ${dlt-logstorage-ctrl_SRCS}
+               ${dlt_control_common_SRCS})
 
-set(DLT_LOGSTORAGE_LIBRARIES dlt-logstorage-ctrl dlt ${EXPAT_LIBRARIES})
-
-if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
- set(DLT_LOGSTORAGE_LIBRARIES ${DLT_LOGSTORAGE_LIBRARIES} udev)
-endif(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
-
-target_link_libraries(${DLT_LOGSTORAGE_LIBRARIES})
-
+target_link_libraries(dlt-logstorage-ctrl dlt ${LOGSTORAGE_LIBRARY})
 set_target_properties(dlt-logstorage-ctrl PROPERTIES LINKER_LANGUAGE C)
 
 install(TARGETS dlt-logstorage-ctrl
