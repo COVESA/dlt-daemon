@@ -160,17 +160,4 @@ void watchdog_thread(void *v_conf)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("systemd watchdog timeout (WATCHDOG_USEC) is null\n"));
     }
 }
-
-void start_systemd_watchdog(DltSystemConfiguration *conf)
-{
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Creating thread for systemd watchdog\n"));
-
-    static pthread_attr_t t_attr;
-    static pthread_t pt;
-
-    if (pthread_create(&pt, &t_attr, (void *)watchdog_thread, conf) == 0)
-        threads.threads[threads.count++] = pt;
-    else
-        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Could not create thread for systemd watchdog\n"));
-}
 #endif
