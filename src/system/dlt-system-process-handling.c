@@ -119,30 +119,60 @@ void start_threads(DltSystemConfiguration *config)
         threads.threads[i] = 0;
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    start_systemd_watchdog(config);
+    start_thread(config, watchdog_thread, "systemd watchdog");
 #endif
 
     if (config->Shell.Enable)
         init_shell();
 
     if (config->LogFile.Enable)
-        start_logfile(config);
+        start_thread(config, logfile_thread, "log file");
 
     if (config->Filetransfer.Enable)
-        start_filetransfer(config);
+        start_thread(config, filetransfer_thread, "file transfer");
 
     if (config->LogProcesses.Enable)
-        start_logprocess(config);
+        start_thread(config, logprocess_thread, "log process");
 
     if (config->Syslog.Enable)
-        start_syslog(config);
+        start_thread(config, syslog_thread, "syslog");
 
 #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
 
     if (config->Journal.Enable)
-        start_systemd_journal(config);
+        start_thread(config, journal_thread, "systemd journal");
 
 #endif
+}
+
+/**
+ * Start a thread and add it to the thread pool.
+ */
+
+void start_thread(DltSystemConfiguration *conf,
+                  void (thread)(void *), const char *name)
+{
+    if (threads.count == MAX_THREADS) {
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("Could not create thread for "),
+                DLT_STRING(name),
+                DLT_STRING("Out of thread slots.\n"));
+        return;
+    }
+
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Creating thread for "),
+            DLT_STRING(name),
+            DLT_STRING("\n"));
+
+    pthread_t pt;
+
+    if (pthread_create(&pt, NULL, (void *)thread, conf) == 0)
+        threads.threads[threads.count++] = pt;
+    else
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("Could not create thread for "),
+                DLT_STRING(name),
+                DLT_STRING("\n"));
 }
 
 /**

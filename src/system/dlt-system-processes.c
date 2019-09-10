@@ -159,13 +159,3 @@ void logprocess_thread(void *v_conf)
         }
     }
 }
-
-void start_logprocess(DltSystemConfiguration *conf)
-{
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-processes, starting process log."));
-    static pthread_attr_t t_attr;
-    static pthread_t pt;
-    pthread_create(&pt, &t_attr, (void *)logprocess_thread, conf);
-    threads.threads[threads.count++] = pt;
-}

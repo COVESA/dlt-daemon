@@ -154,7 +154,8 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
         if (errno != 0)
             time_usecs = 0;
     }
-    else if ((ret = sd_journal_get_realtime_usec(journal, &time_usecs)) < 0) {
+    else if ((ret = sd_journal_get_realtime_usec(journal, &time_usecs)) < 0)
+    {
         DLT_LOG(dltsystem, DLT_LOG_WARN,
                 DLT_STRING("dlt-system-journal failed to get realtime: "),
                 DLT_STRING(strerror(-ret)));
@@ -180,7 +181,8 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
         if (errno != 0)
             time_usecs = 0;
     }
-    else if ((ret = sd_journal_get_monotonic_usec(journal, &time_usecs, NULL)) < 0) {
+    else if ((ret = sd_journal_get_monotonic_usec(journal, &time_usecs, NULL)) < 0)
+    {
         DLT_LOG(dltsystem, DLT_LOG_WARN,
                 DLT_STRING("dlt-system-journal failed to get monotonic time: "),
                 DLT_STRING(strerror(-ret)));
@@ -380,16 +382,6 @@ void journal_thread(void *v_conf)
 
     DLT_UNREGISTER_CONTEXT(journalContext);
 
-}
-
-void start_systemd_journal(DltSystemConfiguration *conf)
-{
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-journal, start journal"));
-    static pthread_attr_t t_attr;
-    static pthread_t pt;
-    pthread_create(&pt, &t_attr, (void *)journal_thread, conf);
-    threads.threads[threads.count++] = pt;
 }
 
 #endif /* DLT_SYSTEMD_JOURNAL_ENABLE */

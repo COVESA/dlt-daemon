@@ -174,23 +174,25 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name);
 /* In dlt-process-handling.c */
 int daemonize();
 void start_threads(DltSystemConfiguration *config);
+void start_thread(DltSystemConfiguration *conf,
+                  void (thread)(void *), const char *nam);
 void join_threads();
 void dlt_system_signal_handler(int sig);
 void register_with_dlt(DltSystemConfiguration *config);
 
-/* Thread initiators: */
+/* Threads */
 void init_shell();
-void start_syslog();
-void start_filetransfer(DltSystemConfiguration *conf);
-void start_logfile(DltSystemConfiguration *conf);
-void start_logprocess(DltSystemConfiguration *conf);
+void syslog_thread(void *v_conf);
+void filetransfer_thread(void *v_conf);
+void logfile_thread(void *v_conf);
+void logprocess_thread(void *v_conf);
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-void start_systemd_watchdog(DltSystemConfiguration *conf);
+void watchdog_thread(void *v_conf);
 #endif
 
 #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
-void start_systemd_journal(DltSystemConfiguration *conf);
+void journal_thread(void *v_conf);
 #endif
 
 #endif /* DLT_SYSTEM_H_ */
