@@ -57,6 +57,7 @@
 #include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
 #include <fcntl.h>      /* for open() */
 #include <sys/uio.h>    /* for writev() */
+#include <sys/ioctl.h>  /* for ioctl(), SIOCOUTQ */
 #include <string.h>     /* for open() */
 
 #include "dlt_client.h"
@@ -109,6 +110,27 @@ typedef struct {
     DltFilter filter;
 } DltReceiveData;
 
+
+void wait_send_buffer_empty(int fd)
+{
+#ifdef __linux__
+    struct timespec ts = {0};
+    /* Wait until send buffer is empty */
+    while (1)
+    {
+        int unsent;
+        ioctl(fd, TIOCOUTQ, &unsent);
+        if (!unsent)
+        {
+            break;
+        }
+
+        ts.tv_sec = 0;
+        ts.tv_nsec = 100000 * 1000;
+        nanosleep(&ts, NULL);
+    }
+#endif
+}
 
 /**
  * Print usage information of tool.
@@ -643,6 +665,9 @@ int main(int argc, char *argv[])
         ts.tv_sec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
         ts.tv_nsec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
+
+        /* Wait for all the data is sent to dlt-daemon */
+        wait_send_buffer_empty(g_dltclient.sock);
     }
 
     /* Dlt Client Cleanup */
