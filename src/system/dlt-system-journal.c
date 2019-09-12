@@ -136,9 +136,9 @@ int dlt_system_journal_get(sd_journal *j, char *target, const char *field, size_
 void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *timestamp)
 {
     int ret = 0;
-    uint64_t time_secs = 0;
+    time_t time_secs = 0;
     uint64_t time_usecs = 0;
-    struct tm *timeinfo = NULL;
+    struct tm timeinfo;
 
     char buffer_realtime[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
     char buffer_realtime_formatted[DLT_SYSTEM_JOURNAL_BUFFER_SIZE] = { 0 };
@@ -164,9 +164,9 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
         time_usecs = 0;
     }
 
-    time_secs = time_usecs / 1000000;
-    localtime_r((const time_t *)(&time_secs), timeinfo);
-    strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", timeinfo);
+    time_secs = (time_t)(time_usecs / 1000000);
+    localtime_r(&time_secs, &timeinfo);
+    strftime(buffer_realtime_formatted, sizeof(buffer_realtime_formatted), "%Y/%m/%d %H:%M:%S", &timeinfo);
 
     snprintf(timestamp->real, sizeof(timestamp->real), "%s.%06" PRIu64, buffer_realtime_formatted,
              time_usecs % 1000000);
