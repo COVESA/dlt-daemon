@@ -88,6 +88,7 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         char stamp[DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + 1] = { 0 };
         time_t t = time(NULL);
         struct tm tm_info;
+        tzset();
         localtime_r(&t, &tm_info);
         sprintf(stamp,
                 "%c%04d%02d%02d-%02d%02d%02d",

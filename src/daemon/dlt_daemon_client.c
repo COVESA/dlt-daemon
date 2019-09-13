@@ -1464,6 +1464,7 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
 
     time_t t = time(NULL);
     struct tm lt;
+    tzset();
     localtime_r(&t, &lt);
 #if !defined(__CYGWIN__)
     resp->timezone = (int32_t)lt.tm_gmtoff;
@@ -2331,6 +2332,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 
         /*Added memset to avoid compiler warning for near initialization */
         memset((void *)&lt, 0, sizeof(lt));
+        tzset();
         localtime_r(&t, &lt);
 
         dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,

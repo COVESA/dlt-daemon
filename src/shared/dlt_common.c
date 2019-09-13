@@ -640,6 +640,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlen
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
         /* print received time */
         time_t tt = msg->storageheader->seconds;
+        tzset();
         localtime_r(&tt, &timeinfo);
         strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
         snprintf(text, textlength, "%s.%.6d ", buffer, msg->storageheader->microseconds);
