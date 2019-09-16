@@ -909,7 +909,7 @@ int main(int argc, char *argv[])
              g_signo);
     dlt_daemon_log_internal(&daemon, &daemon_local, local_str,
                             daemon_local.flags.vflag);
-    dlt_log(LOG_NOTICE, local_str);
+    dlt_vlog(LOG_NOTICE, "%s%s", local_str, "\n");
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
@@ -1772,12 +1772,13 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                                 daemon_local->flags.vflag);
     }
 
-    snprintf(local_str,
-             DLT_DAEMON_TEXTBUFSIZE,
-             "New client connection #%d established, Total Clients : %d\n",
+    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+             "New client connection #%d established, Total Clients : %d",
              in_sock, daemon_local->client_connections);
-    dlt_log(LOG_DEBUG, local_str);
-    dlt_daemon_log_internal(daemon, daemon_local, local_str, daemon_local->flags.vflag);
+
+    dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                            daemon_local->flags.vflag);
+    dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
     if (daemon_local->client_connections == 1) {
         if (daemon_local->flags.vflag)
@@ -2390,7 +2391,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         snprintf(local_str,
                  DLT_DAEMON_TEXTBUFSIZE,
-                 "ApplicationID '%.4s' registered for PID %d, Description=%s\n",
+                 "ApplicationID '%.4s' registered for PID %d, Description=%s",
                  application->apid,
                  application->pid,
                  application->application_description);
@@ -2398,7 +2399,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                 daemon_local,
                                 local_str,
                                 daemon_local->flags.vflag);
-        dlt_log(LOG_DEBUG, local_str);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
     }
 
     return 0;
@@ -2526,7 +2527,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         snprintf(local_str,
                  DLT_DAEMON_TEXTBUFSIZE,
-                 "ContextID '%.4s' registered for ApID '%.4s', Description=%s\n",
+                 "ContextID '%.4s' registered for ApID '%.4s', Description=%s",
                  context->ctid,
                  context->apid,
                  context->context_description);
@@ -2534,7 +2535,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         if (verbose)
             dlt_daemon_log_internal(daemon, daemon_local, local_str, verbose);
 
-        dlt_log(LOG_DEBUG, local_str);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
     }
 
     if (daemon_local->flags.offlineLogstorageMaxDevices)
@@ -2685,13 +2686,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
                 snprintf(local_str,
                          DLT_DAEMON_TEXTBUFSIZE,
-                         "Unregistered ApID '%.4s'\n",
+                         "Unregistered ApID '%.4s'",
                          userapp.apid);
                 dlt_daemon_log_internal(daemon,
                                         daemon_local,
                                         local_str,
                                         verbose);
-                dlt_log(LOG_DEBUG, local_str);
+                dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
         }
     }
@@ -2750,7 +2751,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
             snprintf(local_str,
                      DLT_DAEMON_TEXTBUFSIZE,
-                     "Unregistered CtID '%.4s' for ApID '%.4s'\n",
+                     "Unregistered CtID '%.4s' for ApID '%.4s'",
                      userctxt.ctid,
                      userctxt.apid);
 
@@ -2760,7 +2761,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                         local_str,
                                         verbose);
 
-            dlt_log(LOG_DEBUG, local_str);
+            dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
     }
 
@@ -3189,11 +3190,11 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
                                                verbose);
 
     snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-             "Client connection #%d closed. Total Clients : %d\n",
+             "Client connection #%d closed. Total Clients : %d",
              sock,
              daemon_local->client_connections);
-    dlt_log(LOG_DEBUG, local_str);
     dlt_daemon_log_internal(daemon, daemon_local, local_str, daemon_local->flags.vflag);
+    dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
     return 0;
 }
