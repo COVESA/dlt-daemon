@@ -186,6 +186,7 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
     if (trace->filenameTimestampBased) {
         int ret = 0;
         t = time(NULL);
+        tzset();
         localtime_r(&t, &tmp);
 
         strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", &tmp);

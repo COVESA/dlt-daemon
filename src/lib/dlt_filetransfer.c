@@ -180,6 +180,7 @@ void getFileCreationDate2(const char *file, int *ok, char *date)
     }
 
     *ok = 1;
+    tzset();
     localtime_r(&st.st_ctime, &ts);
     asctime_r(&ts, date);
 }
