@@ -168,7 +168,7 @@ if(WITH_MAN)
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-receive.1 > ${MAN_BUILD_DIR}/dlt-receive.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
-        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-control.1 > ${MAN_BUILD_DIR}/dlt-system.1.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-control.1 > ${MAN_BUILD_DIR}/dlt-control.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1 > ${MAN_BUILD_DIR}/dlt-logstorage-ctrl.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1 > ${MAN_BUILD_DIR}/dlt-passive-node-ctrl.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1 > ${MAN_BUILD_DIR}/dlt-adaptor-stdin.1.gz
