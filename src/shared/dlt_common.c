@@ -1152,22 +1152,40 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     if (file == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    /* load header from file */
-    if (fread(file->msg.headerbuffer, sizeof(DltStorageHeader) + sizeof(DltStandardHeader), 1, file->handle) != 1) {
-        if (!feof(file->handle))
-            dlt_log(LOG_WARNING, "Cannot read header from file!\n");
+    /* Loop until storage header is found */
+    while (1) {
+        /* load header from file */
+        if (fread(file->msg.headerbuffer,
+                  sizeof(DltStorageHeader) + sizeof(DltStandardHeader), 1,
+                  file->handle) != 1) {
+            if (!feof(file->handle))
+                dlt_log(LOG_WARNING, "Cannot read header from file!\n");
+            else
+                dlt_log(LOG_DEBUG, "Reached end of file\n");
 
-        return DLT_RETURN_ERROR;
-    }
 
-    /* set ptrs to structures */
-    file->msg.storageheader = (DltStorageHeader *)file->msg.headerbuffer;
-    file->msg.standardheader = (DltStandardHeader *)(file->msg.headerbuffer + sizeof(DltStorageHeader));
+            return DLT_RETURN_ERROR;
+        }
 
-    /* check id of storage header */
-    if (dlt_check_storageheader(file->msg.storageheader) != DLT_RETURN_TRUE) {
-        dlt_log(LOG_WARNING, "DLT storage header pattern not found!\n");
-        return DLT_RETURN_ERROR;
+        /* set ptrs to structures */
+        file->msg.storageheader = (DltStorageHeader *)file->msg.headerbuffer;
+        file->msg.standardheader = (DltStandardHeader *)(file->msg.headerbuffer +
+                                                         sizeof(DltStorageHeader));
+
+        /* check id of storage header */
+        if (dlt_check_storageheader(file->msg.storageheader) != DLT_RETURN_TRUE) {
+            /* Shift the position back to the place where it stared to read + 1 */
+            if (fseek(file->handle,
+                      1 - (sizeof(DltStorageHeader) + sizeof(DltStandardHeader)),
+                      SEEK_CUR) < 0) {
+                dlt_log(LOG_WARNING, "DLT storage header pattern not found!\n");
+                return DLT_RETURN_ERROR;
+            }
+        }
+        else {
+            /* storage header is found */
+            break;
+        }
     }
 
     /* calculate complete size of headers */
