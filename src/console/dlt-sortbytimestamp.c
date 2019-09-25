@@ -64,6 +64,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <time.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -144,13 +145,17 @@ int compare_index_systime(const void *a, const void *b) {
 /**
  * Write the messages in the order specified by the given index
  */
-void write_messages(int ohandle, DltFile *file, TimestampIndex *timestamps, int message_count) {
+void write_messages(int ohandle, DltFile *file,
+        TimestampIndex *timestamps, uint32_t message_count) {
     struct iovec iov[2];
     int bytes_written;
+    uint32_t i = 0;
+    int last_errno = 0;
 
     verbose(1, "Writing %d messages\n", message_count);
 
-    for (int i = 0; i < message_count; ++i) {
+    for (i = 0; i < message_count; ++i) {
+        errno = 0;
         if ((0 == i % 1001) || (i == message_count - 1))
             verbose(2, "Writing message %d\r", i);
 
@@ -161,9 +166,21 @@ void write_messages(int ohandle, DltFile *file, TimestampIndex *timestamps, int 
         iov[1].iov_len = file->msg.datasize;
 
         bytes_written = writev(ohandle, iov, 2);
+        last_errno = errno;
 
         if (0 > bytes_written) {
-            printf("in main: writev(ohandle, iov, 2); returned an error!");
+            printf("%s: returned an error [%s]!\n",
+                    __func__,
+                    strerror(last_errno));
+            if (ohandle > 0) {
+                close(ohandle);
+                ohandle = -1;
+            }
+            if (timestamps) {
+                free(timestamps);
+                timestamps = NULL;
+            }
+
             dlt_file_free(file, 0);
             exit (-1);
         }
@@ -209,7 +226,7 @@ int main(int argc, char *argv[]) {
 
     TimestampIndex *timestamp_index = 0;
     TimestampIndex *temp_timestamp_index = 0;
-    int32_t message_count = 0;
+    uint32_t message_count = 0;
 
     uint32_t count = 0;
     int start = 0;
@@ -415,6 +432,7 @@ int main(int argc, char *argv[]) {
          */
         count++;
         if(delta_tmsp > FIFTY_SEC_IN_MSEC || delta_systime >= THREE_MIN_IN_SEC) {
+            verbose(1, "Detected a new cycle of boot\n");
             temp_timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * count);
 
             if (temp_timestamp_index == NULL) {
@@ -442,6 +460,18 @@ int main(int argc, char *argv[]) {
             count = 0;
         }
     }
+
+    /*
+     * In case there is only cycle of boot in DLT file,
+     * sort the DLT file again by timestamp then write
+     * all messages out.
+     */
+    if (count == message_count) {
+        qsort((void *) timestamp_index, message_count + 1,
+              sizeof(TimestampIndex), compare_index_timestamps);
+        write_messages(ohandle, &file, timestamp_index, count);
+    }
+
     if (ovalue)
         close(ohandle);
 
