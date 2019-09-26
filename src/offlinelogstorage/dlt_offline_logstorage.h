@@ -210,11 +210,6 @@ typedef struct {
     int is_opt; /* If configuration is optional or not */
 } DltLogstorageGeneralConf;
 
-typedef enum {
-    DLT_LOGSTORAGE_GENERAL_CONF_BLOCKMODE = 0,
-    DLT_LOGSTORAGE_GENERAL_CONF_COUNT
-} DltLogstorageGeneralConfType;
-
 typedef struct {
     char *key; /* Configuration key */
     int (*func)(DltLogStorageFilterConfig *config, char *value); /* conf handler */

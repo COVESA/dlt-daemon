@@ -78,7 +78,7 @@ typedef struct
 {
     uint32_t service_id;            /**< service ID */
     uint8_t status;                 /**< response status */
-} PACKED DltServiceHeader;
+} DLT_PACKED DltServiceHeader;
 
 DltClient g_dltclient;
 
