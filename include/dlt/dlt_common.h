@@ -93,9 +93,7 @@
 #   include "dlt_types.h"
 #   include "dlt_protocol.h"
 
-#   if !defined (DLT_PACKED)
-#      define DLT_PACKED __attribute__((aligned(1), packed))
-#   endif
+#   define DLT_PACKED __attribute__((aligned(1), packed))
 
 #   if defined (__MSDOS__) || defined (_MSC_VER)
 /* set instead /Zp8 flag in Visual C++ configuration */
