@@ -148,7 +148,7 @@ int compare_index_systime(const void *a, const void *b) {
 void write_messages(int ohandle, DltFile *file,
         TimestampIndex *timestamps, uint32_t message_count) {
     struct iovec iov[2];
-    int bytes_written;
+    ssize_t bytes_written;
     uint32_t i = 0;
     int last_errno = 0;
 
