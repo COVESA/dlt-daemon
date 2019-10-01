@@ -123,8 +123,8 @@
 /* default message id for non-verbose mode, if no message id was provided */
 #define DLT_USER_DEFAULT_MSGID 0xffff
 
-/* delay for receiver thread (nsec) */
-#define DLT_USER_RECEIVE_NDELAY (100000000)
+/* delay for housekeeper thread (nsec) while receiving messages*/
+#define DLT_USER_RECEIVE_NDELAY (500 * 1000 * 1000)
 
 /* Name of environment variable for local print mode */
 #define DLT_USER_ENV_LOCAL_PRINT_MODE "DLT_LOCAL_PRINT_MODE"
