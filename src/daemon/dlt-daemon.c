@@ -148,8 +148,10 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     opterr = 0;
 
 #ifdef DLT_SHM_ENABLE
+
     while ((c = getopt (argc, argv, "hdc:t:s:p:")) != -1)
 #else
+
     while ((c = getopt (argc, argv, "hdc:t:p:")) != -1)
 #endif
         switch (c) {
@@ -282,6 +284,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
         fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
                 daemon_local->flags.appSockPath);
+
 #else
     memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
 #endif
@@ -601,8 +604,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                     intval);
                         }
                     }
+
 #ifndef DLT_USE_UNIX_SOCKET_IPC
-                    else if(strcmp(token, "DaemonFifoGroup") == 0)
+                    else if (strcmp(token, "DaemonFifoGroup") == 0)
                     {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
                         daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
@@ -1038,13 +1042,13 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     /* init shared memory */
     if (dlt_shm_init_server(&(daemon_local->dlt_shm), daemon_local->flags.dltShmName,
-        daemon_local->flags.sharedMemorySize) == DLT_RETURN_ERROR)
-    {
+                            daemon_local->flags.sharedMemorySize) == DLT_RETURN_ERROR) {
         dlt_log(LOG_ERR, "Could not initialize shared memory\n");
         return -1;
     }
 
     daemon_local->recv_buf_shm = (unsigned char *)calloc(1, DLT_SHM_RCV_BUFFER_SIZE);
+
     if (NULL == daemon_local->recv_buf_shm) {
         dlt_log(LOG_ERR, "failed to allocated the buffer to receive shm data\n");
         return -1;
@@ -1163,19 +1167,17 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     } /* if */
 
     /* Set group of daemon FIFO */
-    if (daemon_local->flags.daemonFifoGroup[0] != 0)
-    {
+    if (daemon_local->flags.daemonFifoGroup[0] != 0) {
         errno = 0;
-        struct group * group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
-        if (group_dlt)
-        {
+        struct group *group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
+
+        if (group_dlt) {
             ret = chown(tmpFifo, -1, group_dlt->gr_gid);
+
             if (ret == -1)
-            {
                 dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
                          tmpFifo, daemon_local->flags.daemonFifoGroup,
                          strerror(errno));
-            }
         }
         else if ((errno == 0) || (errno == ENOENT) || (errno == EBADF) || (errno == EPERM))
         {
@@ -1183,8 +1185,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                      daemon_local->flags.daemonFifoGroup,
                      strerror(errno));
         }
-        else
-        {
+        else {
             dlt_vlog(LOG_ERR, "Failed to get group id of %s (%s)\n",
                      daemon_local->flags.daemonFifoGroup,
                      strerror(errno));
@@ -1201,18 +1202,15 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 
     if (daemon_local->daemonFifoSize != 0) {
         /* Set Daemon FIFO size */
-        if (fcntl(fd, F_SETPIPE_SZ, daemon_local->daemonFifoSize) == -1) {
+        if (fcntl(fd, F_SETPIPE_SZ, daemon_local->daemonFifoSize) == -1)
             dlt_vlog(LOG_ERR, "set FIFO size error: %s\n", strerror(errno));
-        }
     }
 
     /* Get Daemon FIFO size */
-    if ((fifo_size = fcntl(fd, F_GETPIPE_SZ, 0)) == -1) {
+    if ((fifo_size = fcntl(fd, F_GETPIPE_SZ, 0)) == -1)
         dlt_vlog(LOG_ERR, "get FIFO size error: %s\n", strerror(errno));
-    }
-    else {
+    else
         dlt_vlog(LOG_INFO, "FIFO size: %d\n", fifo_size);
-    }
 
     /* Early init, to be able to catch client (app) connections
      * as soon as possible. This registration is automatically ignored
@@ -1982,9 +1980,8 @@ int dlt_daemon_process_control_connect(
         return -1;
     }
 
-    if (verbose) {
+    if (verbose)
         dlt_vlog(LOG_INFO, "New connection to control client established\n");
-    }
 
     return 0;
 }
@@ -2032,9 +2029,8 @@ int dlt_daemon_process_app_connect(
         return -1;
     }
 
-    if (verbose) {
+    if (verbose)
         dlt_vlog(LOG_INFO, "New connection to application established\n");
-    }
 
     return 0;
 }
@@ -2381,7 +2377,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                  userapp.apid, userapp.pid);
         return -1;
     }
-    else if (old_pid != application->pid) {
+    else if (old_pid != application->pid)
+    {
         char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
 
         snprintf(local_str,
@@ -2731,7 +2728,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
      * unregisters, the context information will not be deleted from daemon's
      * table until its parent application is unregistered.
      */
-    if (context && context->predefined == false) {
+    if (context && (context->predefined == false)) {
         /* Delete this connection entry from internal table*/
         if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
             dlt_vlog(LOG_WARNING,
@@ -2789,6 +2786,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
 #ifdef DLT_SHM_ENABLE
+
     /** In case of SHM, the header still received via fifo/unix_socket receiver,
      * so we need to remove header from the receiver.
      */
@@ -2815,10 +2813,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         }
 
         ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                                daemon_local, verbose);
+                                                           daemon_local, verbose);
+
         if (DLT_DAEMON_ERROR_OK != ret)
             dlt_log(LOG_ERR, "failed to send message to client.\n");
     }
+
 #else
     ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
@@ -2841,7 +2841,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
     ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                            daemon_local, verbose);
+                                                       daemon_local, verbose);
+
     if (DLT_DAEMON_ERROR_OK != ret)
         dlt_log(LOG_ERR, "failed to send message to client\n");
 
@@ -2857,6 +2858,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
+
 #endif
 
     return DLT_DAEMON_ERROR_OK;
@@ -3112,10 +3114,9 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         struct itimerspec l_timer_spec;
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
-        if (local_fd < 0) {
+        if (local_fd < 0)
             dlt_vlog(LOG_WARNING, "<%s> timerfd_create failed: %s\n",
                      timer_name, strerror(errno));
-        }
 
         l_timer_spec.it_interval.tv_sec = period_sec;
         l_timer_spec.it_interval.tv_nsec = 0;
@@ -3133,10 +3134,9 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
     /* If fully initialized we are done.
      * Event handling registration is done later on with other connections.
      */
-    if (local_fd > 0) {
+    if (local_fd > 0)
         dlt_vlog(LOG_INFO, "<%s> initialized with %d timer\n", timer_name,
                  period_sec);
-    }
 
     return dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,

@@ -373,8 +373,6 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
             user_list->applications[i].application_description = NULL;
         }
 
-
-
     if (user_list->applications != NULL)
         free(user_list->applications);
 
@@ -1060,8 +1058,6 @@ int dlt_daemon_contexts_clear(DltDaemon *daemon, char *ecu, int verbose)
             users->contexts[i].context_description = NULL;
         }
 
-
-
     if (users->contexts) {
         free(users->contexts);
         users->contexts = NULL;
@@ -1496,12 +1492,11 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
         if (context != NULL) {
             if ((context->log_level == DLT_LOG_DEFAULT) ||
                 (context->trace_status == DLT_TRACE_STATUS_DEFAULT)) {
-                if (context->user_handle >= DLT_FD_MINIMUM) {
+                if (context->user_handle >= DLT_FD_MINIMUM)
                     if (dlt_daemon_user_send_log_level(daemon,
                                                        context,
                                                        verbose) == -1)
                         dlt_vlog(LOG_WARNING, "Cannot update default of %.4s:%.4s\n", context->apid, context->ctid);
-                }
             }
         }
     }
@@ -1601,10 +1596,9 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
         app = &(user_list->applications[count]);
 
         if (app != NULL) {
-            if (app->user_handle >= DLT_FD_MINIMUM) {
+            if (app->user_handle >= DLT_FD_MINIMUM)
                 if (dlt_daemon_user_send_log_state(daemon, app, verbose) == -1)
                     dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n", app->apid, app->pid);
-            }
         }
     }
 }

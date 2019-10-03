@@ -38,7 +38,7 @@ TEST(t_dlt_logstorage_list_add, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     char key = 1;
     int num_keys = 1;
 
@@ -74,7 +74,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     char key = 1;
     int num_keys = 1;
 
@@ -95,7 +95,7 @@ TEST(t_dlt_logstorage_list_find, normal)
     DltLogStorageFilterConfig *data = NULL;
     int num_configs = 0;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     char key[] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
@@ -196,7 +196,7 @@ TEST(t_dlt_logstorage_prepare_table, normal)
     DltLogStorage handle;
     DltLogStorageFilterConfig data;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     memset(&handle, 0, sizeof(DltLogStorage));
     memset(&data, 0, sizeof(DltLogStorageFilterConfig));
     char apids[] = "1234";
@@ -447,7 +447,7 @@ TEST(t_dlt_logstorage_store_filters, normal)
 {
     DltLogStorage handle;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     char config_file_name[] = "/tmp/dlt_logstorage.conf";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
@@ -469,7 +469,7 @@ TEST(t_dlt_logstorage_load_config, normal)
 {
     DltLogStorage handle;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
@@ -933,7 +933,7 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
-              data1, size, data2, size, data3, size));
+                                                         data1, size, data2, size, data3, size));
 }
 
 TEST(t_dlt_logstorage_write_on_msg, null)
@@ -1006,14 +1006,14 @@ TEST(t_dlt_logstorage_write_msg_cache, normal)
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = (char *)"/tmp";
 
     config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
 
     if (config.cache != NULL) {
         config.file_size = 50;
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path,
-                  data1, size, data2, size, data3, size));
+                                                                data1, size, data2, size, data3, size));
 
         free(config.cache);
         config.cache = NULL;
@@ -1510,7 +1510,7 @@ TEST(t_dlt_logstorage_find_dlt_header, null)
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_find_last_dlt_header*/
 TEST(t_dlt_logstorage_find_last_dlt_header, normal)
 {
-    char data[] = {'a','b','D','L','T',0x01};
+    char data[] = { 'a', 'b', 'D', 'L', 'T', 0x01 };
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.cache = calloc(1, sizeof(data));
@@ -1525,12 +1525,12 @@ TEST(t_dlt_logstorage_find_last_dlt_header, normal)
 }
 TEST(t_dlt_logstorage_find_last_dlt_header, null)
 {
-    char data[] = {'N','o','H','e','a','d','e','r'};
+    char data[] = { 'N', 'o', 'H', 'e', 'a', 'd', 'e', 'r' };
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.cache = calloc(1, sizeof(data));
-    if (config.cache != NULL)
-    {
+
+    if (config.cache != NULL) {
         /* config.cache =(void *) "a,b,D,L,T,0x01"; */
         strncpy((char *)config.cache, data, sizeof(data));
         EXPECT_EQ(-1, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
@@ -1573,12 +1573,12 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     if (config.cache != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path,
-                  data1, size, data2, size, data3, size));
+                                                                data1, size, data2, size, data3, size));
 
-        footer = (DltLogStorageCacheFooter *)((uint8_t*)config.cache + config.file_size);
+        footer = (DltLogStorageCacheFooter *)((uint8_t *)config.cache + config.file_size);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path,
-                  footer, footer->last_sync_offset, footer->offset));
+                                                             footer, footer->last_sync_offset, footer->offset));
         free(config.cache);
         config.cache = NULL;
     }
@@ -1625,7 +1625,8 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
 
     if (config.cache != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1));
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path, data1, size, data2, size, data3, size));
+        EXPECT_EQ(DLT_RETURN_OK,
+                  dlt_logstorage_write_msg_cache(&config, &file_config, path, data1, size, data2, size, data3, size));
         EXPECT_EQ(DLT_RETURN_OK,
                   dlt_logstorage_sync_msg_cache(&config, &file_config, path, DLT_LOGSTORAGE_SYNC_ON_DEMAND));
         free(config.cache);
@@ -1647,7 +1648,7 @@ int connectServer(void)
     portno = 8080;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server = gethostbyname("127.0.0.1");
-    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    memset((char *)&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     memcpy((char *)&serv_addr.sin_addr.s_addr,
            (char *)server->h_addr,
@@ -1659,6 +1660,7 @@ int connectServer(void)
         close(sockfd);
         return -1;
     }
+
 #else
     char filename[1024];
     int sockfd;
@@ -1701,7 +1703,7 @@ int main(int argc, char **argv)
             return -1;
         }
 
-        memset((char *) &serv_addr, 0, sizeof(serv_addr));
+        memset((char *)&serv_addr, 0, sizeof(serv_addr));
         portno = 8080;
 
         serv_addr.sin_family = AF_INET;
@@ -1745,12 +1747,12 @@ int main(int argc, char **argv)
     }
     else {
 #endif
-        ::testing::InitGoogleTest(&argc, argv);
-        ::testing::FLAGS_gtest_break_on_failure = false;
+    ::testing::InitGoogleTest(&argc, argv);
+    ::testing::FLAGS_gtest_break_on_failure = false;
 /*        ::testing::FLAGS_gtest_filter = "t_dlt_event_handler_register_connection*"; */
-        return RUN_ALL_TESTS();
+    return RUN_ALL_TESTS();
 #ifdef DLT_USE_UNIX_SOCKET_IPC
-    }
+}
 #endif
 
     return 0;

@@ -96,12 +96,12 @@ extern "C" {
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 
-#define DLT_DAEMON_SEM_LOCK() do{\
-    while ((sem_wait(&dlt_daemon_mutex) == -1) && (errno == EINTR)) \
-        continue;       /* Restart if interrupted */ \
-    } while(0)
+#   define DLT_DAEMON_SEM_LOCK() do { \
+        while ((sem_wait(&dlt_daemon_mutex) == -1) && (errno == EINTR)) \
+            continue;   /* Restart if interrupted */ \
+} while (0)
 
-#define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
+#   define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
 extern sem_t dlt_daemon_mutex;
 
 /* UDPMulticart Default IP and Port */
