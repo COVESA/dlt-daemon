@@ -206,6 +206,7 @@ int dlt_daemon_init(DltDaemon *daemon,
                     const char *runtime_directory,
                     int InitialContextLogLevel,
                     int InitialContextTraceStatus,
+                    DltUserLogMode UserLogMode,
                     int ForceLLTS,
                     int verbose)
 {
@@ -225,7 +226,7 @@ int dlt_daemon_init(DltDaemon *daemon,
 
     daemon->runtime_context_cfg_loaded = 0;
 
-    daemon->mode = DLT_USER_MODE_EXTERNAL;
+    daemon->mode = UserLogMode;
 
     daemon->connectionState = 0; /* no logger connected */
 

@@ -1068,7 +1068,8 @@ TEST(t_dlt_logstorage_update_all_contexts, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_all_contexts(&daemon, &daemon_local, apid, 1, 1, ecu, 0));
@@ -1108,7 +1109,8 @@ TEST(t_dlt_logstorage_update_context, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     app = dlt_daemon_application_add(&daemon, apid, getpid(), desc, fd, ecu, 0);
@@ -1153,7 +1155,8 @@ TEST(t_dlt_logstorage_update_context_loglevel, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     app = dlt_daemon_application_add(&daemon, apid, getpid(), desc, fd, ecu, 0);
@@ -1190,7 +1193,8 @@ TEST(t_dlt_daemon_logstorage_reset_application_loglevel, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     EXPECT_NO_THROW(dlt_daemon_logstorage_reset_application_loglevel(&daemon, &daemon_local, device_index, 1, 0));
@@ -1232,7 +1236,8 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
 
@@ -1285,7 +1290,8 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
 
@@ -1319,7 +1325,8 @@ TEST(t_dlt_daemon_logstorage_write, normal)
                                  DLT_DAEMON_RINGBUFFER_MAX_SIZE,
                                  DLT_DAEMON_RINGBUFFER_STEP_SIZE,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     daemon.storage_handle = &storage_handle;
@@ -1381,7 +1388,8 @@ TEST(t_dlt_daemon_logstorage_setup_internal_storage, normal)
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF,
+                                 DLT_USER_MODE_EXTERNAL, 0, 0));
 
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));

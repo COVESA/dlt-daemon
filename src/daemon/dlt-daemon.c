@@ -998,7 +998,10 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if (dlt_daemon_init(daemon, daemon_local->RingbufferMinSize, daemon_local->RingbufferMaxSize,
                         daemon_local->RingbufferStepSize, daemon_local->flags.ivalue,
                         daemon_local->flags.contextLogLevel,
-                        daemon_local->flags.contextTraceStatus, daemon_local->flags.enforceContextLLAndTS,
+                        daemon_local->flags.contextTraceStatus,
+                        (daemon_local->flags.offlineTraceDirectory[0] !=
+                         '\0') ? DLT_USER_MODE_BOTH : DLT_USER_MODE_EXTERNAL,
+                        daemon_local->flags.enforceContextLLAndTS,
                         daemon_local->flags.vflag) == -1) {
         dlt_log(LOG_ERR, "Could not initialize daemon data\n");
         return -1;

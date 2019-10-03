@@ -201,6 +201,7 @@ typedef struct
  * @param runtime_directory Directory of persistent configuration
  * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
  * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param UserLogMode DLT_USER_LOG_(OFF|INTERNAL|EXTERNAL|BOTH)
  * @param ForceLLTS force default log-level
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
@@ -212,6 +213,7 @@ int dlt_daemon_init(DltDaemon *daemon,
                     const char *runtime_directory,
                     int InitialContextLogLevel,
                     int InitialContextTraceStatus,
+                    DltUserLogMode UserLogMode,
                     int ForceLLTS,
                     int verbose);
 /**
