@@ -88,7 +88,7 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
         int len = 0;
         len = strlen(file_name);
 
-        if ((strncmp(files[i]->d_name, file_name, len) == 0) && (files[i]->d_name[len] == '.')) {
+        if ((strncmp(files[i]->d_name, file_name, len) == 0) && (files[i]->d_name[len] == '_')) {
             num++;
 
             if ((tmp_old == NULL) || (strlen(tmp_old) >= strlen(files[i]->d_name))) {
@@ -153,7 +153,7 @@ void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int i
 
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
 {
-    const char d[2] = ".";
+    const char d[2] = "_";
     char *token;
     unsigned int idx = 0;
 
@@ -164,6 +164,7 @@ unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
     /* we are interested in 2. token because of log file name */
     token = strtok(NULL, d);
 
+    token = strtok(NULL, d);
     if (token != NULL)
         idx = strtol(token, NULL, 10);
     else
