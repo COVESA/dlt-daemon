@@ -60,7 +60,7 @@
 #include "dlt_types.h"
 
 #define DLT_OFFLINETRACE_FILENAME_BASE "dlt_offlinetrace"
-#define DLT_OFFLINETRACE_FILENAME_DELI "."
+#define DLT_OFFLINETRACE_FILENAME_DELI "_"
 #define DLT_OFFLINETRACE_FILENAME_EXT  ".dlt"
 #define DLT_OFFLINETRACE_INDEX_MAX_SIZE 10
 #define DLT_OFFLINETRACE_FILENAME_TO_COMPARE "dlt_offlinetrace_"
