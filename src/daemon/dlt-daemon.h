@@ -101,6 +101,7 @@ typedef struct
     int sharedMemorySize;        /**< (int) Size of shared memory (Default: 100000) */
     int sendMessageTime;        /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
+    int offlineTraceOn; /**< (int) Enable offline tracing if offlineTraceDirectory is set */
     int offlineTraceFileSize;     /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int offlineTraceMaxSize;     /**< (int) Maximum size of all trace files (Default: 4000000) */
     int offlineTraceFilenameTimestampBased;  /**< (int) timestamp based or index based (Default: 1 Timestamp based) */

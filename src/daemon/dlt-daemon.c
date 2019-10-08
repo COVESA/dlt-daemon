@@ -247,6 +247,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     /* set default values for configuration */
     daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
     daemon_local->flags.sendMessageTime = 0;
+    daemon_local->flags.offlineTraceOn = 0;
     daemon_local->flags.offlineTraceDirectory[0] = 0;
     daemon_local->flags.offlineTraceFileSize = 1000000;
     daemon_local->flags.offlineTraceMaxSize = 0;
@@ -454,6 +455,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     else if (strcmp(token, "SharedMemorySize") == 0)
                     {
                         daemon_local->flags.sharedMemorySize = atoi(value);
+                        /*printf("Option: %s=%s\n",token,value); */
+                    }
+                    else if (strcmp(token, "OfflineTraceOn") == 0)
+                    {
+                        daemon_local->flags.offlineTraceOn = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
                     }
                     else if (strcmp(token, "OfflineTraceDirectory") == 0)
@@ -1000,7 +1006,8 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
                         daemon_local->flags.contextLogLevel,
                         daemon_local->flags.contextTraceStatus,
                         (daemon_local->flags.offlineTraceDirectory[0] !=
-                         '\0') ? DLT_USER_MODE_BOTH : DLT_USER_MODE_EXTERNAL,
+                         '\0') &&
+                        (daemon_local->flags.offlineTraceOn != 0) ? DLT_USER_MODE_BOTH : DLT_USER_MODE_EXTERNAL,
                         daemon_local->flags.enforceContextLLAndTS,
                         daemon_local->flags.vflag) == -1) {
         dlt_log(LOG_ERR, "Could not initialize daemon data\n");
