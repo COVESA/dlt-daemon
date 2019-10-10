@@ -145,7 +145,13 @@ int dlt_daemon_load_runtime_configuration(DltDaemon *daemon, const char *runtime
 {
     int append_length = 0;
 
-    if ((daemon == NULL) || (runtime_directory == NULL))
+    if ( daemon == NULL )
+        return DLT_RETURN_ERROR;
+
+    // Default
+    daemon->mode = DLT_USER_MODE_EXTERNAL;
+
+    if ( runtime_directory == NULL )
         return DLT_RETURN_ERROR;
 
     /* prepare filenames for configuration */
@@ -224,8 +230,6 @@ int dlt_daemon_init(DltDaemon *daemon,
     daemon->overflow_counter = 0;
 
     daemon->runtime_context_cfg_loaded = 0;
-
-    daemon->mode = DLT_USER_MODE_EXTERNAL;
 
     daemon->connectionState = 0; /* no logger connected */
 

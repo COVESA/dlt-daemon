@@ -813,6 +813,11 @@ int main(int argc, char *argv[])
 
     /* --- Daemon connection init end */
 
+    if (dlt_daemon_load_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
+        dlt_log(LOG_ERR, "Could not load runtime config\n");
+        return -1;
+    }
+
     /* --- Daemon init phase 2 begin --- */
     if (dlt_daemon_local_init_p2(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_CRIT, "Initialization of phase 2 failed!\n");
@@ -883,11 +888,6 @@ int main(int argc, char *argv[])
                                      &daemon_local.pGateway,
                                      daemon_local.flags.gatewayMode,
                                      daemon_local.flags.vflag);
-
-    if (dlt_daemon_load_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
-        dlt_log(LOG_ERR, "Could not load runtime config\n");
-        return -1;
-    }
 
     dlt_daemon_log_internal(&daemon,
                             &daemon_local,
