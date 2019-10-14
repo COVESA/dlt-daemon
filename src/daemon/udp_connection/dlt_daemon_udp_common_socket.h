@@ -33,15 +33,10 @@
 #include <string.h>     /* for memset() */
 #include <syslog.h>
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
-#include <sys/ioctl.h>
-#include <sys/epoll.h>
 #include <unistd.h>     /* for close() */
 
 #include "dlt_common.h"
 #include "dlt-daemon.h"
-#include "dlt_daemon_common_cfg.h"
-#include "dlt_daemon_client.h"
-#include "dlt_daemon_connection.h"
 #include "dlt_daemon_udp_socket.h"
 #include "dlt_types.h"
 

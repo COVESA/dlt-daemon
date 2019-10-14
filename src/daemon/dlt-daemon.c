@@ -912,6 +912,10 @@ int main(int argc, char *argv[])
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
 
+#ifdef UDP_CONNECTION_SUPPORT
+    dlt_daemon_udp_close_connection();
+#endif
+
     dlt_gateway_deinit(&daemon_local.pGateway, daemon_local.flags.vflag);
 
     dlt_daemon_free(&daemon, daemon_local.flags.vflag);
@@ -1317,11 +1321,11 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 
     if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
         if (dlt_daemon_udp_connection_setup(daemon_local) < 0) {
-            dlt_log(LOG_ERR, "UDP fd creation and register in epoll failed\n");
+            dlt_log(LOG_ERR, "UDP fd creation failed\n");
             return DLT_RETURN_ERROR;
         }
         else {
-            dlt_log(LOG_INFO, "UDP fd creation and register in epoll success\n");
+            dlt_log(LOG_INFO, "UDP fd creation success\n");
         }
     }
 

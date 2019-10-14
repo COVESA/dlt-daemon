@@ -46,9 +46,7 @@ void dlt_daemon_udp_init_clientstruct(DltDaemonClientSockInfo *clientinfo_struct
     clientinfo_struct->clientaddr_size = sizeof(clientinfo_struct->clientaddr);
     clientinfo_struct->isvalidflag = ADDRESS_INVALID; /* info is invalid */
     dlt_vlog(LOG_DEBUG, "%s: client addr struct init success \n", __func__);
-    dlt_log(LOG_INFO, "dlt_daemon_udp_init_clientstruct: client addr struct init success \n");
 }
-
 
 /* ************************************************************************** */
 /* Function   : dlt_daemon_udp_setmulticast_addr */
@@ -79,7 +77,6 @@ void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal *daemon_local)
 /* In Param   : contains daemon param values used globally */
 /* Out Param  : status of udp connection setup and fd registration */
 /* Description: DataGram socket fd connection is setup */
-/*                fd is registered with the epoll */
 /* ************************************************************************** */
 DltReturnValue dlt_daemon_udp_connection_setup(DltDaemonLocal *daemon_local)
 {
@@ -255,4 +252,17 @@ void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
         if (size2 <= 0)
             dlt_vlog(LOG_ERR, "%s: size2 <= 0\n", __func__);
     }
+}
+
+/* ************************************************************************** */
+/* Function   : dlt_daemon_udp_close_connection */
+/* In Param   : NIL */
+/* Out Param  : NIL */
+/* Description: Closes UDP Connection */
+/* ************************************************************************** */
+void dlt_daemon_udp_close_connection(void)
+{
+    if (close(g_udp_sock_fd) == SYSTEM_CALL_ERROR)
+        dlt_vlog(LOG_WARNING, "[%s:%d] close error %s\n", __func__, __LINE__,
+                 strerror(errno));
 }

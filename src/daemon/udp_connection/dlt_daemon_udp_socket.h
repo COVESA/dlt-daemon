@@ -29,4 +29,6 @@
 DltReturnValue dlt_daemon_udp_connection_setup(DltDaemonLocal *daemon_local);
 void dlt_daemon_udp_dltmsg_multicast(void *data1, int size1, void *data2, int size2,
                                      int verbose);
+void dlt_daemon_udp_close_connection(void);
+
 #endif /* DLT_DAEMON_UDP_SOCKET_H */
