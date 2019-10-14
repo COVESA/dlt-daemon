@@ -60,15 +60,9 @@
 #include "dlt_types.h"
 
 #define DLT_OFFLINETRACE_FILENAME_BASE "dlt_offlinetrace"
-#define DLT_OFFLINETRACE_FILENAME_DELI "."
+#define DLT_OFFLINETRACE_FILENAME_INDEX_DELI "."
+#define DLT_OFFLINETRACE_FILENAME_TIMESTAMP_DELI "_"
 #define DLT_OFFLINETRACE_FILENAME_EXT  ".dlt"
-#define DLT_OFFLINETRACE_INDEX_MAX_SIZE 10
-#define DLT_OFFLINETRACE_FILENAME_TO_COMPARE "dlt_offlinetrace_"
-/* "dlt_offlinetrace.4294967295.dlt" -> MAX 32byte include NULL terminate */
-#define DLT_OFFLINETRACE_FILENAME_MAX_SIZE   (sizeof(DLT_OFFLINETRACE_FILENAME_BASE) + \
-                                              sizeof(DLT_OFFLINETRACE_FILENAME_DELI) + \
-                                              DLT_OFFLINETRACE_INDEX_MAX_SIZE + \
-                                              sizeof(DLT_OFFLINETRACE_FILENAME_EXT) + 1)
 
 typedef struct
 {
