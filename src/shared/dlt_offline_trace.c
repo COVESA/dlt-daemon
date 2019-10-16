@@ -138,17 +138,20 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
     return num;
 }
 
-void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx)
+void dlt_offline_trace_file_name(char *log_file_name, size_t length,
+                                 char *name, unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
-    memset(log_file_name, 0, DLT_OFFLINETRACE_FILENAME_MAX_SIZE * sizeof(char));
-    strncat(log_file_name, name, sizeof(log_file_name) - strlen(log_file_name) - 1);
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI, sizeof(log_file_name) - strlen(log_file_name) - 1);
-    strncat(log_file_name, file_index, sizeof(log_file_name) - strlen(log_file_name) - 1);
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT, sizeof(log_file_name) - strlen(log_file_name) - 1);
+    memset(log_file_name, 0, length * sizeof(char));
+    strncat(log_file_name, name, length - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI,
+            length - strlen(log_file_name) - 1);
+    strncat(log_file_name, file_index, length - strlen(log_file_name) - 1);
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT,
+            length - strlen(log_file_name) - 1);
 }
 
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
@@ -177,19 +180,17 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
 {
     time_t t;
     struct tm tmp;
-    char outstr[200];
-    char newest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
-    char oldest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
+    char outstr[NAME_MAX];
     unsigned int idx = 0;
+    int ret = 0;
 
     /* set filename */
     if (trace->filenameTimestampBased) {
-        int ret = 0;
         t = time(NULL);
         tzset();
         localtime_r(&t, &tmp);
 
-        strftime(outstr, sizeof(outstr), "%Y%m%d_%H%M%S", &tmp);
+        strftime(outstr, NAME_MAX, "%Y%m%d_%H%M%S", &tmp);
 
         ret = snprintf(trace->filename, NAME_MAX, "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
 
@@ -199,12 +200,14 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
         }
     }
     else {
-        int ret = 0;
+        char newest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
+        char oldest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
         /* targeting newest file, ignoring number of files in dir returned */
         dlt_offline_trace_storage_dir_info(trace->directory, DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
         idx = dlt_offline_trace_get_idx_of_log_file(newest) + 1;
 
-        dlt_offline_trace_file_name(outstr, DLT_OFFLINETRACE_FILENAME_BASE, idx);
+        dlt_offline_trace_file_name(outstr, NAME_MAX,
+                                    DLT_OFFLINETRACE_FILENAME_BASE, idx);
         ret = snprintf(trace->filename, NAME_MAX, "%s/%s", trace->directory, outstr);
 
         if ((ret < 0) || (ret >= NAME_MAX)) {

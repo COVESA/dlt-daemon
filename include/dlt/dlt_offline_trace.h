@@ -149,10 +149,12 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
 /**
  * creates filename with index
  * @param log_file_name file name created with index
+ * @param length the maximum length of the log_file_name
  * @param name filename base
  * @param idx index to be used for file name creation
  */
-void dlt_offline_trace_file_name(char *log_file_name, char *name, unsigned int idx);
+void dlt_offline_trace_file_name(char *log_file_name, size_t length,
+                                 char *name, unsigned int idx);
 
 /**
  * generates index for log file name
