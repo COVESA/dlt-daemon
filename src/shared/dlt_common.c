@@ -1855,19 +1855,31 @@ DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
 
 DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
 {
-    if (receiver == NULL)
+    if (NULL == receiver)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    receiver->lastBytesRcvd = 0;
-    receiver->bytesRcvd = 0;
-    receiver->totalBytesRcvd = 0;
-    receiver->buffersize = buffersize;
     receiver->fd = fd;
-    receiver->buffer = (char *)malloc(receiver->buffersize);
-    receiver->backup_buf = NULL;
 
-    if (receiver->buffer == NULL) {
+    /** Reuse the receiver buffer if it exists and the buffer size
+      * is not changed. If not, free the old one and allocate a new buffer.
+      */
+    if ((NULL != receiver->buffer) && (buffersize != receiver->buffersize)) {
+       free(receiver->buffer);
+       receiver->buffer = NULL;
+    }
+
+    if (NULL == receiver->buffer) {
+        receiver->lastBytesRcvd = 0;
+        receiver->bytesRcvd = 0;
+        receiver->totalBytesRcvd = 0;
         receiver->buf = NULL;
+        receiver->backup_buf = NULL;
+        receiver->buffer = (char *)calloc(1, buffersize);
+        receiver->buffersize = buffersize;
+    }
+
+    if (NULL == receiver->buffer) {
+        dlt_log(LOG_ERR, "allocate memory for receiver buffer failed.\n");
         return DLT_RETURN_ERROR;
     }
     else {
