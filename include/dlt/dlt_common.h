@@ -313,14 +313,21 @@ enum {
         { memcpy(dst, src, DLT_ID_SIZE); src += DLT_ID_SIZE; length -= DLT_ID_SIZE; } \
     }
 
-#   define DLT_MSG_READ_STRING(dst, src, maxlength, length) \
+#define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
+{ \
+    if ((maxlength < 0) || (length < 0) || (dstlength < length) || (maxlength < length)) \
     { \
-        if (((maxlength) < 0) || ((length) < 0) || ((maxlength) < (length))) \
-        { maxlength = -1; } \
-        else \
-        { memcpy(dst, src, length); dlt_clean_string(dst, length); dst[length] = 0; \
-          src += length; maxlength -= length; } \
-    }
+        maxlength = -1; \
+    } \
+    else \
+    { \
+        memcpy(dst, src, length); \
+        dlt_clean_string(dst, length); \
+        dst[length] = 0; \
+        src += length; \
+        maxlength -= length; \
+    } \
+}
 
 #   define DLT_MSG_READ_NULL(src, maxlength, length) \
     { \

@@ -3181,7 +3181,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             *datalength -= length2;
         }
 
-        DLT_MSG_READ_STRING((text + strlen(text)), *ptr, *datalength, length);
+        DLT_MSG_READ_STRING((text+strlen(text)), *ptr, *datalength, textlength-(int)strlen(text), length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
@@ -3671,7 +3671,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             return DLT_RETURN_ERROR;
 
         length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length_tmp);
-        DLT_MSG_READ_STRING((text + strlen(text)), *ptr, *datalength, length);
+        DLT_MSG_READ_STRING((text+strlen(text)), *ptr, *datalength, textlength-(int)(strlen(text)), length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
