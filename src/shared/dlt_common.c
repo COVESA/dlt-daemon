@@ -763,10 +763,12 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
 
     int num;
     uint32_t type_info = 0, type_info_tmp = 0;
+    int text_offset = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((msg == NULL) || (text == NULL))
+    if ((msg == NULL) || (msg->databuffer == NULL) || (text == NULL) ||
+        (type < DLT_OUTPUT_HEX) || (type > DLT_OUTPUT_ASCII_LIMITED))
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (textlength <= 0) {
@@ -867,15 +869,19 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
     type_info_tmp = 0;
 
     for (num = 0; num < (int)(msg->extendedheader->noar); num++) {
-        if (num != 0)
-            snprintf(text + strlen(text), textlength - strlen(text), " ");
+        if (num != 0) {
+            text_offset = (int)strlen(text);
+            snprintf(text + text_offset, textlength - text_offset, " ");
+        }
 
         /* first read the type info of the argument */
         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
         type_info = DLT_ENDIAN_GET_32(msg->standardheader->htyp, type_info_tmp);
 
         /* print out argument */
-        if (dlt_message_argument_print(msg, type_info, pptr, pdatalength, text, textlength, -1, 0) == DLT_RETURN_ERROR)
+        text_offset = (int)strlen(text);
+        if (dlt_message_argument_print(msg, type_info, pptr, pdatalength,
+            (text + text_offset), (textlength - text_offset), -1, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
     }
 
@@ -3126,8 +3132,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     if ((msg == NULL) || (ptr == NULL) || (datalength == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    int16_t length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
-    uint16_t length2 = 0, length2_tmp = 0, length3 = 0, length3_tmp = 0;
+    uint16_t length = 0, length2 = 0, length3 = 0;
 
     uint8_t value8u = 0;
     uint16_t value16u = 0, value16u_tmp = 0;
@@ -3155,24 +3160,24 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         (((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII) || ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_UTF8))) {
         /* string type or utf8-encoded string type */
         if (byteLength < 0) {
-            DLT_MSG_READ_VALUE(length_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length_tmp);
+            length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
         }
         else {
-            length = (int16_t)byteLength;
+            length = (uint16_t)byteLength;
         }
 
         if (type_info & DLT_TYPE_INFO_VARI) {
-            DLT_MSG_READ_VALUE(length2_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length2_tmp);
+            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3181,7 +3186,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             *datalength -= length2;
         }
 
-        DLT_MSG_READ_STRING((text+strlen(text)), *ptr, *datalength, textlength-(int)strlen(text), length);
+        DLT_MSG_READ_STRING(text, *ptr, *datalength, textlength, length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
@@ -3190,12 +3195,12 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     {
         /* Boolean type */
         if (type_info & DLT_TYPE_INFO_VARI) {
-            DLT_MSG_READ_VALUE(length2_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length2_tmp);
+            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3210,7 +3215,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        snprintf(text + strlen(text), textlength - strlen(text), "%d", value8u);
+        snprintf(text, textlength, "%d", value8u);
     }
     else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_BIN == (type_info & DLT_TYPE_INFO_SCOD)))
     {
@@ -3230,7 +3235,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 strcat(binary, (i == (value8u & i)) ? "1" : "0");
             }
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0b%s", binary);
+            snprintf(text, textlength, "0b%s", binary);
         }
 
         if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3249,7 +3254,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 strcat(binary, (i == (value16u & i)) ? "1" : "0");
             }
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0b%s", binary);
+            snprintf(text, textlength, "0b%s", binary);
         }
     }
     else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_HEX == (type_info & DLT_TYPE_INFO_SCOD)))
@@ -3260,7 +3265,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0x%02x", value8u);
+            snprintf(text, textlength, "0x%02x", value8u);
         }
 
         if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3269,7 +3274,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0x%04x", value16u);
+            snprintf(text, textlength, "0x%04x", value16u);
         }
 
         if (DLT_TYLE_32BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3278,7 +3283,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0x%08x", value32u);
+            snprintf(text, textlength, "0x%08x", value32u);
         }
 
         if (DLT_TYLE_64BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3288,7 +3293,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text + strlen(text), textlength - strlen(text), "0x%08x", value32u);
+            snprintf(text, textlength, "0x%08x", value32u);
             *ptr -= 8;
             DLT_MSG_READ_VALUE(value32u, *ptr, *datalength, uint32_t);
 
@@ -3303,18 +3308,18 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     {
         /* signed or unsigned argument received */
         if (type_info & DLT_TYPE_INFO_VARI) {
-            DLT_MSG_READ_VALUE(length2_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length2_tmp);
-            DLT_MSG_READ_VALUE(length3_tmp, *ptr, *datalength, uint16_t);
+            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length3 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length3_tmp);
+            length3 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3382,7 +3387,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(text + strlen(text), textlength - strlen(text), "%d", value8i);
+                snprintf(text, textlength, "%d", value8i);
             }
             else {
                 value8u = 0;
@@ -3391,7 +3396,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(text + strlen(text), textlength - strlen(text), "%d", value8u);
+                snprintf(text, textlength, "%d", value8u);
             }
 
             break;
@@ -3407,7 +3412,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16i = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
-                snprintf(text + strlen(text), textlength - strlen(text), "%hd", value16i);
+                snprintf(text, textlength, "%hd", value16i);
             }
             else {
                 value16u = 0;
@@ -3418,7 +3423,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16u = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
-                snprintf(text + strlen(text), textlength - strlen(text), "%hu", value16u);
+                snprintf(text, textlength, "%hu", value16u);
             }
 
             break;
@@ -3434,7 +3439,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32i = DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
-                snprintf(text + strlen(text), textlength - strlen(text), "%d", value32i);
+                snprintf(text, textlength, "%d", value32i);
             }
             else {
                 value32u = 0;
@@ -3445,7 +3450,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32u = DLT_ENDIAN_GET_32(msg->standardheader->htyp, value32u_tmp);
-                snprintf(text + strlen(text), textlength - strlen(text), "%u", value32u);
+                snprintf(text, textlength, "%u", value32u);
             }
 
             break;
@@ -3462,9 +3467,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 value64i = DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64i_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
-                snprintf(text + strlen(text), textlength - strlen(text), "%I64d", value64i);
+                snprintf(text, textlength, "%I64d", value64i);
     #else
-                snprintf(text + strlen(text), textlength - strlen(text), "%" PRId64, value64i);
+                snprintf(text, textlength, "%" PRId64, value64i);
     #endif
             }
             else {
@@ -3477,9 +3482,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 value64u = DLT_ENDIAN_GET_64(msg->standardheader->htyp, value64u_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
-                snprintf(text + strlen(text), textlength - strlen(text), "%I64u", value64u);
+                snprintf(text, textlength, "%I64u", value64u);
     #else
-                snprintf(text + strlen(text), textlength - strlen(text), "%" PRId64, value64u);
+                snprintf(text, textlength, "%" PRId64, value64u);
     #endif
             }
 
@@ -3488,7 +3493,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_128BIT:
         {
             if (*datalength >= 16)
-                dlt_print_hex_string(text + strlen(text), textlength, *ptr, 16);
+                dlt_print_hex_string(text, textlength, *ptr, 16);
 
             if ((*datalength) < 16)
                 return DLT_RETURN_ERROR;
@@ -3507,18 +3512,18 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     {
         /* float data argument */
         if (type_info & DLT_TYPE_INFO_VARI) {
-            DLT_MSG_READ_VALUE(length2_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length2_tmp);
-            DLT_MSG_READ_VALUE(length3_tmp, *ptr, *datalength, uint16_t);
+            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length3 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length3_tmp);
+            length3 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3537,7 +3542,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_8BIT:
         {
             if (*datalength >= 1)
-                dlt_print_hex_string(text + strlen(text), textlength, *ptr, 1);
+                dlt_print_hex_string(text, textlength, *ptr, 1);
 
             if ((*datalength) < 1)
                 return DLT_RETURN_ERROR;
@@ -3549,7 +3554,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_16BIT:
         {
             if (*datalength >= 2)
-                dlt_print_hex_string(text + strlen(text), textlength, *ptr, 2);
+                dlt_print_hex_string(text, textlength, *ptr, 2);
 
             if ((*datalength) < 2)
                 return DLT_RETURN_ERROR;
@@ -3574,7 +3579,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 value32f_tmp_int32i_swaped =
                     DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32f_tmp_int32i);
                 memcpy(&value32f, &value32f_tmp_int32i_swaped, sizeof(float32_t));
-                snprintf(text + strlen(text), textlength - strlen(text), "%g", value32f);
+                snprintf(text, textlength, "%g", value32f);
             }
             else {
                 dlt_log(LOG_ERR, "Invalid size of float32_t\n");
@@ -3600,9 +3605,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
                 memcpy(&value64f, &value64f_tmp_int64i_swaped, sizeof(float64_t));
 #ifdef __arm__
-                snprintf(text + strlen(text), textlength - strlen(text), "ILLEGAL");
+                snprintf(text, textlength, "ILLEGAL");
 #else
-                snprintf(text + strlen(text), textlength - strlen(text), "%g", value64f);
+                snprintf(text, textlength, "%g", value64f);
 #endif
             }
             else {
@@ -3615,7 +3620,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_128BIT:
         {
             if (*datalength >= 16)
-                dlt_print_hex_string(text + strlen(text), textlength, *ptr, 16);
+                dlt_print_hex_string(text, textlength, *ptr, 16);
 
             if ((*datalength) < 16)
                 return DLT_RETURN_ERROR;
@@ -3633,20 +3638,20 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     else if (type_info & DLT_TYPE_INFO_RAWD)
     {
         /* raw data argument */
-        DLT_MSG_READ_VALUE(length_tmp, *ptr, *datalength, uint16_t);
+        DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length_tmp);
+        length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
         if (type_info & DLT_TYPE_INFO_VARI) {
-            DLT_MSG_READ_VALUE(length2_tmp, *ptr, *datalength, uint16_t);
+            DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length2_tmp);
+            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3658,20 +3663,21 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string(text + strlen(text), textlength, *ptr, length);
+        dlt_print_hex_string(text, textlength, *ptr, length);
         *ptr += length;
         *datalength -= length;
     }
     else if (type_info & DLT_TYPE_INFO_TRAI)
     {
         /* trace info argument */
-        DLT_MSG_READ_VALUE(length_tmp, *ptr, *datalength, uint16_t);
+        DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, length_tmp);
-        DLT_MSG_READ_STRING((text+strlen(text)), *ptr, *datalength, textlength-(int)(strlen(text)), length);
+        length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+
+        DLT_MSG_READ_STRING(text, *ptr, *datalength, textlength, length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
