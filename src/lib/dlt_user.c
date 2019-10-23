@@ -4630,18 +4630,16 @@ void dlt_stop_threads()
 {
     int dlt_housekeeperthread_result = 0;
     int dlt_segmented_nwt_result = 0;
-    int tmp_errno = 0;
     int joined = 0;
 
     if (dlt_housekeeperthread_handle) {
         /* do not ignore return value */
         dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
-        tmp_errno = errno;
 
         if (dlt_housekeeperthread_result != 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_cancel(dlt_housekeeperthread_handle): %s\n",
-                     strerror(tmp_errno));
+                     strerror(dlt_housekeeperthread_result));
     }
 
     if (dlt_user.dlt_segmented_nwt_handle) {
@@ -4650,35 +4648,32 @@ void dlt_stop_threads()
         dlt_unlock_mutex(&mq_mutex);
 
         dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
-        tmp_errno = errno;
 
         if (dlt_segmented_nwt_result != 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
-                     strerror(tmp_errno));
+                     strerror(dlt_segmented_nwt_result));
     }
 
     /* make sure that the threads really finished working */
     if ((dlt_housekeeperthread_result == 0) && dlt_housekeeperthread_handle) {
         joined = pthread_join(dlt_housekeeperthread_handle, NULL);
-        tmp_errno = errno;
 
-        if (joined < 0)
+        if (joined != 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_join(dlt_housekeeperthread_handle, NULL): %s\n",
-                     strerror(tmp_errno));
+                     strerror(joined));
 
         dlt_housekeeperthread_handle = 0; /* set to invalid */
     }
 
     if ((dlt_segmented_nwt_result == 0) && dlt_user.dlt_segmented_nwt_handle) {
         joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
-        tmp_errno = errno;
 
-        if (joined < 0)
+        if (joined != 0)
             dlt_vlog(LOG_ERR,
                      "ERROR pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL): %s\n",
-                     strerror(tmp_errno));
+                     strerror(joined));
 
         dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
     }
