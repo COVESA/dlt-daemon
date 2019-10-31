@@ -128,8 +128,10 @@ void start_threads(DltSystemConfiguration *config)
     if (config->LogFile.Enable)
         start_thread(config, logfile_thread, "log file");
 
+#if defined(DLT_FILETRANSFER_ENABLE)
     if (config->Filetransfer.Enable)
         start_thread(config, filetransfer_thread, "file transfer");
+#endif
 
     if (config->LogProcesses.Enable)
         start_thread(config, logprocess_thread, "log process");

@@ -18,19 +18,29 @@ if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
 endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
 
 set(dlt_system_SRCS dlt-system.c dlt-system-options.c dlt-system-process-handling.c
-	dlt-system-filetransfer.c dlt-system-logfile.c dlt-system-processes.c dlt-system-shell.c
-	dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c)
+       dlt-system-logfile.c dlt-system-processes.c dlt-system-shell.c
+       dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c)
+
+if(WITH_DLT_FILETRANSFER)
+  set(dlt_system_SRCS ${dlt_system_SRCS} dlt-system-filetransfer.c)
+  add_definitions(-DDLT_FILETRANSFER_ENABLE)
+endif(WITH_DLT_FILETRANSFER)
+
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 
+target_link_libraries(dlt-system dlt)
+
 if(WITH_SYSTEMD_JOURNAL)
-    if(SYSTEMD_VERSION LESS 209)
-	   target_link_libraries(dlt-system dlt ${ZLIB_LIBRARIES} systemd-journal systemd-id128)
-	else(SYSTEMD_VERSION LESS 209)
-	   target_link_libraries(dlt-system dlt ${ZLIB_LIBRARIES} systemd)
-	endif(SYSTEMD_VERSION LESS 209)
-else(WITH_SYSTEMD_JOURNAL)
-	target_link_libraries(dlt-system dlt ${ZLIB_LIBRARIES})
+ if(SYSTEMD_VERSION LESS 209)
+  target_link_libraries(dlt-system systemd-journal systemd-id128)
+ else(SYSTEMD_VERSION LESS 209)
+  target_link_libraries(dlt-system systemd)
+ endif(SYSTEMD_VERSION LESS 209)
 endif(WITH_SYSTEMD_JOURNAL)
+
+if(WITH_DLT_FILETRANSFER)
+ target_link_libraries(dlt-system ${ZLIB_LIBRARY})
+endif(WITH_DLT_FILETRANSFER)
 
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)
 
