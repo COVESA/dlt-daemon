@@ -1332,7 +1332,7 @@ DltReturnValue dlt_unregister_app(void)
         return DLT_RETURN_ERROR;
     }
 
-    if(dlt_user.reference <= 0) {
+    if(dlt_user.reference <= 1) {
 
         /* Inform daemon to unregister application and all of its contexts */
         ret = dlt_user_log_send_unregister_application();
