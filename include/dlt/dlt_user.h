@@ -244,6 +244,8 @@ typedef struct
     DltUserConnectionState connection_state;
 #   endif
     uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
+
+    uint32_t reference;
 } DltUser;
 
 typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);

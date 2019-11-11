@@ -366,6 +366,7 @@ DltReturnValue dlt_init(void)
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
     dlt_user.overflow_counter = 0;
+    dlt_user.reference = 0;
 #ifdef DLT_SHM_ENABLE
     memset(&(dlt_user.dlt_shm), 0, sizeof(DltShm));
 
@@ -1001,36 +1002,46 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
         return DLT_RETURN_OK;
     }
 
-    DLT_SEM_LOCK();
+    dlt_user.reference++;
 
-    /* Store locally application id and application description */
-    dlt_set_id(dlt_user.appID, apid);
+    if(dlt_user.reference <= 1) {
 
-    if (dlt_user.application_description != NULL)
-        free(dlt_user.application_description);
+        DLT_SEM_LOCK();
 
-    dlt_user.application_description = NULL;
+        /* Store locally application id and application description */
+        dlt_set_id(dlt_user.appID, apid);
 
-    if (description != NULL) {
-        size_t desc_len = strlen(description);
-        dlt_user.application_description = malloc(desc_len + 1);
+        if (dlt_user.application_description != NULL)
+            free(dlt_user.application_description);
 
-        if (dlt_user.application_description) {
-            strncpy(dlt_user.application_description, description, desc_len);
-            dlt_user.application_description[desc_len] = '\0';
+        dlt_user.application_description = NULL;
+
+        if (description != NULL) {
+            size_t desc_len = strlen(description);
+            dlt_user.application_description = malloc(desc_len + 1);
+
+            if (dlt_user.application_description) {
+                strncpy(dlt_user.application_description, description, desc_len);
+                dlt_user.application_description[desc_len] = '\0';
+            }
+            else {
+                DLT_SEM_FREE();
+                return DLT_RETURN_ERROR;
+            }
         }
-        else {
-            DLT_SEM_FREE();
-            return DLT_RETURN_ERROR;
-        }
+
+        DLT_SEM_FREE();
+
+        ret = dlt_user_log_send_register_application();
+
+        if ((ret == DLT_RETURN_OK) && (dlt_user.dlt_log_handle != -1))
+            ret = dlt_user_log_resend_buffer();
+
+        dlt_vlog(LOG_DEBUG, "%s done\n", __FUNCTION__);
     }
-
-    DLT_SEM_FREE();
-
-    ret = dlt_user_log_send_register_application();
-
-    if ((ret == DLT_RETURN_OK) && (dlt_user.dlt_log_handle != -1))
-        ret = dlt_user_log_resend_buffer();
+    else {
+        dlt_vlog(LOG_DEBUG, "%s ignored for reference=%d\n", __FUNCTION__, dlt_user.reference);
+    }
 
     return ret;
 }
@@ -1321,20 +1332,29 @@ DltReturnValue dlt_unregister_app(void)
         return DLT_RETURN_ERROR;
     }
 
-    /* Inform daemon to unregister application and all of its contexts */
-    ret = dlt_user_log_send_unregister_application();
+    if(dlt_user.reference <= 0) {
 
-    DLT_SEM_LOCK();
+        /* Inform daemon to unregister application and all of its contexts */
+        ret = dlt_user_log_send_unregister_application();
 
-    /* Clear and free local stored application information */
-    dlt_set_id(dlt_user.appID, "");
+        DLT_SEM_LOCK();
 
-    if (dlt_user.application_description != NULL)
-        free(dlt_user.application_description);
+        /* Clear and free local stored application information */
+        dlt_set_id(dlt_user.appID, "");
 
-    dlt_user.application_description = NULL;
+        if (dlt_user.application_description != NULL)
+            free(dlt_user.application_description);
 
-    DLT_SEM_FREE();
+        dlt_user.application_description = NULL;
+
+        DLT_SEM_FREE();
+
+        dlt_vlog(LOG_DEBUG, "%s done\n", __FUNCTION__);
+    }
+    else {
+        dlt_vlog(LOG_DEBUG, "%s ignored for reference=%d\n", __FUNCTION__, dlt_user.reference);
+        dlt_user.reference--;
+    }
 
     return ret;
 }
