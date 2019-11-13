@@ -366,7 +366,6 @@ DltReturnValue dlt_init(void)
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
     dlt_user.overflow_counter = 0;
-    dlt_user.app_reference = 0;
 #ifdef DLT_SHM_ENABLE
     memset(&(dlt_user.dlt_shm), 0, sizeof(DltShm));
 
@@ -1002,8 +1001,6 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
         return DLT_RETURN_OK;
     }
 
-    dlt_user.app_reference++;
-
     DLT_SEM_LOCK();
 
     /* Store locally application id and application description */
@@ -1338,10 +1335,6 @@ DltReturnValue dlt_unregister_app(void)
     dlt_user.application_description = NULL;
 
     DLT_SEM_FREE();
-
-    if(dlt_user.app_reference > 0) {
-        dlt_user.app_reference--;
-    }
 
     return ret;
 }
@@ -4685,5 +4678,5 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
 
 int dlt_is_app_registered(void)
 {
-    return (dlt_user.app_reference > 0) ? 1 : 0;
+    return (dlt_user.appID[0] == '\0') ? 0 : 1;
 }
