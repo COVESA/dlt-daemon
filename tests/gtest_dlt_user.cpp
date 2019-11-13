@@ -4464,6 +4464,14 @@ TEST(t_dlt_user_is_logLevel_enabled, nullpointer)
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_is_logLevel_enabled(NULL, DLT_LOG_FATAL));
 }
 
+TEST(t_dlt_is_app_registered, normal)
+{
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(1, dlt_is_app_registered());
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+    EXPECT_LE(0, dlt_is_app_registered());
+}
+
 /*/////////////////////////////////////// */
 /* main */
 int main(int argc, char **argv)

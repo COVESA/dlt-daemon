@@ -245,7 +245,7 @@ typedef struct
 #   endif
     uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
 
-    uint32_t reference;
+    uint32_t app_reference;
 } DltUser;
 
 typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);
@@ -530,6 +530,13 @@ DltReturnValue dlt_register_app(const char *apid, const char *description);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_unregister_app(void);
+
+/**
+ * Get the status of application registering.
+ *
+ * @return 1 means registered. 0 means not registered.
+ */
+int dlt_is_app_registered(void);
 
 /**
  * Unregister an application in the daemon and also flushes the buffered logs.
