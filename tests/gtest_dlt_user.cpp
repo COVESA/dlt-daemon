@@ -4467,9 +4467,9 @@ TEST(t_dlt_user_is_logLevel_enabled, nullpointer)
 TEST(t_dlt_is_app_registered, normal)
 {
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(1, dlt_is_app_registered());
+    EXPECT_EQ(1, dlt_is_app_registered());
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
-    EXPECT_LE(0, dlt_is_app_registered());
+    EXPECT_EQ(0, dlt_is_app_registered());
 }
 
 /*/////////////////////////////////////// */
