@@ -3124,56 +3124,43 @@ TEST(t_dlt_message_payload, normal)
 }
 TEST(t_dlt_message_payload, abnormal)
 {
-/*    DltFile file; */
-/*    static char text[DLT_DAEMON_TEXTSIZE]; */
+    DltFile file;
+    static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file and filter can be used*/
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+    char pwd[100];
+    getcwd(pwd, 100);
+    char  openfile[114];
+    sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_HEX, 0)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII, 0)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_PLAIN, 0)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_HTML, 0)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII_LIMITED, 0)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_HEX, 1)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII, 1)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_PLAIN, 1)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_HTML, 1)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII_LIMITED, 1)); */
+    memset(&file, 0x00, sizeof(DltFile));
+
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_HEX, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_PLAIN, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_HTML, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII_LIMITED, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_HEX, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_PLAIN, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_HTML, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII_LIMITED, 1));
 
     /* USE own DLT_HEADER_SHOW , expected -1 */
-/*    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, 99, 0)); */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, 99, 0));
 
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0)); */
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0)); */
-/*    while (dlt_file_read(&file,0)>=0){} */
-/*    for(int i=0;i<file.counter;i++) */
-/*    { */
-/*        EXPECT_LE(DLT_RETURN_OK, dlt_file_message(&file, i, 0)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, 99, 0)); */
-/*        printf("%s \n",text); */
-/*    } */
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0)); */
-
-    /* set verbose to 12345678 */
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0)); */
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0)); */
-/*    while (dlt_file_read(&file,0)>=0){} */
-/*    for(int i=0;i<file.counter;i++) */
-/*    { */
-/*        EXPECT_LE(DLT_RETURN_OK, dlt_file_message(&file, i, 0)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_HEX, 12345678)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII, 12345678)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_PLAIN, 12345678)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_MIXED_FOR_HTML, 12345678)); */
-/*        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_OUTPUT_ASCII_LIMITED, 12345678)); */
-/*    } */
-/*    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0)); */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
+    while (dlt_file_read(&file,0)>=0){}
+    for(int i=0;i<file.counter;i++)
+    {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_message(&file, i, 0));
+        EXPECT_GE(DLT_RETURN_ERROR, dlt_message_payload(&file.msg, text, DLT_DAEMON_TEXTSIZE, 99, 0));
+        printf("%s \n",text);
+    }
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
 }
 TEST(t_dlt_message_payload, nullpointer)
 {

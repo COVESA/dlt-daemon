@@ -1171,7 +1171,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_macro[7]++;
@@ -1183,7 +1183,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 char hdr[2048];
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                                 length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                                DLT_MSG_READ_STRING(hdr, ptr, datalength, length);
+                                DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
                                 if ((length == 16) && (hdr[15] == 15))
                                     dltdata->test_counter_macro[7]++;
@@ -1276,7 +1276,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
                                 dltdata->test_counter_macro[8]++;
@@ -1373,7 +1373,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
                                 dltdata->test_counter_macro[8]++;
@@ -1435,7 +1435,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
                                 dltdata->test_counter_macro[8]++;
@@ -2195,7 +2195,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_function[7]++;
@@ -2207,7 +2207,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 char hdr[2048];
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                                 length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                                DLT_MSG_READ_STRING(hdr, ptr, datalength, length);
+                                DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
                                 if ((length == 16) && (hdr[15] == 15))
                                     dltdata->test_counter_function[7]++;
@@ -2300,7 +2300,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
                                 dltdata->test_counter_function[8]++;
@@ -2397,7 +2397,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
                                 dltdata->test_counter_function[8]++;
@@ -2459,7 +2459,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
                             length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
-                            DLT_MSG_READ_STRING(chdr, ptr, datalength, length);
+                            DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
                                 dltdata->test_counter_function[8]++;
