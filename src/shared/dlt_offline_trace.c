@@ -88,7 +88,8 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
         int len = 0;
         len = strlen(file_name);
 
-        if ((strncmp(files[i]->d_name, file_name, len) == 0) && (files[i]->d_name[len] == '.')) {
+        if ((strncmp(files[i]->d_name, file_name, len) == 0) &&
+            (files[i]->d_name[len] == DLT_OFFLINETRACE_FILENAME_INDEX_DELI[0])) {
             num++;
 
             if ((tmp_old == NULL) || (strlen(tmp_old) >= strlen(files[i]->d_name))) {
@@ -119,13 +120,13 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
 
     if (num > 0) {
         if (tmp_old != NULL) {
-            if (strlen(tmp_old) < DLT_OFFLINETRACE_FILENAME_MAX_SIZE)
-                strncpy(oldest, tmp_old, DLT_OFFLINETRACE_FILENAME_MAX_SIZE);
+            if (strlen(tmp_old) < NAME_MAX)
+                strncpy(oldest, tmp_old, NAME_MAX);
         }
 
         if (tmp_new != NULL) {
-            if (strlen(tmp_old) < DLT_OFFLINETRACE_FILENAME_MAX_SIZE)
-                strncpy(newest, tmp_new, DLT_OFFLINETRACE_FILENAME_MAX_SIZE);
+            if (strlen(tmp_old) < NAME_MAX)
+                strncpy(newest, tmp_new, NAME_MAX);
         }
     }
 
@@ -147,7 +148,7 @@ void dlt_offline_trace_file_name(char *log_file_name, size_t length,
     /* create log file name */
     memset(log_file_name, 0, length * sizeof(char));
     strncat(log_file_name, name, length - strlen(log_file_name) - 1);
-    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_DELI,
+    strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_INDEX_DELI,
             length - strlen(log_file_name) - 1);
     strncat(log_file_name, file_index, length - strlen(log_file_name) - 1);
     strncat(log_file_name, DLT_OFFLINETRACE_FILENAME_EXT,
@@ -156,7 +157,7 @@ void dlt_offline_trace_file_name(char *log_file_name, size_t length,
 
 unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
 {
-    const char d[2] = ".";
+    const char d[2] = DLT_OFFLINETRACE_FILENAME_INDEX_DELI;
     char *token;
     unsigned int idx = 0;
 
@@ -180,35 +181,50 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
 {
     time_t t;
     struct tm tmp;
-    char outstr[NAME_MAX];
+    char file_path[PATH_MAX + 1];
     unsigned int idx = 0;
     int ret = 0;
 
     /* set filename */
     if (trace->filenameTimestampBased) {
+        /* timestamp format: "yyyymmdd_hhmmss" */
+        char timestamp[16];
         t = time(NULL);
         tzset();
         localtime_r(&t, &tmp);
 
-        strftime(outstr, NAME_MAX, "%Y%m%d_%H%M%S", &tmp);
+        strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tmp);
 
-        ret = snprintf(trace->filename, NAME_MAX, "%s/dlt_offlinetrace_%s.dlt", trace->directory, outstr);
+        ret = snprintf(trace->filename, sizeof(trace->filename), "%s%s%s%s",
+                       DLT_OFFLINETRACE_FILENAME_BASE,
+                       DLT_OFFLINETRACE_FILENAME_TIMESTAMP_DELI, timestamp,
+                       DLT_OFFLINETRACE_FILENAME_EXT);
 
-        if ((ret < 0) || (ret >= NAME_MAX)) {
+        if ((ret < 0) || (ret >= (int)sizeof(trace->filename))) {
             printf("dlt_offlinetrace filename cannot be concatenated\n");
+            return DLT_RETURN_ERROR;
+        }
+
+        ret = snprintf(file_path, sizeof(file_path), "%s/%s",
+                       trace->directory, trace->filename);
+
+        if ((ret < 0) || (ret >= (int)sizeof(file_path))) {
+            printf("dlt_offlinetrace file path cannot be concatenated\n");
             return DLT_RETURN_ERROR;
         }
     }
     else {
-        char newest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
-        char oldest[DLT_OFFLINETRACE_FILENAME_MAX_SIZE] = { 0 };
+        char newest[NAME_MAX + 1] = { 0 };
+        char oldest[NAME_MAX + 1] = { 0 };
         /* targeting newest file, ignoring number of files in dir returned */
-        dlt_offline_trace_storage_dir_info(trace->directory, DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
+        dlt_offline_trace_storage_dir_info(trace->directory,
+                            DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
         idx = dlt_offline_trace_get_idx_of_log_file(newest) + 1;
 
-        dlt_offline_trace_file_name(outstr, NAME_MAX,
+        dlt_offline_trace_file_name(trace->filename, sizeof(trace->filename),
                                     DLT_OFFLINETRACE_FILENAME_BASE, idx);
-        ret = snprintf(trace->filename, NAME_MAX, "%s/%s", trace->directory, outstr);
+        ret = snprintf(file_path, sizeof(file_path), "%s/%s",
+                       trace->directory, trace->filename);
 
         if ((ret < 0) || (ret >= NAME_MAX)) {
             printf("filename cannot be concatenated\n");
@@ -217,11 +233,12 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
     }
 
     /* open DLT output file */
-    trace->ohandle = open(trace->filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+    trace->ohandle = open(file_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR |
+                          S_IRGRP | S_IROTH); /* mode: wb */
 
     if (trace->ohandle == -1) {
         /* trace file cannot be opened */
-        printf("Offline trace file %s cannot be created\n", trace->filename);
+        printf("Offline trace file %s cannot be created\n", file_path);
         return DLT_RETURN_ERROR;
     } /* if */
 
@@ -231,7 +248,7 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
 unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace)
 {
     struct dirent *dp;
-    char filename[256];
+    char filename[PATH_MAX + 1];
     unsigned long size = 0;
     struct stat status;
 
@@ -280,7 +297,7 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace)
     DIR *dir = opendir(trace->directory);
 
     while ((dp = readdir(dir)) != NULL)
-        if (strstr(dp->d_name, DLT_OFFLINETRACE_FILENAME_TO_COMPARE)) {
+        if (strstr(dp->d_name, DLT_OFFLINETRACE_FILENAME_BASE)) {
             int res = snprintf(filename, sizeof(filename), "%s/%s", trace->directory, dp->d_name);
 
             /* if the total length of the string is greater than the buffer, silently forget it. */

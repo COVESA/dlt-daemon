@@ -249,7 +249,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.sendMessageTime = 0;
     daemon_local->flags.offlineTraceDirectory[0] = 0;
     daemon_local->flags.offlineTraceFileSize = 1000000;
-    daemon_local->flags.offlineTraceMaxSize = 0;
+    daemon_local->flags.offlineTraceMaxSize = 4000000;
     daemon_local->flags.offlineTraceFilenameTimestampBased = 1;
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
@@ -267,7 +267,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.sendTimezone = 0;
     daemon_local->flags.offlineLogstorageMaxDevices = 0;
     daemon_local->flags.offlineLogstorageDirPath[0] = 0;
-    daemon_local->flags.offlineLogstorageMaxDevices = 0;
     daemon_local->flags.offlineLogstorageTimestamp = 1;
     daemon_local->flags.offlineLogstorageDelimiter = '_';
     daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
