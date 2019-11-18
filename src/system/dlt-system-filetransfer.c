@@ -274,7 +274,11 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     char *src_copy = strndup(src, PATH_MAX);
     MALLOC_ASSERT(src_copy);
-    char* fdir = dirname(src_copy);/*dirname overwrites its argument anyway, depending on argument the returned address might change */
+
+    /*dirname overwrites its argument anyway, */
+    /*but depending on argument returned address might change */
+    char *fdir = dirname(src_copy);
+
     char *dst_tosend;/*file which is going to be sent */
 
     char *rn = unique_name(src);/*new unique filename based on inode */
