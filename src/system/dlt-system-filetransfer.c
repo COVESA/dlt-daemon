@@ -272,9 +272,13 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
         return -1;
     }
 
-    char *fdir = strndup(src, PATH_MAX);
-    MALLOC_ASSERT(fdir);
-    fdir = dirname(fdir);/*dirname overwrites its argument anyway */
+    char *src_copy = strndup(src, PATH_MAX);
+    MALLOC_ASSERT(src_copy);
+
+    /*dirname overwrites its argument anyway, */
+    /*but depending on argument returned address might change */
+    char *fdir = dirname(src_copy);
+
     char *dst_tosend;/*file which is going to be sent */
 
     char *rn = unique_name(src);/*new unique filename based on inode */
@@ -308,7 +312,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
                     DLT_STRING(dst_tocompress));
             free(rn);
             free(dst_tocompress);
-            free(fdir);
+            free(src_copy);
             return -1;
         }
 
@@ -321,7 +325,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
             free(rn);
             free(dst_tosend);
             free(dst_tocompress);
-            free(fdir);
+            free(src_copy);
             return -1;
         }
 
@@ -349,7 +353,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
                     DLT_STRING(dst_tosend));
             free(rn);
             free(dst_tosend);
-            free(fdir);
+            free(src_copy);
             return -1;
         }
     }
@@ -362,7 +366,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
     free(rn);
     free(dst_tosend);
-    free(fdir);
+    free(src_copy);
 
     return 0;
 }
