@@ -971,7 +971,7 @@ DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceGetLogInfoResponse)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceGetLogInfoResponse)) < 0)
         return DLT_RETURN_ERROR;
 
     /* if the request was send from gateway, clear all application and context list */
@@ -1093,7 +1093,7 @@ DLT_STATIC int dlt_gateway_parse_get_default_log_level(DltDaemon *daemon,
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize,
+    if (dlt_check_rcv_data_size(msg->datasize,
                                 sizeof(DltServiceGetDefaultLogLevelResponse)) < 0) {
         dlt_log(LOG_ERR, "Received data incomplete.\n");
         return DLT_RETURN_ERROR;

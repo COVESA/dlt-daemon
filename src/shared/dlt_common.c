@@ -2110,6 +2110,16 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_check_rcv_data_size(int received, int required)
+{
+    int _ret = DLT_RETURN_OK;
+    if ((received - required) < 0) {
+        dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__);
+        _ret = DLT_RETURN_ERROR;
+    }
+    return _ret;
+}
+
 DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader)
 {
     if (storageheader == NULL)
