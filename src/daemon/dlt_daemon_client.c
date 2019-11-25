@@ -881,7 +881,7 @@ void dlt_daemon_control_get_log_info(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
         return;
 
     user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
@@ -1740,7 +1740,7 @@ void dlt_daemon_control_set_log_level(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
         return;
 
     req = (DltServiceSetLogLevel *)(msg->databuffer);
@@ -1913,7 +1913,7 @@ void dlt_daemon_control_set_trace_status(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0)
         return;
 
     req = (DltServiceSetLogLevel *)(msg->databuffer);
@@ -2007,7 +2007,7 @@ void dlt_daemon_control_set_default_log_level(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
         return;
 
     req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
@@ -2047,7 +2047,7 @@ void dlt_daemon_control_set_all_log_level(int sock,
         return;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
         return;
 
     req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
@@ -2084,7 +2084,7 @@ void dlt_daemon_control_set_default_trace_status(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
         return;
 
     req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
@@ -2124,7 +2124,7 @@ void dlt_daemon_control_set_all_trace_status(int sock,
         return;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
         return;
 
     req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
@@ -2161,7 +2161,7 @@ void dlt_daemon_control_set_timing_packets(int sock,
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
         return;
 
     req = (DltServiceSetVerboseMode *)(msg->databuffer);
@@ -2429,7 +2429,7 @@ void dlt_daemon_control_service_logstorage(int sock,
         return;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServiceOfflineLogstorage)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceOfflineLogstorage)) < 0)
         return;
 
     req = (DltServiceOfflineLogstorage *)(msg->databuffer);
@@ -2610,7 +2610,7 @@ void dlt_daemon_control_passive_node_connect(int sock,
         return;
     }
 
-    if (DLT_CHECK_RCV_DATA_SIZE(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
         return;
 
     req = (DltServicePassiveNodeConnect *)msg->databuffer;

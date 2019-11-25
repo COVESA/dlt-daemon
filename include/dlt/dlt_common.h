@@ -218,17 +218,6 @@ enum {
 #   define GET_LOG_INFO_LENGTH 13
 #   define SERVICE_OPT_LENGTH 3
 
-/* checks if received size is big enough for expected data */
-#   define DLT_CHECK_RCV_DATA_SIZE(received, required) \
-    ({ \
-        int _ret = DLT_RETURN_OK; \
-        if (((int)received - (int)required) < 0) { \
-            dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__); \
-            _ret = DLT_RETURN_ERROR; \
-        } \
-        _ret; \
-    })
-
 /**
  * Get the size of extra header parameters, depends on htyp.
  */
@@ -1249,6 +1238,13 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
  */
 DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
 
+/**
+ * Checks if received size is big enough for expected data
+ * @param received size
+ * @param required size
+ * @return negative value if required size is not sufficient
+ * */
+DltReturnValue dlt_check_rcv_data_size(int received, int required);
 
 /**
  * Initialise static ringbuffer with a size of size.
