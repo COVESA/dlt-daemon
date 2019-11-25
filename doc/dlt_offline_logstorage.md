@@ -79,7 +79,7 @@ SpecificSize=<spec size in bytes>    # Store logs in storage devices after speci
 The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all
 others are mandatory.
 
-An configuration file might look like:
+A typical configuration file may look like:
 
 ```
 [FILTER1]
@@ -110,6 +110,44 @@ FileSize=250000
 NOFiles=5
 SyncBehavior=ON_FILE_SIZE,ON_DEMAND
 EcuID=ECU1
+```
+
+In case of Non-Verbose mode, following filters should be used.
+
+```
+[NON-VERBOSE-STORAGE-FILTER<unique number>]    # filter configuration name for a Non-Verbose passive node
+EcuID=<ECUid>                                  # Specify ECU identifier
+File=<file name>                               # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
+FileSize=<file size in bytes>                  # Maximum file size in bytes
+NOFiles=<number of files>                      # Number of created files before oldest is deleted and a new one is created
+
+[NON-VERBOSE-LOGLEVEL-CTRL<unique number>]     # filter configuration name to control log level of Non-Verbose applications
+LogAppName=<APID>                              # Name of application (wildcard allowed)
+ContextName=<CTID>                             # Name of context (wildcard allowed)
+LogLevel=<Log level>                           # Define log level, e.g. DLT_LOG_INFO or DLT_LOG_FATAL
+EcuID=<ECUid>                                  # Specify ECU identifier
+```
+
+A typical configuration file may look like:
+
+```
+[NON-VERBOSE-STORAGE-FILTER1]
+EcuID=PASV
+File=scc
+FileSize=50000
+NOFiles=5
+
+[NON-VERBOSE-LOGLEVEL-CTRL1]
+LogAppName=LOG
+ContextName=TEST
+LogLevel=DLT_LOG_DEBUG
+EcuID=PASV
+
+[NON-VERBOSE-LOGLEVEL-CTRL2]
+LogAppName=.*
+ContextName=.*
+LogLevel=DLT_LOG_WARN
+EcuID=PASV
 ```
 
 
