@@ -1275,6 +1275,41 @@ DLT_STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
     return -1;
 }
 
+DLT_STATIC int dlt_logstorage_get_filter_section_value(DltConfigFile *config_file,
+                                                       char *sec_name,
+                                                       DltLogstorageFilterConf entry,
+                                                       char *value)
+{
+    int ret = 0;
+
+    if ((config_file == NULL) || (sec_name == NULL))
+        return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
+
+    if (entry.key != NULL) {
+        ret = dlt_config_file_get_value(config_file, sec_name,
+                                        entry.key,
+                                        value);
+
+        if ((ret != 0) && (entry.is_opt == 0)) {
+            dlt_vlog(LOG_WARNING,
+                     "Invalid configuration in section: %s -> %s : %s\n",
+                     sec_name, entry.key, value);
+            return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
+        }
+
+        if ((ret != 0) && (entry.is_opt == 1)) {
+            dlt_vlog(LOG_DEBUG, "Optional parameter %s not specified\n",
+                     entry.key);
+            return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
+        }
+    }
+    else {
+        return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
+    }
+
+    return 0;
+}
+
 DLT_STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
                                                char *sec_name,
                                                int index,
@@ -1292,70 +1327,30 @@ DLT_STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
     if (strncmp(sec_name,
                 DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION,
                 config_sec_len) == 0) {
-        if (filter_cfg_entries[index].key != NULL) {
-            ret = dlt_config_file_get_value(config_file, sec_name,
-                                            filter_cfg_entries[index].key,
-                                            value);
-
-            if ((ret != 0) && (filter_cfg_entries[index].is_opt == 0)) {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid configuration in section: %s -> %s : %s\n",
-                         sec_name, filter_cfg_entries[index].key, value);
-                return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
-            }
-
-            if ((ret != 0) && (filter_cfg_entries[index].is_opt == 1)) {
-                dlt_vlog(LOG_DEBUG, "Optional parameter %s not specified\n",
-                         filter_cfg_entries[index].key);
-                return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
-            }
-        }
-        else {
-            return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
-        }
+        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
+                                                      filter_cfg_entries[index],
+                                                      value);
     }
     else if (strncmp(sec_name,
                      DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION,
-                     storage_sec_len) == 0)
-    {
-        if (filter_nonverbose_storage_entries[index].key != NULL) {
-            if (dlt_config_file_get_value(config_file, sec_name,
-                                          filter_nonverbose_storage_entries[index].key, value) != 0) {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid configuration in section: %s -> %s : %s\n",
-                         sec_name, filter_nonverbose_storage_entries[index].key,
-                         value);
-                return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
-            }
-        }
-        else {
-            return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
-        }
+                     storage_sec_len) == 0) {
+        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
+                                                      filter_nonverbose_storage_entries[index],
+                                                      value);
     }
     else if ((strncmp(sec_name,
                       DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION,
-                      control_sec_len) == 0))
-    {
-        if (filter_nonverbose_control_entries[index].key != NULL) {
-            if (dlt_config_file_get_value(config_file, sec_name,
-                                          filter_nonverbose_control_entries[index].key, value) != 0) {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid configuration in section: %s -> %s : %s\n",
-                         sec_name, filter_nonverbose_control_entries[index].key,
-                         value);
-                return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
-            }
-        }
-        else {
-            return DLT_OFFLINE_LOGSTORAGE_FILTER_CONTINUE;
-        }
+                      control_sec_len) == 0)) {
+        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
+                                                      filter_nonverbose_control_entries[index],
+                                                      value);
     }
     else {
         dlt_log(LOG_ERR, "Error: Section name not valid \n");
-        return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
+        ret = DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
     }
 
-    return 0;
+    return ret;
 }
 
 DLT_STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
