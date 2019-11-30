@@ -650,6 +650,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
                             if (daemon_local->flags.ipNodes == NULL) {
                                 dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
+                                fclose(pFile);
                                 return -1;
                             }
                             else {
@@ -666,6 +667,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
                                     if (newNode == NULL) {
                                         dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
+                                        fclose(pFile);
                                         return -1;
                                     }
                                     else {
