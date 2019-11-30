@@ -124,6 +124,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
         lastErrno = errno;     /*close() may set errno too */
         close(*sock);
         dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
+        return -1;
     }
 
     /*listen */
