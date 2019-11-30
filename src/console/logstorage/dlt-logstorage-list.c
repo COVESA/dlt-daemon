@@ -165,6 +165,8 @@ int logstorage_store_dev_info(const char *node, const char *path)
 
     if (ptr->mnt_point == NULL) {
         pr_error("memory allocation failed for mnt_point\n");
+        free(ptr);
+        ptr = NULL;
         return -1;
     }
 
