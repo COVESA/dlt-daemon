@@ -2633,7 +2633,7 @@ DltReturnValue dlt_user_trace_network_segmented_start(uint32_t *id,
                                                       void *header,
                                                       uint16_t payload_len)
 {
-    DltContextData log;
+    DltContextData log = { 0 };
     struct timeval tv;
     int ret = DLT_RETURN_ERROR;
 
@@ -2750,7 +2750,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
         return DLT_RETURN_ERROR;
 
     if (handle->trace_status_ptr && (*(handle->trace_status_ptr) == DLT_TRACE_STATUS_ON)) {
-        DltContextData log;
+        DltContextData log = { 0 };
 
         if (dlt_user_log_init(handle, &log) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
@@ -2808,7 +2808,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
 
 DltReturnValue dlt_user_trace_network_segmented_end(uint32_t id, DltContext *handle, DltNetworkTraceType nw_trace_type)
 {
-    DltContextData log;
+    DltContextData log = { 0 };
     int ret = DLT_RETURN_ERROR;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
@@ -3066,11 +3066,10 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
                                                 int allow_truncate)
 {
     int ret = DLT_RETURN_ERROR;
+    DltContextData log = { 0 };
 
     if ((payload == NULL) && (payload_len > 0))
         return DLT_RETURN_WRONG_PARAMETER;
-
-    DltContextData log;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
         dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
