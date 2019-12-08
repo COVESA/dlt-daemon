@@ -2046,7 +2046,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
                                unsigned int flags)
 {
     unsigned int min_size = to_get;
-    void *src = NULL;
+    char *src = NULL;
 
     if (flags & DLT_RCV_SKIP_HEADER)
         min_size += sizeof(DltUserHeader);
@@ -2057,7 +2057,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
         !dest)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    src = (void *)receiver->buf;
+    src = receiver->buf;
 
     if (flags & DLT_RCV_SKIP_HEADER)
         src += sizeof(DltUserHeader);
