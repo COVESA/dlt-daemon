@@ -205,7 +205,11 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
     /* if (file_already_exists) */
     glob_t outer;
 
-    if (glob(dltdata->ovalue, GLOB_TILDE | GLOB_NOSORT, NULL, &outer) == 0) {
+    if (glob(dltdata->ovalue,
+#ifndef __ANDROID_API__
+                GLOB_TILDE |
+#endif
+                GLOB_NOSORT, NULL, &outer) == 0) {
         if (dltdata->vflag) {
             dlt_vlog(LOG_INFO, "File %s already exists, need to rename first\n", dltdata->ovalue);
         }
@@ -223,7 +227,11 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
              * foo.1000.dlt
              * foo.11.dlt
              */
-            if (glob(pattern, GLOB_TILDE | GLOB_NOSORT, NULL, &inner) == 0) {
+            if (glob(pattern,
+#ifndef __ANDROID_API__
+                        GLOB_TILDE |
+#endif
+                        GLOB_NOSORT, NULL, &inner) == 0) {
                 /* search for the highest number used */
                 size_t i;
 
