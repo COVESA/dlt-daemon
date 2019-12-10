@@ -73,7 +73,11 @@
  * \addtogroup userapi
  \{
  */
+
+#ifndef __ANDROID_API__
 #   include <mqueue.h>
+#endif
+
 #   include <pthread.h>
 
 #   if !defined (__WIN32__)
@@ -193,10 +197,11 @@ typedef struct
     char appID[DLT_ID_SIZE];                   /**< Application ID */
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
+#ifndef __ANDROID_API__
     mqd_t dlt_segmented_queue_read_handle;     /**< Handle message queue */
     mqd_t dlt_segmented_queue_write_handle;    /**< Handle message queue */
     pthread_t dlt_segmented_nwt_handle;        /**< thread handle of segmented sending */
-
+#endif
     int8_t dlt_is_file;                        /**< Target of logging: 1 to file, 0 to daemon */
 
     dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all

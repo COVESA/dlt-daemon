@@ -1,0 +1,154 @@
+/**
+ * Copyright (C) 2019  Advanced Driver Information Technology.
+ * This code is developed by Advanced Driver Information Technology.
+ * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
+ *
+ * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ *
+ *
+ * \copyright
+ * This Source Code Form is subject to the terms of the
+ * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
+ * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * For further information see http://www.genivi.org/.
+ */
+
+cc_defaults {
+    name: "dlt_defaults",
+    vendor: true,
+
+    local_include_dirs: [
+        "include/dlt",
+    ],
+
+    generated_headers: ["dlt_version_header"],
+
+    cflags: [
+        "-DDLT_USE_UNIX_SOCKET_IPC",
+        "-DCONFIGURATION_FILES_DIR=\"/vendor/etc\"",
+        "-DDLT_USER_IPC_PATH=\"/data/local/tmp\"",
+    ] + [
+        "-Wno-unused-parameter",
+        "-W",
+        "-Wall",
+    ],
+}
+
+// Generate dlt_version.h without Cmake
+genrule {
+    name: "dlt_version_header",
+    tool_files: ["util/create_dlt_version_h.py"],
+    srcs: [
+        "CMakeLists.txt",
+        "cmake/dlt_version.h.cmake",
+    ],
+    cmd: "$(location util/create_dlt_version_h.py) $(in) $(out)",
+    out: ["dlt_version.h"],
+}
+
+cc_binary {
+
+    name: "dlt-daemon",
+    defaults: ["dlt_defaults"],
+
+    /*
+    init_rc: [
+        "src/daemon/dlt-daemon.rc",
+    ],
+    */
+
+    local_include_dirs: [
+        "src/daemon",
+        "src/gateway",
+        "src/lib",
+        "src/shared",
+        "src/offlinelogstorage",
+    ],
+
+    srcs: [
+        "src/daemon/dlt-daemon.c",
+        "src/daemon/dlt_daemon_client.c",
+        "src/daemon/dlt_daemon_common.c",
+        "src/daemon/dlt_daemon_connection.c",
+        "src/daemon/dlt_daemon_event_handler.c",
+        "src/daemon/dlt_daemon_filter.c",
+        "src/daemon/dlt_daemon_offline_logstorage.c",
+        "src/daemon/dlt_daemon_serial.c",
+        "src/daemon/dlt_daemon_socket.c",
+        "src/daemon/dlt_daemon_unix_socket.c",
+        "src/gateway/dlt_gateway.c",
+        "src/lib/dlt_client.c",
+        "src/shared/dlt_common.c",
+        "src/shared/dlt_config_file_parser.c",
+        "src/shared/dlt_offline_trace.c",
+        "src/shared/dlt_protocol.c",
+        "src/shared/dlt_user_shared.c",
+        "src/offlinelogstorage/dlt_offline_logstorage.c",
+        "src/offlinelogstorage/dlt_offline_logstorage_behavior.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libutils",
+        "libcutils",
+    ],
+}
+
+cc_library_shared {
+    name: "libdlt",
+    defaults: ["dlt_defaults"],
+
+    local_include_dirs: [
+        "src/lib",
+        "src/shared",
+    ],
+
+    export_include_dirs: [
+        "include/dlt",
+    ],
+
+    export_generated_headers: ["dlt_version_header"],
+
+    srcs: [
+        "src/lib/dlt_client.c",
+        "src/lib/dlt_env_ll.c",
+        "src/lib/dlt_filetransfer.c",
+        "src/lib/dlt_user.c",
+        "src/shared/dlt_common.c",
+        "src/shared/dlt_protocol.c",
+        "src/shared/dlt_user_shared.c",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-example-user",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/examples/dlt-example-user.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-receive",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/console/dlt-receive.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+// vim: ft=python

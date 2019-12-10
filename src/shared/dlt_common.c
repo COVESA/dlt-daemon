@@ -2064,7 +2064,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
                                unsigned int flags)
 {
     unsigned int min_size = to_get;
-    char *src = NULL;
+    uint8_t *src = NULL;
 
     if (flags & DLT_RCV_SKIP_HEADER)
         min_size += sizeof(DltUserHeader);
@@ -2075,7 +2075,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
         !dest)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    src = receiver->buf;
+    src = (uint8_t *)receiver->buf;
 
     if (flags & DLT_RCV_SKIP_HEADER)
         src += sizeof(DltUserHeader);
@@ -3048,8 +3048,11 @@ void dlt_get_version(char *buf, size_t size)
              _DLT_PACKAGE_VERSION,
              _DLT_PACKAGE_VERSION_STATE,
              _DLT_PACKAGE_REVISION,
+/* Clang does not like these macros, because they are not reproducable */
+#pragma clang diagnostic ignored "-Wdate-time"
              __DATE__,
              __TIME__,
+#pragma clang diagnostic error "-Wdate-time"
              _DLT_SYSTEMD_ENABLE,
              _DLT_SYSTEMD_WATCHDOG_ENABLE,
              _DLT_TEST_ENABLE,
