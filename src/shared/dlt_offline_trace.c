@@ -99,19 +99,16 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
                 else if (strlen(tmp_old) > strlen(files[i]->d_name))
                     tmp_old = files[i]->d_name;
                 else /* filename is equal, do a string compare */
-                    if (strcmp(tmp_old, files[i]->d_name) > 0)
-                        tmp_old = files[i]->d_name;
+                if (strcmp(tmp_old, files[i]->d_name) > 0)
+                    tmp_old = files[i]->d_name;
             }
 
             if ((tmp_new == NULL) || (strlen(tmp_new) <= strlen(files[i]->d_name))) {
-                if (tmp_new == NULL) {
+                if (tmp_new == NULL)
                     tmp_new = files[i]->d_name;
-                }
                 /* when file name is longer, it is younger */
                 else if (strlen(tmp_new) < strlen(files[i]->d_name))
-                {
                     tmp_new = files[i]->d_name;
-                }
                 else if (strcmp(tmp_new, files[i]->d_name) < 0)
                     tmp_new = files[i]->d_name;
             }
@@ -119,15 +116,13 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
     }
 
     if (num > 0) {
-        if (tmp_old != NULL) {
+        if (tmp_old != NULL)
             if (strlen(tmp_old) < NAME_MAX)
                 strncpy(oldest, tmp_old, NAME_MAX);
-        }
 
-        if (tmp_new != NULL) {
+        if (tmp_new != NULL)
             if (strlen(tmp_old) < NAME_MAX)
                 strncpy(newest, tmp_new, NAME_MAX);
-        }
     }
 
     /* free scandir result */
@@ -218,7 +213,7 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
         char oldest[NAME_MAX + 1] = { 0 };
         /* targeting newest file, ignoring number of files in dir returned */
         dlt_offline_trace_storage_dir_info(trace->directory,
-                            DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
+                                           DLT_OFFLINETRACE_FILENAME_BASE, newest, oldest);
         idx = dlt_offline_trace_get_idx_of_log_file(newest) + 1;
 
         dlt_offline_trace_file_name(trace->filename, sizeof(trace->filename),
@@ -245,15 +240,18 @@ DltReturnValue dlt_offline_trace_create_new_file(DltOfflineTrace *trace)
     return DLT_RETURN_OK; /* OK */
 }
 
-unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace)
+ssize_t dlt_offline_trace_get_total_size(DltOfflineTrace *trace)
 {
     struct dirent *dp;
     char filename[PATH_MAX + 1];
-    unsigned long size = 0;
+    ssize_t size = 0;
     struct stat status;
 
     /* go through all dlt files in directory */
     DIR *dir = opendir(trace->directory);
+
+    if (!dir)
+        return -1;
 
     while ((dp = readdir(dir)) != NULL)
         if (strstr(dp->d_name, DLT_OFFLINETRACE_FILENAME_BASE)) {
@@ -354,11 +352,16 @@ DltReturnValue dlt_offline_trace_check_size(DltOfflineTrace *trace)
         return DLT_RETURN_ERROR;
     }
 
+    ssize_t s = 0;
+
     /* check size of complete offline trace */
-    while ((int)dlt_offline_trace_get_total_size(trace) > (trace->maxSize - trace->fileSize))
+    while ((s = dlt_offline_trace_get_total_size(trace)) > (trace->maxSize - trace->fileSize))
         /* remove oldest files as long as new file will not fit in completely into complete offline trace */
         if (dlt_offline_trace_delete_oldest_file(trace) < 0)
             return DLT_RETURN_ERROR;
+
+    if (s == -1)
+        return DLT_RETURN_ERROR;
 
     return DLT_RETURN_OK; /* OK */
 }

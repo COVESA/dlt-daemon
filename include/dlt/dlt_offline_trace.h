@@ -128,7 +128,7 @@ extern DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,
  * Get size of currently used offline trace buffer
  * @return size in bytes
  */
-extern unsigned long dlt_offline_trace_get_total_size(DltOfflineTrace *trace);
+extern ssize_t dlt_offline_trace_get_total_size(DltOfflineTrace *trace);
 
 /**
  * Provides info about the offline logs storage directory
