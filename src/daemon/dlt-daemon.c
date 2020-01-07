@@ -2849,10 +2849,15 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
     ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                                       daemon_local, verbose);
+                                            daemon_local, verbose);
 
-    if (DLT_DAEMON_ERROR_OK != ret)
-        dlt_log(LOG_ERR, "failed to send message to client\n");
+    if (ret == DLT_DAEMON_ERROR_BUFFER_FULL && daemon->overflow_counter == 1) {
+        dlt_vlog(LOG_WARNING, "%s: buffer full, messages will be discarded.\n",
+                __func__);
+    } else if (ret != DLT_DAEMON_ERROR_OK &&
+               ret != DLT_DAEMON_ERROR_BUFFER_FULL) {
+        dlt_vlog(LOG_ERR, "%s: failed to send message to client\n", __func__);
+    }
 
     /* keep not read data in buffer */
     size = daemon_local->msg.headersize +
