@@ -605,8 +605,9 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
  * - a comma separated list of ids
  * - a wildcard: .*
  *
- * Not allowed is the combination of application id and context id set to
- * wildcard. This will be rejected.
+ * If both application and context id are set to wildcard, this will be treated
+ * in the same way of the case application and context id are not present:
+ * - EcuID must be specified
  *
  * If lists given for application and/or context id, all possible combinations
  * are returned as keys in a form "[apid][ctid], e.g. "APP1\:CTX1".
@@ -637,7 +638,8 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
     int num_currkey = 0;
 
     /* Handle ecuid alone case here */
-    if ((apids == NULL) && (ctids == NULL) && (ecuid != NULL)) {
+    if (((apids == NULL) && (ctids == NULL) && (ecuid != NULL)) ||
+        ((strncmp(apids, ".*", 2) == 0) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
         dlt_logstorage_create_keys_only_ecu(ecuid, curr_key);
         *(num_keys) = 1;
         *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
@@ -1542,7 +1544,7 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
  * key consists of none wildcard value, e.g. apid=.*, cxid=CTX1
  * results in "CTX1".
  *
- * Combination of two wildcards is not allowed.
+ * Combination of two wildcards is not allowed if ECUID is not specified.
  *
  * @param handle        DLT Logstorage handle
  * @return              0 on success, -1 on error, 1 on warning
