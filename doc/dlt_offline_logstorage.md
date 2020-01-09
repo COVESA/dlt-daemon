@@ -79,6 +79,9 @@ SpecificSize=<spec size in bytes>    # Store logs in storage devices after speci
 The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all
 others are mandatory.
 
+If both of the parameter "LogAppName" and "ContextName" are set to wildcard or
+not present in the configuration file, "EcuID" must be specified.
+
 A typical configuration file may look like:
 
 ```
