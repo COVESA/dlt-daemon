@@ -515,17 +515,13 @@ DLT_STATIC int dlt_logstorage_find_dlt_header(void *ptr,
                                               unsigned int offset,
                                               unsigned int cnt)
 {
-    int index = 0;
-    char substring[] = { 'D', 'L', 'T', 0x01 };
+    const char magic[] = { 'D', 'L', 'T', 0x01 };
+    const char *cache = (char*)ptr + offset;
 
-    while (cnt > 0) {
-        if (*((char *)ptr + offset + index) == 'D') {
-            if (strncmp((char *)ptr + offset + index, substring, 4) == 0)
-                return index;
-        }
-
-        cnt--;
-        index++;
+    unsigned int i;
+    for (i = 0; i < cnt; i++) {
+        if ((cache[i] == 'D') && (strncmp(&cache[i], magic, 4) == 0))
+           return i;
     }
 
     return -1;
@@ -545,18 +541,15 @@ DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
                                                    unsigned int offset,
                                                    unsigned int cnt)
 {
-    char substring[] = {'D', 'L', 'T', 0x01};
-    while(cnt > 0)
-    {
-        if (*((char *)ptr + offset + cnt) == 'D')
-        {
-            if (strncmp((char *)ptr + offset + cnt, substring, 4) == 0)
-            {
-                return cnt;
-            }
-        }
-        cnt--;
+    const char magic[] = {'D', 'L', 'T', 0x01};
+    const char *cache = (char*)ptr + offset;
+
+    unsigned int i;
+    for (i = cnt; i > 0; i--) {
+        if ((cache[i] == 'D') && (strncmp(&cache[i], magic, 4) == 0))
+            return i;
     }
+
     return -1;
 }
 
@@ -653,7 +646,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
                 }
             }
 
-            ret = fwrite((char *)config->cache + start_offset + start_index, count, 1,
+            ret = fwrite((uint8_t*)config->cache + start_offset + start_index, count, 1,
                          config->log);
             dlt_logstorage_check_write_ret(config, ret);
 
@@ -691,7 +684,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
             }
         }
 
-        ret = fwrite((char *)config->cache + start_offset + start_index, count, 1,
+        ret = fwrite((uint8_t*)config->cache + start_offset + start_index, count, 1,
                      config->log);
         dlt_logstorage_check_write_ret(config, ret);
 
@@ -962,7 +955,7 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
     DltLogStorageCacheFooter *footer = NULL;
     int msg_size;
     int remain_cache_size;
-    char *curr_write_addr = NULL;
+    uint8_t *curr_write_addr = NULL;
     int ret = 0;
     unsigned int cache_size;
 
@@ -983,7 +976,7 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
         cache_size = config->file_size;
     }
 
-    footer = (DltLogStorageCacheFooter *)((char *)config->cache + cache_size);
+    footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
     if (footer == NULL)
     {
         dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
@@ -994,7 +987,7 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
 
     if (msg_size <= remain_cache_size) /* add at current position */
     {
-        curr_write_addr = (char *)config->cache + footer->offset;
+        curr_write_addr = (uint8_t*)config->cache + footer->offset;
         footer->offset += msg_size;
         if (footer->wrap_around_cnt < 1) {
             footer->end_sync_offset = footer->offset;
@@ -1123,7 +1116,7 @@ int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
             cache_size = config->file_size;
         }
 
-        footer = (DltLogStorageCacheFooter *)((char *)config->cache + cache_size);
+        footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
         if (footer == NULL)
         {
             dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
