@@ -9,4 +9,8 @@ include/dlt/dlt_version.h
 .cproject
 .settings
 .idea/
+*~
+*.o
+*.out
+*.swp
 cmake-build-debug/

@@ -52,11 +52,9 @@ cc_binary {
     name: "dlt-daemon",
     defaults: ["dlt_defaults"],
 
-    /*
     init_rc: [
         "src/daemon/dlt-daemon.rc",
     ],
-    */
 
     local_include_dirs: [
         "src/daemon",
@@ -148,6 +146,34 @@ cc_binary {
     shared_libs: [
         "libc",
         "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-logd-converter",
+    vendor: true,
+
+    srcs: [
+        "src/android/dlt-logd-converter.cpp",
+    ],
+    init_rc: [
+        "src/android/dlt-logd-converter.rc",
+    ],
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-std=c++14",
+
+    ],
+    shared_libs: [
+        "libdlt",
+        "liblog",
+    ],
+    include_dirs: [
+        "system/core/include",
     ],
 }
 
