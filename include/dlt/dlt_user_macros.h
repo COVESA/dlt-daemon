@@ -202,9 +202,9 @@
  * Send log message with variable list of messages (intended for verbose mode)
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
- * @param ARGS variable list of arguments
+ * @param ... variable list of arguments
  * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
- *       use a semicolon instead of a comma to separate the ARGS.
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
  *       Example: DLT_LOG(hContext, DLT_LOG_INFO, DLT_STRING("Hello world"); DLT_INT(123));
  */
 #ifdef _MSC_VER
@@ -229,9 +229,9 @@
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
  * @param TS timestamp to be used for log message
- * @param ARGS variable list of arguments
+ * @param ... variable list of arguments
  * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
- *       use a semicolon instead of a comma to separate the ARGS.
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
  *       Example: DLT_LOG_TS(hContext, DLT_LOG_INFO, timestamp, DLT_STRING("Hello world"); DLT_INT(123));
  */
 #ifdef _MSC_VER
@@ -258,11 +258,11 @@
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
  * @param MSGID the message id of log message
- * @param ARGS variable list of arguments:
+ * @param ... variable list of arguments
  * calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
  * DLT_INT(), DLT_UINT(), DLT_RAW()
  * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
- *       use a semicolon instead of a comma to separate the ARGS.
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
  *       Example: DLT_LOG_ID(hContext, DLT_LOG_INFO, 0x1234, DLT_STRING("Hello world"); DLT_INT(123));
  */
 #ifdef _MSC_VER
@@ -288,11 +288,11 @@
  * @param LOGLEVEL the log level of the log message
  * @param MSGID the message id of log message
  * @param TS timestamp to be used for log message
- * @param ARGS variable list of arguments:
+ * @param ... variable list of arguments
  * calls to DLT_STRING(), DLT_BOOL(), DLT_FLOAT32(), DLT_FLOAT64(),
  * DLT_INT(), DLT_UINT(), DLT_RAW()
  * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
- *       use a semicolon instead of a comma to separate the ARGS.
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
  *       Example: DLT_LOG_ID_TS(hContext, DLT_LOG_INFO, 0x1234, timestamp, DLT_STRING("Hello world"); DLT_INT(123));
  */
 #ifdef _MSC_VER
