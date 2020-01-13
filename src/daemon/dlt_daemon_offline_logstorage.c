@@ -49,9 +49,9 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
         return DLT_RETURN_ERROR;
 
-    strncpy(ecuid, key, (len - 2));
-    strncpy(apid, ".*", 2);
-    strncpy(ctid, ".*", 2);
+    memcpy(ecuid, key, (len - 2));
+    memcpy(apid, ".*", 2);
+    memcpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -76,7 +76,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
         return DLT_RETURN_ERROR;
 
     strncpy(ctid, (key + 2), (len - 1));
-    strncpy(apid, ".*", 2);
+    memcpy(apid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -101,7 +101,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
         return DLT_RETURN_ERROR;
 
     strncpy(apid, key + 1, (len - 2));
-    strncpy(ctid, ".*", 2);
+    memcpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -183,7 +183,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid_apid(char *key,
     else
         return DLT_RETURN_ERROR;
 
-    strncpy(ctid, ".*", 2);
+    memcpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
 }
@@ -227,7 +227,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
         if (tok != NULL)
             strncpy(ctid, tok, DLT_ID_SIZE);
 
-        strncpy(apid, ".*", 2);
+        memcpy(apid, ".*", 2);
     }
     else {
         strncpy(ecuid, tok, DLT_ID_SIZE);

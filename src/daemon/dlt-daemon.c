@@ -253,10 +253,14 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.offlineTraceFilenameTimestampBased = 1;
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
-    snprintf(daemon_local->flags.loggingFilename,
-             sizeof(daemon_local->flags.loggingFilename),
-             "%s/dlt.log",
-             dltFifoBaseDir);
+
+    if (snprintf(daemon_local->flags.loggingFilename,
+                 sizeof(daemon_local->flags.loggingFilename),
+                 "%s/dlt.log", dltFifoBaseDir) != 0) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error %s\n", __func__,
+                 daemon_local->flags.loggingFilename);
+    }
+
     daemon_local->timeoutOnSend = 4;
     daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
     daemon_local->RingbufferMaxSize = DLT_DAEMON_RINGBUFFER_MAX_SIZE;
@@ -1496,7 +1500,9 @@ void dlt_daemon_exit_trigger()
 {
     char tmp[DLT_PATH_MAX] = { 0 };
 
-    snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    if (snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir) != 0) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error %s\n", __func__, tmp);
+    }
     (void)unlink(tmp);
 
     /* stop event loop */
@@ -2346,7 +2352,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     if (dlt_receiver_check_and_get(rec, description, len, DLT_RCV_NONE) < 0) {
         dlt_log(LOG_ERR, "Unable to get application description\n");
         /* in case description was not readable, set dummy description */
-        strncpy(description, "Unknown", sizeof("Unknown"));
+        memcpy(description, "Unknown", sizeof("Unknown"));
+
         /* unknown len of original description, set to 0 to not remove in next
          * step. Because message buffer is re-adjusted the corrupted description
          * is ignored. */
@@ -2454,7 +2461,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     if (dlt_receiver_check_and_get(rec, description, len, DLT_RCV_NONE) < 0) {
         dlt_log(LOG_ERR, "Unable to get context description\n");
         /* in case description was not readable, set dummy description */
-        strncpy(description, "Unknown", sizeof("Unknown"));
+        memcpy(description, "Unknown", sizeof("Unknown"));
+
         /* unknown len of original description, set to 0 to not remove in next
          * step. Because message buffer is re-adjusted the corrupted description
          * is ignored. */

@@ -422,8 +422,8 @@ int main(int argc, char *argv[]) {
     qsort((void *) timestamp_index, message_count, sizeof(TimestampIndex), compare_index_systime);
 
     for (num = begin; num <= end; num++) {
-        delta_tmsp = abs(timestamp_index[num + 1].tmsp - timestamp_index[num].tmsp);
-        delta_systime = abs(timestamp_index[num + 1].systmsp - timestamp_index[num].systmsp);
+        delta_tmsp = (uint32_t)llabs((int64_t)timestamp_index[num + 1].tmsp - timestamp_index[num].tmsp);
+        delta_systime = (uint32_t)llabs((int64_t)timestamp_index[num + 1].systmsp - timestamp_index[num].systmsp);
 
         /*
          * Here is a try to detect a new cycle of boot in system.

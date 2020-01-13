@@ -116,13 +116,15 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
     }
 
     if (num > 0) {
-        if (tmp_old != NULL)
-            if (strlen(tmp_old) < NAME_MAX)
-                strncpy(oldest, tmp_old, NAME_MAX);
+        if ((tmp_old != NULL) && (strlen(tmp_old) < NAME_MAX)) {
+            strncpy(oldest, tmp_old, NAME_MAX);
+            oldest[NAME_MAX] = '\0';
+        }
 
-        if (tmp_new != NULL)
-            if (strlen(tmp_old) < NAME_MAX)
-                strncpy(newest, tmp_new, NAME_MAX);
+        if ((tmp_new != NULL) && (strlen(tmp_old) < NAME_MAX)) {
+            strncpy(newest, tmp_new, NAME_MAX);
+            oldest[NAME_MAX] = '\0';
+        }
     }
 
     /* free scandir result */
