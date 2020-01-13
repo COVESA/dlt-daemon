@@ -288,17 +288,21 @@ static int dlt_config_file_get_key_value(char *line, char *str1, char *str2)
 
     ptr = strtok_r(line, delimiter, &save_ptr);
 
-    if (ptr != NULL) /* get key */
-        strncpy(str1, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
-    else
+    if (ptr != NULL) { /* get key */
+        strncpy(str1, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1);
+        str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1] = '\0';
+    } else {
         return -1;
+    }
 
     ptr = strtok_r(NULL, delimiter, &save_ptr);
 
-    if (ptr != NULL)
-        strncpy(str2, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
-    else
+    if (ptr != NULL) {
+        strncpy(str2, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1);
+        str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1] = '\0';
+    } else {
         return -1;
+    }
 
     return 0;
 }

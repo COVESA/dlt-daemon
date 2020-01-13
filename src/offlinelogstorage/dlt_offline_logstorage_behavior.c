@@ -90,15 +90,19 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         struct tm tm_info;
         tzset();
         localtime_r(&t, &tm_info);
-        sprintf(stamp,
-                "%c%04d%02d%02d-%02d%02d%02d",
-                file_config->logfile_delimiter,
-                1900 + tm_info.tm_year,
-                1 + tm_info.tm_mon,
-                tm_info.tm_mday,
-                tm_info.tm_hour,
-                tm_info.tm_min,
-                tm_info.tm_sec);
+        if (snprintf(stamp,
+                     DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + 1,
+                     "%c%04d%02d%02d-%02d%02d%02d",
+                     file_config->logfile_delimiter,
+                     1900 + tm_info.tm_year,
+                     1 + tm_info.tm_mon,
+                     tm_info.tm_mday,
+                     tm_info.tm_hour,
+                     tm_info.tm_min,
+                     tm_info.tm_sec) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: snprintf truncation %s\n", __func__,
+                     stamp);
+        }
         strcat(log_file_name, stamp);
     }
 

@@ -3042,21 +3042,22 @@ void dlt_get_version(char *buf, size_t size)
         return;
     }
 
+/* Clang does not like these macros, because they are not reproducable */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdate-time"
     snprintf(buf,
              size,
              "DLT Package Version: %s %s, Package Revision: %s, build on %s %s\n%s %s %s %s\n",
              _DLT_PACKAGE_VERSION,
              _DLT_PACKAGE_VERSION_STATE,
              _DLT_PACKAGE_REVISION,
-/* Clang does not like these macros, because they are not reproducable */
-#pragma clang diagnostic ignored "-Wdate-time"
              __DATE__,
              __TIME__,
-#pragma clang diagnostic error "-Wdate-time"
              _DLT_SYSTEMD_ENABLE,
              _DLT_SYSTEMD_WATCHDOG_ENABLE,
              _DLT_TEST_ENABLE,
              _DLT_SHM_ENABLE);
+#pragma GCC diagnostic pop
 }
 
 void dlt_get_major_version(char *buf, size_t size)
