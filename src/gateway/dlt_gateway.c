@@ -1476,7 +1476,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
 
 int dlt_gateway_process_on_demand_request(DltGateway *gateway,
                                           DltDaemonLocal *daemon_local,
-                                          char *node_id,
+                                          char node_id[DLT_ID_SIZE],
                                           int connection_status,
                                           int verbose)
 {
@@ -1491,13 +1491,12 @@ int dlt_gateway_process_on_demand_request(DltGateway *gateway,
     }
 
     /* find connection by ECU id */
-    for (i = 0; i < gateway->num_connections; i++)
-        if (strncmp(node_id, gateway->connections->ecuid, DLT_ID_SIZE) == 0) {
+    for (i = 0; i < gateway->num_connections; i++) {
+        if (strncmp(node_id, gateway->connections[i].ecuid, DLT_ID_SIZE) == 0) {
             con = &gateway->connections[i];
             break;
         }
-
-
+    }
 
     if (con == NULL) {
         dlt_log(LOG_WARNING, "Specified ECUid not found\n");
