@@ -243,6 +243,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     char value[value_length];
     char *pch;
     const char *filename;
+    ssize_t n;
 
     /* set default values for configuration */
     daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
@@ -254,11 +255,12 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
 
-    if (snprintf(daemon_local->flags.loggingFilename,
+    n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", dltFifoBaseDir) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error %s\n", __func__,
-                 daemon_local->flags.loggingFilename);
+                 "%s/dlt.log", dltFifoBaseDir);
+    if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+                __func__, n, daemon_local->flags.loggingFilename);
     }
 
     daemon_local->timeoutOnSend = 4;
@@ -1500,9 +1502,13 @@ void dlt_daemon_exit_trigger()
 {
     char tmp[DLT_PATH_MAX] = { 0 };
 
-    if (snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error %s\n", __func__, tmp);
+    ssize_t n;
+    n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    if (n < 0 || (size_t)n > DLT_PATH_MAX) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+                __func__, n, tmp);
     }
+
     (void)unlink(tmp);
 
     /* stop event loop */
