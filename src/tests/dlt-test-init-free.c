@@ -32,7 +32,7 @@
 
 void exec(const char *cmd, char *buffer, size_t length);
 void printMemoryUsage();
-char *occupyMemory(uint size);
+char *occupyMemory(int size);
 void do_example_test();
 void do_dlt_test();
 
@@ -131,7 +131,7 @@ void printMemoryUsage()
     printf("%s", result);
 }
 
-char *occupyMemory(uint size)
+char *occupyMemory(int size)
 {
     char *buf = (char *)malloc(size * sizeof(char));
 
