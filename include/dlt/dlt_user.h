@@ -74,6 +74,7 @@
  \{
  */
 #   include <mqueue.h>
+#   include <pthread.h>
 
 #   if !defined (__WIN32__)
 #      include <semaphore.h>
