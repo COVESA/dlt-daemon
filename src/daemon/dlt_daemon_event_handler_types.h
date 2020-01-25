@@ -25,7 +25,7 @@
  * \file dlt_daemon_event_handler_types.h
  */
 
-#include <sys/poll.h>
+#include <poll.h>
 
 #include "dlt_daemon_connection_types.h"
 
