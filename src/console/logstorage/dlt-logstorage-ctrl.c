@@ -61,7 +61,7 @@
 #include <string.h>
 #include <getopt.h>
 
-#include <sys/poll.h>
+#include <poll.h>
 
 #if defined(__linux__)
 #   include "sd-daemon.h"

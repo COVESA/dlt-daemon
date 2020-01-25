@@ -43,7 +43,7 @@
 #include <errno.h>
 
 #include <sys/uio.h> /* writev() */
-#include <sys/poll.h>
+#include <poll.h>
 
 #include <limits.h>
 #ifdef linux

@@ -30,7 +30,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <sys/poll.h>
+#include <poll.h>
 #include <syslog.h>
 
 #include "dlt_common.h"
