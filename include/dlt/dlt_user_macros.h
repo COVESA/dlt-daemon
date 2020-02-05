@@ -211,14 +211,14 @@
 /* DLT_LOG is not supported by MS Visual C++ */
 /* use function interface instead            */
 #else
-#   define DLT_LOG(CONTEXT, LOGLEVEL, ARGS ...) \
+#   define DLT_LOG(CONTEXT, LOGLEVEL, ...) \
     do { \
         DltContextData log_local; \
         int dlt_local; \
         dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            ARGS; \
+            __VA_ARGS__; \
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
@@ -238,14 +238,14 @@
 /* DLT_LOG_TS is not supported by MS Visual C++ */
 /* use function interface instead            */
 #else
-#   define DLT_LOG_TS(CONTEXT, LOGLEVEL, TS, ARGS ...) \
+#   define DLT_LOG_TS(CONTEXT, LOGLEVEL, TS, ...) \
     do { \
         DltContextData log_local; \
         int dlt_local; \
         dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            ARGS; \
+            __VA_ARGS__; \
             log_local.use_timestamp = DLT_USER_TIMESTAMP; \
             log_local.user_timestamp = (uint32_t) TS; \
             (void)dlt_user_log_write_finish(&log_local); \
@@ -269,14 +269,14 @@
 /* DLT_LOG_ID is not supported by MS Visual C++ */
 /* use function interface instead               */
 #else
-#   define DLT_LOG_ID(CONTEXT, LOGLEVEL, MSGID, ARGS ...) \
+#   define DLT_LOG_ID(CONTEXT, LOGLEVEL, MSGID, ...) \
     do { \
         DltContextData log_local; \
         int dlt_local; \
         dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            ARGS; \
+            __VA_ARGS__; \
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
@@ -299,14 +299,14 @@
 /* DLT_LOG_ID_TS is not supported by MS Visual C++ */
 /* use function interface instead               */
 #else
-#   define DLT_LOG_ID_TS(CONTEXT, LOGLEVEL, MSGID, TS, ARGS ...) \
+#   define DLT_LOG_ID_TS(CONTEXT, LOGLEVEL, MSGID, TS, ...) \
     do { \
         DltContextData log_local; \
         int dlt_local; \
         dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
-            ARGS; \
+            __VA_ARGS__; \
             log_local.use_timestamp = DLT_USER_TIMESTAMP; \
             log_local.user_timestamp = (uint32_t) TS; \
             (void)dlt_user_log_write_finish(&log_local); \
