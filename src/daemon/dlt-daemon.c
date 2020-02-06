@@ -98,6 +98,70 @@ int g_exit = 0;
 
 int g_signo = 0;
 
+static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
+    [DLT_TIMER_PACKET] = DLT_CONNECTION_ONE_S_TIMER,
+    [DLT_TIMER_ECU] = DLT_CONNECTION_SIXTY_S_TIMER,
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = DLT_CONNECTION_SYSTEMD_TIMER,
+#endif
+    [DLT_TIMER_GATEWAY] = DLT_CONNECTION_GATEWAY_TIMER,
+    [DLT_TIMER_UNKNOWN] = DLT_CONNECTION_TYPE_MAX
+};
+
+static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
+    [DLT_TIMER_PACKET] = "Timing packet",
+    [DLT_TIMER_ECU] = "ECU version",
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = "Systemd watchdog",
+#endif
+    [DLT_TIMER_GATEWAY] = "Gateway",
+    [DLT_TIMER_UNKNOWN] = "Unknown timer"
+};
+
+#ifdef __QNX__
+static int dlt_timer_pipes[DLT_TIMER_UNKNOWN][2] = {
+    /* [timer_id] = {read_pipe, write_pipe} */
+    [DLT_TIMER_PACKET] = {DLT_FD_INIT, DLT_FD_INIT},
+    [DLT_TIMER_ECU] = {DLT_FD_INIT, DLT_FD_INIT},
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = {DLT_FD_INIT, DLT_FD_INIT},
+#endif
+    [DLT_TIMER_GATEWAY] = {DLT_FD_INIT, DLT_FD_INIT}
+};
+
+static pthread_t timer_threads[DLT_TIMER_UNKNOWN] = {
+    [DLT_TIMER_PACKET] = 0,
+    [DLT_TIMER_ECU] = 0,
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = 0,
+#endif
+    [DLT_TIMER_GATEWAY] = 0
+};
+
+static DltDaemonPeriodicData *timer_data[DLT_TIMER_UNKNOWN] = {
+    [DLT_TIMER_PACKET] = NULL,
+    [DLT_TIMER_ECU] = NULL,
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    [DLT_TIMER_SYSTEMD] = NULL,
+#endif
+    [DLT_TIMER_GATEWAY] = NULL
+};
+
+void close_pipes(int fds[2])
+{
+    if (fds[0] > 0) {
+        close(fds[0]);
+        fds[0] = DLT_FD_INIT;
+    }
+
+    if (fds[1] > 0) {
+        close(fds[1]);
+        fds[1] = DLT_FD_INIT;
+    }
+}
+
+#endif // __QNX__
+
 /**
  * Print usage information of tool.
  */
@@ -1622,6 +1686,10 @@ void dlt_daemon_exit_trigger()
     (void)unlink(tmp);
 #endif
 
+#ifdef __QNX__
+    dlt_daemon_cleanup_timers();
+#endif
+
     /* stop event loop */
     g_exit = -1;
 }
@@ -1650,6 +1718,30 @@ void dlt_daemon_signal_handler(int sig)
     } /* switch */
 
 } /* dlt_daemon_signal_handler() */
+
+#ifdef __QNX__
+void dlt_daemon_cleanup_timers()
+{
+    int i = 0;
+    while (i < DLT_TIMER_UNKNOWN) {
+        /* Remove FIFO of every timer and kill timer thread */
+        if (0 != timer_threads[i]) {
+            pthread_kill(timer_threads[i], SIGUSR1);
+            pthread_join(timer_threads[i], NULL);
+            timer_threads[i] = 0;
+
+            close_pipes(dlt_timer_pipes[i]);
+
+            /* Free data of every timer */
+            if (NULL != timer_data[i]) {
+                free(timer_data[i]);
+                timer_data[i] = NULL;
+            }
+        }
+        i++;
+    }
+}
+#endif
 
 void dlt_daemon_daemonize(int verbose)
 {
@@ -3168,32 +3260,57 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     return DLT_DAEMON_ERROR_OK;
 }
 
-static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
-    [DLT_TIMER_PACKET] = DLT_CONNECTION_ONE_S_TIMER,
-    [DLT_TIMER_ECU] = DLT_CONNECTION_SIXTY_S_TIMER,
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    [DLT_TIMER_SYSTEMD] = DLT_CONNECTION_SYSTEMD_TIMER,
-#endif
-    [DLT_TIMER_GATEWAY] = DLT_CONNECTION_GATEWAY_TIMER,
-    [DLT_TIMER_UNKNOWN] = DLT_CONNECTION_TYPE_MAX
-};
+#ifdef __QNX__
+static void *timer_thread(void *data)
+{
+    sigset_t set;
+    sigset_t pset;
+    int pexit = 0;
 
-static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
-    [DLT_TIMER_PACKET] = "Timing packet",
-    [DLT_TIMER_ECU] = "ECU version",
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    [DLT_TIMER_SYSTEMD] = "Systemd watchdog",
+    /*
+     * In timer thread, it is only expecting to receive SIGUSR1
+     */
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    sigprocmask(SIG_BLOCK, &set, NULL);
+
+    DltDaemonPeriodicData* timer_data = (DltDaemonPeriodicData*) data;
+
+    /* Timer will start in starts_in sec*/
+    sleep(timer_data->starts_in);
+    while (1) {
+        if (0 > write(dlt_timer_pipes[timer_data->timer_id][1], "1", 1)) {
+            dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
+                    dlt_timer_names[timer_data->timer_id]);
+            pexit = 1;
+        }
+
+        if (sigpending(&pset)) {
+            dlt_log(LOG_ERR, "sigpending error!\n");
+            pexit = 1;
+        }
+
+        if (sigismember(&pset, SIGUSR1)) {
+            dlt_log(LOG_NOTICE, "Received SIGUSR1! Stop thread\n");
+            pexit = 1;
+        }
+
+        if (pexit) {
+            close_pipes(dlt_timer_pipes[timer_data->timer_id]);
+            return NULL;
+        }
+
+        sleep(timer_data->period_sec);
+    }
+}
 #endif
-    [DLT_TIMER_GATEWAY] = "Gateway",
-    [DLT_TIMER_UNKNOWN] = "Unknown timer"
-};
 
 int create_timer_fd(DltDaemonLocal *daemon_local,
                     int period_sec,
                     int starts_in,
                     DltTimers timer_id)
 {
-    int local_fd = -1;
+    int local_fd = DLT_FD_INIT;
     char *timer_name = NULL;
 
     if (timer_id >= DLT_TIMER_UNKNOWN) {
@@ -3204,18 +3321,17 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
     timer_name = dlt_timer_names[timer_id];
 
     if (daemon_local == NULL) {
-        dlt_log(DLT_LOG_ERROR, "Daemaon local structure is NULL");
+        dlt_log(DLT_LOG_ERROR, "Daemon local structure is NULL");
         return -1;
     }
 
     if ((period_sec <= 0) || (starts_in <= 0)) {
         /* timer not activated via the service file */
         dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
-        local_fd = -1;
+        local_fd = DLT_FD_INIT;
     }
-
-#ifdef linux
     else {
+#ifdef linux
         struct itimerspec l_timer_spec;
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
@@ -3231,17 +3347,47 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         if (timerfd_settime(local_fd, 0, &l_timer_spec, NULL) < 0) {
             dlt_vlog(LOG_WARNING, "<%s> timerfd_settime failed: %s\n",
                      timer_name, strerror(errno));
-            local_fd = -1;
+            local_fd = DLT_FD_INIT;
         }
-    }
-#endif
+#elif __QNX__
+        /*
+         * Since timerfd is not valid in QNX, new threads are introduced
+         * to manage timers and communicate with main thread when timer expires.
+         */
+        if(0 != pipe(dlt_timer_pipes[timer_id])) {
+            dlt_vlog(LOG_ERR, "Failed to create pipe for timer [%s]",
+                    dlt_timer_names[timer_id]);
+            return -1;
+        }
+        if (NULL == timer_data[timer_id]) {
+            timer_data[timer_id] = calloc(1, sizeof(DltDaemonPeriodicData));
+            if (NULL == timer_data[timer_id]) {
+                dlt_vlog(LOG_ERR, "Failed to allocate memory for timer_data [%s]!\n",
+                         dlt_timer_names[timer_id]);
+                close_pipes(dlt_timer_pipes[timer_id]);
+                return -1;
+            }
+        }
 
-    /* If fully initialized we are done.
-     * Event handling registration is done later on with other connections.
-     */
-    if (local_fd > 0)
-        dlt_vlog(LOG_INFO, "<%s> initialized with %d timer\n", timer_name,
-                 period_sec);
+        timer_data[timer_id]->timer_id = timer_id;
+        timer_data[timer_id]->period_sec = period_sec;
+        timer_data[timer_id]->starts_in = starts_in;
+        timer_data[timer_id]->wakeups_missed = 0;
+
+        if (0 != pthread_create(&timer_threads[timer_id], NULL,
+                            &timer_thread, (void*)timer_data[timer_id])) {
+            dlt_vlog(LOG_ERR, "Failed to create new thread for timer [%s]!\n",
+                                     dlt_timer_names[timer_id]);
+            /* Clean up timer before returning */
+            close_pipes(dlt_timer_pipes[timer_id]);
+            free(timer_data[timer_id]);
+            timer_data[timer_id] = NULL;
+
+            return -1;
+        }
+        local_fd = dlt_timer_pipes[timer_id][0];
+#endif
+    }
 
     return dlt_connection_create(daemon_local,
                                  &daemon_local->pEvent,

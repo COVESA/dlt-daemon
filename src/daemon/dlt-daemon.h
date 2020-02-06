@@ -169,8 +169,10 @@ typedef struct
 
 typedef struct
 {
-    int timer_fd;
     unsigned long long wakeups_missed;
+    int period_sec;
+    int starts_in;
+    int timer_id;
 } DltDaemonPeriodicData;
 
 typedef struct
@@ -197,6 +199,10 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 void dlt_daemon_daemonize(int verbose);
 void dlt_daemon_exit_trigger();
 void dlt_daemon_signal_handler(int sig);
+#ifdef __QNX__
+void dlt_daemon_cleanup_timers();
+void close_pipes(int fds[2]);
+#endif
 int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *revc, int verbose);
 int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
