@@ -27,7 +27,7 @@ minimal code example. Detailed information about the API can be found later in
 this document.
 
 ```
-#include <dlt/dlt.h>
+#include <dlt.h>
 
 DLT_DECLARE_CONTEXT(ctx); /* declare context */
 
