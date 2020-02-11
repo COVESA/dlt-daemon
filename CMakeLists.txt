@@ -182,6 +182,14 @@ add_definitions(-DCONFIGURATION_FILES_DIR="${CONFIGURATION_FILES_DIR}")
 
 add_subdirectory(cmake)
 
+# Message queue
+if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
+   HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
+    add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
+else()
+    message(STATUS "Disable network trace interface since message queue is not supported")
+endif()
+
 if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)

@@ -5,7 +5,13 @@ Back to [README.md](../README.md)
 ## Introduction
 
 The extended network trace allows the user to send or truncate network trace
-messages that are larger than the normal maximum size of a DLT message.
+messages that are larger than the normal maximum size of a DLT message. This
+interface will be enabled if following calls are supported on the target:
+- mq\_open
+- mq\_close
+- mq\_unlink
+- mq\_send
+- mq\_receive
 
 ## Protocol
 

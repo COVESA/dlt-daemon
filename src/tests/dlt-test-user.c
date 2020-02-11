@@ -560,6 +560,7 @@ int test6m(void)
 
 int test7m(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[32];
     int num;
 
@@ -585,12 +586,18 @@ int test7m(void)
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 7: (Macro IF) Test network trace */
+    printf("Test7m: (Macro IF) Test network trace: Network trace interface is not supported, skipping\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 7: (Macro IF) Test network trace: Network trace interface is not supported, skipping");
+#endif
 
     return 0;
 }
 
 int test8m(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[1024 * 5];
     int num;
 
@@ -616,12 +623,18 @@ int test8m(void)
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 8: (Macro IF) Test truncated network trace*/
+    printf("Test8m: (Macro IF) Test truncated network trace: Network trace interface is not supported, skipping\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 8: (Macro IF) Test truncated network trace: Network trace interface is not supported, skipping");
+#endif
 
     return 0;
 }
 
 int test9m(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[1024 * 5];
     int num;
 
@@ -647,6 +660,11 @@ int test9m(void)
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 9: (Macro IF) Test segmented network trace*/
+    printf("Test9m: (Macro IF) Test segmented  network trace: Network trace interface is not supported, skipping\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 9: (Macro IF) Test segmented network trace: Network trace interface is not supported, skipping");
+#endif
 
     return 0;
 }
@@ -1100,6 +1118,7 @@ int test6f(void)
 
 int test7f(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[32];
     int num;
 
@@ -1133,12 +1152,22 @@ int test7f(void)
 
     dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 7: (Function IF) Test network trace */
+    printf("Test7f: (Function IF) Test network trace: Network trace interface is not supported, skipping\n");
+
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test 7: (Function IF) Test network trace: Network trace interface is not supported, skipping");
+        dlt_user_log_write_finish(&context_data);
+    }
+#endif
 
     return 0;
 }
 
 int test8f(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[1024 * 5];
     int num;
 
@@ -1173,12 +1202,22 @@ int test8f(void)
 
     dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 8: (Function IF) Test truncated network trace */
+    printf("Test8f: (Function IF) Test truncated network trace: Network trace interface is not supported, skipping\n");
+
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test 8: (Function IF) Test truncated network trace: Network trace interface is not supported, skipping");
+        dlt_user_log_write_finish(&context_data);
+    }
+#endif
 
     return 0;
 }
 
 int test9f(void)
 {
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char buffer[1024 * 5];
     int num;
 
@@ -1212,6 +1251,15 @@ int test9f(void)
 
     dlt_set_application_ll_ts_limit(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
+#else
+    /* Test 9: (Function IF) Test segmented network trace */
+    printf("Test9f: (Function IF) Test segmented network trace: Network trace interface is not supported, skipping\n");
+
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test 9: (Function IF) Test segmented network trace: Network trace interface is not supported, skipping");
+        dlt_user_log_write_finish(&context_data);
+    }
+#endif
 
     return 0;
 }

@@ -26,6 +26,7 @@ extern "C"
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 }
 
 #ifndef DLT_DAEMON_BLOCKING_TEST
