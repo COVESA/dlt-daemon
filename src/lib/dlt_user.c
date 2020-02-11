@@ -104,16 +104,21 @@ enum StringType
     UTF8_STRING = 1
 };
 
+#define DLT_UNUSED(x) (void)(x)
+
+/* Network trace */
+#ifdef DLT_NETWORK_TRACE_ENABLE
+#define DLT_USER_SEGMENTED_THREAD (1<<2)
+
 /* Segmented Network Trace */
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
 #define DLT_DELAYED_RESEND_INDICATOR_PATTERN 0xFFFF
 
-#define DLT_UNUSED(x) (void)(x)
-
 /* Mutex to wait on while message queue is not initialized */
 pthread_mutex_t mq_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t mq_init_condition;
+#endif /* DLT_NETWORK_TRACE_ENABLE */
 
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
@@ -160,10 +165,6 @@ static DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static DltReturnValue dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static DltReturnValue dlt_user_log_send_overflow(void);
-#ifndef __ANDROID_API__
-static void dlt_user_trace_network_segmented_thread(void *unused);
-static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
-#endif
 static DltReturnValue dlt_user_log_out_error_handling(void *ptr1,
                                                       size_t len1,
                                                       void *ptr2,
@@ -174,6 +175,10 @@ static void dlt_user_cleanup_handler(void *arg);
 static int dlt_start_threads();
 static void dlt_stop_threads();
 static void dlt_fork_child_fork_handler();
+#ifdef DLT_NETWORK_TRACE_ENABLE
+static void dlt_user_trace_network_segmented_thread(void *unused);
+static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
+#endif
 
 static DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text,
                                                       const enum StringType type);
@@ -402,7 +407,7 @@ DltReturnValue dlt_init(void)
 
 #endif
 
-#ifndef __ANDROID_API__
+#ifdef DLT_NETWORK_TRACE_ENABLE
     /* These will be lazy initialized only when needed */
     dlt_user.dlt_segmented_queue_read_handle = -1;
     dlt_user.dlt_segmented_queue_write_handle = -1;
@@ -459,7 +464,7 @@ DltReturnValue dlt_init_file(const char *name)
     return DLT_RETURN_OK;
 }
 
-#ifndef __ANDROID_API__
+#ifdef DLT_NETWORK_TRACE_ENABLE
 DltReturnValue dlt_init_message_queue(void)
 {
     dlt_lock_mutex(&mq_mutex);
@@ -524,7 +529,7 @@ DltReturnValue dlt_init_message_queue(void)
     dlt_unlock_mutex(&mq_mutex);
     return DLT_RETURN_OK;
 }
-#endif /*__ANDROID_API__*/
+#endif /* DLT_NETWORK_TRACE_ENABLE */
 
 DltReturnValue dlt_init_common(void)
 {
@@ -940,7 +945,7 @@ DltReturnValue dlt_free(void)
     dlt_env_free_ll_set(&dlt_user.initial_ll_set);
     DLT_SEM_FREE();
 
-#ifndef __ANDROID_API__
+#ifdef DLT_NETWORK_TRACE_ENABLE
     char queue_name[NAME_MAX];
     snprintf(queue_name, NAME_MAX, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
 
@@ -962,7 +967,7 @@ DltReturnValue dlt_free(void)
     dlt_user.dlt_segmented_queue_read_handle = DLT_FD_INIT;
 
     pthread_cond_destroy(&mq_init_condition);
-#endif /* ifndef __ANDROID_API__ */
+#endif /* DLT_NETWORK_TRACE_ENABLE */
     sem_destroy(&dlt_mutex);
 
     /* allow the user app to do dlt_init() again. */
@@ -2652,7 +2657,7 @@ DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
  * NW Trace related
  */
 
-
+#ifdef DLT_NETWORK_TRACE_ENABLE
 int check_buffer(void)
 {
     int total_size, used_size;
@@ -2901,7 +2906,6 @@ DltReturnValue dlt_user_trace_network_segmented_end(uint32_t id, DltContext *han
     return DLT_RETURN_OK;
 }
 
-#ifndef __ANDROID_API__
 void dlt_user_trace_network_segmented_thread(void *unused)
 {
     /* Unused on purpose. */
@@ -3201,7 +3205,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
     return DLT_RETURN_OK;
 }
-#endif /*__ANDROID_API__*/
+#endif /* DLT_NETWORK_TRACE_ENABLE */
 
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)
 {
@@ -3466,8 +3470,12 @@ DltReturnValue dlt_disable_local_print(void)
 static void dlt_user_cleanup_handler(void *arg)
 {
     DLT_UNUSED(arg); /* Satisfy compiler */
+
+#ifdef DLT_NETWORK_TRACE_ENABLE
     /* unlock the message queue */
     dlt_unlock_mutex(&mq_mutex);
+#endif
+
     /* unlock DLT (dlt_mutex) */
     DLT_SEM_FREE();
 }
@@ -4645,7 +4653,10 @@ void dlt_stop_threads()
 #ifndef __ANDROID_API__
         dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
 #else
+
+#ifdef DLT_NETWORK_TRACE_ENABLE
         dlt_lock_mutex(&mq_mutex);
+#endif /* DLT_NETWORK_TRACE_ENABLE */
         dlt_housekeeperthread_result = pthread_kill(dlt_housekeeperthread_handle, SIGKILL);
         dlt_user_cleanup_handler(NULL);
 #endif
@@ -4662,7 +4673,7 @@ void dlt_stop_threads()
                      strerror(dlt_housekeeperthread_result));
     }
 
-#ifndef __ANDROID_API__
+#ifdef DLT_NETWORK_TRACE_ENABLE
     int dlt_segmented_nwt_result = 0;
 
     if (dlt_user.dlt_segmented_nwt_handle) {
@@ -4677,7 +4688,7 @@ void dlt_stop_threads()
                      "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
                      strerror(dlt_segmented_nwt_result));
     }
-#endif /* ifndef __ANDROID_API__ */
+#endif /* DLT_NETWORK_TRACE_ENABLE */
     /* make sure that the threads really finished working */
     if ((dlt_housekeeperthread_result == 0) && dlt_housekeeperthread_handle) {
         joined = pthread_join(dlt_housekeeperthread_handle, NULL);
@@ -4690,7 +4701,7 @@ void dlt_stop_threads()
         dlt_housekeeperthread_handle = 0; /* set to invalid */
     }
 
-#ifndef __ANDROID_API__
+#ifdef DLT_NETWORK_TRACE_ENABLE
     if ((dlt_segmented_nwt_result == 0) && dlt_user.dlt_segmented_nwt_handle) {
         joined = pthread_join(dlt_user.dlt_segmented_nwt_handle, NULL);
 
@@ -4701,7 +4712,7 @@ void dlt_stop_threads()
 
         dlt_user.dlt_segmented_nwt_handle = 0; /* set to invalid */
     }
-#endif /* ifndef __ANDROID_API__ */
+#endif /* DLT_NETWORK_TRACE_ENABLE */
 }
 
 static void dlt_fork_child_fork_handler()

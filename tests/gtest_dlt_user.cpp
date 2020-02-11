@@ -4170,7 +4170,7 @@ TEST(t_dlt_register_log_level_changed_callback, normal)
 
 }
 
-
+#ifdef DLT_NETWORK_TRACE_ENABLE
 /*/////////////////////////////////////// */
 /* t_dlt_user_trace_network */
 TEST(t_dlt_user_trace_network, normal)
@@ -4463,7 +4463,7 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
-
+#endif /* DLT_NETWORK_TRACE_ENABLE */
 
 /*/////////////////////////////////////// */
 /* t_dlt_set_log_mode */
