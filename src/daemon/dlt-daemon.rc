@@ -2,3 +2,4 @@ service dlt-daemon /vendor/bin/dlt-daemon
     class late_start
     user root
     group root
+    disabled

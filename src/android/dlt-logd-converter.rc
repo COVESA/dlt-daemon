@@ -2,3 +2,4 @@ service dlt-logd-converter /vendor/bin/dlt-logd-converter
     class late_start
     user system
     group system
+    disabled
