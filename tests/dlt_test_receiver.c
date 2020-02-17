@@ -78,7 +78,6 @@
 #include <syslog.h>
 
 #include "dlt_client.h"
-#include <zlib.h>
 
 #define DLT_RECEIVE_ECU_ID "RECV"
 
