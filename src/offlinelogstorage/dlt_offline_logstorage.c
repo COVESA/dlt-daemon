@@ -639,7 +639,8 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
 
     /* Handle ecuid alone case here */
     if (((apids == NULL) && (ctids == NULL) && (ecuid != NULL)) ||
-        ((strncmp(apids, ".*", 2) == 0) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
+        ((apids != NULL) && (strncmp(apids, ".*", 2) == 0) &&
+         (ctids != NULL) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
         dlt_logstorage_create_keys_only_ecu(ecuid, curr_key);
         *(num_keys) = 1;
         *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
