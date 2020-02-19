@@ -1415,12 +1415,12 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
     long *ptr;
     int found = DLT_RETURN_OK;
 
+    if (file == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "%s: Message %d:\n", __func__, file->counter_total);
     }
-
-    if (file == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
 
     /* allocate new memory for index if number of messages exceeds a multiple of DLT_COMMON_INDEX_ALLOC (e.g.: 1000) */
     if (file->counter % DLT_COMMON_INDEX_ALLOC == 0) {
