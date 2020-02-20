@@ -60,7 +60,8 @@
 #include "dlt_client.h"
 
 #define DLT_GATEWAY_CONFIG_PATH CONFIGURATION_FILES_DIR "/dlt_gateway.conf"
-#define DLT_GATEWAY_TIMER_INTERVAL 1
+#define DLT_GATEWAY_TIMER_DEFAULT_INTERVAL 1
+#define DLT_GATEWAY_GENERAL_SECTION_NAME "General"
 
 #define DLT_GATEWAY_RECONNECT_MAX 1 /* reconnect once after connection loss */
 
@@ -139,6 +140,7 @@ typedef struct
     int send_serial;     /* Default: Send serial header with control messages */
     DltGatewayConnection *connections; /* pointer to connections */
     int num_connections; /* number of connections */
+    int interval;        /* interval of retry connection */
 } DltGateway;
 
 typedef struct {
@@ -146,6 +148,12 @@ typedef struct {
     int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
     int is_opt; /* If the configuration is optional or not */
 } DltGatewayConf;
+
+typedef struct {
+    char *key;  /* The configuration key*/
+    int (*func)(DltGateway *gateway, char *value); /* Conf handler */
+    int is_opt; /* If the configuration is optional or not */
+} DltGatewayGeneralConf;
 
 typedef enum {
     GW_CONF_IP_ADDRESS = 0,
@@ -158,5 +166,10 @@ typedef enum {
     GW_CONF_SEND_SERIAL_HEADER,
     GW_CONF_COUNT
 } DltGatewayConfType;
+
+typedef enum {
+    GW_CONF_GENERAL_INTERVAL = 0,
+    GW_CONF_GENEREL_COUNT
+} DltGatewayGeneralConfType;
 
 #endif /* DLT_GATEWAY_TYPES_H_ */

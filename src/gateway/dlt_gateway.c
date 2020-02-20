@@ -200,6 +200,29 @@ DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
 }
 
 /**
+ * Check connection interval value in General section
+ *
+ * @param con     DltGateway to be updated
+ * @param value   string to be tested
+ * @return Value from DltReturnValue enum
+ */
+DLT_STATIC DltReturnValue dlt_gateway_check_interval(DltGateway *gateway,
+                                                    char *value)
+{
+    if ((gateway == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    gateway->interval = (int)strtol(value, NULL, 10);
+
+    if (gateway->interval > 0)
+        return DLT_RETURN_OK;
+
+    return DLT_RETURN_ERROR;
+}
+
+/**
  * Check the value for SendSerialHeader
  *
  * @param con   DltGatewayConnection to be updated
@@ -492,7 +515,38 @@ DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] = {
     }
 };
 
+DLT_STATIC DltGatewayGeneralConf general_entries[GW_CONF_COUNT] = {
+    [GW_CONF_GENERAL_INTERVAL] = {
+        .key = "Interval",
+        .func = dlt_gateway_check_interval,
+        .is_opt = 1
+    }
+};
+
 #define DLT_GATEWAY_NUM_PROPERTIES_MAX GW_CONF_COUNT
+
+/**
+ * Check if gateway connection general configuration parameter is valid.
+ *
+ * @param gateway    DltGateway
+ * @param ctype      DltGatwayGeneralConnection property
+ * @param value      specified property value from configuration file
+ * @return Value from DltReturnValue enum
+ */
+DLT_STATIC DltReturnValue dlt_gateway_check_general_param(DltGateway *gateway,
+                                                  DltGatewayGeneralConfType ctype,
+                                                  char *value)
+{
+    if ((gateway == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (ctype < GW_CONF_GENEREL_COUNT)
+        return general_entries[ctype].func(gateway, value);
+
+    return DLT_RETURN_ERROR;
+}
 
 /**
  * Check if gateway connection configuration parameter is valid.
@@ -603,6 +657,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
     int ret = 0;
     int i = 0;
     DltConfigFile *file = NULL;
+    int num_sections = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -615,7 +670,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
     file = dlt_config_file_init(config_file);
 
     /* get number of entries and allocate memory to store information */
-    ret = dlt_config_file_get_num_sections(file, &gateway->num_connections);
+    ret = dlt_config_file_get_num_sections(file, &num_sections);
 
     if (ret != 0) {
         dlt_config_file_release(file);
@@ -623,6 +678,11 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
         return DLT_RETURN_ERROR;
     }
 
+    /*
+     * Since the General section is also counted in num_sections,
+     * so number of connections must be number of sections subtracts 1.
+     */
+    gateway->num_connections = num_sections - 1;
     gateway->connections = calloc(sizeof(DltGatewayConnection),
                                   gateway->num_connections);
 
@@ -632,10 +692,11 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
         return DLT_RETURN_ERROR;
     }
 
-    for (i = 0; i < gateway->num_connections; i++) {
+    for (i = 0; i < num_sections; i++) {
         DltGatewayConnection tmp;
         int invalid = 0;
         DltGatewayConfType j = 0;
+        DltGatewayGeneralConfType g = 0;
         char section[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
         char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
 
@@ -646,57 +707,100 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
         tmp.port = DLT_DAEMON_TCP_PORT;
 
         ret = dlt_config_file_get_section_name(file, i, section);
-
-        for (j = 0; j < GW_CONF_COUNT; j++) {
-            ret = dlt_config_file_get_value(file,
-                                            section,
-                                            configuration_entries[j].key,
-                                            value);
-
-            if ((ret != 0) && configuration_entries[j].is_opt) {
-                /* Use default values for this key */
-                dlt_vlog(LOG_WARNING,
-                         "Using default for %s.\n",
-                         configuration_entries[j].key);
-                continue;
-            }
-            else if (ret != 0)
-            {
-                dlt_vlog(LOG_WARNING,
-                         "Missing configuration for %s.\n",
-                         configuration_entries[j].key);
-                invalid = 1;
-                break;
-            }
-
-            /* check value and store temporary */
-            ret = dlt_gateway_check_param(gateway, &tmp, j, value);
-
-            if (ret != 0)
-                dlt_vlog(LOG_ERR,
-                         "Configuration %s = %s is invalid.\n"
-                         "Using default.\n",
-                         configuration_entries[j].key, value);
+        if (ret != 0) {
+            dlt_log(LOG_WARNING, "Get section name failed\n");
+            continue;
         }
 
-        if (invalid) {
-            dlt_vlog(LOG_ERR,
-                     "%s configuration is invalid.\n"
-                     "Ignoring.\n",
-                     section);
+        if (strncmp(section, DLT_GATEWAY_GENERAL_SECTION_NAME,
+                sizeof(DLT_GATEWAY_GENERAL_SECTION_NAME)) == 0) {
+            for (g = 0; g < GW_CONF_GENEREL_COUNT; g++) {
+                ret = dlt_config_file_get_value(file,
+                                                section,
+                                                general_entries[g].key,
+                                                value);
+
+                if ((ret != 0) && general_entries[g].is_opt) {
+                    /* Use default values for this key */
+                    dlt_vlog(LOG_WARNING,
+                             "Using default for %s.\n",
+                             general_entries[g].key);
+                    continue;
+                }
+                else if (ret != 0)
+                {
+                    dlt_vlog(LOG_WARNING,
+                             "Missing configuration for %s.\n",
+                             general_entries[g].key);
+                    break;
+                }
+
+                /* check value and store general configuration */
+                ret = dlt_gateway_check_general_param(gateway, g, value);
+
+                if (ret != 0)
+                    dlt_vlog(LOG_ERR,
+                             "Configuration %s = %s is invalid.\n"
+                             "Using default.\n",
+                             general_entries[g].key, value);
+            }
         }
         else {
-            ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
+            for (j = 0; j < GW_CONF_COUNT; j++) {
+                ret = dlt_config_file_get_value(file,
+                                                section,
+                                                configuration_entries[j].key,
+                                                value);
 
-            if (ret != 0)
-                dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
+                if ((ret != 0) && configuration_entries[j].is_opt) {
+                    /* Use default values for this key */
+                    dlt_vlog(LOG_WARNING,
+                             "Using default for %s.\n",
+                             configuration_entries[j].key);
+                    continue;
+                }
+                else if (ret != 0)
+                {
+                    dlt_vlog(LOG_WARNING,
+                             "Missing configuration for %s.\n",
+                             configuration_entries[j].key);
+                    invalid = 1;
+                    break;
+                }
+
+                /* check value and store temporary */
+                ret = dlt_gateway_check_param(gateway, &tmp, j, value);
+
+                if (ret != 0)
+                    dlt_vlog(LOG_ERR,
+                             "Configuration %s = %s is invalid.\n"
+                             "Using default.\n",
+                             configuration_entries[j].key, value);
+            }
+
+            if (invalid) {
+                dlt_vlog(LOG_ERR,
+                         "%s configuration is invalid.\n"
+                         "Ignoring.\n",
+                         section);
+            }
+            else {
+                ret = dlt_gateway_store_connection(gateway, &tmp, verbose);
+
+                if (ret != 0)
+                    dlt_log(LOG_ERR, "Storing gateway connection data failed\n");
+            }
         }
 
         /* strdup used inside some get_value function */
-        free(tmp.ecuid);
-        tmp.ecuid = NULL;
-        free(tmp.ip_address);
-        tmp.ip_address = NULL;
+        if (tmp.ecuid != NULL) {
+            free(tmp.ecuid);
+            tmp.ecuid = NULL;
+        }
+        if (tmp.ip_address != NULL) {
+            free(tmp.ip_address);
+            tmp.ip_address = NULL;
+        }
     }
 
     dlt_config_file_release(file);
@@ -717,6 +821,7 @@ int dlt_gateway_init(DltDaemonLocal *daemon_local, int verbose)
     if (gateway != NULL) {
         /* Get default value from daemon_local */
         gateway->send_serial = daemon_local->flags.lflag;
+        gateway->interval = DLT_GATEWAY_TIMER_DEFAULT_INTERVAL;
 
         if (dlt_gateway_configure(gateway,
                                   daemon_local->flags.gatewayConfigFile,

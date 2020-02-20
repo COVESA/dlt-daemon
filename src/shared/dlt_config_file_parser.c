@@ -504,6 +504,9 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num)
     if ((file == NULL) || (file->num_sections < 0))
         return -1;
 
+    /*
+     * Note: this number is also containing General section
+     */
     *num = file->num_sections;
 
     return 0;

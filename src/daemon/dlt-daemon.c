@@ -882,8 +882,8 @@ int main(int argc, char *argv[])
 
         /* create gateway timer */
         create_timer_fd(&daemon_local,
-                        DLT_GATEWAY_TIMER_INTERVAL,
-                        DLT_GATEWAY_TIMER_INTERVAL,
+                        daemon_local.pGateway.interval,
+                        daemon_local.pGateway.interval,
                         DLT_TIMER_GATEWAY);
     }
 
