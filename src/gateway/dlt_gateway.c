@@ -193,7 +193,8 @@ DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
 
     con->timeout = (int)strtol(value, NULL, 10);
 
-    if (con->timeout > 0)
+
+    if (con->timeout >= 0)
         return DLT_RETURN_OK;
 
     return DLT_RETURN_ERROR;
@@ -978,11 +979,16 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
 
                 con->timeout_cnt++;
 
-                if (con->timeout_cnt > con->timeout) {
-                    con->trigger = DLT_GATEWAY_DISABLED;
-                    dlt_log(LOG_WARNING,
-                            "Passive Node connection retry timed out. "
-                            "Give up.\n");
+                if (con->timeout > 0) {
+                    if (con->timeout_cnt > con->timeout) {
+                        con->trigger = DLT_GATEWAY_DISABLED;
+                        dlt_log(LOG_WARNING,
+                                "Passive Node connection retry timed out. "
+                                "Give up.\n");
+                    }
+                }
+                else if (con->timeout == 0) {
+                    dlt_vlog(LOG_DEBUG, "Retried [%d] times\n", con->timeout_cnt);
                 }
             }
         }
