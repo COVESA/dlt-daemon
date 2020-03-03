@@ -1679,25 +1679,14 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     /* Sending data... */
     {
-        /* check if overflow occurred */
-        if (daemon->overflow_counter) {
-            if (dlt_daemon_send_message_overflow(daemon, daemon_local, verbose) == 0) {
-                dlt_vlog(LOG_WARNING, "%u messages discarded!\n",
-                         daemon->overflow_counter);
-                daemon->overflow_counter = 0;
-            }
-        }
+        ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
+                                        msg.headerbuffer, sizeof(DltStorageHeader),
+                                        msg.headerbuffer + sizeof(DltStorageHeader),
+                                        msg.headersize - sizeof(DltStorageHeader),
+                                        msg.databuffer, msg.datasize, verbose);
 
-        /* look if TCP connection to client is available */
-        if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
-
-            if ((ret =
-                     dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, msg.headerbuffer,
-                                            sizeof(DltStorageHeader), msg.headerbuffer + sizeof(DltStorageHeader),
-                                            msg.headersize - sizeof(DltStorageHeader),
-                                            msg.databuffer, msg.datasize, verbose)))
-                if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
-                    daemon->overflow_counter++;
+        if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
+            daemon->overflow_counter++;
     }
 
     free(msg.databuffer);
