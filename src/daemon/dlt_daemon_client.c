@@ -362,7 +362,7 @@ int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
     }
 
     /* check if overflow occurred */
-    if (daemon->overflow_counter) {
+    if (daemon->overflow_counter == 1) {
         ret = dlt_daemon_send_message_overflow(daemon, daemon_local, verbose);
         if (DLT_DAEMON_ERROR_OK == ret) {
             dlt_vlog(LOG_WARNING, "%s: %u messages discarded! Now able to send messages to the client.\n",
