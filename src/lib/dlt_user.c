@@ -2908,8 +2908,10 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         /* Wait until message queue is initialized */
         dlt_lock_mutex(&mq_mutex);
 
-        if (dlt_user.dlt_segmented_queue_read_handle < 0)
+        while (dlt_user.dlt_segmented_queue_read_handle < 0)
+        {
             pthread_cond_wait(&mq_init_condition, &mq_mutex);
+        }
 
         dlt_unlock_mutex(&mq_mutex);
 
