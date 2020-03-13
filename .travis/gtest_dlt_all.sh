@@ -51,7 +51,12 @@ gtest_run_test gtest_dlt_daemon_common
 
 gtest_run_test gtest_dlt_daemon_event_handler
 
+# Without General section in dlt_gateway.conf
 ./gtest_dlt_daemon_gateway.sh > /dev/null
+gtest_run_test gtest_dlt_daemon_gateway
+
+# With General section in dlt_gateway.conf
+./gtest_dlt_daemon_gateway.sh -w > /dev/null
 gtest_run_test gtest_dlt_daemon_gateway
 
 ./gtest_dlt_daemon_logstorage.sh > /dev/null

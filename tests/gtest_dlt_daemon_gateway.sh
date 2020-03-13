@@ -153,6 +153,13 @@ setupTest()
         echo "Error in creating dlt_gateway file"
         return 1
     fi
+
+    if [ $# -eq 1 ] && [ "$1" == "1" ]
+    then
+        echo "[General]" >>$tmpPath/dlt_gateway.conf
+        echo "Interval=1">>$tmpPath/dlt_gateway.conf
+    fi
+
     echo "[PassiveNode1]" >>$tmpPath/dlt_gateway.conf
     echo "IPaddress=$ipaddr">>$tmpPath/dlt_gateway.conf
     echo "Port=3490" >>$tmpPath/dlt_gateway.conf
@@ -235,7 +242,14 @@ then
 fi
 
 echo "Initializing test"
-setupTest
+
+if [ $# -eq 1 ] && [ "$1" == "-w" ]
+then
+    echo "Including General section in dlt_gateway.conf"
+    setupTest 1
+else
+    setupTest
+fi
 
 if [ $? -ne '0' ]
 then
