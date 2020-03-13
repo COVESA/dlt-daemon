@@ -473,6 +473,29 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
 }
 
 /**
+ * dlt_logstorage_create_keys_any
+ *
+ * Prepares keys without app ID and context ID, will use ecuid if provided
+ * (ecuid\:\:) or (\:\:)
+ *
+ * @param ecuid          ECU ID
+ * @param ctid           Context ID
+ * @param key            Prepared key stored here
+ * @return               None
+ */
+DLT_STATIC void dlt_logstorage_create_keys_any(char *ecuid, char *ctid,
+                                                     char *key)
+{
+    if (ecuid != NULL) {
+        strncpy(key, ecuid, strlen(ecuid));
+        strncat(key, "::", 2);
+    }
+    else {
+        strncpy(key, "::", 2);
+    }
+}
+
+/**
  * dlt_logstorage_create_keys_only_ctid
  *
  * Prepares keys with context ID alone, will use ecuid if provided
@@ -687,7 +710,9 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
         for (j = 0; j < num_ctids; j++) {
             curr_ctid = ctid_list + (j * (DLT_ID_SIZE + 1));
 
-            if (strncmp(curr_apid, ".*", 2) == 0) /* only context id matters */
+            if (strncmp(curr_apid, ".*", 2) == 0 && strncmp(curr_ctid, ".*", 2) == 0) /* app id and context id does not matter */
+                dlt_logstorage_create_keys_any(ecuid, curr_ctid, curr_key);
+            else if (strncmp(curr_apid, ".*", 2) == 0) /* only context id matters */
                 dlt_logstorage_create_keys_only_ctid(ecuid, curr_ctid, curr_key);
             else if (strncmp(curr_ctid, ".*", 2) == 0) /* only app id matters*/
                 dlt_logstorage_create_keys_only_apid(ecuid, curr_apid, curr_key);
