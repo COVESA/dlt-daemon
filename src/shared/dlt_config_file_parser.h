@@ -148,4 +148,16 @@ int dlt_config_file_get_value(const DltConfigFile *file,
                               const char *section,
                               const char *key,
                               char *value);
+
+/**
+ * dlt_config_file_check_section_name_exists
+ *
+ * Get name of section number.
+ *
+ * @param[in]  file      DltConfigFile
+ * @param[in]  name      Section name
+ * @return     0 on success/exist, else -1
+ */
+int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
+                                             const char *name);
 #endif
