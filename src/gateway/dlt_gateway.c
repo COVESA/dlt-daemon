@@ -672,20 +672,33 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
     /* get number of entries and allocate memory to store information */
     ret = dlt_config_file_get_num_sections(file, &num_sections);
-
     if (ret != 0) {
         dlt_config_file_release(file);
         dlt_log(LOG_ERR, "Invalid number of sections in configuration file\n");
         return DLT_RETURN_ERROR;
     }
 
-    /*
-     * Since the General section is also counted in num_sections,
-     * so number of connections must be number of sections subtracts 1.
-     */
-    gateway->num_connections = num_sections - 1;
-    gateway->connections = calloc(sizeof(DltGatewayConnection),
-                                  gateway->num_connections);
+    ret = dlt_config_file_check_section_name_exists(file, DLT_GATEWAY_GENERAL_SECTION_NAME);
+    if (ret == -1) {
+        /*
+         * No General section in configuration file.
+         * Try to use default for interval.
+         */
+        gateway->num_connections = num_sections;
+        dlt_vlog(LOG_WARNING,
+                "Missing General section in gateway. Using default interval %d (secs)\n",
+                gateway->interval);
+    }
+    else {
+        /*
+         * Since the General section is also counted in num_sections,
+         * so number of connections must be number of sections - 1.
+         */
+        gateway->num_connections = num_sections - 1;
+    }
+
+    gateway->connections = calloc(gateway->num_connections,
+                                sizeof(DltGatewayConnection));
 
     if (gateway->connections == NULL) {
         dlt_config_file_release(file);
@@ -741,8 +754,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
                 if (ret != 0)
                     dlt_vlog(LOG_ERR,
-                             "Configuration %s = %s is invalid.\n"
-                             "Using default.\n",
+                             "Configuration %s = %s is invalid. Using default.\n",
                              general_entries[g].key, value);
             }
         }

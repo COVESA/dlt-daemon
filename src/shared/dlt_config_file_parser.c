@@ -505,7 +505,8 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num)
         return -1;
 
     /*
-     * Note: this number is also containing General section
+     * Note: Since General section could be used in configuration file,
+     * this number could be also containing General section.
      */
     *num = file->num_sections;
 
@@ -547,4 +548,19 @@ int dlt_config_file_get_value(const DltConfigFile *file,
 
     dlt_vlog(LOG_WARNING, "Entry does not exist in section: %s\n", key);
     return -1;
+}
+
+int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
+                                             const char *name)
+{
+    int ret = 0;
+
+    if ((file == NULL) || (file->num_sections <= 0) || (name == NULL))
+        return -1;
+
+    ret = dlt_config_file_find_section(file, name);
+    if (ret == -1)
+        return ret;
+
+    return 0;
 }
