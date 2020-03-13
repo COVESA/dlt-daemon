@@ -321,7 +321,7 @@ TEST(t_dlt_gateway_check_timeout, abnormal)
 {
     DltGatewayConnection tmp;
     DltGatewayConnection *con;
-    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "0";
+    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "-1";
     con = &tmp;
 
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_gateway_check_timeout(con, value));
