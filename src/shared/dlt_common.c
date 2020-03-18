@@ -3506,7 +3506,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     #if defined (__WIN32__) && !defined(_MSC_VER)
                 snprintf(text, textlength, "%I64u", value64u);
     #else
-                snprintf(text, textlength, "%" PRId64, value64u);
+                snprintf(text, textlength, "%" PRIu64, value64u);
     #endif
             }
 
