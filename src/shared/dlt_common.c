@@ -110,9 +110,9 @@ void dlt_print_hex(uint8_t *ptr, int size)
 
     for (num = 0; num < size; num++) {
         if (num > 0)
-            printf(" ");
+            dlt_user_printf(" ");
 
-        printf("%.2x", ((uint8_t *)ptr)[num]);
+        dlt_user_printf("%.2x", ((uint8_t *)ptr)[num]);
     }
 }
 
@@ -1754,7 +1754,7 @@ void dlt_log_init(int mode)
         logging_handle = fopen(logging_filename, "a");
 
         if (logging_handle == NULL) {
-            printf("Internal log file %s cannot be opened!\n", logging_filename);
+            dlt_user_printf("Internal log file %s cannot be opened!\n", logging_filename);
             return;
         }
     }
@@ -1764,6 +1764,29 @@ void dlt_log_free(void)
 {
     if (logging_mode == DLT_LOG_TO_FILE)
         fclose(logging_handle);
+}
+
+int dlt_user_printf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    int ret = 0;
+    switch (logging_mode) {
+        case DLT_LOG_TO_CONSOLE:
+        case DLT_LOG_TO_SYSLOG:
+        case DLT_LOG_TO_FILE:
+        case DLT_LOG_DROPPED:
+        default:
+            ret = vfprintf(stdout, format, args);
+            break;
+        case DLT_LOG_TO_STDERR:
+            ret = vfprintf(stderr, format, args);
+            break;
+    }
+    va_end(args);
+
+    return ret;
 }
 
 DltReturnValue dlt_log(int prio, char *s)
@@ -1789,13 +1812,22 @@ DltReturnValue dlt_log(int prio, char *s)
     switch (logging_mode) {
     case DLT_LOG_TO_CONSOLE:
         /* log to stdout */
-        printf(sFormatString,
+        fprintf(stdout, sFormatString,
                (unsigned int)sTimeSpec.tv_sec,
                (unsigned int)(sTimeSpec.tv_nsec / 1000),
                getpid(),
                asSeverity[prio],
                s);
         fflush(stdout);
+        break;
+    case DLT_LOG_TO_STDERR:
+        /* log to stderr */
+        fprintf(stderr, sFormatString,
+               (unsigned int)sTimeSpec.tv_sec,
+               (unsigned int)(sTimeSpec.tv_nsec / 1000),
+               getpid(),
+               asSeverity[prio],
+               s);
         break;
     case DLT_LOG_TO_SYSLOG:
         /* log to syslog */
@@ -3106,7 +3138,7 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
         return DLT_RETURN_WRONG_PARAMETER;
 
     dlt_message_header(message, text, size, verbose);
-    printf("%s\n", text);
+    dlt_user_printf("%s\n", text);
 
     return DLT_RETURN_OK;
 }
@@ -3117,9 +3149,9 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
         return DLT_RETURN_WRONG_PARAMETER;
 
     dlt_message_header(message, text, size, verbose);
-    printf("%s ", text);
+    dlt_user_printf("%s ", text);
     dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose);
-    printf("[%s]\n", text);
+    dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
 }
@@ -3130,9 +3162,9 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
         return DLT_RETURN_WRONG_PARAMETER;
 
     dlt_message_header(message, text, size, verbose);
-    printf("%s ", text);
+    dlt_user_printf("%s ", text);
     dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose);
-    printf("[%s]\n", text);
+    dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
 }
@@ -3143,9 +3175,9 @@ DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, ui
         return DLT_RETURN_WRONG_PARAMETER;
 
     dlt_message_header(message, text, size, verbose);
-    printf("%s \n", text);
+    dlt_user_printf("%s \n", text);
     dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose);
-    printf("[%s]\n", text);
+    dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
 }
@@ -3156,9 +3188,9 @@ DltReturnValue dlt_message_print_mixed_html(DltMessage *message, char *text, uin
         return DLT_RETURN_WRONG_PARAMETER;
 
     dlt_message_header(message, text, size, verbose);
-    printf("%s \n", text);
+    dlt_user_printf("%s \n", text);
     dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_HTML, verbose);
-    printf("[%s]\n", text);
+    dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
 }
