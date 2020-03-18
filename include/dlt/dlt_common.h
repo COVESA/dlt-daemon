@@ -185,7 +185,8 @@ enum {
     DLT_LOG_TO_CONSOLE = 0,
     DLT_LOG_TO_SYSLOG = 1,
     DLT_LOG_TO_FILE = 2,
-    DLT_LOG_DROPPED = 3
+    DLT_LOG_TO_STDERR = 3,
+    DLT_LOG_DROPPED = 4
 };
 
 /**
@@ -1127,9 +1128,15 @@ void dlt_log_set_filename(const char *filename);
 void dlt_log_set_level(int level);
 /**
  * Initialize (external) logging facility
- * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file
+ * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
  */
 void dlt_log_init(int mode);
+/**
+ * Print with variable arguments to specified file descriptor by DLT_LOG_MODE environment variable (like fprintf)
+ * @param format format string for message
+ * @return negative value if there was an error or the total number of characters written is returned on success
+ */
+int dlt_user_printf(const char *format, ...);
 /**
  * Log ASCII string with null-termination to (external) logging facility
  * @param prio priority (see syslog() call)

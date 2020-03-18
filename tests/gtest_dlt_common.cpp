@@ -3566,13 +3566,15 @@ TEST(t_dlt_log_set_level, normal)
     /* DLT_LOG_TO_CONSOLE=0, */
     /* DLT_LOG_TO_SYSLOG=1, */
     /* DLT_LOG_TO_FILE=2, */
-    /* DLT_LOG_DROPPED=3 */
+    /* DLT_LOG_TO_STDERR=3, */
+    /* DLT_LOG_DROPPED=4 */
     /*####################### */
 
-    /* Normal Use-Case, expcect 0-3 */
+    /* Normal Use-Case, expect 0-4 */
     EXPECT_NO_THROW(dlt_log_set_level(DLT_LOG_TO_CONSOLE));
     EXPECT_NO_THROW(dlt_log_set_level(DLT_LOG_TO_SYSLOG));
     EXPECT_NO_THROW(dlt_log_set_level(DLT_LOG_TO_FILE));
+    EXPECT_NO_THROW(dlt_log_set_level(DLT_LOG_TO_STDERR));
     EXPECT_NO_THROW(dlt_log_set_level(DLT_LOG_DROPPED));
 }
 TEST(t_dlt_log_set_level, abnormal)
@@ -3619,7 +3621,8 @@ TEST(t_dlt_log_init, normal)
     /* DLT_LOG_TO_CONSOLE=0, */
     /* DLT_LOG_TO_SYSLOG=1, */
     /* DLT_LOG_TO_FILE=2, */
-    /* DLT_LOG_DROPPED=3 */
+    /* DLT_LOG_TO_STDERR=3, */
+    /* DLT_LOG_DROPPED=4 */
     /*####################### */
 
     /* Normal Use-Case, exptect 0-3 */
@@ -3628,6 +3631,7 @@ TEST(t_dlt_log_init, normal)
     EXPECT_NO_THROW(dlt_log_set_filename("/tmp/dlt.log"));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_FILE));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_FILE));
+    EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_STDERR));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_DROPPED));
 }
 TEST(t_dlt_log_init, abnormal)
@@ -3651,12 +3655,14 @@ TEST(t_dlt_log_free, normal)
     /* DLT_LOG_TO_CONSOLE=0, */
     /* DLT_LOG_TO_SYSLOG=1, */
     /* DLT_LOG_TO_FILE=2, */
-    /* DLT_LOG_DROPPED=3 */
+    /* DLT_LOG_TO_STDERR=3, */
+    /* DLT_LOG_DROPPED=4 */
     /*####################### */
 
     /* Normal Use-Case, expected 0 */
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_CONSOLE));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_SYSLOG));
+    EXPECT_NO_THROW(dlt_log_init(DLT_LOG_TO_STDERR));
     EXPECT_NO_THROW(dlt_log_init(DLT_LOG_DROPPED));
 }
 TEST(t_dlt_log_free, abnormal)

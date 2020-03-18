@@ -63,7 +63,7 @@ This is the directory path, where the DLT daemon stores its runtime configuratio
 
 ## LoggingMode
 
-The logging console for internal logging of dlt-daemon. 0 = log to stdout, 1 = log to syslog, 2 = log to file (see LoggingFilename)
+The logging console for internal logging of dlt-daemon. 0 = log to stdout, 1 = log to syslog, 2 = log to file (see LoggingFilename), 3 = log to stderr
 
     Default: 0
 
