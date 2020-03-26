@@ -35,6 +35,10 @@
 #   include <pthread.h> /* POSIX Threads */
 #endif
 
+#if defined (__ANDROID__)
+#define pthread_cancel(x) pthread_kill(x, SIGUSR1)
+#endif
+
 #include <sys/time.h>
 #include <math.h>
 
@@ -798,6 +802,24 @@ int dlt_user_atexit_blow_out_user_buffer(void)
     return count;
 }
 
+#ifdef __ANDROID__
+
+static void thread_exit_handler(int sig)
+{ 
+    pthread_exit(0);
+}
+
+__attribute__((constructor)) void android_init()
+{
+    struct sigaction actions;
+    memset(&actions, 0, sizeof(actions)); 
+    sigemptyset(&actions.sa_mask);
+    actions.sa_flags = 0; 
+    actions.sa_handler = thread_exit_handler;
+    sigaction(SIGUSR1, &actions, NULL);
+}
+
+#endif
 static void dlt_user_free_buffer(unsigned char **buffer)
 {
     if (*buffer) {

@@ -627,6 +627,22 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     return 0;
 }
 
+#ifdef __ANDROID__
+static void thread_exit_handler(int sig)
+{
+	pthread_exit(0);
+}
+
+__attribute__((constructor)) void android_init()
+{
+	struct sigaction actions;
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = thread_exit_handler;
+	sigaction(SIGUSR1, &actions, NULL);
+}
+#endif
 /** @brief Control communication clean-up
  *
  * Cancels the listener thread and clean=up the dlt client structure.
@@ -636,7 +652,11 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
 int dlt_control_deinit(void)
 {
     /* Stopping the listener thread */
+#ifdef __ANDROID__
+	pthread_kill(daemon_connect_thread, SIGUSR1);
+#else
     pthread_cancel(daemon_connect_thread);
+#endif
     /* Closing the socket */
     return dlt_client_cleanup(&g_client, get_verbosity());
 }

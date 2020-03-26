@@ -66,6 +66,9 @@
  * aw          13.01.2010   initial
  */
 
+#ifdef __ANDROID__
+#define GLOB_TILDE 0x800
+#endif
 #include <ctype.h>      /* for isprint() */
 #include <stdlib.h>     /* for atoi() */
 #include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
