@@ -2643,11 +2643,13 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
     }
 
     /* third check size */
-    if (max_size && (head.size > max_size))
+    if (max_size && (head.size > max_size)) {
         dlt_vlog(LOG_WARNING,
                  "%s: Buffer: Max size is smaller than read header size. Max size: %d\n",
                  __func__, max_size);
-        /* nothing to do but data does not fit provided buffer */
+        /* prevent buffer overflow on dlt_buffer_read_block */
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
 
 
     if ((data != NULL) && max_size) {
