@@ -155,6 +155,7 @@ make doc
 - [dlt.conf(5)](doc/dlt.conf.5.md)
 - [dlt-system(1)](doc/dlt-system.1.md)
 - [dlt-system.conf(5)](doc/dlt-system.conf.5.md)
+- [dlt_gateway.conf(5)](doc/dlt_gateway.conf.5.md)
 - [dlt-convert(1)](doc/dlt-convert.1.md)
 - [dlt-sortbytimestamp(1)](doc/dlt-sortbytimestamp.1.md)
 - [dlt-receive(1)](doc/dlt-receive.1.md)

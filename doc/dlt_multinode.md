@@ -38,10 +38,14 @@ GatewayMode = 1
 
 ### Gateway Configuration File
 
-The MultiNode configuration file has to be loaded by the Gateway DLT Daemon
-during startup.
+The MultiNode configuration file has to be loaded by the Gateway DLT Daemon during startup.
+
+Example:
 
 ```
+[General]
+Interval=1
+
 [PassiveNode1]
 ; IP Address. (Mandatory)
 IPaddress = 192.168.2.32
@@ -51,7 +55,8 @@ Port = 3495
 EcuID = ECU2
 ; Connection to passive node only on demand. Default ‘OnStartup’ if not specified
 Connect = OnDemand
-; timeout in seconds
+; Stop connecting to passive node, if not successful after 10 retries.
+; Set to 0 for endless retry.
 Timeout = 10
 ; Send following control messages after connection is established
 SendControl=0x03, 0x13
@@ -60,27 +65,7 @@ SendControl=0x03, 0x13
 SendSerialHeader=1
 ```
 
-The configuration file is written in an INI file format and contains information
-about different connected passive nodes. Each passive node’s connection
-parameters are specified in a unique numbered separate section
-([PassiveNode{1,2, …N}]). Because TCP is the only supported communication
-channel, the IPaddress and Port of the Passive DLT Daemon has to be specified.
-
-With the Connect property it is possible to specify when the Gateway DLT Daemon
-shall connect to the passive node. The following values are allowed:
-- OnStartup - The Gateway DLT Daemon tries to connect to the Passive DLT Daemon
-  immediately after the Gateway DLT Daemon is started.
-- OnDemand - The Gateway DLT Daemon tries to connect to the Passive DLT Daemon
-  when it receives a connection request.
-
-The Timeout property specifies the time after which the Gateway DLT Daemon stops
-connecting attempts to a Passive DLT Daemon. If the connection is not
-established within the specified time, the Gateway DLT Daemon gives up
-connecting attempts and writes an error messages to its internal log. The
-following control messages are supported to be send to a passive node
-automatically after connection is established:
-- 0x03: Get Log Info
-- 0x13: Get Software Version
+For more details, please refer to [dlt_gateway.conf.5.md](dlt_gateway.conf.5.md)
 
 ## Using DLT MultiNode
 

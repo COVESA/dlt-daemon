@@ -94,6 +94,7 @@ if(WITH_MAN)
     set(MD_SRC
         ${MAN_SRC_DIR}/dlt.conf.5.md
         ${MAN_SRC_DIR}/dlt-system.conf.5.md
+        ${MAN_SRC_DIR}/dlt_gateway.conf.5.md
         ${MAN_SRC_DIR}/dlt-convert.1.md
         ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md
         ${MAN_SRC_DIR}/dlt-daemon.1.md
@@ -108,6 +109,7 @@ if(WITH_MAN)
     set(MAN_SRC
         ${MAN_SRC_DIR}/dlt.conf.5
         ${MAN_SRC_DIR}/dlt-system.conf.5
+        ${MAN_SRC_DIR}/dlt_gateway.conf.5
         ${MAN_SRC_DIR}/dlt-convert.1
         ${MAN_SRC_DIR}/dlt-sortbytimestamp.1
         ${MAN_SRC_DIR}/dlt-daemon.1
@@ -122,6 +124,7 @@ if(WITH_MAN)
     set(MAN_BUILD_SRC
         ${MAN_BUILD_DIR}/dlt.conf.5
         ${MAN_BUILD_DIR}/dlt-system.conf.5
+        ${MAN_BUILD_DIR}/dlt_gateway.conf.5
         ${MAN_BUILD_DIR}/dlt-convert.1
         ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
         ${MAN_BUILD_DIR}/dlt-daemon.1
@@ -136,6 +139,7 @@ if(WITH_MAN)
     set(MAN_BUILD_GZ
         ${MAN_BUILD_DIR}/dlt.conf.5.gz
         ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        ${MAN_BUILD_DIR}/dlt_gateway.conf.5.gz
         ${MAN_BUILD_DIR}/dlt-convert.1.gz
         ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
         ${MAN_BUILD_DIR}/dlt-daemon.1.gz
@@ -150,6 +154,7 @@ if(WITH_MAN)
     add_custom_target(generate_man ALL
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt.conf.5.md -o ${MAN_BUILD_DIR}/dlt.conf.5
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-system.conf.5.md -o ${MAN_BUILD_DIR}/dlt-system.conf.5
+        COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt_gateway.conf.5.md -o ${MAN_BUILD_DIR}/dlt_gateway.conf.5
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-convert.1.md -o ${MAN_BUILD_DIR}/dlt-convert.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-sortbytimestamp.1.md -o ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1
         COMMAND ${PANDOC_TOOL} -s -t man ${MAN_SRC_DIR}/dlt-daemon.1.md -o ${MAN_BUILD_DIR}/dlt-daemon.1
@@ -163,6 +168,7 @@ if(WITH_MAN)
 
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt.conf.5 > ${MAN_BUILD_DIR}/dlt.conf.5.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-system.conf.5 > ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt_gateway.conf.5 > ${MAN_BUILD_DIR}/dlt_gateway.conf.5.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-convert.1  > ${MAN_BUILD_DIR}/dlt-convert.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1  > ${MAN_BUILD_DIR}/dlt-sortbytimestamp.1.gz
         COMMAND ${GZIP_TOOL} -c ${MAN_BUILD_DIR}/dlt-daemon.1 > ${MAN_BUILD_DIR}/dlt-daemon.1.gz
@@ -180,6 +186,7 @@ if(WITH_MAN)
     install(FILES
         ${MAN_BUILD_DIR}/dlt.conf.5.gz
         ${MAN_BUILD_DIR}/dlt-system.conf.5.gz
+        ${MAN_BUILD_DIR}/dlt_gateway.conf.5.gz
         DESTINATION ${MAN_INSTALL_DIR}/man5
     )
 
