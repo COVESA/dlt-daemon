@@ -27,4 +27,13 @@ install(TARGETS dlt-adaptor-stdin dlt-adaptor-udp
 	RUNTIME DESTINATION bin
 	COMPONENT base)
 
-
+if(CMAKE_SYSTEM_NAME MATCHES QNX)
+	set(dlt_adaptor_slog2_SRCS dlt-adaptor-slog2.c)
+	add_executable(dlt-adaptor-slog2 ${dlt_adaptor_slog2_SRCS})
+	target_link_libraries(dlt-adaptor-slog2 dlt slog2parse)
+	set_target_properties(dlt-adaptor-slog2 PROPERTIES LINKER_LANGUAGE C)
+	
+	install(TARGETS dlt-adaptor-slog2
+		RUNTIME DESTINATION bin
+		COMPONENT base)
+endif()
