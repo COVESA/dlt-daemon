@@ -210,6 +210,9 @@ enum {
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
 #   define DLT_SIZE_WTMS (sizeof(uint32_t))
 
+/* Size of buffer for text output */
+#define DLT_CONVERT_TEXTBUFSIZE  10024
+
 /**
  * Definitions for GET_LOG_INFO
  */
@@ -1041,6 +1044,17 @@ DltReturnValue dlt_file_set_filter(DltFile *file, DltFilter *filter, int verbose
  * @return negative value if there was an error
  */
 DltReturnValue dlt_file_open(DltFile *file, const char *filename, int verbose);
+/**
+ * This function reads DLT file and parse DLT message one by one.
+ * Each message will be written into new file.
+ * If a filter is set, the filter list is used.
+ * @param file pointer to structure of organizing access to DLT file
+ * @param filename file to contain parsed DLT messages.
+ * @param type 1 = payload as hex, 2 = payload as ASCII.
+ * @param verbose if set to true verbose information is printed out.
+ * @return 0 = message does not match filter, 1 = message was read, negative value if there was an error
+ */
+DltReturnValue dlt_file_quick_parsing(DltFile *file, const char *filename, int type, int verbose);
 /**
  * Find next message in the DLT file and parse them.
  * This function finds the next message in the DLT file.

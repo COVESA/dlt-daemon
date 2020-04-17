@@ -3985,3 +3985,72 @@ int dlt_mkdir_recursive(const char *dir)
     return ret;
 }
 #endif
+
+DltReturnValue dlt_file_quick_parsing(DltFile *file, const char *filename,
+                                    int type, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+    int ret = DLT_RETURN_OK;
+    char text[DLT_CONVERT_TEXTBUFSIZE] = { 0 };
+
+    if (file == NULL || filename == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    FILE *output = fopen(filename, "w+");
+    if (output == NULL) {
+        dlt_vlog(LOG_ERR, "Cannot open output file %s for parsing\n", filename);
+        return DLT_RETURN_ERROR;
+    }
+
+    while(ret >= DLT_RETURN_OK && file->file_position < file->file_length) {
+        /* get file position at start of DLT message */
+        if (verbose) {
+            dlt_vlog(LOG_DEBUG, "Position in file: %ld\n", file->file_position);
+        }
+
+        /* read all header and payload */
+        ret = dlt_file_read_header(file, verbose);
+        if (ret < DLT_RETURN_OK)
+            break;
+
+        ret = dlt_file_read_header_extended(file, verbose);
+        if (ret < DLT_RETURN_OK)
+            break;
+
+        ret = dlt_file_read_data(file, verbose);
+        if (ret < DLT_RETURN_OK)
+            break;
+
+        if (file->filter) {
+            /* check the filters if message is used */
+            ret = dlt_message_filter_check(&(file->msg), file->filter, verbose);
+            if (ret != DLT_RETURN_TRUE)
+                continue;
+        }
+
+        ret = dlt_message_header(&(file->msg), text,
+                DLT_CONVERT_TEXTBUFSIZE, verbose);
+        if (ret < DLT_RETURN_OK)
+            break;
+
+        fprintf(output, "%s", text);
+
+        ret = dlt_message_payload(&(file->msg), text,
+                DLT_CONVERT_TEXTBUFSIZE, type, verbose);
+        if (ret < DLT_RETURN_OK)
+            break;
+
+        fprintf(output, "[%s]\n", text);
+
+        /* store index pointer to message position in DLT file */
+        file->counter++;
+        file->position = file->counter_total - 1;
+        /* increase total message counter */
+        file->counter_total++;
+        /* store position to next message */
+        file->file_position = ftell(file->handle);
+    } // while()
+
+    fclose(output);
+    return ret;
+}
