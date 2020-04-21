@@ -382,6 +382,17 @@ DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data);
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text);
 
 /**
+ * Write a potentially non-null-terminated ASCII string into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param text pointer to the parameter written into log message
+ * @param length length in bytes of @a text (without any termination character)
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length);
+
+/**
  * Write a constant null terminated ASCII string into a DLT log message.
  * In non verbose mode DLT parameter will not be send at all.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
@@ -393,6 +404,18 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text);
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text);
 
 /**
+ * Write a constant, potentially non-null-terminated ASCII string into a DLT log message.
+ * In non verbose mode DLT parameter will not be send at all.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param text pointer to the parameter written into log message containing null termination.
+ * @param length length in bytes of @a text (without any termination character)
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length);
+
+/**
  * Write a null terminated UTF8 string into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
@@ -401,6 +424,17 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
+
+/**
+ * Write a potentially non-null-terminated UTF8 string into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any attributes to the log message.
+ * Finish sending log message by calling dlt_user_log_write_finish.
+ * @param log pointer to an object containing information about logging context data
+ * @param text pointer to the parameter written into log message
+ * @param length length in bytes of @a text (without any termination character)
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length);
 
 /**
  * Write a binary memory block into a DLT log message.

@@ -2333,15 +2333,31 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
     return dlt_user_log_write_string_utils(log, text, ASCII_STRING);
 }
 
+DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length)
+{
+    return dlt_user_log_write_sized_string_utils(log, text, length, ASCII_STRING);
+}
+
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
 {
     /* Send parameter only in verbose mode */
     return dlt_user.verbose_mode ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length)
+{
+    /* Send parameter only in verbose mode */
+    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
     return dlt_user_log_write_string_utils(log, text, UTF8_STRING);
+}
+
+DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length)
+{
+    return dlt_user_log_write_sized_string_utils(log, text, length, UTF8_STRING);
 }
 
 DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text, uint16_t length, const enum StringType type)
