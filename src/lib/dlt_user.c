@@ -175,6 +175,9 @@ static void dlt_fork_child_fork_handler();
 
 static DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text,
                                                       const enum StringType type);
+static DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text,
+                                                            uint16_t text_len, const enum StringType type);
+
 
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
 {
@@ -2341,7 +2344,7 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
     return dlt_user_log_write_string_utils(log, text, UTF8_STRING);
 }
 
-DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type)
+DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text, uint16_t length, const enum StringType type)
 {
     uint16_t arg_size = 0;
     uint32_t type_info = 0;
@@ -2359,7 +2362,7 @@ DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *
         return DLT_RETURN_ERROR;
     }
 
-    arg_size = strlen(text) + 1;
+    arg_size = length + 1;
 
     new_log_size = log->size + arg_size + sizeof(uint16_t);
 
@@ -2445,7 +2448,9 @@ DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *
     case DLT_RETURN_OK:
     {
         /* Whole string will be copied */
-        memcpy((log->buffer) + log->size, text, arg_size);
+        memcpy((log->buffer) + log->size, text, length);
+        /* The input string might not be null-terminated, so we're doing that by ourselves */
+        log->buffer[log->size + length] = '\0';
         log->size += arg_size;
         break;
     }
@@ -2470,6 +2475,15 @@ DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *
     log->args_num++;
 
     return ret;
+}
+
+DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type)
+{
+    if ((log == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    uint16_t length = strlen(text);
+    return dlt_user_log_write_sized_string_utils(log, text, length, type);
 }
 
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
