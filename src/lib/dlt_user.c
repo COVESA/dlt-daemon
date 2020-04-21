@@ -95,7 +95,7 @@ static int atexit_registered = 0;
 /* used to disallow DLT usage in fork() child */
 static int g_dlt_is_child = 0;
 /* String truncate message */
-static const char *STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
+static const char STR_TRUNCATED_MESSAGE[] = "... <<Message truncated, too long>>";
 
 /* Enum for type of string */
 enum StringType
