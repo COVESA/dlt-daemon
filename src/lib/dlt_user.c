@@ -345,6 +345,12 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 
 DltReturnValue dlt_init(void)
 {
+    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
+    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
+
+    /* check environment variables */
+    dlt_check_envvar();
+
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0) {
         dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting", __func__);
@@ -361,12 +367,6 @@ DltReturnValue dlt_init(void)
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
     }
-
-    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
-    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
-
-    /* check environment variables */
-    dlt_check_envvar();
 
     dlt_user.dlt_is_file = 0;
     dlt_user.overflow = 0;
