@@ -1623,6 +1623,59 @@ TEST(t_dlt_file_open, nullpointer)
 
 
 
+/* Begin Method: dlt_common::dlt_file_quick_parsing */
+TEST(t_dlt_file_quick_parsing, normal)
+{
+    DltFile file;
+    /* Get PWD so file can be used*/
+    char pwd[100];
+    char openfile[114];
+    char output[128] = "/tmp/output_testfile.txt";
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, 100) == NULL) {}
+
+    sprintf(openfile, "%s/testfile.dlt", pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_quick_parsing(&file, output, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+    unlink(output);
+}
+
+TEST(t_dlt_file_quick_parsing, abnormal)
+{
+    DltFile file;
+    /* Get PWD so file can be used*/
+    char pwd[100];
+    char openfile[114];
+    char output[128] = "/tmp/output_testfile.txt";
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, 100) == NULL) {}
+
+    sprintf(openfile, "%s/testfile.dlt", pwd);
+    /*---------------------------------------*/
+
+    /* Abnormal Use-Case, expected DLT_RETURN_WRONG_PARAMETER (-5) */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
+    EXPECT_GE(DLT_RETURN_WRONG_PARAMETER, dlt_file_quick_parsing(&file, NULL, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
+    EXPECT_GE(DLT_RETURN_WRONG_PARAMETER, dlt_file_quick_parsing(NULL, output, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* End Method: dlt_common::dlt_file_quick_parsing */
+
+
+
+
 /* Begin Method: dlt_common::dlt_message_print_ascii*/
 TEST(t_dlt_message_print_ascii, normal)
 {
@@ -3129,7 +3182,8 @@ TEST(t_dlt_message_payload, abnormal)
 
     /* Get PWD so file and filter can be used*/
     char pwd[100];
-    getcwd(pwd, 100);
+    if (getcwd(pwd, 100) == NULL) {}
+
     char  openfile[114];
     sprintf(openfile, "%s/testfile.dlt", pwd);
     /*---------------------------------------*/
