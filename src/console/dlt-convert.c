@@ -89,7 +89,6 @@
 
 #include "dlt_common.h"
 
-#define DLT_CONVERT_TEXTBUFSIZE  10024   /* Size of buffer for text output */
 #define COMMAND_SIZE        1024    /* Size of command */
 #define FILENAME_SIZE       1024    /* Size of filename */
 #define DLT_EXTENSION       "dlt"
