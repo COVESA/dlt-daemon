@@ -1772,9 +1772,11 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                                 daemon_local->flags.vflag);
     }
 
-    dlt_vlog(LOG_DEBUG,
+    snprintf(local_str,
+             DLT_DAEMON_TEXTBUFSIZE,
              "New client connection #%d established, Total Clients : %d\n",
              in_sock, daemon_local->client_connections);
+    dlt_log(LOG_DEBUG, local_str);
     dlt_daemon_log_internal(daemon, daemon_local, local_str, daemon_local->flags.vflag);
 
     if (daemon_local->client_connections == 1) {
