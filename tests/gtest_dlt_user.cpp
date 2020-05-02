@@ -27,6 +27,7 @@
 #include "gtest/gtest.h"
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 extern "C" {
 #include "dlt_user.h"
@@ -62,8 +63,11 @@ extern "C" {
  * int dlt_user_log_write_int32(DltContextData *log, int32_t data);
  * int dlt_user_log_write_int64(DltContextData *log, int64_t data);
  * int dlt_user_log_write_string( DltContextData *log, const char *text);
+ * int dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length);
  * int dlt_user_log_write_constant_string( DltContextData *log, const char *text);
+ * int dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length);
  * int dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
+ * int dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length);
  * int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
  * int dlt_user_log_write_raw_formatted(DltContextData *log,void *data,uint16_t length,DltFormatType type);
  */
@@ -1875,6 +1879,31 @@ TEST(t_dlt_user_log_write_string, nullpointer)
 }
 
 /*/////////////////////////////////////// */
+/* t_dlt_user_log_write_sized_string */
+
+TEST(t_dlt_user_log_write_sized_string, normal)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_string normal"));
+
+    /* normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    const char text1[] = "TheQuickBrownFox";
+    const char *arg1_start = strchr(text1, 'Q');
+    const size_t arg1_len = 5;
+    /* from the above string, send only the substring "Quick" */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_string(&contextData, arg1_start, arg1_len));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/*/////////////////////////////////////// */
 /* t_dlt_user_log_write_constant_string */
 TEST(t_dlt_user_log_write_constant_string, normal)
 {
@@ -2009,6 +2038,31 @@ TEST(t_dlt_user_log_write_constant_string, nullpointer)
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_constant_string(NULL, text1));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_constant_string(NULL, NULL));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_constant_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/*/////////////////////////////////////// */
+/* t_dlt_user_log_write_sized_constant_string */
+
+TEST(t_dlt_user_log_write_sized_constant_string, normal)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_string normal"));
+
+    /* normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    const char text1[] = "TheQuickBrownFox";
+    const char *arg1_start = strchr(text1, 'Q');
+    const size_t arg1_len = 5;
+    /* from the above string, send only the substring "Quick" */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_string(&contextData, arg1_start, arg1_len));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -2967,6 +3021,52 @@ TEST(t_dlt_user_log_write_utf8_string, nullpointer)
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_utf8_string(NULL, text1));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_utf8_string(NULL, NULL));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_utf8_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+/*/////////////////////////////////////// */
+/* t_dlt_user_log_write_sized_utf8_string */
+
+TEST(t_dlt_user_log_write_sized_utf8_string, partial_string)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string normal"));
+
+    /* normal values */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    const char text1[] = "TheQuickBrownFox";
+    const char* arg1_start = strchr(text1, 'Q');
+    const size_t arg1_len = 5;
+    /* from the above string, send only the substring "Quick" */
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_utf8_string(&contextData, arg1_start, arg1_len));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+TEST(t_dlt_user_log_write_sized_utf8_string, nullpointer)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string nullpointer"));
+
+    /* NULL */
+    const char *text1 = "test1";
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_sized_utf8_string(NULL, text1, 5));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_sized_utf8_string(NULL, NULL, 5));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_sized_utf8_string(&contextData, NULL, 5));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
