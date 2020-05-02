@@ -322,6 +322,17 @@
     (void)dlt_user_log_write_string(&log_local, TEXT)
 
 /**
+ * Add string parameter with given length to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT ASCII string
+ * @param LEN length in bytes to take from @a TEXT
+ */
+#define DLT_SIZED_STRING(TEXT, LEN) \
+    (void)dlt_user_log_write_sized_string(&log_local, TEXT, LEN)
+
+/**
  * Add constant string parameter to the log messsage.
  * @param TEXT Constant ASCII string
  */
@@ -329,11 +340,33 @@
     (void)dlt_user_log_write_constant_string(&log_local, TEXT)
 
 /**
+ * Add constant string parameter with given length to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant ASCII string
+ * @param LEN length in bytes to take from @a TEXT
+ */
+#define DLT_SIZED_CSTRING(TEXT, LEN) \
+    (void)dlt_user_log_write_sized_constant_string(&log_local, TEXT, LEN)
+
+/**
  * Add utf8-encoded string parameter to the log messsage.
  * @param TEXT UTF8-encoded string
  */
 #define DLT_UTF8(TEXT) \
     (void)dlt_user_log_write_utf8_string(&log_local, TEXT)
+
+/**
+ * Add utf8-encoded string parameter with given length to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ */
+#define DLT_SIZED_UTF8(TEXT, LEN) \
+    (void)dlt_user_log_write_sized_utf8_string(&log_local, TEXT, LEN)
 
 /**
  * Add boolean parameter to the log messsage.
