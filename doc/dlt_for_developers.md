@@ -566,6 +566,35 @@ DLT_VERBOSE_MODE();
 DLT_NONVERBOSE_MODE();
 ```
 
+#### String arguments
+
+For string arguments, you can choose between ASCII and UTF-8 encoding. This
+encoding is written into the argument header, so that the receiver knows what to
+expect when parsing the message.
+
+In addition, you can also choose between null-terminated strings and (potentially)
+non-null-terminated ones.
+The latter often arise in C++ code when using classes such as std::string\_view,
+which does not provide an accessor method that returns a null-terminated C-string.
+Copying data out of a std::string\_view thus requires to copy only the desired
+number of characters.
+
+For instance, using Verbose mode:
+
+```
+std::string_view line = "Name: Ford Prefect";
+std::string_view key = line.substr(0, 4);
+std::string_view value = line.substr(6);
+
+if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
+    dlt_user_log_write_constant_string(&myctxdata, "key");
+    dlt_user_log_write_sized_utf8_string(&myctxdata, key.data(), key.size());
+    dlt_user_log_write_constant_string(&myctxdata, "value");
+    dlt_user_log_write_sized_utf8_string(&myctxdata, value.data(), value.size());
+    dlt_user_log_write_finish(&myctxdata);
+}
+```
+
 #### Using custom timestamps
 
 The timestamp that is transmitted in the header of a DLT message is usually generated automatically by the library itself right before the message is sent. If you wish to change this, e.g. because you want to indicate when an event occured, rather than when the according message was assembled, you can supply a custom timestamp. Compared to the example above, two macros are defined for convenience:
@@ -606,8 +635,11 @@ exceed 1390 bytes, including the DLT message header.
 Type | Description
 --- | ---
 DLT\_STRING(TEXT) | String
-DLT\_CSTRING(TEXT) | Constant String (not send in non-verbose mode)
-DLT\_UTF8 | Utf8-encoded string
+DLT\_SIZED\_STRING(TEXT,LENGTH) | String with known length
+DLT\_CSTRING(TEXT) | Constant string (not sent in non-verbose mode)
+DLT\_SIZED\_CSTRING(TEXT,LENGTH) | Constant string with known length (not sent in non-verbose mode)
+DLT\_UTF8(TEXT) | Utf8-encoded string
+DLT\_SIZED\_UTF8(TEXT,LENGTH) | Utf8-encoded string with known length
 DLT\_RAW(BUF,LENGTH) | Raw buffer
 DLT\_INT(VAR) | Integer variable, dependent on platform
 DLT\_INT8(VAR) |Integer 8 Bit variable
