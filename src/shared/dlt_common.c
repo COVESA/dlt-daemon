@@ -3799,6 +3799,9 @@ void dlt_check_envvar()
 
     if (env_pipe_dir != NULL)
         dlt_log_set_fifo_basedir(env_pipe_dir);
+    else
+        dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH);
+    
 
 #ifdef DLT_SHM_ENABLE
     char* env_shm_name = getenv("DLT_SHM_NAME");
