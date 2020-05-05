@@ -350,9 +350,6 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 
 DltReturnValue dlt_init(void)
 {
-    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
-    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
-
     /* check environment variables */
     dlt_check_envvar();
 
