@@ -76,6 +76,9 @@
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
 #   include <mqueue.h>
+#else
+#    include <sys/types.h>
+#    include <fcntl.h>
 #endif
 
 #   include <pthread.h>

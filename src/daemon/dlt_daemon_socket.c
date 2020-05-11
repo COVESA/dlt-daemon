@@ -34,7 +34,6 @@
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
-#include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
@@ -44,7 +43,6 @@
 #ifdef linux
 #   include <sys/timerfd.h>
 #endif
-#include <sys/stat.h>
 #include <sys/time.h>
 #if defined(linux) && defined(__NR_statx)
 #   include <linux/stat.h>

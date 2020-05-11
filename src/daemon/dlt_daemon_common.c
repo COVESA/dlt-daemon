@@ -71,9 +71,7 @@
 #include <syslog.h>
 #include <errno.h>
 #include <unistd.h>
-#include <fcntl.h>
 
-#include <sys/types.h>  /* send() */
 #include <sys/socket.h> /* send() */
 
 #include "dlt_types.h"
