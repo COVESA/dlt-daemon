@@ -48,9 +48,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
-#include <fcntl.h>
 #include <sys/uio.h>
-#include <sys/stat.h>
 
 /* DLT Library includes */
 #include "dlt_client.h"

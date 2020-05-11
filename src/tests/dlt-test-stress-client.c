@@ -67,8 +67,6 @@
 
 #include <ctype.h>      /* for isprint() */
 #include <stdlib.h>     /* for atoi() */
-#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
-#include <fcntl.h>      /* for open() */
 #include <string.h>     /* for strcmp() */
 #include <sys/uio.h>    /* for writev() */
 
