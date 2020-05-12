@@ -65,7 +65,10 @@
 
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
+
+#ifndef DLT_USE_UNIX_SOCKET_IPC
 char dltFifoBaseDir[DLT_PATH_MAX] = "/tmp";
+#endif
 
 #ifdef DLT_SHM_ENABLE
 char dltShmName[NAME_MAX + 1] = "/dlt-shm";
@@ -1726,11 +1729,13 @@ void dlt_log_set_filename(const char *filename)
     logging_filename[NAME_MAX] = 0;
 }
 
-void dlt_log_set_fifo_basedir(const char *env_pipe_dir)
+#ifndef DLT_USE_UNIX_SOCKET_IPC
+void dlt_log_set_fifo_basedir(const char *pipe_dir)
 {
-    strncpy(dltFifoBaseDir, env_pipe_dir, DLT_PATH_MAX);
+    strncpy(dltFifoBaseDir, pipe_dir, DLT_PATH_MAX);
     dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
 }
+#endif
 
 #ifdef DLT_SHM_ENABLE
 void dlt_log_set_shm_name(const char * env_shm_name)
@@ -3795,13 +3800,14 @@ void dlt_check_envvar()
             dlt_log_init(mode);
     }
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     char *env_pipe_dir = getenv("DLT_PIPE_DIR");
 
     if (env_pipe_dir != NULL)
         dlt_log_set_fifo_basedir(env_pipe_dir);
     else
         dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH);
-    
+#endif
 
 #ifdef DLT_SHM_ENABLE
     char* env_shm_name = getenv("DLT_SHM_NAME");

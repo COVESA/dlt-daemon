@@ -105,10 +105,14 @@ void usage()
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
     printf("  -c filename   DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
+
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     printf("  -t directory  Directory for local fifo and user-pipes (Default: /tmp)\n");
     printf("                (Applications wanting to connect to a daemon using a\n");
     printf("                custom directory need to be started with the environment \n");
     printf("                variable DLT_PIPE_DIR set appropriately)\n");
+#endif
+
 #ifdef DLT_SHM_ENABLE
     printf("  -s filename   The file name to create the share memory (Default: /dlt-shm)\n");
     printf("                (Applications wanting to connect to a daemon using a\n");
@@ -138,8 +142,10 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
     /* default values */
     daemon_local->flags.port = DLT_DAEMON_TCP_PORT;
-    strncpy(dltFifoBaseDir, DLT_USER_IPC_PATH, DLT_PATH_MAX);
-    dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
+
+#ifndef DLT_USE_UNIX_SOCKET_IPC
+    dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH);
+#endif
 
 #ifdef DLT_SHM_ENABLE
     strncpy(dltShmName, "/dlt-shm", NAME_MAX);
@@ -165,12 +171,14 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
             strncpy(daemon_local->flags.cvalue, optarg, NAME_MAX);
             break;
         }
+#ifndef DLT_USE_UNIX_SOCKET_IPC
         case 't':
         {
-            strncpy(dltFifoBaseDir, optarg, DLT_PATH_MAX);
-            dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
+            dlt_log_set_fifo_basedir(optarg);
             break;
         }
+#endif
+
 #ifdef DLT_SHM_ENABLE
         case 's':
         {
@@ -255,9 +263,16 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
 
+#ifdef DLT_USE_UNIX_SOCKET_IPC
+    n = snprintf(daemon_local->flags.loggingFilename,
+                 sizeof(daemon_local->flags.loggingFilename),
+                 "%s/dlt.log", DLT_USER_IPC_PATH);
+#else
     n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
                  "%s/dlt.log", dltFifoBaseDir);
+#endif
+
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
         dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
                 __func__, n, daemon_local->flags.loggingFilename);
@@ -1500,6 +1515,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 void dlt_daemon_exit_trigger()
 {
+
+#ifndef DLT_USE_UNIX_SOCKET_IPC
     char tmp[DLT_PATH_MAX] = { 0 };
 
     ssize_t n;
@@ -1510,6 +1527,7 @@ void dlt_daemon_exit_trigger()
     }
 
     (void)unlink(tmp);
+#endif
 
     /* stop event loop */
     g_exit = -1;

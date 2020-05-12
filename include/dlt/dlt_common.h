@@ -415,10 +415,12 @@ extern const char dltSerialHeader[DLT_ID_SIZE];
  */
 extern char dltSerialHeaderChar[DLT_ID_SIZE];
 
+#ifndef DLT_USE_UNIX_SOCKET_IPC
 /**
  * The common base-path of the dlt-daemon-fifo and application-generated fifos
  */
 extern char dltFifoBaseDir[DLT_PATH_MAX];
+#endif
 
 #ifdef DLT_SHM_ENABLE
 /**
@@ -1135,6 +1137,13 @@ DltReturnValue dlt_file_free(DltFile *file, int verbose);
  * @param filename the filename
  */
 void dlt_log_set_filename(const char *filename);
+#ifndef DLT_USE_UNIX_SOCKET_IPC
+/**
+ * Set FIFO base direction
+ * @param pipe_dir the pipe direction
+ */
+void dlt_log_set_fifo_basedir(const char *pipe_dir);
+#endif
 /**
  * Set internal logging level
  * @param level the level
