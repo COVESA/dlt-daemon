@@ -90,13 +90,13 @@ int slog2_callback (slog2_packet_info_t *info, void *payload, void *param __attr
     int log_level = DLT_LOG_VERBOSE;
     switch (info->severity)
     {
-        case SLOG2_SHUTDOWN: log_level = DLT_LOG_FATAL;  break;
-        case SLOG2_CRITICAL: log_level = DLT_LOG_FATAL;  break;
-        case SLOG2_ERROR:    log_level = DLT_LOG_ERROR;  break;
-        case SLOG2_WARNING:  log_level = DLT_LOG_WARN;   break;
-        case SLOG2_NOTICE:   log_level = DLT_LOG_INFO;   break;
-        case SLOG2_INFO:     log_level = DLT_LOG_INFO;   break;
-        case SLOG2_DEBUG1:   log_level = DLT_LOG_VERBOSE; break;
+        case SLOG2_SHUTDOWN: log_level = DLT_LOG_FATAL;   break;
+        case SLOG2_CRITICAL: log_level = DLT_LOG_FATAL;   break;
+        case SLOG2_ERROR:    log_level = DLT_LOG_ERROR;   break;
+        case SLOG2_WARNING:  log_level = DLT_LOG_WARN;    break;
+        case SLOG2_NOTICE:   log_level = DLT_LOG_INFO;    break;
+        case SLOG2_INFO:     log_level = DLT_LOG_INFO;    break;
+        case SLOG2_DEBUG1:   log_level = DLT_LOG_DEBUG;   break;
         case SLOG2_DEBUG2:   log_level = DLT_LOG_VERBOSE; break;
         default: break;
     }
