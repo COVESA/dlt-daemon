@@ -68,7 +68,8 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
 int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  DltLogStorageUserConfig *file_config,
                                  char *dev_path,
-                                 int msg_size);
+                                 int msg_size,
+                                 bool is_update_required);
 
 DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
                                            DltLogStorageUserConfig *file_config,
