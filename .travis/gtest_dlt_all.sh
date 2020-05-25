@@ -41,15 +41,9 @@ function gtest_run_test()
     echo "$1 passed"
 }
 
+CTEST_OUTPUT_ON_FAILURE=1 make test
+
 pushd tests > /dev/null
-
-gtest_run_test gtest_dlt_common
-
-gtest_run_test gtest_dlt_user
-
-gtest_run_test gtest_dlt_daemon_common
-
-gtest_run_test gtest_dlt_daemon_event_handler
 
 # Without General section in dlt_gateway.conf
 ./gtest_dlt_daemon_gateway.sh > /dev/null
@@ -61,7 +55,5 @@ gtest_run_test gtest_dlt_daemon_gateway
 
 ./gtest_dlt_daemon_logstorage.sh > /dev/null
 gtest_run_test gtest_dlt_daemon_offline_log
-
-gtest_run_test dlt_env_ll_unit_test
 
 popd > /dev/null
