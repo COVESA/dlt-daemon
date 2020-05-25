@@ -53,6 +53,13 @@ def main(cmake_file, header_in_file, header_out_file):
         else:
             undetermined_vars[key] = val
 
+    m = re.match('project\(\s+ VERSION (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\(.(?P<tweak>\d+))?', src)
+    if m:
+        determined_vars['PROJECT_VERSION_MAJOR'] = m.group('major')
+        determined_vars['PROJECT_VERSION_MINOR'] = m.group('minor')
+        determined_vars['PROJECT_VERSION_PATCH'] = m.group('patch')
+        determined_vars['PROJECT_VERSION_TWEAK'] = m.groupdict.get('tweak', '')
+
     # Try to resolve all variables referencing other vars e.g.:
     # set(DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
     no_changes = 5

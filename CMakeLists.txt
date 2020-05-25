@@ -13,20 +13,15 @@
 # For further information see http://www.genivi.org/.
 #######
 
-cmake_minimum_required(VERSION 2.8.5)
-project(automotive-dlt)
+cmake_minimum_required(VERSION 3.3)
+project(automotive-dlt VERSION 2.18.4)
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 
 include(GNUInstallDirs)
 # Set version parameters
-set(DLT_MAJOR_VERSION 2)
-set(DLT_MINOR_VERSION 18)
-set(DLT_PATCH_LEVEL 4)
-set(DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
 set(DLT_VERSION_STATE STABLE)
-set(DLT_REVISION "")
 
 execute_process(COMMAND git describe --tags WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE DLT_REVISION
@@ -227,8 +222,9 @@ add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(include/dlt)
 add_subdirectory(testscripts)
-if(WITH_DLT_UNIT_TESTS)
+if (WITH_DLT_UNIT_TESTS)
     add_subdirectory( gtest-1.7.0 )
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
