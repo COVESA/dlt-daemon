@@ -13,69 +13,54 @@
 #
 # For further information see http://www.genivi.org/.
 import pathlib
+import subprocess
 import argparse
 import re
 
 
-# CMake variables without references to other vars
-determined_vars = {}
+def get_cmd(cmd, cwd):
+    return subprocess.check_output(cmd, cwd=cwd, shell=True,
+                                   stderr=subprocess.STDOUT
+                                   ).decode().strip()
 
 
-# Resolves variable reverences from CMakeLists e.g.:
-#       ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}
-#    -> 2.${DLT_MINOR_VERSION}
-def resolve_variables(undetermined_vars):
-    for key, val in undetermined_vars.items():
-        m = re.search('\$\{(?P<var_name>\w+)\}', val)
-        if m:
-            if m.group('var_name') in determined_vars:
-                yield key, val.replace(m.group(0), determined_vars[m.group('var_name')])
-                continue
-            yield key, val
-        else:
-            determined_vars[key] = val
+def get_revision(git_dir):
+    try:
+        rev = get_cmd('git describe --tags', git_dir)
+        if not rev.startswith("fatal:"):
+            return rev
+
+        rev = get_cmd('git rev-parse HEAD', git_dir)
+        if not rev.startswith("fatal:"):
+            return rev
+    except subprocess.CalledProcessError:
+        pass
+
+    return get_cmd('date +%F', git_dir)
 
 
 def main(cmake_file, header_in_file, header_out_file):
     cmakelists = pathlib.Path(cmake_file)
     header_in = pathlib.Path(header_in_file)
     header_out = pathlib.Path(header_out_file)
+    git_dir = str(header_in.parent)
+    cmake_vars = {}
 
-    src = cmakelists.open().read()
-    undetermined_vars = {}
-
-    # Find all cmake variable assignments
-    for match in re.finditer('set\s*\(\s*(?P<key>\w+)\s*(?P<value>\S+)\s*\)', src):
-        key = match.group('key')
-        val = match.group('value')
-        if '${' not in val:
-            determined_vars[key] = val
-        else:
-            undetermined_vars[key] = val
-
-    m = re.match('project\(\s+ VERSION (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\(.(?P<tweak>\d+))?', src)
-    if m:
-        determined_vars['PROJECT_VERSION_MAJOR'] = m.group('major')
-        determined_vars['PROJECT_VERSION_MINOR'] = m.group('minor')
-        determined_vars['PROJECT_VERSION_PATCH'] = m.group('patch')
-        determined_vars['PROJECT_VERSION_TWEAK'] = m.groupdict.get('tweak', '')
-
-    # Try to resolve all variables referencing other vars e.g.:
-    # set(DLT_VERSION ${DLT_MAJOR_VERSION}.${DLT_MINOR_VERSION}.${DLT_PATCH_LEVEL})
-    no_changes = 5
-    def_len = len(undetermined_vars)
-    while no_changes > 0:
-        undetermined_vars = dict(resolve_variables(undetermined_vars))
-        if len(undetermined_vars) == def_len:
-            no_changes -= 1
-        else:
-            def_len = len(undetermined_vars)
-            no_changes = 5
+    for m in re.finditer(
+            'project\(\S+ VERSION (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<tweak>\d+))?',
+            cmakelists.open().read()):
+        cmake_vars['PROJECT_VERSION_MAJOR'] = m.group('major')
+        cmake_vars['PROJECT_VERSION_MINOR'] = m.group('minor')
+        cmake_vars['PROJECT_VERSION_PATCH'] = m.group('patch')
+        cmake_vars['PROJECT_VERSION'] = "{}.{}.{}".format(m.group('major'), m.group('minor'), m.group('patch'))
+        cmake_vars['PROJECT_VERSION_TWEAK'] = m.group('tweak')
+        cmake_vars['DLT_REVISION'] = get_revision(git_dir)
+        cmake_vars['DLT_VERSION_STATE'] = 'STABLE'
 
     header_out.parent.mkdir(parents=True, exist_ok=True)
     with header_in.open() as hi, header_out.open('w') as ho:
         for line in hi:
-            text, _ = re.subn('@(?P<var_name>\w+)@', lambda x: determined_vars.get(x.group('var_name'), "NONE"), line)
+            text, _ = re.subn('@(?P<var_name>\w+)@', lambda x: cmake_vars.get(x.group('var_name'), "NONE"), line)
             ho.write(text)
 
 
