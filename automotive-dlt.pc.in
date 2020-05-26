@@ -20,8 +20,8 @@ includedir=${exec_prefix}/include
 
 Name: DLT
 Description: Diagnostic Log and Trace
-Version: @DLT_VERSION@
+Version: @PROJECT_VERSION@
 Requires:
 Libs: -L${libdir} -ldlt -lrt -lpthread @ZLIB_LIBRARY@
-Cflags: -I${includedir}/dlt -DDLT_@DLT_MAJOR_VERSION@_@DLT_MINOR_VERSION@
+Cflags: -I${includedir}/dlt -DDLT_@PROJECT_VERSION_MAJOR@_@PROJECT_VERSION_MINOR@
 

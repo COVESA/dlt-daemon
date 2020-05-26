@@ -14,7 +14,7 @@
 #######
 
 Name: @PROJECT_NAME@
-Version: @DLT_VERSION@
+Version: @PROJECT_VERSION@
 Release: @GENIVI_RPM_RELEASE@
 Summary: %{name} - Diagnostic Log and Trace
 Group: System Environment/Base
@@ -108,8 +108,8 @@ rm -rf $RPM_BUILD_ROOT
 /etc/dlt.conf
 /usr/share/dlt-filetransfer/dlt-test-filetransfer-file
 /usr/share/dlt-filetransfer/dlt-test-filetransfer-image.png
-%{_libdir}/libdlt.so.@DLT_MAJOR_VERSION@
-%{_libdir}/libdlt.so.@DLT_VERSION@
+%{_libdir}/libdlt.so.@PROJECT_VERSION_MAJOR@
+%{_libdir}/libdlt.so.@PROJECT_VERSION@
 %{_libdir}/libdlt.so
 %{_bindir}/dlt-system
 %{_bindir}/dlt-convert

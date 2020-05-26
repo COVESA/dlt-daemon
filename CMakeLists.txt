@@ -230,7 +230,7 @@ endif()
 
 message(STATUS)
 message(STATUS "-------------------------------------------------------------------------------")
-message(STATUS "Build for Version ${DLT_VERSION} build ${DLT_REVISION} version state ${DLT_VERSION_STATE}")
+message(STATUS "Build for Version ${PROJECT_VERSION} build ${DLT_REVISION} version state ${DLT_VERSION_STATE}")
 message(STATUS "WITH_SYSTEMD = ${WITH_SYSTEMD}")
 message(STATUS "WITH_SYSTEMD_WATCHDOG = ${WITH_SYSTEMD_WATCHDOG}")
 message(STATUS "WITH_SYSTEMD_JOURNAL = ${WITH_SYSTEMD_JOURNAL}")
