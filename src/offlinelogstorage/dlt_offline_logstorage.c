@@ -798,7 +798,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
             if (handle->newest_file_list == NULL)
                 handle->newest_file_list = new_tmp;
             else
-                tmp->next = new_tmp;
+                handle->newest_file_list->next = new_tmp;
         }
     }
 
