@@ -766,7 +766,9 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         return -1;
     }
 
-    if (data->file_name) {
+    if ((data->sync == DLT_LOGSTORAGE_SYNC_ON_MSG ||
+            data->sync == DLT_LOGSTORAGE_SYNC_UNSET) &&
+        (data->file_name)) {
         if (handle->newest_file_list != NULL) {
             tmp = handle->newest_file_list;
             while (tmp) {
@@ -2091,36 +2093,52 @@ int dlt_logstorage_write(DltLogStorage *handle,
         if (config[i]->file_name == NULL)
             continue;
 
-        tmp = handle->newest_file_list;
-        while (tmp) {
-            if (strcmp(tmp->file_name, config[i]->file_name) == 0) {
-                found = 1;
-                break;
+        /* The newest file must be applied to only ON_MSG */
+        if ((config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG ||
+            config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
+            tmp = handle->newest_file_list;
+            while (tmp) {
+                if (strcmp(tmp->file_name, config[i]->file_name) == 0) {
+                    found = 1;
+                    break;
+                }
+                else {
+                    tmp = tmp->next;
+                }
             }
-            else {
-                tmp = tmp->next;
+            if (!found) {
+                dlt_vlog(LOG_ERR, "Cannot find out record for filename [%s]\n",
+                        config[i]->file_name);
+                return -1;
+            }
+
+            /* prepare log file (create and/or open)*/
+            ret = config[i]->dlt_logstorage_prepare(config[i],
+                                                    uconfig,
+                                                    handle->device_mount_point,
+                                                    size1 + size2 + size3,
+                                                    tmp->newest_file);
+
+            if ((tmp->newest_file == NULL ||
+                    strcmp(config[i]->working_file_name, tmp->newest_file) != 0)) {
+                if (tmp->newest_file) {
+                    free(tmp->newest_file);
+                    tmp->newest_file = NULL;
+                }
+                tmp->newest_file = strdup(config[i]->working_file_name);
             }
         }
-        if (!found) {
-            dlt_vlog(LOG_ERR, "Cannot find out record for filename [%s]\n",
-                    config[i]->file_name);
-            return -1;
+        else {
+            /* In case SyncBehaviour differs from ON_MSG,
+             * do not need to update the newest file name
+             */
+            ret = config[i]->dlt_logstorage_prepare(config[i],
+                                                    uconfig,
+                                                    handle->device_mount_point,
+                                                    size1 + size2 + size3,
+                                                    NULL);
         }
 
-        /* prepare log file (create and/or open)*/
-        ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                uconfig,
-                                                handle->device_mount_point,
-                                                size1 + size2 + size3,
-                                                tmp->newest_file);
-        if (tmp->newest_file == NULL ||
-            strcmp(config[i]->working_file_name, tmp->newest_file) != 0) {
-            if (tmp->newest_file) {
-                free(tmp->newest_file);
-                tmp->newest_file = NULL;
-            }
-            tmp->newest_file = strdup(config[i]->working_file_name);
-        }
 
         if (ret == 0) { /* log data (write) */
             ret = config[i]->dlt_logstorage_write(config[i],
