@@ -17,37 +17,62 @@ For further information see http://www.genivi.org/
 Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 0.0.1, 2012/10/10: Initial version
 
+Luong Hong Duy Khanh <KHANH.LUONGHONGDUY@vn.bosch.com>
+0.0.2, 2020/04/10: Update and convert to markdown format
+
 ![genivilogo](images/genivilogo.png "GENIVI")
 
-*This document is not up to date*
-
 ## Purpose
-This document specifies the usage of the DLT daemon v2 and also the internal functionality of the DLT daemon v2. The DLT daemon v2 is a complete rework of the DLT daemon v1, which is part of the GENIVI 1.0 release.
+This document specifies the usage of the DLT daemon v2 and also the internal
+functionality of the DLT daemon v2. The DLT daemon v2 is a complete rework of
+the DLT daemon v1, which is part of the GENIVI 1.0 release.
 
-The DLT daemon is the central place where logs and traces are gathered from different applications, stored temporarily or permanently and transferred to a DLT client application, which can run directly on the GENIVI system or more likely on a external tester device.
-
-The DLT client component is described in an extra document.
-
-The DLT daemon component is based on the AUTOSAR 4.0 standard DLT.
+The DLT daemon component is based on the
+[AUTOSAR 4.0 standard DLT](https://www.autosar.org/fileadmin/user_upload/standards/classic/4-0/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf)
+(the current latest version is
+[R19-11](https://www.autosar.org/fileadmin/user_upload/standards/classic/19-11/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf)).
 
 ## Overview
 
 ![dlt_overview](images/dlt_overview.png "DLT OVERVIEW")
 
-The DLT daemon is the central component in GENIVI, which gathers all logs and traces from the DLT user applications. The logs and traces are stored optionally directly in a file in the ECU. The DLT daemon forwards all logs and traces to a connected DLT client.
+The DLT daemon is the central component in GENIVI, where logs and traces are
+gathered from the DLT user and different applications, stored optionally
+temporarily or permanently in a file in the ECU. The DLT daemon forwards all
+logs and traces to a connected DLT client application, which can run directly
+on the GENIVI system or more likely on an external tester device.
 
-The DLT client can send control messages to the daemon, e.g. to set individual log levels of applications and contexts or get the list of applications and contexts registered in the DLT daemon.
+The DLT client can send control messages to the daemon, e.g. to set individual
+log levels of applications and contexts or get the list of applications and
+contexts registered in the DLT daemon.
+
+In DLT, a log message contains debug information like state changes or value
+changes and a trace message contains information, which has passed via the
+Virtual Function Bus (VFB).
 
 ## Architecture
 
 ### DLT daemon
 
-The DLT daemon is the central component between the DLT clients and one or more applications using the DLT user library.
+The DLT daemon is the central component between the DLT clients and one or more
+applications using the DLT user library.
 
 #### Overview
-The DLT daemon communicates with the DLT clients over TCP/IP connections or over a serial line (the message format is specified in the DLT AUTOSAR Standard), with the applications using the DLT user library over named pipes (FIFOs) or UNIX_SOCKET based on compile time configuration. More details concerning the exchanged user messages and their content can be found in chapter 6.3.
+The DLT daemon is a standalone application which is running as the center of
+management and this is implemented as a single-thread process. The DLT daemon
+communicates with the DLT clients over TCP/IP connections or over a serial line
+with the applications using the DLT user library over named pipes (FIFOs) or
+UNIX_SOCKET based on compile time configuration.
 
-The main time, the DLT daemon executes a main loop, in which file and socket descriptors are watched (via poll()). If a message is received, the DLT daemon reacts. Additionally, a thread is implemented, which if enabled sends each second a keep-alive message to all connected DLT clients.
+The message format is specified in the DLT AUTOSAR Standard. More details
+concerning the exchanged user messages and their content can be found in
+[chapter 6](https://www.autosar.org/fileadmin/user_upload/standards/adaptive/19-11/AUTOSAR_SWS_LogAndTrace.pdf#page=10).
+
+
+The main time, the DLT daemon executes the main loop, in which file and socket
+descriptors are watched (via poll()). If a message is received, the DLT daemon
+reacts.
+
 Here is a rough schematic, how the DLT daemon is structured:
 
 ![dlt_architecture](images/dlt_architecture.png "DLT ARCHITECTURE")
@@ -56,11 +81,14 @@ Here is a rough schematic, how the DLT daemon is structured:
 #### Initialization
 During initialization of the DLT daemon, the following steps occur:
 
-- Option handling
-- Initialization of logging facility for the DLT daemon application. The DLT daemon application by itself prints to screen, if not in daemon mode. In daemon mode, it uses the syslog daemon for log messages of the DLT daemon application.
+- Option handling.
+- Option file parsed. The most important configuration files is dlt.conf
+- Initialization of logging facility for the DLT daemon application. The DLT
+daemon application by itself prints to screen, if not in daemon mode. In daemon
+mode, it uses the syslog daemon for log messages of the DLT daemon application.
 - Then the daemon enters initialization phase 1:
   - Enter daemon mode, if started as daemon
-  - Initialize output of messages to local file
+  - Initialize output of messages to the local file
   - Parse filter file, if specified; then set filters for file storage
   - Setup signal handler
   - Open DLT output file, if specified
@@ -71,32 +99,38 @@ During initialization of the DLT daemon, the following steps occur:
 - Then the daemon enters initialization phase 2:
   - Initialize daemon data structures
   - Initialize ring buffer for client connection
-  - Check if a runtime configuration exists, if yes load all stored application and context ids, as well as all log levels and trace statuses. Store this information to a local array.
-  - Prepare main loop
+  - Check if a runtime configuration exists, if yes load all stored application
+  and context ids, as well as all log levels and trace statuses. Store this
+  information to a local array.
+  - Prepare the main loop
   - Initialize receiver objects for socket and serial connection
   - Initialize binary semaphore
-  - Create and start thread for timing messages, sending of these messages is disabled at default.
+  - Create and start thread(s) for timing messages, sending of these messages is
+  disabled at default.
+- After phase 2:
+  - Initialize the offline logstorage, if the directory path is specified.
+  - Prepare timer for system watchdog, if specified.
+  - Prepare timer to check incoming events.
+  - Prepare timer to send ECU version, if specified.
+  - Initialize the gateway mode, if specified, then prepare the timer for gateway.
 - Now, the initialization is finished, and the DLT daemon enters the main loop.
 
 #### Main loop
 In the main loop, the following things occur:
 
-- Wait for event on the incoming named pipe or socket, the TCP connections (the one connection for new connections, and all TCP connections from clients), and possibly on the serial device, via poll() call.
+- Wait for event(s) on the incoming named pipe or socket, the TCP connections
+(the one connection for new connections, and all TCP connections from clients),
+and possibly on the serial device, via poll() call.
 - Distinguish from which socket/file descriptor the connection came, and handle them:
   - Event from TCP server socket (New DLT client to DLT daemon):
-    - Create new TCP connection
-    - If the newly created connection is the first TCP connection, send all log messages already stored in ring buffer to DLT client.
-  - Event from incoming named pipe or unix socket (DLT user library to DLT daemon):
+    - Create a new TCP connection
+    - If the newly created connection is the first TCP connection, send all log
+    messages already stored in ring buffer to DLT client.
+  - Event from incoming named pipe (FIFO) or Unix socket (from DLT user library
+  to DLT daemon):
     - Use dlt receiver to read data
-    - As long as there are DLT messages available in received data:
-      - Handle user message:
-        - **DLT_USER_MESSAGE_REGISTER_APPLICATION**
-        - **DLT_USER_MESSAGE_UNREGISTER_APPLICATION**
-        - **DLT_USER_MESSAGE_REGISTER_CONTEXT**
-        - **DLT_USER_MESSAGE_UNREGISTER_CONTEXT**
-        - **DLT_USER_MESSAGE_OVERFLOW**
-        - **DLT_USER_MESSAGE_LOG**
-        - **DLT_USER_MESSAGE_APP_LL_TS**
+    - As long as there are DLT messages available in received data, the handle
+    user messages type can be found at src/shared/dlt_user_shared_cfg.h
     - Move rest of data in front of buffer for next read attempt
   - Event from serial device (DLT client to DLT daemon via serial device)
     - Use other dlt receiver to read data
@@ -109,43 +143,90 @@ In the main loop, the following things occur:
       - Check for DLT message type control request, and if yes process the request
     - Move rest of data in front of buffer for next read attempt
 
-How the received user messages and control messages are handled, is described in the Appendix.
+How the received user messages and control messages are handled, is described
+in the Appendix.
 
+#### Clean up
+Before exiting from DLT daemon, the following cleanup procedures occur:
+
+- Local cleanup
+  - Destroy the connection list
+  - Free the used memory by the organising structure of file
+  - Uninitialise the offline trace
+  - Free the used memory by the organising structure of file
+  - Delete existing named pipes (FIFOs) or UNIX_SOCKET
+  - Cleanup dlt logstorage
+- Close UDP connection, if specified
+- De-initialize the gateway, if specified. All internal data will be freed
+- De-Initialise the dlt daemon structure
+  - Clear all contexts in internal context management of specific ecu
+  - Clear all applications in internal application management of specific ecu
+  - Release and free memory used by dynamic ringbuffer
+
+Now, the cleanup is finished, and the DLT daemon is terminated.
 ### DLT user library
 
 #### Overview
-The DLT user library is linked to each application which wants to use DLT. It encapsulates the communication with the DLT daemon, and provides two interfaces: the DLT user macro interface and the DLT user functional interface. All macros from the DLT user macro interface are mapped to functions in the DLT user functional interface. The DLT user library has one additional thread, responsible for receiving messages from the DLT daemon. Parts of functions accessible by the user interface are protected by a semaphore, as well as parts of the function which is called within the thread.
+The DLT user library is linked to each application that wants to use DLT. It
+encapsulates the communication with the DLT daemon and provides two interfaces:
+the DLT user macro interface and the DLT user functional interface. All macros
+from the DLT user macro interface are mapped to functions in the DLT user
+functional interface. The DLT user library has one additional thread, called
+housekeeper thread, responsible for receiving and sending messages from/to
+the DLT daemon.
+
+The DLT user library can be written/read from multiple threads (the threads of
+applications which are using DLT APIs, and DLT housekeeper thread which will
+send log messages to the daemon). To prevent the concurrent access to the DLT
+buffer, parts of functions accessible by the user interface are protected by a
+semaphore as well as parts of the function which is called within the thread.
 
 #### Initialization
 During initialization, the following things are done:
 
-- Setup internal structure including Application ID and Description (textual) of application
-- Get value from environment variable "DLT_LOCAL_PRINT_MODE". This variable can be used to control the local printing mode of the DLT user library. If enabled (either via "AUTOMATIC" or via "FORCE_ON"), all messages, which are prepared to be sent to the DLT daemon will also be print out locally (as ASCII string). If the environment variable is set, this value overrides the local print mode which can be set with the API function dlt_enable_local_print() or with dlt_disable_local_print() from within the application using the DLT user library. The following values are allowed:
-  - "AUTOMATIC"": Local printing is enabled, if NO DLT daemon is running.
+- Setup internal structure including Application ID and Description (textual)
+of application
+- Get value from environment variable "DLT_LOCAL_PRINT_MODE". This variable can
+be used to control the local printing mode of the DLT user library. If enabled
+(either via "AUTOMATIC" or via "FORCE_ON"), all messages, which are prepared to
+be sent to the DLT daemon will also be print out locally (as ASCII string). If
+the environment variable is set, this value overrides the local print mode which
+can be set with the API function dlt_enable_local_print() or with dlt_disable_local_print()
+from within the application using the DLT user library. The following values
+are allowed:
+  - "AUTOMATIC": Local printing is enabled, if NO DLT daemon is running.
   - "FORCE_ON": Local printing is always enabled.
-  - "FORCE_OFF"": Local printing is always disabled.
-- Clear internal context array (dynamically growing in step size DLT_USER_CONTEXT_ALLOC_SIZE, typically 500). The internal context array is NOT be kept sorted, as the DLT daemon stores for each registered context the offset position within this array, and sends this offset position for faster access of a context within this internal context array). The internal context array contains one entry for each context:
+  - "FORCE_OFF": Local printing is always disabled.
+- Clear internal context array (dynamically growing in step size
+DLT_USER_CONTEXT_ALLOC_SIZE, typically 500). The internal context array is NOT
+be kept sorted, as the DLT daemon stores for each registered context the offset
+position within this array, and sends this offset position for faster access of
+a context within this internal context array. The internal context array
+contains one entry for each context:
   - Context ID
   - Log level for this context
   - Trace status for this context
-  - Initialize table (dynamically growing in step-size 1) with function pointers for callback functions used for injection messages
+  - Initialize table (dynamically growing in step-size 1) with function pointers
+  for callback functions used for injection messages
   - Description (textual) of context
 - Initialize ringbuffer for local storage of not sent messages
 - Setup signal handler and atexit handler
 - Ignore all pipe signals
-- Create and open own named pipe with the name /tmp/dlt<PID>, where <PID> is the process id of the application using the DLT user library.
-- Open named pipe to the DLT daemon
+- Create and open own named pipe (with the name /tmp/dlt<PID>, where <PID> is the
+process id of the application using the DLT user library) or Unix socket IPC to
+the DLT daemon
 - Open local file for storage, if specified
 - Initialize receiver object
-- Start receiver thread
+- Start housekeeper thread for receiving messages
 
 #### De-Initialization
 During de-initialization, the following things are done:
 
-- De-register application (and all contexts belonging to this application) from DLT daemon
-- Stop receiver thread
-- Close and remove own named pipe
-- Close named pipe to the DLT daemon
+- De-register application (and all contexts belonging to this application) from
+DLT daemon
+- Stop housekeeper thread
+- Close and remove own named pipe to the DLT daemon, if FIFO is used
+- Close and remove Unix socket if socket IPC is used
 - De-Initialize receiver object
 - De-Initialize ringbuffer
 
@@ -160,7 +241,9 @@ During register of the application, the following things occur:
 During register of a context of the application, the following things occur:
 
 - Auto-initialize DLT user library, if necessary
-- Check, if context was already registered, if not , dynamically increment if required, the context array in step size DLT_USER_CONTEXT_ALLOC_SIZE, typically 500. Then store one entry for the new context to internal context array.
+- Check, if context was already registered, if not, dynamically increment if
+required, the context array in step size DLT_USER_CONTEXT_ALLOC_SIZE,
+typically 500. Then store one entry for the new context to internal context array.
 - Send message DLT_REGISTER_CONTEXT to DLT daemon
 
 #### Unregister context and application
@@ -177,18 +260,24 @@ During unregister of application, the following things occur:
 
 #### Handling of messages received from DLT daemon
 
-During housekeeper thread within the DLT user library checks for newly received messages from the DLT daemon, and handles them in the following way:
+During housekeeper thread within the DLT user library checks for newly received
+messages from the DLT daemon, and handles them in the following way:
 
 - **DLT_USER_MESSAGE_LOG_LEVEL**
-  - Store received log level and trace status for the received context to the context array
+  - Store received log level and trace status for the received context to the
+  context array.
 - **DLT_USER_MESSAGE_INJECTION**
   - Check all registered callbacks for this context:
-    - Compare service id of registered callback with received service id, if they matches:
+    - Compare service id of registered callback with received service id, if
+    they matches:
       - Call registered callback function.
 
 #### Overflow handling
 
-If the named pipe/socket of the DLT daemon is full, an overflow flag is set and the message stored in a ring buffer. The next time, a message could be send to the DLT daemon, an overflow message is send first, then the contents of the ring buffer. If sending of this message was possible, the overflow flag is reset.
+If the named pipe/socket of the DLT daemon is full, an overflow flag is set and
+the message stored in a ring buffer. The next time, a message could be sent to
+the DLT daemon, an overflow message is sent first, then the contents of the ring
+buffer. If sending of this message was possible, the overflow flag is reset.
 
 #### Send log message
 
@@ -197,7 +286,9 @@ During sending of a log message, the following things occur:
 - Auto-initialize DLT user library, if necessary
 - Initialize DLT log structure
 - Store log level of log message in DLT log structure
-- Check if log level is smaller than or equal than the stored log level of the context, under which the message should be sent. If yes continue, else don't send this log message. This is a kind of filtering on the DLT user library side.
+- Check if log level is smaller than or equal than the stored log level of the
+context, under which the message should be sent. If yes continue, else don't
+send this log message. This is a kind of filtering on the DLT user library side.
 - In non-verbose mode, insert message id
 - Add values (int, string, raw, …) to DLT log structure:
   - Set argument type (only in verbose mode)
@@ -206,8 +297,9 @@ During sending of a log message, the following things occur:
   - Set number of arguments and total length of message
 - Create new message with the help of the DLT log structure and handle this message:
   - Initialize new message
-  - Add headers (standard header, extended header, storage header, ...) to this message
-  - If logging to a file is enabled, write the log message to file. Finished sending log.
+  - Add headers (standard header, extended header, storage header, ...) to this
+  message
+  - If logging to a file is enabled, write the log message to file
   - Print message locally, if requested by environment variable
   - Check if connection to DLT daemon was lost and try to reattach to daemon.
   - Check for overflow flag and try to send overflow message.
@@ -217,14 +309,14 @@ During sending of a log message, the following things occur:
     - other error condition
     - no error, all right
   - If sending failed, put this message in the ring buffer for later sending.
-  - Handle this error conditions.
+  - Handle these error conditions.
 
 #### Send network trace message
 
 During sending of a network trace message, the following things occur:
 
 - Auto-initialize DLT user library, if necessary
-- Check for trace status of network trace message to be send.
+- Check for trace status of network trace message to be sent.
 - If Trace status equals on:
   - Initialize DLT log structure
   - Set trace status in DLT log structure to network trace type of message
@@ -236,30 +328,62 @@ During sending of a network trace message, the following things occur:
 
 #### Register callback function for injection message
 
-During registration of a callback function for a injection message, the following steps are executed:
+During registration of a callback function for an injection message, then following
+steps are executed:
 
-  - For the specified context, check if service id is already in the table of the registered callbacks (this table is dynamically growing in steps of one entry).
+  - For the specified context, check if service id is already in the table of the
+  registered callbacks (this table is dynamically growing in steps of one entry).
     - If yes:
       - Stored service id is set to service id to be registered
-      - Stored callback function pointer is set to callback function pointer to be registered
+      - Stored callback function pointer is set to callback function pointer to
+      be registered
     - If no:
-      - Increase nr of callbacks for this context
+      - Increase the number of callbacks for this context
       - Store service id in callback table
       - Store function pointer in callback table
 
 ### Communication between DLT daemon and DLT user library
 
-The communication mechanism (IPC) used between DLT daemon and DLT user library are named pipes (FIFOs) or UNIX_SOCKETS (based on compile time configuration).
+The communication mechanism (IPC) used between DLT daemon and DLT user library
+are named pipes (FIFOs or UNIX_SOCKETS, based on compile time configuration).
 
-During startup of the DLT daemon, the DLT daemon creates and opens the IPC on configured path. If a DLT user application using the DLT user library wants to send something to the DLT daemon this IPC is used.
+During the startup of the DLT daemon, the DLT daemon creates and opens the IPC
+(FIFOs or UNIX_SOCKET) on the configured path called /tmp/dlt. If a DLT user
+application using the DLT user library wants to send log messages to the DLT
+daemon, this IPC is used.
 
-During startup of the DLT user application using the DLT user library, it creates and opens the same IPC (a named pipe called /tmp/dlt<PID>, where <PID> is the process id of the DLT user application or an UNIX_SOCKET). If the DLT daemon wants to send something to the DLT user application, this IPC is used.
+During the startup of the DLT user application using the DLT user library, it
+creates and opens the same IPC type of DLT daemon. If the DLT daemon wants to
+send the control messages to the DLT user application, this IPC is used.
 
-The exchanged messages are described in the chapter 7.1.
+-  When the FIFOs IPC is used, a named pipe called /tmp/dltpipes/dlt<PID>, where
+<PID> is the process id of the DLT user application. Each DLT user application
+creates its own named pipe to communicate with the DLT daemon.
+-  When the UNIX_SOCKETS IPC is used, the DLT user application just needs to
+connect to the opened socket port of DLT daemon. All DLT user applications
+use the same UNIX_SOCKETS port to communicate with the DLT daemon.
+
+The exchanged messages are described in the
+[chapter 7.1](https://www.autosar.org/fileadmin/user_upload/standards/adaptive/19-11/AUTOSAR_SWS_LogAndTrace.pdf#page=12).
+
+In a system with a single process tree where PIDs are unique, the FIFOs IPC shall
+work well.
+
+In a system with the multiple nested process trees, each process tree
+maintains an entirely isolated set of processes. Because of that, PIDs are not
+unique anymore and a DLT User application running in the parent PID namespace
+might have the same PID as another DLT User application running in the child
+PID namespace. Since a DLT User application creates its own FIFO based on its
+PID (getpid()), the DLT Daemon has to deal with multiple applications registering
+itself with the same PID, which is impossible. To solve this problem, the
+UNIX_SOCKETS based communication is used. The UNIX_SOCKETS IPC is also supported
+in the Non-linux platforms (eg: QNX).
 
 ### Place of message creation
 
-The following table shows, where the DLT messages are created. The message types are described in more detail in the AUTOSAR Specification for Diagnostic Log and Trace.
+The following table shows, where the certain types of DLT messages are created.
+The message types are described in more detail in the AUTOSAR Specification for
+Diagnostic Log and Trace.
 
 | Type of message  | DLT client | DLT daemon | DLT library |
 | ---------------- | :--------: | :--------: | :---------: |
@@ -268,14 +392,15 @@ The following table shows, where the DLT messages are created. The message types
 | Log message      |            |            |      X      |
 | Trace message    |            |            |      X      |
 
-- "Get log info" request only, if enabled with \-r option in DLT daemon during start-up
-- "File generation" means, that the DLT client creates a file for testing purposes, containing multiple DLT messages. This functionality is only in the "old" DLT viewer (WX widget-based implementation) available.
-
 This table shows, that:
 
-- DLT messages of message type control request (e.g. "Get Log Info"-Request) are created in the DLT client, and then sent to the DLT daemon.
-- DLT messages of message type control response (to a control request) are created in the DLT daemon, and then sent to the DLT client.
-- DLT messages of type log and of type trace are created in the DLT user library, then passed (via the named pipe of the DLT daemon) to the DLT daemon , which forwards them to the connected DLT clients.
+- DLT messages of message type control request are created in the DLT client,
+and then sent to the DLT daemon.
+- DLT messages of message type control response (to a control request) are
+created in the DLT daemon, and then sent to the DLT client.
+- DLT messages of type log and of type trace are created in the DLT user library,
+then passed (via the named pipe of the DLT daemon) to the DLT daemon, which
+forwards them to the connected DLT clients.
 
 ### Message flow
 The following figure shows the overall flow of messages.
@@ -287,7 +412,9 @@ The following figure shows the overall flow of messages.
 
 ### Messages exchanged between DLT daemon and DLT user library
 
-There are several user messages (each has its own message identifier DLT_USER_MESSAGE_*) which will are exchanged between DLT daemon and DLT user library, and will be described in the following sub-chapters.
+There are several user messages (each has its own message identifier
+DLT_USER_MESSAGE_*) which will are exchanged between DLT daemon and DLT user
+library, and will be described in the following sub-chapters.
 
 From DLT user library to DLT daemon:
 
@@ -302,7 +429,7 @@ From DLT user library to DLT daemon:
 From DLT daemon to DLT user library:
 
 - **DLT_USER_MESSAGE_LOG_LEVEL**
-- **DLT_USER_MESSAGE_INJECTION****
+- **DLT_USER_MESSAGE_INJECTION**
 
 Each of the following messages has a message header with the following information:
 
@@ -311,17 +438,20 @@ Each of the following messages has a message header with the following informati
 
 #### User Message: Register Application
 
-This message is send by the DLT user library once per application to register the application to the DLT daemon.
+This message is sent by the DLT user library once per application to register the
+application to the DLT daemon.
 It contains the following information:
 
 - The application id of the application to be registered
-- The process id of the process using the DLT user library. This information is required, if the DLT daemon wants to send something to the DLT user library.
+- The process id of the process using the DLT user library. This information is
+required, if the DLT daemon wants to send something to the DLT user library.
 - The length of the following description.
 - The application description.
 
 #### User Message: Unregister Application
 
-This message is send by the DLT user library once per application to unregister the application from the DLT daemon.
+This message is sent by the DLT user library once per application to unregister
+the application from the DLT daemon.
 It contains the following information:
 
 - The application id of the application to be unregistered
@@ -329,13 +459,16 @@ It contains the following information:
 
 #### User Message: Register Context
 
-This message is send by the DLT user library once for each context which should be registered to the DLT daemon.
+This message is sent by the DLT user library once for each context which should
+be registered to the DLT daemon.
 It contains the following information:
 
 - The application id of the application to be registered
 - The context id of the application to be registered
-- Each created context is stored with its associated information in a dynamically growing array in the DLT user library. The index in this array is send.
-- The process id of the process using the DLT user library. This information is required, if the DLT daemon wants to send something to the DLT user library.
+- Each created context is stored with its associated information in a dynamically
+growing array in the DLT user library. The index in this array is sent.
+- The process id of the process using the DLT user library. This information is
+required, if the DLT daemon wants to send something to the DLT user library.
 - The initial log level of the context
 - The initial trace status of the context
 - The length of the following description.
@@ -343,7 +476,8 @@ It contains the following information:
 
 #### User Message: Unregister Context
 
-This message is send by the DLT user library once for each context which should be unregistered from the DLT daemon.
+This message is sent by the DLT user library once for each context which should
+be unregistered from the DLT daemon.
 It contains the following information:
 
 - The application id of the application to be unregistered
@@ -361,12 +495,15 @@ It contains the following information:
 
 #### User Message: Overflow
 
-This message is send from the DLT user library to the DLT daemon, if there was an overflow during writing to the DLT daemon named pipe.
+This message is sent from the DLT user library to the DLT daemon, if there was
+an overflow during writing to the DLT daemon named pipe or socket IPC.
 It contains no further information.
 
 #### User Message: Application Log Level and Trace Status
 
-This message is send from the DLT user library to the DLT daemon, when the overall Log Level and Trace Status for the whole DLT application should be set from within the DLT application.
+This message is sent from the DLT user library to the DLT daemon, when the
+overall Log Level and Trace Status for the whole DLT application should be set
+from within the DLT application.
 It contains the following information:
 
 - The application id
@@ -375,21 +512,28 @@ It contains the following information:
 
 #### User Message: Log Level
 
-If the log level or trace status is changed, or initialized, this message is send from the DLT daemon to the DLT user library to store the current log level and trace status for filtering in the DLT user library.
+If the log level or trace status is changed, or initialized, this message is
+sent from the DLT daemon to the DLT user library to store the current log level
+and trace status for filtering in the DLT user library.
 
 It contains the following information:
 
 - The new set log level
 - New set trace status.
-- Each created context is stored with its associated information in a dynamically growing array in the DLT user library. The index in this array is send.
+- Each created context is stored with its associated information in a dynamically
+growing array in the DLT user library. The index in this array is sent.
 
 #### User Message: Injection
 
-This message is send from the DLT daemon to the DLT user library, if an injection message was received by the DLT daemon from a DLT client. Via the context, the appropriate application and its named pipe can be identified. The injection message is then passed to this named pipe.
+This message is sent from the DLT daemon to the DLT user library, if an injection
+message was received by the DLT daemon from a DLT client. Via the context, the
+appropriate application and its named pipe can be identified. The injection
+message is then passed to this named pipe.
 
 It contains the following information:
 
-- Each created context is stored with its associated information in a dynamically growing array in the DLT user library. The index in this array is send.
+- Each created context is stored with its associated information in a dynamically
+growing array in the DLT user library. The index in this array is sent.
 - Service ID of the injection message
 - Length of the following injection message
 - The contents of the injection message
@@ -399,19 +543,34 @@ It contains the following information:
 Following things occur for the received DLT user messages:
 
 - **DLT_USER_MESSAGE_REGISTER_APPLICATION**
-  - Add all information about application to a local application array (dynamically growing in a predefined step size (DLT_DAEMON_APPL_ALLOC_SIZE, typically 500)). The array is always being kept sorted (via qsort()). Finding entries in this array is done by a binary search (via bsearch()).
-  - Open named pipe to DLT application using the DLT user library with process id <PID>. The name of the pipe is /tmp/dlt<PID>
+  - Add all information about application to a local application array
+  (dynamically growing in a predefined step size (DLT_DAEMON_APPL_ALLOC_SIZE,
+  typically 500)). The array is always being kept sorted (via qsort()). Finding
+  entries in this array is done by a binary search (via bsearch()).
+  - Open named pipe (or Unix socket IPC if specified) to DLT application using
+  the DLT user library with process id <PID>. The name of the pipe (or Unix
+  socket IPC) is /tmp/dlt<PID>
 - **DLT_USER_MESSAGE_UNREGISTER_APPLICATION**
-  - Remove all information about this application from local application array, and remove all information of all contexts belonging to this application from local context array. The arrays are always being kept sorted, without empty entries in between. Dynamically shrinking of this array is NOT implemented.
+  - Remove all information about this application from local application array,
+  and remove all information of all contexts belonging to this application from
+  local context array. The arrays are always being kept sorted, without empty
+  entries in between. Dynamically shrinking of this array is NOT implemented.
 - **DLT_USER_MESSAGE_REGISTER_CONTEXT**
-  - Add all information about context to local context array (dynamically growing in a predefined step size (DLT_DAEMON_CONTEXT_ALLOC_SIZE, typically 1000)). The array is always being kept sorted (via qsort()). Finding entries in this array is done by a binary search (via bsearch()).
-  - Send log level and trace status to DLT user library for this context. Therefore, the DLT_USER_MESSAGE_LOG_LEVEL is used.
-  - Create and send DLT control message response "get log info" for this application and context to all connected DLT clients, if requested (-r option during startup of DLT daemon).
+  - Add all information about context to local context array (dynamically growing
+  in a predefined step size (DLT_DAEMON_CONTEXT_ALLOC_SIZE, typically 1000)).
+  The array is always being kept sorted (via qsort()). Finding entries in this
+  array is done by a binary search (via bsearch()).
+  - Send log level and trace status to DLT user library for this context.
+  Therefore, the DLT_USER_MESSAGE_LOG_LEVEL is used.
 - **DLT_USER_MESSAGE_UNREGISTER_CONTEXT**
-  - Remove all information about this context from local context array. The array is always being kept sorted, without empty entries in between. Dynamically shrinking of this array is NOT implemented.
+  - Remove all information about this context from local context array. The array
+  is always being kept sorted, without empty entries in between. Dynamically
+  shrinking of this array is NOT implemented.
 - **DLT_USER_MESSAGE_OVERFLOW**
   - Set internal flag for overflow.
-  - Create and send DLT control message response overflow to all connected TCP connections, and optionally to serial device, if connected. If the message was sent, reset the internal flag for overflow.
+  - Create and send DLT control message response overflow to all connected TCP
+  connections, and optionally to serial device, if connected. If the message
+  was sent, reset the internal flag for overflow.
 - **DLT_USER_MESSAGE_LOG**
   - Overwrite ECU id, if requested
   - Set storage header
@@ -422,8 +581,13 @@ Following things occur for the received DLT user messages:
       - Show message headers only
     - Store message to output file
     - Set serial header in front of message, if specified.
-    - Create and try to send DLT message to all DLT clients connected via TCP connection, and optionally via serial device.
-    - If the message could not be sent, store the message to a local ring buffer. The ring buffer internally uses a variable length for the buffered elements, and therefore uses the memory available for the buffer the best way possible. If the buffer is full, the oldest messages are silently discarded, until there is enough space for the message to be stored in the ring buffer.
+    - Create and try to send DLT message to all DLT clients connected via TCP
+    connection, and optionally via serial device.
+    - If the message could not be sent, store the message to a local ring buffer.
+    The ring buffer internally uses a variable length for the buffered elements,
+    and therefore uses the memory available for the buffer the best way possible.
+    If the buffer is full, the oldest messages are silently discarded, until
+    there is enough space for the message to be stored in the ring buffer.
 - **DLT_USER_MESSAGE_APP_LL_TS**
   - For all contexts belonging to the specified application:
     - Set specified log level
@@ -432,17 +596,23 @@ Following things occur for the received DLT user messages:
 
 ### DLT daemon: Control message handling
 
-If the DLT daemon receives a control message request from a DLT client, it handles it in the following way. First the service id of the message is detected, and if it is no injection message, the following things occur:
+If the DLT daemon receives a control message request from a DLT client, it handles
+it in the following way. First the service id of the message is detected, and
+if it is no injection message, the following things occur:
 
 - DLT_SERVICE_ID_SET_LOG_LEVEL
   - Check if received log level is other then already set log level. If yes:
     - Store new log level to local array.
-    - Send new log level to DLT user library for this context. Therefore, the DLT_USER_MESSAGE_LOG_LEVEL is used.
+    - Send new log level to DLT user library for this context. Therefore, the
+    DLT_USER_MESSAGE_LOG_LEVEL is used. Note that the DLT would take the log
+    level of Logstorage as the highest priority. So even if log level is changed
+    from client, it will be overwritten by Logstorage definition.
   - Send DLT control response to DLT client, with status of operation.
 - DLT_SERVICE_ID_SET_TRACE_STATUS
   - Check if received trace status is other then already set trace status. If yes:
     - Store new trace status to local array.
-    - Send new trace status to DLT user library for this context. Therefore, the DLT_USER_MESSAGE_LOG_LEVEL is used.
+    - Send new trace status to DLT user library for this context. Therefore, the
+    DLT_USER_MESSAGE_LOG_LEVEL is used.
   - Send DLT control response to DLT client, with status of operation.
 - DLT_SERVICE_ID_GET_LOG_INFO
   - Create answer message for DLT control response. All kinds of requests are supported:
@@ -456,16 +626,21 @@ If the DLT daemon receives a control message request from a DLT client, it handl
       - 5: Application ID, Context ID, Trace Status
       - 6: Application ID, Context ID, Log Level, Trace Status
       - 7: Application ID, Context ID, Log Level, Trace Status, Description
-  - Answer is of the corresponding type 3-7, or of type 8 (no matching context ids found), or of type 2 (error).
+  - Answer is of the corresponding type 3-7, or of type 8 (no matching context
+  ids found), or of type 2 (error).
   - Send DLT control response answer to DLT client.
 - DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL
   - Send DLT control response with default log level to DLT client.
 - DLT_SERVICE_ID_STORE_CONFIG
-  - Store configuration files with currently registered application ids and context ids as well as currently set log levels and trace statuses to configuration files. If these files exists, they will be read in when the DLT daemon is started next time.
+  - Store configuration files with currently registered application ids and
+  context ids as well as currently set log levels and trace statuses to
+  configuration files. If these files exists, they will be read in when the DLT
+  daemon is started next time.
   - Send DLT control response to DLT client.
 - DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT
   - Delete the stored configuration files, if they exists.
-  - Set default log level and trace status to initial values, and inform all applications using the default log level and trace status about the new defaults.
+  - Set default log level and trace status to initial values, and inform all
+  applications using the default log level and trace status about the new defaults.
   - Send DLT control response to DLT client.
 - DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS
   - Send DLT control response "Not supported" to DLT client
@@ -489,14 +664,18 @@ If the DLT daemon receives a control message request from a DLT client, it handl
 - DLT_SERVICE_ID_USE_EXTENDED_HEADER
   - Send DLT control response "Not supported" to DLT client
 - DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL
-  - Check if received default log level is other than already stored default log level. If yes:
+  - Check if received default log level is other than already stored default
+  log level. If yes:
     - Store new default log level to internal structure.
-    - Send a DLT_USER_MESSAGE_LOG_LEVEL to all DLT clients containing the new default log level, which uses a context which is set to default log level.
+    - Send a DLT_USER_MESSAGE_LOG_LEVEL to all DLT clients containing the new
+    default log level, which uses a context which is set to default log level.
   - Send DLT control response to DLT client, with status of operation.
 - DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS
-  - Check if received default trace status is other than already stored default trace status. If yes:
+  - Check if received default trace status is other than already stored default
+  trace status. If yes:
     - Store new default trace status to internal structure.
-    - Send a DLT_USER_MESSAGE_LOG_LEVEL to all DLT clients containing the new default trace status, which uses a context which is set to default trace status.
+    - Send a DLT_USER_MESSAGE_LOG_LEVEL to all DLT clients containing the new
+    default trace status, which uses a context which is set to default trace status.
   - Send DLT control response to DLT client, with status of operation.
 - DLT_SERVICE_ID_GET_SOFTWARE_VERSION
   - Send DLT control response containing a software version string to DLT Client.
@@ -505,11 +684,14 @@ If the DLT daemon receives a control message request from a DLT client, it handl
     - the package status of the package dltv2, e.g. "alpha, beta, final"
     - the overall subversion revision number for the package dltv2, e.g. "2300"
 - DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW
-  - Try to send DLT control response containing the status of the internal flag for overflow. If the message could be send, reset the internal flag for overflow.
+  - Try to send DLT control response containing the status of the internal flag
+  for overflow. If the message could be send, reset the internal flag for overflow.
 
 For handling of the injection message, the following steps occur:
 
-- Create new user message DLT_USER_MESSAGE_INJECTION from received DLT control request message, and send this user message to the DLT application using the DLT user library.
+- Create new user message DLT_USER_MESSAGE_INJECTION from received DLT control
+request message, and send this user message to the DLT application using the
+DLT user library.
 
 ### Mapping to files
 
@@ -521,22 +703,21 @@ The following table shows a top level view of the available Git repositories:
 | dlt | DLT Daemon and Library implementation; command line utilities, examples and test programs |
 | dlt_viewer | DLT Client GUI (DLT Viewer): QT based implementation |
 
-As this document has the focus on the DLT Daemon and the DLT user library, only the "dlt" directory is introduced in more detail:
+As this document has the focus on the DLT Daemon and the DLT user library, only
+the "dlt" directory is introduced in more detail:
 
 | Directory | Description |
 | --------- | ----------- |
 | doc | Documentation |
 | include | Include files, installed on target |
-| package | Packaging support files |
 | src | Source Code |
 | src/shared | Shared source code (between DLT daemon and DLT user library) |
 | src/adaptor | Adaptors to DLT daemon:dlt-adaptor-stdin (for connection over stdin) dlt-adaptor-udp (for connection over UDP) |
-| src/console | Console utilities: dlt-receive, dlt-convert, and dlt-sortbytimestamp |
+| src/console | Console utilities: logstorage, dlt-control, dlt-convert, dlt-passive-node-ctrl, dlt-receive, and dlt-sortbytimestamp |
 | src/daemon | DLT Daemon |
-| src/example | Examples for usage of the DLT user library:dlt-example-user (Macro IF) anddlt-example-user-func (Function IF) andwintestclient (MS Windows based test client) |
+| src/examples | Examples for usage of the DLT user library:dlt-example-user (Macro IF) anddlt-example-user-func (Function IF) andwintestclient (MS Windows based test client) |
 | src/lib | DLT library functions |
 | src/tests | Test programs:dlt-test-client and dlt-test-user for automatic tests, dlt-test-stress for stress tests, dlt-test-internal for internal tests |
-| src/winclientlib | MS Windows implementation of a client library |
 | testscripts | Several supporting scripts |
 
 The DLT daemon implementation uses the following files, besides DLT functions from files from the shared directory:
@@ -563,9 +744,9 @@ The shared directory contains the following files:
 
 | File | Description |
 | --------- | ----------- |
-| dlt_common.c | Common helper functions, such as:<br><ul><li>Print functions for DLT messages</li><li>Functions for handling DLT Ids</li><li>Filter functions</li><li>DLT message handling functions</li><li>Functions for handling DLT files</li><li>DLT receiver functions</li><li>Log handling</li><li>Ringbuffer functions</li><li>Setting and checking of storage header</li></ul> |
+| dlt_common.c | Common helper functions, such as: Print functions for DLT messages, Functions for handling DLT Ids, Filter functions, DLT message handling functions, Functions for handling DLT files, DLT receiver functions, Log handling, Ringbuffer functions, Setting and checking of storage header |
 | dlt_common_cfg.h | Compile time configuration for dlt_common.c |
-| dlt_user_shared.c | Shared functions, required by the DLT daemon and the DLT user library, such as:<br><ul><li>Setting and checking the user header</li><li>Sending DLT messages over named pipes (FIFOs)</li></ul> |
+| dlt_user_shared.c | Shared functions, required by the DLT daemon and the DLT user library, such as: Setting and checking the user header, Sending DLT messages over named pipes (FIFOs) or UNIX_SOCKET |
 | dlt_user_shared.h | Header file for dlt_user_shared.c |
 | dlt_user_shared_cfg.h | Compile time configuration for dlt_user_shared.c |
 
@@ -613,10 +794,18 @@ The following important structures are used in the DLT Daemon and DLT User Libra
 
 - The following preconditions were given prior to implementation:
   - C-only implementation for the DLT daemon and the DLT user library
-  - Implementation of common functions, which can be used in a command line utility as well as in an Graphical UI
+  - Implementation of common functions, which can be used in a command line
+  utility as well as in a Graphical UI
   - Implementation of C+\+ like classes in C, see dlt_common.c and dlt_common.h
-- The current implementation of the DLT daemon and DLT user library is only tested with gcc under Ubuntu 16.04 on Intel HW.
-- It is assumed that packed structs are always stored in memory in the order specified within the packed struct.
+- The current implementation of the DLT daemon and DLT user library is tested
+with gcc under Ubuntu 16.04 on Intel HW; Android and QNX on IMX, RCAR, Qualcomm
+ARM target boards.
+- It is assumed that packed structs are always stored in memory in the order
+specified within the packed struct.
 - The implementation is multithread safe.
-- Initialize DLT application and contexts, then forking and using the forked process, will lead to unclear behavior (or in worst case to a crash), as the forked process uses another process id as the parent process. Instead, initialize the DLT application and contexts in the forked process.
-- Calling of DLT logging and tracing functions within a callback function for injections is not supported, and will lead to an unclear behavior.
+- Initialize DLT application and contexts, then forking and using the forked
+process, will lead to unclear behavior (or in the worst case to a crash), as the
+forked process uses another process id as the parent process. Instead, initialize
+the DLT application and contexts in the forked process.
+- Calling of DLT logging and tracing functions within a callback function for
+injections are not supported, and will lead to an unclear behavior.
