@@ -1636,7 +1636,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     uint32_t uiType;
     uint16_t uiSize;
     uint32_t uiExtraSize;
-    int ret;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1692,20 +1691,14 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
     msg.datasize += uiSize;
 
-    /* Calc lengths */
+    /* Calc length */
     msg.standardheader->len = DLT_HTOBE_16(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
 
-    /* Sending data... */
-    {
-        ret = dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
-                                        msg.headerbuffer, sizeof(DltStorageHeader),
-                                        msg.headerbuffer + sizeof(DltStorageHeader),
-                                        msg.headersize - sizeof(DltStorageHeader),
-                                        msg.databuffer, msg.datasize, verbose);
-
-        if (ret == DLT_DAEMON_ERROR_BUFFER_FULL)
-            daemon->overflow_counter++;
-    }
+    dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
+                           msg.headerbuffer, sizeof(DltStorageHeader),
+                           msg.headerbuffer + sizeof(DltStorageHeader),
+                           msg.headersize - sizeof(DltStorageHeader),
+                           msg.databuffer, msg.datasize, verbose);
 
     free(msg.databuffer);
 
@@ -2869,16 +2862,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
-    ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                            daemon_local, verbose);
-
-    if (ret == DLT_DAEMON_ERROR_BUFFER_FULL && daemon->overflow_counter == 1) {
-        dlt_vlog(LOG_WARNING, "%s: buffer full, messages will be discarded.\n",
-                __func__);
-    } else if (ret != DLT_DAEMON_ERROR_OK &&
-               ret != DLT_DAEMON_ERROR_BUFFER_FULL) {
-        dlt_vlog(LOG_ERR, "%s: failed to send message to client\n", __func__);
-    }
+    dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
     /* keep not read data in buffer */
     size = daemon_local->msg.headersize +

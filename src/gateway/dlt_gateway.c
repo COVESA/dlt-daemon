@@ -1416,7 +1416,7 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                 return DLT_RETURN_ERROR;
             }
 
-            if (dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,
+            dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL,
                                        daemon,
                                        daemon_local,
                                        msg.headerbuffer,
@@ -1425,10 +1425,8 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                        msg.headersize - sizeof(DltStorageHeader),
                                        msg.databuffer,
                                        msg.datasize,
-                                       verbose) != DLT_DAEMON_ERROR_OK)
-                dlt_log(LOG_WARNING, "Forward message to clients failed!\n");
-        }
-        else { /* otherwise remove this connection and do not connect again */
+                                       verbose);
+        } else { /* otherwise remove this connection and do not connect again */
             dlt_vlog(LOG_WARNING,
                      "Received ECUid (%s) differs to configured ECUid(%s). "
                      "Discard this message.\n",
