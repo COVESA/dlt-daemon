@@ -441,7 +441,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         (*tmp)->idx = 1;
         (*tmp)->next = NULL;
     }
-    else { /* newest file available*/
+    else {
+        /* newest file available*/
         strcat(absolute_file_path, storage_path);
         strcat(absolute_file_path, (*newest)->name);
 
@@ -457,8 +458,10 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         /* if size is enough, open it */
         if ((ret == 0) && (s.st_size + msg_size < (int)config->file_size)) {
             config->log = fopen(absolute_file_path, "a+");
+            config->current_write_file_offset = s.st_size;
         }
-        else { /* no space in file or file stats cannot be read */
+        else {
+            /* no space in file or file stats cannot be read */
             unsigned int idx = 0;
 
             /* get index of newest log file */
@@ -639,8 +642,8 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     int ret = 0;
     int start_index = 0;
     int end_index = 0;
-    int count;
-    int remain_file_size;
+    int count = 0;
+    int remain_file_size = 0;
 
     if ((config == NULL) || (file_config == NULL) || (dev_path == NULL) ||
         (footer == NULL))
@@ -650,6 +653,22 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     }
 
     count = end_offset - start_offset;
+
+    /* In case of cached-based strategy, the newest file information
+     * must be updated everytime of synchronization.
+     */
+    if (config->log) {
+        fclose(config->log);
+        config->log = NULL;
+        config->current_write_file_offset = 0;
+    }
+
+    if (dlt_logstorage_open_log_file(config, file_config,
+            dev_path, count, true) != 0) {
+        dlt_vlog(LOG_ERR, "%s: failed to open log file\n", __func__);
+        return -1;
+    }
+
     remain_file_size = config->file_size - config->current_write_file_offset;
 
     if (count > remain_file_size)
@@ -665,20 +684,8 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         if ((start_index >= 0) && (end_index > start_index) &&
             (count > 0) && (count <= remain_file_size))
         {
-            /* Prepare log file */
-            if (config->log == NULL)
-            {
-                if (dlt_logstorage_prepare_on_msg(config, file_config, dev_path,
-                                                  config->file_size, NULL) != 0)
-                {
-                    dlt_vlog(LOG_ERR, "%s: failed to prepare log file\n",
-                             __func__);
-                    return -1;
-                }
-            }
-
-            ret = fwrite((uint8_t*)config->cache + start_offset + start_index, count, 1,
-                         config->log);
+            ret = fwrite((uint8_t*)config->cache + start_offset + start_index,
+                        count, 1, config->log);
             dlt_logstorage_check_write_ret(config, ret);
 
             /* Close log file */
@@ -698,8 +705,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         }
     }
 
-    start_index = dlt_logstorage_find_dlt_header(config->cache, start_offset,
-                                                 count);
+    start_index = dlt_logstorage_find_dlt_header(config->cache, start_offset, count);
     count = end_offset - start_offset - start_index;
 
     if ((start_index >= 0) && (count > 0))
@@ -708,7 +714,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         if (config->log == NULL)
         {
             if (dlt_logstorage_prepare_on_msg(config, file_config, dev_path,
-                                              config->file_size, NULL) != 0)
+                                              count, NULL) != 0)
             {
                 dlt_vlog(LOG_ERR, "%s: failed to prepare log file\n", __func__);
                 return -1;
@@ -755,6 +761,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
         return -1;
     }
 
+    /* This is for ON_MSG/UNSET strategy */
     if (config->log == NULL) { /* open a new log file */
         ret = dlt_logstorage_open_log_file(config,
                                            file_config,
