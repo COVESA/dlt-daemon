@@ -766,9 +766,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         return -1;
     }
 
-    if ((data->sync == DLT_LOGSTORAGE_SYNC_ON_MSG ||
-            data->sync == DLT_LOGSTORAGE_SYNC_UNSET) &&
-        (data->file_name)) {
+    if (data->file_name) {
         if (handle->newest_file_list != NULL) {
             tmp = handle->newest_file_list;
             while (tmp) {
@@ -2093,34 +2091,46 @@ int dlt_logstorage_write(DltLogStorage *handle,
         if (config[i]->file_name == NULL)
             continue;
 
-        /* The newest file must be applied to only ON_MSG */
-        if ((config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG ||
-            config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
-            tmp = handle->newest_file_list;
-            while (tmp) {
-                if (strcmp(tmp->file_name, config[i]->file_name) == 0) {
-                    found = 1;
-                    break;
-                }
-                else {
-                    tmp = tmp->next;
-                }
+        tmp = handle->newest_file_list;
+        while (tmp) {
+            if (strcmp(tmp->file_name, config[i]->file_name) == 0) {
+                found = 1;
+                break;
             }
-            if (!found) {
-                dlt_vlog(LOG_ERR, "Cannot find out record for filename [%s]\n",
+            else {
+                tmp = tmp->next;
+            }
+        }
+        if (!found) {
+            dlt_vlog(LOG_ERR, "Cannot find out record for filename [%s]\n",
+                    config[i]->file_name);
+            return -1;
+        }
+
+        /* prepare log file (create and/or open)*/
+        ret = config[i]->dlt_logstorage_prepare(config[i],
+                                                uconfig,
+                                                handle->device_mount_point,
+                                                size1 + size2 + size3,
+                                                tmp->newest_file);
+
+        /* In case the strategy is other than ON_MSG and UNSET,
+         * in the very first time of preparation, the working file name
+         * is not created yet. So check strategy and update it later in
+         * step prepare_on_msg.
+         */
+        if (!config[i]->working_file_name) {
+            if (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
+                    config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) {
+                dlt_vlog(LOG_ERR, "Failed to prepare working file for %s\n",
                         config[i]->file_name);
                 return -1;
             }
-
-            /* prepare log file (create and/or open)*/
-            ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                    uconfig,
-                                                    handle->device_mount_point,
-                                                    size1 + size2 + size3,
-                                                    tmp->newest_file);
-
+        }
+        else {
             if ((tmp->newest_file == NULL ||
                     strcmp(config[i]->working_file_name, tmp->newest_file) != 0)) {
+
                 if (tmp->newest_file) {
                     free(tmp->newest_file);
                     tmp->newest_file = NULL;
@@ -2128,17 +2138,6 @@ int dlt_logstorage_write(DltLogStorage *handle,
                 tmp->newest_file = strdup(config[i]->working_file_name);
             }
         }
-        else {
-            /* In case SyncBehaviour differs from ON_MSG,
-             * do not need to update the newest file name
-             */
-            ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                    uconfig,
-                                                    handle->device_mount_point,
-                                                    size1 + size2 + size3,
-                                                    NULL);
-        }
-
 
         if (ret == 0) { /* log data (write) */
             ret = config[i]->dlt_logstorage_write(config[i],
