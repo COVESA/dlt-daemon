@@ -74,6 +74,10 @@
  \{
  */
 
+#ifndef DLT_NETWORK_TRACE_ENABLE
+#cmakedefine DLT_NETWORK_TRACE_ENABLE
+#endif
+
 #ifdef DLT_NETWORK_TRACE_ENABLE
 #   include <mqueue.h>
 #else

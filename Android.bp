@@ -47,6 +47,17 @@ genrule {
     out: ["dlt_version.h"],
 }
 
+// Generate dlt_user.h without Cmake
+genrule {
+    name: "dlt_user_header",
+    tool_files: ["util/create_dlt_user.py"],
+    srcs: [
+        "include/dlt/dlt_user.h.in",
+    ],
+    cmd: "$(location util/create_dlt_user.py) $(in) $(out)",
+    out: ["dlt_user.h"],
+}
+
 cc_binary {
 
     name: "dlt-daemon",
@@ -106,7 +117,10 @@ cc_library_shared {
         "include/dlt",
     ],
 
-    export_generated_headers: ["dlt_version_header"],
+    export_generated_headers: [
+        "dlt_version_header",
+        "dlt_user_header"
+    ],
 
     srcs: [
         "src/lib/dlt_client.c",

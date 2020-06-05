@@ -674,6 +674,9 @@ be set to 0, and the corresponding pointer must be set to NULL.
 DLT_TRACE_NETWORK(mycontext, DLT_NW_TRACE_CAN, headerlen, header, payloadlen, payload);
 ```
 
+Note that when DLT_NETWORK_TRACE_ENABLE is disabled, the mqueue.h will not be
+included.
+
 ### DLT C++ Extension
 
 The DLT C++ extension was added to DLT in version 2.13. This approach solves
