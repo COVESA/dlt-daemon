@@ -96,8 +96,8 @@ endif()
 
 include_directories(
     ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/include/dlt
     ${PROJECT_BINARY_DIR}/include/dlt
+    ${PROJECT_SOURCE_DIR}/include/dlt
     ${PROJECT_SOURCE_DIR}/src/shared
     ${PROJECT_SOURCE_DIR}/src/core_dump_handler
     ${PROJECT_SOURCE_DIR}/src/offlinelogstorage
@@ -181,6 +181,7 @@ add_subdirectory(cmake)
 if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
    HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
     add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
+    set(DLT_NETWORK_TRACE_ENABLE 1)
 else()
     message(STATUS "Disable network trace interface since message queue is not supported")
 endif()

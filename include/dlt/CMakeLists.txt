@@ -13,10 +13,13 @@
 # For further information see http://www.genivi.org/.
 #######
 
-install(FILES dlt.h dlt_user.h dlt_user_macros.h dlt_client.h dlt_protocol.h
+configure_file(dlt_user.h.in dlt_user.h)
+
+install(FILES dlt.h dlt_user_macros.h dlt_client.h dlt_protocol.h
               dlt_common.h dlt_types.h dlt_shm.h dlt_offline_trace.h
               dlt_filetransfer.h dlt_common_api.h
-              ${PROJECT_BINARY_DIR}/include/dlt/dlt_version.h
+              ${CMAKE_CURRENT_BINARY_DIR}/dlt_version.h
+              ${CMAKE_CURRENT_BINARY_DIR}/dlt_user.h
         DESTINATION include/dlt
         COMPONENT devel)
 
