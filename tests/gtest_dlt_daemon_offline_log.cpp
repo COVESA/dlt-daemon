@@ -512,6 +512,7 @@ TEST(t_dlt_logstorage_device_disconnected, normal)
     DltLogStorage handle;
     int reason = 0;
     handle.config_status = 0;
+    handle.newest_file_list = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_disconnected(&handle, reason));
 }
