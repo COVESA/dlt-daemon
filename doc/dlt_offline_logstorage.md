@@ -270,3 +270,4 @@ The following strategies are implemented:
 Note :
 1. Combinations (not allowed: combinations with ON_MSG,combination of ON\_FILE\_SIZE with ON\_SPECIFIC\_SIZE)
 2. If on\_demand sync strategy alone is specified, it is advised to concatenate the log files in sequential order before viewing it on viewer.
+3. In case multiple FILTERs use the same `File` value, it is recommened that the following settings must also have same values: `NOFiles`, `FileSize` and `SpecificSize`
