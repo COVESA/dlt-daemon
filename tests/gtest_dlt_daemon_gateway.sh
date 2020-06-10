@@ -154,7 +154,7 @@ setupTest()
         return 1
     fi
 
-    if [ $# -eq 1 ] && [ "$1" == "1" ]
+    if [ $# -eq 1 ] && [ "$1" = "1" ]
     then
         echo "[General]" >>$tmpPath/dlt_gateway.conf
         echo "Interval=1">>$tmpPath/dlt_gateway.conf
@@ -243,7 +243,7 @@ fi
 
 echo "Initializing test"
 
-if [ $# -eq 1 ] && [ "$1" == "-w" ]
+if [ $# -eq 1 ] && [ "$1" = "-w" ]
 then
     echo "Including General section in dlt_gateway.conf"
     setupTest 1
