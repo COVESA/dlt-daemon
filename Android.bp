@@ -22,7 +22,8 @@ cc_defaults {
         "include/dlt",
     ],
 
-    generated_headers: ["dlt_version_header"],
+    generated_headers: ["dlt_version_header",
+                        "dlt_user_header"],
 
     cflags: [
         "-DDLT_USE_UNIX_SOCKET_IPC",
@@ -50,11 +51,11 @@ genrule {
 // Generate dlt_user.h without Cmake
 genrule {
     name: "dlt_user_header",
-    tool_files: ["util/create_dlt_user.py"],
+    tool_files: ["util/create_dlt_user_h.py"],
     srcs: [
         "include/dlt/dlt_user.h.in",
     ],
-    cmd: "$(location util/create_dlt_user.py) $(in) $(out)",
+    cmd: "$(location util/create_dlt_user_h.py) $(in) $(out)",
     out: ["dlt_user.h"],
 }
 
@@ -192,3 +193,4 @@ cc_binary {
 }
 
 // vim: ft=python
+
