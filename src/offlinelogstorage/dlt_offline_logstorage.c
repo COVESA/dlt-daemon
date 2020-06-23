@@ -735,6 +735,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
     int found = 0;
     char *keys = NULL;
     DltNewestFileName *tmp = NULL;
+    DltNewestFileName *prev_tmp = NULL;
     DltNewestFileName *new_tmp = NULL;
 
     if ((handle == NULL) || (data == NULL)) {
@@ -775,6 +776,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
                     break;
                 }
                 else {
+                    prev_tmp = tmp;
                     tmp = tmp->next;
                 }
             }
@@ -798,7 +800,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
             if (handle->newest_file_list == NULL)
                 handle->newest_file_list = new_tmp;
             else
-                handle->newest_file_list->next = new_tmp;
+                prev_tmp->next = new_tmp;
         }
     }
 
