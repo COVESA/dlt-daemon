@@ -26,10 +26,6 @@ This is a small external program for forwarding input from stdin to DLT Daemon.
 
 :    To flush the buffered logs while unregistering app
 
--s
-
-:    Set socket to Blocking mode if unix socket is used
-
 -t
 
 :    Set timeout when sending messages at exit, in ms (default: 10000 = 10sec)

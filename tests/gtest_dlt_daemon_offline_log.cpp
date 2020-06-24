@@ -29,10 +29,6 @@ extern "C"
 #include <fcntl.h>
 }
 
-#ifndef DLT_DAEMON_BLOCKING_TEST
-#   define DLT_DAEMON_BLOCKING_TEST 1
-#endif
-
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
 TEST(t_dlt_logstorage_list_add, normal)
 {
