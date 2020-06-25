@@ -19,12 +19,17 @@ endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
 
 set(dlt_system_SRCS dlt-system.c dlt-system-options.c dlt-system-process-handling.c
        dlt-system-logfile.c dlt-system-processes.c dlt-system-shell.c
-       dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c)
+       dlt-system-syslog.c dlt-system-watchdog.c dlt-system-journal.c
+       dlt-system-slogger2.c)
 
 if(WITH_DLT_FILETRANSFER)
   set(dlt_system_SRCS ${dlt_system_SRCS} dlt-system-filetransfer.c)
   add_definitions(-DDLT_FILETRANSFER_ENABLE)
 endif(WITH_DLT_FILETRANSFER)
+
+if(WITH_DLT_SLOGGER2)
+  target_link_libraries(dlt-system slog2parse)
+endif(WITH_DLT_SLOGGER2)
 
 add_executable(dlt-system ${dlt_system_SRCS} ${systemd_SRCS})
 

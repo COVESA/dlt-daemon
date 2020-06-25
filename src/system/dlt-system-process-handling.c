@@ -145,6 +145,13 @@ void start_threads(DltSystemConfiguration *config)
         start_thread(config, journal_thread, "systemd journal");
 
 #endif
+
+#if defined(DLT_SLOGGER2_ENABLE)
+
+    if (config->Slogger2.Enable)
+        start_thread(config, slogger2_thread, "slogger2");
+
+#endif
 }
 
 /**

@@ -186,6 +186,13 @@ void init_configuration(DltSystemConfiguration *config)
         config->LogProcesses.Mode[i] = 0;
         config->LogProcesses.TimeDelay[i] = 0;
     }
+
+#if defined(__QNX__)
+    /* Slogger2 */
+    config->Slogger2.Enable = 0;
+    config->Slogger2.ContextId = "SLG2";
+    config->Slogger2.LogsPath = "/dev/shmem/slogger2";
+#endif
 }
 
 /**
@@ -266,6 +273,26 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             {
                 config->Syslog.Port = atoi(value);
             }
+
+#if defined(__QNX__)
+            /* Slogger2 */
+            else if (strcmp(token, "Slogger2Enable") == 0)
+            {
+                config->Slogger2.Enable = atoi(value);
+            }
+            else if (strcmp(token, "Slogger2ContextId") == 0)
+            {
+                config->Slogger2.ContextId = malloc(strlen(value) + 1);
+                MALLOC_ASSERT(config->Slogger2.ContextId);
+                strcpy(config->Slogger2.ContextId, value);
+            }
+            else if (strcmp(token, "Slogger2LogsPath") == 0)
+            {
+                config->Slogger2.LogsPath = malloc(strlen(value) + 1);
+                MALLOC_ASSERT(config->Slogger2.LogsPath);
+                strcpy(config->Slogger2.LogsPath, value);
+            }
+#endif
 
             /* Journal */
             else if (strcmp(token, "JournalEnable") == 0)

@@ -148,6 +148,15 @@ typedef struct {
     int TimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];
 } LogProcessOptions;
 
+#if defined(__QNX__)
+/* Configuration slogger2 options */
+typedef struct {
+    int Enable;
+    char *ContextId;
+    char *LogsPath;
+} Slogger2Options;
+#endif
+
 typedef struct {
     char *ApplicationId;
     ShellOptions Shell;
@@ -156,6 +165,9 @@ typedef struct {
     FiletransferOptions Filetransfer;
     LogFileOptions LogFile;
     LogProcessOptions LogProcesses;
+#if defined(__QNX__)
+    Slogger2Options Slogger2;
+#endif
 } DltSystemConfiguration;
 
 typedef struct {
@@ -187,6 +199,10 @@ void syslog_thread(void *v_conf);
 void filetransfer_thread(void *v_conf);
 void logfile_thread(void *v_conf);
 void logprocess_thread(void *v_conf);
+
+#if defined(DLT_SLOGGER2_ENABLE)
+void slogger2_thread(void *v_conf);
+#endif
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
 void watchdog_thread(void *v_conf);

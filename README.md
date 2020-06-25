@@ -83,6 +83,7 @@ WITH\_SYSTEMD                     | OFF            | Set to ON to run CMakeLists
 WITH\_SYSTEMD\_WATCHDOG           | OFF            | Set to ON to use the systemd watchdog in dlt-daemon
 WITH\_SYSTEMD\_JOURNAL            | OFF            | Set to ON to use the systemd journal in dlt-system
 WITH\_DLT\_DBUS                   | OFF            | Set to ON to build src/dbus binaries
+WITH\_DLT\_SLOGGER2               | OFF            | Set to ON to use the QNX slogger2 in dlt-system
 
 #### Documentation Options
 

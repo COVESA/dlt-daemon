@@ -68,6 +68,9 @@ option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"          
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                             OFF)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                             ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "QNX")
+    option(WITH_DLT_SLOGGER2      "Set to ON to build dlt-system with slogger2 support"                              OFF)
+endif()
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
