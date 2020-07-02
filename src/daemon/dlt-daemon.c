@@ -274,7 +274,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
                 __func__, n, daemon_local->flags.loggingFilename);
     }
 
@@ -1522,7 +1522,7 @@ void dlt_daemon_exit_trigger()
     ssize_t n;
     n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     if (n < 0 || (size_t)n > DLT_PATH_MAX) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
                 __func__, n, tmp);
     }
 
