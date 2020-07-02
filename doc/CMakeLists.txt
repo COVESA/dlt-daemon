@@ -60,7 +60,7 @@ if(WITH_DOC)
         COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals
         COMMAND mkdir -p ${PROJECT_BINARY_DIR}/doc/manuals/images
         COMMAND cp ${PROJECT_SOURCE_DIR}/doc/images/* ${PROJECT_BINARY_DIR}/doc/manuals/images
-        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${PROJECT_SOURCE_DIR}/doc/dlt_design_specification.txt
+        COMMAND ${ASCIIDOC_TOOL} -a TOC1 -o ${PROJECT_BINARY_DIR}/doc/manuals/dlt_design_specification.html ${PROJECT_SOURCE_DIR}/doc/dlt_design_specification.md
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/doc
     )
 
