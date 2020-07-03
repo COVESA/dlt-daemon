@@ -784,6 +784,12 @@ DltReturnValue dlt_init_common(void)
         }
     }
 
+    dlt_user.disable_injection_msg = 0;
+    if (getenv(DLT_USER_ENV_DISABLE_INJECTION_MSG)) {
+        dlt_log(LOG_WARNING, "Injection message is disabled\n");
+        dlt_user.disable_injection_msg = 1;
+    }
+
     if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer),
                                 buffer_min,
                                 buffer_max,
@@ -3573,9 +3579,10 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
 
     while (1) {
         /* Check for new messages from DLT daemon */
-        if (dlt_user_log_check_user_message() < DLT_RETURN_OK)
-            /* Critical error */
-            dlt_log(LOG_CRIT, "Housekeeper thread encountered error condition\n");
+        if (!dlt_user.disable_injection_msg)
+            if (dlt_user_log_check_user_message() < DLT_RETURN_OK)
+                /* Critical error */
+                dlt_log(LOG_CRIT, "Housekeeper thread encountered error condition\n");
 
         /* Reattach to daemon if neccesary */
         dlt_user_log_reattach_to_daemon();

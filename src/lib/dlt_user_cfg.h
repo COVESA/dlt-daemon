@@ -157,6 +157,9 @@ typedef enum
 /* Maximum msg size as per autosar standard */
 #define DLT_LOG_MSG_BUF_MAX_SIZE 65535
 
+/* Name of environment variable for disabling the injection message at libdlt */
+#define DLT_USER_ENV_DISABLE_INJECTION_MSG "DLT_DISABLE_INJECTION_MSG_AT_USER"
+
 /************************/
 /* Don't change please! */
 /************************/
