@@ -779,3 +779,19 @@ context changed. The usage is similar to DLT\_REGISTER\_INJECTION\_CALLBACK.
 ```
 DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(CONTEXT, CALLBACK)
 ```
+## Disable injection messages
+
+An environment variable named `DLT_DISABLE_INJECTION_MSG_AT_USER` could be used in case
+dlt application wants to ignore all data/messages from dlt-daemon completely.
+
+To use:
+
+```
+export DLT_DISABLE_INJECTION_MSG_AT_USER=1
+```
+
+To clear:
+
+```
+unset DLT_DISABLE_INJECTION_MSG_AT_USER
+```
