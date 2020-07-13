@@ -333,6 +333,12 @@ During sending of a network trace message, the following things occur:
 During registration of a callback function for an injection message, then following
 steps are executed:
 
+  - Check if the environment variable DLT\_DISABLE\_INJECTION\_MSG\_AT\_USER is set.
+    - If yes:
+      - libdlt will ignore all data/messages from dlt-daemon, including:
+      loglevel change, custom injection messages ...
+    - If no (default):
+      - libdlt will handle all data/messages from dlt-daemon as normal.
   - For the specified context, check if service id is already in the table of the
   registered callbacks (this table is dynamically growing in steps of one entry).
     - If yes:
