@@ -397,7 +397,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     while (!feof(handle)) {
         str1[0] = 0;
 
-        if (fscanf(handle, "%s", str1) != 1)
+        if (fscanf(handle, "%255s", str1) != 1)
             break;
 
         if (str1[0] == 0)
@@ -412,7 +412,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
 
         str1[0] = 0;
 
-        if (fscanf(handle, "%s", str1) != 1)
+        if (fscanf(handle, "%255s", str1) != 1)
             break;
 
         if (str1[0] == 0)
@@ -1732,7 +1732,7 @@ void dlt_log_set_filename(const char *filename)
 #ifndef DLT_USE_UNIX_SOCKET_IPC
 void dlt_log_set_fifo_basedir(const char *pipe_dir)
 {
-    strncpy(dltFifoBaseDir, pipe_dir, DLT_PATH_MAX);
+    strncpy(dltFifoBaseDir, pipe_dir, DLT_PATH_MAX-1);
     dltFifoBaseDir[DLT_PATH_MAX - 1] = 0;
 }
 #endif

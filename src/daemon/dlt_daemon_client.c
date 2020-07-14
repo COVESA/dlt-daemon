@@ -1083,7 +1083,7 @@ void dlt_daemon_control_get_log_info(int sock,
                                                       daemon->ecuid,
                                                       verbose);
 
-            if (application) {
+            if ((user_list->applications) && (application)) {
                 /* Calculate start offset within contexts[] */
                 offset_base = 0;
 
