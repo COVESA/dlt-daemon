@@ -475,7 +475,7 @@ DltReturnValue dlt_init_message_queue(void)
 
     /* Generate per process name for queue */
     char queue_name[NAME_MAX];
-    snprintf(queue_name, NAME_MAX, "%s.%d", DLT_MESSAGE_QUEUE_NAME, getpid());
+    snprintf(queue_name, NAME_MAX, "%s.%ld", DLT_MESSAGE_QUEUE_NAME, getpid());
 
     /* Maximum queue size is 10, limit to size of pointers */
     struct mq_attr mqatr;
@@ -846,7 +846,7 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        snprintf(filename, DLT_PATH_MAX, "%s/dlt%ld", dlt_user_dir, getpid());
         unlink(filename);
     }
 
@@ -1571,33 +1571,40 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
         return DLT_RETURN_ERROR;
 
     /* initialize values */
-    if (log->buffer == NULL) {
+     if ((NULL != log->buffer))
+     {
+       free(log->buffer);
+       log->buffer = NULL;
+     }
+     else 
+     {
         log->buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
-
-        if (log->buffer == NULL) {
+	 }
+	 	
+     if (log->buffer == NULL) {
             dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
             return DLT_RETURN_ERROR;
-        }
-    }
+     }
+    else {
 
-    log->args_num = 0;
-    log->log_level = loglevel;
-    log->size = 0;
-    log->use_timestamp = DLT_AUTO_TIMESTAMP;
+    	log->args_num = 0;
+    	log->log_level = loglevel;
+    	log->size = 0;
+    	log->use_timestamp = DLT_AUTO_TIMESTAMP;
 
-    /* In non-verbose mode, insert message id */
-    if (dlt_user.verbose_mode == 0) {
-        if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
+    	/* In non-verbose mode, insert message id */
+    	if (dlt_user.verbose_mode == 0) {
+        	if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
+            	return DLT_RETURN_USER_BUFFER_FULL;
 
-        /* Write message id */
-        memcpy(log->buffer, &(messageid), sizeof(uint32_t));
-        log->size = sizeof(uint32_t);
+        	/* Write message id */
+        	memcpy(log->buffer, &(messageid), sizeof(uint32_t));
+        	log->size = sizeof(uint32_t);
 
-        /* as the message id is part of each message in non-verbose mode,
-         * it doesn't increment the argument counter in extended header (if used) */
-    }
-
+        	/* as the message id is part of each message in non-verbose mode,
+         	* it doesn't increment the argument counter in extended header (if used) */
+		}
+	}
     return DLT_RETURN_TRUE;
 }
 

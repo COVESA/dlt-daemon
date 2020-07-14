@@ -1800,6 +1800,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
 
         if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
             dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+			close(in_sock);
+			in_sock = -1;
             return -1;
         }
 

@@ -512,7 +512,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #else
         snprintf(filename,
                  DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                 "%s/dltpipes/dlt%d",
+                 "%s/dltpipes/dlt%ld",
                  dltFifoBaseDir,
                  pid);
 
