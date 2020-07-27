@@ -935,10 +935,12 @@ DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
 
 DltReturnValue dlt_client_set_mode(DltClient *client, DltClientMode mode)
 {
+    dlt_vlog(LOG_INFO, "Setting mode to %d\n", mode);
     if (client == 0)
         return DLT_RETURN_ERROR;
 
     client->mode = mode;
+    dlt_vlog(LOG_INFO, "Mode set to %d\n", client->mode);
     return DLT_RETURN_OK;
 
 }
