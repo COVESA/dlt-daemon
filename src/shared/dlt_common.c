@@ -2014,6 +2014,8 @@ DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver)
 
 int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src)
 {
+    socklen_t addrlen;
+
     if (receiver == NULL)
         return -1;
 
@@ -2035,11 +2037,22 @@ int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src)
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - receiver->lastBytesRcvd,
                                    0);
-    else
+    else if (from_src == DLT_RECEIVE_FD)
         /* wait for data from fd */
         receiver->bytesRcvd = read(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - receiver->lastBytesRcvd);
+
+        else {
+            /* wait for data from UDP socket */
+            addrlen = sizeof(receiver->addr);
+            receiver->bytesRcvd = recvfrom(receiver->fd,
+                                           receiver->buf + receiver->lastBytesRcvd,
+                                           receiver->buffersize - receiver->lastBytesRcvd,
+                                           0,
+                                           (struct sockaddr *)&(receiver->addr),
+                                           &addrlen);
+        }
 
     if (receiver->bytesRcvd <= 0) {
         receiver->bytesRcvd = 0;

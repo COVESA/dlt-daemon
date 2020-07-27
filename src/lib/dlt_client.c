@@ -121,6 +121,7 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
     client->receiver.buffer = NULL;
     client->receiver.buf = NULL;
     client->receiver.backup_buf = NULL;
+    client->hostip = NULL;
 
     return DLT_RETURN_OK;
 }
@@ -153,16 +154,17 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
         dlt_vlog(LOG_INFO,
                  "Init dlt client struct with default port: %hu.\n",
                  servPort);
-
     return dlt_client_init_port(client, servPort, verbose);
 }
 
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
+    const int yes = 1;
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
     int rv;
+    struct ip_mreq mreq;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
@@ -266,6 +268,58 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         }
 
         break;
+    case DLT_CLIENT_MODE_UDP_MULTICAST:
+
+        if ((client->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+        {
+            fprintf(stderr, "ERROR: socket error: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        /* allow multiple sockets to use the same PORT number */
+        if (setsockopt(client->sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
+        {
+            fprintf(stderr, "ERROR: Reusing address failed: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        memset(&client->receiver.addr, 0, sizeof(client->receiver.addr));
+        client->receiver.addr.sin_family = AF_INET;
+        client->receiver.addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        client->receiver.addr.sin_port = htons(client->port);
+
+        /* bind to receive address */
+        if (bind(client->sock, (struct sockaddr*) &client->receiver.addr, sizeof(client->receiver.addr)) < 0)
+        {
+            fprintf(stderr, "ERROR: bind failed: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if (client->hostip)
+        {
+            mreq.imr_interface.s_addr = inet_addr(client->hostip);
+        }
+        if (client->servIP == NULL)
+        {
+            fprintf(stderr, "ERROR: server address not set\n");
+            return DLT_RETURN_ERROR;
+        }
+
+        mreq.imr_multiaddr.s_addr = inet_addr(client->servIP);
+        if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
+        {
+            fprintf(stderr, "ERROR: server address not not valid %s\n", client->servIP);
+            return DLT_RETURN_ERROR;
+        }
+
+        if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
+        {
+            fprintf(stderr, "ERROR: setsockopt add membership failed: %s\n", strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        break;
     default:
 
         if (verbose)
@@ -315,6 +369,10 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
         client->socketPath = NULL;
     }
 
+    if (client->hostip) {
+        free(client->hostip);
+        client->hostip = NULL;
+    }
     return ret;
 }
 
@@ -875,12 +933,36 @@ DltReturnValue dlt_client_setbaudrate(DltClient *client, int baudrate)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_client_set_mode(DltClient *client, DltClientMode mode)
+{
+    dlt_vlog(LOG_INFO, "Setting mode to %d\n", mode);
+    if (client == 0)
+        return DLT_RETURN_ERROR;
+
+    client->mode = mode;
+    dlt_vlog(LOG_INFO, "Mode set to %d\n", client->mode);
+    return DLT_RETURN_OK;
+
+}
+
 int dlt_client_set_server_ip(DltClient *client, char *ipaddr)
 {
     client->servIP = strdup(ipaddr);
 
     if (client->servIP == NULL) {
         dlt_log(LOG_ERR, "ERROR: failed to duplicate server IP\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
+int dlt_client_set_host_if_address(DltClient *client, char *hostip)
+{
+    client->hostip = strdup(hostip);
+
+    if (client->hostip == NULL) {
+        dlt_log(LOG_ERR, "ERROR: failed to duplicate UDP interface address\n");
         return DLT_RETURN_ERROR;
     }
 
