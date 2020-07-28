@@ -2110,6 +2110,13 @@ int dlt_logstorage_write(DltLogStorage *handle,
         }
 
         /* prepare log file (create and/or open)*/
+        if (config[i]->ecuid == NULL)
+            dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[]\n", __func__,
+                     config[i]->apids, config[i]->ctids);
+        else
+            dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[%s]\n", __func__,
+                     config[i]->apids, config[i]->ctids, config[i]->ecuid);
+
         ret = config[i]->dlt_logstorage_prepare(config[i],
                                                 uconfig,
                                                 handle->device_mount_point,

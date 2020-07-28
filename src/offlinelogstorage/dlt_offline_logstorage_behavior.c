@@ -279,6 +279,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                                     char *path,
                                     DltLogStorageFilterConfig *config)
 {
+    int check = 0;
     int i = 0;
     int cnt = 0;
     int ret = 0;
@@ -297,10 +298,11 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     cnt = scandir(path, &files, 0, alphasort);
 
     if (cnt < 0) {
-        dlt_log(LOG_ERR,
-                "dlt_logstorage_storage_dir_info: Failed to scan directory\n");
+        dlt_vlog(LOG_ERR, "%s: Failed to scan directory\n", __func__);
         return -1;
     }
+
+    dlt_vlog(LOG_DEBUG, "%s: Scanned [%d] files from %s\n", __func__, cnt, path);
 
     /* In order to have a latest status of file list,
      * the existing records must be deleted before updating
@@ -357,8 +359,12 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
             (*tmp)->name = strdup(files[i]->d_name);
             (*tmp)->idx = current_idx;
             (*tmp)->next = NULL;
+            check++;
         }
     }
+
+    dlt_vlog(LOG_DEBUG, "%s: After dir scan: [%d] files of [%s]\n", __func__,
+             check, config->file_name);
 
     if (ret == 0) {
         max_idx = dlt_logstorage_sort_file_name(&config->records);
@@ -480,8 +486,12 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             }
             config->working_file_name = strdup((*newest)->name);
         }
-
         strcat(absolute_file_path, config->working_file_name);
+
+        dlt_vlog(LOG_DEBUG,
+                 "%s: Number of log files-newest file-wrap_id [%d]-[%s]-[%d]\n",
+                 __func__, num_log_files, config->working_file_name,
+                 config->wrap_id);
 
         ret = stat(absolute_file_path, &s);
 
@@ -529,9 +539,16 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             if (config->wrap_id && stat(absolute_file_path, &s) == 0) {
                 remove(absolute_file_path);
                 num_log_files -= 1;
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d)\n",
+                         __func__, absolute_file_path, num_log_files, config->num_files);
             }
 
             config->log = fopen(absolute_file_path, "a+");
+
+            dlt_vlog(LOG_DEBUG,
+                     "%s: Filename and Index after updating [%s]-[%d]\n",
+                     __func__, file_name, idx);
 
             /* Add file to file list */
             *tmp = malloc(sizeof(DltLogStorageFileList));
@@ -557,6 +574,10 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                        sizeof(absolute_file_path) / sizeof(char));
                 strcat(absolute_file_path, storage_path);
                 strcat(absolute_file_path, (*head)->name);
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d)\n",
+                         __func__, absolute_file_path, num_log_files,
+                         config->num_files);
                 remove(absolute_file_path);
                 free((*head)->name);
                 (*head)->name = NULL;
