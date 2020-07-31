@@ -29,6 +29,7 @@ extern "C"
 #include <fcntl.h>
 }
 
+unsigned int g_logstorage_cache_max;
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
 TEST(t_dlt_logstorage_list_add, normal)
 {
