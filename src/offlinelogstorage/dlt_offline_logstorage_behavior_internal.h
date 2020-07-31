@@ -54,7 +54,7 @@ void dlt_logstorage_log_file_name(char *log_file_name,
                                   char *name,
                                   int idx);
 
-void dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
+unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
 
 void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head);
 
