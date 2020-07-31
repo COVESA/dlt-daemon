@@ -173,8 +173,17 @@ void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head)
     if ((head == NULL) || (*head == NULL) || ((*head)->next == NULL))
         return;
 
+    if ((*head)->idx != 1)
+    {
+        /* Do not sort */
+        return;
+    }
+
     for (n = *head; n != NULL; n = n->next) {
-        if (n && n_prev) {
+        /* Compare the diff between n->idx and n_prev->idx only if
+         * wrap_post and wrap_pre are not set yet. Otherwise continue the loop
+         * until the tail */
+        if (n && n_prev && !wrap_post && !wrap_pre) {
             if ((n->idx - n_prev->idx) != 1) {
                 wrap_post = n;
                 wrap_pre = n_prev;
