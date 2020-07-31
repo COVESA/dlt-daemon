@@ -116,14 +116,15 @@ void dlt_logstorage_log_file_name(char *log_file_name,
  * Sort the filenames with index based ascending order (bubble sort)
  *
  * @param head              Log filename list
- * @ return                 None
+ * @ return                 The last (biggest) index
  */
-void dlt_logstorage_sort_file_name(DltLogStorageFileList **head)
+unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head)
 {
     int done = 0;
+    unsigned int max_idx = 0;
 
     if ((head == NULL) || (*head == NULL) || ((*head)->next == NULL))
-        return;
+        return 0;
 
     while (!done) {
         /* "source" of the pointer to the current node in the list struct */
@@ -134,7 +135,9 @@ void dlt_logstorage_sort_file_name(DltLogStorageFileList **head)
         done = 1;
 
         while (nx) {
+            max_idx = nx->idx;
             if (nd->idx > nx->idx) {
+                max_idx = nd->idx;
                 nd->next = nx->next;
                 nx->next = nd;
                 *pv = nx;
@@ -147,6 +150,8 @@ void dlt_logstorage_sort_file_name(DltLogStorageFileList **head)
             nx = nx->next;
         }
     }
+
+    return max_idx;
 }
 
 /**
@@ -268,6 +273,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     int i = 0;
     int cnt = 0;
     int ret = 0;
+    unsigned int max_idx = 0;
     struct dirent **files = { 0 };
     unsigned int current_idx = 0;
     DltLogStorageFileList *n = NULL;
@@ -346,8 +352,17 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     }
 
     if (ret == 0) {
-        dlt_logstorage_sort_file_name(&config->records);
-        dlt_logstorage_rearrange_file_name(&config->records);
+        max_idx = dlt_logstorage_sort_file_name(&config->records);
+
+        /* Fault tolerance:
+         * In case there are some log files are removed but
+         * the index is still not reaching maxcounter, no need
+         * to perform rearrangement of filename.
+         * This would help the log keeps growing until maxcounter is reached and
+         * the maximum number of log files could be obtained.
+         */
+        if (max_idx == file_config->logfile_maxcounter)
+            dlt_logstorage_rearrange_file_name(&config->records);
     }
 
     /* free scandir result */
@@ -443,21 +458,26 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         (*tmp)->next = NULL;
     }
     else {
-        /* newest file available*/
         strcat(absolute_file_path, storage_path);
-        strcat(absolute_file_path, (*newest)->name);
 
-        if (config->working_file_name != NULL) {
-            free(config->working_file_name);
-            config->working_file_name = NULL;
+        /* newest file available
+         * Since the working file is already updated from newest file info
+         * So if there is already wrap-up, the newest file will be the working file
+         */
+        if ((config->wrap_id == 0) || (config->working_file_name == NULL)) {
+            if (config->working_file_name != NULL) {
+                free(config->working_file_name);
+                config->working_file_name = NULL;
+            }
+            config->working_file_name = strdup((*newest)->name);
         }
 
-        config->working_file_name = strdup((*newest)->name);
+        strcat(absolute_file_path, config->working_file_name);
 
         ret = stat(absolute_file_path, &s);
 
         /* if size is enough, open it */
-        if ((ret == 0) && (s.st_size + msg_size < (int)config->file_size)) {
+        if ((ret == 0) && (s.st_size + msg_size <= (int) config->file_size)) {
             config->log = fopen(absolute_file_path, "a+");
             config->current_write_file_offset = s.st_size;
         }
@@ -467,13 +487,15 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 
             /* get index of newest log file */
             idx = dlt_logstorage_get_idx_of_log_file(file_config,
-                                                     (*newest)->name);
+                                                     config->working_file_name);
             idx += 1;
 
             /* wrap around if max index is reached or an error occurred
              * while calculating index from file name */
-            if ((idx > file_config->logfile_maxcounter) || (idx == 0))
+            if ((idx > file_config->logfile_maxcounter) || (idx == 0)) {
                 idx = 1;
+                config->wrap_id += 1;
+            }
 
             dlt_logstorage_log_file_name(file_name,
                                          file_config,
@@ -490,6 +512,14 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             if(config->working_file_name) {
                 free(config->working_file_name);
                 config->working_file_name = strdup(file_name);
+            }
+
+            /* If there is already wrap-up, check the existence of file
+             * remove it and reopen it.
+             * In this case number of log file won't be increased*/
+            if (config->wrap_id && stat(absolute_file_path, &s) == 0) {
+                remove(absolute_file_path);
+                num_log_files -= 1;
             }
 
             config->log = fopen(absolute_file_path, "a+");
@@ -520,6 +550,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 strcat(absolute_file_path, (*head)->name);
                 remove(absolute_file_path);
                 free((*head)->name);
+                (*head)->name = NULL;
                 *head = n->next;
                 n->next = NULL;
                 free(n);
@@ -528,8 +559,21 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
     }
 
     if (config->log == NULL) {
-        dlt_log(LOG_ERR,
-                "dlt_logstorage_create_log_file: Unable to open log file.\n");
+        if (*tmp != NULL) {
+            if ((*tmp)->name != NULL) {
+                free((*tmp)->name);
+                (*tmp)->name = NULL;
+            }
+            free(*tmp);
+            *tmp = NULL;
+        }
+
+        if (config->working_file_name != NULL) {
+            free(config->working_file_name);
+            config->working_file_name = NULL;
+        }
+
+        dlt_vlog(LOG_ERR, "%s: Unable to open log file.\n", __func__);
         return -1;
     }
 
@@ -745,25 +789,37 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
  * @param file_config   User configurations for log file
  * @param dev_path      Storage device path
  * @param log_msg_size  Size of log message
- * @param newest_file   Name of newest file for corresponding filename
+ * @param newest_file_info   Info of newest file for corresponding filename
  * @return 0 on success, -1 on error
  */
 int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                   DltLogStorageUserConfig *file_config,
                                   char *dev_path,
                                   int log_msg_size,
-                                  char *newest_file)
+                                  DltNewestFileName *newest_file_info)
 {
     int ret = 0;
     struct stat s;
 
-    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL)) {
+    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL) ||
+        (newest_file_info == NULL)) {
         dlt_vlog(LOG_INFO, "Wrong paratemters\n");
         return -1;
     }
 
     /* This is for ON_MSG/UNSET strategy */
-    if (config->log == NULL) { /* open a new log file */
+    if (config->log == NULL) {
+        /* Sync the wrap id and working file name before opening log file */
+        if (config->wrap_id < newest_file_info->wrap_id) {
+            config->wrap_id = newest_file_info->wrap_id;
+            if (config->working_file_name) {
+                free(config->working_file_name);
+                config->working_file_name = NULL;
+            }
+            config->working_file_name = strdup(newest_file_info->newest_file);
+        }
+
+        /* open a new log file */
         ret = dlt_logstorage_open_log_file(config,
                                            file_config,
                                            dev_path,
@@ -775,10 +831,24 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
 
         if (ret == 0) {
             /* check if adding new data do not exceed max file size */
+            /* Check if wrap id needs to be updated*/
             if ((s.st_size + log_msg_size > (int)config->file_size) ||
-                strcmp(config->working_file_name, newest_file) != 0) {
+                (strcmp(config->working_file_name, newest_file_info->newest_file) != 0) ||
+                (config->wrap_id < newest_file_info->wrap_id)) {
+
                 fclose(config->log);
                 config->log = NULL;
+
+                /* Sync the wrap id and working file name before opening log file */
+                if (config->wrap_id <= newest_file_info->wrap_id) {
+                    config->wrap_id = newest_file_info->wrap_id;
+                    if (config->working_file_name) {
+                        free(config->working_file_name);
+                        config->working_file_name = NULL;
+                    }
+                    config->working_file_name = strdup(newest_file_info->newest_file);
+                }
+
                 ret = dlt_logstorage_open_log_file(config,
                                                    file_config,
                                                    dev_path,
@@ -896,18 +966,37 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
  * @param file_config   User configurations for log file
  * @param dev_path      Storage device path
  * @param log_msg_size  Size of log message
- * @param newest_file   Name of newest file for corresponding filename
+ * @param newest_file_info   Info of newest files for corresponding filename
  * @return 0 on success, -1 on error
  */
 int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
                                      DltLogStorageUserConfig *file_config,
                                      char *dev_path,
                                      int log_msg_size,
-                                     char *newest_file )
+                                     DltNewestFileName *newest_file_info )
 {
-    (void) newest_file;
-    if ((config == NULL) || (file_config == NULL) || (dev_path == NULL))
+    if ((config == NULL) || (file_config == NULL) ||
+            (dev_path == NULL) || (newest_file_info == NULL))
         return -1;
+
+    /* check if newest file info is available
+     * + working file name is NULL => update directly to newest file
+     * + working file name is not NULL: check if
+     * ++ wrap_ids are different from each other or
+     * ++ newest file name <> working file name
+     */
+    if (newest_file_info->newest_file) {
+        if (config->working_file_name &&
+                ((config->wrap_id != newest_file_info->wrap_id) ||
+                (strcmp(newest_file_info->newest_file, config->working_file_name) != 0))) {
+            free(config->working_file_name);
+            config->working_file_name = NULL;
+        }
+        if (config->working_file_name == NULL) {
+            config->working_file_name = strdup(newest_file_info->newest_file);
+            config->wrap_id = newest_file_info->wrap_id;
+        }
+    }
 
     /* Combinations allowed: on Daemon_Exit with on Demand,File_Size with Daemon_Exit
      *  File_Size with on Demand, Specific_Size with Daemon_Exit,Specific_Size with on Demand

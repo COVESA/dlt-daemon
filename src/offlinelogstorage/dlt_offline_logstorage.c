@@ -2114,30 +2114,26 @@ int dlt_logstorage_write(DltLogStorage *handle,
                                                 uconfig,
                                                 handle->device_mount_point,
                                                 size1 + size2 + size3,
-                                                tmp->newest_file);
+                                                tmp);
 
-        /* In case the strategy is other than ON_MSG and UNSET,
-         * in the very first time of preparation, the working file name
-         * is not created yet. So check strategy and update it later in
-         * step prepare_on_msg.
-         */
-        if (!config[i]->working_file_name) {
-            if (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
-                    config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) {
+        if (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
+                 config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) {
+            /* It is abnormal if working file is still NULL after preparation. */
+            if (!config[i]->working_file_name) {
                 dlt_vlog(LOG_ERR, "Failed to prepare working file for %s\n",
                         config[i]->file_name);
                 return -1;
             }
-        }
-        else {
-            if ((tmp->newest_file == NULL ||
-                    strcmp(config[i]->working_file_name, tmp->newest_file) != 0)) {
-
+            else {
+                /* After preparation phase, update newest file info
+                 * it means there is new file created, newest file info must be updated.
+                 */
                 if (tmp->newest_file) {
                     free(tmp->newest_file);
                     tmp->newest_file = NULL;
                 }
                 tmp->newest_file = strdup(config[i]->working_file_name);
+                tmp->wrap_id = config[i]->wrap_id;
             }
         }
 
@@ -2153,6 +2149,25 @@ int dlt_logstorage_write(DltLogStorage *handle,
                                                   size3);
 
             if (ret == 0) {
+                /* In case of behavior CACHED_BASED, the newest file info
+                 * must be updated right after writing phase.
+                 * That is because in writing phase, it could also perform
+                 * sync to file which actions could impact to the log file info.
+                 * If both working file name and newest file name are unavailable,
+                 * it means the sync to file is not performed yet, wait for next times.
+                 */
+                if (config[i]->sync != DLT_LOGSTORAGE_SYNC_ON_MSG &&
+                        config[i]->sync != DLT_LOGSTORAGE_SYNC_UNSET) {
+                    if (config[i]->working_file_name) {
+                        if (tmp->newest_file) {
+                            free(tmp->newest_file);
+                            tmp->newest_file = NULL;
+                        }
+                        tmp->newest_file = strdup(config[i]->working_file_name);
+                        tmp->wrap_id = config[i]->wrap_id;
+                    }
+                }
+
                 /* flush to be sure log is stored on device */
                 ret = config[i]->dlt_logstorage_sync(config[i],
                                                      uconfig,
