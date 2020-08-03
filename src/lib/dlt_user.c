@@ -4631,12 +4631,14 @@ int dlt_start_threads()
         return -1;
     }
 
+#ifdef DLT_NETWORK_TRACE_ENABLE
     /* Start the segmented thread */
     if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
                        (void *)dlt_user_trace_network_segmented_thread, NULL)) {
         dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
         return -1;
     }
+#endif
     return 0;
 }
 
