@@ -1618,6 +1618,14 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
  */
 void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
 
+/**
+ * Helper function to execute the execvp function in a new child process.
+ * @param filename file path to store the stdout of command (NULL if not required)
+ * @param command execution command followed by arguments with NULL-termination
+ * @return negative value if there was an error
+ */
+int dlt_execute_command(char *filename, char *command, ...);
+
 #   ifdef __cplusplus
 }
 #   endif

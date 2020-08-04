@@ -32,9 +32,11 @@
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
 #include <stdarg.h>
+#include <err.h>
 
 #include <errno.h>
 #include <sys/stat.h> /* for mkdir() */
+#include <sys/wait.h>
 
 #include "dlt_user_shared.h"
 #include "dlt_common.h"
@@ -4061,5 +4063,58 @@ DltReturnValue dlt_file_quick_parsing(DltFile *file, const char *filename,
     } // while()
 
     fclose(output);
+    return ret;
+}
+
+
+int dlt_execute_command(char *filename, char *command, ...){
+    va_list val;
+    int argc;
+    char ** args = NULL;
+    int ret = 0;
+
+    if (command == NULL)
+        return -1;
+
+    /* Determine number of variadic arguments */
+    va_start(val, command);
+    for (argc = 2; va_arg(val, char *) != NULL;  argc++);
+    va_end(val);
+
+    /* Allocate args, put references to command */
+    args = (char **) malloc(argc * sizeof(char*));
+    args[0] = command;
+
+    va_start(val, command);
+    for (int i = 0; args[i] != NULL; i++)
+        args[i+1] = va_arg(val, char *);
+    va_end(val);
+
+    /* Run command in child process */
+    pid_t pid = fork();
+    if (pid == 0) { /* child process */
+
+        /* Redirect output if required */
+        if (filename != NULL) {
+            int fd = open(filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            if (fd < 0)
+                err(-1, "%s failed on open()", __func__);
+
+            if (dup2(fd, STDOUT_FILENO) == -1) {
+                close(fd);
+                err(-1, "%s failed on dup2()", __func__);
+            }
+            close(fd);
+        }
+
+        /* Run command */
+        execvp(command, (char **)args);
+    }
+    else if (pid == -1) /* error in fork */
+        ret = -1;
+    else /* parent */
+        wait(&ret);
+
+    free(args);
     return ret;
 }
