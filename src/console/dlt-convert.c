@@ -216,7 +216,6 @@ int main(int argc, char *argv[])
     char text[DLT_CONVERT_TEXTBUFSIZE] = { 0 };
 
     /* For handling compressed files */
-    char command[COMMAND_SIZE] = { 0 };
     char tmp_filename[FILENAME_SIZE] = { 0 };
     struct stat st = { 0 };
     struct dirent **files = { 0 };
@@ -359,22 +358,22 @@ int main(int argc, char *argv[])
         }
 
         for (index = optind; index < argc; index++) {
-            memset(command, 0, COMMAND_SIZE);
-
             /* Check extension of input file
              * If it is a compressed file, uncompress it
              */
-            if (strcmp(get_filename_ext(argv[index]), DLT_EXTENSION) != 0)
-                snprintf(command, COMMAND_SIZE, "tar xf %s -C %s",
-                        argv[index], DLT_CONVERT_WS);
-            else
-                snprintf(command, COMMAND_SIZE, "cp %s %s",
-                        argv[index], DLT_CONVERT_WS);
+            if (strcmp(get_filename_ext(argv[index]), DLT_EXTENSION) != 0) {
+                syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", DLT_CONVERT_WS, NULL);
+                if (syserr != 0)
+                    fprintf(stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n",
+                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
+            }
+            else {
+                syserr = dlt_execute_command(NULL, "cp", argv[index], DLT_CONVERT_WS, NULL);
+                if (syserr != 0)
+                    fprintf(stderr, "ERROR: Failed to copy %s to %s with error [%d]\n",
+                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
+            }
 
-            syserr = system(command);
-            if (syserr != 0)
-                fprintf(stderr, "ERROR: Failed to execute command [%s] with error [%d]\n",
-                        command, syserr);
         }
 
         n = scandir(DLT_CONVERT_WS, &files, NULL, alphasort);
