@@ -35,7 +35,7 @@
 #ifdef __BIONIC__
 #include <linux/fcntl.h>
 #else
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #endif
 #include <netinet/in.h>
 #include <stdlib.h>
