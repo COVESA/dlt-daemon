@@ -117,6 +117,8 @@ enum StringType
 
 #define DLT_UNUSED(x) (void)(x)
 
+#define DLT_USER_MAX_RETRY_COUNT 1000
+
 /* Network trace */
 #ifdef DLT_NETWORK_TRACE_ENABLE
 #define DLT_USER_SEGMENTED_THREAD (1<<2)
@@ -197,6 +199,8 @@ static DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log,
                                                             uint16_t text_len, const enum StringType type);
 
 
+static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
+
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
 {
     char lib_major_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
@@ -275,8 +279,8 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     if (connect(sockfd, (struct sockaddr *)&remote, sizeof(remote)) == -1) {
         if (dlt_user.connection_state != DLT_USER_RETRY_CONNECT) {
             dlt_vlog(LOG_INFO,
-                     "Socket %s cannot be opened. Retrying later...\n",
-                     dltSockBaseDir);
+                     "Socket %s cannot be opened (errno=%d). Retrying later...\n",
+                     dltSockBaseDir, errno);
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
         }
 
@@ -838,7 +842,7 @@ void dlt_user_atexit_handler(void)
 
     /* Unregister app (this also unregisters all contexts in daemon) */
     /* Ignore return value */
-    dlt_unregister_app();
+    dlt_unregister_app_util(false);
 
     /* Cleanup */
     /* Ignore return value */
@@ -957,17 +961,31 @@ DltReturnValue dlt_free(void)
             dlt_vlog(LOG_WARNING, "%s: shutdown failed: %s\n", __func__, strerror(errno));
         }
         else {
+            int count = 0;
             while (1) {
                 ssize_t bytes_read;
 
                 bytes_read = read(dlt_user.dlt_log_handle, dlt_user.resend_buffer, dlt_user.log_buf_len);
 
                 if (bytes_read < 0) {
-                    dlt_vlog(LOG_DEBUG, "%s - %d: Reading...\n", __func__, __LINE__);
-                    break;
+                    if (((errno == EAGAIN) || (errno == EWOULDBLOCK)) &&
+                        count < DLT_USER_MAX_RETRY_COUNT)
+                    {
+                        dlt_vlog(LOG_DEBUG, "%s - %d: Retry to read the socket (errno=%d)\n",
+                             __func__, __LINE__, errno);
+
+                        count++;
+                        continue;
+                    }
+                    else {
+                        dlt_vlog(LOG_WARNING,
+                                 "%s - %d: Log messages remain in socket (errno=%d)\n",
+                                 __func__, __LINE__, errno);
+                        break;
+                    }
                 }
                 else {
-                    dlt_vlog(LOG_DEBUG, "%s - %d: %d bytes read from resend buffer\n", __func__, __LINE__);
+                    dlt_vlog(LOG_DEBUG, "%s - %d: %d bytes read from resend buffer\n", __func__, __LINE__, bytes_read);
 
                     if (!bytes_read)
                         break;
@@ -1422,7 +1440,9 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
                                             dlt_log_level_changed_callback);
 }
 
-DltReturnValue dlt_unregister_app(void)
+/* If force_sending_messages is set to true, do not clean appIDs when there are
+ * still data in startup_buffer. atexit_handler will free the appIDs */
+DltReturnValue dlt_unregister_app_util(bool force_sending_messages)
 {
     DltReturnValue ret = DLT_RETURN_OK;
 
@@ -1440,17 +1460,27 @@ DltReturnValue dlt_unregister_app(void)
 
     DLT_SEM_LOCK();
 
-    /* Clear and free local stored application information */
-    dlt_set_id(dlt_user.appID, "");
+    int count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+    if (!force_sending_messages ||
+        (force_sending_messages && count == 0))
+    {
+        /* Clear and free local stored application information */
+        dlt_set_id(dlt_user.appID, "");
 
-    if (dlt_user.application_description != NULL)
-        free(dlt_user.application_description);
+        if (dlt_user.application_description != NULL)
+            free(dlt_user.application_description);
 
-    dlt_user.application_description = NULL;
+        dlt_user.application_description = NULL;
+    }
 
     DLT_SEM_FREE();
 
     return ret;
+}
+
+DltReturnValue dlt_unregister_app(void)
+{
+    return dlt_unregister_app_util(false);
 }
 
 DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
@@ -1472,7 +1502,7 @@ DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
         while ((ret != DLT_RETURN_OK) && (dlt_user.dlt_log_handle != -1));
     }
 
-    return dlt_unregister_app();
+    return dlt_unregister_app_util(true);
 }
 
 DltReturnValue dlt_unregister_context(DltContext *handle)
