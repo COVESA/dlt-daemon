@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <stdio.h>      /* for printf() and fprintf() */
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
+#include <sys/stat.h>   /* for stat() */
 #include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
@@ -2407,6 +2408,14 @@ void dlt_daemon_control_service_logstorage(int sock,
     int device_index = -1;
     int i = 0;
 
+    int tmp_errno = 0;
+
+    struct stat daemon_mpoint_st = {0};
+    int daemon_st_status = 0;
+
+    struct stat req_mpoint_st = {0};
+    int req_st_status = 0;
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (msg == NULL) || (daemon_local == NULL)) {
@@ -2434,14 +2443,53 @@ void dlt_daemon_control_service_logstorage(int sock,
 
     req = (DltServiceOfflineLogstorage *)(msg->databuffer);
 
+    req_st_status= stat(req->mount_point, &req_mpoint_st);
+
+    tmp_errno = errno;
+
+    if (req_st_status < 0) {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+
+        dlt_vlog(LOG_WARNING,
+                "%s: Failed to stat requested mount point [%s] with error [%s]\n",
+                __func__, req->mount_point, strerror(tmp_errno));
+        return;
+    }
+
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
         connection_type = daemon->storage_handle[i].connection_type;
 
-        /* Check if the requested device path is already used as log storage device */
-        if (strncmp(daemon->storage_handle[i].device_mount_point,
-                    req->mount_point, strlen(req->mount_point)) == 0) {
-            device_index = i;
-            break;
+        memset(&daemon_mpoint_st, 0, sizeof(struct stat));
+        if (strlen(daemon->storage_handle[i].device_mount_point) > 1) {
+            daemon_st_status = stat(daemon->storage_handle[i].device_mount_point,
+                    &daemon_mpoint_st);
+            tmp_errno = errno;
+
+            if (daemon_st_status < 0) {
+                dlt_daemon_control_service_response(sock,
+                                                    daemon,
+                                                    daemon_local,
+                                                    DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                                    DLT_SERVICE_RESPONSE_ERROR,
+                                                    verbose);
+                dlt_vlog(LOG_WARNING,
+                        "%s: Failed to stat daemon mount point [%s] with error [%s]\n",
+                        __func__, daemon->storage_handle[i].device_mount_point,
+                        strerror(tmp_errno));
+                return;
+            }
+
+            /* Check if the requested device path is already used as log storage device */
+            if (req_mpoint_st.st_dev == daemon_mpoint_st.st_dev &&
+                    req_mpoint_st.st_ino == daemon_mpoint_st.st_ino) {
+                device_index = i;
+                break;
+            }
         }
 
         /* Get first available device index here */
