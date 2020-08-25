@@ -39,16 +39,17 @@ if(WITH_UDP_CONNECTION)
     target_link_libraries(dlt-example-multicast-clientmsg-view dlt )
     set_target_properties(dlt-example-multicast-clientmsg-view PROPERTIES LINKER_LANGUAGE C)
 
-    install(TARGETS dlt-example-multicast-clientmsg-view
-			RUNTIME DESTINATION bin
-			COMPONENT base)
+    set(dlt_example_multicast_client_SRCS dlt-example-multicast-client.c)
+    add_executable(dlt-example-multicast-client ${dlt_example_multicast_client_SRCS})
+    target_link_libraries(dlt-example-multicast-client dlt)
+    set_target_properties(dlt-example-multicast-client PROPERTIES LINKER_LANGUAGE C)
+
+    install(TARGETS dlt-example-multicast-clientmsg-view dlt-example-multicast-client
+            RUNTIME DESTINATION bin
+            COMPONENT base)
+
 endif(WITH_UDP_CONNECTION)
 
-set(dlt_example_multicast_client_SRCS dlt-example-multicast-client.c)
-add_executable(dlt-example-multicast-client ${dlt_example_multicast_client_SRCS})
-target_link_libraries(dlt-example-multicast-client dlt)
-set_target_properties(dlt-example-multicast-client PROPERTIES LINKER_LANGUAGE C)
-
-install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api dlt-example-filetransfer dlt-example-multicast-client
+install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api dlt-example-filetransfer
 	RUNTIME DESTINATION bin
 	COMPONENT base)
