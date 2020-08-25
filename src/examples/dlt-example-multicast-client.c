@@ -30,7 +30,7 @@
 #include "dlt_client_cfg.h"
 #include "dlt_types.h"
 
-#define MULTICAST_GROUP_ADDRESS "239.1.2.3"
+#define MULTICAST_GROUP_ADDRESS "225.0.0.37"
 
 // From dlt-example-multicast-clientmsg-view example
 int message_callback(DltMessage *message, void *data)
