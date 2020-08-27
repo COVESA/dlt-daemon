@@ -96,6 +96,7 @@ typedef struct {
     int mflag;
     int vflag;
     int yflag;
+    int uflag;
     char *ovalue;
     char *ovaluebase; /* ovalue without ".dlt" */
     char *fvalue;
@@ -131,6 +132,7 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
     printf("  -y            Serial device mode\n");
+    printf("  -u            UDP multicast mode\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
@@ -300,6 +302,7 @@ int main(int argc, char *argv[])
     dltdata.mflag = 0;
     dltdata.vflag = 0;
     dltdata.yflag = 0;
+    dltdata.uflag = 0;
     dltdata.ovalue = 0;
     dltdata.ovaluebase = 0;
     dltdata.fvalue = 0;
@@ -313,7 +316,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:c:")) != -1)
+    while ((c = getopt (argc, argv, "vashyuxmf:o:e:b:c:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -348,6 +351,11 @@ int main(int argc, char *argv[])
         case 'y':
         {
             dltdata.yflag = 1;
+            break;
+        }
+        case 'u':
+        {
+            dltdata.uflag = 1;
             break;
         }
         case 'f':
@@ -425,9 +433,14 @@ int main(int argc, char *argv[])
     dlt_client_register_message_callback(dlt_receive_message_callback);
 
     /* Setup DLT Client structure */
-    dltclient.mode = dltdata.yflag;
+    if(dltdata.uflag) {
+        dltclient.mode = DLT_CLIENT_MODE_UDP_MULTICAST;
+    }
+    else {
+        dltclient.mode = dltdata.yflag;
+    }
 
-    if (dltclient.mode == DLT_CLIENT_MODE_TCP) {
+    if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");
