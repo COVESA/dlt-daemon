@@ -114,9 +114,9 @@
 #define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S)&(s))
 
 /* logstorage max cache */
-static unsigned int g_logstorage_cache_max;
+unsigned int g_logstorage_cache_max;
 /* current logstorage cache size */
-static unsigned int g_logstorage_cache_size;
+unsigned int g_logstorage_cache_size;
 
 typedef struct
 {
