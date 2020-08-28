@@ -233,13 +233,13 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
         strncpy(ecuid, tok, DLT_ID_SIZE);
         tok = strtok(NULL, ":");
 		
-		if (tok != NULL)
-        	strncpy(apid, tok, DLT_ID_SIZE);
+        if (tok != NULL)
+        strncpy(apid, tok, DLT_ID_SIZE);
 		
-		tok = strtok(NULL, ":");
-		
-		if (tok != NULL)
-			strncpy(ctid, tok, DLT_ID_SIZE);
+        tok = strtok(NULL, ":");
+
+        if (tok != NULL)
+        strncpy(ctid, tok, DLT_ID_SIZE);
     }
 
     return DLT_RETURN_OK;
