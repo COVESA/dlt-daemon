@@ -40,8 +40,8 @@ if(WITH_UDP_CONNECTION)
     set_target_properties(dlt-example-multicast-clientmsg-view PROPERTIES LINKER_LANGUAGE C)
 
     install(TARGETS dlt-example-multicast-clientmsg-view
-			RUNTIME DESTINATION bin
-			COMPONENT base)
+            RUNTIME DESTINATION bin
+            COMPONENT base)
 
 endif(WITH_UDP_CONNECTION)
 

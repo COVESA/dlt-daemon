@@ -77,6 +77,7 @@
 #   include <stdio.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
+#      include <sys/socket.h>
 #   else
 #      include <limits.h>
 #   endif
@@ -402,6 +403,7 @@ enum {
 typedef enum
 {
     DLT_RECEIVE_SOCKET,
+    DLT_RECEIVE_UDP_SOCKET,
     DLT_RECEIVE_FD
 } DltReceiverType;
 
@@ -767,11 +769,12 @@ typedef struct
     int32_t lastBytesRcvd;    /**< bytes received in last receive call */
     int32_t bytesRcvd;        /**< received bytes */
     int32_t totalBytesRcvd;   /**< total number of received bytes */
-    char *buffer;         /**< pointer to receiver buffer */
-    char *buf;            /**< pointer to position within receiver buffer */
-    char *backup_buf;     /** pointer to the buffer with partial messages if any **/
-    int fd;               /**< connection handle */
+    char *buffer;             /**< pointer to receiver buffer */
+    char *buf;                /**< pointer to position within receiver buffer */
+    char *backup_buf;         /** pointer to the buffer with partial messages if any **/
+    int fd;                   /**< connection handle */
     int32_t buffersize;       /**< size of receiver buffer */
+    struct sockaddr_in addr;  /**< socket address information */
 } DltReceiver;
 
 typedef struct
