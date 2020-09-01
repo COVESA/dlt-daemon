@@ -56,6 +56,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
     return DLT_RETURN_OK;
 }
 
+unsigned int g_logstorage_cache_max;
 /**
  * dlt_logstorage_split_ctid
  *
