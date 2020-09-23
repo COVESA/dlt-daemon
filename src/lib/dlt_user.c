@@ -117,8 +117,6 @@ enum StringType
 
 #define DLT_UNUSED(x) (void)(x)
 
-#define DLT_USER_MAX_RETRY_COUNT 1000
-
 /* Network trace */
 #ifdef DLT_NETWORK_TRACE_ENABLE
 #define DLT_USER_SEGMENTED_THREAD (1<<2)
@@ -961,34 +959,54 @@ DltReturnValue dlt_free(void)
             dlt_vlog(LOG_WARNING, "%s: shutdown failed: %s\n", __func__, strerror(errno));
         }
         else {
-            int count = 0;
+            ssize_t bytes_read = 0;
+            int prev_errno = 0;
+            struct pollfd nfd[1];
+            nfd[0].events = POLLIN;
+            nfd[0].fd = dlt_user.dlt_log_handle;
+
             while (1) {
-                ssize_t bytes_read;
+                ret = poll(nfd, 1, DLT_USER_RECEIVE_MDELAY);
 
-                bytes_read = read(dlt_user.dlt_log_handle, dlt_user.resend_buffer, dlt_user.log_buf_len);
-
-                if (bytes_read < 0) {
-                    if (((errno == EAGAIN) || (errno == EWOULDBLOCK)) &&
-                        count < DLT_USER_MAX_RETRY_COUNT)
-                    {
-                        dlt_vlog(LOG_DEBUG, "%s - %d: Retry to read the socket (errno=%d)\n",
-                             __func__, __LINE__, errno);
-
-                        count++;
-                        continue;
-                    }
-                    else {
-                        dlt_vlog(LOG_WARNING,
-                                 "%s - %d: Log messages remain in socket (errno=%d)\n",
-                                 __func__, __LINE__, errno);
-                        break;
-                    }
+                /* In case failure of polling or reaching timeout,
+                 * continue to close socket anyway.
+                 * */
+                if (ret < 0) {
+                    dlt_vlog(LOG_WARNING, "[%s] Failed to poll with error [%s]\n",
+                            __func__, strerror(errno));
+                    break;
+                }
+                else if (ret == 0) {
+                    dlt_vlog(LOG_DEBUG, "[%s] Polling timeout\n", __func__);
+                    break;
                 }
                 else {
-                    dlt_vlog(LOG_DEBUG, "%s - %d: %d bytes read from resend buffer\n", __func__, __LINE__, bytes_read);
+                    /* It could take some time to get the socket is shutdown
+                     * So it means there could be some data available to read.
+                     * Try to consume the data and poll the socket again.
+                     * If read fails, time to close the socket then.
+                     */
+                    dlt_vlog(LOG_DEBUG, "[%s] polling returns [%d] with revent [0x%x]."
+                            "There are something to read\n", __func__, ret, nfd[0].revents);
 
-                    if (!bytes_read)
-                        break;
+                    bytes_read = read(dlt_user.dlt_log_handle, dlt_user.resend_buffer, dlt_user.log_buf_len);
+                    prev_errno = errno;
+
+                    if (bytes_read < 0) {
+                        dlt_vlog(LOG_WARNING, "[%s] Failed to read with error [%s]\n",
+                                __func__, strerror(prev_errno));
+
+                        if ((prev_errno == EAGAIN) || (prev_errno == EWOULDBLOCK))
+                            continue;
+                        else
+                            break;
+                    }
+                    if (bytes_read >= 0) {
+                        if (!bytes_read)
+                            break;
+                        dlt_vlog(LOG_NOTICE, "[%s] data is still readable... [%d] bytes read\n",
+                                __func__, bytes_read);
+                    }
                 }
             }
         }
@@ -1012,9 +1030,11 @@ DltReturnValue dlt_free(void)
 
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
-    DLT_SEM_FREE();
 
-    DLT_SEM_LOCK();
+    /* Clear and free local stored application information */
+    if (dlt_user.application_description != NULL)
+        free(dlt_user.application_description);
+    dlt_user.application_description = NULL;
 
     if (dlt_user.dlt_ll_ts) {
         for (i = 0; i < dlt_user.dlt_ll_ts_max_num_entries; i++) {
