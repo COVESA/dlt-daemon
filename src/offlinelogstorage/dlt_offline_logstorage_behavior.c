@@ -32,6 +32,7 @@
 #include "dlt_offline_logstorage_behavior.h"
 #include "dlt_offline_logstorage_behavior_internal.h"
 
+unsigned int g_logstorage_cache_size;
 /**
  * dlt_logstorage_log_file_name
  *
