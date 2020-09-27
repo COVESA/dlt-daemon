@@ -286,25 +286,32 @@ DltReturnValue dlt_print_char_string(char **text, int textlength, uint8_t *ptr, 
     return DLT_RETURN_OK;
 }
 
+size_t dlt_strnlen_s(const char* str, size_t maxsize)
+{
+    if (str == NULL)
+        return 0;
+
+    for (size_t i = 0; i < maxsize; ++i) {
+        if (str[i] == '\0')
+            return i;
+    }
+    return maxsize;
+}
+
 void dlt_print_id(char *text, const char *id)
 {
     /* check nullpointer */
     if ((text == NULL) || (id == NULL))
         return;
 
-    int i, len;
-
     /* Initialize text */
-    for (i = 0; i < DLT_ID_SIZE; i++)
-        text[i] = '-';
+    memset(text, '-', DLT_ID_SIZE);
 
     text[DLT_ID_SIZE] = 0;
 
-    len = ((strlen(id) <= DLT_ID_SIZE) ? strlen(id) : DLT_ID_SIZE);
+    size_t len = dlt_strnlen_s(id, DLT_ID_SIZE);
 
-    /* Check id*/
-    for (i = 0; i < len; i++)
-        text[i] = id[i];
+    memcpy(text, id, len);
 }
 
 void dlt_set_id(char *id, const char *text)
