@@ -2067,7 +2067,6 @@ int dlt_receiver_receive(DltReceiver *receiver)
 
     if (receiver->bytesRcvd <= 0) {
         receiver->bytesRcvd = 0;
-
         return receiver->bytesRcvd;
     } /* if */
 
@@ -2131,7 +2130,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
         min_size += sizeof(DltUserHeader);
 
     if (!receiver ||
-        (receiver->bytesRcvd < (int32_t)min_size) ||
+        (receiver->bytesRcvd < (int32_t) min_size) ||
         !receiver->buf ||
         !dest)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2189,10 +2188,10 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_check_rcv_data_size(int received, int required)
+DltReturnValue dlt_check_rcv_data_size(uint32_t received, uint32_t required)
 {
     int _ret = DLT_RETURN_OK;
-    if ((received - required) < 0) {
+    if (received < required) {
         dlt_vlog(LOG_WARNING, "%s: Received data not complete\n", __func__);
         _ret = DLT_RETURN_ERROR;
     }

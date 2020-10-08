@@ -2373,7 +2373,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 {
     int offset = 0;
     int run_loop = 1;
-    int32_t min_size = (int32_t)sizeof(DltUserHeader);
+    int32_t min_size = (int32_t) sizeof(DltUserHeader);
     DltUserHeader *userheader;
     int recv;
 
@@ -3042,7 +3042,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #else
     ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
-                           rec->bytesRcvd - sizeof(DltUserHeader),
+                           (unsigned int) (rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
 
