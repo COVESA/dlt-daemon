@@ -300,7 +300,7 @@ enum {
         if ((length < 0) || ((length) < ((int32_t)sizeof(type)))) \
         { length = -1; } \
         else \
-        { dst = *((type *)src); src += sizeof(type); length -= sizeof(type); } \
+        { dst = *((type *)src); src += sizeof(type); length -= (int32_t) sizeof(type); } \
     }
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
@@ -497,14 +497,14 @@ typedef struct sDltMessage
     int32_t resync_offset;
 
     /* size parameters */
-    int32_t headersize;    /**< size of complete header including storage header */
-    int32_t datasize;      /**< size of complete payload */
+    uint32_t headersize;    /**< size of complete header including storage header */
+    uint32_t datasize;      /**< size of complete payload */
 
     /* buffer for current loaded message */
     uint8_t headerbuffer[sizeof(DltStorageHeader) +
                          sizeof(DltStandardHeader) + sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
-    int32_t databuffersize;
+    uint32_t databuffersize;
 
     /* header values of current loaded message */
     DltStorageHeader *storageheader;        /**< pointer to storage header of current loaded header */
@@ -780,7 +780,7 @@ typedef struct
     char *backup_buf;         /** pointer to the buffer with partial messages if any **/
     int fd;                   /**< connection handle */
     DltReceiverType type;     /**< type of connection handle */
-    int32_t buffersize;       /**< size of receiver buffer */
+    uint32_t buffersize;      /**< size of receiver buffer */
     struct sockaddr_in addr;  /**< socket address information */
 } DltReceiver;
 
@@ -1291,7 +1291,7 @@ DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
  * @param required size
  * @return negative value if required size is not sufficient
  * */
-DltReturnValue dlt_check_rcv_data_size(int received, int required);
+DltReturnValue dlt_check_rcv_data_size(uint32_t received, uint32_t required);
 
 /**
  * Initialise static ringbuffer with a size of size.
