@@ -102,7 +102,7 @@ void verbose(int level, char *msg, ...) {
             }
         }
 
-        int len = strlen(msg);
+        int len = (int) strlen(msg);
         va_list args;
         va_start (args, msg);
         vprintf(msg, args);
@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
     uint32_t message_count = 0;
 
     uint32_t count = 0;
-    int start = 0;
+    uint32_t start = 0;
     uint32_t delta_tmsp = 0;
     uint32_t delta_systime = 0;
     size_t i;
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
 
     verbose(1, "Allocating memory\n");
 
-    message_count = 1 + end - begin;
+    message_count = (uint32_t) (1 + end - begin);
 
     timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * (message_count + 1));
 

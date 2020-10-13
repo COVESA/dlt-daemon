@@ -617,12 +617,12 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         /* if file output enabled write message */
         if (dltdata->ovalue) {
             iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = message->headersize;
+            iov[0].iov_len = (uint32_t) message->headersize;
             iov[1].iov_base = message->databuffer;
-            iov[1].iov_len = message->datasize;
+            iov[1].iov_len = (uint32_t) message->datasize;
 
             if (dltdata->climit > -1) {
-                int bytes_to_write = message->headersize + message->datasize;
+                uint32_t bytes_to_write = message->headersize + message->datasize;
 
                 if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
                     dlt_receive_close_output_file(dltdata);
@@ -637,7 +637,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
                 }
             }
 
-            bytes_written = writev(dltdata->ohandle, iov, 2);
+            bytes_written = (int) writev(dltdata->ohandle, iov, 2);
 
             dltdata->totalbytes += bytes_written;
 

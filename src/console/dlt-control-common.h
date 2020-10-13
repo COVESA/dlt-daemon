@@ -55,7 +55,7 @@
 typedef struct
 {
     void *data; /**< data to be send to DLT Daemon */
-    int size;   /**< size of that data */
+    uint32_t size;   /**< size of that data */
 } DltControlMsgBody;
 
 /* As verbosity, ecuid and timeout are needed during the communication,
@@ -68,8 +68,8 @@ void set_verbosity(int);
 char *get_ecuid(void);
 void set_ecuid(char *);
 
-long get_timeout(void);
-void set_timeout(long);
+int get_timeout(void);
+void set_timeout(int);
 
 /* Parse dlt.conf file and return the value of requested configuration */
 int dlt_parse_config_param(char *config_id, char **config_data);

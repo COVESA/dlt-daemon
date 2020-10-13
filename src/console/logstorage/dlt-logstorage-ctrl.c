@@ -308,8 +308,8 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
            !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
-        pr_error("Retrying to connect in %lds.\n", get_timeout());
-        sleep(get_timeout());
+        pr_error("Retrying to connect in %ds.\n", get_timeout());
+        sleep((unsigned int) get_timeout());
     }
 
     if (dlt_logstorage_must_exit()) {
@@ -370,8 +370,8 @@ static int dlt_logstorage_ctrl_single_request()
     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &&
            !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
-        pr_error("Retrying to connect in %lds.\n", get_timeout());
-        sleep(get_timeout());
+        pr_error("Retrying to connect in %ds.\n", get_timeout());
+        sleep( (unsigned int) get_timeout());
     }
 
     pr_verbose("event type is [%d]\t device path is [%s]\n",
@@ -452,7 +452,7 @@ static int parse_args(int argc, char *argv[])
             set_default_path(optarg);
             break;
         case 't':
-            set_timeout(strtol(optarg, NULL, 10));
+            set_timeout((int) strtol(optarg, NULL, 10));
             break;
         case 'h':
             usage();

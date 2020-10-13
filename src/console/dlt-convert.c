@@ -150,7 +150,7 @@ void empty_dir(const char *dir)
 
     if (stat(dir, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {
-            n = scandir(dir, &files, NULL, alphasort);
+            n = (uint32_t) scandir(dir, &files, NULL, alphasort);
 
             /* Do not include /. and /.. */
             if (n < 2)
@@ -464,11 +464,11 @@ int main(int argc, char *argv[])
                 /* if file output enabled write message */
                 if (ovalue) {
                     iov[0].iov_base = file.msg.headerbuffer;
-                    iov[0].iov_len = file.msg.headersize;
+                    iov[0].iov_len = (uint32_t) file.msg.headersize;
                     iov[1].iov_base = file.msg.databuffer;
-                    iov[1].iov_len = file.msg.datasize;
+                    iov[1].iov_len = (uint32_t) file.msg.datasize;
 
-                    bytes_written = writev(ohandle, iov, 2);
+                    bytes_written =(int) writev(ohandle, iov, 2);
 
                     if (0 > bytes_written) {
                         printf("in main: writev(ohandle, iov, 2); returned an error!");
