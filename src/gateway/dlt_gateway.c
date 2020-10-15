@@ -1321,7 +1321,7 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     }
 
     /* nearly copy and paste of dlt_client_main_loop function */
-    if (dlt_receiver_receive(receiver, DLT_RECEIVE_SOCKET) <= 0) {
+    if (dlt_receiver_receive(receiver) <= 0) {
         /* No more data to be received */
         if (dlt_message_free(&msg, verbose) < 0) {
             dlt_log(LOG_ERR, "Cannot free DLT message\n");

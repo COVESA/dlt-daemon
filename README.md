@@ -64,6 +64,9 @@ WITH\_CHECK\_CONFIG\_FILE         | OFF            | Set to ON to create a confi
 CMAKE\_INSTALL\_PREFIX            | /usr/local
 CMAKE\_BUILD\_TYPE                | RelWithDebInfo
 WITH\_UDP\_CONNECTION             | ON             | Set to ON to enable dlt UDP multicast SUPPORT
+WITH\_DLT\_DAEMON\_VSOCK\_IPC     | OFF            | Set to ON for VSOCK support in daemon.
+WITH\_DLT\_LIB\_VSOCK\_IPC        | OFF            | Set to ON for VSOCK support in libdlt (DLT_IPC is overridden in libdlt).
+DLT\_VSOCK\_PORT                  | 13490          | Port to use for VSOCK communication.
 
 #### Command Line Tool Options
 

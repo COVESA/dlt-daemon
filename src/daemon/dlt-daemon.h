@@ -117,9 +117,9 @@ typedef struct
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
     unsigned int offlineLogstorageCacheSize; /**< Max cache size offline logstorage cache */
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
-#else
+#else /* DLT_DAEMON_USE_FIFO_IPC */
     char userPipesDir[DLT_PATH_MAX]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
     char daemonFifoName[DLT_PATH_MAX]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     char daemonFifoGroup[DLT_PATH_MAX]; /**< (String: Group name) Owner group of local fifo (Default: Primary Group) */
@@ -209,7 +209,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
 int dlt_daemon_process_app_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 #endif
 int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv,

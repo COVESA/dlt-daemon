@@ -54,9 +54,20 @@
 #include <unistd.h>
 
 #include <stdbool.h>
-#ifdef DLT_USE_UNIX_SOCKET_IPC
-#   include <sys/un.h>
+
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
 #   include <sys/socket.h>
+#endif
+#ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
+#   include <sys/un.h>
+#endif
+#ifdef DLT_LIB_USE_VSOCK_IPC
+#   ifdef linux
+#       include <linux/vm_sockets.h>
+#   endif
+#   ifdef __QNX__
+#       include <vm_sockets.h>
+#   endif
 #endif
 
 #include "dlt_user.h"
@@ -81,7 +92,7 @@ static DltUser dlt_user;
 static bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_LIB_USE_FIFO_IPC
 static char dlt_user_dir[DLT_PATH_MAX];
 static char dlt_daemon_fifo[DLT_PATH_MAX];
 #endif
@@ -209,13 +220,33 @@ DltReturnValue dlt_user_check_library_version(const char *user_major_version, co
     return DLT_RETURN_OK;
 }
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
+static DltReturnValue dlt_socket_set_nonblock_and_linger(int sockfd)
+{
+    int status;
+    struct linger l_opt;
+
+    status = fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+    if (status == -1) {
+        dlt_log(LOG_INFO, "Socket cannot be changed to NON BLOCK\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    l_opt.l_onoff = 1;
+    l_opt.l_linger = 10;
+
+    if (setsockopt(sockfd, SOL_SOCKET, SO_LINGER, &l_opt, sizeof l_opt) < 0)
+        dlt_log(LOG_WARNING, "Failed to set socket linger option\n");
+
+    return DLT_RETURN_OK;
+}
+#endif
+
+#ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
 static DltReturnValue dlt_initialize_socket_connection(void)
 {
     struct sockaddr_un remote;
-    int status = 0;
     char dltSockBaseDir[DLT_IPC_PATH_MAX];
-    struct linger l_opt;
 
     DLT_SEM_LOCK();
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -226,21 +257,11 @@ static DltReturnValue dlt_initialize_socket_connection(void)
         return DLT_RETURN_ERROR;
     }
 
-    status = fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
-
-    if (status == -1) {
-        dlt_vlog(LOG_INFO,
-                 "Socket %s/dlt cannot be changed to NON BLOCK\n",
-                 DLT_USER_IPC_PATH);
+    if (dlt_socket_set_nonblock_and_linger(sockfd) != DLT_RETURN_OK) {
+        close(sockfd);
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
     }
-
-    /* Set SO_LINGER opt for the new client socket. */
-    l_opt.l_onoff = 1;
-    l_opt.l_linger = 10;
-
-    if (setsockopt(sockfd, SOL_SOCKET, SO_LINGER, &l_opt, sizeof l_opt) < 0)
-        dlt_log(LOG_WARNING, "Failed to set linger option\n");
 
     remote.sun_family = AF_UNIX;
     snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
@@ -268,8 +289,10 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 
         if (dlt_receiver_init(&(dlt_user.receiver),
                               sockfd,
+                              DLT_RECEIVE_SOCKET,
                               DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR) {
             dlt_user_initialised = false;
+            close(sockfd);
             DLT_SEM_FREE();
             return DLT_RETURN_ERROR;
         }
@@ -279,7 +302,62 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 
     return DLT_RETURN_OK;
 }
-#else /* setup fifo*/
+#elif defined DLT_LIB_USE_VSOCK_IPC
+static DltReturnValue dlt_initialize_vsock_connection()
+{
+    struct sockaddr_vm remote;
+
+    DLT_SEM_LOCK();
+    int sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
+
+    if (sockfd == DLT_FD_INIT) {
+        dlt_log(LOG_CRIT, "Failed to create VSOCK socket\n");
+        DLT_SEM_FREE();
+        return DLT_RETURN_ERROR;
+    }
+
+    memset(&remote, 0, sizeof(remote));
+    remote.svm_family = AF_VSOCK;
+    remote.svm_port = DLT_VSOCK_PORT;
+    remote.svm_cid = VMADDR_CID_HOST;
+
+    if (connect(sockfd, (struct sockaddr *)&remote, sizeof(remote)) == -1) {
+        if (dlt_user.connection_state != DLT_USER_RETRY_CONNECT) {
+            dlt_vlog(LOG_INFO, "VSOCK socket cannot be opened. Retrying later...\n");
+            dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
+        }
+
+        close(sockfd);
+        dlt_user.dlt_log_handle = -1;
+    }
+    else {
+        /* Set to non-blocking after connect() to avoid EINPROGRESS. DltUserConntextionState
+           needs "connecting" state if connect() should be non-blocking. */
+        if (dlt_socket_set_nonblock_and_linger(sockfd) != DLT_RETURN_OK) {
+            close(sockfd);
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+
+        dlt_user.dlt_log_handle = sockfd;
+        dlt_user.connection_state = DLT_USER_CONNECTED;
+
+        if (dlt_receiver_init(&(dlt_user.receiver),
+                              sockfd,
+                              DLT_RECEIVE_SOCKET,
+                              DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR) {
+            dlt_user_initialised = false;
+            close(sockfd);
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    DLT_SEM_FREE();
+
+    return DLT_RETURN_OK;
+}
+#else /* DLT_LIB_USE_FIFO_IPC */
 static DltReturnValue dlt_initialize_fifo_connection(void)
 {
     char filename[DLT_PATH_MAX];
@@ -383,7 +461,7 @@ DltReturnValue dlt_init(void)
 
 #endif
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
 
     if (dlt_initialize_socket_connection() != DLT_RETURN_OK)
         /* We could connect to the pipe, but not to the socket, which is normally */
@@ -391,12 +469,19 @@ DltReturnValue dlt_init(void)
         /* in case application is started before daemon, it is expected behaviour */
         return DLT_RETURN_ERROR;
 
-#else /* FIFO connection */
+#elif defined DLT_LIB_USE_VSOCK_IPC
+
+    if (dlt_initialize_vsock_connection() != DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+#else /* DLT_LIB_USE_FIFO_IPC */
 
     if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
-    if (dlt_receiver_init(&(dlt_user.receiver), dlt_user.dlt_user_handle,
+    if (dlt_receiver_init(&(dlt_user.receiver),
+                          dlt_user.dlt_user_handle,
+                          DLT_RECEIVE_FD,
                           DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR) {
         dlt_user_initialised = false;
         return DLT_RETURN_ERROR;
@@ -821,7 +906,7 @@ DltReturnValue dlt_free(void)
 {
     uint32_t i;
     int ret = 0;
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_LIB_USE_FIFO_IPC
     char filename[DLT_PATH_MAX];
 #endif
 
@@ -841,7 +926,7 @@ DltReturnValue dlt_free(void)
 
     dlt_stop_threads();
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_LIB_USE_FIFO_IPC
 
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
@@ -859,7 +944,7 @@ DltReturnValue dlt_free(void)
 
     if (dlt_user.dlt_log_handle != -1) {
         /* close log file/output fifo to daemon */
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
         ret = shutdown(dlt_user.dlt_log_handle, SHUT_WR);
 
         if (ret < 0) {
@@ -3752,7 +3837,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             /* handle not open or pipe error */
             close(dlt_user.dlt_log_handle);
             dlt_user.dlt_log_handle = -1;
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
 
@@ -4126,7 +4211,6 @@ DltReturnValue dlt_user_log_check_user_message(void)
 
     uint32_t i;
     int fd;
-    DltReceiverType from_src_type = DLT_RECEIVE_FD;
     struct pollfd nfd[1];
 
     DltUserHeader *userheader;
@@ -4150,20 +4234,18 @@ DltReturnValue dlt_user_log_check_user_message(void)
     delayed_log_level_changed_callback.log_level_changed_callback = 0;
     delayed_injection_callback.data = 0;
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
     fd = dlt_user.dlt_log_handle;
-    from_src_type = DLT_RECEIVE_SOCKET;
-#else
+#else /* DLT_LIB_USE_FIFO_IPC */
     fd = dlt_user.dlt_user_handle;
-    from_src_type = DLT_RECEIVE_FD;
 #endif
     nfd[0].events = POLLIN;
     nfd[0].fd = fd;
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
     if (fd != DLT_FD_INIT) {
         ret = poll(nfd, 1, -1);
-#else
+#else /* DLT_LIB_USE_FIFO_IPC */
     if (fd != DLT_FD_INIT && dlt_user.dlt_log_handle > 0) {
         ret = poll(nfd, 1, DLT_USER_RECEIVE_NDELAY);
 #endif
@@ -4173,7 +4255,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
                 return DLT_RETURN_ERROR;
             }
 
-            if (dlt_receiver_receive(receiver, from_src_type) <= 0)
+            if (dlt_receiver_receive(receiver) <= 0)
                 /* No new message available */
                 return DLT_RETURN_OK;
 
@@ -4502,7 +4584,7 @@ void dlt_user_log_reattach_to_daemon(void)
     if (dlt_user.dlt_log_handle < 0) {
         dlt_user.dlt_log_handle = DLT_FD_INIT;
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
         /* try to open connection to dlt daemon */
         dlt_initialize_socket_connection();
 
@@ -4510,7 +4592,13 @@ void dlt_user_log_reattach_to_daemon(void)
             /* return if not connected */
             return;
 
-#else
+#elif defined DLT_LIB_USE_VSOCK_IPC
+        dlt_initialize_vsock_connection();
+
+        if (dlt_user.connection_state != DLT_USER_CONNECTED)
+            return;
+
+#else /* DLT_LIB_USE_FIFO_IPC */
         /* try to open pipe to dlt daemon */
         int fd = open(dlt_daemon_fifo, O_WRONLY | O_NONBLOCK);
 
