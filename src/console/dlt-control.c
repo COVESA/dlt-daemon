@@ -282,6 +282,7 @@ int main(int argc, char *argv[])
 {
     DltReceiveData dltdata;
     int c;
+    int ret;
     int index;
     char *endptr = NULL;
     struct timespec ts;
@@ -310,6 +311,9 @@ int main(int argc, char *argv[])
 
     /* Fetch command line arguments */
     opterr = 0;
+
+    /* Default return value */
+    ret = 0;
 
     while ((c = getopt (argc, argv, "vhye:b:a:c:s:m:x:t:l:r:d:f:i:ogjku")) != -1)
         switch (c) {
@@ -560,8 +564,10 @@ int main(int argc, char *argv[])
                                            dltdata.cvalue,
                                            dltdata.svalue,
                                            (uint8_t *)dltdata.mvalue,
-                                           strlen(dltdata.mvalue)) != DLT_RETURN_OK)
+                                           strlen(dltdata.mvalue)) != DLT_RETURN_OK) {
                 fprintf(stderr, "ERROR: Could not send inject message\n");
+                ret = -1;
+            }
         }
         else if (dltdata.xvalue && dltdata.avalue && dltdata.cvalue)
         {
@@ -581,8 +587,10 @@ int main(int argc, char *argv[])
                                            dltdata.avalue,
                                            dltdata.cvalue,
                                            dltdata.svalue,
-                                           buffer, size) != DLT_RETURN_OK)
+                                           buffer, size) != DLT_RETURN_OK) {
                 fprintf(stderr, "ERROR: Could not send inject message\n");
+                ret = -1;
+            }
         }
         else if (dltdata.lvalue != DLT_INVALID_LOG_LEVEL)  /*&& dltdata.avalue && dltdata.cvalue)*/
         {
@@ -593,8 +601,10 @@ int main(int argc, char *argv[])
                 }
 
                 if (0 != dlt_client_send_all_log_level(&g_dltclient,
-                                                       dltdata.lvalue))
+                                                       dltdata.lvalue)) {
                     fprintf(stderr, "ERROR: Could not send log level\n");
+                    ret = -1;
+                }
             }
             else {
                 /* log level */
@@ -609,8 +619,10 @@ int main(int argc, char *argv[])
                 if (0 != dlt_client_send_log_level(&g_dltclient,
                                                    dltdata.avalue,
                                                    dltdata.cvalue,
-                                                   dltdata.lvalue))
+                                                   dltdata.lvalue)) {
                     fprintf(stderr, "ERROR: Could not send log level\n");
+                    ret = -1;
+                }
             }
         }
         else if (dltdata.rvalue != DLT_INVALID_TRACE_STATUS)
@@ -622,8 +634,10 @@ int main(int argc, char *argv[])
                 }
 
                 if (0 != dlt_client_send_all_trace_status(&g_dltclient,
-                                                          dltdata.rvalue))
+                                                          dltdata.rvalue)) {
                     fprintf(stderr, "ERROR: Could not send trace status\n");
+                    ret = -1;
+                }
             }
             else {
                 /* trace status */
@@ -638,8 +652,10 @@ int main(int argc, char *argv[])
                 if (0 != dlt_client_send_trace_status(&g_dltclient,
                                                       dltdata.avalue,
                                                       dltdata.cvalue,
-                                                      dltdata.rvalue))
+                                                      dltdata.rvalue)) {
                     fprintf(stderr, "ERROR: Could not send trace status\n");
+                    ret = -1;
+                }
             }
         }
         else if (dltdata.dvalue != -1)
@@ -649,8 +665,10 @@ int main(int argc, char *argv[])
             printf("Loglevel: %d\n", dltdata.dvalue);
 
             /* send control message in*/
-            if (dlt_client_send_default_log_level(&g_dltclient, dltdata.dvalue) != DLT_RETURN_OK)
+            if (dlt_client_send_default_log_level(&g_dltclient, dltdata.dvalue) != DLT_RETURN_OK) {
                 fprintf (stderr, "ERROR: Could not send default log level\n");
+                ret = -1;
+            }
         }
         else if (dltdata.fvalue != -1)
         {
@@ -659,8 +677,10 @@ int main(int argc, char *argv[])
             printf("TraceStatus: %d\n", dltdata.fvalue);
 
             /* send control message in*/
-            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.fvalue) != DLT_RETURN_OK)
+            if (dlt_client_send_default_trace_status(&g_dltclient, dltdata.fvalue) != DLT_RETURN_OK) {
                 fprintf (stderr, "ERROR: Could not send default trace status\n");
+                ret = -1;
+            }
         }
         else if (dltdata.ivalue != -1)
         {
@@ -669,8 +689,10 @@ int main(int argc, char *argv[])
             printf("Timing packets: %d\n", dltdata.ivalue);
 
             /* send control message in*/
-            if (dlt_client_send_timing_pakets(&g_dltclient, dltdata.ivalue) != DLT_RETURN_OK)
+            if (dlt_client_send_timing_pakets(&g_dltclient, dltdata.ivalue) != DLT_RETURN_OK) {
                 fprintf (stderr, "ERROR: Could not send timing packets\n");
+                ret = -1;
+            }
         }
         else if (dltdata.oflag != -1)
         {
@@ -678,8 +700,10 @@ int main(int argc, char *argv[])
             printf("Store config\n");
 
             /* send control message in*/
-            if (dlt_client_send_store_config(&g_dltclient) != DLT_RETURN_OK)
+            if (dlt_client_send_store_config(&g_dltclient) != DLT_RETURN_OK) {
                 fprintf (stderr, "ERROR: Could not send store config\n");
+                ret = -1;
+            }
         }
         else if (dltdata.gflag != -1)
         {
@@ -687,8 +711,10 @@ int main(int argc, char *argv[])
             printf("Reset to factory default\n");
 
             /* send control message in*/
-            if (dlt_client_send_reset_to_factory_default(&g_dltclient) != DLT_RETURN_OK)
+            if (dlt_client_send_reset_to_factory_default(&g_dltclient) != DLT_RETURN_OK) {
                 fprintf (stderr, "ERROR: Could not send reset to factory default\n");
+                ret = -1;
+            }
         }
         else if (dltdata.jvalue == 1)
         {
@@ -710,6 +736,8 @@ int main(int argc, char *argv[])
         ts.tv_sec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
         ts.tv_nsec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
+    } else {
+        ret = -1;
     }
 
     /* Dlt Client Cleanup */
@@ -722,7 +750,7 @@ int main(int argc, char *argv[])
 
     dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 
-    return 0;
+    return ret;
 }
 
 int dlt_receive_message_callback(DltMessage *message, void *data)
