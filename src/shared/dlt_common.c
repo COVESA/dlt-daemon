@@ -3844,7 +3844,7 @@ int dlt_set_loginfo_parse_service_id(char *resp_text,
 
     /* ascii type, syntax is 'get_log_info, ..' */
     /* check target id */
-    strncpy(get_log_info_tag, "get_log_info", strlen("get_log_info"));
+    strncpy(get_log_info_tag, "get_log_info", strlen("get_log_info") + 1);
     ret = memcmp((void *)resp_text, (void *)get_log_info_tag, sizeof(get_log_info_tag) - 1);
 
     if (ret == 0) {
