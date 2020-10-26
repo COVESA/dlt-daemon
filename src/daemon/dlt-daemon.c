@@ -952,7 +952,7 @@ int main(int argc, char *argv[])
 
     /* --- Daemon connection init end */
 
-    if (dlt_daemon_load_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
+    if (dlt_daemon_init_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_ERR, "Could not load runtime config\n");
         return -1;
     }
@@ -964,6 +964,12 @@ int main(int argc, char *argv[])
     }
 
     /* --- Daemon init phase 2 end --- */
+
+    /*
+     * Load dlt-runtime.cfg if available.
+     * This must be loaded before offline setup
+     */
+    dlt_daemon_configuration_load(&daemon, daemon.runtime_configuration, daemon_local.flags.vflag);
 
     if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
@@ -1027,6 +1033,16 @@ int main(int argc, char *argv[])
                                      &daemon_local.pGateway,
                                      daemon_local.flags.gatewayMode,
                                      daemon_local.flags.vflag);
+
+    /*
+     * Check for app and ctx runtime cfg.
+     * These cfg must be loaded after ecuId and num_user_lists are available
+     */
+    if ((dlt_daemon_applications_load(&daemon, daemon.runtime_application_cfg,
+                                      daemon_local.flags.vflag) == 0) &&
+        (dlt_daemon_contexts_load(&daemon, daemon.runtime_context_cfg,
+                                  daemon_local.flags.vflag) == 0))
+        daemon.runtime_context_cfg_loaded = 1;
 
     dlt_daemon_log_internal(&daemon,
                             &daemon_local,
