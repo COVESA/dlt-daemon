@@ -53,6 +53,14 @@
 **  mk          Markus Klein               Fraunhofer ESK                     **
 *******************************************************************************/
 
+/**************************************************************************************************
++* Compilers may complain about not using variadic macros if they are supported
++**************************************************************************************************/
+#if __STDC_VERSION__ >= 199901L || __cplusplus >= 201103L
+/* DLT_ENABLE_C_VARIADIC_MACROS code */
+#define DLT_ENABLE_C_VARIADIC_MACROS
+#endif
+
 /*******************************************************************************
 **                      Revision Control History                              **
 *******************************************************************************/
@@ -211,6 +219,7 @@
 /* DLT_LOG is not supported by MS Visual C++ */
 /* use function interface instead            */
 #else
+#ifdef DLT_ENABLE_C_VARIADIC_MACROS
 #   define DLT_LOG(CONTEXT, LOGLEVEL, ...) \
     do { \
         DltContextData log_local; \
@@ -222,7 +231,22 @@
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
+#else
+#   define DLT_LOG(CONTEXT, LOGLEVEL, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
 #endif
+#endif
+
+
 
 /**
  * Send log message with variable list of messages (intended for verbose mode)
@@ -238,6 +262,7 @@
 /* DLT_LOG_TS is not supported by MS Visual C++ */
 /* use function interface instead            */
 #else
+#ifdef DLT_ENABLE_C_VARIADIC_MACROS
 #   define DLT_LOG_TS(CONTEXT, LOGLEVEL, TS, ...) \
     do { \
         DltContextData log_local; \
@@ -251,6 +276,21 @@
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
+#else
+#   define DLT_LOG_TS(CONTEXT, LOGLEVEL, TS, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            log_local.use_timestamp = DLT_USER_TIMESTAMP; \
+            log_local.user_timestamp = (uint32_t) TS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
+#endif
 #endif
 
 /**
@@ -269,6 +309,7 @@
 /* DLT_LOG_ID is not supported by MS Visual C++ */
 /* use function interface instead               */
 #else
+#ifdef DLT_ENABLE_C_VARIADIC_MACROS
 #   define DLT_LOG_ID(CONTEXT, LOGLEVEL, MSGID, ...) \
     do { \
         DltContextData log_local; \
@@ -280,6 +321,19 @@
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
+#else
+#   define DLT_LOG_ID(CONTEXT, LOGLEVEL, MSGID, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
+#endif
 #endif
 
 /**
@@ -299,6 +353,7 @@
 /* DLT_LOG_ID_TS is not supported by MS Visual C++ */
 /* use function interface instead               */
 #else
+#ifdef DLT_ENABLE_C_VARIADIC_MACROS
 #   define DLT_LOG_ID_TS(CONTEXT, LOGLEVEL, MSGID, TS, ...) \
     do { \
         DltContextData log_local; \
@@ -312,6 +367,21 @@
             (void)dlt_user_log_write_finish(&log_local); \
         } \
     } while (0)
+#else
+#   define DLT_LOG_ID_TS(CONTEXT, LOGLEVEL, MSGID, TS, ARGS ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            ARGS; \
+            log_local.use_timestamp = DLT_USER_TIMESTAMP; \
+            log_local.user_timestamp = (uint32_t) TS; \
+            (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (0)
+#endif
 #endif
 
 /**
