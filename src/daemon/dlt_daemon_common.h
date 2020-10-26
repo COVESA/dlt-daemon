@@ -246,13 +246,16 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
                                                      char *ecu,
                                                      int verbose);
 /**
- * Loads the user saved configurations to daemon
+ * Init the user saved configurations to daemon.
+ * Since the order of loading runtime config could be different,
+ * this function won't be the place to do that.
+ * This is just for preparation of real load later.
  * @param daemon pointer to dlt daemon structure
  * @param runtime_directory directory path
  * @param verbose if set to true verbose information is printed out
  * @return DLT_RETURN_OK on success, DLT_RETURN_ERROR otherwise
  */
-int dlt_daemon_load_runtime_configuration(DltDaemon *daemon,
+int dlt_daemon_init_runtime_configuration(DltDaemon *daemon,
                                           const char *runtime_directory,
                                           int verbose);
 

@@ -140,8 +140,9 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
     dlt_vlog(LOG_ERR, "Cannot find user list for ECU: %4s\n", ecu);
     return (DltDaemonRegisteredUsers *)NULL;
 }
-int dlt_daemon_load_runtime_configuration(DltDaemon *daemon, const char *runtime_directory, int verbose)
+int dlt_daemon_init_runtime_configuration(DltDaemon *daemon, const char *runtime_directory, int verbose)
 {
+    PRINT_FUNCTION_VERBOSE(verbose);
     int append_length = 0;
 
     if (daemon == NULL)
@@ -192,14 +193,6 @@ int dlt_daemon_load_runtime_configuration(DltDaemon *daemon, const char *runtime
     }
 
     strcat(daemon->runtime_configuration, DLT_RUNTIME_CONFIGURATION); /* strcat uncritical here, because max length already checked */
-
-    /* Check for runtime cfg, if it is loadable, load it! */
-    if ((dlt_daemon_applications_load(daemon, daemon->runtime_application_cfg, verbose) == 0) &&
-        (dlt_daemon_contexts_load(daemon, daemon->runtime_context_cfg, verbose) == 0))
-        daemon->runtime_context_cfg_loaded = 1;
-
-    /* load configuration if available */
-    dlt_daemon_configuration_load(daemon, daemon->runtime_configuration, verbose);
 
     return DLT_RETURN_OK;
 }
