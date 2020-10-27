@@ -409,7 +409,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
             return DLT_RETURN_TRUE;
         }
 
-        while (dlt_message_read(&msg, (unsigned char *)(client->receiver.buf), client->receiver.bytesRcvd, 0,
+        while (dlt_message_read(&msg, (unsigned char *)(client->receiver.buf),
+                                (unsigned int) client->receiver.bytesRcvd, 0,
                                 verbose) == DLT_MESSAGE_ERROR_OK) {
             /* Call callback function */
             if (message_callback_function)
@@ -417,8 +418,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
             if (msg.found_serialheader) {
                 if (dlt_receiver_remove(&(client->receiver),
-                                        msg.headersize + msg.datasize - sizeof(DltStorageHeader) +
-                                        sizeof(dltSerialHeader)) ==
+                                        (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader) +
+                                        sizeof(dltSerialHeader))) ==
                     DLT_RETURN_ERROR) {
                     /* Return value ignored */
                     dlt_message_free(&msg, verbose);
@@ -426,7 +427,7 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
                 }
             }
             else if (dlt_receiver_remove(&(client->receiver),
-                                         msg.headersize + msg.datasize - sizeof(DltStorageHeader)) ==
+                                         (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader))) ==
                      DLT_RETURN_ERROR) {
                 /* Return value ignored */
                 dlt_message_free(&msg, verbose);
@@ -527,12 +528,12 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     dlt_set_id(msg.extendedheader->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
 
     /* prepare length information */
-    msg.headersize = sizeof(DltStorageHeader) +
+    msg.headersize = (uint32_t) (sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
         sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
+        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
 
-    len = msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
+    len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
 
     if (len > UINT16_MAX) {
         fprintf(stderr, "Critical: Huge injection message discarded!\n");
@@ -547,7 +548,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
         /* via FileDescriptor */
         ret =
-            write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
+            (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
 
         if (0 > ret) {
             dlt_log(LOG_ERR, "Sending message failed\n");
@@ -555,7 +556,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
             return DLT_RETURN_ERROR;
         }
 
-        ret = write(client->sock, msg.databuffer, msg.datasize);
+        ret = (int) write(client->sock, msg.databuffer, msg.datasize);
 
         if (0 > ret) {
             dlt_log(LOG_ERR, "Sending message failed\n");
@@ -601,14 +602,14 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client,
 
     offset = 0;
     memcpy(payload, &serviceID, sizeof(serviceID));
-    offset += sizeof(uint32_t);
+    offset += (int) sizeof(uint32_t);
     memcpy(payload + offset, &size, sizeof(size));
-    offset += sizeof(uint32_t);
+    offset += (int) sizeof(uint32_t);
     memcpy(payload + offset, buffer, size);
 
     /* free message */
     if (dlt_client_send_ctrl_msg(client, apid, ctid, payload,
-                                 sizeof(uint32_t) + sizeof(uint32_t) + size) == DLT_RETURN_ERROR) {
+                                 (uint32_t) (sizeof(uint32_t) + sizeof(uint32_t) + size)) == DLT_RETURN_ERROR) {
         free(payload);
         return DLT_RETURN_ERROR;
     }
@@ -1094,7 +1095,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
     }
 
     /* count_app_ids */
-    resp->log_info_type.count_app_ids = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+    resp->log_info_type.count_app_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
                                                                               &rp_count);
 
     resp->log_info_type.app_ids = (AppIDsType *)calloc
@@ -1112,7 +1113,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
         dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, app->app_id, DLT_ID_SIZE);
 
         /* count_con_ids */
-        app->count_context_ids = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+        app->count_context_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
                                                                        &rp_count);
 
         app->context_id_info = (ContextIDsInfoType *)calloc
@@ -1145,10 +1146,10 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
 
             /* context desc */
             if (resp->status == 7) {
-                con->len_context_description = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                con->len_context_description = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
                                                                                      &rp_count);
                 con->context_description = (char *)calloc
-                        (con->len_context_description + 1, sizeof(char));
+                        ((size_t) (con->len_context_description + 1), sizeof(char));
 
                 if (con->context_description == 0) {
                     dlt_log(LOG_ERR, "calloc failed for context description\n");
@@ -1165,10 +1166,10 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
 
         /* application desc */
         if (resp->status == 7) {
-            app->len_app_description = dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+            app->len_app_description = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
                                                                              &rp_count);
             app->app_description = (char *)calloc
-                    (app->len_app_description + 1, sizeof(char));
+                    ((size_t) (app->len_app_description + 1), sizeof(char));
 
             if (app->app_description == 0) {
                 dlt_log(LOG_ERR, "calloc failed for application description\n");

@@ -996,17 +996,25 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     msg->headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + extra_size);
     msg->datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
 
+    /* calculate complete size of payload */
+    int32_t temp_datasize;
+    temp_datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
+
+    /* check data size */
+    if (temp_datasize < 0) {
+        dlt_vlog(LOG_WARNING,
+                 "Plausibility check failed. Complete message size too short (%d)!\n",
+                 temp_datasize);
+        return DLT_MESSAGE_ERROR_CONTENT;
+    }
+    else {
+        msg->datasize = (uint32_t) temp_datasize;
+    }
+
+    /* check if verbose mode is on*/
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "BufferLength=%d, HeaderSize=%d, DataSize=%d\n",
                  length, msg->headersize, msg->datasize);
-    }
-
-    /* check data size */
-    if (msg->datasize < 0) {
-        dlt_vlog(LOG_WARNING,
-                 "Plausibility check failed. Complete message size too short (%d)!\n",
-                 msg->datasize);
-        return DLT_MESSAGE_ERROR_CONTENT;
     }
 
     /* load standard header extra parameters and Extended header if used */
@@ -1204,19 +1212,25 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     file->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(file->msg.standardheader->htyp) +
         (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
-    file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
 
+    /* calculate complete size of payload */
+    int32_t temp_datasize;
+    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
+
+    /* check data size */
+    if (temp_datasize < 0) {
+        dlt_vlog(LOG_WARNING,
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
+                 temp_datasize);
+        return DLT_RETURN_ERROR;
+    } else {
+        file->msg.datasize = (uint32_t) temp_datasize;
+    }
+
+    /* check if verbose mode is on */
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "HeaderSize=%d, DataSize=%d\n",
                  file->msg.headersize, file->msg.datasize);
-    }
-
-    /* check data size */
-    if (file->msg.datasize < 0) {
-        dlt_vlog(LOG_WARNING,
-                 "Plausibility check failed. Complete message size too short! (%d)\n",
-                 file->msg.datasize);
-        return DLT_RETURN_ERROR;
     }
 
     return DLT_RETURN_OK;
@@ -1294,19 +1308,26 @@ DltReturnValue dlt_file_read_header_raw(DltFile *file, int resync, int verbose)
     file->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(file->msg.standardheader->htyp) +
         (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
-    file->msg.datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
 
+    /* calculate complete size of payload */
+    int32_t temp_datasize;
+    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
+
+    /* check data size */
+    if (temp_datasize < 0) {
+        dlt_vlog(LOG_WARNING,
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
+                 temp_datasize);
+        return DLT_RETURN_ERROR;
+    }
+    else {
+        file->msg.datasize = (uint32_t) temp_datasize;
+    }
+
+    /* check if verbose mode is on */
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "HeaderSize=%d, DataSize=%d\n",
                  file->msg.headersize, file->msg.datasize);
-    }
-
-    /* check data size */
-    if (file->msg.datasize < 0) {
-        dlt_vlog(LOG_WARNING,
-                 "Plausibility check failed. Complete message size too short! (%d)\n",
-                 file->msg.datasize);
-        return DLT_RETURN_ERROR;
     }
 
     return DLT_RETURN_OK;
@@ -1934,7 +1955,7 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, DltReceiverType 
     /** Reuse the receiver buffer if it exists and the buffer size
       * is not changed. If not, free the old one and allocate a new buffer.
       */
-    if ((NULL != receiver->buffer) && (buffersize != receiver->buffersize)) {
+    if ((NULL != receiver->buffer) && ((uint32_t) buffersize != receiver->buffersize)) {
        free(receiver->buffer);
        receiver->buffer = NULL;
     }
