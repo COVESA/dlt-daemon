@@ -129,7 +129,7 @@ typedef struct
 {
     DltContext *handle;                           /**< pointer to DltContext */
     unsigned char *buffer;                        /**< buffer for building log message*/
-    int32_t size;                                 /**< payload size */
+    size_t size;                                 /**< payload size */
     int32_t log_level;                            /**< log level */
     int32_t trace_status;                         /**< trace status */
     int32_t args_num;                             /**< number of arguments for extended header*/

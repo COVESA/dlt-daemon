@@ -91,7 +91,7 @@ uint32_t getFilesize(const char *file, int *ok)
     }
 
     *ok = 1;
-    return (uint32_t)st.st_size;
+    return (uint32_t) st.st_size;
 }
 
 /** A simple Hash function for C-strings
@@ -104,7 +104,7 @@ void stringHash(const char *str, uint32_t *hash)
     if (!str || !hash)
         return;
 
-    unsigned int len = strlen(str);
+    unsigned int len = (unsigned int) strlen(str);
 
     unsigned int i = 0;
 
@@ -112,7 +112,7 @@ void stringHash(const char *str, uint32_t *hash)
         return;
 
     for (i = 0; i < len; i++)
-        *hash = 53 * *hash + str[i];
+        *hash = 53 * *hash + (uint32_t) str[i];
 }
 
 
@@ -133,10 +133,10 @@ uint32_t getFileSerialNumber(const char *file, int *ok)
     }
     else {
         *ok = 1;
-        ret = st.st_ino;
+        ret = (uint32_t) st.st_ino;
         ret = ret << (sizeof(ret) * 8) / 2;
-        ret |= st.st_size;
-        ret ^= st.st_ctime;
+        ret |= (uint32_t) st.st_size;
+        ret ^= (uint32_t) st.st_ctime;
         stringHash(file, &ret);
     }
 
@@ -595,7 +595,7 @@ int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int pa
 
             }
 
-            readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+            readBytes = (uint32_t) fread(buffer, sizeof(char), BUFFER_SIZE, file);
             int ok;
 
             uint32_t fserial = getFileSerialNumber(filename, &ok);
