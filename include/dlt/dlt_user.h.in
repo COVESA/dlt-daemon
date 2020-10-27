@@ -1231,6 +1231,13 @@ int dlt_user_atexit_blow_out_user_buffer(void);
  */
 DltReturnValue dlt_user_log_resend_buffer(void);
 
+ /**
+ * Try to set max size of ring buffer for dlt user
+ * @param size new size of ring buffer in bytes
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_set_max_ring_buffer_size(uint32_t size);
+
 /**
  * Checks the log level passed by the log function if enabled for that context or not.
  * This function can be called by applications before generating their logs.

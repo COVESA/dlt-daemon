@@ -5130,3 +5130,13 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
 
     return ret;
 }
+
+DltReturnValue dlt_user_set_max_ring_buffer_size(uint32_t size)
+{
+    DltBuffer * buf = &(dlt_user.startup_buffer);
+    if (size < buf->min_size) {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+    buf->max_size = size;
+    return DLT_RETURN_OK;
+}
