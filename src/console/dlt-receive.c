@@ -75,6 +75,8 @@
 #include <string.h>
 #include <glob.h>
 #include <syslog.h>
+#include <signal.h>
+#include <sys/socket.h>
 #ifdef __linux__
 #   include <linux/limits.h>
 #else
@@ -85,6 +87,24 @@
 #include "dlt_client.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
+
+DltClient dltclient;
+
+void signal_handler(int signal)
+{
+    switch (signal) {
+    case SIGHUP:
+    case SIGTERM:
+    case SIGINT:
+    case SIGQUIT:
+        /* stop main loop */
+        shutdown(dltclient.receiver.fd, SHUT_RD);
+        break;
+    default:
+        /* This case should never happen! */
+        break;
+    } /* switch */
+}
 
 /* Function prototypes */
 int dlt_receive_message_callback(DltMessage *message, void *data);
@@ -290,7 +310,6 @@ void dlt_receive_close_output_file(DltReceiveData *dltdata)
  */
 int main(int argc, char *argv[])
 {
-    DltClient dltclient;
     DltReceiveData dltdata;
     int c;
     int index;
@@ -312,6 +331,15 @@ int main(int argc, char *argv[])
     dltdata.ohandle = -1;
     dltdata.totalbytes = 0;
     dltdata.part_num = -1;
+
+    /* Config signal handler */
+    struct sigaction act;
+    act.sa_handler = signal_handler;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGHUP, &act, 0);
+    sigaction(SIGTERM, &act, 0);
+    sigaction(SIGINT, &act, 0);
+    sigaction(SIGQUIT, &act, 0);
 
     /* Fetch command line arguments */
     opterr = 0;
