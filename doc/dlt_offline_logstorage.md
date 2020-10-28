@@ -271,3 +271,26 @@ Note :
 1. Combinations (not allowed: combinations with ON_MSG,combination of ON\_FILE\_SIZE with ON\_SPECIFIC\_SIZE)
 2. If on\_demand sync strategy alone is specified, it is advised to concatenate the log files in sequential order before viewing it on viewer.
 3. In case multiple FILTERs use the same `File` value, it is recommened that the following settings must also have same values: `NOFiles`, `FileSize` and `SpecificSize`
+
+## Maintain Logstorage Log Level Implementation
+
+The log level setting of each user context in the logstorage FILTER will be
+treated as the highest priority. Other clients (e.g: dlt-control, dlt-viewer)
+can update the user context's log level to a lower level but can not update
+to a higher level. In case the clients need to update the user context's log
+level to a higher level, the new macro ```MaintainLogstorageLogLevel``` is
+implemented in the ```[General]``` session to allow changing user context's
+log level to any level or maintain the log level of logstorage configuration.
+
+A typical configuration file may look like:
+
+  ```
+  [General]
+  MaintainLogstorageLogLevel=OFF
+  ```
+
+By setting ```MaintainLogstorageLogLevel=OFF``` or ```MaintainLogstorageLogLevel=0```,
+the clients are able to update any log level to user contexts.
+
+By setting ```MaintainLogstorageLogLevel=ON``` or ```MaintainLogstorageLogLevel=1```
+or not set, the logstorage will maintain its log level as the highest priority.
