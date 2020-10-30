@@ -82,7 +82,6 @@ cc_binary {
         "src/daemon/dlt_daemon_common.c",
         "src/daemon/dlt_daemon_connection.c",
         "src/daemon/dlt_daemon_event_handler.c",
-        "src/daemon/dlt_daemon_filter.c",
         "src/daemon/dlt_daemon_offline_logstorage.c",
         "src/daemon/dlt_daemon_serial.c",
         "src/daemon/dlt_daemon_socket.c",
