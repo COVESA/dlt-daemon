@@ -28,6 +28,8 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <float.h>
 
 extern "C" {
 #include "dlt_user.h"
@@ -107,90 +109,6 @@ extern "C" {
  * int dlt_verbose_mode(void);
  * int dlt_nonverbose_mode(void);
  */
-
-
-
-
-/* define some min and max values (if not present in <limits.h>) */
-#ifndef UINT8_MIN
-#   define UINT8_MIN 0
-#endif
-
-#ifndef UINT16_MIN
-#   define UINT16_MIN 0
-#endif
-
-#ifndef UINT32_MIN
-#   define UINT32_MIN 0
-#endif
-
-#ifndef UINT64_MIN
-#   define UINT64_MIN 0
-#endif
-
-#ifndef UINT8_MAX
-#   define UINT8_MAX 255
-#endif
-
-#ifndef UINT16_MAX
-#   define UINT16_MAX 65535
-#endif
-
-#ifndef UINT32_MAX
-#   define UINT32_MAX 4294967295
-#endif
-
-#ifndef UINT64_MAX
-#   define UINT64_MAX 18446744073709551615UL
-#endif
-
-#ifndef INT8_MIN
-#   define INT8_MIN -128
-#endif
-
-#ifndef INT16_MIN
-#   define INT16_MIN -32768
-#endif
-
-#ifndef INT32_MIN
-#   define INT32_MIN -2147483648
-#endif
-
-#ifndef INT64_MIN
-#   define INT64_MIN -9223372036854775807
-#endif
-
-#ifndef INT8_MAX
-#   define INT8_MAX 127
-#endif
-
-#ifndef INT16_MAX
-#   define INT16_MAX 32767
-#endif
-
-#ifndef INT32_MAX
-#   define INT32_MAX 2147483647
-#endif
-
-#ifndef INT64_MAX
-#   define INT64_MAX 9223372036854775807
-#endif
-
-#ifndef UINT_MIN
-#   define UINT_MIN UINT32_MIN
-#endif
-
-#ifndef UINT_MAX
-#   define UINT_MAX UINT32_MAX
-#endif
-
-#ifndef INT_MIN
-#   define INT_MIN INT32_MIN
-#endif
-
-#ifndef INT_MAX
-#   define INT_MAX INT32_MAX
-#endif
 
 static const char *STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
 
@@ -313,7 +231,7 @@ TEST(t_dlt_user_log_write_start_id, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id normal"));
 
     /* the defined enum values for log level */
-    messageid = UINT32_MIN;
+    messageid = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
@@ -367,7 +285,7 @@ TEST(t_dlt_user_log_write_start_id, abnormal)
 
     /* undefined values for DltLogLevelType */
     /* shouldn't it return -1? */
-    /* TODO: messageid = UINT32_MIN; */
+    /* TODO: messageid = 0; */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-100, messageid)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-10, messageid)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)10, messageid)); */
@@ -389,7 +307,7 @@ TEST(t_dlt_user_log_write_start_id, startstartfinish)
     EXPECT_LE(DLT_RETURN_OK,
               dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
 
-    messageid = UINT32_MIN;
+    messageid = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
     /* shouldn't it return -1, because it is already started? */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid)); */
@@ -412,7 +330,7 @@ TEST(t_dlt_user_log_write_start_id, nullpointer)
               dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
 
     /* NULL's */
-    messageid = UINT32_MIN;
+    messageid = 0;
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_start_id(NULL, &contextData, DLT_LOG_DEFAULT, messageid));
     /*EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData)); */
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_start_id(NULL, NULL, DLT_LOG_DEFAULT, messageid));
@@ -663,7 +581,7 @@ TEST(t_dlt_user_log_write_uint, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
     data = 1;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
@@ -730,7 +648,7 @@ TEST(t_dlt_user_log_write_uint8, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT8_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint8(&contextData, data));
     data = 1;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint8(&contextData, data));
@@ -776,7 +694,7 @@ TEST(t_dlt_user_log_write_uint16, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT16_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint16(&contextData, data));
     data = 1;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint16(&contextData, data));
@@ -822,7 +740,7 @@ TEST(t_dlt_user_log_write_uint32, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT32_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32(&contextData, data));
     data = 1;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32(&contextData, data));
@@ -868,7 +786,7 @@ TEST(t_dlt_user_log_write_uint64, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT64_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint64(&contextData, data));
     data = 1;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint64(&contextData, data));
@@ -915,7 +833,7 @@ TEST(t_dlt_user_log_write_uint8_formatted, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT8_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX8));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint8_formatted(&contextData, data, DLT_FORMAT_HEX16));
@@ -1011,7 +929,7 @@ TEST(t_dlt_user_log_write_uint16_formatted, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT16_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX8));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint16_formatted(&contextData, data, DLT_FORMAT_HEX16));
@@ -1107,7 +1025,7 @@ TEST(t_dlt_user_log_write_uint32_formatted, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT32_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX8));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_formatted(&contextData, data, DLT_FORMAT_HEX16));
@@ -1203,7 +1121,7 @@ TEST(t_dlt_user_log_write_uint64_formatted, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    data = UINT64_MIN;
+    data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX8));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint64_formatted(&contextData, data, DLT_FORMAT_HEX16));
@@ -3408,7 +3326,7 @@ TEST(t_dlt_log_string_uint, normal)
 
     /* normal values */
     const char text1[6] = "test1";
-    unsigned int data = UINT_MIN;
+    unsigned int data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_log_string_uint(&context, DLT_LOG_DEFAULT, text1, data));
     EXPECT_LE(DLT_RETURN_OK, dlt_log_string_uint(&context, DLT_LOG_OFF, text1, data));
     EXPECT_LE(DLT_RETURN_OK, dlt_log_string_uint(&context, DLT_LOG_FATAL, text1, data));
@@ -3578,7 +3496,7 @@ TEST(t_dlt_log_uint, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_uint normal"));
 
     /* normal values */
-    unsigned int data = UINT_MIN;
+    unsigned int data = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_log_uint(&context, DLT_LOG_DEFAULT, data));
     EXPECT_LE(DLT_RETURN_OK, dlt_log_uint(&context, DLT_LOG_OFF, data));
     EXPECT_LE(DLT_RETURN_OK, dlt_log_uint(&context, DLT_LOG_FATAL, data));
