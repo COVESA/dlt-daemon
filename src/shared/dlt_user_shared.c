@@ -117,7 +117,7 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2
     iov[1].iov_base = ptr2;
     iov[1].iov_len = len2;
 
-    bytes_written = writev(handle, iov, 2);
+    bytes_written = (uint32_t) writev(handle, iov, 2);
 
     if (bytes_written != (len1 + len2))
         return DLT_RETURN_ERROR;
@@ -141,7 +141,7 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
     iov[2].iov_base = ptr3;
     iov[2].iov_len = len3;
 
-    bytes_written = writev(handle, iov, 3);
+    bytes_written = (uint32_t) writev(handle, iov, 3);
 
     if (bytes_written != (len1 + len2 + len3)) {
         switch (errno) {

@@ -629,12 +629,12 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, int verbose)
+DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose)
 {
     return dlt_message_header_flags(msg, text, textlength, DLT_HEADER_SHOW_ALL, verbose);
 }
 
-DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlength, int flags, int verbose)
+DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose)
 {
     struct tm timeinfo;
     char buffer [DLT_COMMON_BUFFER_LENGTH];
@@ -759,7 +759,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlen
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, int type, int verbose)
+DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlength, int type, int verbose)
 {
     uint32_t id = 0, id_tmp = 0;
     uint8_t retval = 0;
@@ -793,17 +793,17 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
 
     /* print payload only as hex */
     if (type == DLT_OUTPUT_HEX)
-        return dlt_print_hex_string(text, textlength, msg->databuffer, msg->datasize);
+        return dlt_print_hex_string(text, (int) textlength, msg->databuffer, (int) msg->datasize);
 
     /* print payload as mixed */
     if (type == DLT_OUTPUT_MIXED_FOR_PLAIN)
-        return dlt_print_mixed_string(text, textlength, msg->databuffer, msg->datasize, 0);
+        return dlt_print_mixed_string(text, (int) textlength, msg->databuffer, (int) msg->datasize, 0);
 
     if (type == DLT_OUTPUT_MIXED_FOR_HTML)
-        return dlt_print_mixed_string(text, textlength, msg->databuffer, msg->datasize, 1);
+        return dlt_print_mixed_string(text, (int) textlength, msg->databuffer, (int) msg->datasize, 1);
 
     ptr = msg->databuffer;
-    datalength = msg->datasize;
+    datalength = (int32_t) msg->datasize;
 
     /* Pointer to ptr and datalength */
     pptr = &ptr;
@@ -817,10 +817,10 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
         DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t);
         id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
-        if (textlength < ((datalength * 3) + 20)) {
+        if (textlength < (( (unsigned int) datalength * 3) + 20)) {
             dlt_vlog(LOG_WARNING,
                      "String does not fit binary data (available=%d, required=%d) !\n",
-                     textlength, (datalength * 3) + 20);
+                     (int) textlength, (datalength * 3) + 20);
             return DLT_RETURN_ERROR;
         }
 
@@ -857,8 +857,8 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
 
         if (type == DLT_OUTPUT_ASCII_LIMITED) {
             ret = dlt_print_hex_string(text + strlen(text),
-                                       textlength - strlen(
-                                           text),
+                                       (int) (textlength - strlen(
+                                           text)),
                                        ptr,
                                        (datalength >
                                         DLT_COMMON_ASCII_LIMIT_MAX_CHARS ? DLT_COMMON_ASCII_LIMIT_MAX_CHARS : datalength));
@@ -868,7 +868,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
                 snprintf(text + strlen(text), textlength - strlen(text), " ...");
         }
         else {
-            ret = dlt_print_hex_string(text + strlen(text), textlength - strlen(text), ptr, datalength);
+            ret = dlt_print_hex_string(text + strlen(text),(int) (textlength - strlen(text)), ptr, datalength);
         }
 
         return ret;
@@ -883,7 +883,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
     for (num = 0; num < (int)(msg->extendedheader->noar); num++) {
         if (num != 0) {
             text_offset = (int)strlen(text);
-            snprintf(text + text_offset, textlength - text_offset, " ");
+            snprintf(text + text_offset, textlength - (size_t) text_offset, " ");
         }
 
         /* first read the type info of the argument */
@@ -893,7 +893,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, 
         /* print out argument */
         text_offset = (int)strlen(text);
         if (dlt_message_argument_print(msg, type_info, pptr, pdatalength,
-            (text + text_offset), (textlength - text_offset), -1, 0) == DLT_RETURN_ERROR)
+            (text + text_offset), (textlength - (size_t) text_offset), -1, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
     }
 
@@ -929,7 +929,7 @@ DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int 
 
 int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
-    int extra_size = 0;
+    uint32_t extra_size = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -948,7 +948,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
         /* serial header found */
         msg->found_serialheader = 1;
         buffer += sizeof(dltSerialHeader);
-        length -= sizeof(dltSerialHeader);
+        length -= (unsigned int) sizeof(dltSerialHeader);
     }
     else {
         /* serial header not found */
@@ -963,18 +963,18 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
                     /* serial header found */
                     msg->found_serialheader = 1;
                     buffer += sizeof(dltSerialHeader);
-                    length -= sizeof(dltSerialHeader);
+                    length -= (unsigned int) sizeof(dltSerialHeader);
                     break;
                 }
 
                 msg->resync_offset++;
-            } while ((sizeof(dltSerialHeader) + msg->resync_offset) <= length);
+            } while ( (sizeof(dltSerialHeader) + (size_t) msg->resync_offset) <= length);
 
             /* Set new start offset */
             if (msg->resync_offset > 0) {
                 /* Resyncing connection */
                 buffer += msg->resync_offset;
-                length -= msg->resync_offset;
+                length -= (unsigned int) msg->resync_offset;
             }
         }
     }
@@ -993,7 +993,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     /* calculate complete size of headers */
     extra_size = DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp) +
         (DLT_IS_HTYP_UEH(msg->standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
-    msg->headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + extra_size;
+    msg->headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + extra_size);
     msg->datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
 
     if (verbose) {
@@ -1015,7 +1015,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
             return DLT_MESSAGE_ERROR_SIZE;
 
         memcpy(msg->headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader),
-               buffer + sizeof(DltStandardHeader), extra_size);
+               buffer + sizeof(DltStandardHeader), (size_t) extra_size);
 
         /* set extended header ptr and get standard header extra parameters */
         if (DLT_IS_HTYP_UEH(msg->standardheader->htyp))
@@ -1460,7 +1460,7 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
             return DLT_RETURN_ERROR;
 
         if (file->index) {
-            memcpy(ptr, file->index, file->counter * sizeof(long));
+            memcpy(ptr, file->index, (size_t) (file->counter) * sizeof(long));
             free(file->index);
         }
 
@@ -1579,7 +1579,7 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
             return DLT_RETURN_ERROR;
 
         if (file->index) {
-            memcpy(ptr, file->index, file->counter * sizeof(long));
+            memcpy(ptr, file->index, (size_t) (file->counter) * sizeof(long));
             free(file->index);
         }
 
@@ -1945,8 +1945,8 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, DltReceiverType 
         receiver->totalBytesRcvd = 0;
         receiver->buf = NULL;
         receiver->backup_buf = NULL;
-        receiver->buffer = (char *)calloc(1, buffersize);
-        receiver->buffersize = buffersize;
+        receiver->buffer = (char *)calloc(1, (size_t) buffersize);
+        receiver->buffersize = (uint32_t) buffersize;
     }
 
     if (NULL == receiver->buffer) {
@@ -2037,7 +2037,7 @@ int dlt_receiver_receive(DltReceiver *receiver)
     receiver->lastBytesRcvd = receiver->bytesRcvd;
 
     if ((receiver->lastBytesRcvd) && (receiver->backup_buf != NULL)) {
-        memcpy(receiver->buf, receiver->backup_buf, receiver->lastBytesRcvd);
+        memcpy(receiver->buf, receiver->backup_buf, (size_t) receiver->lastBytesRcvd);
         free(receiver->backup_buf);
         receiver->backup_buf = NULL;
     }
@@ -2046,13 +2046,13 @@ int dlt_receiver_receive(DltReceiver *receiver)
         /* wait for data from socket */
         receiver->bytesRcvd = recv(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
-                                   receiver->buffersize - receiver->lastBytesRcvd,
+                                   receiver->buffersize - (uint32_t) receiver->lastBytesRcvd,
                                    0);
     else if (receiver->type == DLT_RECEIVE_FD)
         /* wait for data from fd */
         receiver->bytesRcvd = read(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
-                                   receiver->buffersize - receiver->lastBytesRcvd);
+                                   receiver->buffersize - (uint32_t) receiver->lastBytesRcvd);
 
     else { /* receiver->type == DLT_RECEIVE_UDP_SOCKET */
         /* wait for data from UDP socket */
@@ -2105,14 +2105,14 @@ DltReturnValue dlt_receiver_move_to_begin(DltReceiver *receiver)
         return DLT_RETURN_ERROR;
 
     if ((receiver->buffer != receiver->buf) && (receiver->bytesRcvd != 0)) {
-        receiver->backup_buf = calloc(receiver->bytesRcvd + 1, sizeof(char));
+        receiver->backup_buf = calloc((size_t) (receiver->bytesRcvd + 1), sizeof(char));
 
         if (receiver->backup_buf == NULL)
             dlt_vlog(LOG_WARNING,
                      "Can't allocate memory for backup buf, there will be atleast"
                      "one corrupted message for fd[%d] \n", receiver->fd);
         else
-            memcpy(receiver->backup_buf, receiver->buf, receiver->bytesRcvd);
+            memcpy(receiver->backup_buf, receiver->buf, (size_t) receiver->bytesRcvd);
     }
 
     return DLT_RETURN_OK;
@@ -2123,7 +2123,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
                                unsigned int to_get,
                                unsigned int flags)
 {
-    unsigned int min_size = to_get;
+    size_t min_size = (size_t) to_get;
     uint8_t *src = NULL;
 
     if (flags & DLT_RCV_SKIP_HEADER)
@@ -2143,7 +2143,7 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
     memcpy(dest, src, to_get);
 
     if (flags & DLT_RCV_REMOVE) {
-        if (dlt_receiver_remove(receiver, min_size) != DLT_RETURN_OK) {
+        if (dlt_receiver_remove(receiver, (int) min_size) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             return DLT_RETURN_ERROR;
         }
@@ -2240,7 +2240,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
     head->write = 0;
     head->count = 0;
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
-    buf->size = buf->min_size - sizeof(DltBufferHead);
+    buf->size = (unsigned int) buf->min_size - sizeof(DltBufferHead);
 
     /* clear memory */
     memset(buf->mem, 0, buf->size);
@@ -2265,7 +2265,7 @@ DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char
 
     /* Init pointers */
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
-    buf->size = buf->min_size - sizeof(DltBufferHead);
+    buf->size = (uint32_t) (buf->min_size - sizeof(DltBufferHead));
 
     dlt_vlog(LOG_DEBUG,
              "%s: Buffer: Size %d, Start address %lX\n",
@@ -2314,14 +2314,14 @@ DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32
     head->write = 0;
     head->count = 0;
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
-    buf->size = buf->min_size - sizeof(DltBufferHead);
+    buf->size = (uint32_t) (buf->min_size - sizeof(DltBufferHead));
 
     dlt_vlog(LOG_DEBUG,
              "%s: Buffer: Size %d, Start address %lX\n",
              __func__, buf->size, (unsigned long)buf->mem);
 
     /* clear memory */
-    memset(buf->mem, 0, buf->size);
+    memset(buf->mem, 0, (size_t) buf->size);
 
     return DLT_RETURN_OK; /* OK */
 }
@@ -2365,16 +2365,16 @@ void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *dat
     /* catch null pointer */
     if ((buf != NULL) && (write != NULL) && (data != NULL)) {
 	if (size <= buf->size){
-            if ((int)(*write + size) <= buf->size) {
+            if (( (unsigned int) (*write ) + size) <= buf->size) {
                 /* write one block */
                 memcpy(buf->mem + *write, data, size);
-                *write += size;
+                *write += (int) size;
             }
             else {
                 /* write two blocks */
-                memcpy(buf->mem + *write, data, buf->size - *write);
-                memcpy(buf->mem, data + buf->size - *write, size - buf->size + *write);
-                *write += size - buf->size;
+                memcpy(buf->mem + *write, data, buf->size - (unsigned int) (*write));
+                memcpy(buf->mem, data + buf->size - *write, size - buf->size + (unsigned int) (*write));
+                *write += (int) (size - buf->size);
             }
 	}
 	else {
@@ -2390,16 +2390,16 @@ void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsig
 {
     /* catch nullpointer */
     if ((buf != NULL) && (read != NULL) && (data != NULL)) {
-        if ((int)(*read + size) <= buf->size) {
+        if (((unsigned int) (*read) + size) <= buf->size) {
             /* read one block */
             memcpy(data, buf->mem + *read, size);
-            *read += size;
+            *read +=(int) size;
         }
         else {
             /* read two blocks */
-            memcpy(data, buf->mem + *read, buf->size - *read);
-            memcpy(data + buf->size - *read, buf->mem, size - buf->size + *read);
-            *read += size - buf->size;
+            memcpy(data, buf->mem + *read, buf->size - (unsigned int) (*read));
+            memcpy(data + buf->size - *read, buf->mem, size - buf->size + (unsigned int) (*read));
+            *read += (int) (size - buf->size);
         }
     }
     else {
@@ -2454,16 +2454,16 @@ int dlt_buffer_increase_size(DltBuffer *buf)
     new_head = (DltBufferHead *)new_ptr;
 
     if (head->read < head->write) {
-        memcpy(new_ptr + sizeof(DltBufferHead), buf->mem + head->read, head->write - head->read);
+        memcpy(new_ptr + sizeof(DltBufferHead), buf->mem + head->read, (size_t) (head->write - head->read));
         new_head->read = 0;
         new_head->write = head->write - head->read;
         new_head->count = head->count;
     }
     else {
-        memcpy(new_ptr + sizeof(DltBufferHead), buf->mem + head->read, buf->size - head->read);
-        memcpy(new_ptr + sizeof(DltBufferHead) + buf->size - head->read, buf->mem, head->write);
+        memcpy(new_ptr + sizeof(DltBufferHead), buf->mem + head->read, buf->size - (uint32_t) (head->read));
+        memcpy(new_ptr + sizeof(DltBufferHead) + buf->size - head->read, buf->mem, (size_t) head->write);
         new_head->read = 0;
-        new_head->write = buf->size - head->read + head->write;
+        new_head->write = (int) (buf->size) + head->write - head->read;
         new_head->count = head->count;
     }
 
@@ -2514,7 +2514,7 @@ int dlt_buffer_minimize_size(DltBuffer *buf)
     /* update data */
     buf->shm = new_ptr;
     buf->mem = new_ptr + sizeof(DltBufferHead);
-    buf->size = buf->min_size - sizeof(DltBufferHead);
+    buf->size = (uint32_t) (buf->min_size - sizeof(DltBufferHead));
 
     /* reset pointers and counters */
     ((int *)(buf->shm))[0] = 0;  /* pointer to write memory */
@@ -2587,7 +2587,7 @@ int dlt_buffer_push3(DltBuffer *buf,
     count = ((int *)(buf->shm))[2];
 
     /* check pointers */
-    if ((read > buf->size) || (write > buf->size)) {
+    if (((unsigned int) read > buf->size) || ((unsigned int) write > buf->size)) {
         dlt_vlog(LOG_ERR,
                  "%s: Buffer: Pointer out of range. Read: %d, Write: %d, Size: %d\n",
                  __func__, read, write, buf->size);
@@ -2601,10 +2601,10 @@ int dlt_buffer_push3(DltBuffer *buf,
     else if (count && (write == read))
         free_size = 0;
     else
-        free_size = buf->size - write + read;
+        free_size = (int) buf->size - write + read;
 
     /* check size */
-    while (free_size < (int)(sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
+    while (free_size < (int) (sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
         /* try to increase size if possible */
         if (dlt_buffer_increase_size(buf))
             /* increase size is not possible */
@@ -2629,7 +2629,7 @@ int dlt_buffer_push3(DltBuffer *buf,
     strncpy(head.head, DLT_BUFFER_HEAD, 4);
     head.head[3] = 0;
     head.status = 2;
-    head.size = size1 + size2 + size3;
+    head.size = (int) (size1 + size2 + size3);
 
     /* write data */
     dlt_buffer_write_block(buf, &write, (unsigned char *)&head, sizeof(DltBufferBlockHead));
@@ -2674,7 +2674,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
     count = ((int *)(buf->shm))[2];
 
     /* check pointers */
-    if ((read > buf->size) || (write > buf->size) || (count < 0)) {
+    if (((unsigned int) read > buf->size) || ((unsigned int) write > buf->size) || (count < 0)) {
         dlt_vlog(LOG_ERR,
                  "%s: Buffer: Pointer out of range. Read: %d, Write: %d, Count: %d, Size: %d\n",
                  __func__, read, write, count, buf->size);
@@ -2698,7 +2698,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
     if (write > read)
         used_size = write - read;
     else
-        used_size = buf->size - read + write;
+        used_size = (int) buf->size - read + write;
 
     /* first check size */
     if (used_size < (int)(sizeof(DltBufferBlockHead))) {
@@ -2726,7 +2726,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
     }
 
     /* second check size */
-    if (used_size < (int)(sizeof(DltBufferBlockHead) + head.size)) {
+    if (used_size < ((int) sizeof(DltBufferBlockHead) + head.size)) {
         dlt_vlog(LOG_ERR,
                  "%s: Buffer: Used size is smaller than buffer block header size And read header size. Used size: %d\n",
                  __func__, used_size);
@@ -2744,17 +2744,17 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
 
     if ((data != NULL) && max_size) {
         /* read data */
-        dlt_buffer_read_block(buf, &read, data, head.size);
+        dlt_buffer_read_block(buf, &read, data, (unsigned int) head.size);
 
         if (delete)
             /* update buffer pointers */
             ((int *)(buf->shm))[1] = read; /* set new read pointer */
     }
     else if (delete) {
-        if ((read + head.size) <= buf->size)
+        if ((unsigned int) (read + head.size) <= buf->size)
             ((int *)(buf->shm))[1] = read + head.size;  /* set new read pointer */
         else
-            ((int *)(buf->shm))[1] = read + head.size - buf->size; /* set new read pointer */
+            ((int *)(buf->shm))[1] = read + head.size - (int) buf->size; /* set new read pointer */
 
     }
 
@@ -2851,7 +2851,7 @@ int dlt_buffer_get_used_size(DltBuffer *buf)
     if (write > read)
         return write - read;
 
-    return buf->size - read + write;
+    return (int) buf->size - read + write;
 }
 
 int dlt_buffer_get_message_count(DltBuffer *buf)
@@ -3242,7 +3242,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                                           uint8_t **ptr,
                                           int32_t *datalength,
                                           char *text,
-                                          int textlength,
+                                          size_t textlength,
                                           int byteLength,
                                           int __attribute__((unused)) verbose)
 {
@@ -3660,7 +3660,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_8BIT:
         {
             if (*datalength >= 1)
-                dlt_print_hex_string(text, textlength, *ptr, 1);
+                dlt_print_hex_string(text, (int) textlength, *ptr, 1);
 
             if ((*datalength) < 1)
                 return DLT_RETURN_ERROR;
@@ -3672,7 +3672,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_16BIT:
         {
             if (*datalength >= 2)
-                dlt_print_hex_string(text, textlength, *ptr, 2);
+                dlt_print_hex_string(text, (int) textlength, *ptr, 2);
 
             if ((*datalength) < 2)
                 return DLT_RETURN_ERROR;
@@ -3781,7 +3781,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string(text, textlength, *ptr, length);
+        dlt_print_hex_string(text, (int) textlength, *ptr, length);
         *ptr += length;
         *datalength -= length;
     }

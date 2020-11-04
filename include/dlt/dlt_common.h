@@ -787,7 +787,7 @@ typedef struct
 typedef struct
 {
     unsigned char *shm; /* pointer to beginning of shared memory */
-    int size;           /* size of data area in shared memory */
+    unsigned int size;  /* size of data area in shared memory */
     unsigned char *mem; /* pointer to data area in shared memory */
 
     uint32_t min_size;     /**< Minimum size of buffer */
@@ -982,7 +982,7 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, int verbose);
+DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose);
 /**
  * Print Header into an ASCII string, selective.
  * @param msg pointer to structure of organising access to DLT messages
@@ -992,7 +992,7 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, i
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlength, int flags, int verbose);
+DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose);
 /**
  * Print Payload into an ASCII string.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1002,7 +1002,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlen
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, int type, int verbose);
+DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlength, int type, int verbose);
 /**
  * Check if message is filtered or not. All filters are applied (logical OR).
  * @param msg pointer to structure of organising access to DLT messages
@@ -1563,7 +1563,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                                           uint8_t **ptr,
                                           int32_t *datalength,
                                           char *text,
-                                          int textlength,
+                                          size_t textlength,
                                           int byteLength,
                                           int verbose);
 
