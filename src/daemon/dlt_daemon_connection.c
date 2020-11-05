@@ -86,7 +86,7 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
     case DLT_CONNECTION_CLIENT_MSG_TCP:
         ret = dlt_daemon_socket_sendreliable(conn->receiver->fd,
                                              msg,
-                                             msg_size);
+                                             (int) msg_size);
         return ret;
     default:
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -125,10 +125,10 @@ int dlt_connection_send_multiple(DltConnection *con,
                                   sizeof(dltSerialHeader));
 
     if ((data1 != NULL) && (ret == DLT_RETURN_OK))
-        ret = dlt_connection_send(con, data1, size1);
+        ret = dlt_connection_send(con, data1, (size_t) size1);
 
     if ((data2 != NULL) && (ret == DLT_RETURN_OK))
-        ret = dlt_connection_send(con, data2, size2);
+        ret = dlt_connection_send(con, data2, (size_t) size2);
 
     return ret;
 }

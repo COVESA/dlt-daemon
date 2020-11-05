@@ -110,7 +110,7 @@ typedef struct
     int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
     int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
-    int offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
+    uint32_t offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
     char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
     int offlineLogstorageTimestamp;  /**< (int) Append timestamp in offline logstorage filename */
     char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */

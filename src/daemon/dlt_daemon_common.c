@@ -143,7 +143,7 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
 int dlt_daemon_init_runtime_configuration(DltDaemon *daemon, const char *runtime_directory, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
-    int append_length = 0;
+    size_t append_length = 0;
 
     if (daemon == NULL)
         return DLT_RETURN_ERROR;
@@ -215,9 +215,9 @@ int dlt_daemon_init(DltDaemon *daemon,
     daemon->user_list = NULL;
     daemon->num_user_lists = 0;
 
-    daemon->default_log_level = InitialContextLogLevel;
-    daemon->default_trace_status = InitialContextTraceStatus;
-    daemon->force_ll_ts = ForceLLTS;
+    daemon->default_log_level = (int8_t) InitialContextLogLevel;
+    daemon->default_trace_status = (int8_t) InitialContextTraceStatus;
+    daemon->force_ll_ts = (int8_t) ForceLLTS;
 
     daemon->overflow_counter = 0;
 
@@ -236,8 +236,8 @@ int dlt_daemon_init(DltDaemon *daemon,
     dlt_vlog(LOG_INFO, "Ringbuffer configuration: %lu/%lu/%lu\n",
              RingbufferMinSize, RingbufferMaxSize, RingbufferStepSize);
 
-    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), RingbufferMinSize, RingbufferMaxSize,
-                                RingbufferStepSize) == DLT_RETURN_ERROR)
+    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), (uint32_t) RingbufferMinSize, (uint32_t) RingbufferMaxSize,
+                                (uint32_t) RingbufferStepSize) == DLT_RETURN_ERROR)
         return -1;
 
     daemon->storage_handle = NULL;
@@ -291,7 +291,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
 
     if (gateway_mode == 0) {
         /* initialize application list */
-        daemon->user_list = calloc(nodes, sizeof(DltDaemonRegisteredUsers));
+        daemon->user_list = calloc((size_t) nodes, sizeof(DltDaemonRegisteredUsers));
 
         if (daemon->user_list == NULL) {
             dlt_log(LOG_ERR, "Allocating memory for user information");
@@ -305,7 +305,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
         nodes += gateway->num_connections;
 
         /* initialize application list */
-        daemon->user_list = calloc(nodes, sizeof(DltDaemonRegisteredUsers));
+        daemon->user_list = calloc((size_t) nodes, sizeof(DltDaemonRegisteredUsers));
 
         if (daemon->user_list == NULL) {
             dlt_log(LOG_ERR, "Allocating memory for user information");
@@ -557,7 +557,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
     /* Sort */
     if (new_application) {
         qsort(user_list->applications,
-              user_list->num_applications,
+              (size_t) user_list->num_applications,
               sizeof(DltDaemonApplication),
               dlt_daemon_cmp_apid);
 
@@ -595,7 +595,7 @@ int dlt_daemon_application_del(DltDaemon *daemon,
             application->application_description = NULL;
         }
 
-        pos = application - (user_list->applications);
+        pos = (int) (application - (user_list->applications));
 
         /* move all applications above pos to pos */
         memmove(&(user_list->applications[pos]),
@@ -642,7 +642,7 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
     dlt_set_id(application.apid, apid);
     return (DltDaemonApplication *)bsearch(&application,
                                            user_list->applications,
-                                           user_list->num_applications,
+                                           (size_t) user_list->num_applications,
                                            sizeof(DltDaemonApplication),
                                            dlt_daemon_cmp_apid);
 }
@@ -925,7 +925,7 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
     /* Sort */
     if (new_context) {
         qsort(user_list->contexts,
-              user_list->num_contexts,
+              (size_t) user_list->num_contexts,
               sizeof(DltDaemonContext),
               dlt_daemon_cmp_apid_ctid);
 
@@ -964,7 +964,7 @@ int dlt_daemon_context_del(DltDaemon *daemon,
             context->context_description = NULL;
         }
 
-        pos = context - (user_list->contexts);
+        pos = (int) (context - (user_list->contexts));
 
         /* move all contexts above pos to pos */
         memmove(&(user_list->contexts[pos]),
@@ -1018,7 +1018,7 @@ DltDaemonContext *dlt_daemon_context_find(DltDaemon *daemon,
 
     return (DltDaemonContext *)bsearch(&context,
                                        user_list->contexts,
-                                       user_list->num_contexts,
+                                       (size_t) user_list->num_contexts,
                                        sizeof(DltDaemonContext),
                                        dlt_daemon_cmp_apid_ctid);
 }
@@ -1356,14 +1356,14 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
 
     if ((context->storage_log_level != DLT_LOG_DEFAULT) &&
         (daemon->maintain_logstorage_loglevel != DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF))
-            usercontext.log_level = context->log_level >
-                context->storage_log_level ? context->log_level : context->storage_log_level;
+            usercontext.log_level = (uint8_t) (context->log_level >
+                context->storage_log_level ? context->log_level : context->storage_log_level);
     else /* Storage log level is not updated (is DEFAULT) then  no device is yet connected so ignore */
         usercontext.log_level =
-            ((context->log_level == DLT_LOG_DEFAULT) ? daemon->default_log_level : context->log_level);
+            (uint8_t) ((context->log_level == DLT_LOG_DEFAULT) ? daemon->default_log_level : context->log_level);
 
     usercontext.trace_status =
-        ((context->trace_status == DLT_TRACE_STATUS_DEFAULT) ? daemon->default_trace_status : context->trace_status);
+        (uint8_t) ((context->trace_status == DLT_TRACE_STATUS_DEFAULT) ? daemon->default_trace_status : context->trace_status);
 
     usercontext.log_level_pos = context->log_level_pos;
 
@@ -1464,9 +1464,9 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
         unlink(filename1);
     }
 
-    daemon->default_log_level = InitialContextLogLevel;
-    daemon->default_trace_status = InitialContextTraceStatus;
-    daemon->force_ll_ts = InitialEnforceLlTsStatus;
+    daemon->default_log_level = (int8_t) InitialContextLogLevel;
+    daemon->default_trace_status = (int8_t) InitialContextTraceStatus;
+    daemon->force_ll_ts = (int8_t) InitialEnforceLlTsStatus;
 
     /* Reset all other things (log level, trace status, etc.
      *                         to default values             */

@@ -109,8 +109,8 @@ int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
 static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
 {
     if (ev->max_nfds <= ev->nfds) {
-        int i = ev->nfds;
-        int max = 2 * ev->max_nfds;
+        int i = (int) ev->nfds;
+        int max = (int) (2 * ev->max_nfds);
         struct pollfd *tmp = realloc(ev->pfd, max * sizeof(*ev->pfd));
 
         if (!tmp) {
@@ -143,7 +143,7 @@ static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
 {
     unsigned int i = 0;
     unsigned int j = 0;
-    unsigned int nfds = ev->nfds;
+    unsigned int nfds = (unsigned int) ev->nfds;
 
     for (; i < nfds; i++, j++) {
         if (ev->pfd[i].fd == fd) {

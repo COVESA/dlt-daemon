@@ -196,7 +196,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
     while (data_sent < message_size) {
         ssize_t ret = send(sock,
                            (uint8_t*)data_buffer + data_sent,
-                           message_size - data_sent,
+                           (size_t) (message_size - data_sent),
                            0);
 
         if (ret < 0) {
