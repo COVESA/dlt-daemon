@@ -261,7 +261,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 #endif
         case 'p':
         {
-            daemon_local->flags.port = atoi(optarg);
+            daemon_local->flags.port = (unsigned int) atoi(optarg);
 
             if (daemon_local->flags.port == 0) {
                 fprintf (stderr, "Invalid port `%s' specified.\n", optarg);
@@ -593,7 +593,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "OfflineLogstorageMaxDevices") == 0)
                     {
-                        daemon_local->flags.offlineLogstorageMaxDevices = atoi(value);
+                        daemon_local->flags.offlineLogstorageMaxDevices = (uint32_t) atoi(value);
                     }
                     else if (strcmp(token, "OfflineLogstorageDirPath") == 0)
                     {
@@ -615,8 +615,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "OfflineLogstorageMaxCounter") == 0)
                     {
-                        daemon_local->flags.offlineLogstorageMaxCounter = atoi(value);
-                        daemon_local->flags.offlineLogstorageMaxCounterIdx = strlen(value);
+                        daemon_local->flags.offlineLogstorageMaxCounter = (unsigned int) atoi(value);
+                        daemon_local->flags.offlineLogstorageMaxCounterIdx = (unsigned int) strlen(value);
                     }
                     else if (strcmp(token, "OfflineLogstorageCacheSize") == 0)
                     {
@@ -1272,7 +1272,7 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
 
         daemon_local->baudrate = dlt_convert_serial_speed(speed);
 
-        if (dlt_setup_serial(fd, daemon_local->baudrate) < 0) {
+        if (dlt_setup_serial(fd, (speed_t) daemon_local->baudrate) < 0) {
             close(fd);
             daemon_local->flags.yvalue[0] = 0;
 
@@ -1601,7 +1601,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
     }
 
     /* Allocate permanent buffer for version info */
-    version = malloc(size + 1);
+    version = malloc((size_t) (size + 1));
 
     if (version == 0) {
         dlt_log(LOG_WARNING, "Cannot allocate memory for ECU version.\n");
@@ -1612,7 +1612,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
     off_t offset = 0;
 
     while (!feof(f)) {
-        offset += fread(version + offset, 1, size, f);
+        offset += fread(version + offset, 1, (size_t) size, f);
 
         if (ferror(f)) {
             dlt_log(LOG_WARNING, "Failed to read ECU Software version file.\n");
@@ -1876,10 +1876,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     /* Set payload data... */
     uiType = DLT_TYPE_INFO_STRG;
-    uiSize = strlen(str) + 1;
-    msg.datasize = sizeof(uint32_t) + sizeof(uint16_t) + uiSize;
+    uiSize = (uint16_t) (strlen(str) + 1);
+    msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
 
-    msg.databuffer = (uint8_t *)malloc(msg.datasize);
+    msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
     msg.databuffersize = msg.datasize;
 
     if (msg.databuffer == 0) {
@@ -1889,9 +1889,9 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     msg.datasize = 0;
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
-    msg.datasize += sizeof(uint32_t);
+    msg.datasize += (uint32_t) sizeof(uint32_t);
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
-    msg.datasize += sizeof(uint16_t);
+    msg.datasize += (uint32_t) sizeof(uint16_t);
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
     msg.datasize += uiSize;
 
@@ -1901,8 +1901,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
     dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                            msg.headerbuffer, sizeof(DltStorageHeader),
                            msg.headerbuffer + sizeof(DltStorageHeader),
-                           msg.headersize - sizeof(DltStorageHeader),
-                           msg.databuffer, msg.datasize, verbose);
+                           (int) (msg.headersize - sizeof(DltStorageHeader)),
+                           msg.databuffer, (int) msg.datasize, verbose);
 
     free(msg.databuffer);
 
@@ -2045,7 +2045,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
     /* Process all received messages */
     while (dlt_message_read(&(daemon_local->msg),
                             (uint8_t *)receiver->buf,
-                            receiver->bytesRcvd,
+                            (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.nflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
@@ -2057,12 +2057,12 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        bytes_to_be_removed = daemon_local->msg.headersize +
+        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
-            sizeof(DltStorageHeader);
+            sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += sizeof(dltSerialHeader);
+            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
 
         if (daemon_local->msg.resync_offset)
             bytes_to_be_removed += daemon_local->msg.resync_offset;
@@ -2118,7 +2118,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
     /* Process all received messages */
     while (dlt_message_read(&(daemon_local->msg),
                             (uint8_t *)receiver->buf,
-                            receiver->bytesRcvd,
+                            (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
@@ -2134,12 +2134,12 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
             }
         }
 
-        bytes_to_be_removed = daemon_local->msg.headersize +
+        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
-            sizeof(DltStorageHeader);
+            sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += sizeof(dltSerialHeader);
+            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
 
         if (daemon_local->msg.resync_offset)
             bytes_to_be_removed += daemon_local->msg.resync_offset;
@@ -2289,7 +2289,7 @@ int dlt_daemon_process_control_messages(
     while (dlt_message_read(
                &(daemon_local->msg),
                (uint8_t *)receiver->buf,
-               receiver->bytesRcvd,
+               (unsigned int) receiver->bytesRcvd,
                daemon_local->flags.nflag,
                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
@@ -2300,12 +2300,12 @@ int dlt_daemon_process_control_messages(
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        bytes_to_be_removed = daemon_local->msg.headersize +
+        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
-            sizeof(DltStorageHeader);
+            sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += sizeof(dltSerialHeader);
+            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
 
         if (daemon_local->msg.resync_offset)
             bytes_to_be_removed += daemon_local->msg.resync_offset;
@@ -2510,7 +2510,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          int verbose)
 {
     uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
-    int to_remove = 0;
+    uint32_t to_remove = 0;
     DltDaemonApplication *application = NULL;
     DltDaemonApplication *old_application = NULL;
     pid_t old_pid = 0;
@@ -2530,15 +2530,21 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     memset(&userapp, 0, sizeof(DltUserControlMsgRegisterApplication));
     origin = rec->buf;
 
+    /* Adding temp variable to check the return value */
+    int temp = 0;
+
     /* We shall not remove data before checking that everything is there. */
-    to_remove = dlt_receiver_check_and_get(rec,
+    temp = dlt_receiver_check_and_get(rec,
                                            &userapp,
                                            len,
                                            DLT_RCV_SKIP_HEADER);
 
-    if (to_remove < 0)
+    if (temp < 0)
         /* Not enough bytes received */
         return -1;
+    else {
+        to_remove = (uint32_t) temp;
+    }
 
     len = userapp.description_length;
 
@@ -2562,12 +2568,12 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     }
 
     /* adjust to_remove */
-    to_remove += sizeof(DltUserHeader) + len;
+    to_remove += (uint32_t) sizeof(DltUserHeader) + len;
     /* point to begin of message */
     rec->buf = origin;
 
     /* We can now remove data. */
-    if (dlt_receiver_remove(rec, to_remove) != DLT_RETURN_OK) {
+    if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
         dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
         return -1;
     }
@@ -2621,7 +2627,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                                      DltReceiver *rec,
                                                      int verbose)
 {
-    int to_remove = 0;
+    uint32_t to_remove = 0;
     uint32_t len = sizeof(DltUserControlMsgRegisterContext);
     DltUserControlMsgRegisterContext userctxt;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
@@ -2643,14 +2649,20 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
     origin = rec->buf;
 
-    to_remove = dlt_receiver_check_and_get(rec,
+    /* Adding temp variable to check the return value */
+    int temp = 0;
+
+    temp = dlt_receiver_check_and_get(rec,
                                            &userctxt,
                                            len,
                                            DLT_RCV_SKIP_HEADER);
 
-    if (to_remove < 0)
+    if (temp < 0)
         /* Not enough bytes received */
         return -1;
+    else {
+        to_remove = (uint32_t) temp;
+    }
 
     len = userctxt.description_length;
 
@@ -2674,12 +2686,12 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     }
 
     /* adjust to_remove */
-    to_remove += sizeof(DltUserHeader) + len;
+    to_remove += (uint32_t) sizeof(DltUserHeader) + len;
     /* point to begin of message */
     rec->buf = origin;
 
     /* We can now remove data. */
-    if (dlt_receiver_remove(rec, to_remove) != DLT_RETURN_OK) {
+    if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
         dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
         return -1;
     }
@@ -2753,8 +2765,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     if (daemon_local->flags.offlineLogstorageMaxDevices)
         /* Store log level set for offline logstorage into context structure*/
         context->storage_log_level =
-            dlt_daemon_logstorage_get_loglevel(daemon,
-                                               daemon_local->flags.offlineLogstorageMaxDevices,
+            (int8_t) dlt_daemon_logstorage_get_loglevel(daemon,
+                                               (int8_t) daemon_local->flags.offlineLogstorageMaxDevices,
                                                userctxt.apid,
                                                userctxt.ctid);
     else
@@ -2788,7 +2800,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         req = (DltServiceGetLogInfoRequest *)msg.databuffer;
 
         req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-        req->options = daemon_local->flags.autoResponseGetLogInfoOption;
+        req->options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
         dlt_set_id(req->apid, userctxt.apid);
         dlt_set_id(req->ctid, userctxt.ctid);
         dlt_set_id(req->com, "remo");
@@ -3063,12 +3075,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
     /* keep not read data in buffer */
-    size = daemon_local->msg.headersize +
+    size = (int) (daemon_local->msg.headersize +
         daemon_local->msg.datasize - sizeof(DltStorageHeader) +
-        sizeof(DltUserHeader);
+        sizeof(DltUserHeader));
 
     if (daemon_local->msg.found_serialheader)
-        size += sizeof(dltSerialHeader);
+        size += (int) sizeof(dltSerialHeader);
 
     if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
         dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
@@ -3135,10 +3147,10 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
 
                 if (context) {
                     old_log_level = context->log_level;
-                    context->log_level = userctxt.log_level; /* No endianess conversion necessary*/
+                    context->log_level = (int8_t) userctxt.log_level; /* No endianess conversion necessary*/
 
                     old_trace_status = context->trace_status;
-                    context->trace_status = userctxt.trace_status;   /* No endianess conversion necessary */
+                    context->trace_status = (int8_t) userctxt.trace_status;   /* No endianess conversion necessary */
 
                     /* The following function sends also the trace status */
                     if ((context->user_handle >= DLT_FD_MINIMUM) &&

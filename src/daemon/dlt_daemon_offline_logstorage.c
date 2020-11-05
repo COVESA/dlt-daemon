@@ -49,7 +49,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ecuid(char *key,
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
         return DLT_RETURN_ERROR;
 
-    memcpy(ecuid, key, (len - 2));
+    memcpy(ecuid, key, (size_t) (len - 2));
     memcpy(apid, ".*", 2);
     memcpy(ctid, ".*", 2);
 
@@ -76,7 +76,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_ctid(char *key,
     if ((len > (DLT_ID_SIZE + 2)) || (len < 1))
         return DLT_RETURN_ERROR;
 
-    strncpy(ctid, (key + 2), (len - 1));
+    strncpy(ctid, (key + 2), (size_t) (len - 1));
     memcpy(apid, ".*", 2);
 
     return DLT_RETURN_OK;
@@ -101,7 +101,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_apid(char *key,
     if ((len > (DLT_ID_SIZE + 2)) || (len < 2))
         return DLT_RETURN_ERROR;
 
-    strncpy(apid, key + 1, (len - 2));
+    strncpy(apid, key + 1, (size_t) (len - 2));
     memcpy(ctid, ".*", 2);
 
     return DLT_RETURN_OK;
@@ -218,7 +218,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_multi(char *key,
     if (tok == NULL)
         return DLT_RETURN_ERROR;
 
-    len = strlen(tok);
+    len = (int) strlen(tok);
 
     if (key[len + 1] == ':') {
         strncpy(ecuid, tok, DLT_ID_SIZE);
@@ -264,7 +264,7 @@ DLT_STATIC DltReturnValue dlt_logstorage_split_key(char *key, char *apid,
     if ((key == NULL) || (apid == NULL) || (ctid == NULL) || (ecuid == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    len = strlen(key);
+    len = (int) strlen(key);
 
     sep = strchr (key, ':');
 
@@ -336,7 +336,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context(
     dlt_set_id(req.apid, apid);
     dlt_set_id(req.ctid, ctid);
 
-    req.log_level = loglevel;
+    req.log_level = (uint8_t) loglevel;
 
     if (dlt_gateway_send_control_message(con, &ctrl, (void *)&req, verbose) != 0) {
         dlt_vlog(LOG_ERR,
@@ -487,7 +487,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_force_reset_level(DltDaemon *dae
 {
     int ll = DLT_LOG_DEFAULT;
     int num = 0;
-    int i = 0;
+    uint32_t i = 0;
     DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
 
     if ((daemon == NULL) || (daemon_local == NULL) || (ecuid == NULL) ||
@@ -975,11 +975,11 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
                 /* If logstorage configuration do not contain file name,
                  * then it is non verbose control filter, so return level as in this filter */
                 if (config[j]->file_name == NULL) {
-                    storage_loglevel = config[j]->log_level;
+                    storage_loglevel = (int8_t) config[j]->log_level;
                     break;
                 }
 
-                configured_loglevel = config[j]->log_level;
+                configured_loglevel = (int8_t) config[j]->log_level;
                 storage_loglevel = DLT_OFFLINE_LOGSTORAGE_MAX(
                     configured_loglevel,
                     storage_loglevel);
@@ -1014,7 +1014,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  unsigned char *data3,
                                  int size3)
 {
-    int i = 0;
+    uint32_t i = 0;
     DltLogStorageUserConfig file_config;
 
     if ((daemon == NULL) || (user_config == NULL) ||
@@ -1118,7 +1118,7 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
                                   DltDaemonLocal *daemon_local,
                                   int verbose)
 {
-    int i = 0;
+    uint32_t i = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1152,7 +1152,7 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                                      char *mnt_point,
                                      int verbose)
 {
-    int i = 0;
+    uint32_t i = 0;
     DltLogStorage *handle = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -1210,7 +1210,7 @@ DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
                                                 char *mnt_point,
                                                 int verbose)
 {
-    int i = 0;
+    uint32_t i = 0;
     int len = 0;
     int len1 = 0;
     int len2 = 0;
@@ -1220,17 +1220,17 @@ DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
     if ((daemon == NULL) || (daemon_local == NULL) || (mnt_point == NULL))
         return NULL;
 
-    len1 = strlen(mnt_point);
+    len1 = (int) strlen(mnt_point);
 
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
-        len2 = strlen(daemon->storage_handle[i].device_mount_point);
+        len2 = (int) strlen(daemon->storage_handle[i].device_mount_point);
 
         /* Check if the requested device path is already used as log storage
          * device. Check for strlen first, to avoid comparison errors when
          * final '/' is given or not */
         len = len1 > len2 ? len2 : len1;
 
-        if (strncmp(daemon->storage_handle[i].device_mount_point, mnt_point, len) == 0)
+        if (strncmp(daemon->storage_handle[i].device_mount_point, mnt_point, (size_t) len) == 0)
             return &daemon->storage_handle[i];
     }
 
