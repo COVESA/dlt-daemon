@@ -31,7 +31,7 @@ DLT_DECLARE_CONTEXT(dlt_ctx_main)
 DLT_DECLARE_CONTEXT(dlt_ctx_rdio)
 DLT_DECLARE_CONTEXT(dlt_ctx_evnt) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_syst)
-DLT_DECLARE_CONTEXT(dlt_ctx_crsh) /* Binary Buffer */
+DLT_DECLARE_CONTEXT(dlt_ctx_crsh)
 DLT_DECLARE_CONTEXT(dlt_ctx_stat) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_secu) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_krnl)
@@ -65,9 +65,9 @@ static struct logger_list *init_logger_list(bool skip_binary_buffers)
     init_logger(logger_list, LOG_ID_RADIO);
     init_logger(logger_list, LOG_ID_SYSTEM);
     init_logger(logger_list, LOG_ID_KERNEL);
+    init_logger(logger_list, LOG_ID_CRASH);
 
     if (!skip_binary_buffers) {
-        init_logger(logger_list, LOG_ID_CRASH);
         init_logger(logger_list, LOG_ID_EVENTS);
         init_logger(logger_list, LOG_ID_STATS);
         init_logger(logger_list, LOG_ID_SECURITY);
@@ -191,17 +191,20 @@ int main(int argc, char *argv[])
 {
     (void) argc;
     (void) argv;
+    bool skip_binary_buffers = true;
 
     DLT_REGISTER_APP("LOGD", "logd -> dlt adapter");
     DLT_REGISTER_CONTEXT(dlt_ctx_self, "LOGF", "logd retriever");
     DLT_REGISTER_CONTEXT(dlt_ctx_main, "MAIN", "logd type: main");
     DLT_REGISTER_CONTEXT(dlt_ctx_rdio, "RDIO", "logd type: rdio");
-    DLT_REGISTER_CONTEXT(dlt_ctx_evnt, "EVNT", "logd type: evnt");
     DLT_REGISTER_CONTEXT(dlt_ctx_syst, "SYST", "logd type: syst");
     DLT_REGISTER_CONTEXT(dlt_ctx_crsh, "CRSH", "logd type: crsh");
-    DLT_REGISTER_CONTEXT(dlt_ctx_stat, "STAT", "logd type: stat");
-    DLT_REGISTER_CONTEXT(dlt_ctx_secu, "SECU", "logd type: secu");
     DLT_REGISTER_CONTEXT(dlt_ctx_krnl, "KRNL", "logd type: krnl");
+    if(!skip_binary_buffers){
+        DLT_REGISTER_CONTEXT(dlt_ctx_evnt, "EVNT", "logd type: evnt");
+        DLT_REGISTER_CONTEXT(dlt_ctx_stat, "STAT", "logd type: stat");
+        DLT_REGISTER_CONTEXT(dlt_ctx_secu, "SECU", "logd type: secu");
+    }
 
     struct sigaction act;
     act.sa_handler = signal_handler;
@@ -211,7 +214,7 @@ int main(int argc, char *argv[])
 
     struct logger_list *logger_list;
     /* Binary buffers are currently not supported */
-    logger_list = init_logger_list(true);
+    logger_list = init_logger_list(skip_binary_buffers);
     if (logger_list == nullptr)
         return EXIT_FAILURE;
 
@@ -229,6 +232,11 @@ int main(int argc, char *argv[])
     DLT_UNREGISTER_CONTEXT(dlt_ctx_rdio);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_main);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_self);
+    if(!skip_binary_buffers){
+        DLT_UNREGISTER_CONTEXT(dlt_ctx_evnt);
+        DLT_UNREGISTER_CONTEXT(dlt_ctx_stat);
+        DLT_UNREGISTER_CONTEXT(dlt_ctx_secu);
+    }
 
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
 
