@@ -113,6 +113,17 @@ cmake -DWITH_DOC=ON ..
 make doc
 ```
 
+### Build DLT debian package
+
+To build the DLT debian package for your own purpose, follow these steps:
+
+```bash
+mkdir build
+cd build
+cmake ..
+cpack
+```
+
 ## Learn more
 Once you got your feet wet with developing your first application, you might
 want to learn more. Find out about DLT's [advanced topics](#advanced-topics),
