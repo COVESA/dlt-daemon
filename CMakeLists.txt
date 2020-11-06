@@ -245,6 +245,12 @@ if (WITH_DLT_UNIT_TESTS)
     add_subdirectory(tests)
 endif()
 
+SET(CPACK_GENERATOR "DEB")
+SET(CPACK_PACKAGE_NAME "dlt_${DLT_REVISION}")
+SET(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "genivi-diagnostic-log-and-trace@lists.genivi.org")
+INCLUDE(CPack)
+
 message(STATUS)
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS "Build for Version ${PROJECT_VERSION} build ${DLT_REVISION} version state ${DLT_VERSION_STATE}")
