@@ -301,6 +301,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->UDPMulticastIPPort = MULTICASTIPPORT;
 #endif
     daemon_local->flags.ipNodes = NULL;
+    daemon_local->flags.injectionMode = 1;
 
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
@@ -683,6 +684,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         else {
                             dlt_vlog(LOG_WARNING, "BindAddress option is empty\n");
                         }
+                    }
+                    else if (strcmp(token, "InjectionMode") == 0) {
+                        daemon_local->flags.injectionMode = atoi(value);
                     }
                     else {
                         fprintf(stderr, "Unknown option: %s=%s\n", token, value);
