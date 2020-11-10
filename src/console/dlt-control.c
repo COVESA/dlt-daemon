@@ -287,26 +287,16 @@ int main(int argc, char *argv[])
     struct timespec ts;
 
     /* Initialize dltdata */
-    dltdata.vflag = 0;
-    dltdata.yflag = 0;
-    dltdata.evalue = 0;
-    dltdata.bvalue = 0;
-
-    dltdata.avalue = 0;
-    dltdata.cvalue = 0;
-    dltdata.svalue = 0;
-    dltdata.mvalue = 0;
-    dltdata.xvalue = 0;
-    dltdata.tvalue = 1000;
-    dltdata.lvalue = DLT_INVALID_LOG_LEVEL;
-    dltdata.rvalue = DLT_INVALID_TRACE_STATUS;
-    dltdata.dvalue = -1;
-    dltdata.fvalue = -1;
-    dltdata.ivalue = -1;
-    dltdata.oflag = -1;
-    dltdata.gflag = -1;
-    dltdata.jvalue = 0;
-    dltdata.kvalue = 0;
+    dltdata = (DltReceiveData) {
+        .tvalue = 1000,
+        .lvalue = DLT_INVALID_LOG_LEVEL,
+        .rvalue = DLT_INVALID_TRACE_STATUS,
+        .dvalue = -1,
+        .fvalue = -1,
+        .ivalue = -1,
+        .oflag = -1,
+        .gflag = -1,
+    };
 
     /* Fetch command line arguments */
     opterr = 0;
