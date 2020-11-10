@@ -30,6 +30,7 @@ cc_defaults {
         "-DDLT_LIB_USE_UNIX_SOCKET_IPC",
         "-DCONFIGURATION_FILES_DIR=\"/vendor/etc\"",
         "-DDLT_USER_IPC_PATH=\"/data/local/tmp\"",
+        "-D_GNU_SOURCE",
     ] + [
         "-Wno-unused-parameter",
         "-W",

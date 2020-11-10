@@ -99,6 +99,8 @@ static char dlt_daemon_fifo[DLT_PATH_MAX];
 
 static sem_t dlt_mutex;
 static pthread_t dlt_housekeeperthread_handle;
+static bool dlt_housekeeperthread_exit = false;
+static int dlt_housekeeperthread_exit_pipe[2] = {-1, -1};
 
 /* calling dlt_user_atexit_handler() second time fails with error message */
 static int atexit_registered = 0;
@@ -125,6 +127,8 @@ enum StringType
 #define DLT_MAX_TRACE_SEGMENT_SIZE 1024
 #define DLT_MESSAGE_QUEUE_NAME "/dlt_message_queue"
 #define DLT_DELAYED_RESEND_INDICATOR_PATTERN 0xFFFF
+
+static bool dlt_user_trace_network_segmented_thread_exit = false;
 
 /* Mutex to wait on while message queue is not initialized */
 pthread_mutex_t mq_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -182,7 +186,6 @@ static DltReturnValue dlt_user_log_out_error_handling(void *ptr1,
                                                       size_t len2,
                                                       void *ptr3,
                                                       size_t len3);
-static void dlt_user_cleanup_handler(void *arg);
 static int dlt_start_threads();
 static void dlt_stop_threads();
 static void dlt_fork_child_fork_handler();
@@ -2995,20 +2998,24 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 #ifdef linux
     prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
 #endif
-    pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
-
     s_segmented_data *data;
+    bool exit = false;
 
     while (1) {
         /* Wait until message queue is initialized */
         dlt_lock_mutex(&mq_mutex);
 
-        while (dlt_user.dlt_segmented_queue_read_handle < 0)
-        {
+        while (dlt_user.dlt_segmented_queue_read_handle < 0 &&
+               dlt_user.dlt_segmented_queue_write_handle < 0 &&
+               !dlt_user_trace_network_segmented_thread_exit)
             pthread_cond_wait(&mq_init_condition, &mq_mutex);
-        }
+
+        exit = dlt_user_trace_network_segmented_thread_exit;
 
         dlt_unlock_mutex(&mq_mutex);
+
+        if (exit)
+            break;
 
         ssize_t read = mq_receive(dlt_user.dlt_segmented_queue_read_handle, (char *)&data,
                                   sizeof(s_segmented_data *), NULL);
@@ -3025,6 +3032,9 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 
             continue;
         }
+
+        if (read == 1)
+            continue; /* 1 byte from dlt_stop_threads(), dlt_user_trace_network_segmented_thread_exit is true. */
 
         if (read != sizeof(s_segmented_data *)) {
             /* This case will not happen. */
@@ -3047,8 +3057,6 @@ void dlt_user_trace_network_segmented_thread(void *unused)
         free(data->payload);
         free(data);
     }
-
-    pthread_cleanup_pop(1);
 }
 
 void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data)
@@ -3548,30 +3556,15 @@ DltReturnValue dlt_disable_local_print(void)
     return DLT_RETURN_OK;
 }
 
-/* Cleanup on thread cancellation, thread may hold lock release it here */
-static void dlt_user_cleanup_handler(void *arg)
-{
-    DLT_UNUSED(arg); /* Satisfy compiler */
-
-#ifdef DLT_NETWORK_TRACE_ENABLE
-    /* unlock the message queue */
-    dlt_unlock_mutex(&mq_mutex);
-#endif
-
-    /* unlock DLT (dlt_mutex) */
-    DLT_SEM_FREE();
-}
-
 void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
 {
     struct timespec ts;
 #ifdef linux
     prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
 #endif
+    dlt_housekeeperthread_exit = false;
 
-    pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
-
-    while (1) {
+    while (!dlt_housekeeperthread_exit) {
         /* Check for new messages from DLT daemon */
         if (dlt_user_log_check_user_message() < DLT_RETURN_OK)
             /* Critical error */
@@ -3588,8 +3581,6 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
         ts.tv_nsec = DLT_USER_RECEIVE_NDELAY;
         nanosleep(&ts, NULL);
     }
-
-    pthread_cleanup_pop(1);
 }
 
 /* Private functions of user library */
@@ -4210,8 +4201,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
     int ret = 0;
 
     uint32_t i;
-    int fd;
-    struct pollfd nfd[1];
+    struct pollfd nfd[2];
 
     DltUserHeader *userheader;
     DltReceiver *receiver = &(dlt_user.receiver);
@@ -4234,249 +4224,252 @@ DltReturnValue dlt_user_log_check_user_message(void)
     delayed_log_level_changed_callback.log_level_changed_callback = 0;
     delayed_injection_callback.data = 0;
 
-#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
-    fd = dlt_user.dlt_log_handle;
-#else /* DLT_LIB_USE_FIFO_IPC */
-    fd = dlt_user.dlt_user_handle;
-#endif
     nfd[0].events = POLLIN;
-    nfd[0].fd = fd;
+    nfd[0].fd = dlt_housekeeperthread_exit_pipe[0];
 
+    nfd[1].events = POLLIN;
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
-    if (fd != DLT_FD_INIT) {
-        ret = poll(nfd, 1, -1);
+    nfd[1].fd = dlt_user.dlt_log_handle;
 #else /* DLT_LIB_USE_FIFO_IPC */
-    if (fd != DLT_FD_INIT && dlt_user.dlt_log_handle > 0) {
-        ret = poll(nfd, 1, DLT_USER_RECEIVE_NDELAY);
+    nfd[1].fd = dlt_user.dlt_user_handle;
 #endif
-        if (ret) {
-            if (nfd[0].revents & (POLLHUP | POLLNVAL | POLLERR)) {
-                dlt_user.dlt_log_handle = DLT_FD_INIT;
-                return DLT_RETURN_ERROR;
-            }
 
-            if (dlt_receiver_receive(receiver) <= 0)
-                /* No new message available */
-                return DLT_RETURN_OK;
+    ret = poll(nfd, 2, -1);
+    if (ret <= 0) {
+        if (ret < 0 && errno != EINTR)
+            dlt_vlog(LOG_WARNING, "poll() for DLT user messages failed: %s\n", strerror(errno));
+        return DLT_RETURN_OK;
+    }
 
-            /* look through buffer as long as data is in there */
-            while (1) {
-                if (receiver->bytesRcvd < (int32_t)sizeof(DltUserHeader))
-                    break;
+    if (nfd[0].revents)
+        dlt_housekeeperthread_exit = true;
 
-                /* resync if necessary */
-                offset = 0;
+    if (nfd[1].revents) {
+        if (nfd[1].revents & (POLLHUP | POLLNVAL | POLLERR)) {
+            dlt_user.dlt_log_handle = DLT_FD_INIT;
+            return DLT_RETURN_ERROR;
+        }
 
-                do {
-                    userheader = (DltUserHeader *)(receiver->buf + offset);
+        if (dlt_receiver_receive(receiver) <= 0)
+            /* No new message available */
+            return DLT_RETURN_OK;
 
-                    /* Check for user header pattern */
-                    if (dlt_user_check_userheader(userheader))
-                        break;
+        /* look through buffer as long as data is in there */
+        while (1) {
+            if (receiver->bytesRcvd < (int32_t)sizeof(DltUserHeader))
+                break;
 
-                    offset++;
+            /* resync if necessary */
+            offset = 0;
 
-                } while ((int32_t)(sizeof(DltUserHeader) + offset) <= receiver->bytesRcvd);
+            do {
+                userheader = (DltUserHeader *)(receiver->buf + offset);
 
                 /* Check for user header pattern */
-                if ((dlt_user_check_userheader(userheader) < 0) ||
-                    (dlt_user_check_userheader(userheader) == 0))
+                if (dlt_user_check_userheader(userheader))
                     break;
 
-                /* Set new start offset */
-                if (offset > 0) {
-                    receiver->buf += offset;
-                    receiver->bytesRcvd -= offset;
+                offset++;
+
+            } while ((int32_t)(sizeof(DltUserHeader) + offset) <= receiver->bytesRcvd);
+
+            /* Check for user header pattern */
+            if ((dlt_user_check_userheader(userheader) < 0) ||
+                (dlt_user_check_userheader(userheader) == 0))
+                break;
+
+            /* Set new start offset */
+            if (offset > 0) {
+                receiver->buf += offset;
+                receiver->bytesRcvd -= offset;
+            }
+
+            switch (userheader->message) {
+            case DLT_USER_MESSAGE_LOG_LEVEL:
+            {
+                if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel))) {
+                    leave_while = 1;
+                    break;
                 }
 
-                switch (userheader->message) {
-                case DLT_USER_MESSAGE_LOG_LEVEL:
-                {
-                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel))) {
-                        leave_while = 1;
-                        break;
-                    }
+                usercontextll = (DltUserControlMsgLogLevel *)(receiver->buf + sizeof(DltUserHeader));
 
-                    usercontextll = (DltUserControlMsgLogLevel *)(receiver->buf + sizeof(DltUserHeader));
+                /* Update log level and trace status */
+                if (usercontextll != NULL) {
+                    DLT_SEM_LOCK();
 
-                    /* Update log level and trace status */
-                    if (usercontextll != NULL) {
-                        DLT_SEM_LOCK();
+                    if ((usercontextll->log_level_pos >= 0) &&
+                        (usercontextll->log_level_pos < (int32_t)dlt_user.dlt_ll_ts_num_entries)) {
+                        if (dlt_user.dlt_ll_ts) {
+                            dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level = usercontextll->log_level;
+                            dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status =
+                                usercontextll->trace_status;
 
-                        if ((usercontextll->log_level_pos >= 0) &&
-                            (usercontextll->log_level_pos < (int32_t)dlt_user.dlt_ll_ts_num_entries)) {
-                            if (dlt_user.dlt_ll_ts) {
-                                dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level = usercontextll->log_level;
-                                dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status =
+                            if (dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr)
+                                *(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr) =
+                                    usercontextll->log_level;
+
+                            if (dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr)
+                                *(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr) =
                                     usercontextll->trace_status;
 
-                                if (dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr)
-                                    *(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_ptr) =
-                                        usercontextll->log_level;
-
-                                if (dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr)
-                                    *(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr) =
-                                        usercontextll->trace_status;
-
-                                delayed_log_level_changed_callback.log_level_changed_callback =
-                                    dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback;
-                                memcpy(delayed_log_level_changed_callback.contextID,
-                                       dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID, DLT_ID_SIZE);
-                                delayed_log_level_changed_callback.log_level = usercontextll->log_level;
-                                delayed_log_level_changed_callback.trace_status = usercontextll->trace_status;
-                            }
+                            delayed_log_level_changed_callback.log_level_changed_callback =
+                                dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback;
+                            memcpy(delayed_log_level_changed_callback.contextID,
+                                   dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID, DLT_ID_SIZE);
+                            delayed_log_level_changed_callback.log_level = usercontextll->log_level;
+                            delayed_log_level_changed_callback.trace_status = usercontextll->trace_status;
                         }
-
-                        DLT_SEM_FREE();
                     }
 
-                    /* call callback outside of semaphore */
-                    if (delayed_log_level_changed_callback.log_level_changed_callback != 0)
-                        delayed_log_level_changed_callback.log_level_changed_callback(
-                            delayed_log_level_changed_callback.contextID,
-                            delayed_log_level_changed_callback.log_level,
-                            delayed_log_level_changed_callback.trace_status);
-
-                    /* keep not read data in buffer */
-                    if (dlt_receiver_remove(receiver,
-                                            sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel)) ==
-                        DLT_RETURN_ERROR)
-                        return DLT_RETURN_ERROR;
+                    DLT_SEM_FREE();
                 }
-                break;
-                case DLT_USER_MESSAGE_INJECTION:
-                {
-                    /* At least, user header, user context, and service id and data_length of injected message is available */
-                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection))) {
-                        leave_while = 1;
-                        break;
-                    }
 
-                    usercontextinj = (DltUserControlMsgInjection *)(receiver->buf + sizeof(DltUserHeader));
-                    userbuffer =
-                        (unsigned char *)(receiver->buf + sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection));
+                /* call callback outside of semaphore */
+                if (delayed_log_level_changed_callback.log_level_changed_callback != 0)
+                    delayed_log_level_changed_callback.log_level_changed_callback(
+                        delayed_log_level_changed_callback.contextID,
+                        delayed_log_level_changed_callback.log_level,
+                        delayed_log_level_changed_callback.trace_status);
 
-                    if (userbuffer != NULL) {
-
-                        if (receiver->bytesRcvd <
-                            (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection) +
-                                      usercontextinj->data_length_inject)) {
-                            leave_while = 1;
-                            break;
-                        }
-
-                        DLT_SEM_LOCK();
-
-                        if ((usercontextinj->data_length_inject > 0) && (dlt_user.dlt_ll_ts))
-                            /* Check if injection callback is registered for this context */
-                            for (i = 0; i < dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].nrcallbacks; i++)
-                                if ((dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table) &&
-                                    (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].service_id ==
-                                     usercontextinj->service_id)) {
-                                    /* Prepare delayed injection callback call */
-                                    if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
-                                        injection_callback != NULL) {
-                                        delayed_injection_callback.injection_callback =
-                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
-                                            injection_callback;
-                                    }
-                                    else if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
-                                             injection_callback_with_id != NULL)
-                                    {
-                                        delayed_injection_callback.injection_callback_with_id =
-                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
-                                            injection_callback_with_id;
-                                        delayed_injection_callback.data =
-                                            dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].data;
-                                    }
-
-                                    delayed_injection_callback.service_id = usercontextinj->service_id;
-                                    delayed_inject_data_length = usercontextinj->data_length_inject;
-                                    delayed_inject_buffer = malloc(delayed_inject_data_length);
-
-                                    if (delayed_inject_buffer != NULL) {
-                                        memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
-                                    }
-                                    else {
-                                        DLT_SEM_FREE();
-                                        dlt_log(LOG_WARNING, "malloc failed!\n");
-                                        return DLT_RETURN_ERROR;
-                                    }
-
-                                    break;
-                                }
-
-                        DLT_SEM_FREE();
-
-                        /* Delayed injection callback call */
-                        if ((delayed_inject_buffer != NULL) &&
-                            (delayed_injection_callback.injection_callback != NULL)) {
-                            delayed_injection_callback.injection_callback(delayed_injection_callback.service_id,
-                                                                          delayed_inject_buffer,
-                                                                          delayed_inject_data_length);
-                            delayed_injection_callback.injection_callback = NULL;
-                        }
-                        else if ((delayed_inject_buffer != NULL) &&
-                                 (delayed_injection_callback.injection_callback_with_id != NULL))
-                        {
-                            delayed_injection_callback.injection_callback_with_id(delayed_injection_callback.service_id,
-                                                                                  delayed_inject_buffer,
-                                                                                  delayed_inject_data_length,
-                                                                                  delayed_injection_callback.data);
-                            delayed_injection_callback.injection_callback_with_id = NULL;
-                        }
-
-                        free(delayed_inject_buffer);
-                        delayed_inject_buffer = NULL;
-
-                        /* keep not read data in buffer */
-                        if (dlt_receiver_remove(receiver,
-                                                (sizeof(DltUserHeader) +
-                                                 sizeof(DltUserControlMsgInjection) +
-                                                 usercontextinj->data_length_inject)) != DLT_RETURN_OK)
-                            return DLT_RETURN_ERROR;
-                    }
-                }
-                break;
-                case DLT_USER_MESSAGE_LOG_STATE:
-                {
-                    /* At least, user header, user context, and service id and data_length of injected message is available */
-                    if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogState))) {
-                        leave_while = 1;
-                        break;
-                    }
-
-                    userlogstate = (DltUserControlMsgLogState *)(receiver->buf + sizeof(DltUserHeader));
-                    dlt_user.log_state = userlogstate->log_state;
-
-                    /* keep not read data in buffer */
-                    if (dlt_receiver_remove(receiver,
-                                            (sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogState))) ==
-                        DLT_RETURN_ERROR)
-                        return DLT_RETURN_ERROR;
-                }
-                break;
-                default:
-                {
-                    dlt_log(LOG_WARNING, "Invalid user message type received!\n");
-                    /* Ignore result */
-                    dlt_receiver_remove(receiver, sizeof(DltUserHeader));
-                    /* In next invocation of while loop, a resync will be triggered if additional data was received */
-                }
-                break;
-                } /* switch() */
-
-                if (leave_while == 1) {
-                    leave_while = 0;
+                /* keep not read data in buffer */
+                if (dlt_receiver_remove(receiver,
+                                        sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel)) ==
+                    DLT_RETURN_ERROR)
+                    return DLT_RETURN_ERROR;
+            }
+            break;
+            case DLT_USER_MESSAGE_INJECTION:
+            {
+                /* At least, user header, user context, and service id and data_length of injected message is available */
+                if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection))) {
+                    leave_while = 1;
                     break;
                 }
-            } /* while buffer*/
 
-            if (dlt_receiver_move_to_begin(receiver) == DLT_RETURN_ERROR)
-                return DLT_RETURN_ERROR;
-        } /* while receive */
+                usercontextinj = (DltUserControlMsgInjection *)(receiver->buf + sizeof(DltUserHeader));
+                userbuffer =
+                    (unsigned char *)(receiver->buf + sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection));
 
-    } /* if */
+                if (userbuffer != NULL) {
+
+                    if (receiver->bytesRcvd <
+                        (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgInjection) +
+                                  usercontextinj->data_length_inject)) {
+                        leave_while = 1;
+                        break;
+                    }
+
+                    DLT_SEM_LOCK();
+
+                    if ((usercontextinj->data_length_inject > 0) && (dlt_user.dlt_ll_ts))
+                        /* Check if injection callback is registered for this context */
+                        for (i = 0; i < dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].nrcallbacks; i++)
+                            if ((dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table) &&
+                                (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].service_id ==
+                                 usercontextinj->service_id)) {
+                                /* Prepare delayed injection callback call */
+                                if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
+                                    injection_callback != NULL) {
+                                    delayed_injection_callback.injection_callback =
+                                        dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
+                                        injection_callback;
+                                }
+                                else if (dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
+                                         injection_callback_with_id != NULL)
+                                {
+                                    delayed_injection_callback.injection_callback_with_id =
+                                        dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].
+                                        injection_callback_with_id;
+                                    delayed_injection_callback.data =
+                                        dlt_user.dlt_ll_ts[usercontextinj->log_level_pos].injection_table[i].data;
+                                }
+
+                                delayed_injection_callback.service_id = usercontextinj->service_id;
+                                delayed_inject_data_length = usercontextinj->data_length_inject;
+                                delayed_inject_buffer = malloc(delayed_inject_data_length);
+
+                                if (delayed_inject_buffer != NULL) {
+                                    memcpy(delayed_inject_buffer, userbuffer, delayed_inject_data_length);
+                                }
+                                else {
+                                    DLT_SEM_FREE();
+                                    dlt_log(LOG_WARNING, "malloc failed!\n");
+                                    return DLT_RETURN_ERROR;
+                                }
+
+                                break;
+                            }
+
+                    DLT_SEM_FREE();
+
+                    /* Delayed injection callback call */
+                    if ((delayed_inject_buffer != NULL) &&
+                        (delayed_injection_callback.injection_callback != NULL)) {
+                        delayed_injection_callback.injection_callback(delayed_injection_callback.service_id,
+                                                                      delayed_inject_buffer,
+                                                                      delayed_inject_data_length);
+                        delayed_injection_callback.injection_callback = NULL;
+                    }
+                    else if ((delayed_inject_buffer != NULL) &&
+                             (delayed_injection_callback.injection_callback_with_id != NULL))
+                    {
+                        delayed_injection_callback.injection_callback_with_id(delayed_injection_callback.service_id,
+                                                                              delayed_inject_buffer,
+                                                                              delayed_inject_data_length,
+                                                                              delayed_injection_callback.data);
+                        delayed_injection_callback.injection_callback_with_id = NULL;
+                    }
+
+                    free(delayed_inject_buffer);
+                    delayed_inject_buffer = NULL;
+
+                    /* keep not read data in buffer */
+                    if (dlt_receiver_remove(receiver,
+                                            (sizeof(DltUserHeader) +
+                                             sizeof(DltUserControlMsgInjection) +
+                                             usercontextinj->data_length_inject)) != DLT_RETURN_OK)
+                        return DLT_RETURN_ERROR;
+                }
+            }
+            break;
+            case DLT_USER_MESSAGE_LOG_STATE:
+            {
+                /* At least, user header, user context, and service id and data_length of injected message is available */
+                if (receiver->bytesRcvd < (int32_t)(sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogState))) {
+                    leave_while = 1;
+                    break;
+                }
+
+                userlogstate = (DltUserControlMsgLogState *)(receiver->buf + sizeof(DltUserHeader));
+                dlt_user.log_state = userlogstate->log_state;
+
+                /* keep not read data in buffer */
+                if (dlt_receiver_remove(receiver,
+                                        (sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogState))) ==
+                    DLT_RETURN_ERROR)
+                    return DLT_RETURN_ERROR;
+            }
+            break;
+            default:
+            {
+                dlt_log(LOG_WARNING, "Invalid user message type received!\n");
+                /* Ignore result */
+                dlt_receiver_remove(receiver, sizeof(DltUserHeader));
+                /* In next invocation of while loop, a resync will be triggered if additional data was received */
+            }
+            break;
+            } /* switch() */
+
+            if (leave_while == 1) {
+                leave_while = 0;
+                break;
+            }
+        } /* while buffer*/
+
+        if (dlt_receiver_move_to_begin(receiver) == DLT_RETURN_ERROR)
+            return DLT_RETURN_ERROR;
+    }
 
     return DLT_RETURN_OK;
 }
@@ -4707,9 +4700,53 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 }
 #endif
 
+static void dlt_close_pipe(int pipe_fds[2])
+{
+    if (pipe_fds[0] == -1)
+        return;
+
+    close(pipe_fds[0]);
+    pipe_fds[0] = -1;
+
+    close(pipe_fds[1]);
+    pipe_fds[1] = -1;
+}
+
+static DltReturnValue dlt_open_pipe(int pipe_fds[2])
+{
+#ifdef __linux__
+    if (pipe2(pipe_fds, O_CLOEXEC) != 0) {
+        dlt_vlog(LOG_CRIT, "Failed to create pipe: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+#else
+    int flags[2];
+
+    if (pipe(pipe_fds) != 0) {
+        dlt_vlog(LOG_CRIT, "Failed to create pipe: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+
+    flags[0] = fcntl(pipe_fds[0], F_GETFD);
+    flags[1] = fcntl(pipe_fds[1], F_GETFD);
+
+    if (fcntl(pipe_fds[0], F_SETFD, flags[0] | FD_CLOEXEC) == -1 ||
+        fcntl(pipe_fds[1], F_SETFD, flags[1] | FD_CLOEXEC) == -1) {
+        dlt_vlog(LOG_CRIT, "Failed to set FD_CLOEXEC on pipe: %s\n", strerror(errno));
+        dlt_close_pipe(pipe_fds);
+        return DLT_RETURN_ERROR;
+    }
+#endif
+
+    return DLT_RETURN_OK;
+}
 
 int dlt_start_threads()
 {
+    if (dlt_housekeeperthread_exit_pipe[0] == -1)
+        if (dlt_open_pipe(dlt_housekeeperthread_exit_pipe) != DLT_RETURN_OK)
+            return -1;
+
     /* Start housekeeper thread */
     if (pthread_create(&(dlt_housekeeperthread_handle),
                        0,
@@ -4720,6 +4757,10 @@ int dlt_start_threads()
     }
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
+    dlt_lock_mutex(&mq_mutex);
+    dlt_user_trace_network_segmented_thread_exit = false;
+    dlt_unlock_mutex(&mq_mutex);
+
     /* Start the segmented thread */
     if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
                        (void *)dlt_user_trace_network_segmented_thread, NULL)) {
@@ -4736,27 +4777,12 @@ void dlt_stop_threads()
     int joined = 0;
 
     if (dlt_housekeeperthread_handle) {
-        /* do not ignore return value */
-#ifndef __ANDROID_API__
-        dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
-#else
-
-#ifdef DLT_NETWORK_TRACE_ENABLE
-        dlt_lock_mutex(&mq_mutex);
-#endif /* DLT_NETWORK_TRACE_ENABLE */
-        dlt_housekeeperthread_result = pthread_kill(dlt_housekeeperthread_handle, SIGKILL);
-        dlt_user_cleanup_handler(NULL);
-#endif
-
+        if (write(dlt_housekeeperthread_exit_pipe[1], "1", 1) != 1)
+            dlt_housekeeperthread_result = errno;
 
         if (dlt_housekeeperthread_result != 0)
             dlt_vlog(LOG_ERR,
-                     "ERROR %s(dlt_housekeeperthread_handle): %s\n",
-#ifndef __ANDROID_API__
-                     "pthread_cancel",
-#else
-                     "pthread_kill",
-#endif
+                     "ERROR write to dlt_housekeeperthread exit pipe failed: %s\n",
                      strerror(dlt_housekeeperthread_result));
     }
 
@@ -4765,15 +4791,15 @@ void dlt_stop_threads()
 
     if (dlt_user.dlt_segmented_nwt_handle) {
         dlt_lock_mutex(&mq_mutex);
+        dlt_user_trace_network_segmented_thread_exit = true;
         pthread_cond_signal(&mq_init_condition);
         dlt_unlock_mutex(&mq_mutex);
 
-        dlt_segmented_nwt_result = pthread_cancel(dlt_user.dlt_segmented_nwt_handle);
-
-        if (dlt_segmented_nwt_result != 0)
-            dlt_vlog(LOG_ERR,
-                     "ERROR pthread_cancel(dlt_user.dlt_segmented_nwt_handle): %s\n",
-                     strerror(dlt_segmented_nwt_result));
+        if (dlt_user.dlt_segmented_queue_write_handle >= 0) {
+            /* Write 1 byte to return from mq_receive(). */
+            if (mq_send(dlt_user.dlt_segmented_queue_write_handle, "1", 1, 1) < 0)
+                dlt_segmented_nwt_result = errno;
+        }
     }
 #endif /* DLT_NETWORK_TRACE_ENABLE */
     /* make sure that the threads really finished working */
@@ -4787,6 +4813,8 @@ void dlt_stop_threads()
 
         dlt_housekeeperthread_handle = 0; /* set to invalid */
     }
+
+    dlt_close_pipe(dlt_housekeeperthread_exit_pipe);
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
     if ((dlt_segmented_nwt_result == 0) && dlt_user.dlt_segmented_nwt_handle) {
