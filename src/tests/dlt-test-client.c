@@ -476,7 +476,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 length = 0;  /* the macro can set this variable to -1 */
                 length_tmp = 0;
                 ptr = message->databuffer;
-                datalength = message->datasize;
+                datalength = (int32_t) message->datasize;
 
                 /* Log message */
                 if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
@@ -664,7 +664,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 id = 0;
                 id_tmp = 0;
                 ptr = message->databuffer;
-                datalength = message->datasize;
+                datalength = (int32_t) message->datasize;
                 slen = -1;
 
                 tc_old = dltdata->test_counter_macro[2];
@@ -674,7 +674,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 id = DLT_ENDIAN_GET_32(message->standardheader->htyp, id_tmp);
 
                 /* Length of string */
-                datalength -= sizeof(uint16_t);
+                datalength -= (int32_t) sizeof(uint16_t);
                 ptr += sizeof(uint16_t);
 
                 switch (id) {
@@ -850,7 +850,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     slen = strlen("raw") + 1;
                     datalength -= slen;
                     ptr += slen;
-                    datalength -= sizeof(uint16_t);
+                    datalength -= (int32_t) sizeof(uint16_t);
                     ptr += sizeof(uint16_t);
 
                     if (datalength == 10)
@@ -901,7 +901,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length_tmp = 0; /* the macro can set this variable to -1 */
 
                             ptr = message->databuffer;
-                            datalength = message->datasize;
+                            datalength = (int32_t) message->datasize;
 
                             /* first read the type info of the first argument: must be string */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1076,7 +1076,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1159,7 +1159,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
                         type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
@@ -1264,7 +1264,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1361,7 +1361,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1423,7 +1423,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -1531,7 +1531,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 length = 0;
                 length_tmp = 0; /* the macro can set this variable to -1 */
                 ptr = message->databuffer;
-                datalength = message->datasize;
+                datalength = (int32_t) message->datasize;
 
                 /* Log message */
                 if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
@@ -1709,7 +1709,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 id = 0;
                 id_tmp = 0;
                 ptr = message->databuffer;
-                datalength = message->datasize;
+                datalength = (int32_t) message->datasize;
                 slen = -1;
 
                 tc_old = dltdata->test_counter_function[2];
@@ -1924,7 +1924,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             length_tmp = 0; /* the macro can set this variable to -1 */
 
                             ptr = message->databuffer;
-                            datalength = message->datasize;
+                            datalength = (int32_t) message->datasize;
 
                             /* first read the type info of the first argument: should be string */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2100,7 +2100,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* first read the type info of the first argument: should be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2183,7 +2183,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
                         type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
@@ -2288,7 +2288,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2385,7 +2385,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2447,7 +2447,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -2510,7 +2510,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = message->datasize;
 
-            bytes_written = writev(dltdata->ohandle, iov, 2);
+            bytes_written = (int) writev(dltdata->ohandle, iov, 2);
 
             if (0 > bytes_written) {
                 printf("dlt_testclient_message_callback, error in: writev(dltdata->ohandle, iov, 2)\n");
