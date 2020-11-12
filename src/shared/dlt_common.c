@@ -2601,7 +2601,7 @@ int dlt_buffer_push3(DltBuffer *buf,
         free_size = buf->size - write + read;
 
     /* check size */
-    if (free_size < (int)(sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
+    while (free_size < (int)(sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
         /* try to increase size if possible */
         if (dlt_buffer_increase_size(buf))
             /* increase size is not possible */
