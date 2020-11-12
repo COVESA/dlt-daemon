@@ -2361,17 +2361,22 @@ void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *dat
 {
     /* catch null pointer */
     if ((buf != NULL) && (write != NULL) && (data != NULL)) {
-        if ((int)(*write + size) <= buf->size) {
-            /* write one block */
-            memcpy(buf->mem + *write, data, size);
-            *write += size;
-        }
-        else {
-            /* write two blocks */
-            memcpy(buf->mem + *write, data, buf->size - *write);
-            memcpy(buf->mem, data + buf->size - *write, size - buf->size + *write);
-            *write += size - buf->size;
-        }
+	if (size <= buf->size){
+            if ((int)(*write + size) <= buf->size) {
+                /* write one block */
+                memcpy(buf->mem + *write, data, size);
+                *write += size;
+            }
+            else {
+                /* write two blocks */
+                memcpy(buf->mem + *write, data, buf->size - *write);
+                memcpy(buf->mem, data + buf->size - *write, size - buf->size + *write);
+                *write += size - buf->size;
+            }
+	}
+	else {
+	    dlt_vlog(LOG_WARNING, "%s: Write error: ring buffer to small\n", __func__);
+	}
     }
     else {
         dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
