@@ -343,7 +343,7 @@ void do_logging(s_thread_data *data)
 
     int msgs_left = data->params.nmsgs;
 
-    logmsg = calloc(1, data->params.nloglength + 1);
+    logmsg = calloc(1, (size_t) (data->params.nloglength + 1));
     if (logmsg == NULL) {
         printf("Error allocate memory for message.\n");
         DLT_UNREGISTER_CONTEXT(mycontext);
@@ -356,7 +356,7 @@ void do_logging(s_thread_data *data)
         {
             n = 'A' + (n - 91) % 26;
         }
-        logmsg[i] = n;
+        logmsg[i] = (char) n;
     }
 
     while (msgs_left-- > 0) {
@@ -387,21 +387,21 @@ void run_threads(s_parameters params)
     char apid_name[256];
     int i;
 
-    srand(getpid());
+    srand((unsigned int) getpid());
 
     snprintf(apid, 5, "MT%02u", pidcount);
     snprintf(apid_name, 256, "Apps %s.", apid);
 
     DLT_REGISTER_APP(apid, apid_name);
 
-    thread_data = calloc(params.nthreads, sizeof(s_thread_data));
+    thread_data = calloc( (size_t) params.nthreads, sizeof(s_thread_data));
     if (thread_data == NULL) {
         printf("Error allocate memory for thread data.\n");
         abort();
     }
 
     for (i = 0; i < params.nthreads; i++) {
-        thread_data[i].tidcount = i;
+        thread_data[i].tidcount = (unsigned int) i;
         thread_data[i].params = params;
         thread_data[i].pidcount = pidcount;
 
@@ -427,7 +427,7 @@ void run_threads(s_parameters params)
  */
 int wait_for_death()
 {
-    int pids_left = pidcount;
+    int pids_left = (int) pidcount;
 
     while (pids_left > 0) {
         int status;

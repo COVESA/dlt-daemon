@@ -233,7 +233,7 @@ int testall(int count, int repeat, int delay, int size)
     struct timespec ts;
 
     for (num = 0; num < size; num++)
-        buffer[num] = num;
+        buffer[num] = (char) num;
 
     /* Test All: Test all start */
     /*printf("Test1: Test all\n"); */
