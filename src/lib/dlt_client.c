@@ -160,6 +160,7 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     const int yes = 1;
+    int connect_errno = 0;
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
@@ -187,9 +188,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             }
 
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+                connect_errno = errno;
                 close(client->sock);
-                dlt_vlog(LOG_WARNING, "connect() failed! %s\n",
-                         strerror(errno));
                 continue;
             }
 
@@ -199,7 +199,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         freeaddrinfo(servinfo);
 
         if (p == NULL) {
-            dlt_log(LOG_ERR, "ERROR: failed to connect.\n");
+            dlt_vlog(LOG_ERR, "ERROR: failed to connect! %s\n", strerror(connect_errno));
             return DLT_RETURN_ERROR;
         }
 
