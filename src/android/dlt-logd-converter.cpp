@@ -167,9 +167,15 @@ static int logd_parser_loop(struct logger_list *logger_list)
         DltLogLevelType log_level;
         log_level = get_log_level_from_log_msg(&log_msg);
 
-        /* Look into system/core/liblog/logprint.c for buffer format */
-        auto tag = log_msg.msg()+1;
-        auto message = tag+strlen(tag)+1;
+        /* Look into system/core/liblog/logprint.c for buffer format.
+           "<priority:1><tag:N>\0<message:N>\0" */
+        const char *tag = "";
+        const char *message= "";
+        if(log_msg.entry.len > 1)
+           tag = log_msg.msg() + 1;
+        if (log_msg.entry.len > 1 + strlen(tag) + 1)
+            message = tag + strlen(tag) + 1;
+
 
         uint32_t ts;
         ts = get_timestamp_from_log_msg(&log_msg);
