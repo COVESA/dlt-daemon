@@ -310,9 +310,9 @@ int main(int argc, char *argv[])
         maxnum = 10;
 
     if (dvalue)
-        delay = atoi(dvalue) * 1000000;
+        delay = atoi(dvalue);
     else
-        delay = 500 * 1000000;
+        delay = 500;
 
     if (tvalue)
         dlt_set_resend_timeout_atexit(atoi(tvalue));
@@ -378,8 +378,8 @@ int main(int argc, char *argv[])
         }
 
         if (delay > 0) {
-            ts.tv_sec = delay / 1000000000;
-            ts.tv_nsec = delay % 1000000000;
+            ts.tv_sec = delay / 1000;
+            ts.tv_nsec = (delay % 1000) * 1000000;
             nanosleep(&ts, NULL);
         }
     }
