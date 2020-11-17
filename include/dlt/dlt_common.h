@@ -87,6 +87,12 @@
 #      include <time.h>
 #   endif
 
+#   if defined(__GNUC__)
+#      define PURE_FUNCTION __attribute__((pure))
+#   else
+#      define PURE_FUNCTION /* nothing */
+#   endif
+
 #   if !defined (__WIN32__) && !defined(_MSC_VER)
 #      include <termios.h>
 #   endif
@@ -859,6 +865,17 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
  * @return negative value if there was an error
  */
 DltReturnValue dlt_print_char_string(char **text, int textlength, uint8_t *ptr, int size);
+
+/**
+ * Helper function to determine a bounded length of a string.
+ * This function returns zero if @a str is a null pointer,
+ * and it returns @a maxsize if the null character was not found in the first @a maxsize bytes of @a str.
+ * This is a re-implementation of C11's strnlen_s, which we cannot yet assume to be available.
+ * @param text pointer to string whose length is to be determined
+ * @param maxsize maximal considered length of @a str
+ * @return the bounded length of the string
+ */
+PURE_FUNCTION size_t dlt_strnlen_s(const char* str, size_t maxsize);
 
 /**
  * Helper function to print an id.

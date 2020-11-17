@@ -4067,6 +4067,49 @@ TEST(t_dlt_print_char_string, nullpointer)
 
 
 
+/* Begin Method:dlt_common::dlt_strnlen_s*/
+TEST(t_dlt_strnlen_s, nullpointer)
+{
+    size_t len = dlt_strnlen_s(NULL, 0);
+    EXPECT_EQ(len, 0);
+}
+
+TEST(t_dlt_strnlen_s, len_zero)
+{
+    const char text[] = "The Quick Brown Fox";
+
+    size_t len = dlt_strnlen_s(text, 0);
+    EXPECT_EQ(len, 0);
+}
+
+TEST(t_dlt_strnlen_s, len_smaller)
+{
+    const char text[] = "The Quick Brown Fox";
+
+    size_t len = dlt_strnlen_s(text, 10);
+    EXPECT_EQ(len, 10);
+}
+
+TEST(t_dlt_strnlen_s, len_equal)
+{
+    const char text[] = "The Quick Brown Fox";
+
+    size_t len = dlt_strnlen_s(text, 19);
+    EXPECT_EQ(len, 19);
+}
+
+TEST(t_dlt_strnlen_s, len_larger)
+{
+    const char text[] = "The Quick Brown Fox";
+
+    size_t len = dlt_strnlen_s(text, 100);
+    EXPECT_EQ(len, 19);
+}
+/* End Method:dlt_common::dlt_strnlen_s*/
+
+
+
+
 /* Begin Method:dlt_common::dlt_print_id */
 TEST(t_dlt_print_id, normal)
 {
