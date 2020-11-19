@@ -186,7 +186,7 @@ int dlt_daemon_client_send(int sock,
         if (isatty(sock)) {
             DLT_DAEMON_SEM_LOCK();
 
-            if ((ret = dlt_daemon_serial_send(sock, data1, size1, data2, size2, daemon->sendserialheader))) {
+            if ((ret = dlt_daemon_serial_send(sock, data1, size1, data2, size2, (char) daemon->sendserialheader))) {
                 DLT_DAEMON_SEM_FREE();
                 dlt_vlog(LOG_WARNING, "%s: serial send dlt message failed\n", __func__);
                 return ret;
@@ -197,7 +197,7 @@ int dlt_daemon_client_send(int sock,
         else {
             DLT_DAEMON_SEM_LOCK();
 
-            if ((ret = dlt_daemon_socket_send(sock, data1, size1, data2, size2, daemon->sendserialheader))) {
+            if ((ret = dlt_daemon_socket_send(sock, data1, size1, data2, size2, (char) daemon->sendserialheader))) {
                 DLT_DAEMON_SEM_FREE();
                 dlt_vlog(LOG_WARNING, "%s: socket send dlt message failed\n", __func__);
                 return ret;
@@ -958,8 +958,8 @@ void dlt_daemon_control_get_log_info(int sock,
     if ((req->options == 5) || (req->options == 6) || (req->options == 7))
         sizecont += sizeof(int8_t); /* trace status */
 
-    resp.datasize += (uint32_t) (num_applications * (sizeof(uint32_t) /* app_id */ + sizeof(uint16_t) /* count_con_ids */)) +
-        (num_contexts * sizecont);
+    resp.datasize += (uint32_t) (((uint32_t) num_applications * (sizeof(uint32_t) /* app_id */ + sizeof(uint16_t) /* count_con_ids */)) +
+        ((size_t) num_contexts * sizecont));
 
     resp.datasize += (uint32_t) sizeof(uint16_t) /* count_app_ids */;
 
@@ -2225,8 +2225,8 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     dlt_set_id(msg.extendedheader->ctid, "");       /* context id */
 
     /* prepare length information */
-    msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
+    msg.headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) +
+        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
 
     len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
 
@@ -2245,8 +2245,8 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
     dlt_daemon_client_send(sock, daemon, daemon_local, msg.headerbuffer,
                            sizeof(DltStorageHeader),
                            msg.headerbuffer + sizeof(DltStorageHeader),
-                           msg.headersize - sizeof(DltStorageHeader),
-                           msg.databuffer, msg.datasize, verbose);
+                           (int) msg.headersize - (int) sizeof(DltStorageHeader),
+                           msg.databuffer, (int) msg.datasize, verbose);
 
     /* free message */
     dlt_message_free(&msg, 0);
@@ -2407,7 +2407,7 @@ void dlt_daemon_control_service_logstorage(int sock,
     unsigned int connection_type = 0;
     DltLogStorage *device = NULL;
     int device_index = -1;
-    int i = 0;
+    uint32_t i = 0;
 
     int tmp_errno = 0;
 
@@ -2488,7 +2488,7 @@ void dlt_daemon_control_service_logstorage(int sock,
             /* Check if the requested device path is already used as log storage device */
             if (req_mpoint_st.st_dev == daemon_mpoint_st.st_dev &&
                     req_mpoint_st.st_ino == daemon_mpoint_st.st_ino) {
-                device_index = i;
+                device_index = (int) i;
                 break;
             }
         }
@@ -2496,7 +2496,7 @@ void dlt_daemon_control_service_logstorage(int sock,
         /* Get first available device index here */
         if ((connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) &&
             (device_index == -1))
-            device_index = i;
+            device_index = (int) i;
     }
 
     /* It might be possible to sync all caches of all devices */
@@ -2570,7 +2570,7 @@ void dlt_daemon_control_service_logstorage(int sock,
             daemon,
             daemon_local,
             device_index,
-            daemon_local->flags.offlineLogstorageMaxDevices,
+            (int) daemon_local->flags.offlineLogstorageMaxDevices,
             verbose);
 
         dlt_logstorage_device_disconnected(&(daemon->storage_handle[device_index]),

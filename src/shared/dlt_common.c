@@ -991,14 +991,14 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     msg->standardheader = (DltStandardHeader *)(msg->headerbuffer + sizeof(DltStorageHeader));
 
     /* calculate complete size of headers */
-    extra_size = DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp) +
-        (DLT_IS_HTYP_UEH(msg->standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
+    extra_size = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp) +
+        (DLT_IS_HTYP_UEH(msg->standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
     msg->headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + extra_size);
-    msg->datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
+    msg->datasize = (uint32_t) DLT_BETOH_16(msg->standardheader->len) - msg->headersize + (uint32_t) sizeof(DltStorageHeader);
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    temp_datasize = DLT_BETOH_16(msg->standardheader->len) - (msg->headersize - sizeof(DltStorageHeader));
+    temp_datasize = DLT_BETOH_16(msg->standardheader->len) - (int32_t) msg->headersize + (int32_t) sizeof(DltStorageHeader);
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1196,7 +1196,7 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
         if (dlt_check_storageheader(file->msg.storageheader) != DLT_RETURN_TRUE) {
             /* Shift the position back to the place where it stared to read + 1 */
             if (fseek(file->handle,
-                      1 - (sizeof(DltStorageHeader) + sizeof(DltStandardHeader)),
+                      (long) (1 - (sizeof(DltStorageHeader) + sizeof(DltStandardHeader))),
                       SEEK_CUR) < 0) {
                 dlt_log(LOG_WARNING, "DLT storage header pattern not found!\n");
                 return DLT_RETURN_ERROR;
@@ -1209,13 +1209,13 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     }
 
     /* calculate complete size of headers */
-    file->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+    file->msg.headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(file->msg.standardheader->htyp) +
-        (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
+        (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
+    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + (int32_t) sizeof(DltStorageHeader) - (int32_t) file->msg.headersize;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1305,13 +1305,13 @@ DltReturnValue dlt_file_read_header_raw(DltFile *file, int resync, int verbose)
     /* no check for storage header id*/
 
     /* calculate complete size of headers */
-    file->msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+    file->msg.headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(file->msg.standardheader->htyp) +
-        (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
+        (DLT_IS_HTYP_UEH(file->msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + sizeof(DltStorageHeader) - file->msg.headersize;
+    temp_datasize = DLT_BETOH_16(file->msg.standardheader->len) + (int32_t) sizeof(DltStorageHeader) - (int32_t) file->msg.headersize;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1547,7 +1547,7 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
         /* filter is disabled */
         /* skip additional header parameters and payload data */
         if (fseek(file->handle,
-                  file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize,
+                  (long) (file->msg.headersize - sizeof(DltStorageHeader) - sizeof(DltStandardHeader) + file->msg.datasize),
                   SEEK_CUR)) {
 
             dlt_vlog(LOG_WARNING,
@@ -2202,8 +2202,8 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #if defined(_MSC_VER)
     storageheader->microseconds = 0;
 #else
-    storageheader->seconds = (time_t)tv.tv_sec; /* value is long */
-    storageheader->microseconds = (int32_t)tv.tv_usec; /* value is long */
+    storageheader->seconds = (uint32_t) tv.tv_sec; /* value is long */
+    storageheader->microseconds = (int32_t) tv.tv_usec; /* value is long */
 #endif
 
     return DLT_RETURN_OK;
@@ -2261,7 +2261,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
     head->write = 0;
     head->count = 0;
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
-    buf->size = (unsigned int) buf->min_size - sizeof(DltBufferHead);
+    buf->size = (unsigned int) buf->min_size - (unsigned int) sizeof(DltBufferHead);
 
     /* clear memory */
     memset(buf->mem, 0, buf->size);
@@ -2433,7 +2433,7 @@ int dlt_buffer_check_size(DltBuffer *buf, int needed)
     if (buf == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if ((buf->size + sizeof(DltBufferHead) + needed) > buf->max_size)
+    if ((buf->size + sizeof(DltBufferHead) + (size_t) needed) > buf->max_size)
         return DLT_RETURN_ERROR;
 
     return DLT_RETURN_OK;
@@ -3304,7 +3304,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            length = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
         }
         else {
             length = (uint16_t)byteLength;
@@ -3316,7 +3316,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            length2 = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3339,7 +3339,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            length2 = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3452,13 +3452,13 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            length2 = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
             DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length3 = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+            length3 = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -3550,7 +3550,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value16i = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
+                value16i = (int16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
                 snprintf(text, textlength, "%hd", value16i);
             }
             else {
@@ -3561,7 +3561,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value16u = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
+                value16u = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
                 snprintf(text, textlength, "%hu", value16u);
             }
 
@@ -3577,7 +3577,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value32i = DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
+                value32i = (int32_t) DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
                 snprintf(text, textlength, "%d", value32i);
             }
             else {
@@ -3604,7 +3604,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value64i = DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64i_tmp);
+                value64i = (int64_t) DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64i_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
                 snprintf(text, textlength, "%I64d", value64i);
     #else
@@ -3632,7 +3632,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_128BIT:
         {
             if (*datalength >= 16)
-                dlt_print_hex_string(text, textlength, *ptr, 16);
+                dlt_print_hex_string(text, (int) textlength, *ptr, 16);
 
             if ((*datalength) < 16)
                 return DLT_RETURN_ERROR;
@@ -3716,7 +3716,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 memcpy(&value32f_tmp_int32i, &value32f_tmp, sizeof(float32_t));
                 value32f_tmp_int32i_swaped =
-                    DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32f_tmp_int32i);
+                    (int32_t) DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32f_tmp_int32i);
                 memcpy(&value32f, &value32f_tmp_int32i_swaped, sizeof(float32_t));
                 snprintf(text, textlength, "%g", value32f);
             }
@@ -3741,7 +3741,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 memcpy(&value64f_tmp_int64i, &value64f_tmp, sizeof(float64_t));
                 value64f_tmp_int64i_swaped =
-                    DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
+                    (int64_t) DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
                 memcpy(&value64f, &value64f_tmp_int64i_swaped, sizeof(float64_t));
 #ifdef __arm__
                 snprintf(text, textlength, "ILLEGAL");
@@ -3898,7 +3898,7 @@ int dlt_set_loginfo_parse_service_id(char *resp_text,
         service_opt_str[0] = *(resp_text + GET_LOG_INFO_LENGTH + 1);
         service_opt_str[1] = *(resp_text + GET_LOG_INFO_LENGTH + 2);
         service_opt_str[2] = 0;
-        *service_opt = atoi(service_opt_str);
+        *service_opt = (uint8_t) atoi(service_opt_str);
     }
 
     return ret;
@@ -3959,7 +3959,7 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
     for (count = 0; count < len; count++) {
         number16[0] = *(rp + *rp_count + 0);
         number16[1] = *(rp + *rp_count + 1);
-        *(wp + count) = strtol(number16, &endptr, 16);
+        *(wp + count) = (char) strtol(number16, &endptr, 16);
         *rp_count += 3;
     }
 
@@ -3984,17 +3984,17 @@ void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size)
         found = 0;
 
         if ((ch >= '0') && (ch <= '9')) {
-            binary[pos] = (binary[pos] << 4) + (ch - '0');
+            binary[pos] = (uint8_t) ((binary[pos] << 4) + (ch - '0'));
             found = 1;
         }
         else if ((ch >= 'A') && (ch <= 'F'))
         {
-            binary[pos] = (binary[pos] << 4) + (ch - 'A' + 10);
+            binary[pos] = (uint8_t) ((binary[pos] << 4) + (ch - 'A' + 10));
             found = 1;
         }
         else if ((ch >= 'a') && (ch <= 'f'))
         {
-            binary[pos] = (binary[pos] << 4) + (ch - 'a' + 10);
+            binary[pos] = (uint8_t) ((binary[pos] << 4) + (ch - 'a' + 10));
             found = 1;
         }
 
@@ -4102,7 +4102,7 @@ int dlt_execute_command(char *filename, char *command, ...){
     va_end(val);
 
     /* Allocate args, put references to command */
-    args = (char **) malloc(argc * sizeof(char*));
+    args = (char **) malloc( (uint32_t) argc * sizeof(char*));
     args[0] = command;
 
     va_start(val, command);

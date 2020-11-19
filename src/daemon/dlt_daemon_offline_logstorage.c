@@ -382,7 +382,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level(DltDaemon *daemon
     if (strncmp(ecuid, daemon->ecuid, DLT_ID_SIZE) == 0) {
         old_log_level = context->storage_log_level;
 
-        context->storage_log_level = DLT_OFFLINE_LOGSTORAGE_MAX(loglevel,
+        context->storage_log_level = (int8_t) DLT_OFFLINE_LOGSTORAGE_MAX(loglevel,
                                                                 context->storage_log_level);
 
         if (context->storage_log_level > old_log_level) {

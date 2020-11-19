@@ -447,7 +447,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);

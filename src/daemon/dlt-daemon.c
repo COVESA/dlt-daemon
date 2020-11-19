@@ -1612,7 +1612,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
     off_t offset = 0;
 
     while (!feof(f)) {
-        offset += fread(version + offset, 1, (size_t) size, f);
+        offset += (off_t) fread(version + offset, 1, (size_t) size, f);
 
         if (ferror(f)) {
             dlt_log(LOG_WARNING, "Failed to read ECU Software version file.\n");
@@ -1853,16 +1853,16 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
         DLT_HTYP_PROTOCOL_VERSION1;
     msg.standardheader->mcnt = uiMsgCount++;
 
-    uiExtraSize = DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
-        (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0);
-    msg.headersize = sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + uiExtraSize;
+    uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
+        (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
+    msg.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
 
     /* Set extraheader */
     pStandardExtra =
         (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
     pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
-    pStandardExtra->seid = DLT_HTOBE_32(getpid());
+    pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
 
     /* Set extendedheader */
     msg.extendedheader =
@@ -3054,7 +3054,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #else
     ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
-                           (unsigned int) (rec->bytesRcvd - sizeof(DltUserHeader)),
+                           (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
 

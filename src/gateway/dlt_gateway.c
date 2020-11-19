@@ -1254,7 +1254,7 @@ DLT_STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
                                                       int verbose)
 {
     unsigned int connection_type = 0;
-    int i = 0;
+    uint32_t i = 0;
 
     if (daemon_local->flags.offlineLogstorageMaxDevices <= 0) {
         dlt_log(LOG_INFO,
@@ -1269,7 +1269,7 @@ DLT_STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
             /* Check if log level of running application needs an update */
             dlt_daemon_logstorage_update_application_loglevel(daemon,
                                                               daemon_local,
-                                                              i,
+                                                              (int) i,
                                                               verbose);
     }
 

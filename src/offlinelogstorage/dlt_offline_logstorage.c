@@ -326,7 +326,7 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
 DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
 {
     int i = 0;
-    int y = 0;
+    size_t y = 0;
     size_t len = 0;
     char *tok;
     int num = 1;

@@ -297,7 +297,7 @@ enum {
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
     { \
-        if ((length < 0) || ((length) < ((int32_t)sizeof(type)))) \
+        if ((length < 0) || ((length) < ((int32_t) sizeof(type)))) \
         { length = -1; } \
         else \
         { dst = *((type *)src); src += sizeof(type); length -= (int32_t) sizeof(type); } \
@@ -319,7 +319,7 @@ enum {
     } \
     else \
     { \
-        memcpy(dst, src, length); \
+        memcpy(dst, src, (size_t) length); \
         dlt_clean_string(dst, length); \
         dst[length] = 0; \
         src += length; \
