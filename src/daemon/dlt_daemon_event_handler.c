@@ -111,7 +111,7 @@ static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
     if (ev->max_nfds <= ev->nfds) {
         int i = (int) ev->nfds;
         int max = (int) (2 * ev->max_nfds);
-        struct pollfd *tmp = realloc(ev->pfd, max * sizeof(*ev->pfd));
+        struct pollfd *tmp = realloc(ev->pfd, (size_t) (max) * sizeof(*ev->pfd));
 
         if (!tmp) {
             dlt_log(LOG_CRIT,

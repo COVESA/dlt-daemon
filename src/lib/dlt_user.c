@@ -2530,7 +2530,7 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
         return DLT_RETURN_ERROR;
     }
 
-    arg_size = length + 1;
+    arg_size = (uint16_t) (length + 1);
 
     new_log_size = log->size + arg_size + sizeof(uint16_t);
 
@@ -2582,7 +2582,7 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
             }
 
             max_payload_str_msg -= reduce_size;
-            arg_size -= reduce_size;
+            arg_size -= (uint16_t) reduce_size;
         }
     }
 
@@ -2877,7 +2877,7 @@ DltReturnValue dlt_user_trace_network_segmented_start(uint32_t *id,
         }
 
         /* Write expected segment count */
-        uint16_t segment_count = payload_len / DLT_MAX_TRACE_SEGMENT_SIZE + 1;
+        uint16_t segment_count = (uint16_t) (payload_len / DLT_MAX_TRACE_SEGMENT_SIZE + 1);
 
         /* If segments align perfectly with segment size, avoid sending empty segment */
         if ((payload_len % DLT_MAX_TRACE_SEGMENT_SIZE) == 0)
@@ -3156,7 +3156,7 @@ DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
         return DLT_RETURN_ERROR;
 
     /* Send as normal trace if possible */
-    if (header_len + payload_len + sizeof(uint16_t) < dlt_user.log_buf_len)
+    if (header_len + payload_len + (uint16_t) sizeof(uint16_t) < dlt_user.log_buf_len)
         return dlt_user_trace_network(handle, nw_trace_type, header_len, header, payload_len, payload);
 
     /* Allocate Memory */
@@ -3286,7 +3286,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
             header_len = 0;
 
         /* If truncation is allowed, check if we must do it */
-        if ((allow_truncate > 0) && ((header_len + payload_len + sizeof(uint16_t)) > dlt_user.log_buf_len)) {
+        if ((allow_truncate > 0) && ((header_len + payload_len + (uint16_t) sizeof(uint16_t)) > dlt_user.log_buf_len)) {
             /* Identify as truncated */
             if (dlt_user_log_write_string(&log, DLT_TRACE_NW_TRUNCATED) < DLT_RETURN_OK) {
                 dlt_user_free_buffer(&(log.buffer));
@@ -3309,10 +3309,10 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
              *  Calculate maximum available space in sending buffer after headers.
              */
 
-            int truncated_payload_len = dlt_user.log_buf_len - log.size - sizeof(uint16_t) - sizeof(uint32_t);
+            uint16_t truncated_payload_len = (uint16_t) (dlt_user.log_buf_len - log.size - sizeof(uint16_t) - sizeof(uint32_t));
 
             /* Write truncated payload */
-            if (dlt_user_log_write_raw(&log, payload, (uint16_t) truncated_payload_len) < DLT_RETURN_OK) {
+            if (dlt_user_log_write_raw(&log, payload, truncated_payload_len) < DLT_RETURN_OK) {
                 dlt_user_free_buffer(&(log.buffer));
                 return DLT_RETURN_ERROR;
             }
@@ -3882,10 +3882,10 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 #   ifdef DLT_TEST_ENABLE
 
             if (dlt_user.corrupt_user_header) {
-                userheader.pattern[0] = 0xff;
-                userheader.pattern[1] = 0xff;
-                userheader.pattern[2] = 0xff;
-                userheader.pattern[3] = 0xff;
+                userheader.pattern[0] = (char) 0xff;
+                userheader.pattern[1] = (char) 0xff;
+                userheader.pattern[2] = (char) 0xff;
+                userheader.pattern[3] = (char) 0xff;
             }
 
             if (dlt_user.corrupt_message_size)
@@ -4276,7 +4276,7 @@ DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log)
     dlt_message_get_extraparameters(msg, 0);
 
     msg->databuffer = log->buffer;
-    msg->datasize = log->size;
+    msg->datasize = (uint32_t) log->size;
     msg->databuffersize = (uint32_t) log->size;
 
     /* Print message as ASCII */

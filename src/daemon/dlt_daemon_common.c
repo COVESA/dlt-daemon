@@ -845,7 +845,7 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
             if ((user_list->num_contexts % DLT_DAEMON_CONTEXT_ALLOC_SIZE) == 0) {
                 /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
                 old = user_list->contexts;
-                user_list->contexts = (DltDaemonContext *)malloc(sizeof(DltDaemonContext) *
+                user_list->contexts = (DltDaemonContext *)malloc((size_t) sizeof(DltDaemonContext) *
                                                                  ((user_list->num_contexts /
                                                                    DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) *
                                                                  DLT_DAEMON_CONTEXT_ALLOC_SIZE);
@@ -858,7 +858,7 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
 
                 memcpy(user_list->contexts,
                        old,
-                       sizeof(DltDaemonContext) * user_list->num_contexts);
+                       (size_t) sizeof(DltDaemonContext) * user_list->num_contexts);
                 free(old);
             }
         }

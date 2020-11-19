@@ -98,7 +98,7 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 
     while (ch && (count < res_len - 1) && (ch != ';')) {
         if ((ch >= 'A') && (ch <= 'Z'))
-            result[count] = ch + 'a' - 'A';
+            result[count] = (char) (ch + 'a' - 'A');
         else
             result[count] = ch;
 
