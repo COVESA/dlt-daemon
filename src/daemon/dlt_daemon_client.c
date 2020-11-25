@@ -1544,7 +1544,7 @@ void dlt_daemon_control_callsw_cinjection(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+    if ((daemon == NULL) || (daemon_local == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
     datalength = msg->datasize;
@@ -1552,6 +1552,12 @@ void dlt_daemon_control_callsw_cinjection(int sock,
 
     DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t); /* Get service id */
     id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
+
+    /* injectionMode is disabled */
+    if (daemon_local->flags.injectionMode == 0) {
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_PERM_DENIED, verbose);
+        return;
+    }
 
     /* id is always less than DLT_DAEMON_INJECTION_MAX since its type is uinit32_t */
     if (id >= DLT_DAEMON_INJECTION_MIN) {

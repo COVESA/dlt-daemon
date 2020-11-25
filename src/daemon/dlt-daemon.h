@@ -135,7 +135,8 @@ typedef struct
     int contextLogLevel;  /**< (int) log level sent to context if registered with default log-level or if enforced*/
     int contextTraceStatus;   /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
     int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
-    DltBindAddress_t *ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
+    DltBindAddress_t* ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
+    int injectionMode;  /**< (Boolean) Injection mode */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
