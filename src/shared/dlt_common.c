@@ -404,7 +404,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     while (!feof(handle)) {
         str1[0] = 0;
 
-        if (fscanf(handle, "%s", str1) != 1)
+        if (fscanf(handle, "%254s", str1) != 1)
             break;
 
         if (str1[0] == 0)
@@ -419,7 +419,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
 
         str1[0] = 0;
 
-        if (fscanf(handle, "%s", str1) != 1)
+        if (fscanf(handle, "%254s", str1) != 1)
             break;
 
         if (str1[0] == 0)
