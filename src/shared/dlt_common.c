@@ -2612,13 +2612,13 @@ int dlt_buffer_push3(DltBuffer *buf,
         write = ((int *)(buf->shm))[0];
         read = ((int *)(buf->shm))[1];
     	
-	/* update free size */
-    if (read > write)
-        free_size = read - write;
-    else if (count && (write == read))
-        free_size = 0;
-    else
-        free_size = buf->size - write + read;
+	    /* update free size */
+        if (read > write)
+            free_size = read - write;
+        else if (count && (write == read))
+            free_size = 0;
+        else
+            free_size = buf->size - write + read;
 
     }
 
