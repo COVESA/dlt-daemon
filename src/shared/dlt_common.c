@@ -2361,17 +2361,22 @@ void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *dat
 {
     /* catch null pointer */
     if ((buf != NULL) && (write != NULL) && (data != NULL)) {
-        if ((int)(*write + size) <= buf->size) {
-            /* write one block */
-            memcpy(buf->mem + *write, data, size);
-            *write += size;
-        }
-        else {
-            /* write two blocks */
-            memcpy(buf->mem + *write, data, buf->size - *write);
-            memcpy(buf->mem, data + buf->size - *write, size - buf->size + *write);
-            *write += size - buf->size;
-        }
+	if (size <= buf->size){
+            if ((int)(*write + size) <= buf->size) {
+                /* write one block */
+                memcpy(buf->mem + *write, data, size);
+                *write += size;
+            }
+            else {
+                /* write two blocks */
+                memcpy(buf->mem + *write, data, buf->size - *write);
+                memcpy(buf->mem, data + buf->size - *write, size - buf->size + *write);
+                *write += size - buf->size;
+            }
+	}
+	else {
+	    dlt_vlog(LOG_WARNING, "%s: Write error: ring buffer to small\n", __func__);
+	}
     }
     else {
         dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
@@ -2596,7 +2601,7 @@ int dlt_buffer_push3(DltBuffer *buf,
         free_size = buf->size - write + read;
 
     /* check size */
-    if (free_size < (int)(sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
+    while (free_size < (int)(sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
         /* try to increase size if possible */
         if (dlt_buffer_increase_size(buf))
             /* increase size is not possible */
@@ -2606,6 +2611,15 @@ int dlt_buffer_push3(DltBuffer *buf,
         /* update pointers */
         write = ((int *)(buf->shm))[0];
         read = ((int *)(buf->shm))[1];
+    	
+	    /* update free size */
+        if (read > write)
+            free_size = read - write;
+        else if (count && (write == read))
+            free_size = 0;
+        else
+            free_size = buf->size - write + read;
+
     }
 
     /* set header */
