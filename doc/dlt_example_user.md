@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-example-user** \[**-h**\] \[**-g**\] \[**-a**\] \[**-k**\] \[**-d** delay\] \[**-f** filename\] \[**-n** count\] \[**-m** mode\] \[**-l** level\] \[**-A** appID\] \[**-C** contextID\] \[**-t** timeout\] \[**-s** size\] message
+**dlt-example-user** \[**-h**\] \[**-g**\] \[**-a**\] \[**-k**\] \[**-d** delay\] \[**-f** filename\] \[**-S** filesize\] \[**-n** count\] \[**-m** mode\] \[**-l** level\] \[**-A** appID\] \[**-C** contextID\] \[**-t** timeout\] \[**-s** size\] message
 
 # DESCRIPTION
 
@@ -37,6 +37,10 @@ Sends the given message as DLT messages to DLT daemon or prints the raw DLT mess
 -f
 
 : Use local log file instead of sending to daemon.
+
+-S
+
+: Set maximum size of local log file (Default: UINT\_MAX).
 
 -n
 
@@ -80,6 +84,10 @@ Set app ID to `APP1`, context Id to `TEST` and log level to `error` for send mes
 Send 100 DLT messages every second::
 
     dlt-example-user -n 100 -d 1000 HelloWorld
+
+Send "HelloWorld" can log to local file with maximum size 1000 bytes::
+
+    dlt-example-user -f helloworld.dlt -S 1000 HelloWorld
 
 # EXIT STATUS
 
