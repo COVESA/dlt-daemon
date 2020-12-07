@@ -91,6 +91,7 @@
 static DltUser dlt_user;
 static bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
+static bool dlt_user_file_reach_max = false;
 
 #ifdef DLT_LIB_USE_FIFO_IPC
 static char dlt_user_dir[DLT_PATH_MAX];
@@ -459,6 +460,9 @@ DltReturnValue dlt_init(void)
     }
 
     dlt_user.dlt_is_file = 0;
+    dlt_user.filesize_max = UINT_MAX;
+    dlt_user_file_reach_max = false;
+
     dlt_user.overflow = 0;
     dlt_user.overflow_counter = 0;
 #ifdef DLT_SHM_ENABLE
@@ -546,12 +550,35 @@ DltReturnValue dlt_init_file(const char *name)
     dlt_user.dlt_is_file = 1;
 
     /* open DLT output file */
-    dlt_user.dlt_log_handle = open(name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+    dlt_user.dlt_log_handle = open(name, O_WRONLY | O_CREAT,
+                                   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
 
     if (dlt_user.dlt_log_handle == -1) {
         dlt_vnlog(LOG_ERR, DLT_USER_BUFFER_LENGTH, "Log file %s cannot be opened!\n", name);
+        dlt_user.dlt_is_file = 0;
         return DLT_RETURN_ERROR;
     }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_set_filesize_max(unsigned int filesize)
+{
+    if (dlt_user.dlt_is_file == 0)
+    {
+        dlt_vlog(LOG_ERR, "%s: Library is not configured to log to file\n",
+                 __func__);
+        return DLT_LOG_ERROR;
+    }
+
+    if (filesize == 0) {
+        dlt_user.filesize_max = UINT_MAX;
+    }
+    else {
+        dlt_user.filesize_max = filesize;
+    }
+    dlt_vlog(LOG_DEBUG, "%s: Defined filesize_max is [%d]\n", __func__,
+             dlt_user.filesize_max);
 
     return DLT_RETURN_OK;
 }
@@ -3756,11 +3783,36 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
     }
 
     if (dlt_user.dlt_is_file) {
-        /* log to file */
-        ret = dlt_user_log_out2(dlt_user.dlt_log_handle, msg.headerbuffer, msg.headersize, log->buffer, log->size);
-        return ret;
-    }
-    else {
+        if (dlt_user_file_reach_max) {
+            return DLT_RETURN_FILESZERR;
+        }
+        else {
+            /* Get file size */
+            struct stat st;
+            fstat(dlt_user.dlt_log_handle, &st);
+            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%d]\n", __func__,
+                     st.st_size);
+
+            /* Check filesize */
+            /* Return error if the file size has reached to maximum */
+            unsigned int msg_size = st.st_size + (unsigned int) msg.headersize +
+                                    (unsigned int) log->size;
+            if (msg_size > dlt_user.filesize_max) {
+                dlt_user_file_reach_max = true;
+                dlt_vlog(LOG_ERR,
+                         "%s: File size (%d bytes) reached to defined maximum size (%d bytes)\n",
+                         __func__, st.st_size, dlt_user.filesize_max);
+                return DLT_RETURN_FILESZERR;
+            }
+            else {
+                /* log to file */
+                ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
+                                        msg.headerbuffer, msg.headersize,
+                                        log->buffer, log->size);
+                return ret;
+            }
+        }
+    } else {
         if (dlt_user.overflow_counter) {
             if (dlt_user_log_send_overflow() == DLT_RETURN_OK) {
                 dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "%u messages discarded!\n", dlt_user.overflow_counter);

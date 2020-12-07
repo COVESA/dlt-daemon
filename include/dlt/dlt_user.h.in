@@ -211,6 +211,7 @@ typedef struct
     pthread_t dlt_segmented_nwt_handle;        /**< thread handle of segmented sending */
 #endif
     int8_t dlt_is_file;                        /**< Target of logging: 1 to file, 0 to daemon */
+    unsigned int filesize_max;                 /**< Maximum size of existing file in case dlt_is_file=1 */
 
     dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all
                                                 *  contexts */
@@ -819,6 +820,14 @@ DltReturnValue dlt_init();
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_init_file(const char *name);
+
+/**
+ * Set maximum file size if lib is configured to write only to file.
+ * This function has to be called after dlt_init_file().
+ * @param filesize maximum file size
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_set_filesize_max(unsigned int filesize);
 
 /**
  * Terminate the user lib.
