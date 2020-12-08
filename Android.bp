@@ -166,7 +166,7 @@ cc_binary {
 cc_binary {
 
     name: "dlt-logd-converter",
-    vendor: true,
+    defaults: ["dlt_defaults"],
 
     srcs: [
         "src/android/dlt-logd-converter.cpp",
@@ -176,11 +176,9 @@ cc_binary {
     ],
 
     cflags: [
-        "-Wall",
         "-Wextra",
         "-Wpedantic",
         "-std=c++14",
-
     ],
     shared_libs: [
         "libdlt",
