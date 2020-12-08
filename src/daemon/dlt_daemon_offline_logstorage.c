@@ -1095,6 +1095,16 @@ int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon,
                                                       0,
                                                       verbose);
 
+    if (daemon->storage_handle[0].maintain_logstorage_loglevel !=
+            DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF) {
+        daemon->maintain_logstorage_loglevel =
+                daemon->storage_handle[0].maintain_logstorage_loglevel;
+
+        dlt_vlog(LOG_DEBUG, "[%s] Startup with maintain loglevel: [%d]\n",
+                        __func__,
+                        daemon->storage_handle[0].maintain_logstorage_loglevel);
+    }
+
     return ret;
 }
 

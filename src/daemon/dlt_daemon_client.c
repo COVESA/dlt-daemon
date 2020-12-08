@@ -2548,6 +2548,12 @@ void dlt_daemon_control_service_logstorage(int sock,
                                             DLT_SERVICE_RESPONSE_OK,
                                             verbose);
 
+        /* Update maintain logstorage loglevel if necessary */
+        if (daemon->storage_handle[device_index].maintain_logstorage_loglevel != DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF)
+        {
+            daemon->maintain_logstorage_loglevel = daemon->storage_handle[device_index].maintain_logstorage_loglevel;
+        }
+
         /* Check if log level of running application needs an update */
         dlt_daemon_logstorage_update_application_loglevel(daemon,
                                                           daemon_local,
