@@ -190,6 +190,7 @@ typedef struct
     char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
     DltDaemonState state;   /**< the current logging state of dlt daemon. */
     DltLogStorage *storage_handle;
+    int maintain_logstorage_loglevel;     /* Permission to maintain the logstorage loglevel*/
 } DltDaemon;
 
 /**

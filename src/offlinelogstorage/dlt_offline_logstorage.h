@@ -217,6 +217,7 @@ typedef struct
     unsigned int config_status;        /* Status of configuration */
     int write_errors;                  /* number of write errors */
     DltNewestFileName *newest_file_list; /* List of newest file name */
+    int maintain_logstorage_loglevel;  /* Permission to maintain the logstorage loglevel*/
 } DltLogStorage;
 
 typedef struct {
@@ -224,6 +225,11 @@ typedef struct {
     int (*func)(DltLogStorage *handle, char *value); /* conf handler */
     int is_opt; /* If configuration is optional or not */
 } DltLogstorageGeneralConf;
+
+typedef enum {
+    DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL = 1,
+    DLT_LOGSTORAGE_GENERAL_CONF_COUNT
+} DltLogstorageGeneralConfType;
 
 typedef struct {
     char *key; /* Configuration key */

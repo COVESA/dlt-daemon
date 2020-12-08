@@ -1504,6 +1504,126 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
 }
 
 /**
+ * dlt_logstorage_check_maintain_logstorage_loglevel
+ *
+ * Evaluate to maintain the logstorage loglevel setting. This is an optional
+ * configuration parameter
+ * If the given value cannot be associated with an overwrite, the default value
+ * will be assigned.
+ *
+ * @param config       DltLogStorage
+ * @param value        string given in config file
+ * @return             0 on success, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_check_maintain_logstorage_loglevel(DltLogStorage *handle,
+                                                  char *value)
+{
+    if ((handle == NULL) || (value == NULL))
+    {
+        return -1;
+    }
+
+    if ((strncmp(value, "OFF", 3) == 0) || (strncmp(value, "0", 1) == 0))
+    {
+        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF;
+    }
+    else if ((strncmp(value, "ON", 2) == 0) || (strncmp(value, "1", 1) == 0))
+    {
+        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
+    }
+    else
+    {
+        dlt_vlog(LOG_ERR,
+                 "Wrong value for Maintain logstorage loglevel section name: %s\n", value);
+        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
+        return -1;
+    }
+
+    return 0;
+}
+
+DLT_STATIC DltLogstorageGeneralConf
+    general_cfg_entries[DLT_LOGSTORAGE_GENERAL_CONF_COUNT] = {
+    [DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL] = {
+        .key = "MaintainLogstorageLogLevel",
+        .func = dlt_logstorage_check_maintain_logstorage_loglevel,
+        .is_opt = 1
+    }
+};
+
+/**
+ * Check if DltLogstorage General configuration parameter is valid.
+ *
+ * @param handle pointer to DltLogstorage structure
+ * @param ctype Logstorage general configuration type
+ * @param value specified property value from configuration file
+ * @return 0 on success, -1 otherwise
+ */
+DLT_STATIC int dlt_logstorage_check_general_param(DltLogStorage *handle,
+                                              DltLogstorageGeneralConfType ctype,
+                                              char *value)
+{
+    if ((handle == NULL) || (value == NULL))
+    {
+        return -1;
+    }
+
+    if (ctype < DLT_LOGSTORAGE_GENERAL_CONF_COUNT)
+    {
+        return general_cfg_entries[ctype].func(handle, value);
+    }
+
+    return -1;
+}
+
+DLT_STATIC int dlt_daemon_setup_general_properties(DltLogStorage *handle,
+                                               DltConfigFile *config_file,
+                                               char *sec_name)
+{
+    DltLogstorageGeneralConfType type = DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL;
+    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {0};
+
+    if ((handle == NULL) || (config_file == NULL) || (sec_name == NULL))
+    {
+        return -1;
+    }
+
+    for ( ; type < DLT_LOGSTORAGE_GENERAL_CONF_COUNT ; type++)
+    {
+        if (dlt_config_file_get_value(config_file,
+                                      sec_name,
+                                      general_cfg_entries[type].key,
+                                      value) == 0)
+        {
+            if (dlt_logstorage_check_general_param(handle, type, value) != 0)
+            {
+                dlt_vlog(LOG_WARNING,
+                         "General parameter %s [%s] is invalid\n",
+                         general_cfg_entries[type].key, value);
+            }
+        }
+        else
+        {
+            if (general_cfg_entries[type].is_opt == 1)
+            {
+                dlt_vlog(LOG_DEBUG,
+                         "Optional General parameter %s not given\n",
+                         general_cfg_entries[type].key);
+            }
+            else
+            {
+                dlt_vlog(LOG_ERR,
+                         "General parameter %s not given\n",
+                         general_cfg_entries[type].key);
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
  * dlt_logstorage_store_filters
  *
  * This function reads the filter keys and values
@@ -1537,6 +1657,7 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
         return -1;
     }
 
+    handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF;
     dlt_config_file_get_num_sections(config, &num_sec);
 
     for (sec = 0; sec < num_sec; sec++) {
@@ -1549,8 +1670,11 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
         }
 
         if (strstr(sec_name, GENERAL_BASE_NAME) != NULL) {
-            dlt_log(LOG_CRIT, "General configuration not supported \n");
-            continue;
+            if (dlt_daemon_setup_general_properties(handle, config, sec_name) == -1)
+            {
+                dlt_log(LOG_CRIT, "General configuration is invalid\n");
+                continue;
+            }
         }
         else if (dlt_logstorage_validate_filter_name(sec_name) == 0)
         {

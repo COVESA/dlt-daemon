@@ -173,6 +173,13 @@ typedef enum
     DLT_USER_MODE_MAX                       /**< maximum value, used for range check */
 } DltUserLogMode;
 
+/**
+ * Definition of Maintain Logstorage Loglevel modes
+ */
+#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF -1
+#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF    0
+#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON     1
+
 typedef float float32_t;
 typedef double float64_t;
 

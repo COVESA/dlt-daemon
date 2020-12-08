@@ -1354,9 +1354,10 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
         return -1;
     }
 
-    if (context->storage_log_level != DLT_LOG_DEFAULT)
-        usercontext.log_level = context->log_level >
-            context->storage_log_level ? context->log_level : context->storage_log_level;
+    if ((context->storage_log_level != DLT_LOG_DEFAULT) &&
+        (daemon->maintain_logstorage_loglevel != DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF))
+            usercontext.log_level = context->log_level >
+                context->storage_log_level ? context->log_level : context->storage_log_level;
     else /* Storage log level is not updated (is DEFAULT) then  no device is yet connected so ignore */
         usercontext.log_level =
             ((context->log_level == DLT_LOG_DEFAULT) ? daemon->default_log_level : context->log_level);
