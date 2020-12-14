@@ -133,6 +133,7 @@ typedef struct
     char apid[DLT_ID_SIZE];                   /**< application id */
     pid_t pid;                   /**< process id of user application */
     int user_handle;    /**< connection handle for connection to user application */
+    bool owns_user_handle; /**< user_handle should be closed when reset */
     char *application_description; /**< context description */
     int num_contexts; /**< number of contexts for this application */
 } DltDaemonApplication;

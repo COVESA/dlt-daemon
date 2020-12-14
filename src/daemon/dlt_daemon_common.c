@@ -65,6 +65,7 @@
  * aw          13.01.2010   initial
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -384,6 +385,33 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
     return 0;
 }
 
+static void dlt_daemon_application_reset_user_handle(DltDaemon *daemon,
+                                                     DltDaemonApplication *application,
+                                                     int verbose)
+{
+    DltDaemonRegisteredUsers *user_list;
+    DltDaemonContext *context;
+    int i;
+
+    if (application->user_handle == DLT_FD_INIT)
+        return;
+
+    user_list = dlt_daemon_find_users_list(daemon, daemon->ecuid, verbose);
+    if (user_list != NULL) {
+        for (i = 0; i < user_list->num_contexts; i++) {
+            context = &user_list->contexts[i];
+            if (context->user_handle == application->user_handle)
+                context->user_handle = DLT_FD_INIT;
+        }
+    }
+
+    if (application->owns_user_handle)
+        close(application->user_handle);
+
+    application->user_handle = DLT_FD_INIT;
+    application->owns_user_handle = false;
+}
+
 DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                                                  char *apid,
                                                  pid_t pid,
@@ -396,8 +424,9 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
     DltDaemonApplication *old;
     int new_application;
     int dlt_user_handle;
+    bool owns_user_handle;
     DltDaemonRegisteredUsers *user_list = NULL;
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_DAEMON_USE_FIFO_IPC
     (void)fd;  /* To avoid compiler warning : unused variable */
     char filename[DLT_DAEMON_COMMON_TEXTBUFSIZE];
 #endif
@@ -455,6 +484,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         application->application_description = NULL;
         application->num_contexts = 0;
         application->user_handle = DLT_FD_INIT;
+        application->owns_user_handle = false;
 
         new_application = 1;
 
@@ -487,42 +517,39 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         }
     }
 
-    if (application->user_handle != DLT_FD_INIT) {
-        if (application->pid != pid) {
-#ifndef DLT_USE_UNIX_SOCKET_IPC
-
-            if (close(application->user_handle) < 0)
-                dlt_vlog(LOG_WARNING,
-                         "close() failed to %s/dltpipes/dlt%d, errno=%d (%s)!\n",
-                         dltFifoBaseDir,
-                         pid,
-                         errno,
-                         strerror(errno)); /* errno 2: ENOENT - No such file or directory */
-
-#endif
-            application->user_handle = DLT_FD_INIT;
-            application->pid = 0;
-        }
+    if (application->pid != pid) {
+        dlt_daemon_application_reset_user_handle(daemon, application, verbose);
+        application->pid = 0;
     }
 
     /* open user pipe only if it is not yet opened */
     if ((application->user_handle == DLT_FD_INIT) && (pid != 0)) {
-#ifdef DLT_USE_UNIX_SOCKET_IPC
-        dlt_user_handle = fd;
-#else
-        snprintf(filename,
-                 DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                 "%s/dltpipes/dlt%d",
-                 dltFifoBaseDir,
-                 pid);
+        dlt_user_handle = DLT_FD_INIT;
+        owns_user_handle = false;
 
-        dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
+#if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
+        if (fd >= DLT_FD_MINIMUM) {
+            dlt_user_handle = fd;
+            owns_user_handle = false;
+        }
+#endif
+#ifdef DLT_DAEMON_USE_FIFO_IPC
+        if (dlt_user_handle < DLT_FD_MINIMUM) {
+            snprintf(filename,
+                     DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                     "%s/dltpipes/dlt%d",
+                     dltFifoBaseDir,
+                     pid);
 
-        if (dlt_user_handle < 0) {
-            int prio = (errno == ENOENT) ? LOG_INFO : LOG_WARNING;
-            dlt_vlog(prio, "open() failed to %s, errno=%d (%s)!\n", filename, errno, strerror(errno));
-        } /* if */
+            dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 
+            if (dlt_user_handle < 0) {
+                int prio = (errno == ENOENT) ? LOG_INFO : LOG_WARNING;
+                dlt_vlog(prio, "open() failed to %s, errno=%d (%s)!\n", filename, errno, strerror(errno));
+            } else {
+                owns_user_handle = true;
+            }
+        }
 #endif
         /* check if file descriptor was already used, and make it invalid if it
         * is reused. This prevents sending messages to wrong file descriptor */
@@ -530,6 +557,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         dlt_daemon_contexts_invalidate_fd(daemon, ecu, dlt_user_handle, verbose);
 
         application->user_handle = dlt_user_handle;
+        application->owns_user_handle = owns_user_handle;
         application->pid = pid;
     }
 
@@ -566,13 +594,7 @@ int dlt_daemon_application_del(DltDaemon *daemon,
         return -1;
 
     if (user_list->num_applications > 0) {
-        /* Check if user handle is open; if yes, close it */
-        if (application->user_handle >= DLT_FD_MINIMUM) {
-#ifndef DLT_USE_UNIX_SOCKET_IPC
-            close(application->user_handle);
-#endif
-            application->user_handle = DLT_FD_INIT;
-        }
+        dlt_daemon_application_reset_user_handle(daemon, application, verbose);
 
         /* Free description of application to be deleted */
         if (application->application_description) {
@@ -1325,6 +1347,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
     DltUserHeader userheader;
     DltUserControlMsgLogLevel usercontext;
     DltReturnValue ret;
+    DltDaemonApplication *app;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1370,11 +1393,9 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
                  errno != 0 ? strerror(errno) : "Unknown error");
 
         if (errno == EPIPE) {
-#ifndef DLT_USE_UNIX_SOCKET_IPC
-            /* Close connection */
-            close(context->user_handle);
-#endif
-            context->user_handle = DLT_FD_INIT;
+            app = dlt_daemon_application_find(daemon, context->apid, daemon->ecuid, verbose);
+            if (app != NULL)
+                dlt_daemon_application_reset_user_handle(daemon, app, verbose);
         }
     }
 
@@ -1403,13 +1424,8 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
                             &(logstate), sizeof(DltUserControlMsgLogState));
 
     if (ret < DLT_RETURN_OK) {
-        if (errno == EPIPE) {
-#ifndef DLT_USE_UNIX_SOCKET_IPC
-            /* Close connection */
-            close(app->user_handle);
-#endif
-            app->user_handle = DLT_FD_INIT;
-        }
+        if (errno == EPIPE)
+            dlt_daemon_application_reset_user_handle(daemon, app, verbose);
     }
 
     return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;

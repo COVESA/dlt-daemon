@@ -166,6 +166,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
     struct sockaddr_un addr;
     int rv;
     struct ip_mreq mreq;
+    DltReceiverType receiver_type = DLT_RECEIVE_FD;
+
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
@@ -206,6 +208,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         if (verbose)
             printf("Connected to DLT daemon (%s)\n", client->servIP);
 
+        receiver_type = DLT_RECEIVE_SOCKET;
+
         break;
     case DLT_CLIENT_MODE_SERIAL:
         /* open serial connection */
@@ -242,6 +246,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         if (verbose)
             printf("Connected to %s\n", client->serialDevice);
 
+        receiver_type = DLT_RECEIVE_FD;
+
         break;
     case DLT_CLIENT_MODE_UNIX:
 
@@ -266,6 +272,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
                     client->socketPath);
             return DLT_RETURN_ERROR;
         }
+
+        receiver_type = DLT_RECEIVE_SOCKET;
 
         break;
     case DLT_CLIENT_MODE_UDP_MULTICAST:
@@ -319,6 +327,8 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             return DLT_RETURN_ERROR;
         }
 
+        receiver_type = DLT_RECEIVE_UDP_SOCKET;
+
         break;
     default:
 
@@ -328,7 +338,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         return DLT_RETURN_ERROR;
     }
 
-    if (dlt_receiver_init(&(client->receiver), client->sock, DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK) {
+    if (dlt_receiver_init(&(client->receiver), client->sock, receiver_type, DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK) {
         fprintf(stderr, "ERROR initializing receiver\n");
         return DLT_RETURN_ERROR;
     }
@@ -389,7 +399,7 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
 
     while (1) {
         /* wait for data from socket or serial connection */
-        ret = dlt_receiver_receive(&(client->receiver), client->mode);
+        ret = dlt_receiver_receive(&(client->receiver));
 
         if (ret <= 0) {
             /* No more data to be received */

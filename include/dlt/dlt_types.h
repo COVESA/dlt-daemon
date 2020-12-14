@@ -176,7 +176,7 @@ typedef enum
 typedef float float32_t;
 typedef double float64_t;
 
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
 /**
  * Definition Library connection state
  */

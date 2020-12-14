@@ -423,7 +423,7 @@ extern const char dltSerialHeader[DLT_ID_SIZE];
  */
 extern char dltSerialHeaderChar[DLT_ID_SIZE];
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * The common base-path of the dlt-daemon-fifo and application-generated fifos
  */
@@ -779,6 +779,7 @@ typedef struct
     char *buf;                /**< pointer to position within receiver buffer */
     char *backup_buf;         /** pointer to the buffer with partial messages if any **/
     int fd;                   /**< connection handle */
+    DltReceiverType type;     /**< type of connection handle */
     int32_t buffersize;       /**< size of receiver buffer */
     struct sockaddr_in addr;  /**< socket address information */
 } DltReceiver;
@@ -1157,7 +1158,7 @@ DltReturnValue dlt_file_free(DltFile *file, int verbose);
  * @param filename the filename
  */
 void dlt_log_set_filename(const char *filename);
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * Set FIFO base direction
  * @param pipe_dir the pipe direction
@@ -1211,10 +1212,11 @@ void dlt_log_free(void);
  * Initialising a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @param _fd handle to file/socket/fifo, fram which the data should be received
+ * @param type specify whether received data is from socket or file/fifo
  * @param _buffersize size of data buffer for storing the received data
  * @return negative value if there was an error
  */
-DltReturnValue dlt_receiver_init(DltReceiver *receiver, int _fd, int _buffersize);
+DltReturnValue dlt_receiver_init(DltReceiver *receiver, int _fd, DltReceiverType type, int _buffersize);
 /**
  * De-Initialize a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
@@ -1225,23 +1227,23 @@ DltReturnValue dlt_receiver_free(DltReceiver *receiver);
  * Initialising a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @param fd handle to file/socket/fifo, fram which the data should be received
+ * @param type specify whether received data is from socket or file/fifo
  * @param buffer data buffer for storing the received data
  * @return negative value if there was an error and zero if success
  */
-DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char **buffer);
+DltReturnValue dlt_receiver_init_global_buffer(DltReceiver *receiver, int fd, DltReceiverType type, char **buffer);
 /**
  * De-Initialize a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @return negative value if there was an error and zero if success
  */
-DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver);
+DltReturnValue dlt_receiver_free_global_buffer(DltReceiver *receiver);
 /**
  * Receive data from socket or file/fifo using the dlt receiver structure
  * @param receiver pointer to dlt receiver structure
- * @param from_src specify whether received data is from socket or file/fifo
  * @return number of received bytes or negative value if there was an error
  */
-int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src);
+int dlt_receiver_receive(DltReceiver *receiver);
 /**
  * Remove a specific size of bytes from the received data
  * @param receiver pointer to dlt receiver structure
@@ -1615,14 +1617,6 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
  * @param size   int
  */
 void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
-
-#   ifndef DLT_USE_UNIX_SOCKET_IPC
-/**
- * Create the specified path, recursive if necessary
- * behaves like calling mkdir -p \<dir\> on the console
- */
-int dlt_mkdir_recursive(const char *dir);
-#   endif
 
 #   ifdef __cplusplus
 }

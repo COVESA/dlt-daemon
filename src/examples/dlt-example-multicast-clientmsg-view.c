@@ -164,7 +164,9 @@ int main()
     if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
-    if (dlt_receiver_init(&(clientinfo.receiver), clientinfo.fd,
+    if (dlt_receiver_init(&(clientinfo.receiver),
+                          clientinfo.fd,
+                          DLT_RECEIVE_UDP_SOCKET,
                           DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 

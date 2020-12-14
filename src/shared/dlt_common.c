@@ -66,7 +66,7 @@
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 char dltFifoBaseDir[DLT_PATH_MAX] = "/tmp";
 #endif
 
@@ -1736,7 +1736,7 @@ void dlt_log_set_filename(const char *filename)
     logging_filename[NAME_MAX] = 0;
 }
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 void dlt_log_set_fifo_basedir(const char *pipe_dir)
 {
     strncpy(dltFifoBaseDir, pipe_dir, DLT_PATH_MAX);
@@ -1921,12 +1921,13 @@ DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
+DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, DltReceiverType type, int buffersize)
 {
     if (NULL == receiver)
         return DLT_RETURN_WRONG_PARAMETER;
 
     receiver->fd = fd;
+    receiver->type = type;
 
     /** Reuse the receiver buffer if it exists and the buffer size
       * is not changed. If not, free the old one and allocate a new buffer.
@@ -1957,7 +1958,7 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, int buffersize)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char **buffer)
+DltReturnValue dlt_receiver_init_global_buffer(DltReceiver *receiver, int fd, DltReceiverType type, char **buffer)
 {
     if (receiver == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1977,6 +1978,7 @@ DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char
     receiver->totalBytesRcvd = 0;
     receiver->buffersize = DLT_RECEIVE_BUFSIZE;
     receiver->fd = fd;
+    receiver->type = type;
     receiver->buffer = *buffer;
     receiver->backup_buf = NULL;
     receiver->buf = receiver->buffer;
@@ -2003,7 +2005,7 @@ DltReturnValue dlt_receiver_free(DltReceiver *receiver)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver)
+DltReturnValue dlt_receiver_free_global_buffer(DltReceiver *receiver)
 {
 
     if (receiver == NULL)
@@ -2019,7 +2021,7 @@ DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver)
     return DLT_RETURN_OK;
 }
 
-int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src)
+int dlt_receiver_receive(DltReceiver *receiver)
 {
     socklen_t addrlen;
 
@@ -2038,19 +2040,19 @@ int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src)
         receiver->backup_buf = NULL;
     }
 
-    if (from_src == DLT_RECEIVE_SOCKET)
+    if (receiver->type == DLT_RECEIVE_SOCKET)
         /* wait for data from socket */
         receiver->bytesRcvd = recv(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - receiver->lastBytesRcvd,
                                    0);
-    else if (from_src == DLT_RECEIVE_FD)
+    else if (receiver->type == DLT_RECEIVE_FD)
         /* wait for data from fd */
         receiver->bytesRcvd = read(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - receiver->lastBytesRcvd);
 
-    else {
+    else { /* receiver->type == DLT_RECEIVE_UDP_SOCKET */
         /* wait for data from UDP socket */
         addrlen = sizeof(receiver->addr);
         receiver->bytesRcvd = recvfrom(receiver->fd,
@@ -3834,7 +3836,7 @@ void dlt_check_envvar()
             dlt_log_init(mode);
     }
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
     char *env_pipe_dir = getenv("DLT_PIPE_DIR");
 
     if (env_pipe_dir != NULL)
@@ -3992,42 +3994,6 @@ void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size)
         ch = *(++ptr);
     }
 }
-
-#ifndef DLT_USE_UNIX_SOCKET_IPC
-int dlt_mkdir_recursive(const char *dir)
-{
-    int ret = 0;
-    char tmp[PATH_MAX + 1];
-    char *p = NULL;
-    char *end = NULL;
-    size_t len;
-
-    strncpy(tmp, dir, PATH_MAX);
-    len = strlen(tmp);
-
-    if (tmp[len - 1] == '/')
-        tmp[len - 1] = 0;
-
-    end = tmp + len;
-
-    for (p = tmp + 1; ((*p) && (ret == 0)) || ((ret == -1 && errno == EEXIST) && (p != end)); p++)
-        if (*p == '/') {
-            *p = 0;
-            ret = mkdir(tmp, S_IRWXU);
-            *p = '/';
-        }
-
-
-
-    if ((ret == 0) || ((ret == -1) && (errno == EEXIST)))
-        ret = mkdir(tmp, S_IRWXU);
-
-    if ((ret == -1) && (errno == EEXIST))
-        ret = 0;
-
-    return ret;
-}
-#endif
 
 DltReturnValue dlt_file_quick_parsing(DltFile *file, const char *filename,
                                     int type, int verbose)

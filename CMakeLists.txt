@@ -77,6 +77,10 @@ option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"             
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
 option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   OFF)
 
+option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"                                   OFF)
+option(WITH_DLT_LIB_VSOCK_IPC    "Set to ON to enable VSOCK support in library (DLT_IPC is not used in library)" OFF)
+set(DLT_VSOCK_PORT "13490" CACHE STRING "VSOCK port number for logging traffic.")
+
 # RPM settings
 set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
 set(LICENSE "Mozilla Public License Version 2.0")
@@ -111,8 +115,20 @@ include_directories(
 
 add_definitions(-D_GNU_SOURCE)
 
-if(DLT_IPC STREQUAL "UNIX_SOCKET")
-    add_definitions(-DDLT_USE_UNIX_SOCKET_IPC)
+if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO")
+    message(FATAL_ERROR "${DLT_IPC} is not a valid value for DLT_IPC")
+endif()
+add_definitions(-DDLT_DAEMON_USE_${DLT_IPC}_IPC)
+if(WITH_DLT_DAEMON_VSOCK_IPC)
+    add_definitions(-DDLT_DAEMON_VSOCK_IPC_ENABLE)
+endif()
+if(NOT WITH_DLT_LIB_VSOCK_IPC)
+    add_definitions(-DDLT_LIB_USE_${DLT_IPC}_IPC)
+else()
+    add_definitions(-DDLT_LIB_USE_VSOCK_IPC)
+endif()
+if(WITH_DLT_DAEMON_VSOCK_IPC OR WITH_DLT_LIB_VSOCK_IPC)
+    add_definitions(-DDLT_VSOCK_PORT=${DLT_VSOCK_PORT})
 endif()
 
 if(NOT DLT_USER_IPC_PATH)
@@ -269,6 +285,9 @@ message(STATUS "CMAKE_HOST_SYSTEM_PROCESSOR = ${CMAKE_HOST_SYSTEM_PROCESSOR}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "WITH_DLT_LOGSTORAGE_CTRL_UDEV = ${WITH_DLT_LOGSTORAGE_CTRL_UDEV}")
 message(STATUS "DLT_IPC = ${DLT_IPC}(Path: ${DLT_USER_IPC_PATH})")
+message(STATUS "WITH_DLT_DAEMON_VSOCK_IPC = ${WITH_DLT_DAEMON_VSOCK_IPC}")
+message(STATUS "WITH_DLT_LIB_VSOCK_IPC = ${WITH_DLT_LIB_VSOCK_IPC}")
+message(STATUS "DLT_VSOCK_PORT = ${DLT_VSOCK_PORT}")
 message(STATUS "WITH_UDP_CONNECTION = ${WITH_UDP_CONNECTION}")
 message(STATUS "WITH_DLT_QNX_SYSTEM = ${WITH_DLT_QNX_SYSTEM})")
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
