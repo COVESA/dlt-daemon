@@ -108,7 +108,7 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2
     struct iovec iov[2];
     uint32_t bytes_written;
 
-    if (handle <= 0)
+    if (handle < 0)
         /* Invalid handle */
         return DLT_RETURN_ERROR;
 
@@ -130,7 +130,7 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
     struct iovec iov[3];
     uint32_t bytes_written;
 
-    if (handle <= 0)
+    if (handle < 0)
         /* Invalid handle */
         return DLT_RETURN_ERROR;
 
@@ -145,6 +145,11 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
 
     if (bytes_written != (len1 + len2 + len3)) {
         switch (errno) {
+        case ETIMEDOUT:
+        {
+            return DLT_RETURN_PIPE_ERROR;     /* ETIMEDOUT - connect timeout */
+            break;
+        }
         case EBADF:
         {
             return DLT_RETURN_PIPE_ERROR;     /* EBADF - handle not open */
