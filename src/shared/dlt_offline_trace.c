@@ -396,7 +396,7 @@ DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,
                                        int size3)
 {
 
-    if (trace->ohandle <= 0)
+    if (trace->ohandle < 0)
         return DLT_RETURN_ERROR;
 
     /* check file size here */
@@ -440,7 +440,7 @@ DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,
 DltReturnValue dlt_offline_trace_free(DltOfflineTrace *trace)
 {
 
-    if (trace->ohandle <= 0)
+    if (trace->ohandle < 0)
         return DLT_RETURN_ERROR;
 
     /* close last used log file */
