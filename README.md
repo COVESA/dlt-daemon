@@ -1,6 +1,6 @@
 # Diagnostic Log and Trace
 
-Build and Test status: [![build and test status](https://travis-ci.org/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.org/GENIVI/dlt-daemon)
+Build and Test status: [![Build Status](https://travis-ci.com/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.com/GENIVI/dlt-daemon)
 Alerts: [![Total alerts](https://img.shields.io/lgtm/alerts/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/alerts/)
 Code quality: [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/context:cpp)
 
