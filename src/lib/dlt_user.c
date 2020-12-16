@@ -4242,13 +4242,8 @@ DltReturnValue dlt_user_log_check_user_message(void)
     nfd[0].events = POLLIN;
     nfd[0].fd = fd;
 
-#if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
-    if (fd != DLT_FD_INIT) {
-        ret = poll(nfd, 1, -1);
-#else /* DLT_LIB_USE_FIFO_IPC */
-    if (fd != DLT_FD_INIT && dlt_user.dlt_log_handle > 0) {
-        ret = poll(nfd, 1, DLT_USER_RECEIVE_NDELAY);
-#endif
+    if (fd >= 0) {
+        ret = poll(nfd, 1, DLT_USER_RECEIVE_MDELAY);
         if (ret) {
             if (nfd[0].revents & (POLLHUP | POLLNVAL | POLLERR)) {
                 dlt_user.dlt_log_handle = DLT_FD_INIT;
