@@ -350,6 +350,13 @@ steps are executed:
       - Store service id in callback table
       - Store function pointer in callback table
 
+#### Android: Thread termination
+
+On Android, `pthread_cancel` is not available in bionic. So current
+implementation uses *SIGUSR1* and `pthread_kill` to terminate housekeeper
+thread. Due to this, application which is linked to DLT library should not
+define *SIGUSR1*.
+
 ### Communication between DLT daemon and DLT user library
 
 The communication mechanism (IPC) used between DLT daemon and DLT user library

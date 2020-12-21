@@ -81,6 +81,11 @@ and to TARGET\_LINK\_LIBRARIES:
 ${DLT_LIBRARIES}
 ```
 
+### Limitation
+
+On Android, definition of `SIGUSR1` in DLT application shall be avoided since
+DLT library blocks `SIGUSR1` to terminate housekeeper thread at exit.
+
 ## General Rules for Logging
 
 ### Be Smart
