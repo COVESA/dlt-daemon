@@ -126,6 +126,9 @@
 /* delay for housekeeper thread (nsec) while receiving messages*/
 #define DLT_USER_RECEIVE_NDELAY (500 * 1000 * 1000)
 
+/* timeout for poll operations in milliseconds*/
+#define DLT_USER_RECEIVE_MDELAY (500)
+
 /* Name of environment variable for local print mode */
 #define DLT_USER_ENV_LOCAL_PRINT_MODE "DLT_LOCAL_PRINT_MODE"
 
