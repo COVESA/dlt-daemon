@@ -70,6 +70,8 @@
 #include <stdlib.h>     /* for atoi() */
 #include <string.h>     /* for strcmp() */
 #include <sys/uio.h>    /* for writev() */
+#include <stdbool.h>
+#include <limits.h>
 
 #include "dlt_client.h"
 #include "dlt_protocol.h"
@@ -84,6 +86,7 @@ static int g_testsFailed = 0;
 DltClient g_dltclient;
 /* Function prototypes */
 int dlt_testclient_message_callback(DltMessage *message, void *data);
+bool dlt_testclient_fetch_next_message_callback(void *data);
 
 typedef struct
 {
@@ -114,6 +117,7 @@ typedef struct
     int tests_failed;
 
     int sock;
+    int max_messages;
 } DltTestclientData;
 
 /**
@@ -140,6 +144,7 @@ void usage()
     printf("  -e ecuid      Set ECU ID (Default: ECU1)\n");
     printf("  -o filename   Output messages in new DLT file\n");
     printf("  -f filename   Enable filtering of messages\n");
+    printf("  -z max msgs   Print z DLT messages\n");
 }
 
 /**
@@ -165,6 +170,7 @@ int main(int argc, char *argv[])
     dltdata.ohandle = -1;
 
     dltdata.running_test = 0;
+    dltdata.max_messages = INT_MIN;
 
     for (i = 0; i < DLT_TESTCLIENT_NUM_TESTS; i++) {
         dltdata.test_counter_macro[i] = 0;
@@ -179,7 +185,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:")) != -1)
+    while ((c = getopt (argc, argv, "vashyxmf:o:e:b:z:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -236,6 +242,11 @@ int main(int argc, char *argv[])
             dltdata.bvalue = atoi(optarg);
             break;
         }
+        case 'z':
+        {
+            dltdata.max_messages = atoi(optarg);
+            break;
+        }
         case '?':
         {
             if ((optopt == 'o') || (optopt == 'f') || (optopt == 't'))
@@ -261,6 +272,9 @@ int main(int argc, char *argv[])
 
     /* Register callback to be called when message was received */
     dlt_client_register_message_callback(dlt_testclient_message_callback);
+
+    /* Register callback to be called if next message needs to be fetched */
+    dlt_client_register_fetch_next_message_callback(dlt_testclient_fetch_next_message_callback);
 
     /* Setup DLT Client structure */
     g_dltclient.mode = dltdata.yflag;
@@ -352,6 +366,21 @@ int main(int argc, char *argv[])
     dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 
     return g_testsFailed == 0 ? 0 : 1;
+}
+
+bool dlt_testclient_fetch_next_message_callback(void *data)
+{
+  if (data == 0)
+    return true;
+
+  DltTestclientData *dltdata = (DltTestclientData *)data;
+  if (dltdata->max_messages > INT_MIN)
+  {
+    dltdata->max_messages--;
+    if (dltdata->max_messages <= 0)
+      return false;
+  }
+  return true;
 }
 
 int dlt_testclient_message_callback(DltMessage *message, void *data)
