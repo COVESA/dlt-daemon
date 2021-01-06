@@ -4,9 +4,77 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.5 STABLE
+2.18.6 STABLE
 
 ## Changes
+
+### 2.18.6
+
+   * Update releaseNotes and version to v2.18.6
+   * doc: Limitation to SIGUSR1 usage on Android
+   * gtest_dlt_common: fix seg fault when using memcpy().
+   * example: Added customization of CxtID and AppID
+   * other: fix remaining conversion warnings
+   * library: fix conversion warnings
+   * tests: fix conversion warnings
+   * daemon: fix conversion warnings
+   * shared: fix conversion warnings
+   * logstorage: fix conversion warnings
+   * console :fix conversion warnings
+   * gateway: fix compile warnings
+   * readme: cpack document for debian package
+   * CMakeList: implement cpack for debian package
+   * dlt-receive: flush stdout buffer by signal
+   * gtest: Include necessary header
+   * doc: Update doc for the maintain logstorage loglevel implementation
+   * logstorage: Implement general config to maintain logstorage loglevel
+   * daemon: Correct order of runtime config load.
+   * libdlt: Use SIGUSR1 for thread on Android
+   * dlt-daemon: log levels are not controlled
+   * dlt-daemon: complete logstorage path with '/'
+   * libdlt: Use poll to avoid CPU high load
+   * libdlt: Flush all data in atexit_handler
+   * dlt-convert: replace system() by dlt_execute_command()
+   * dlt_common: Execute system command using execvp
+   * logstorage: snprintf return check
+   * logstorage: Update unit test
+   * logstorage: Add debug logs
+   * logstorage: Modify rearranging file
+   * logstorage: Handle wrap-around
+   * libdlt: support short version
+   * design doc: update spec for new environment variable
+   * doc: update disable injection msg for developer
+   * libdlt: disable injection msg via env var
+   * doc: Rewrote the DLT user documentation.
+   * daemon: Alternative of timerfd in QNX
+   * bug-fix: fix invalid file descriptor check
+   * dlt_user: fix invalid poll timeout
+   * README: Switch from travis-ci.org to travis-ci.com
+   * Add support for logging with VSOCK (#255)
+   * Use dlt_defaults for dlt-logd-converter in Android.bp (#271)
+   * dlt-control.c: return -1 on error (#259)
+   * Check size of ring buffer (#269)
+   * dlt_common: Fix buffer overflow in dlt_filter_load (#275)
+   * dlt-daemon: Adds an option to disable injection mode (#266)
+   * Add message length check
+   * Init logd crash buffer
+   * Avoid memory access errors with 4-chars context ids (#250)
+   * dlt_client.c: remove misleading error message (#258)
+   * Fix overflow for -d argument in dlt-example-user (#270)
+   * dlt-daemon.c: exit early on error (#261)
+   * Remove nonexistent file from Android.bp (#264)
+   * dlt-control.c: initialize dltdata via struct literal (#257)
+   * dlt-common.c: ensure null terminated string (#256)
+   * Make it easier to use libdlt when building DLT as a CMake subproject (#254)
+   * Simplify setting of CONFIGURATION_FILES_DIR in CMakeLists.txt (#247)
+   * Create codeql-analysis.yml (#252)
+   * Modify CMAKE_C_COMPILER check for QNX to accept "qcc" (#246)
+   * dlt_offline: fix build failures with gcc-10 (#245)
+   * Implement DLTClient for UDP multicast (#240)
+   * Revert "dlt_offline: fix build failures with gcc-10"
+   * dlt_offline: fix build failures with gcc-10
+   * sd-daemon.c: Fix build with newer glibc and musl libc
+   * dlt_user.c: fix the lack of DLT_NETWORK_TRACE_ENABLE definition
 
 ### 2.18.5
 
