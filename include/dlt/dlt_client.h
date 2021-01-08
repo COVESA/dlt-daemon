@@ -75,6 +75,7 @@
 
 #   include "dlt_types.h"
 #   include "dlt_common.h"
+#include <stdbool.h>
 
 typedef enum
 {
@@ -104,6 +105,7 @@ extern "C" {
 #   endif
 
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data));
+void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(void *data));
 
 /**
  * Initialising dlt client structure with a specific port

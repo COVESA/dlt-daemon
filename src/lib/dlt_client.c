@@ -97,10 +97,16 @@
 #include "dlt_client_cfg.h"
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
+static bool (*fetch_next_message_callback_function)(void *data) = NULL;
 
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data))
 {
     message_callback_function = registerd_callback;
+}
+
+void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(void *data))
+{
+    fetch_next_message_callback_function = registerd_callback;
 }
 
 DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
@@ -397,7 +403,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
     if (dlt_message_init(&msg, verbose) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
-    while (1) {
+    bool fetch_next_message = true;
+    while (fetch_next_message) {
         /* wait for data from socket or serial connection */
         ret = dlt_receiver_receive(&(client->receiver));
 
@@ -440,6 +447,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
             dlt_message_free(&msg, verbose);
             return DLT_RETURN_ERROR;
         }
+        if (fetch_next_message_callback_function)
+          fetch_next_message = (*fetch_next_message_callback_function)(data);
     }
 
     if (dlt_message_free(&msg, verbose) == DLT_RETURN_ERROR)
