@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE=1
+
+%:
+	dh $@ --buildsystem cmake --builddirectory=build
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+	-DWITH_SYSTEMD=ON -DWITH_SYSTEMD_JOURNAL=ON \
+	-DWITH_MAN=ON -DWITH_DLT_DBUS=ON \
+	-DWITH_DLT_KPI=ON -DWITH_DLT_ADAPTOR=ON \
+	-DWITH_DLT_SYSTEM=ON -DCMAKE_INSTALL_PREFIX=/opt/tooling/dlt \
+	-DCMAKE_INSTALL_SYSCONFDIR=/opt/tooling/dlt/etc
+
+override_dh_install:
+	sed -i 's/INSTALL_PREFIX_PATH/opt\/tooling\/dlt/g' debian/*.install; \
+	dh_install
