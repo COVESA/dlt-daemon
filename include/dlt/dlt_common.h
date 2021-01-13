@@ -297,6 +297,7 @@ enum {
 #   define DLT_OUTPUT_ASCII_LIMITED    5
 
 #   define DLT_FILTER_MAX 30 /**< Maximum number of filters */
+#   define JSON_FILTER_NAME_SIZE 16 /* Size of buffer for the filter names in json filter files */
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
     { \
@@ -736,6 +737,9 @@ typedef struct
 {
     char apid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< application id */
     char ctid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< context id */
+    int log_level[DLT_FILTER_MAX];          /**< log level */
+    int32_t payload_max[DLT_FILTER_MAX];        /**< upper border for payload */
+    int32_t payload_min[DLT_FILTER_MAX];        /**< lower border for payload */
     int counter;                            /**< number of filters */
 } DltFilter;
 
@@ -926,40 +930,68 @@ DltReturnValue dlt_filter_free(DltFilter *filter, int verbose);
  */
 DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verbose);
 /**
- * Save filter list to file.
+ * Load json filter from file.
  * @param filter pointer to structure of organising DLT filter
  * @param filename filename to load filters from
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
+DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose);
+/**
+ * Save filter in space separated list to text file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to safe filters into
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose);
+/**
+ * Save filter in json format to file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to safe filters into
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose);
 /**
  * Find index of filter in filter list
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be found in filter list
  * @param ctid context id to be found in filter list
+ * @param log_level log level to be found in filter list
+ * @param payload_min minimum payload lenght to be found in filter list
+ * @param payload_max maximum payload lenght to be found in filter list
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error (or not found), else return index of filter
  */
-int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 /**
  * Add new filter to filter list.
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be added to filter list (must always be set).
  * @param ctid context id to be added to filter list. empty equals don't care.
+ * @param log_level log level to be added to filter list. 0 equals don't care.
+ * @param payload_min min lenght of payload to be added to filter list. 0 equals don't care.
+ * @param payload_max max lenght of payload to be added to filter list. INT32_MAX equals don't care.
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 /**
  * Delete filter from filter list
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be deleted from filter list
  * @param ctid context id to be deleted from filter list
+ * @param log_level log level to be deleted from filter list
+ * @param payload_min minimum payload lenght to be deleted from filter list
+ * @param payload_max maximum payload lenght to be deleted from filter list
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 
 /**
  * Initialise the structure used to access a DLT message.

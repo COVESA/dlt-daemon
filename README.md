@@ -62,11 +62,13 @@ install DLT daemon:
 - cmake
 - zlib
 - dbus
+- json-c (only required for dlt-receives extended filtering)
 
 On Ubuntu those dependencies can be installed with the following command:
 
-```
+```bash
 sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+optional: sudo apt-get install libjson-c-dev # in case you want to use dlt-receives extended filtering
 ```
 
 Then proceed to download DLT if you haven't already. We recommend cloning the
