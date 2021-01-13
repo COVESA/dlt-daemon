@@ -39,6 +39,7 @@ set(dlt_daemon_SRCS
     ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage_behavior.c
     )
 
+
 if(WITH_DLT_SHM_ENABLE)
     set(dlt_daemon_SRCS
         ${dlt_daemon_SRCS}
@@ -60,7 +61,7 @@ if(WITH_UDP_CONNECTION)
 endif(WITH_UDP_CONNECTION)
 
 add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
-target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${DLT_JSON_LIBRARY})
 
 install(TARGETS dlt-daemon
         RUNTIME DESTINATION bin
@@ -78,7 +79,7 @@ if (WITH_DLT_UNIT_TESTS)
     endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
 
     add_library(dlt_daemon ${library_SRCS})
-    target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${DLT_JSON_LIBRARY})
 
     install(TARGETS dlt_daemon
             RUNTIME DESTINATION bin
