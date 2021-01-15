@@ -1316,7 +1316,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     const char *tmpFifo = daemon_local->flags.daemonFifoName;
     unlink(tmpFifo);
 
-    ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
 
     if (ret == -1) {
         dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n",
