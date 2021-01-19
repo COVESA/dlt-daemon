@@ -120,10 +120,7 @@ make doc
 To build the DLT debian package for your own purpose, follow these steps:
 
 ```bash
-mkdir build
-cd build
-cmake ..
-cpack
+dpkg-buildpackage -us -uc
 ```
 
 ## Learn more
