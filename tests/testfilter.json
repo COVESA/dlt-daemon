@@ -1,0 +1,17 @@
+{
+"filter1": {
+    "AppId": "LOG",
+    "ContextId": "TEST",
+    "LogLevel": "3"
+    },
+"filter2": {
+    "AppId": "app",
+    "LogLevel": "4"
+    },
+"filter3": {
+    "AppId": "app2",
+    "ContextId": "con2",
+    "PayloadMin": "20",
+    "PayloadMax": "50"
+    }
+}
