@@ -390,6 +390,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     FILE *handle;
     char str1[DLT_COMMON_BUFFER_LENGTH];
     char apid[DLT_ID_SIZE], ctid[DLT_ID_SIZE];
+    char format[10];
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -400,13 +401,15 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
         return DLT_RETURN_ERROR;
     }
 
+    sprintf(format, "%c%ds", '%', DLT_COMMON_BUFFER_LENGTH-1);
+
     /* Reset filters */
     filter->counter = 0;
 
     while (!feof(handle)) {
         str1[0] = 0;
 
-        if (fscanf(handle, "%254s", str1) != 1)
+        if (fscanf(handle, format, str1) != 1)
             break;
 
         if (str1[0] == 0)
@@ -421,7 +424,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
 
         str1[0] = 0;
 
-        if (fscanf(handle, "%254s", str1) != 1)
+        if (fscanf(handle, format, str1) != 1)
             break;
 
         if (str1[0] == 0)
