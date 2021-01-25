@@ -46,5 +46,15 @@ foreach(target
             COMPONENT base)
 endforeach()
 
+if(WITH_DLT_QNX_SYSTEM)
+    set(dlt-test-qnx-slogger_SRCS dlt-test-qnx-slogger.c)
+    add_executable(dlt-test-qnx-slogger ${dlt-test-qnx-slogger_SRCS})
+    target_link_libraries(dlt-test-qnx-slogger dlt)
+    set_target_properties(dlt-test-qnx-slogger PROPERTIES LINKER_LANGUAGE C)
+    install(TARGETS dlt-test-qnx-slogger
+            RUNTIME DESTINATION bin
+            COMPONENT base)
+endif()
+
 install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
         DESTINATION share/dlt-filetransfer)
