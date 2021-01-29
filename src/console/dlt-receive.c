@@ -338,6 +338,9 @@ int main(int argc, char *argv[])
 
     /* Config signal handler */
     struct sigaction act;
+
+    /* Initialize signal handler struct */
+    memset(&act, 0, sizeof(act));
     act.sa_handler = signal_handler;
     sigemptyset(&act.sa_mask);
     sigaction(SIGHUP, &act, 0);
