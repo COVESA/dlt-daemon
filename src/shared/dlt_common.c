@@ -3881,7 +3881,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string(value_text, (int) textlength, *ptr, length);
+        dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'');
         *ptr += length;
         *datalength -= length;
     }
