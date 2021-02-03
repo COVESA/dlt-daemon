@@ -156,7 +156,7 @@ configure DLT to exactly suit your needs, how to control the behvaiour of
 running instances and how to interface DLT with existing system through
 provided adaptors.
 
-The man pages are generated with *pandoc*.
+The man pages are generated with *pandoc*, which also needs *asciidoc* as dependency.
 
 Build manpages (initally or because something changed) with e.g.
 ```bash
