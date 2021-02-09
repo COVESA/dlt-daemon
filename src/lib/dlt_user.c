@@ -191,10 +191,8 @@ static void dlt_user_trace_network_segmented_thread(void *unused);
 static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
 #endif
 
-static DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text,
-                                                      const enum StringType type);
-static DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text,
-                                                            uint16_t text_len, const enum StringType type);
+static DltReturnValue dlt_user_log_write_string_utils_attr(DltContextData *log, const char *text, const enum StringType type, const char *name, bool with_var_info);
+static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info);
 
 
 static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
@@ -2212,12 +2210,22 @@ DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
 {
-    return dlt_user_log_write_string_utils(log, text, ASCII_STRING);
+    return dlt_user_log_write_string_utils_attr(log, text, ASCII_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    return dlt_user_log_write_string_utils_attr(log, text, ASCII_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length)
 {
-    return dlt_user_log_write_sized_string_utils(log, text, length, ASCII_STRING);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, ASCII_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, ASCII_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
@@ -2226,23 +2234,45 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
     return dlt_user.verbose_mode ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return dlt_user.verbose_mode ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length)
 {
     /* Send parameter only in verbose mode */
     return dlt_user.verbose_mode ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
-    return dlt_user_log_write_string_utils(log, text, UTF8_STRING);
+    return dlt_user_log_write_string_utils_attr(log, text, UTF8_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    return dlt_user_log_write_string_utils_attr(log, text, UTF8_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length)
 {
-    return dlt_user_log_write_sized_string_utils(log, text, length, UTF8_STRING);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, NULL, false);
 }
 
-DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text, uint16_t length, const enum StringType type)
+DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, name, true);
+}
+
+static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info)
 {
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2252,12 +2282,23 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
         return DLT_RETURN_ERROR;
     }
 
+    const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
+
     uint16_t arg_size = (uint16_t) (length + 1);
 
     size_t new_log_size = log->size + arg_size + sizeof(uint16_t);
 
-    if (dlt_user.verbose_mode)
+    uint32_t type_info = 0;
+
+    if (dlt_user.verbose_mode) {
         new_log_size += sizeof(uint32_t);
+        if (with_var_info) {
+            new_log_size += sizeof(uint16_t);  // length of "name" attribute
+            new_log_size += name_size;  // the "name" attribute itself
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
+    }
 
     size_t str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     size_t max_payload_str_msg;
@@ -2275,6 +2316,10 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
         if (dlt_user.verbose_mode) {
             min_payload_str_truncate_msg += sizeof(uint32_t);
             arg_size -= (uint16_t) sizeof(uint32_t);
+            if (with_var_info) {
+                min_payload_str_truncate_msg += sizeof(uint16_t) + name_size;
+                arg_size -= sizeof(uint16_t) + name_size;
+            }
         }
 
         /* Return when dlt_user.log_buf_len does not have enough space for min_payload_str_truncate_msg */
@@ -2313,14 +2358,12 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
     }
 
     if (dlt_user.verbose_mode) {
-        uint32_t type_info = 0;
-
         switch (type) {
         case ASCII_STRING:
-            type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
+            type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
             break;
         case UTF8_STRING:
-            type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
+            type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
             break;
         default:
             /* Do nothing */
@@ -2333,6 +2376,21 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
 
     memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
+
+    if (with_var_info) {
+        // Write length of "name" attribute.
+        // We assume that the protocol allows zero-sized strings here (which this code will create
+        // when the input pointer is NULL).
+        memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+        log->size += sizeof(uint16_t);
+
+        // Write name string itself.
+        // Must not use NULL as source pointer for memcpy. This check assures that.
+        if (name_size != 0) {
+            memcpy(log->buffer + log->size, name, name_size);
+            log->size += name_size;
+        }
+    }
 
     switch (ret) {
     case DLT_RETURN_OK:
@@ -2367,13 +2425,13 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
     return ret;
 }
 
-DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type)
+static DltReturnValue dlt_user_log_write_string_utils_attr(DltContextData *log, const char *text, const enum StringType type, const char *name, bool with_var_info)
 {
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     uint16_t length = (uint16_t) strlen(text);
-    return dlt_user_log_write_sized_string_utils(log, text, length, type);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, type, name, with_var_info);
 }
 
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
