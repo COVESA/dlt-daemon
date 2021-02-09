@@ -1754,12 +1754,7 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log)
     return ret;
 }
 
-DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length)
-{
-    return dlt_user_log_write_raw_formatted(log, data, length, DLT_FORMAT_DEFAULT);
-}
-
-DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
+static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name, bool with_var_info)
 {
     /* check nullpointer */
     if ((log == NULL) || ((data == NULL) && (length != 0)))
@@ -1776,6 +1771,8 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         return DLT_RETURN_ERROR;
     }
 
+    const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
+
     size_t needed_size = length + sizeof(uint16_t);
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
@@ -1784,9 +1781,17 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         uint32_t type_info = DLT_TYPE_INFO_RAWD;
 
         needed_size += sizeof(uint32_t);  // Type Info field
+        if (with_var_info) {
+            needed_size += sizeof(uint16_t);  // length of name
+            needed_size += name_size;  // the name itself
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
         if ((log->size + needed_size) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
 
+        // Genivi extension: put formatting hints into the unused (for RAWD) TYLE + SCOD fields.
+        // The SCOD field holds the base (hex or bin); the TYLE field holds the column width (8bit..64bit).
         if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64)) {
             type_info |= DLT_SCOD_HEX;
             type_info += type;
@@ -1801,9 +1806,23 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         log->size += sizeof(uint32_t);
     }
 
-    /* First transmit length of raw data, then the raw data itself */
     memcpy(log->buffer + log->size, &length, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
+
+    if (with_var_info) {
+        // Write length of "name" attribute.
+        // We assume that the protocol allows zero-sized strings here (which this code will create
+        // when the input pointer is NULL).
+        memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+        log->size += sizeof(uint16_t);
+
+        // Write name string itself.
+        // Must not use NULL as source pointer for memcpy. This check assures that.
+        if (name_size != 0) {
+            memcpy(log->buffer + log->size, name, name_size);
+            log->size += name_size;
+        }
+    }
 
     memcpy(log->buffer + log->size, data, length);
     log->size += length;
@@ -1811,6 +1830,26 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
     log->args_num++;
 
     return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, DLT_FORMAT_DEFAULT, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, type, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data, uint16_t length, const char *name)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, DLT_FORMAT_DEFAULT, name, true);
+}
+
+DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, type, name, true);
 }
 
 // Generic implementation for all "simple" types, possibly with attributes

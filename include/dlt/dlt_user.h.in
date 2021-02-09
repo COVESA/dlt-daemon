@@ -641,6 +641,39 @@ DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t 
 DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type);
 
 /**
+ * Write a binary memory block with "name" attribute into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name is NULL, this function will add an attribute field with length 0
+ * and no content to the message.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  pointer to the parameter written into log message.
+ * @param length  length in bytes of the parameter written into log message
+ * @param name  the "name" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data, uint16_t length, const char *name);
+
+/**
+ * Write a binary memory block with "name" attribute into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name is NULL, this function will add an attribute field with length 0
+ * and no content to the message.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  pointer to the parameter written into log message.
+ * @param length  length in bytes of the parameter written into log message
+ * @param type  the format information
+ * @param name  the "name" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name);
+
+/**
  * Trace network message
  * @param handle pointer to an object containing information about one special logging context
  * @param nw_trace_type type of network trace (DLT_NW_TRACE_IPC, DLT_NW_TRACE_CAN, DLT_NW_TRACE_FLEXRAY, or DLT_NW_TRACE_MOST)
