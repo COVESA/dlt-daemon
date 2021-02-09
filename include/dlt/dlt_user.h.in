@@ -334,6 +334,38 @@ DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data);
 DltReturnValue dlt_user_log_write_float64(DltContextData *log, double data);
 
 /**
+ * Write a float parameter with attributes into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name or @a unit is NULL, this function will add a corresponding attribute field with length 0
+ * and no content to the message for that attribute.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  float32_t parameter written into log message
+ * @param name  the "name" attribute (or NULL)
+ * @param unit  the "unit" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit);
+
+/**
+ * Write a double parameter with attributes into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name or @a unit is NULL, this function will add a corresponding attribute field with length 0
+ * and no content to the message for that attribute.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  float64_t parameter written into log message
+ * @param name  the "name" attribute (or NULL)
+ * @param unit  the "unit" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t data, const char *name, const char *unit);
+
+/**
  * Write a uint parameter into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
@@ -346,6 +378,26 @@ DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data);
 DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data);
 DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data);
 DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
+
+/**
+ * Write a uint parameter with attributes into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name or @a unit is NULL, this function will add a corresponding attribute field with length 0
+ * and no content to the message for that attribute.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  unsigned int parameter written into log message
+ * @param name  the "name" attribute (or NULL)
+ * @param unit  the "unit" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit);
 
 /**
  * Write a uint parameter into a DLT log message. The output will be formatted as given by the parameter type.
@@ -384,6 +436,27 @@ DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data);
 DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data);
 DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data);
 DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data);
+
+/**
+ * Write an int parameter with attributes into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name or @a unit is NULL, this function will add a corresponding attribute field with length 0
+ * and no content to the message for that attribute.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  int parameter written into log message
+ * @param name  the "name" attribute (or NULL)
+ * @param unit  the "unit" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_int16_attr(DltContextData *log, int16_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_int32_attr(DltContextData *log, int32_t data, const char *name, const char *unit);
+DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, const char *name, const char *unit);
+
 /**
  * Write a null terminated ASCII string into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
