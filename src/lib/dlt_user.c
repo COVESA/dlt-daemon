@@ -115,6 +115,16 @@ enum StringType
     UTF8_STRING = 1
 };
 
+/* Data type holding "Variable Info" (VARI) properties
+ * Some of the supported data types (eg. bool, string, raw) have only "name", but not "unit".
+ */
+typedef struct VarInfo
+{
+    const char *name;  // the "name" attribute (can be NULL)
+    const char *unit;  // the "unit" attribute (can be NULL)
+    bool with_unit;    // true if the "unit" field is to be considered
+} VarInfo;
+
 #define DLT_UNUSED(x) (void)(x)
 
 /* Network trace */
@@ -1853,7 +1863,7 @@ DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const 
 }
 
 // Generic implementation for all "simple" types, possibly with attributes
-static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, void *datap, size_t datalen, uint32_t type_info, const char *name, const char *unit, bool with_var_info)
+static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const void *datap, size_t datalen, uint32_t type_info, const VarInfo *varinfo)
 {
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1868,13 +1878,22 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, void 
         return DLT_RETURN_USER_BUFFER_FULL;
 
     if (dlt_user.verbose_mode) {
-        const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
-        const uint16_t unit_size = (unit != NULL) ? strlen(unit)+1 : 0;
+        bool with_var_info = (varinfo != NULL);
+
+        uint16_t name_size;
+        uint16_t unit_size;
 
         needed_size += sizeof(uint32_t);  // Type Info field
         if (with_var_info) {
-            needed_size += sizeof(uint16_t) + sizeof(uint16_t);  // lengths of name + unit
-            needed_size += name_size + unit_size;  // name + unit themselves
+            name_size = (varinfo->name != NULL) ? strlen(varinfo->name)+1 : 0;
+            unit_size = (varinfo->unit != NULL) ? strlen(varinfo->unit)+1 : 0;
+
+            needed_size += sizeof(uint16_t);      // length of name
+            needed_size += name_size;             // the name itself
+            if (varinfo->with_unit) {
+                needed_size += sizeof(uint16_t);  // length of unit
+                needed_size += unit_size;         // the unit itself
+            }
 
             type_info |= DLT_TYPE_INFO_VARI;
         }
@@ -1890,17 +1909,19 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, void 
             // when the input pointers are NULL).
             memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
             log->size += sizeof(uint16_t);
-            memcpy(log->buffer + log->size, &unit_size, sizeof(uint16_t));
-            log->size += sizeof(uint16_t);
+            if (varinfo->with_unit) {
+                memcpy(log->buffer + log->size, &unit_size, sizeof(uint16_t));
+                log->size += sizeof(uint16_t);
+            }
 
             // Write name/unit strings themselves
             // Must not use NULL as source pointer for memcpy.
             if (name_size != 0) {
-                memcpy(log->buffer + log->size, name, name_size);
+                memcpy(log->buffer + log->size, varinfo->name, name_size);
                 log->size += name_size;
             }
             if (unit_size != 0) {
-                memcpy(log->buffer + log->size, unit, unit_size);
+                memcpy(log->buffer + log->size, varinfo->unit, unit_size);
                 log->size += unit_size;
             }
         }
@@ -1965,7 +1986,7 @@ DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data)
         return DLT_RETURN_ERROR;
 
     uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_float64(DltContextData *log, float64_t data)
@@ -1974,7 +1995,7 @@ DltReturnValue dlt_user_log_write_float64(DltContextData *log, float64_t data)
         return DLT_RETURN_ERROR;
 
     uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit)
@@ -1983,7 +2004,8 @@ DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t da
         return DLT_RETURN_ERROR;
 
     uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t data, const char *name, const char *unit)
@@ -1992,7 +2014,8 @@ DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t da
         return DLT_RETURN_ERROR;
 
     uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit)
@@ -2039,25 +2062,25 @@ DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int da
 DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
@@ -2068,25 +2091,29 @@ DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
 DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type)
@@ -2185,25 +2212,25 @@ DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const 
 DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
@@ -2214,88 +2241,42 @@ DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
 DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_int16_attr(DltContextData *log, int16_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_int32_attr(DltContextData *log, int32_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, const char *name, const char *unit)
 {
     uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, name, unit, true);
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_BOOL;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL, NULL, false);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name)
 {
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    size_t needed_size = sizeof(uint8_t);
-    if ((log->size + needed_size) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        uint32_t type_info = DLT_TYPE_INFO_BOOL;
-
-        const bool with_var_info = true;
-        const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
-
-        needed_size += sizeof(uint32_t);  // Type Info field
-        if (with_var_info) {
-            needed_size += sizeof(uint16_t);  // length of name
-            needed_size += name_size;  // the name itself
-
-            type_info |= DLT_TYPE_INFO_VARI;
-        }
-        if ((log->size + needed_size) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-
-        if (with_var_info) {
-            // Write length of "name" attribute.
-            // We assume that the protocol allows zero-sized strings here (which this code will create
-            // when the input pointer is NULL).
-            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
-            log->size += sizeof(uint16_t);
-
-            // Write name string itself.
-            // Must not use NULL as source pointer for memcpy. This check assures that.
-            if (name_size != 0) {
-                memcpy(log->buffer + log->size, name, name_size);
-                log->size += name_size;
-            }
-        }
-    }
-
-    memcpy(log->buffer + log->size, &data, sizeof(uint8_t));
-    log->size += sizeof(uint8_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    const VarInfo var_info = { name, NULL, false };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
