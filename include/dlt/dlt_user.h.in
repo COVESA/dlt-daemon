@@ -314,6 +314,21 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log);
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data);
 
 /**
+ * Write a boolean parameter with "name" attribute into a DLT log message.
+ * dlt_user_log_write_start has to be called before adding any parameters to the log message.
+ * Finish building a log message by calling dlt_user_log_write_finish.
+ *
+ * If @a name is NULL, this function will add an attribute field with length 0
+ * and no content to the message.
+ *
+ * @param log  pointer to an object containing information about logging context data
+ * @param data  boolean parameter written into log message (mapped to uint8)
+ * @param name  the "name" attribute (or NULL)
+ * @return value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name);
+
+/**
  * Write a float parameter into a DLT log message.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.

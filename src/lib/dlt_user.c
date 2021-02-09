@@ -1915,12 +1915,6 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, void 
 }
 
 // Generic implementation for all "simple" types
-static DltReturnValue dlt_user_log_write_generic(DltContextData *log, void *datap, size_t datalen, uint32_t type_info)
-{
-    return dlt_user_log_write_generic_attr(log, datap, datalen, type_info, NULL, NULL, false);
-}
-
-// Generic implementation for all "simple" types
 static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, const void *datap, size_t datalen, uint32_t type_info, DltFormatType type)
 {
     if (log == NULL)
@@ -2244,7 +2238,64 @@ DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, 
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 {
     uint32_t type_info = DLT_TYPE_INFO_BOOL;
-    return dlt_user_log_write_generic(log, &data, sizeof(uint8_t), type_info);
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name)
+{
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (!dlt_user_initialised) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    size_t needed_size = sizeof(uint8_t);
+    if ((log->size + needed_size) > dlt_user.log_buf_len)
+        return DLT_RETURN_USER_BUFFER_FULL;
+
+    if (dlt_user.verbose_mode) {
+        uint32_t type_info = DLT_TYPE_INFO_BOOL;
+
+        const bool with_var_info = true;
+        const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
+
+        needed_size += sizeof(uint32_t);  // Type Info field
+        if (with_var_info) {
+            needed_size += sizeof(uint16_t);  // length of name
+            needed_size += name_size;  // the name itself
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
+        if ((log->size + needed_size) > dlt_user.log_buf_len)
+            return DLT_RETURN_USER_BUFFER_FULL;
+
+        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+
+        if (with_var_info) {
+            // Write length of "name" attribute.
+            // We assume that the protocol allows zero-sized strings here (which this code will create
+            // when the input pointer is NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
+
+            // Write name string itself.
+            // Must not use NULL as source pointer for memcpy. This check assures that.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, name, name_size);
+                log->size += name_size;
+            }
+        }
+    }
+
+    memcpy(log->buffer + log->size, &data, sizeof(uint8_t));
+    log->size += sizeof(uint8_t);
+
+    log->args_num++;
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
