@@ -60,6 +60,8 @@ else()
 endif()
 
 install(TARGETS dlt
+    EXPORT
+        ${PROJECT_NAME}-targets
     RUNTIME
         DESTINATION bin
         COMPONENT base
@@ -69,3 +71,10 @@ install(TARGETS dlt
     ARCHIVE
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
         COMPONENT base)
+
+# Install *-targets.cmake file
+install(
+    EXPORT ${PROJECT_NAME}-targets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+    NAMESPACE Genivi::
+)
