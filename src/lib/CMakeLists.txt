@@ -59,6 +59,8 @@ else()
     set_target_properties(dlt PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
 
+add_library(Genivi::dlt ALIAS dlt)
+
 install(TARGETS dlt
     EXPORT
         ${PROJECT_NAME}-targets
