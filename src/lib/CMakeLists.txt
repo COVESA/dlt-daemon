@@ -45,7 +45,13 @@ else()
 endif()
 
 target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(dlt PUBLIC ${PROJECT_SOURCE_DIR}/include/dlt ${PROJECT_BINARY_DIR}/include/dlt)
+
+target_include_directories(dlt
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/dlt>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/dlt>
+        $<INSTALL_INTERFACE:include>
+)
 
 if(WITH_LIB_SHORT_VERSION)
     set_target_properties(dlt PROPERTIES VERSION ${PROJECT_VERSION_MAJOR} SOVERSION ${PROJECT_VERSION_MAJOR})
