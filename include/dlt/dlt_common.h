@@ -75,6 +75,7 @@
 
 #   include <netinet/in.h>
 #   include <stdio.h>
+#   include <stdbool.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
 #      include <sys/socket.h>
@@ -1172,6 +1173,13 @@ void dlt_log_set_fifo_basedir(const char *pipe_dir);
  * @param level the level
  */
 void dlt_log_set_level(int level);
+
+/**
+ * Set whether to print "name" and "unit" attributes in console output
+ * @param state  true = with attributes, false = without attributes
+ */
+void dlt_print_with_attributes(bool state);
+
 /**
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr

@@ -1780,6 +1780,11 @@ void dlt_log_set_shm_name(const char * env_shm_name)
 }
 #endif
 
+void dlt_print_with_attributes(bool state)
+{
+    print_with_attributes = state;
+}
+
 void dlt_log_init(int mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
