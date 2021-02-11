@@ -1819,18 +1819,20 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     memcpy(log->buffer + log->size, &length, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (with_var_info) {
-        // Write length of "name" attribute.
-        // We assume that the protocol allows zero-sized strings here (which this code will create
-        // when the input pointer is NULL).
-        memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
-        log->size += sizeof(uint16_t);
+    if (dlt_user.verbose_mode) {
+        if (with_var_info) {
+            // Write length of "name" attribute.
+            // We assume that the protocol allows zero-sized strings here (which this code will create
+            // when the input pointer is NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
 
-        // Write name string itself.
-        // Must not use NULL as source pointer for memcpy. This check assures that.
-        if (name_size != 0) {
-            memcpy(log->buffer + log->size, name, name_size);
-            log->size += name_size;
+            // Write name string itself.
+            // Must not use NULL as source pointer for memcpy. This check assures that.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, name, name_size);
+                log->size += name_size;
+            }
         }
     }
 
@@ -2448,18 +2450,20 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (with_var_info) {
-        // Write length of "name" attribute.
-        // We assume that the protocol allows zero-sized strings here (which this code will create
-        // when the input pointer is NULL).
-        memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
-        log->size += sizeof(uint16_t);
+    if (dlt_user.verbose_mode) {
+        if (with_var_info) {
+            // Write length of "name" attribute.
+            // We assume that the protocol allows zero-sized strings here (which this code will create
+            // when the input pointer is NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
 
-        // Write name string itself.
-        // Must not use NULL as source pointer for memcpy. This check assures that.
-        if (name_size != 0) {
-            memcpy(log->buffer + log->size, name, name_size);
-            log->size += name_size;
+            // Write name string itself.
+            // Must not use NULL as source pointer for memcpy. This check assures that.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, name, name_size);
+                log->size += name_size;
+            }
         }
     }
 
