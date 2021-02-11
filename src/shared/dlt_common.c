@@ -3301,6 +3301,10 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
     // pointer to the value string
     char* value_text = text;
+    // pointer to the "unit" attribute string, if there is one (only for *INT and FLOAT*)
+    const uint8_t* unit_text_src = NULL;
+    // length of the "unit" attribute string, if there is one (only for *INT and FLOAT*)
+    size_t unit_text_len = 0;
 
     /* apparently this makes no sense but needs to be done to prevent compiler warning.
      * This variable is only written by DLT_MSG_READ_VALUE macro in if (type_info & DLT_TYPE_INFO_FIXP)
@@ -3507,6 +3511,10 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
             if ((*datalength) < length3)
                 return DLT_RETURN_ERROR;
+
+            // We want to add the "unit" attribute only after the value, so remember its pointer and length here.
+            unit_text_src = *ptr;
+            unit_text_len = length3;
 
             *ptr += length3;
             *datalength -= length3;
@@ -3721,6 +3729,10 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length3)
                 return DLT_RETURN_ERROR;
 
+            // We want to add the "unit" attribute only after the value, so remember its pointer and length here.
+            unit_text_src = *ptr;
+            unit_text_len = length3;
+
             *ptr += length3;
             *datalength -= length3;
         }
@@ -3885,6 +3897,18 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     if (*datalength < 0) {
         dlt_log(LOG_ERR, "Payload of DLT message corrupted\n");
         return DLT_RETURN_ERROR;
+    }
+
+    // Now write "unit" attribute, but only if it has more than only a nul-termination char.
+    if (print_with_attributes) {
+        if (unit_text_len > 1) {
+            // 'value_text' still points to the +start+ of the value text
+            size_t currLen = strlen(value_text);
+
+            char* unitText = value_text + currLen;
+            textlength -= currLen;
+            snprintf(unitText, textlength, ":%s", unit_text_src);
+        }
     }
 
     return DLT_RETURN_OK;
