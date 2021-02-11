@@ -31,6 +31,7 @@
 #include <time.h>     /* for localtime_r(), strftime() */
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
+#include <stdbool.h>
 #include <stdarg.h>
 #include <err.h>
 
@@ -81,6 +82,7 @@ static int logging_mode = DLT_LOG_TO_CONSOLE;
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 static FILE *logging_handle = NULL;
+static bool print_with_attributes = false;
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
 char *log_info[] = { "", "fatal", "error", "warn", "info", "debug", "verbose", "", "", "", "", "", "", "", "", "" };
@@ -3331,6 +3333,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
         }
@@ -3353,6 +3364,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
+
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-2;
+                }
+            }
 
             *ptr += length2;
             *datalength -= length2;
@@ -3472,6 +3492,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
+
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for the ":", and -1 for nul
+                    textlength -= length2+1-1;
+                }
+            }
 
             *ptr += length2;
             *datalength -= length2;
@@ -3677,6 +3706,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
 
@@ -3804,6 +3842,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
+
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
 
             *ptr += length2;
             *datalength -= length2;
