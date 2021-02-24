@@ -3802,32 +3802,36 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 #endif
         }
 
+        DltReturnValue process_error_ret = DLT_RETURN_OK;
         /* store message in ringbuffer, if an error has occured */
         if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
-            ret = dlt_user_log_out_error_handling(&(userheader),
+            process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbuffer + sizeof(DltStorageHeader),
                                                   msg.headersize - sizeof(DltStorageHeader),
                                                   log->buffer,
                                                   log->size);
 
-        switch (ret) {
-        case DLT_RETURN_BUFFER_FULL:
-        {
+        if (process_error_ret == DLT_RETURN_OK)
+            return DLT_RETURN_OK;
+        if (process_error_ret == DLT_RETURN_BUFFER_FULL) {
             /* Buffer full */
             dlt_user.overflow_counter += 1;
             return DLT_RETURN_BUFFER_FULL;
         }
-        case DLT_RETURN_PIPE_FULL:
-        {
-            /* data could not be written */
-            return DLT_RETURN_PIPE_FULL;
-        }
-        case DLT_RETURN_PIPE_ERROR:
-        {
-            /* handle not open or pipe error */
-            close(dlt_user.dlt_log_handle);
-            dlt_user.dlt_log_handle = -1;
+
+        /* handle return value of function dlt_user_log_out3() when process_error_ret < 0*/
+        switch (ret) {
+            case DLT_RETURN_PIPE_FULL:
+            {
+                /* data could not be written */
+                return DLT_RETURN_PIPE_FULL;
+            }
+            case DLT_RETURN_PIPE_ERROR:
+            {
+                /* handle not open or pipe error */
+                close(dlt_user.dlt_log_handle);
+                dlt_user.dlt_log_handle = -1;
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
