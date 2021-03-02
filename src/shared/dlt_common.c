@@ -475,8 +475,7 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
         return DLT_RETURN_WRONG_PARAMETER;
 
     FILE *handle;
-    char buffer[1024];
-    long file_size;
+    char buffer[JSON_FILTER_SIZE*DLT_FILTER_MAX];
     struct json_object *j_parsed_json;
     struct json_object *j_app_id;
     struct json_object *j_context_id;
@@ -500,7 +499,12 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
         return DLT_RETURN_ERROR;
     }
 
-    fread(buffer, sizeof(buffer), 1, handle);
+    if (fread(buffer, sizeof(buffer), 1, handle) != 0) {
+        if (!feof(handle)) {
+            dlt_vlog(LOG_WARNING, "Filter file %s is to big for reading it with current buffer!\n", filename);
+            return DLT_RETURN_ERROR;
+        }
+    }
 
     j_parsed_json = json_tokener_parse_verbose(buffer, &jerr);
 
@@ -731,7 +735,7 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
     }
 
     printf("Saving current filter into '%s'\n", filename);
-    json_object_to_file(filename, json_filter_obj);
+    json_object_to_file((char*)filename, json_filter_obj);
 
     return DLT_RETURN_OK;
 }
