@@ -952,6 +952,12 @@ int main(int argc, char *argv[])
 
     /* --- Daemon connection init end */
 
+    /*
+     * Load dlt-runtime.cfg if available.
+     * This must be loaded before offline setup
+     */
+    dlt_daemon_configuration_load(&daemon, daemon.runtime_configuration, daemon_local.flags.vflag);
+
     if (dlt_daemon_init_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_ERR, "Could not load runtime config\n");
         return -1;
@@ -964,12 +970,6 @@ int main(int argc, char *argv[])
     }
 
     /* --- Daemon init phase 2 end --- */
-
-    /*
-     * Load dlt-runtime.cfg if available.
-     * This must be loaded before offline setup
-     */
-    dlt_daemon_configuration_load(&daemon, daemon.runtime_configuration, daemon_local.flags.vflag);
 
     if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
