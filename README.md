@@ -129,7 +129,7 @@ Once you got your feet wet with developing your first application, you might
 want to learn more. Find out about DLT's [advanced topics](#advanced-topics),
 learn how to [configure, control and interface](#configure-control-and-interface)
 DLT or study its internals by checking out the [design
-specifications](#design-specifications).
+specifications](./doc/dlt_design_specification.md).
 
 ### Advanced Topics
 The GENIVI DLT implementation is capable of by far more than to "just" send log
@@ -181,7 +181,7 @@ make generate_man
 |[dlt-adaptor-udp(1)](doc/dlt-adaptor-udp.1.md)| Adaptor for forwarding received UDP messages to daemon. |
 |[dlt-convert(1)](doc/dlt-convert.1.md)| Convert DLT files into human readable format. |
 |[dlt-sortbytimestamp(1)](doc/dlt-sortbytimestamp.1.md)| Read log messages from DLT file, sort by timestamp, and store them again. |
-| [dlt-qnx-system(1)](doc/dlt-qnx-system.md) | Access system logs in QNX with DLT |
+|[dlt-qnx-system(1)](doc/dlt-qnx-system.md) | Access system logs in QNX with DLT |
 
 ## Contribution
 
