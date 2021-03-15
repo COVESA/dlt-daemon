@@ -631,6 +631,19 @@ if (dlt_user_log_write_start(&ctx, &ctxdata, DLT_LOG_INFO) > 0) {
 }
 ```
 
+#### Attributes
+
+In verbose mode, log message arguments can contain attributes. A "name" attribute
+describes the purpose or semantics of an argument, and a "unit" attribute
+describes its unit (if applicable - not all argument data types support having
+a "unit" attribute).
+
+```
+dlt_user_log_write_float64_attr(&myctxdata, 4.2, "speed", "m/s");
+```
+
+In non-verbose mode, these attributes are not added to the message.
+
 ### Logging parameters
 
 The following parameter types can be used. Multiple parameters can be added to
@@ -640,25 +653,45 @@ exceed 1390 bytes, including the DLT message header.
 Type | Description
 --- | ---
 DLT\_STRING(TEXT) | String
+DLT\_STRING\_ATTR(TEXT,NAME) | String (with attribute)
 DLT\_SIZED\_STRING(TEXT,LENGTH) | String with known length
+DLT\_SIZED\_STRING\_ATTR(TEXT,LENGTH,NAME) | String with known length (with attribute)
 DLT\_CSTRING(TEXT) | Constant string (not sent in non-verbose mode)
+DLT\_CSTRING\_ATTR(TEXT,NAME) | Constant string (with attribute; not sent in non-verbose mode)
 DLT\_SIZED\_CSTRING(TEXT,LENGTH) | Constant string with known length (not sent in non-verbose mode)
+DLT\_SIZED\_CSTRING\_ATTR(TEXT,LENGTH,NAME) | Constant string with known length (with attribute; not sent in non-verbose mode)
 DLT\_UTF8(TEXT) | Utf8-encoded string
+DLT\_UTF8\_ATTR(TEXT,NAME) | Utf8-encoded string (with attribute)
 DLT\_SIZED\_UTF8(TEXT,LENGTH) | Utf8-encoded string with known length
+DLT\_SIZED\_UTF8\_ATTR(TEXT,LENGTH,NAME) | Utf8-encoded string with known length (with attribute)
 DLT\_RAW(BUF,LENGTH) | Raw buffer
+DLT\_RAW\_ATTR(BUF,LENGTH,NAME) | Raw buffer (with attribute)
 DLT\_INT(VAR) | Integer variable, dependent on platform
+DLT\_INT\_ATTR(VAR,NAME,UNIT) | Integer variable, dependent on platform (with attributes)
 DLT\_INT8(VAR) |Integer 8 Bit variable
+DLT\_INT8\_ATTR(VAR,NAME,UNIT) |Integer 8 Bit variable (with attributes)
 DLT\_INT16(VAR) | Integer 16 Bit variable
+DLT\_INT16\_ATTR(VAR,NAME,UNIT) | Integer 16 Bit variable (with attributes)
 DLT\_INT32(VAR) | Integer 32 Bit variable
+DLT\_INT32\_ATTR(VAR,NAME,UNIT) | Integer 32 Bit variable (with attributes)
 DLT\_INT64(VAR) | Integer 64 bit variable
+DLT\_INT64\_ATTR(VAR,NAME,UNIT) | Integer 64 bit variable (with attributes)
 DLT\_UINT(VAR) | Unsigned integer variable
+DLT\_UINT\_ATTR(VAR,NAME,UNIT) | Unsigned integer variable (with attributes)
 DLT\_UINT8(VAR) | Unsigned 8 Bit integer variable
+DLT\_UINT8\_ATTR(VAR,NAME,UNIT) | Unsigned 8 Bit integer variable (with attributes)
 DLT\_UINT16(VAR) |Unsigned 16 Bit integer variable
+DLT\_UINT16\_ATTR(VAR,NAME,UNIT) |Unsigned 16 Bit integer variable (with attributes)
 DLT\_UINT32(VAR) | Unsigned 32 Bit integer variable
+DLT\_UINT32\_ATTR(VAR,NAME,UNIT) | Unsigned 32 Bit integer variable (with attributes)
 DLT\_UINT64(VAR) | Unsigned 64 bit integer variable
+DLT\_UINT64\_ATTR(VAR,NAME,UNIT) | Unsigned 64 bit integer variable (with attributes)
 DLT\_BOOL(VAR) | Boolean variable
+DLT\_BOOL\_ATTR(VAR,NAME) | Boolean variable (with attribute)
 DLT\_FLOAT32(VAR) | Float 32 Bit variable
+DLT\_FLOAT32\_ATTR(VAR,NAME,UNIT) | Float 32 Bit variable (with attributes)
 DLT\_FLOAT64(VAR) | Float 64 Bit variable
+DLT\_FLOAT64\_ATTR(VAR,NAME,UNIT) | Float 64 Bit variable (with attributes)
 DLT\_HEX8(UINT\_VAR) | 8 Bit hex value
 DLT\_HEX16(UINT\_VAR) | 16 Bit hex value
 DLT\_HEX32(UINT\_VAR) | 32 Bit hex value

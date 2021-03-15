@@ -75,6 +75,7 @@
 
 #   include <netinet/in.h>
 #   include <stdio.h>
+#   include <stdbool.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
 #      include <sys/socket.h>
@@ -89,8 +90,10 @@
 
 #   if defined(__GNUC__)
 #      define PURE_FUNCTION __attribute__((pure))
+#      define PRINTF_FORMAT(a,b) __attribute__ ((format (printf, a, b)))
 #   else
 #      define PURE_FUNCTION /* nothing */
+#      define PRINTF_FORMAT(a,b) /* nothing */
 #   endif
 
 #   if !defined (__WIN32__) && !defined(_MSC_VER)
@@ -1170,6 +1173,13 @@ void dlt_log_set_fifo_basedir(const char *pipe_dir);
  * @param level the level
  */
 void dlt_log_set_level(int level);
+
+/**
+ * Set whether to print "name" and "unit" attributes in console output
+ * @param state  true = with attributes, false = without attributes
+ */
+void dlt_print_with_attributes(bool state);
+
 /**
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
@@ -1180,7 +1190,7 @@ void dlt_log_init(int mode);
  * @param format format string for message
  * @return negative value if there was an error or the total number of characters written is returned on success
  */
-int dlt_user_printf(const char *format, ...);
+int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1,2);
 /**
  * Log ASCII string with null-termination to (external) logging facility
  * @param prio priority (see syslog() call)

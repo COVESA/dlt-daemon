@@ -31,6 +31,7 @@
 #include <time.h>     /* for localtime_r(), strftime() */
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
+#include <stdbool.h>
 #include <stdarg.h>
 #include <err.h>
 
@@ -81,6 +82,7 @@ static int logging_mode = DLT_LOG_TO_CONSOLE;
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 static FILE *logging_handle = NULL;
+static bool print_with_attributes = false;
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
 char *log_info[] = { "", "fatal", "error", "warn", "info", "debug", "verbose", "", "", "", "", "", "", "", "", "" };
@@ -1778,6 +1780,11 @@ void dlt_log_set_shm_name(const char * env_shm_name)
 }
 #endif
 
+void dlt_print_with_attributes(bool state)
+{
+    print_with_attributes = state;
+}
+
 void dlt_log_init(int mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
@@ -3297,6 +3304,13 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
     uint32_t quantisation_tmp = 0;
 
+    // pointer to the value string
+    char* value_text = text;
+    // pointer to the "unit" attribute string, if there is one (only for *INT and FLOAT*)
+    const uint8_t* unit_text_src = NULL;
+    // length of the "unit" attribute string, if there is one (only for *INT and FLOAT*)
+    size_t unit_text_len = 0;
+
     /* apparently this makes no sense but needs to be done to prevent compiler warning.
      * This variable is only written by DLT_MSG_READ_VALUE macro in if (type_info & DLT_TYPE_INFO_FIXP)
      * case but never read anywhere */
@@ -3328,11 +3342,20 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
         }
 
-        DLT_MSG_READ_STRING(text, *ptr, *datalength, textlength, length);
+        DLT_MSG_READ_STRING(value_text, *ptr, *datalength, textlength, length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
@@ -3351,6 +3374,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-2;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
         }
@@ -3361,7 +3393,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        snprintf(text, textlength, "%d", value8u);
+        snprintf(value_text, textlength, "%d", value8u);
     }
     else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_BIN == (type_info & DLT_TYPE_INFO_SCOD)))
     {
@@ -3381,7 +3413,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 strcat(binary, (i == (value8u & i)) ? "1" : "0");
             }
 
-            snprintf(text, textlength, "0b%s", binary);
+            snprintf(value_text, textlength, "0b%s", binary);
         }
 
         if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3400,7 +3432,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 strcat(binary, (i == (value16u & i)) ? "1" : "0");
             }
 
-            snprintf(text, textlength, "0b%s", binary);
+            snprintf(value_text, textlength, "0b%s", binary);
         }
     }
     else if ((type_info & DLT_TYPE_INFO_UINT) && (DLT_SCOD_HEX == (type_info & DLT_TYPE_INFO_SCOD)))
@@ -3411,7 +3443,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text, textlength, "0x%02x", value8u);
+            snprintf(value_text, textlength, "0x%02x", value8u);
         }
 
         if (DLT_TYLE_16BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3420,7 +3452,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text, textlength, "0x%04x", value16u);
+            snprintf(value_text, textlength, "0x%04x", value16u);
         }
 
         if (DLT_TYLE_32BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3429,7 +3461,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text, textlength, "0x%08x", value32u);
+            snprintf(value_text, textlength, "0x%08x", value32u);
         }
 
         if (DLT_TYLE_64BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
@@ -3439,14 +3471,14 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text, textlength, "0x%08x", value32u);
+            snprintf(value_text, textlength, "0x%08x", value32u);
             *ptr -= 8;
             DLT_MSG_READ_VALUE(value32u, *ptr, *datalength, uint32_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            snprintf(text + strlen(text), textlength - strlen(text), "%08x", value32u);
+            snprintf(value_text + strlen(value_text), textlength - strlen(value_text), "%08x", value32u);
             *ptr += 4;
         }
     }
@@ -3470,11 +3502,24 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for the ":", and -1 for nul
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
 
             if ((*datalength) < length3)
                 return DLT_RETURN_ERROR;
+
+            // We want to add the "unit" attribute only after the value, so remember its pointer and length here.
+            unit_text_src = *ptr;
+            unit_text_len = length3;
 
             *ptr += length3;
             *datalength -= length3;
@@ -3533,7 +3578,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(text, textlength, "%d", value8i);
+                snprintf(value_text, textlength, "%d", value8i);
             }
             else {
                 value8u = 0;
@@ -3542,7 +3587,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(text, textlength, "%d", value8u);
+                snprintf(value_text, textlength, "%d", value8u);
             }
 
             break;
@@ -3558,7 +3603,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16i = (int16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
-                snprintf(text, textlength, "%hd", value16i);
+                snprintf(value_text, textlength, "%hd", value16i);
             }
             else {
                 value16u = 0;
@@ -3569,7 +3614,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16u = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
-                snprintf(text, textlength, "%hu", value16u);
+                snprintf(value_text, textlength, "%hu", value16u);
             }
 
             break;
@@ -3585,7 +3630,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32i = (int32_t) DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
-                snprintf(text, textlength, "%d", value32i);
+                snprintf(value_text, textlength, "%d", value32i);
             }
             else {
                 value32u = 0;
@@ -3596,7 +3641,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32u = DLT_ENDIAN_GET_32(msg->standardheader->htyp, value32u_tmp);
-                snprintf(text, textlength, "%u", value32u);
+                snprintf(value_text, textlength, "%u", value32u);
             }
 
             break;
@@ -3613,9 +3658,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 value64i = (int64_t) DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64i_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
-                snprintf(text, textlength, "%I64d", value64i);
+                snprintf(value_text, textlength, "%I64d", value64i);
     #else
-                snprintf(text, textlength, "%" PRId64, value64i);
+                snprintf(value_text, textlength, "%" PRId64, value64i);
     #endif
             }
             else {
@@ -3628,9 +3673,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
                 value64u = DLT_ENDIAN_GET_64(msg->standardheader->htyp, value64u_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
-                snprintf(text, textlength, "%I64u", value64u);
+                snprintf(value_text, textlength, "%I64u", value64u);
     #else
-                snprintf(text, textlength, "%" PRIu64, value64u);
+                snprintf(value_text, textlength, "%" PRIu64, value64u);
     #endif
             }
 
@@ -3639,7 +3684,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_128BIT:
         {
             if (*datalength >= 16)
-                dlt_print_hex_string(text, (int) textlength, *ptr, 16);
+                dlt_print_hex_string(value_text, (int) textlength, *ptr, 16);
 
             if ((*datalength) < 16)
                 return DLT_RETURN_ERROR;
@@ -3674,11 +3719,24 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
 
             if ((*datalength) < length3)
                 return DLT_RETURN_ERROR;
+
+            // We want to add the "unit" attribute only after the value, so remember its pointer and length here.
+            unit_text_src = *ptr;
+            unit_text_len = length3;
 
             *ptr += length3;
             *datalength -= length3;
@@ -3688,7 +3746,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_8BIT:
         {
             if (*datalength >= 1)
-                dlt_print_hex_string(text, (int) textlength, *ptr, 1);
+                dlt_print_hex_string(value_text, (int) textlength, *ptr, 1);
 
             if ((*datalength) < 1)
                 return DLT_RETURN_ERROR;
@@ -3700,7 +3758,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_16BIT:
         {
             if (*datalength >= 2)
-                dlt_print_hex_string(text, (int) textlength, *ptr, 2);
+                dlt_print_hex_string(value_text, (int) textlength, *ptr, 2);
 
             if ((*datalength) < 2)
                 return DLT_RETURN_ERROR;
@@ -3725,7 +3783,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 value32f_tmp_int32i_swaped =
                     (int32_t) DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32f_tmp_int32i);
                 memcpy(&value32f, &value32f_tmp_int32i_swaped, sizeof(float32_t));
-                snprintf(text, textlength, "%g", value32f);
+                snprintf(value_text, textlength, "%g", value32f);
             }
             else {
                 dlt_log(LOG_ERR, "Invalid size of float32_t\n");
@@ -3751,9 +3809,9 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     (int64_t) DLT_ENDIAN_GET_64(msg->standardheader->htyp, (uint64_t)value64f_tmp_int64i);
                 memcpy(&value64f, &value64f_tmp_int64i_swaped, sizeof(float64_t));
 #ifdef __arm__
-                snprintf(text, textlength, "ILLEGAL");
+                snprintf(value_text, textlength, "ILLEGAL");
 #else
-                snprintf(text, textlength, "%g", value64f);
+                snprintf(value_text, textlength, "%g", value64f);
 #endif
             }
             else {
@@ -3766,7 +3824,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         case DLT_TYLE_128BIT:
         {
             if (*datalength >= 16)
-                dlt_print_hex_string(text, textlength, *ptr, 16);
+                dlt_print_hex_string(value_text, textlength, *ptr, 16);
 
             if ((*datalength) < 16)
                 return DLT_RETURN_ERROR;
@@ -3802,6 +3860,15 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
 
+            if (print_with_attributes) {
+                // Print "name" attribute, if we have one with non-zero size.
+                if (length2 > 1) {
+                    snprintf(text, textlength, "%s:", *ptr);
+                    value_text += length2+1-1;  // +1 for ":" and -1 for NUL
+                    textlength -= length2+1-1;
+                }
+            }
+
             *ptr += length2;
             *datalength -= length2;
         }
@@ -3809,7 +3876,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string(text, (int) textlength, *ptr, length);
+        dlt_print_hex_string(value_text, (int) textlength, *ptr, length);
         *ptr += length;
         *datalength -= length;
     }
@@ -3823,7 +3890,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 
         length = DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
 
-        DLT_MSG_READ_STRING(text, *ptr, *datalength, textlength, length);
+        DLT_MSG_READ_STRING(value_text, *ptr, *datalength, textlength, length);
 
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
@@ -3835,6 +3902,18 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
     if (*datalength < 0) {
         dlt_log(LOG_ERR, "Payload of DLT message corrupted\n");
         return DLT_RETURN_ERROR;
+    }
+
+    // Now write "unit" attribute, but only if it has more than only a nul-termination char.
+    if (print_with_attributes) {
+        if (unit_text_len > 1) {
+            // 'value_text' still points to the +start+ of the value text
+            size_t currLen = strlen(value_text);
+
+            char* unitText = value_text + currLen;
+            textlength -= currLen;
+            snprintf(unitText, textlength, ":%s", unit_text_src);
+        }
     }
 
     return DLT_RETURN_OK;

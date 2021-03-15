@@ -115,6 +115,16 @@ enum StringType
     UTF8_STRING = 1
 };
 
+/* Data type holding "Variable Info" (VARI) properties
+ * Some of the supported data types (eg. bool, string, raw) have only "name", but not "unit".
+ */
+typedef struct VarInfo
+{
+    const char *name;  // the "name" attribute (can be NULL)
+    const char *unit;  // the "unit" attribute (can be NULL)
+    bool with_unit;    // true if the "unit" field is to be considered
+} VarInfo;
+
 #define DLT_UNUSED(x) (void)(x)
 
 /* Network trace */
@@ -191,10 +201,8 @@ static void dlt_user_trace_network_segmented_thread(void *unused);
 static void dlt_user_trace_network_segmented_thread_segmenter(s_segmented_data *data);
 #endif
 
-static DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text,
-                                                      const enum StringType type);
-static DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text,
-                                                            uint16_t text_len, const enum StringType type);
+static DltReturnValue dlt_user_log_write_string_utils_attr(DltContextData *log, const char *text, const enum StringType type, const char *name, bool with_var_info);
+static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info);
 
 
 static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
@@ -1756,16 +1764,8 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log)
     return ret;
 }
 
-DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length)
+static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name, bool with_var_info)
 {
-    return dlt_user_log_write_raw_formatted(log, data, length, DLT_FORMAT_DEFAULT);
-}
-
-DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
-{
-    size_t new_log_size = 0;
-    uint32_t type_info = 0;
-
     /* check nullpointer */
     if ((log == NULL) || ((data == NULL) && (length != 0)))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1781,20 +1781,27 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
         return DLT_RETURN_ERROR;
     }
 
-    new_log_size = log->size + length + sizeof(uint16_t);
+    const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
 
-    if (new_log_size > dlt_user.log_buf_len)
+    size_t needed_size = length + sizeof(uint16_t);
+    if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
     if (dlt_user.verbose_mode) {
-        new_log_size = log->size + length + sizeof(uint32_t) + sizeof(uint16_t);
+        uint32_t type_info = DLT_TYPE_INFO_RAWD;
 
-        if (new_log_size > dlt_user.log_buf_len)
+        needed_size += sizeof(uint32_t);  // Type Info field
+        if (with_var_info) {
+            needed_size += sizeof(uint16_t);  // length of name
+            needed_size += name_size;  // the name itself
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
+        if ((log->size + needed_size) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
 
-        /* Transmit type information */
-        type_info = DLT_TYPE_INFO_RAWD;
-
+        // Genivi extension: put formatting hints into the unused (for RAWD) TYLE + SCOD fields.
+        // The SCOD field holds the base (hex or bin); the TYLE field holds the column width (8bit..64bit).
         if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64)) {
             type_info |= DLT_SCOD_HEX;
             type_info += type;
@@ -1805,16 +1812,170 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
             type_info += type - DLT_FORMAT_BIN8 + 1;
         }
 
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
+        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
         log->size += sizeof(uint32_t);
     }
 
-    /* First transmit length of raw data, then the raw data itself */
-    memcpy((log->buffer) + log->size, &(length), sizeof(uint16_t));
+    memcpy(log->buffer + log->size, &length, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    memcpy((log->buffer) + log->size, data, length);
+    if (dlt_user.verbose_mode) {
+        if (with_var_info) {
+            // Write length of "name" attribute.
+            // We assume that the protocol allows zero-sized strings here (which this code will create
+            // when the input pointer is NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
+
+            // Write name string itself.
+            // Must not use NULL as source pointer for memcpy. This check assures that.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, name, name_size);
+                log->size += name_size;
+            }
+        }
+    }
+
+    memcpy(log->buffer + log->size, data, length);
     log->size += length;
+
+    log->args_num++;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, DLT_FORMAT_DEFAULT, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, type, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data, uint16_t length, const char *name)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, DLT_FORMAT_DEFAULT, name, true);
+}
+
+DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name)
+{
+    return dlt_user_log_write_raw_internal(log, data, length, type, name, true);
+}
+
+// Generic implementation for all "simple" types, possibly with attributes
+static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const void *datap, size_t datalen, uint32_t type_info, const VarInfo *varinfo)
+{
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (!dlt_user_initialised) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    size_t needed_size = datalen;
+    if ((log->size + needed_size) > dlt_user.log_buf_len)
+        return DLT_RETURN_USER_BUFFER_FULL;
+
+    if (dlt_user.verbose_mode) {
+        bool with_var_info = (varinfo != NULL);
+
+        uint16_t name_size;
+        uint16_t unit_size;
+
+        needed_size += sizeof(uint32_t);  // Type Info field
+        if (with_var_info) {
+            name_size = (varinfo->name != NULL) ? strlen(varinfo->name)+1 : 0;
+            unit_size = (varinfo->unit != NULL) ? strlen(varinfo->unit)+1 : 0;
+
+            needed_size += sizeof(uint16_t);      // length of name
+            needed_size += name_size;             // the name itself
+            if (varinfo->with_unit) {
+                needed_size += sizeof(uint16_t);  // length of unit
+                needed_size += unit_size;         // the unit itself
+            }
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
+        if ((log->size + needed_size) > dlt_user.log_buf_len)
+            return DLT_RETURN_USER_BUFFER_FULL;
+
+        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+
+        if (with_var_info) {
+            // Write lengths of name/unit strings
+            // We assume here that the protocol allows zero-sized strings here (which occur
+            // when the input pointers are NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
+            if (varinfo->with_unit) {
+                memcpy(log->buffer + log->size, &unit_size, sizeof(uint16_t));
+                log->size += sizeof(uint16_t);
+            }
+
+            // Write name/unit strings themselves
+            // Must not use NULL as source pointer for memcpy.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, varinfo->name, name_size);
+                log->size += name_size;
+            }
+            if (unit_size != 0) {
+                memcpy(log->buffer + log->size, varinfo->unit, unit_size);
+                log->size += unit_size;
+            }
+        }
+    }
+
+    memcpy(log->buffer + log->size, datap, datalen);
+    log->size += datalen;
+
+    log->args_num++;
+
+    return DLT_RETURN_OK;
+}
+
+// Generic implementation for all "simple" types
+static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, const void *datap, size_t datalen, uint32_t type_info, DltFormatType type)
+{
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
+    if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
+        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (!dlt_user_initialised) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    size_t needed_size = datalen;
+    if ((log->size + needed_size) > dlt_user.log_buf_len)
+        return DLT_RETURN_USER_BUFFER_FULL;
+
+    if (dlt_user.verbose_mode) {
+        needed_size += sizeof(uint32_t);  // Type Info field
+        if ((log->size + needed_size) > dlt_user.log_buf_len)
+            return DLT_RETURN_USER_BUFFER_FULL;
+
+        // Genivi extension: put formatting hints into the unused (for SINT/UINT/FLOA) SCOD field.
+        if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64))
+            type_info |= DLT_SCOD_HEX;
+
+        else if ((type >= DLT_FORMAT_BIN8) && (type <= DLT_FORMAT_BIN16))
+            type_info |= DLT_SCOD_BIN;
+
+        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
+        log->size += sizeof(uint32_t);
+    }
+
+    memcpy(log->buffer + log->size, datap, datalen);
+    log->size += datalen;
 
     log->args_num++;
 
@@ -1823,77 +1984,43 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
 
 DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
     if (sizeof(float32_t) != 4)
         return DLT_RETURN_ERROR;
 
-    if ((log->size + sizeof(float32_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(float32_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(float32_t));
-    log->size += sizeof(float32_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_float64(DltContextData *log, float64_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
     if (sizeof(float64_t) != 8)
         return DLT_RETURN_ERROR;
 
-    if ((log->size + sizeof(float64_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(float64_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(float64_t));
-    log->size += sizeof(float64_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, NULL);
 }
 
-DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
+DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit)
+{
+    if (sizeof(float32_t) != 4)
+        return DLT_RETURN_ERROR;
+
+    uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float32_t), type_info, &var_info);
+}
+
+DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t data, const char *name, const char *unit)
+{
+    if (sizeof(float64_t) != 8)
+        return DLT_RETURN_ERROR;
+
+    uint32_t type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, &var_info);
+}
+
+DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit)
 {
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1906,22 +2033,22 @@ DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
     switch (sizeof(unsigned int)) {
     case 1:
     {
-        return dlt_user_log_write_uint8(log, (uint8_t)data);
+        return dlt_user_log_write_uint8_attr(log, (uint8_t)data, name, unit);
         break;
     }
     case 2:
     {
-        return dlt_user_log_write_uint16(log, (uint16_t)data);
+        return dlt_user_log_write_uint16_attr(log, (uint16_t)data, name, unit);
         break;
     }
     case 4:
     {
-        return dlt_user_log_write_uint32(log, (uint32_t)data);
+        return dlt_user_log_write_uint32_attr(log, (uint32_t)data, name, unit);
         break;
     }
     case 8:
     {
-        return dlt_user_log_write_uint64(log, (uint64_t)data);
+        return dlt_user_log_write_uint64_attr(log, (uint64_t)data, name, unit);
         break;
     }
     default:
@@ -1936,314 +2063,83 @@ DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
 
 DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint8_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint8_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint8_t));
-    log->size += sizeof(uint8_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint16_t));
-    log->size += sizeof(uint16_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint32_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint32_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint32_t));
-    log->size += sizeof(uint32_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data)
 {
-    uint32_t type_info;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, NULL);
+}
 
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
+DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
+{
+    return dlt_user_log_write_uint_attr(log, data, NULL, NULL);
+}
 
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
+DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
+}
 
-    if ((log->size + sizeof(uint64_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
+DltReturnValue dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, &var_info);
+}
 
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint64_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
+DltReturnValue dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, &var_info);
+}
 
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint64_t));
-    log->size += sizeof(uint64_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
-    if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
-        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
-
-        if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64))
-            type_info |= DLT_SCOD_HEX;
-
-        else if ((type >= DLT_FORMAT_BIN8) && (type <= DLT_FORMAT_BIN16))
-            type_info |= DLT_SCOD_BIN;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint8_t));
-    log->size += sizeof(uint8_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+    return dlt_user_log_write_generic_formatted(log, &data, sizeof(uint8_t), type_info, type);
 }
 
 DltReturnValue dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
-    if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
-        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
-
-        if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64))
-            type_info |= DLT_SCOD_HEX;
-
-        else if ((type >= DLT_FORMAT_BIN8) && (type <= DLT_FORMAT_BIN16))
-            type_info |= DLT_SCOD_BIN;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint16_t));
-    log->size += sizeof(uint16_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+    return dlt_user_log_write_generic_formatted(log, &data, sizeof(uint16_t), type_info, type);
 }
 
 DltReturnValue dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
-    if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
-        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
-
-        if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64))
-            type_info |= DLT_SCOD_HEX;
-
-        else if ((type >= DLT_FORMAT_BIN8) && (type <= DLT_FORMAT_BIN16))
-            type_info |= DLT_SCOD_BIN;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint32_t));
-    log->size += sizeof(uint32_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_formatted(log, &data, sizeof(uint32_t), type_info, type);
 }
 
 DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
-    if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
-        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
-        return DLT_RETURN_WRONG_PARAMETER;
-    }
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
-
-        if ((type >= DLT_FORMAT_HEX8) && (type <= DLT_FORMAT_HEX64))
-            type_info |= DLT_SCOD_HEX;
-
-        else if ((type >= DLT_FORMAT_BIN8) && (type <= DLT_FORMAT_BIN16))
-            type_info |= DLT_SCOD_BIN;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint64_t));
-    log->size += sizeof(uint64_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_formatted(log, &data, sizeof(uint64_t), type_info, type);
 }
 
 DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
@@ -2274,7 +2170,7 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
+DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const char *name, const char *unit)
 {
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2287,22 +2183,22 @@ DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
     switch (sizeof(int)) {
     case 1:
     {
-        return dlt_user_log_write_int8(log, (int8_t)data);
+        return dlt_user_log_write_int8_attr(log, (int8_t)data, name, unit);
         break;
     }
     case 2:
     {
-        return dlt_user_log_write_int16(log, (int16_t)data);
+        return dlt_user_log_write_int16_attr(log, (int16_t)data, name, unit);
         break;
     }
     case 4:
     {
-        return dlt_user_log_write_int32(log, (int32_t)data);
+        return dlt_user_log_write_int32_attr(log, (int32_t)data, name, unit);
         break;
     }
     case 8:
     {
-        return dlt_user_log_write_int64(log, (int64_t)data);
+        return dlt_user_log_write_int64_attr(log, (int64_t)data, name, unit);
         break;
     }
     default:
@@ -2317,177 +2213,92 @@ DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
 
 DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(int8_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(int8_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(int8_t));
-    log->size += sizeof(int8_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(int16_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(int16_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(int16_t));
-    log->size += sizeof(int16_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data)
 {
-    uint32_t type_info;
-
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(int32_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(int32_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(int32_t));
-    log->size += sizeof(int32_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data)
 {
-    uint32_t type_info;
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, NULL);
+}
 
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
+DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
+{
+    return dlt_user_log_write_int_attr(log, data, NULL, NULL);
+}
 
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
+DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, &var_info);
+}
 
-    if ((log->size + sizeof(int64_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
+DltReturnValue dlt_user_log_write_int16_attr(DltContextData *log, int16_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, &var_info);
+}
 
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(int64_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
+DltReturnValue dlt_user_log_write_int32_attr(DltContextData *log, int32_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, &var_info);
+}
 
-        type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(int64_t));
-    log->size += sizeof(int64_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, const char *name, const char *unit)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
+    const VarInfo var_info = { name, unit, true };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 {
-    uint32_t type_info;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
+}
 
-    if (log == NULL)
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if (!dlt_user_initialised) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
-        return DLT_RETURN_ERROR;
-    }
-
-    if ((log->size + sizeof(uint8_t)) > dlt_user.log_buf_len)
-        return DLT_RETURN_USER_BUFFER_FULL;
-
-    if (dlt_user.verbose_mode) {
-        if ((log->size + sizeof(uint32_t) + sizeof(uint8_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        type_info = DLT_TYPE_INFO_BOOL;
-
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
-        log->size += sizeof(uint32_t);
-    }
-
-    memcpy((log->buffer) + log->size, &data, sizeof(uint8_t));
-    log->size += sizeof(uint8_t);
-
-    log->args_num++;
-
-    return DLT_RETURN_OK;
+DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name)
+{
+    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    const VarInfo var_info = { name, NULL, false };
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
 }
 
 DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text)
 {
-    return dlt_user_log_write_string_utils(log, text, ASCII_STRING);
+    return dlt_user_log_write_string_utils_attr(log, text, ASCII_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    return dlt_user_log_write_string_utils_attr(log, text, ASCII_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length)
 {
-    return dlt_user_log_write_sized_string_utils(log, text, length, ASCII_STRING);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, ASCII_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, ASCII_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
@@ -2496,32 +2307,46 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
     return dlt_user.verbose_mode ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return dlt_user.verbose_mode ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length)
 {
     /* Send parameter only in verbose mode */
     return dlt_user.verbose_mode ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
 {
-    return dlt_user_log_write_string_utils(log, text, UTF8_STRING);
+    return dlt_user_log_write_string_utils_attr(log, text, UTF8_STRING, NULL, false);
+}
+
+DltReturnValue dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    return dlt_user_log_write_string_utils_attr(log, text, UTF8_STRING, name, true);
 }
 
 DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length)
 {
-    return dlt_user_log_write_sized_string_utils(log, text, length, UTF8_STRING);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, NULL, false);
 }
 
-DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const char *text, uint16_t length, const enum StringType type)
+DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
 {
-    uint16_t arg_size = 0;
-    uint32_t type_info = 0;
-    size_t new_log_size = 0;
-    DltReturnValue ret = DLT_RETURN_OK;
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, name, true);
+}
 
-    size_t str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
-    size_t max_payload_str_msg;
-
+static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info)
+{
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -2530,12 +2355,27 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
         return DLT_RETURN_ERROR;
     }
 
-    arg_size = (uint16_t) (length + 1);
+    const uint16_t name_size = (name != NULL) ? strlen(name)+1 : 0;
 
-    new_log_size = log->size + arg_size + sizeof(uint16_t);
+    uint16_t arg_size = (uint16_t) (length + 1);
 
-    if (dlt_user.verbose_mode)
+    size_t new_log_size = log->size + arg_size + sizeof(uint16_t);
+
+    uint32_t type_info = 0;
+
+    if (dlt_user.verbose_mode) {
         new_log_size += sizeof(uint32_t);
+        if (with_var_info) {
+            new_log_size += sizeof(uint16_t);  // length of "name" attribute
+            new_log_size += name_size;  // the "name" attribute itself
+
+            type_info |= DLT_TYPE_INFO_VARI;
+        }
+    }
+
+    size_t str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
+    size_t max_payload_str_msg;
+    DltReturnValue ret = DLT_RETURN_OK;
 
     /* Check log size condition */
     if (new_log_size > dlt_user.log_buf_len) {
@@ -2549,6 +2389,10 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
         if (dlt_user.verbose_mode) {
             min_payload_str_truncate_msg += sizeof(uint32_t);
             arg_size -= (uint16_t) sizeof(uint32_t);
+            if (with_var_info) {
+                min_payload_str_truncate_msg += sizeof(uint16_t) + name_size;
+                arg_size -= sizeof(uint16_t) + name_size;
+            }
         }
 
         /* Return when dlt_user.log_buf_len does not have enough space for min_payload_str_truncate_msg */
@@ -2589,34 +2433,45 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
     if (dlt_user.verbose_mode) {
         switch (type) {
         case ASCII_STRING:
-        {
-            type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
+            type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
             break;
-        }
         case UTF8_STRING:
-        {
-            type_info = DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
+            type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_UTF8;
             break;
-        }
         default:
-        {
             /* Do nothing */
             break;
         }
-        }
 
-        memcpy((log->buffer) + log->size, &(type_info), sizeof(uint32_t));
+        memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
         log->size += sizeof(uint32_t);
     }
 
-    memcpy((log->buffer) + log->size, &(arg_size), sizeof(uint16_t));
+    memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
+
+    if (dlt_user.verbose_mode) {
+        if (with_var_info) {
+            // Write length of "name" attribute.
+            // We assume that the protocol allows zero-sized strings here (which this code will create
+            // when the input pointer is NULL).
+            memcpy(log->buffer + log->size, &name_size, sizeof(uint16_t));
+            log->size += sizeof(uint16_t);
+
+            // Write name string itself.
+            // Must not use NULL as source pointer for memcpy. This check assures that.
+            if (name_size != 0) {
+                memcpy(log->buffer + log->size, name, name_size);
+                log->size += name_size;
+            }
+        }
+    }
 
     switch (ret) {
     case DLT_RETURN_OK:
     {
         /* Whole string will be copied */
-        memcpy((log->buffer) + log->size, text, length);
+        memcpy(log->buffer + log->size, text, length);
         /* The input string might not be null-terminated, so we're doing that by ourselves */
         log->buffer[log->size + length] = '\0';
         log->size += arg_size;
@@ -2625,11 +2480,11 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
     case DLT_RETURN_USER_BUFFER_FULL:
     {
         /* Only copy partial string */
-        memcpy((log->buffer) + log->size, text, max_payload_str_msg);
+        memcpy(log->buffer + log->size, text, max_payload_str_msg);
         log->size += max_payload_str_msg;
 
         /* Append string truncate the input string */
-        memcpy((log->buffer) + log->size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+        memcpy(log->buffer + log->size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
         log->size += str_truncate_message_length;
         break;
     }
@@ -2645,13 +2500,13 @@ DltReturnValue dlt_user_log_write_sized_string_utils(DltContextData *log, const 
     return ret;
 }
 
-DltReturnValue dlt_user_log_write_string_utils(DltContextData *log, const char *text, const enum StringType type)
+static DltReturnValue dlt_user_log_write_string_utils_attr(DltContextData *log, const char *text, const enum StringType type, const char *name, bool with_var_info)
 {
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     uint16_t length = (uint16_t) strlen(text);
-    return dlt_user_log_write_sized_string_utils(log, text, length, type);
+    return dlt_user_log_write_sized_string_utils_attr(log, text, length, type, name, with_var_info);
 }
 
 DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
