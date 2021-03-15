@@ -129,6 +129,7 @@ typedef struct {
     int part_num;    /* number of current output file if limit was exceeded */
     DltFile file;
     DltFilter filter;
+    int port;
 } DltReceiveData;
 
 /**
@@ -160,6 +161,8 @@ void usage()
     printf("                When limit is reached, a new file is opened. Use K,M,G as\n");
     printf("                suffix to specify kilo-, mega-, giga-bytes respectively\n");
     printf("  -f filename   Enable filtering of messages\n");
+    printf("  -p port       Use the given port instead the default port\n");
+    printf("                Cannot be used with serial devices\n");
 }
 
 
@@ -331,6 +334,7 @@ int main(int argc, char *argv[])
     dltdata.ohandle = -1;
     dltdata.totalbytes = 0;
     dltdata.part_num = -1;
+    dltdata.port = 3490;
 
     /* Config signal handler */
     struct sigaction act;
@@ -344,7 +348,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyuxmf:o:e:b:c:")) != -1)
+    while ((c = getopt (argc, argv, "vashyuxmf:o:e:b:c:p:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -420,6 +424,11 @@ int main(int argc, char *argv[])
             dltdata.bvalue = atoi(optarg);
             break;
         }
+        case 'p':
+        {
+            dltdata.port = atoi(optarg);
+            break;
+        }
 
         case 'c':
         {
@@ -469,6 +478,7 @@ int main(int argc, char *argv[])
     }
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
+        dltclient.port = dltdata.port;
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");

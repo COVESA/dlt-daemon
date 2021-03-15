@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-receive** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-o** filename\] \[**-c** limit\] \[**-v**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-f** filterfile\] hostname/serial_device_name
+**dlt-receive** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-o** filename\] \[**-c** limit\] \[**-v**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-f** filterfile\] \[**-p** port\] hostname/serial_device_name
 
 # DESCRIPTION
 
@@ -62,6 +62,9 @@ Receive DLT messages from DLT daemon and print or store the messages.
 
 :   Enable filtering of messages.
 
+-p
+
+:   Port for UDP and TCP communication (Default: 3490).
 # EXAMPLES
 
 Print received message headers received from a dlt-daemon running on localhost::
