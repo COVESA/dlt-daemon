@@ -230,6 +230,6 @@ https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace_lists.
 ## Contact
 
 Saya Sugiura <ssugiura@jp.adit-jv.com>,
-Quynh Le Hoang Ngoc <Quynh.LeHoangNgoc@vn.bosch.com>
+Bui Nguyen Quoc, Thanh <thanh.buinguyenquoc@vn.bosch.com>
 
 ![alt text](doc/images/genivilogo.png "GENIVI")
