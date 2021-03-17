@@ -88,6 +88,7 @@ int verbosity = 0;
 /**
  * Print information, conditional upon requested verbosity level
  */
+void verbose(int level, char *msg, ...) PRINTF_FORMAT(2, 3);
 void verbose(int level, char *msg, ...) {
     if (level <= verbosity) {
         if (verbosity > 1) { /* timestamp */

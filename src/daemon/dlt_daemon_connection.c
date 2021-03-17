@@ -396,7 +396,7 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
     temp->receiver = dlt_connection_get_receiver(daemon_local, type, fd);
 
     if (!temp->receiver) {
-        dlt_vlog(LOG_CRIT, "Unable to get receiver from %d connection.\n",
+        dlt_vlog(LOG_CRIT, "Unable to get receiver from %u connection.\n",
                  type);
         free(temp);
         return -1;

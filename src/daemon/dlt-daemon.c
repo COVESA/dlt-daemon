@@ -282,7 +282,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf (stderr, "Unknown option character `\\x%x'.\n", (uint32_t)optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
@@ -370,7 +370,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
         daemon_local->flags.offlineLogstorageCacheSize);
     strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
-            sizeof(daemon_local->flags.ctrlSockPath) - 1);
+            sizeof(daemon_local->flags.ctrlSockPath));
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
 
@@ -384,7 +384,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.gatewayMode = 0;
     strncpy(daemon_local->flags.gatewayConfigFile,
             DLT_GATEWAY_CONFIG_PATH,
-            DLT_DAEMON_FLAG_MAX - 1);
+            DLT_DAEMON_FLAG_MAX);
     daemon_local->flags.autoResponseGetLogInfoOption = 7;
     daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
     daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
@@ -2236,7 +2236,7 @@ int dlt_daemon_process_app_connect(
     }
 
     /* check if file file descriptor was already used, and make it invalid if it
-     *  is reused. This prevents sending messages to wrong file descriptor */
+     * is reused. This prevents sending messages to wrong file descriptor */
     dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
     dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
@@ -2336,7 +2336,7 @@ static int dlt_daemon_process_user_message_not_sup(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    dlt_vlog(LOG_ERR, "Invalid user message type received: %d!\n",
+    dlt_vlog(LOG_ERR, "Invalid user message type received: %u!\n",
              userheader->message);
 
     /* remove user header */
@@ -2667,7 +2667,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     len = userctxt.description_length;
 
     if (len > DLT_DAEMON_DESCSIZE) {
-        dlt_vlog(LOG_WARNING, "Context description exceeds limit: %d\n", len);
+        dlt_vlog(LOG_WARNING, "Context description exceeds limit: %u\n", len);
         len = DLT_DAEMON_DESCSIZE;
     }
 
@@ -2712,22 +2712,26 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     }
 
     /* Set log level */
-    if (userctxt.log_level == DLT_USER_LOG_LEVEL_NOT_SET)
+    if (userctxt.log_level == DLT_USER_LOG_LEVEL_NOT_SET) {
         userctxt.log_level = DLT_LOG_DEFAULT;
-    else
-    /* Plausibility check */
-    if ((userctxt.log_level < DLT_LOG_DEFAULT) ||
-        (userctxt.log_level > DLT_LOG_VERBOSE))
-        return -1;
+    } else {
+        /* Plausibility check */
+        if ((userctxt.log_level < DLT_LOG_DEFAULT) ||
+                (userctxt.log_level > DLT_LOG_VERBOSE)) {
+            return -1;
+        }
+    }
 
     /* Set trace status */
-    if (userctxt.trace_status == DLT_USER_TRACE_STATUS_NOT_SET)
+    if (userctxt.trace_status == DLT_USER_TRACE_STATUS_NOT_SET) {
         userctxt.trace_status = DLT_TRACE_STATUS_DEFAULT;
-    else
-    /* Plausibility check */
-    if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
-        (userctxt.trace_status > DLT_TRACE_STATUS_ON))
-        return -1;
+    } else {
+        /* Plausibility check */
+        if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
+                (userctxt.trace_status > DLT_TRACE_STATUS_ON)) {
+            return -1;
+        }
+    }
 
     context = dlt_daemon_context_add(daemon,
                                      userctxt.apid,
@@ -3305,14 +3309,14 @@ static void *timer_thread(void *data)
     sigaddset(&set, SIGUSR1);
     sigprocmask(SIG_BLOCK, &set, NULL);
 
-    DltDaemonPeriodicData* timer_data = (DltDaemonPeriodicData*) data;
+    DltDaemonPeriodicData* timer_thread_data = (DltDaemonPeriodicData*) data;
 
     /* Timer will start in starts_in sec*/
-    sleep(timer_data->starts_in);
+    sleep(timer_thread_data->starts_in);
     while (1) {
-        if (0 > write(dlt_timer_pipes[timer_data->timer_id][1], "1", 1)) {
+        if (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1)) {
             dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
-                    dlt_timer_names[timer_data->timer_id]);
+                    dlt_timer_names[timer_thread_data->timer_id]);
             pexit = 1;
         }
 
@@ -3327,11 +3331,11 @@ static void *timer_thread(void *data)
         }
 
         if (pexit) {
-            close_pipes(dlt_timer_pipes[timer_data->timer_id]);
+            close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
             return NULL;
         }
 
-        sleep(timer_data->period_sec);
+        sleep(timer_thread_data->period_sec);
     }
 }
 #endif

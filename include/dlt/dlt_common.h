@@ -242,13 +242,9 @@ enum {
 #      define __func__ __FUNCTION__
 #   endif
 
-#   define PRINT_FUNCTION_VERBOSE(_verbose)  \
-    { \
-        if (_verbose) \
-        { \
-            dlt_vlog(LOG_INFO, "%s()\n", __func__); \
-        } \
-    }
+#   define PRINT_FUNCTION_VERBOSE(_verbose) \
+    if (_verbose) \
+        dlt_vlog(LOG_INFO, "%s()\n", __func__)
 
 #   ifndef NULL
 #      define NULL (char *)0
@@ -299,44 +295,44 @@ enum {
 #   define DLT_FILTER_MAX 30 /**< Maximum number of filters */
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
-    { \
+    do { \
         if ((length < 0) || ((length) < ((int32_t) sizeof(type)))) \
         { length = -1; } \
         else \
         { dst = *((type *)src); src += sizeof(type); length -= (int32_t) sizeof(type); } \
-    }
+    } while(0)
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
-    { \
+    do { \
         if ((length < 0) || ((length) < DLT_ID_SIZE)) \
         { length = -1; } \
         else \
         { memcpy(dst, src, DLT_ID_SIZE); src += DLT_ID_SIZE; length -= DLT_ID_SIZE; } \
-    }
+    } while(0)
 
-#define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
-{ \
-    if ((maxlength < 0) || (length <= 0) || (dstlength < length) || (maxlength < length)) \
-    { \
-        maxlength = -1; \
-    } \
-    else \
-    { \
-        memcpy(dst, src, (size_t) length); \
-        dlt_clean_string(dst, length); \
-        dst[length] = 0; \
-        src += length; \
-        maxlength -= length; \
-    } \
-}
+#   define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
+    do { \
+        if ((maxlength < 0) || (length <= 0) || (dstlength < length) || (maxlength < length)) \
+        { \
+            maxlength = -1; \
+        } \
+        else \
+        { \
+            memcpy(dst, src, (size_t) length); \
+            dlt_clean_string(dst, length); \
+            dst[length] = 0; \
+            src += length; \
+            maxlength -= length; \
+        } \
+    } while(0)
 
 #   define DLT_MSG_READ_NULL(src, maxlength, length) \
-    { \
+    do { \
         if (((maxlength) < 0) || ((length) < 0) || ((maxlength) < (length))) \
         { length = -1; } \
         else \
         { src += length; maxlength -= length; } \
-    }
+    } while(0)
 
 #   define DLT_HEADER_SHOW_NONE       0x0000
 #   define DLT_HEADER_SHOW_TIME       0x0001
@@ -753,8 +749,8 @@ typedef struct sDltFile
     int32_t counter;       /**< number of messages in DLT file with filter */
     int32_t counter_total; /**< number of messages in DLT file without filter */
     int32_t position;      /**< current index to message parsed in DLT file starting at 0 */
-    long file_length;      /**< length of the file */
-    long file_position;    /**< current position in the file */
+    uint64_t file_length;    /**< length of the file */
+    uint64_t file_position;  /**< current position in the file */
 
     /* error counters */
     int32_t error_messages; /**< number of incomplete DLT messages found during file parsing */
@@ -875,7 +871,7 @@ DltReturnValue dlt_print_char_string(char **text, int textlength, uint8_t *ptr, 
  * This function returns zero if @a str is a null pointer,
  * and it returns @a maxsize if the null character was not found in the first @a maxsize bytes of @a str.
  * This is a re-implementation of C11's strnlen_s, which we cannot yet assume to be available.
- * @param text pointer to string whose length is to be determined
+ * @param str pointer to string whose length is to be determined
  * @param maxsize maximal considered length of @a str
  * @return the bounded length of the string
  */
@@ -1190,7 +1186,7 @@ void dlt_log_init(int mode);
  * @param format format string for message
  * @return negative value if there was an error or the total number of characters written is returned on success
  */
-int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1,2);
+int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1, 2);
 /**
  * Log ASCII string with null-termination to (external) logging facility
  * @param prio priority (see syslog() call)
@@ -1204,7 +1200,7 @@ DltReturnValue dlt_log(int prio, char *s);
  * @param format format string for log message
  * @return negative value if there was an error
  */
-DltReturnValue dlt_vlog(int prio, const char *format, ...);
+DltReturnValue dlt_vlog(int prio, const char *format, ...) PRINTF_FORMAT(2, 3);
 /**
  * Log size bytes with variable arguments to (external) logging facility (similar to snprintf)
  * @param prio priority (see syslog() call)
@@ -1212,7 +1208,7 @@ DltReturnValue dlt_vlog(int prio, const char *format, ...);
  * @param format format string for log message
  * @return negative value if there was an error
  */
-DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...);
+DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...) PRINTF_FORMAT(3, 4);
 /**
  * De-Initialize (external) logging facility
  */
@@ -1580,7 +1576,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
 /**
  * Check environment variables.
  */
-void dlt_check_envvar();
+void dlt_check_envvar(void);
 
 /**
  * Parse the response text and identifying service id and its options.
