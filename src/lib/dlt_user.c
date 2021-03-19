@@ -1686,15 +1686,30 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
 
 /* ********************************************************************************************* */
 
+static DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
+                                                        DltContextData *log,
+                                                        DltLogLevelType loglevel,
+                                                        uint32_t messageid,
+                                                        bool is_verbose);
+
 inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel)
 {
-    return dlt_user_log_write_start_id(handle, log, loglevel, DLT_USER_DEFAULT_MSGID);
+    return dlt_user_log_write_start_internal(handle, log, loglevel, DLT_USER_DEFAULT_MSGID, true);
 }
 
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
                                            uint32_t messageid)
+{
+    return dlt_user_log_write_start_internal(handle, log, loglevel, messageid, false);
+}
+
+DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
+                                           DltContextData *log,
+                                           DltLogLevelType loglevel,
+                                           uint32_t messageid,
+                                           bool is_verbose)
 {
     DLT_LOG_FATAL_RESET_TRAP(loglevel);
     DltReturnValue ret = DLT_RETURN_OK;
