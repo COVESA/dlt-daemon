@@ -623,6 +623,12 @@ DltReturnValue dlt_init_message_queue(void)
 }
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
+/* Return true if verbose mode is to be used */
+static inline bool is_verbose_mode(const DltUser* dlt_user)
+{
+    return (dlt_user->verbose_mode == 1);
+}
+
 DltReturnValue dlt_init_common(void)
 {
     char *env_local_print;
@@ -1750,7 +1756,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
     log->use_timestamp = DLT_AUTO_TIMESTAMP;
 
     /* In non-verbose mode, insert message id */
-    if (dlt_user.verbose_mode == 0) {
+    if (!is_verbose_mode(&dlt_user)) {
         if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
 
@@ -1802,7 +1808,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         uint32_t type_info = DLT_TYPE_INFO_RAWD;
 
         needed_size += sizeof(uint32_t);  // Type Info field
@@ -1834,7 +1840,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     memcpy(log->buffer + log->size, &length, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         if (with_var_info) {
             // Write length of "name" attribute.
             // We assume that the protocol allows zero-sized strings here (which this code will create
@@ -1894,7 +1900,7 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         bool with_var_info = (varinfo != NULL);
 
         uint16_t name_size;
@@ -1973,7 +1979,7 @@ static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, 
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         needed_size += sizeof(uint32_t);  // Type Info field
         if ((log->size + needed_size) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
@@ -2319,25 +2325,25 @@ DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const c
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
+    return is_verbose_mode(&dlt_user) ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
+    return is_verbose_mode(&dlt_user) ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
+    return is_verbose_mode(&dlt_user) ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
+    return is_verbose_mode(&dlt_user) ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
@@ -2378,7 +2384,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
     uint32_t type_info = 0;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         new_log_size += sizeof(uint32_t);
         if (with_var_info) {
             new_log_size += sizeof(uint16_t);  // length of "name" attribute
@@ -2401,7 +2407,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
         size_t min_payload_str_truncate_msg = log->size + str_truncate_message_length + sizeof(uint16_t);
 
-        if (dlt_user.verbose_mode) {
+        if (is_verbose_mode(&dlt_user)) {
             min_payload_str_truncate_msg += sizeof(uint32_t);
             arg_size -= (uint16_t) sizeof(uint32_t);
             if (with_var_info) {
@@ -2445,7 +2451,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
         }
     }
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         switch (type) {
         case ASCII_STRING:
             type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
@@ -2465,7 +2471,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(&dlt_user)) {
         if (with_var_info) {
             // Write length of "name" attribute.
             // We assume that the protocol allows zero-sized strings here (which this code will create
@@ -3222,7 +3228,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
@@ -3243,7 +3249,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
@@ -3265,7 +3271,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
@@ -3286,7 +3292,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
 {
     DltContextData log;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
@@ -3306,7 +3312,7 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
 {
     DltContextData log;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
@@ -3327,7 +3333,7 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
     DltContextData log;
     DltReturnValue ret = DLT_RETURN_OK;
 
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(&dlt_user))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
@@ -3626,7 +3632,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         msg.headerextra.seid = (uint32_t) getpid();
     }
 
-    if (dlt_user.verbose_mode)
+    if (is_verbose_mode(&dlt_user))
         /* In verbose mode, send extended header */
         msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
     else
@@ -3683,7 +3689,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         }
 
         /* If in verbose mode, set flag in header for verbose mode */
-        if (dlt_user.verbose_mode)
+        if (is_verbose_mode(&dlt_user))
             msg.extendedheader->msin |= DLT_MSIN_VERB;
 
         msg.extendedheader->noar = (uint8_t) log->args_num;              /* number of arguments */

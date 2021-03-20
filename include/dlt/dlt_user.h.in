@@ -86,6 +86,7 @@
 #endif
 
 #   include <pthread.h>
+#   include <stdbool.h>
 
 #   if !defined (__WIN32__)
 #      include <semaphore.h>
