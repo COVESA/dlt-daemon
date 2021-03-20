@@ -624,9 +624,9 @@ DltReturnValue dlt_init_message_queue(void)
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
 /* Return true if verbose mode is to be used for this DltContextData */
-static inline bool is_verbose_mode(const DltUser* dlt_user, const DltContextData* log)
+static inline bool is_verbose_mode(const DltUser* dltuser, const DltContextData* log)
 {
-    return (dlt_user->verbose_mode == 1) || (log != NULL && log->verbose_mode);
+    return (dltuser->verbose_mode == 1) || (log != NULL && log->verbose_mode);
 }
 
 DltReturnValue dlt_init_common(void)
