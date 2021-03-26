@@ -110,7 +110,7 @@ find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
 ```
 
-to INCLUDE\_DIRECTORIES, add
+to INCLUDE\_DIRECTORIES (or TARGET\_INCLUDE\_DIRECTORIES), add
 
 ```
 ${DLT_INCLUDE_DIRS}
@@ -119,7 +119,21 @@ ${DLT_INCLUDE_DIRS}
 and to TARGET\_LINK\_LIBRARIES:
 
 ```
-${DLT_LINK_LIBRARIES}
+${DLT_LINK_LIBRARIES}  (for CMake >= 3.12)
+${DLT_LIBRARIES}       (for CMake < 3.12)
+```
+
+The contents of `${DLT_LIBRARIES}` do not include the library's path
+(e.g. `-L/path/to/lib`), so if the library resides in a location that is not
+on the linker's default search path, you'll either have to add that path
+to LINK\_DIRECTORIES:
+```
+link_directories(${DLT_LIBRARY_DIRS})
+```
+or, alternatively, not use `${DLT_LIBRARIES}`, but `${DLT_LDFLAGS}` instead,
+which combines `${DLT_LIBRARIES}` and `${DLT_LIBRARY_DIRS}`:
+```
+target_link_libraries(myapp ${DLT_LDFLAGS})
 ```
 
 ### Limitation
