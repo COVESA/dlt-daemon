@@ -4752,19 +4752,19 @@ static void dlt_fork_child_fork_handler()
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
                                                size_t len3)
 {
-    int ret = DLT_RETURN_ERROR;
+    DltReturnValue ret = DLT_RETURN_ERROR;
     size_t msg_size = len1 + len2 + len3;
 
     DLT_SEM_LOCK();
-    ret = (int) dlt_buffer_check_size(&(dlt_user.startup_buffer), (int) msg_size);
+    ret = dlt_buffer_check_size(&(dlt_user.startup_buffer), (int)msg_size);
     DLT_SEM_FREE();
 
     DLT_SEM_LOCK();
 
     if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                         ptr1, (unsigned char) len1,
-                         ptr2, (unsigned char) len2,
-                         ptr3, (unsigned char) len3) == DLT_RETURN_ERROR) {
+                         ptr1, (unsigned char)len1,
+                         ptr2, (unsigned char)len2,
+                         ptr3, (unsigned char)len3) == DLT_RETURN_ERROR) {
         if (dlt_user.overflow_counter == 0)
             dlt_log(LOG_WARNING, "Buffer full! Messages will be discarded.\n");
 
