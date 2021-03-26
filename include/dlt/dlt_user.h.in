@@ -298,12 +298,46 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            uint32_t messageid);
 
 /**
+ * Initialize the generation of a DLT log message with given buffer from DLT application.
+ * This can be considered as replacement of dlt_user_log_write_start/dlt_user_log_write_start_id
+ * and other data functions like dlt_user_log_write_string. The fourth, fifth, and sixth arguments
+ * shall be prepared by DLT application; this function is only responsible for checking log
+ * level and setting the given values to context data. This function has to be called first,
+ * when an application is ready to send a new log message with given buffer. This function only
+ * works with combination of dlt_user_log_write_finish_w_given_buffer and the function must only be
+ * called, when return value is bigger than zero. The function only supports verbose mode as of now.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param log pointer to an object containing information about logging context data
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param buffer data with log message
+ * @param size buffer size
+ * @param args_num number of arguments in buffer
+ * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is matching
+ */
+DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
+                                                       DltContextData *log,
+                                                       DltLogLevelType loglevel,
+                                                       char *buffer,
+                                                       size_t size,
+                                                       int32_t args_num);
+
+/**
  * Finishing the generation of a DLT log message and sending it to the DLT daemon.
  * This function has to be called after writing all the log attributes of a log message.
  * @param log pointer to an object containing information about logging context data
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_write_finish(DltContextData *log);
+
+/**
+ * Finishing the generation of a DLT log message and sending it to the DLT daemon without
+ * freeing log buffer. This function only works with combination of
+ * dlt_user_log_write_start_w_given_buffer. This function has to be called after writing all
+ * the log attributes of a log message.
+ * @param log pointer to an object containing information about logging context data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
 
 /**
  * Write a boolean parameter into a DLT log message.

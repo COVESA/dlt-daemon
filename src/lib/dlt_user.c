@@ -1719,6 +1719,26 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
 
 /* ********************************************************************************************* */
 
+DltReturnValue dlt_user_log_write_start_init(DltContext *handle,
+                                                    DltContextData *log,
+                                                    DltLogLevelType loglevel,
+                                                    bool is_verbose)
+{
+    DLT_LOG_FATAL_RESET_TRAP(loglevel);
+
+    /* initialize values */
+    if ((dlt_user_log_init(handle, log) < DLT_RETURN_OK) || (dlt_user.dlt_ll_ts == NULL))
+        return DLT_RETURN_ERROR;
+
+    log->args_num = 0;
+    log->log_level = loglevel;
+    log->size = 0;
+    log->use_timestamp = DLT_AUTO_TIMESTAMP;
+    log->verbose_mode = is_verbose;
+
+    return DLT_RETURN_TRUE;
+}
+
 static DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
                                                         DltContextData *log,
                                                         DltLogLevelType loglevel,
@@ -1744,8 +1764,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
                                            uint32_t messageid,
                                            bool is_verbose)
 {
-    DLT_LOG_FATAL_RESET_TRAP(loglevel);
-    DltReturnValue ret = DLT_RETURN_OK;
+    int ret = DLT_RETURN_TRUE;
 
     /* check nullpointer */
     if ((handle == NULL) || (log == NULL))
@@ -1758,47 +1777,78 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
     /* check log levels */
     ret = dlt_user_is_logLevel_enabled(handle, loglevel);
 
-    if (ret == DLT_RETURN_WRONG_PARAMETER)
+    if (ret == DLT_RETURN_WRONG_PARAMETER) {
         return DLT_RETURN_WRONG_PARAMETER;
-    else if (ret == DLT_RETURN_LOGGING_DISABLED)
+    } else if (ret == DLT_RETURN_LOGGING_DISABLED) {
+        log->handle = NULL;
         return DLT_RETURN_OK;
+    }
 
-    /* initialize values */
-    if ((dlt_user_log_init(handle, log) < DLT_RETURN_OK) || (dlt_user.dlt_ll_ts == NULL))
-        return DLT_RETURN_ERROR;
-
-    /* initialize values */
-    if (log->buffer == NULL) {
-        log->buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
-
+    ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
+    if (ret == DLT_RETURN_TRUE) {
+        /* initialize values */
         if (log->buffer == NULL) {
-            dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
-            return DLT_RETURN_ERROR;
+            log->buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+
+            if (log->buffer == NULL) {
+                dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
+                return DLT_RETURN_ERROR;
+            }
+        }
+
+        /* In non-verbose mode, insert message id */
+        if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
+            if ((sizeof(uint32_t)) > dlt_user.log_buf_len) {
+                return DLT_RETURN_USER_BUFFER_FULL;
+            }
+
+            /* Write message id */
+            memcpy(log->buffer, &(messageid), sizeof(uint32_t));
+            log->size = sizeof(uint32_t);
+
+            /* as the message id is part of each message in non-verbose mode,
+             * it doesn't increment the argument counter in extended header (if used) */
         }
     }
 
-    log->args_num = 0;
-    log->log_level = loglevel;
-    log->size = 0;
-    log->use_timestamp = DLT_AUTO_TIMESTAMP;
-    log->verbose_mode = is_verbose;
-
-    /* In non-verbose mode, insert message id */
-    if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
-        if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
-            return DLT_RETURN_USER_BUFFER_FULL;
-
-        /* Write message id */
-        memcpy(log->buffer, &(messageid), sizeof(uint32_t));
-        log->size = sizeof(uint32_t);
-
-        /* as the message id is part of each message in non-verbose mode,
-         * it doesn't increment the argument counter in extended header (if used) */
-    }
-
-    return DLT_RETURN_TRUE;
+    return ret;
 }
 
+DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
+                                                       DltContextData *log,
+                                                       DltLogLevelType loglevel,
+                                                       char *buffer,
+                                                       size_t size,
+                                                       int32_t args_num)
+{
+    int ret = DLT_RETURN_TRUE;
+
+    /* check nullpointer */
+    if ((handle == NULL) || (log == NULL) || (buffer == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* discard unexpected parameters */
+    if ((size <= 0) || (size > dlt_user.log_buf_len) || (args_num <= 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    /* discard non-verbose mode */
+    if (dlt_user.verbose_mode == 0)
+        return DLT_RETURN_ERROR;
+
+    ret = dlt_user_log_write_start_init(handle, log, loglevel, true);
+    if (ret == DLT_RETURN_TRUE) {
+        log->buffer = (unsigned char *)buffer;
+        log->size = size;
+        log->args_num = args_num;
+    }
+
+    return ret;
+ }
+ 
 DltReturnValue dlt_user_log_write_finish(DltContextData *log)
 {
     int ret = DLT_RETURN_ERROR;
@@ -1809,6 +1859,18 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log)
     ret = dlt_user_log_send_log(log, DLT_TYPE_LOG);
 
     dlt_user_free_buffer(&(log->buffer));
+
+    return ret;
+}
+
+DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log)
+{
+    int ret = DLT_RETURN_ERROR;
+
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    ret = dlt_user_log_send_log(log, DLT_TYPE_LOG);
 
     return ret;
 }

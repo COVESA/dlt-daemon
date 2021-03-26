@@ -262,7 +262,7 @@ DLT\_LOG\_INFO | Informational, providing high level understanding
 DLT\_LOG\_DEBUG | Detailed debug information for programmers
 DLT\_LOG\_VERBOSE | Verbose debug information for programmers
 
-Please be aware the the default Log Level is set to INFO; this means message
+Please be aware the default Log Level is set to INFO; this means message
 which are logged in INFO, WARN, ERROR and FATAL will logged. Hint: The default
 Log Level can be changed by setting an environment variable (see DLT Library -
 runtime configuration).
@@ -731,6 +731,74 @@ if (dlt_user_log_write_start(&ctx, &ctxdata, DLT_LOG_INFO) > 0) {
     dlt_user_log_write_string(&myctxdata, "ID: ");
     dlt_user_log_write_uint32(&myctxdata, 123);
     dlt_user_log_write_finish(&myctxdata);
+}
+```
+
+#### Send log message with given buffer
+
+DLT applications can prepare a log message buffer by themselves instead
+of calling logging parameters. There are two benefits; the applications
+can reduce API calls to DLT library as much as possible so that the
+APIs won't block the application's sequence, and dynamic allocation can
+be avoided in DLT library during runtime.
+
+The applications should prepare following values in order to use this
+functionality:
+
+- *char buffer[DLT_USER_BUF_MAX_SIZE]*: Buffer which contains one log message payload
+- *size_t size*: Buffer size
+- *int32_t args_num*: Number of arguments
+
+One argument in the buffer consists of following:
+| Length(byte)   | Description  |
+|----------------|--------------|
+| 4              | Type Info    |
+| x              | Data Payload |
+
+DLT Applications need to simulate what are done in logging parameters to
+store data to the buffer (type info given to the buffer, etc.),
+otherwise the behavior is undefined.
+
+Also important note here is that the functionality works properly only
+with these function combination:
+
+- *Start logging*: dlt\_user\_log\_write\_start\_w\_given\_buffer
+- *Finish logging*: dlt\_user\_log\_write\_finish\_w\_given\_buffer
+
+Since the function does not allocate memory dynamically, it could lead
+to segmentation fault or memory leak with different APIs. It is mandatory
+to check if dlt_user_is_logLevel_enabled is returning DLT_RETURN_TRUE before
+calling dlt_user_log_write_start_w_given_buffer (see below code example).
+
+##### Macro
+
+No macro interface is available as of now.
+
+##### Function
+
+```
+/* Example: Prepare one log message with uint16 */
+char buffer[DLT_USER_BUF_MAX_SIZE] = {0};
+size_t size = 0;
+int32_t args_num = 0;
+
+uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+memcpy(buffer + size, &(type_info), sizeof(uint32_t));
+size += sizeof(uint32_t);
+
+uint16_t data = 1234;
+memcpy(buffer + size, &data, sizeof(uint16_t));
+size += sizeof(uint16_t);
+
+args_num++;
+
+/* Give the buffer to DLT library */
+if (dlt_user_is_logLevel_enabled(&ctx,DLT_LOG_INFO) == DLT_RETURN_TRUE)
+{
+  if (dlt_user_log_write_start_w_given_buffer(&ctx, &ctxdata, DLT_LOG_INFO, buffersize, args_num) > 0)
+  {
+      dlt_user_log_write_finish_w_given_buffer(&ctxdata);
+  }
 }
 ```
 
