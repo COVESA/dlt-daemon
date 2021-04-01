@@ -324,6 +324,7 @@ time_t mksleep_time(int delay, int fudge)
 void do_logging(s_thread_data *data)
 {
     DltContext mycontext;
+    DltContextData mycontextdata;
     char ctid[5];
     char ctid_name[256];
     struct timespec ts;
@@ -339,14 +340,14 @@ void do_logging(s_thread_data *data)
 
     snprintf(ctid_name, 256, "Child %s in dlt-test-multi-process", ctid);
 
-    DLT_REGISTER_CONTEXT(mycontext, ctid, ctid_name);
+    dlt_register_context(&mycontext, ctid, ctid_name);
 
     int msgs_left = data->params.nmsgs;
 
     logmsg = calloc(1, (size_t) (data->params.nloglength + 1));
     if (logmsg == NULL) {
         printf("Error allocate memory for message.\n");
-        DLT_UNREGISTER_CONTEXT(mycontext);
+        dlt_unregister_context(&mycontext);
         abort();
     }
 
@@ -360,7 +361,10 @@ void do_logging(s_thread_data *data)
     }
 
     while (msgs_left-- > 0) {
-        DLT_LOG(mycontext, DLT_LOG_INFO, DLT_STRING(logmsg));
+        if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_INFO) > 0) {
+            dlt_user_log_write_string(&mycontextdata, logmsg);
+            dlt_user_log_write_finish(&mycontextdata);
+        }
 
         sleep_time = mksleep_time(data->params.delay, data->params.delay_fudge);
         ts.tv_sec = sleep_time / 1000000000;
@@ -373,7 +377,7 @@ void do_logging(s_thread_data *data)
         logmsg = NULL;
     }
 
-    DLT_UNREGISTER_CONTEXT(mycontext);
+    dlt_unregister_context(&mycontext);
 }
 
 /**
@@ -392,7 +396,7 @@ void run_threads(s_parameters params)
     snprintf(apid, 5, "MT%02u", pidcount);
     snprintf(apid_name, 256, "Apps %s.", apid);
 
-    DLT_REGISTER_APP(apid, apid_name);
+    dlt_register_app(apid, apid_name);
 
     thread_data = calloc( (size_t) params.nthreads, sizeof(s_thread_data));
     if (thread_data == NULL) {
@@ -417,7 +421,7 @@ void run_threads(s_parameters params)
     if(thread_data)
         free(thread_data);
 
-    DLT_UNREGISTER_APP();
+    dlt_unregister_app();
     /* We can exit now */
     exit(0);
 }

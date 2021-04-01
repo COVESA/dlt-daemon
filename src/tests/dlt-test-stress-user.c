@@ -81,15 +81,7 @@
 int testall(int count, int repeat, int delay, int size);
 
 /* Context declaration.. */
-DLT_DECLARE_CONTEXT(context_info)
-
-/* for macro interface */
-DLT_DECLARE_CONTEXT(context_macro_callback)
-DLT_DECLARE_CONTEXT(context_macro_test[DLT_TEST_NUM_CONTEXT])
-
-/* for function interface */
-DltContext context_function_callback;
-DltContext context_function_test[DLT_TEST_NUM_CONTEXT];
+DltContext context_info;
 
 DltContextData context_data;
 
@@ -192,10 +184,10 @@ int main(int argc, char *argv[])
     }
 
     /* Register APP */
-    DLT_REGISTER_APP("DIFT", "DLT Interface Test");
+    dlt_register_app("DIFT", "DLT Interface Test");
 
     /* Register CONTEXTS... */
-    DLT_REGISTER_CONTEXT(context_info, "INFO", "Information context");
+    dlt_register_context(&context_info, "INFO", "Information context");
 
     /* Tests starting */
     printf("Tests starting\n");
@@ -214,10 +206,10 @@ int main(int argc, char *argv[])
     /*sleep(3); */
 
     /* Unregister CONTEXTS... */
-    DLT_UNREGISTER_CONTEXT(context_info);
+    dlt_unregister_context(&context_info);
 
     /* Unregister APP */
-    DLT_UNREGISTER_APP();
+    dlt_unregister_app();
 
     return 0;
 }
@@ -241,7 +233,11 @@ int testall(int count, int repeat, int delay, int size)
 
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
-            DLT_LOG(context_info, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, size));
+            if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+                dlt_user_log_write_int(&context_data, num);
+                dlt_user_log_write_raw(&context_data, buffer, size);
+                dlt_user_log_write_finish(&context_data);
+            }
             ts.tv_sec = (delay * 1000) / 1000000000;
             ts.tv_nsec = (delay * 1000) % 1000000000;
             nanosleep(&ts, NULL);
