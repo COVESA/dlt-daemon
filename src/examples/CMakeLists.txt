@@ -13,38 +13,23 @@
 # For further information see http://www.genivi.org/.
 #######
 
-set(dlt_example_user_SRCS dlt-example-user.c)
-add_executable(dlt-example-user ${dlt_example_user_SRCS})
-target_link_libraries(dlt-example-user dlt)
-set_target_properties(dlt-example-user PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_example_user_common_api_SRCS dlt-example-user-common-api.c)
-add_executable(dlt-example-user-common-api ${dlt_example_user_common_api_SRCS})
-target_link_libraries(dlt-example-user-common-api dlt)
-set_target_properties(dlt-example-user-common-api PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_example_user_func_SRCS dlt-example-user-func.c)
-add_executable(dlt-example-user-func ${dlt_example_user_func_SRCS})
-target_link_libraries(dlt-example-user-func dlt)
-set_target_properties(dlt-example-user-func PROPERTIES LINKER_LANGUAGE C)
-
-set(dlt_example_filetransfer_SRCS dlt-example-filetransfer.c)
-add_executable(	dlt-example-filetransfer ${dlt_example_filetransfer_SRCS})
-target_link_libraries(dlt-example-filetransfer dlt )
-set_target_properties(dlt-example-filetransfer PROPERTIES LINKER_LANGUAGE C)
+set(TARGET_LIST dlt-example-user-func)
+set(TARGET_LIST ${TARGET_LIST} dlt-example-filetransfer)
+if(NOT WITH_DLT_DISABLE_MACRO)
+    set(TARGET_LIST ${TARGET_LIST} dlt-example-user)
+    set(TARGET_LIST ${TARGET_LIST} dlt-example-user-common-api)
+endif()
 
 if(WITH_UDP_CONNECTION)
-    set(dlt-example-multicast-clientmsg-view_SRCS dlt-example-multicast-clientmsg-view.c)
-    add_executable(dlt-example-multicast-clientmsg-view ${dlt-example-multicast-clientmsg-view_SRCS} ${dlt_most_SRCS})
-    target_link_libraries(dlt-example-multicast-clientmsg-view dlt )
-    set_target_properties(dlt-example-multicast-clientmsg-view PROPERTIES LINKER_LANGUAGE C)
+    set(TARGET_LIST ${TARGET_LIST} dlt-example-multicast-clientmsg-view)
+endif()
 
-    install(TARGETS dlt-example-multicast-clientmsg-view
+foreach(TARGET IN LISTS TARGET_LIST)
+    set(TARGET_SRCS ${TARGET})
+    add_executable(${TARGET} ${TARGET_SRCS})
+    target_link_libraries(${TARGET} dlt)
+    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
+    install(TARGETS ${TARGET}
             RUNTIME DESTINATION bin
             COMPONENT base)
-
-endif(WITH_UDP_CONNECTION)
-
-install(TARGETS dlt-example-user dlt-example-user-func dlt-example-user-common-api dlt-example-filetransfer
-	RUNTIME DESTINATION bin
-	COMPONENT base)
+endforeach()

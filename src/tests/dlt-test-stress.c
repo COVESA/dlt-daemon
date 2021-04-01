@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    DLT_REGISTER_APP("DSTS", "DLT daemon stress tests");
+    dlt_register_app("DSTS", "DLT daemon stress tests");
 
     if (test[0])
         stress1();
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
     if (test[2])
         stress3();
 
-    DLT_UNREGISTER_APP();
+    dlt_unregister_app();
 
     sleep(1);
 
@@ -269,7 +269,7 @@ void stress1(void)
     printf("* Unregister %d contexts...\n", STRESS1_NUM_CONTEXTS);
 
     for (i = 0; i < STRESS1_NUM_CONTEXTS; i++) {
-        DLT_UNREGISTER_CONTEXT(mycontext[i]);
+        dlt_unregister_context(&(mycontext[i]));
         ts.tv_sec = 0;
         ts.tv_nsec = 500 * 1000;
         nanosleep(&ts, NULL);
@@ -314,7 +314,8 @@ void stress2(void)
 void thread_function(void)
 {
     /*thread_data_t *data; */
-    DLT_DECLARE_CONTEXT(context_thread1);
+    DltContext context_thread1;
+    DltContextData context_thread1_data;
     char ctid[5];
     struct timespec ts;
 
@@ -329,29 +330,37 @@ void thread_function(void)
     ts.tv_nsec = rand();
     nanosleep(&ts, NULL);
 
-    DLT_REGISTER_CONTEXT(context_thread1, ctid, ctid);
+    dlt_register_context(&context_thread1, ctid, ctid);
 
-    DLT_LOG(context_thread1, DLT_LOG_INFO, DLT_STRING(ctid));
+    if (dlt_user_log_write_start(&context_thread1, &context_thread1_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_thread1_data, ctid);
+        dlt_user_log_write_finish(&context_thread1_data);
+    }
 
-    DLT_UNREGISTER_CONTEXT(context_thread1);
+    dlt_unregister_context(&context_thread1);
 }
 
 void stress3(void)
 {
-    DLT_DECLARE_CONTEXT(context_stress3);
+    DltContext context_stress3;
+    DltContextData context_stress3_data;
     char buffer[STRESS3_MAX_NUM_MESSAGES];
     int num;
     struct timespec ts;
 
     /* Performance test */
-    DLT_REGISTER_CONTEXT(context_stress3, "TST3", "Stress Test 3 - Performance");
+    dlt_register_context(&context_stress3, "TST3", "Stress Test 3 - Performance");
 
     printf("Starting stress test3... \n");
     printf("* Logging raw data, up to a size of %d\n", STRESS3_MAX_NUM_MESSAGES);
 
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
         buffer[num] = (char) num;
-        DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer,(uint16_t) num));
+        if (dlt_user_log_write_start(&context_stress3, &context_stress3_data, DLT_LOG_INFO) > 0) {
+            dlt_user_log_write_int(&context_stress3_data, num);
+            dlt_user_log_write_raw(&context_stress3_data, buffer, (uint16_t) num);
+            dlt_user_log_write_finish(&context_stress3_data);
+        }
         ts.tv_sec = 0;
         ts.tv_nsec = 10000 * 1000;
         nanosleep(&ts, NULL);

@@ -13,48 +13,34 @@
 # For further information see http://www.genivi.org/.
 #######
 
-set(dlt-test-multi-process_SRCS dlt-test-multi-process.c)
-set(dlt-test-multi-process-client_SRCS dlt-test-multi-process-client.c)
-set(dlt-test-user_SRCS dlt-test-user.c)
-set(dlt-test-client_SRCS dlt-test-client.c)
-set(dlt-test-stress-user_SRCS dlt-test-stress-user.c)
-set(dlt-test-stress-client_SRCS dlt-test-stress-client.c)
-set(dlt-test-stress_SRCS dlt-test-stress.c)
-set(dlt-test-filetransfer_SRCS dlt-test-filetransfer.c)
-set(dlt-test-fork-handler_SRCS dlt-test-fork-handler.c)
-set(dlt-test-init-free_SRCS dlt-test-init-free.c)
-set(dlt-test-non-verbose_SRCS dlt-test-non-verbose.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-client)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-user)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-client)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-user)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-init-free)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer)
+install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
+        DESTINATION share/dlt-filetransfer)
 
-foreach(target
-        dlt-test-multi-process
-        dlt-test-multi-process-client
-        dlt-test-user
-        dlt-test-client
-        dlt-test-stress-user
-        dlt-test-stress-client
-        dlt-test-stress
-        dlt-test-filetransfer
-        dlt-test-fork-handler
-        dlt-test-init-free
-        dlt-test-non-verbose
-        )
-    add_executable(${target} ${${target}_SRCS})
-    target_link_libraries(${target} dlt)
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
-    install(TARGETS ${target}
+#TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage
+if (NOT WITH_DLT_DISABLE_MACRO)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose)
+endif()
+
+if(WITH_DLT_QNX_SYSTEM)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-qnx-slogger)
+endif()
+ 
+foreach(TARGET IN LISTS TARGET_LIST)
+    set(TARGET_SRCS ${TARGET})
+    add_executable(${TARGET} ${TARGET_SRCS})
+    target_link_libraries(${TARGET} dlt)
+    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
+    install(TARGETS ${TARGET}
             RUNTIME DESTINATION bin
             COMPONENT base)
 endforeach()
-
-if(WITH_DLT_QNX_SYSTEM)
-    set(dlt-test-qnx-slogger_SRCS dlt-test-qnx-slogger.c)
-    add_executable(dlt-test-qnx-slogger ${dlt-test-qnx-slogger_SRCS})
-    target_link_libraries(dlt-test-qnx-slogger dlt)
-    set_target_properties(dlt-test-qnx-slogger PROPERTIES LINKER_LANGUAGE C)
-    install(TARGETS dlt-test-qnx-slogger
-            RUNTIME DESTINATION bin
-            COMPONENT base)
-endif()
-
-install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
-        DESTINATION share/dlt-filetransfer)

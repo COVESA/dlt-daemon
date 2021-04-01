@@ -77,6 +77,7 @@ option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"             
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
 option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   OFF)
 option(WITH_LIB_SHORT_VERSION "Set to ON to build library with only major number in version"                    OFF)
+option(WITH_DLT_DISABLE_MACRO "Set to ON to build code without Macro interface support"                         OFF)
 option(WITH_LEGACY_INCLUDE_PATH "Set to ON to add <prefix>/dlt to include paths for the CMake config file, in addition to only <prefix>"    ON)
 option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering. Using json filter files is only supported for Linux based system with json-c and QNX." OFF)
 
@@ -153,6 +154,10 @@ endif()
 
 if(WITH_DLT_USE_IPv6)
     add_definitions(-DDLT_USE_IPv6)
+endif()
+
+if(WITH_DLT_DISABLE_MACRO)
+    add_definitions(-DDLT_DISABLE_MACRO)
 endif()
 
 if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc")
@@ -319,6 +324,7 @@ message(STATUS "WITH_DLT_QNX_SYSTEM = ${WITH_DLT_QNX_SYSTEM}")
 message(STATUS "WITH_LIB_SHORT_VERSION = ${WITH_LIB_SHORT_VERSION}")
 message(STATUS "WITH_LEGACY_INCLUDE_PATH = ${WITH_LEGACY_INCLUDE_PATH}")
 message(STATUS "WITH_EXTENDED_FILTERING = ${WITH_EXTENDED_FILTERING}")
+message(STATUS "WITH_DLT_DISABLE_MACRO = ${WITH_DLT_DISABLE_MACRO}")
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)

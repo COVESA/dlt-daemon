@@ -28,6 +28,24 @@
 
 #include "dlt.h"
 
+void dlt_log_message(DltContext *context, DltLogLevelType ll, char *text, int32_t num)
+{
+    DltContextData contextData;
+
+    if (text == NULL)
+        return;
+
+    if (dlt_user_log_write_start(context, &contextData, ll) > 0) {
+        dlt_user_log_write_string(&contextData, text);
+        if (num > 0) {
+            dlt_user_log_write_int32(&contextData, num);
+        }
+        dlt_user_log_write_finish(&contextData);
+    }
+
+    return;
+}
+
 /**
  * @brief sample code for using at_fork-handler
  */
@@ -39,22 +57,22 @@ int main()
     timeout.tv_sec  = 0;
     timeout.tv_nsec = 200000000L;
 
-    DLT_REGISTER_APP("PRNT", "Parent application");
-    DLT_REGISTER_CONTEXT(mainContext, "CTXP", "Parent context");
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message before fork"));
+    dlt_register_app("PRNT", "Parent application");
+    dlt_register_context(&mainContext, "CTXP", "Parent context");
+    dlt_log_message(&mainContext, DLT_LOG_WARN, "First message before fork", 0);
     nanosleep(&timeout, &r);
 
     pid_t pid = fork();
     if (pid == 0) { /* child process */
         /* this message should not be visible */
-        DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's first message after fork, pid: "), DLT_INT32(getpid()));
+        dlt_log_message(&mainContext, DLT_LOG_WARN, "Child's first message after fork, pid: ", getpid());
 
         /* this will not register CHLD application */
-        DLT_REGISTER_APP("CHLD", "Child application");
+        dlt_register_app("CHLD", "Child application");
         /* this will not register CTXC context */
-        DLT_REGISTER_CONTEXT(mainContext, "CTXC", "Child context");
+        dlt_register_context(&mainContext, "CTXC", "Child context");
         /* this will not log a message */
-        DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Child's second message after fork, pid: "), DLT_INT32(getpid()));
+        dlt_log_message(&mainContext, DLT_LOG_WARN, "Child's second message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
         if (execlp("dlt-example-user", "dlt-example-user", "-n 1",
                    "you should see this message", NULL))
@@ -65,12 +83,11 @@ int main()
         return -1;
     }
     else { /* parent */
-        DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Parent's first message after fork, pid: "), DLT_INT32(getpid()));
+        dlt_log_message(&mainContext, DLT_LOG_WARN, "Parent's first message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
     }
 
-    DLT_UNREGISTER_APP()
-    ;
+    dlt_unregister_app();
 
     return 0;
 }

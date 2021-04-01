@@ -91,6 +91,7 @@ static const char *loglevelstr[DLT_LOG_MAX] = {
 
 /* Test functions... */
 
+#ifndef DLT_DISABLE_MACRO
 /* for macro interface */
 int test1m(void);
 int test2m(void);
@@ -102,6 +103,7 @@ int test7m(void);
 int test8m(void);
 int test9m(void);
 int test10m(void);
+#endif
 
 /* for function interface */
 int test1f(void);
@@ -120,11 +122,13 @@ int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t leng
 int test_injection_function_callback(uint32_t service_id, void *data, uint32_t length);
 
 /* Context declaration.. */
-DLT_DECLARE_CONTEXT(context_info)
+DltContext context_info;
 
+#ifndef DLT_DISABLE_MACRO
 /* for macro interface */
 DLT_DECLARE_CONTEXT(context_macro_callback)
 DLT_DECLARE_CONTEXT(context_macro_test[DLT_TEST_NUM_CONTEXT])
+#endif
 
 /* for function interface */
 DltContext context_function_callback;
@@ -149,6 +153,7 @@ void usage()
     printf("  -f filename   Use local log file instead of sending to daemon\n");
     printf("  -n count      Repeats of tests (Default: 1)\n");
     printf("Tests:\n");
+#ifndef DLT_DISABLE_MACRO
     printf("  1m: (Macro IF)    Test all log levels\n");
     printf("  2m: (Macro IF)    Test all variable types (verbose) \n");
     printf("  3m: (Macro IF)    Test all variable types (non-verbose) \n");
@@ -159,6 +164,7 @@ void usage()
     printf("  8m: (Macro IF)    Test truncated network trace\n");
     printf("  9m: (Macro IF)    Test segmented network trace\n");
     printf(" 10m: (Macro IF)    Test user-specified timestamps\n");
+#endif
     printf("  1f: (Function IF) Test all log levels\n");
     printf("  2f: (Function IF) Test all variable types (verbose) \n");
     printf("  3f: (Function IF) Test all variable types (non-verbose) \n");
@@ -240,11 +246,12 @@ int main(int argc, char *argv[])
         maxnum = 1;
 
     /* Register APP */
-    DLT_REGISTER_APP("DIFT", "DLT Interface Test");
+    dlt_register_app("DIFT", "DLT Interface Test");
 
     /* Register CONTEXTS... */
-    DLT_REGISTER_CONTEXT(context_info, "INFO", "Information context");
+    dlt_register_context(&context_info, "INFO", "Information context");
 
+#ifndef DLT_DISABLE_MACRO
     /* used for macro interface tests */
     DLT_REGISTER_CONTEXT(context_macro_callback, "CBM", "Callback Test context for macro interface");
 
@@ -253,6 +260,7 @@ int main(int argc, char *argv[])
         snprintf(ctdesc, 255, "Test %d context for macro interface", i + 1);
         DLT_REGISTER_CONTEXT(context_macro_test[i], ctid, ctdesc);
     }
+#endif
 
     /* used for function interface tests */
     dlt_register_context(&context_function_callback, "CBF", "Callback Test context for function interface");
@@ -265,10 +273,12 @@ int main(int argc, char *argv[])
 
     /* Register callbacks... */
 
+#ifndef DLT_DISABLE_MACRO
     /* with macro interface */
     DLT_LOG(context_macro_callback, DLT_LOG_INFO,
             DLT_STRING("Register callback (Macro Interface) for Injection ID: 0xFFF"));
     DLT_REGISTER_INJECTION_CALLBACK(context_macro_callback, 0xFFF, test_injection_macro_callback);
+#endif
 
     /* with function interface */
     if (dlt_user_log_write_start(&context_function_callback, &context_data, DLT_LOG_INFO) > 0) {
@@ -280,7 +290,10 @@ int main(int argc, char *argv[])
 
     /* Tests starting */
     printf("Tests starting\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Tests starting"));
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Tests starting");
+        dlt_user_log_write_finish(&context_data);
+    }
 
     /* wait 3 seconds before starting */
     sleep(3);
@@ -288,6 +301,7 @@ int main(int argc, char *argv[])
     for (num = 0; num < maxnum; num++) {
         /* Execute tests... */
 
+#ifndef DLT_DISABLE_MACRO
         /* with macro interface */
         test1m();
         test2m();
@@ -299,6 +313,7 @@ int main(int argc, char *argv[])
         test8m();
         test9m();
         test10m();
+#endif
 
         /* with function interface */
         test1f();
@@ -318,19 +333,24 @@ int main(int argc, char *argv[])
 
     /* Tests finished */
     printf("Tests finished\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Tests finished"));
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Tests finished");
+        dlt_user_log_write_finish(&context_data);
+    }
 
     /* wait 3 seconds before terminating application */
     sleep(3);
 
     /* Unregister CONTEXTS... */
-    DLT_UNREGISTER_CONTEXT(context_info);
+    dlt_unregister_context(&context_info);
 
+#ifndef DLT_DISABLE_MACRO
     /* used for macro interface tests */
     for (i = 0; i < DLT_TEST_NUM_CONTEXT; i++)
         DLT_UNREGISTER_CONTEXT(context_macro_test[i]);
 
     DLT_UNREGISTER_CONTEXT(context_macro_callback);
+#endif
 
     /* used for function interface tests */
     for (i = 0; i < DLT_TEST_NUM_CONTEXT; i++)
@@ -339,7 +359,7 @@ int main(int argc, char *argv[])
     dlt_unregister_context(&context_function_callback);
 
     /* Unregister APP */
-    DLT_UNREGISTER_APP();
+    dlt_unregister_app();
 
     return 0;
 }
@@ -348,6 +368,7 @@ int main(int argc, char *argv[])
 /* The test cases */
 /******************/
 
+#ifndef DLT_DISABLE_MACRO
 int test1m(void)
 {
     /* Test 1: (Macro IF) Test all log levels */
@@ -696,6 +717,7 @@ int test10m(void)
 
     return 0;
 }
+#endif
 
 int test1f(void)
 {
@@ -1301,11 +1323,16 @@ int test10f(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
+
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test10: (Function IF) finished");
+        dlt_user_log_write_finish(&context_data);
+    }
 
     return 0;
 }
 
+#ifndef DLT_DISABLE_MACRO
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length)
 {
     char text[1024];
@@ -1324,6 +1351,7 @@ int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t leng
 
     return 0;
 }
+#endif
 
 int test_injection_function_callback(uint32_t service_id, void *data, uint32_t length)
 {
@@ -1333,8 +1361,12 @@ int test_injection_function_callback(uint32_t service_id, void *data, uint32_t l
 
     snprintf(text, 1024, "Injection received (function IF). ID: 0x%.4x, Length: %d", service_id, length);
     printf("%s \n", text);
-    DLT_LOG(context_function_callback, DLT_LOG_INFO, DLT_STRING("Injection received (function IF). ID: "),
-            DLT_UINT32(service_id), DLT_STRING("Data:"), DLT_STRING(text));
+    if (dlt_user_log_write_start(&context_function_callback, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Injection received (function IF). ID: ");
+        dlt_user_log_write_uint32(&context_data, service_id);
+        dlt_user_log_write_string(&context_data, "Data:");
+        dlt_user_log_write_string(&context_data, text);
+    }
     memset(text, 0, 1024);
 
     if (length > 0) {
