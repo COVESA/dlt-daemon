@@ -2367,6 +2367,30 @@ DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, co
     return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, name, true);
 }
 
+DltReturnValue dlt_user_log_write_constant_utf8_string(DltContextData *log, const char *text)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_utf8_string(log, text) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_constant_utf8_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_utf8_string_attr(log, text, name) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_sized_constant_utf8_string(DltContextData *log, const char *text, uint16_t length)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_utf8_string(log, text, length) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_sized_constant_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_utf8_string_attr(log, text, length, name) : DLT_RETURN_OK;
+}
+
 static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info)
 {
     if ((log == NULL) || (text == NULL))
