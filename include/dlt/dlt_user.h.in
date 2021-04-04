@@ -511,7 +511,7 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
  * @param log pointer to an object containing information about logging context data
- * @param text pointer to the parameter written into log message containing null termination.
+ * @param text pointer to the parameter written into log message
  * @param length length in bytes of @a text (without any termination character)
  * @return Value from DltReturnValue enum
  */
@@ -595,7 +595,7 @@ DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, cons
  * and no content to the message.
  *
  * @param log  pointer to an object containing information about logging context data
- * @param text  pointer to the parameter written into log message containing null termination
+ * @param text  pointer to the parameter written into log message
  * @param length  length in bytes of @a text (without any termination character)
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
