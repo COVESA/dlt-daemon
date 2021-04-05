@@ -125,8 +125,8 @@ ${DLT_INCLUDE_DIRS}
 and to TARGET\_LINK\_LIBRARIES:
 
 ```
-${DLT_LINK_LIBRARIES}  (for CMake >= 3.12)
-${DLT_LIBRARIES}       (for CMake < 3.12)
+${DLT_LINK_LIBRARIES}  (preferred, for CMake >= 3.12)
+${DLT_LIBRARIES}       (otherwise)
 ```
 
 The contents of `${DLT_LIBRARIES}` do not include the library's path
