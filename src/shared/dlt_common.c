@@ -123,11 +123,11 @@ void dlt_print_hex(uint8_t *ptr, int size)
     }
 }
 
-DltReturnValue dlt_print_hex_string(char *text, int textlength, uint8_t *ptr, int size)
+static DltReturnValue dlt_print_hex_string_delim(char *text, int textlength, uint8_t *ptr, int size, char delim)
 {
     int num;
 
-    if ((ptr == NULL) || (text == NULL) || (textlength <= 0) || (size < 0))
+    if ((ptr == NULL) || (text == NULL) || (textlength <= 0) || (size < 0) || (delim == '\0'))
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* Length 3: AB_ , A is first digit of hex number, B is second digit of hex number, _ is space */
@@ -140,7 +140,7 @@ DltReturnValue dlt_print_hex_string(char *text, int textlength, uint8_t *ptr, in
 
     for (num = 0; num < size; num++) {
         if (num > 0) {
-            snprintf(text, 2, " ");
+            snprintf(text, 2, "%c", delim);
             text++;
         }
 
@@ -149,6 +149,11 @@ DltReturnValue dlt_print_hex_string(char *text, int textlength, uint8_t *ptr, in
     }
 
     return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_print_hex_string(char *text, int textlength, uint8_t *ptr, int size)
+{
+    return dlt_print_hex_string_delim(text, textlength, ptr, size, ' ');
 }
 
 DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, int size, int html)
@@ -3876,7 +3881,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string(value_text, (int) textlength, *ptr, length);
+        dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'');
         *ptr += length;
         *datalength -= length;
     }
