@@ -116,7 +116,7 @@ find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
 ```
 
-to INCLUDE\_DIRECTORIES (or TARGET\_INCLUDE\_DIRECTORIES), add
+to INCLUDE\_DIRECTORIES (or, since CMake 2.8.11, TARGET\_INCLUDE\_DIRECTORIES), add
 
 ```
 ${DLT_INCLUDE_DIRS}
