@@ -240,7 +240,16 @@ add_subdirectory(src)
 add_subdirectory(include/dlt)
 add_subdirectory(testscripts)
 if (WITH_DLT_UNIT_TESTS)
-    add_subdirectory( gtest-1.7.0 )
+    find_path(GTEST_ROOT src/gtest.cc
+       /usr/src/googletest/googletest
+       /usr/src/googletest
+       /usr/src/gtest
+    )
+    find_package(GTest)
+
+    if (NOT GTEST_FOUND)
+        add_subdirectory( gtest-1.7.0 )
+    endif()
     enable_testing()
     add_subdirectory(tests)
 endif()
