@@ -74,7 +74,7 @@
 
 #include "dlt.h"
 
-#define DLT_TEST_NUM_CONTEXT 10
+#define DLT_TEST_NUM_CONTEXT 11
 
 #define DLT_MAX_TIMESTAMP 0xFFFFFFFF
 
@@ -103,6 +103,7 @@ int test7m(void);
 int test8m(void);
 int test9m(void);
 int test10m(void);
+int test11m(void);
 #endif
 
 /* for function interface */
@@ -116,10 +117,14 @@ int test7f(void);
 int test8f(void);
 int test9f(void);
 int test10f(void);
+int test11f(void);
 
 /* Declaration of callback functions */
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length);
 int test_injection_function_callback(uint32_t service_id, void *data, uint32_t length);
+
+/* Message copying for test11f() */
+void test11f_internal(DltContext context, DltContextData contextData, uint32_t type_info, void *data, size_t data_size);
 
 /* Context declaration.. */
 DltContext context_info;
@@ -152,6 +157,7 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
     printf("  -n count      Repeats of tests (Default: 1)\n");
+    printf("  -t test num   Test number to be executed (Default: all)\n");
     printf("Tests:\n");
 #ifndef DLT_DISABLE_MACRO
     printf("  1m: (Macro IF)    Test all log levels\n");
@@ -164,6 +170,7 @@ void usage()
     printf("  8m: (Macro IF)    Test truncated network trace\n");
     printf("  9m: (Macro IF)    Test segmented network trace\n");
     printf(" 10m: (Macro IF)    Test user-specified timestamps\n");
+    printf(" 11m: (Macro IF)    Test log buffer input interface\n");
 #endif
     printf("  1f: (Function IF) Test all log levels\n");
     printf("  2f: (Function IF) Test all variable types (verbose) \n");
@@ -175,6 +182,7 @@ void usage()
     printf("  8f: (Function IF) Test truncated network trace\n");
     printf("  9f: (Function IF) Test segmented network trace\n");
     printf(" 10f: (Function IF) Test user-specified timestamps\n");
+    printf(" 11f: (Function IF) Test log buffer input interface\n");
 }
 
 /**
@@ -185,6 +193,7 @@ int main(int argc, char *argv[])
     /*int vflag = 0; */
     char *fvalue = 0;
     char *nvalue = 0;
+    int tvalue = 0;
 
     int c;
 
@@ -195,7 +204,7 @@ int main(int argc, char *argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vf:n:")) != -1)
+    while ((c = getopt (argc, argv, "vf:n:t:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -210,6 +219,11 @@ int main(int argc, char *argv[])
         case 'n':
         {
             nvalue = optarg;
+            break;
+        }
+        case 't':
+        {
+            tvalue = atoi(optarg);
             break;
         }
         case '?':
@@ -301,31 +315,125 @@ int main(int argc, char *argv[])
     for (num = 0; num < maxnum; num++) {
         /* Execute tests... */
 
+        switch(tvalue) {
+        case 1:
+        {
 #ifndef DLT_DISABLE_MACRO
-        /* with macro interface */
-        test1m();
-        test2m();
-        test3m();
-        test4m();
-        test5m();
-        test6m();
-        test7m();
-        test8m();
-        test9m();
-        test10m();
+            test1m();
+#endif
+            test1f();
+            break;
+        }
+        case 2:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test2m();
+#endif
+            test2f();
+            break;
+        }
+        case 3:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test3m();
+#endif
+            test3f();
+            break;
+        }
+        case 4:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test4m();
+#endif
+            test4f();
+            break;
+        }
+        case 5:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test5m();
+#endif
+            test5f();
+            break;
+        }
+        case 6:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test6m();
+#endif
+            test6f();
+            break;
+        }
+        case 7:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test7m();
+#endif
+            test7f();
+            break;
+        }
+        case 8:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test8m();
+#endif
+            test8f();
+            break;
+        }
+        case 9:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test9m();
+#endif
+            test9f();
+            break;
+        }
+        case 10:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test10m();
+#endif
+            test10f();
+            break;
+        }
+        case 11:
+        {
+#ifndef DLT_DISABLE_MACRO
+            test11m();
+#endif
+            test11f();
+            break;
+        }
+        default:
+#ifndef DLT_DISABLE_MACRO
+            /* with macro interface */
+            test1m();
+            test2m();
+            test3m();
+            test4m();
+            test5m();
+            test6m();
+            test7m();
+            test8m();
+            test9m();
+            test10m();
+            test11m();
 #endif
 
-        /* with function interface */
-        test1f();
-        test2f();
-        test3f();
-        test4f();
-        test5f();
-        test6f();
-        test7f();
-        test8f();
-        test9f();
-        test10f();
+            /* with function interface */
+            test1f();
+            test2f();
+            test3f();
+            test4f();
+            test5f();
+            test6f();
+            test7f();
+            test8f();
+            test9f();
+            test10f();
+            test11f();
+            break;
+        }
 
         /* wait 1 second before next repeat of tests */
         sleep(1);
@@ -714,6 +822,21 @@ int test10m(void)
     /* wait 2 second before next test */
     sleep(2);
     DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
+
+    return 0;
+}
+
+int test11m(void)
+{
+    printf("Test11m: (Macro IF) Test log buffer input interface\n");
+    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test11m: (Macro IF) Test log buffer input interface");
+
+    /* Test11m: (Macro IF) Test log buffer input interface */
+    /* Do nothing as there is no macro interface implemented as of now */
+
+    /* wait 2 second before next test */
+    sleep(2);
+    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test11: (Macro IF) finished"));
 
     return 0;
 }
@@ -1332,6 +1455,79 @@ int test10f(void)
     return 0;
 }
 
+int test11f(void)
+{
+    uint32_t type_info;
+
+    printf("Test11f: (Function IF) Test log buffer input interface\n");
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test11: (Function IF) Test log buffer input interface");
+        dlt_user_log_write_finish(&context_data);
+    }
+
+    uint8_t data_bool = 1;    /* true */
+    type_info = DLT_TYPE_INFO_BOOL;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_bool, sizeof(uint8_t));
+
+    int8_t data_int8 = INT8_MIN;    /* (-128) */
+    type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_int8, sizeof(int8_t));
+
+    int16_t data_int16 = INT16_MIN;    /* (-32768) */
+    type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_int16, sizeof(int16_t));
+
+    int32_t data_int32 = INT32_MIN;    /* (-2147483648) */
+    type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_int32, sizeof(int32_t));
+
+    int64_t data_int64 = INT64_MIN;    /* (-9223372036854775808) */
+    type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_int64, sizeof(int64_t));
+
+    uint8_t data_uint8 = UINT8_MAX;    /* (255) */
+    type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_uint8, sizeof(uint8_t));
+
+    uint16_t data_uint16 = UINT16_MAX;    /* (65535) */
+    type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_uint16, sizeof(uint16_t));
+
+    uint32_t data_uint32 = UINT32_MAX;    /* (4294967295) */
+    type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_uint32, sizeof(uint32_t));
+
+    uint64_t data_uint64 = UINT64_MAX;    /* (18446744073709551615) */
+    type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_uint64, sizeof(uint64_t));
+
+    float32_t data_float32 = FLT_MIN;    /* (1.17549e-38) */
+    type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_float32, sizeof(float32_t));
+
+    data_float32 = FLT_MAX;    /* (3.40282e+38) */
+    type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_32BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_float32, sizeof(float32_t));
+
+    float64_t data_float64 = DBL_MIN;    /* (2.22507e-308) */
+    type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_float64, sizeof(float64_t));
+
+    data_float64 = DBL_MAX;    /* (1.79769e+308) */
+    type_info = DLT_TYPE_INFO_FLOA | DLT_TYLE_64BIT;
+    test11f_internal(context_function_test[10], context_data, type_info, &data_float64, sizeof(float64_t));
+
+    /* wait 2 second before next test */
+    sleep(2);
+    /* Test11f: (Function IF) Test log buffer input interface */
+    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+        dlt_user_log_write_string(&context_data, "Test11: (Function IF) finished");
+        dlt_user_log_write_finish(&context_data);
+    }
+
+    return 0;
+}
+
 #ifndef DLT_DISABLE_MACRO
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length)
 {
@@ -1377,4 +1573,18 @@ int test_injection_function_callback(uint32_t service_id, void *data, uint32_t l
     return 0;
 }
 
+void test11f_internal(DltContext context, DltContextData contextData, uint32_t type_info, void *data, size_t data_size)
+{
+    char buffer[DLT_USER_BUF_MAX_SIZE] = {0};
+    size_t size = 0;
+    int32_t args_num = 0;
 
+    memcpy(buffer + size, &(type_info), sizeof(uint32_t));
+    size += sizeof(uint32_t);
+    memcpy(buffer + size, data, data_size);
+    size += data_size;
+    args_num++;
+    if (dlt_user_log_write_start_w_given_buffer(&context, &contextData, DLT_LOG_WARN, buffer, size, args_num) > 0) {
+        dlt_user_log_write_finish_w_given_buffer(&contextData);
+    }
+}
