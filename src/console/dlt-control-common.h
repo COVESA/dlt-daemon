@@ -31,6 +31,8 @@
 #define DLT_CTRL_ECUID_LEN 10
 #define DLT_DAEMON_FLAG_MAX 256
 
+#define JSON_FILTER_SIZE 200     /* Size in bytes, that the definition of one filter with all parameters needs */
+
 #ifndef pr_fmt
 #   define pr_fmt(fmt) fmt
 #endif
@@ -84,4 +86,23 @@ int dlt_control_send_message(DltControlMsgBody *, int);
 
 /* Destroys the connection to the daemon */
 int dlt_control_deinit(void);
+
+#ifdef EXTENDED_FILTERING
+/**
+ * Load json filter from file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to load filters from
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose);
+/**
+ * Save filter in json format to file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to safe filters into
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose);
+#endif
 #endif

@@ -85,6 +85,7 @@
 #include <inttypes.h>
 
 #include "dlt_client.h"
+#include "dlt-control-common.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
 
