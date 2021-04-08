@@ -931,14 +931,6 @@ DltReturnValue dlt_filter_free(DltFilter *filter, int verbose);
  */
 DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verbose);
 /**
- * Load json filter from file.
- * @param filter pointer to structure of organising DLT filter
- * @param filename filename to load filters from
- * @param verbose if set to true verbose information is printed out.
- * @return negative value if there was an error
- */
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose);
-/**
  * Save filter in space separated list to text file.
  * @param filter pointer to structure of organising DLT filter
  * @param filename filename to safe filters into
@@ -946,14 +938,6 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose);
-/**
- * Save filter in json format to file.
- * @param filter pointer to structure of organising DLT filter
- * @param filename filename to safe filters into
- * @param verbose if set to true verbose information is printed out.
- * @return negative value if there was an error
- */
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose);
 /**
  * Find index of filter in filter list
  * @param filter pointer to structure of organising DLT filter

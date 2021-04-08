@@ -44,7 +44,7 @@ else()
     message(STATUS "pthread_setname_np API not available on this platform")
 endif()
 
-target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} ${JSON_LIBRARIES} Threads::Threads)
+target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} Threads::Threads)
 
 target_include_directories(dlt
     PUBLIC

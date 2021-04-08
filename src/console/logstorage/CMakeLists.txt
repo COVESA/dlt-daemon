@@ -36,7 +36,7 @@ add_executable(dlt-logstorage-ctrl
                ${dlt-logstorage-ctrl_SRCS}
                ${dlt_control_common_SRCS})
 
-target_link_libraries(dlt-logstorage-ctrl dlt ${LOGSTORAGE_LIBRARY})
+target_link_libraries(dlt-logstorage-ctrl dlt ${LOGSTORAGE_LIBRARY} dlt_control_common_lib)
 set_target_properties(dlt-logstorage-ctrl PROPERTIES LINKER_LANGUAGE C)
 
 install(TARGETS dlt-logstorage-ctrl
