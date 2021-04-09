@@ -2444,22 +2444,22 @@ void dlt_daemon_control_service_logstorage(int sock,
 
     req = (DltServiceOfflineLogstorage *)(msg->databuffer);
 
-    req_st_status= stat(req->mount_point, &req_mpoint_st);
+    if(req->connection_type != DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES) {
+        req_st_status = stat(req->mount_point, &req_mpoint_st);
+        tmp_errno = errno;
+        if (req_st_status < 0) {
+            dlt_daemon_control_service_response(sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                                DLT_SERVICE_RESPONSE_ERROR,
+                                                verbose);
 
-    tmp_errno = errno;
-
-    if (req_st_status < 0) {
-        dlt_daemon_control_service_response(sock,
-                                            daemon,
-                                            daemon_local,
-                                            DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
-                                            DLT_SERVICE_RESPONSE_ERROR,
-                                            verbose);
-
-        dlt_vlog(LOG_WARNING,
-                "%s: Failed to stat requested mount point [%s] with error [%s]\n",
-                __func__, req->mount_point, strerror(tmp_errno));
-        return;
+            dlt_vlog(LOG_WARNING,
+                     "%s: Failed to stat requested mount point [%s] with error [%s]\n",
+                     __func__, req->mount_point, strerror(tmp_errno));
+            return;
+        }
     }
 
     for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
