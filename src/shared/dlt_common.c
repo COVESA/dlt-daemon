@@ -2350,6 +2350,14 @@ DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32
     head->write = 0;
     head->count = 0;
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
+
+    if (buf->min_size < (uint32_t)sizeof(DltBufferHead)) {
+        dlt_vlog(LOG_ERR,
+                 "%s: min_size is too small [%u]\n",
+                 __func__, buf->min_size);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
     buf->size = (uint32_t) (buf->min_size - sizeof(DltBufferHead));
 
     dlt_vlog(LOG_DEBUG,
