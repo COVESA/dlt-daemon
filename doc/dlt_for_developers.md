@@ -25,9 +25,15 @@ within the standard include directory.
 This example gives an overview of DLT usage inside an application by using a
 minimal code example. Detailed information about the API can be found later in
 this document.
+Please note that the #include statement depends on the means by which you are
+incorporating the DLT library into your project. The `<dlt/dlt.h>` form (i.e.
+with a directory prefix) seen here is necessary when you are using the CMake
+Config file (see below). If you are using pkg-config instead, then this #include
+statement needs to refer to only `<dlt.h>`, due to the way the pkg-config module
+exports the include directory.
 
 ```
-#include <dlt.h>
+#include <dlt/dlt.h>
 
 DLT_DECLARE_CONTEXT(ctx); /* declare context */
 
@@ -62,14 +68,55 @@ string. On application cleanup, all DLT contexts, as well as the DLT
 application have to be unregistered.
 
 ### DLT with cmake
-To use DLT with cmake, the following lines are the important ones:
+
+To use DLT with CMake, the recommended way is to use the CMake Config file
+that is being generated as part of installation.
+
+You can thus:
+```
+find_package(automotive-dlt)
+...
+target_link_libraries(myapp PRIVATE Genivi::DLT)
+```
+which lets your project automatically gain all necessary compile and link flags
+needed by libdlt, including the include directories.
+
+The generated CMake Config file follows "Modern CMake" convention and only
+exports an IMPORTED CMake target; it does not set any variables.
+
+### DLT with pkg-config
+
+Alternatively to the CMake integration detailed above, it is also possible
+to use DLT via pkg-config. This can also be done with CMake's PkgConfig
+module as well.
+
+#### PkgConfig usage with "Modern CMake"
+
+Here, you let the PkgConfig module create targets as well; the target's name
+is however determined by the PkgConfig module:
+
+```
+find_package(PkgConfig)
+pkg_check_modules(DLT REQUIRED IMPORTED_TARGET automotive-dlt)
+```
+
+As per "Modern CMake", there are again no variables to be added, but only
+a CMake target to be added to the link libraries:
+
+```
+target_link_libraries(myapp PRIVATE PkgConfig::DLT)
+```
+
+#### PkgConfig usage with "Legacy CMake" (<3.0)
+
+Here, you let the PkgConfig module only create variables, but not targets:
 
 ```
 find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
 ```
 
-to INCLUDE\_DIRECTORIES, add
+to INCLUDE\_DIRECTORIES (or, since CMake 2.8.11, TARGET\_INCLUDE\_DIRECTORIES), add
 
 ```
 ${DLT_INCLUDE_DIRS}
@@ -78,7 +125,21 @@ ${DLT_INCLUDE_DIRS}
 and to TARGET\_LINK\_LIBRARIES:
 
 ```
-${DLT_LIBRARIES}
+${DLT_LINK_LIBRARIES}  (preferred, for CMake >= 3.12)
+${DLT_LIBRARIES}       (otherwise)
+```
+
+The contents of `${DLT_LIBRARIES}` do not include the library's path
+(e.g. `-L/path/to/lib`), so if the library resides in a location that is not
+on the linker's default search path, you'll either have to add that path
+to LINK\_DIRECTORIES:
+```
+link_directories(${DLT_LIBRARY_DIRS})
+```
+or, alternatively, not use `${DLT_LIBRARIES}`, but `${DLT_LDFLAGS}` instead,
+which combines `${DLT_LIBRARIES}` and `${DLT_LIBRARY_DIRS}`:
+```
+target_link_libraries(myapp ${DLT_LDFLAGS})
 ```
 
 ### Limitation

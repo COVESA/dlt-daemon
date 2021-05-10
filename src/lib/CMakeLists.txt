@@ -44,8 +44,14 @@ else()
     message(STATUS "pthread_setname_np API not available on this platform")
 endif()
 
-target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(dlt PUBLIC ${PROJECT_SOURCE_DIR}/include/dlt ${PROJECT_BINARY_DIR}/include/dlt)
+target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} Threads::Threads)
+
+target_include_directories(dlt
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/dlt>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/dlt>
+        $<INSTALL_INTERFACE:include>
+)
 
 if(WITH_LIB_SHORT_VERSION)
     set_target_properties(dlt PROPERTIES VERSION ${PROJECT_VERSION_MAJOR} SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -53,7 +59,11 @@ else()
     set_target_properties(dlt PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
 
+add_library(Genivi::dlt ALIAS dlt)
+
 install(TARGETS dlt
+    EXPORT
+        ${PROJECT_NAME}-targets
     RUNTIME
         DESTINATION bin
         COMPONENT base
@@ -63,3 +73,27 @@ install(TARGETS dlt
     ARCHIVE
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
         COMPONENT base)
+
+# Install *-targets.cmake file
+install(
+    EXPORT ${PROJECT_NAME}-targets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+    NAMESPACE Genivi::
+)
+
+# Create *-config.cmake file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}-config.cmake.in
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+    NO_SET_AND_CHECK_MACRO
+)
+
+# Install *-config.cmake file
+install(
+    FILES
+        ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+    DESTINATION
+        ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
