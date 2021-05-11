@@ -240,11 +240,6 @@ add_subdirectory(src)
 add_subdirectory(include/dlt)
 add_subdirectory(testscripts)
 if (WITH_DLT_UNIT_TESTS)
-    find_path(GTEST_ROOT src/gtest.cc
-       /usr/src/googletest/googletest
-       /usr/src/googletest
-       /usr/src/gtest
-    )
     find_package(GTest)
 
     if (NOT GTEST_FOUND)
