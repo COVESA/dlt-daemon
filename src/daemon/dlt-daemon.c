@@ -89,6 +89,10 @@
 
 static int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose);
 
+static int dlt_daemon_check_numeric_setting(char *token,
+                                            char *value,
+                                            unsigned long *data);
+
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
 #endif
@@ -97,6 +101,9 @@ static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] 
 int g_exit = 0;
 
 int g_signo = 0;
+
+/* used for value from conf file */
+static int value_length = 1024;
 
 static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
     [DLT_TIMER_PACKET] = DLT_CONNECTION_ONE_S_TIMER,
@@ -318,7 +325,6 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 int option_file_parser(DltDaemonLocal *daemon_local)
 {
     FILE *pFile;
-    int value_length = 1024;
     char line[value_length - 1];
     char token[value_length];
     char value[value_length];
@@ -531,19 +537,27 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "RingbufferMinSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferMinSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferMinSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "RingbufferMaxSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferMaxSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferMaxSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "RingbufferStepSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferStepSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferStepSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "DaemonFIFOSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->daemonFifoSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->daemonFifoSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "SharedMemorySize") == 0)
                     {
@@ -1906,6 +1920,22 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     free(msg.databuffer);
 
+    return 0;
+}
+
+int dlt_daemon_check_numeric_setting(char *token,
+                                    char *value,
+                                    unsigned long *data)
+{
+    char value_check[value_length];
+    value_check[0] = 0;
+    sscanf(value, "%lu%s", data, value_check);
+    if (value_check[0] || !isdigit(value[0])) {
+        fprintf(stderr, "Invalid input [%s] detected in option %s\n",
+                value,
+                token);
+        return -1;
+    }
     return 0;
 }
 

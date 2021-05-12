@@ -236,8 +236,10 @@ int dlt_daemon_init(DltDaemon *daemon,
     dlt_vlog(LOG_INFO, "Ringbuffer configuration: %lu/%lu/%lu\n",
              RingbufferMinSize, RingbufferMaxSize, RingbufferStepSize);
 
-    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer), (uint32_t) RingbufferMinSize, (uint32_t) RingbufferMaxSize,
-                                (uint32_t) RingbufferStepSize) == DLT_RETURN_ERROR)
+    if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer),
+                                (uint32_t) RingbufferMinSize,
+                                (uint32_t) RingbufferMaxSize,
+                                (uint32_t) RingbufferStepSize) < DLT_RETURN_OK)
         return -1;
 
     daemon->storage_handle = NULL;
