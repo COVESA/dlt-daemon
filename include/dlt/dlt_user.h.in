@@ -86,7 +86,6 @@
 #endif
 
 #   include <pthread.h>
-#   include <stdbool.h>
 
 #   if !defined (__WIN32__)
 #      include <semaphore.h>
@@ -137,7 +136,7 @@ typedef struct
     char *context_description;                    /**< description of context */
     DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
     uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
-    bool verbose_mode;                            /**< whether to create verbose message */
+    int8_t verbose_mode;                          /**< verbose mode: 1 enabled, 0 disabled */
 } DltContextData;
 
 typedef struct
