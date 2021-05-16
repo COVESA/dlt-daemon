@@ -496,7 +496,7 @@ DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *
 
 /**
  * Write a constant null terminated ASCII string into a DLT log message.
- * In non verbose mode DLT parameter will not be send at all.
+ * In non verbose mode DLT parameter will not be sent at all.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
  * @param log pointer to an object containing information about logging context data
@@ -507,7 +507,7 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
 
 /**
  * Write a constant, potentially non-null-terminated ASCII string into a DLT log message.
- * In non verbose mode DLT parameter will not be send at all.
+ * In non verbose mode DLT parameter will not be sent at all.
  * dlt_user_log_write_start has to be called before adding any attributes to the log message.
  * Finish sending log message by calling dlt_user_log_write_finish.
  * @param log pointer to an object containing information about logging context data
