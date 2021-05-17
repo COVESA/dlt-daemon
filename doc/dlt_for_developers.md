@@ -560,9 +560,14 @@ int main(int argc, const char* argv[])
 
 ### Logging command
 
-DLT provides functions and macros for logging, whereas the interface for
-Verbose and Non-Verbose differs. The following table shows an example of all 4
-types for logging using a constant string and an integer.
+DLT provides functions that allow for flexible construction of messages
+with an arbitrary number of arguments. Both Verbose and Non-Verbose
+messages are supported, with different APIs. Sending a message using
+these functions require multiple function calls, for starting message
+construction, adding the arguments, and sending off the message.
+
+The following table shows an example of all 4 types for logging
+using a constant string and an integer.
 
 #### Verbose vs. Non-Verbose API
 
@@ -606,30 +611,37 @@ if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
 }
 ```
 
-Drawback of that solution is that the developer has to decide during
-development if Verbose or Non-Verbose mode shall be used and the code most
-likely ends up as written in the dlt-example-user application:
+#### Statefulness of Verbose/Non-Verbose
 
-```
-if (gflag) {
-    /* Non-verbose mode */
-    DLT_LOG_ID(ctx, DLT_LOG_INFO, 42 /* unique msg ID */, DLT_INT(num),
-               DLT_STRING(text));
-}
-else {
-    /* Verbose mode */
-    DLT_LOG(ctx, DLT_LOG_INFO, DLT_INT(num), DLT_STRING(text));
-}
-```
+The library uses a global state that applies to all logging commands being used.
+If the library is in global "Verbose" mode, both the "Verbose" and the "Non-Verbose"
+API calls shown above will always result in Verbose messages being sent.
 
-##### Switching Verbose and Non-Verbose
+However, if the library is in global "Non-Verbose" mode, it is possible to send
+both Verbose and Non-Verbose messages in a single session; all "Verbose" APIs will
+send Verbose messages, and all "Non-Verbose" APIs will send Non-Verbose messages.
+
+It does not make sense to send a Non-Verbose message via a Verbose API, as there
+is then no sensible message ID, which is however mandatory when sending
+Non-Verbose messages.
+
+#### Switching Verbose and Non-Verbose
 
 To switch Verbose/Non-Verbose mode (Verbose mode is default), the following
 APIs are available:
 
+##### MACRO
+
 ```
 DLT_VERBOSE_MODE();
 DLT_NONVERBOSE_MODE();
+```
+
+##### Function
+
+```
+dlt_verbose_mode();
+dlt_nonverbose_mode();
 ```
 
 #### String arguments

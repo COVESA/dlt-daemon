@@ -3647,6 +3647,45 @@ TEST(t_dlt_user_log_write_raw_formatted_attr, normal)
 
 /*/////////////////////////////////////// */
 /*
+ * Test sending Verbose and Non-Verbose messages in the same session.
+ */
+
+/*/////////////////////////////////////// */
+/* t_dlt_user_nonverbose*/
+TEST(t_dlt_user_nonverbose, nonverbosemode)
+{
+    dlt_nonverbose_mode();
+    dlt_use_extended_header_for_non_verbose(false);
+
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_message_modes"));
+
+    // Send a Verbose message
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_string_attr(&contextData, "hello", "msg"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_attr(&contextData, 0x01020304, "val1", "unit1"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_attr(&contextData, 0x04030201, "val2", "unit2"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    // Send a Non-Verbose message
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, 42));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_string_attr(&contextData, "hello", "msg"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_attr(&contextData, 0x01020304, "val1", "unit1"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint32_attr(&contextData, 0x04030201, "val2", "unit2"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+
+    dlt_use_extended_header_for_non_verbose(true);
+    dlt_verbose_mode();
+}
+
+/*/////////////////////////////////////// */
+/*
  * int dlt_log_string(DltContext *handle,DltLogLevelType loglevel, const char *text);
  * int dlt_log_string_int(DltContext *handle,DltLogLevelType loglevel, const char *text, int data);
  * int dlt_log_string_uint(DltContext *handle,DltLogLevelType loglevel, const char *text, unsigned int data);

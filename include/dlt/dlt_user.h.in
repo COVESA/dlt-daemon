@@ -136,6 +136,7 @@ typedef struct
     char *context_description;                    /**< description of context */
     DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
     uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
+    int8_t verbose_mode;                          /**< verbose mode: 1 enabled, 0 disabled */
 } DltContextData;
 
 typedef struct
@@ -940,6 +941,9 @@ DltReturnValue dlt_user_check_library_version(const char *user_major_version, co
 /**
  * Switch to non-verbose mode
  *
+ * This does not force all messages to be sent as Non-Verbose ones, as that does not make much sense.
+ * Instead, it +allows+ the sending of both Verbose and Non-Verbose messages, depending on which APIs
+ * are being called.
  */
 DltReturnValue dlt_nonverbose_mode(void);
 
