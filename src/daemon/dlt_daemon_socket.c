@@ -196,7 +196,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
     while (data_sent < message_size) {
         ssize_t ret = send(sock,
                            (uint8_t*)data_buffer + data_sent,
-                           (size_t) (message_size - data_sent),
+                           message_size - data_sent,
                            0);
 
         if (ret < 0) {
@@ -204,7 +204,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
                      "%s: socket send failed [errno: %d]!\n", __func__, errno);
             return DLT_DAEMON_ERROR_SEND_FAILED;
         } else {
-            data_sent += (int) ret;
+            data_sent += ret;
         }
     }
 
