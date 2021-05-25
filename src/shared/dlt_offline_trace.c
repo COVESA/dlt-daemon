@@ -85,7 +85,7 @@ unsigned int dlt_offline_trace_storage_dir_info(char *path, char *file_name, cha
         return 0;
 
     for (i = 0; i < cnt; i++) {
-        size_t len = 0;
+        int len = 0;
         len = strlen(file_name);
 
         if ((strncmp(files[i]->d_name, file_name, len) == 0) &&
@@ -166,7 +166,7 @@ unsigned int dlt_offline_trace_get_idx_of_log_file(char *file)
     token = strtok(NULL, d);
 
     if (token != NULL)
-        idx = (unsigned int) strtol(token, NULL, 10);
+        idx = strtol(token, NULL, 10);
     else
         idx = 0;
 
@@ -307,7 +307,7 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace)
                 if (0 == stat(filename, &status)) {
                     if ((time_oldest == 0) || (status.st_mtime < time_oldest)) {
                         time_oldest = status.st_mtime;
-                        size_oldest = (unsigned long) status.st_size;
+                        size_oldest = status.st_size;
                         strncpy(filename_oldest, filename, PATH_MAX);
                         filename_oldest[PATH_MAX] = 0;
                     }
@@ -414,21 +414,21 @@ DltReturnValue dlt_offline_trace_write(DltOfflineTrace *trace,
 
     /* write data into log file */
     if (data1 && (trace->ohandle >= 0)) {
-        if (write(trace->ohandle, data1, (size_t) size1) != size1) {
+        if (write(trace->ohandle, data1, size1) != size1) {
             printf("Offline trace write failed!\n");
             return DLT_RETURN_ERROR;
         }
     }
 
     if (data2 && (trace->ohandle >= 0)) {
-        if (write(trace->ohandle, data2, (size_t) size2) != size2) {
+        if (write(trace->ohandle, data2, size2) != size2) {
             printf("Offline trace write failed!\n");
             return DLT_RETURN_ERROR;
         }
     }
 
     if (data3 && (trace->ohandle >= 0)) {
-        if (write(trace->ohandle, data3, (size_t) size3) != size3) {
+        if (write(trace->ohandle, data3, size3) != size3) {
             printf("Offline trace write failed!\n");
             return DLT_RETURN_ERROR;
         }

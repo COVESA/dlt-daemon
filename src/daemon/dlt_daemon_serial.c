@@ -76,13 +76,13 @@ int dlt_daemon_serial_send(int sock, void *data1, int size1, void *data2, int si
     /* Send data */
 
     if (data1 && (size1 > 0))
-        if (0 > write(sock, data1, (size_t) size1))
+        if (0 > write(sock, data1, size1))
             return DLT_DAEMON_ERROR_SEND_FAILED;
 
 
 
     if (data2 && (size2 > 0))
-        if (0 > write(sock, data2, (size_t) size2))
+        if (0 > write(sock, data2, size2))
             return DLT_DAEMON_ERROR_SEND_FAILED;
 
     return DLT_DAEMON_ERROR_OK;
