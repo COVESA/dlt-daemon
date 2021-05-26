@@ -41,11 +41,11 @@
 #include <sys/ioctl.h>
 
 #ifdef linux
-#   include <sys/timerfd.h>
+#include <sys/timerfd.h>
 #endif
 #include <sys/time.h>
 #if defined(linux) && defined(__NR_statx)
-#   include <linux/stat.h>
+#include <linux/stat.h>
 #endif
 
 #include "dlt_types.h"
@@ -66,7 +66,8 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* create socket */
     if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno,
+                 strerror(lastErrno));
         return -1;
     }
 
@@ -74,7 +75,8 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno,
+                 strerror(lastErrno));
         return -1;
     }
 
@@ -85,10 +87,11 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* setsockpt SO_REUSEADDR */
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_ERR,
-                 "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
-                 lastErrno,
-                 strerror(lastErrno));
+        dlt_vlog(
+            LOG_ERR,
+            "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
+            lastErrno,
+            strerror(lastErrno));
         return -1;
     }
 
@@ -98,10 +101,13 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     memset(&forced_addr, 0, sizeof(forced_addr));
     forced_addr.sin6_family = AF_INET6;
     forced_addr.sin6_port = htons(servPort);
-    if (0 == strcmp(ip, "0.0.0.0"))
+
+    if (0 == strcmp(ip, "0.0.0.0")) {
         forced_addr.sin6_addr = in6addr_any;
-    else
+    } else {
         ret_inet_pton = inet_pton(AF_INET6, ip, &forced_addr.sin6_addr);
+    }
+
 #else
     struct sockaddr_in forced_addr;
     memset(&forced_addr, 0, sizeof(forced_addr));
@@ -113,18 +119,20 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* inet_pton returns 1 on success */
     if (ret_inet_pton != 1) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING,
-                 "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
-                 lastErrno,
-                 strerror(lastErrno),
-                 ip);
+        dlt_vlog(
+            LOG_WARNING,
+            "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
+            lastErrno,
+            strerror(lastErrno),
+            ip);
         return -1;
     }
 
     if (bind(*sock, (struct sockaddr *)&forced_addr, sizeof(forced_addr)) == -1) {
         lastErrno = errno;     /*close() may set errno too */
         close(*sock);
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno,
+                 strerror(lastErrno));
         return -1;
     }
 
@@ -137,7 +145,9 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
     if (listen(*sock, 3) < 0) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno,
+        dlt_vlog(LOG_WARNING,
+                 "dlt_daemon_socket_open: listen() failed with error %d: %s\n",
+                 lastErrno,
                  strerror(lastErrno));
         return -1;
     }
@@ -152,7 +162,12 @@ int dlt_daemon_socket_close(int sock)
     return 0;
 }
 
-int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int size2, char serialheader)
+int dlt_daemon_socket_send(int sock,
+                           void *data1,
+                           int size1,
+                           void *data2,
+                           int size2,
+                           char serialheader)
 {
     int ret = DLT_RETURN_OK;
 
@@ -162,20 +177,23 @@ int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int si
                                              (void *)dltSerialHeader,
                                              sizeof(dltSerialHeader));
 
-        if (ret != DLT_RETURN_OK)
+        if (ret != DLT_RETURN_OK) {
             return ret;
+        }
     }
 
     /* Send data */
     if ((data1 != NULL) && (size1 > 0)) {
         ret = dlt_daemon_socket_sendreliable(sock, data1, size1);
 
-        if (ret != DLT_RETURN_OK)
+        if (ret != DLT_RETURN_OK) {
             return ret;
+        }
     }
 
-    if ((data2 != NULL) && (size2 > 0))
+    if ((data2 != NULL) && (size2 > 0)) {
         ret = dlt_daemon_socket_sendreliable(sock, data2, size2);
+    }
 
     return ret;
 }
@@ -195,7 +213,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
 
     while (data_sent < message_size) {
         ssize_t ret = send(sock,
-                           (uint8_t*)data_buffer + data_sent,
+                           (uint8_t *)data_buffer + data_sent,
                            message_size - data_sent,
                            0);
 
