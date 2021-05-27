@@ -3361,6 +3361,26 @@ TEST(t_dlt_user_log_write_constant_utf8_string, verbose)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
 
+TEST(t_dlt_user_log_write_constant_utf8_string, nullpointer)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string nullpointer"));
+
+    const char *text1 = "test1";
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(NULL, text1));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(NULL, NULL));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(&contextData, NULL));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
 TEST(t_dlt_user_log_write_constant_utf8_string, nonverbose)
 {
     dlt_nonverbose_mode();
@@ -3397,6 +3417,26 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string, verbose)
     const char *text1 = "test1text";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, text1, 5));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+TEST(t_dlt_user_log_write_sized_constant_utf8_string, nullpointer)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string nullpointer"));
+
+    const char *text1 = "test1text";
+    EXPECT_LE(DLT_RETURN_TRUE, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(NULL, text1, 5));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(NULL, NULL, 5));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, NULL, 5));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -3572,6 +3612,26 @@ TEST(t_dlt_user_log_write_constant_utf8_string_attr, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
 
+TEST(t_dlt_user_log_write_constant_utf8_string_attr, nullpointer)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string_attr nullpointer"));
+
+    const char *text1 = "test1";
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(NULL, text1, "name"));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(NULL, NULL, "name"));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(&contextData, NULL, "name"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
 /*/////////////////////////////////////// */
 /* t_dlt_user_log_write_sized_constant_utf8_string_attr */
 TEST(t_dlt_user_log_write_sized_constant_utf8_string_attr, normal)
@@ -3586,6 +3646,26 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string_attr, normal)
     const char *text1 = "test1text";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(&contextData, text1, 5, "name"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
+    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
+}
+
+TEST(t_dlt_user_log_write_sized_constant_utf8_string_attr, nullpointer)
+{
+    DltContext context;
+    DltContextData contextData;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string_attr nullpointer"));
+
+    const char *text1 = "test1text";
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(NULL, text1, 5, "name"));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(NULL, NULL, 5, "name"));
+    EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(&contextData, NULL, 5, "name"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
