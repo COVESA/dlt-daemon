@@ -3387,8 +3387,9 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     const char *text2 = "test2text";
+    size_t text2len = 5;  // only use a (non-null-terminated) substring
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, 42));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, text2, 5));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, text2, text2len));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
