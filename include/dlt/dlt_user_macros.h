@@ -369,6 +369,24 @@
     (void)dlt_user_log_write_sized_utf8_string(&log_local, TEXT, LEN)
 
 /**
+ * Add constant utf8-encoded string parameter to the log messsage.
+ * @param TEXT Constant UTF8-encoded string
+ */
+#define DLT_CUTF8(TEXT) \
+    (void)dlt_user_log_write_constant_utf8_string(&log_local, TEXT)
+
+/**
+ * Add constant utf8-encoded string parameter with given length to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ */
+#define DLT_SIZED_CUTF8(TEXT, LEN) \
+    (void)dlt_user_log_write_sized_constant_utf8_string(&log_local, TEXT, LEN)
+
+/**
  * Add string parameter with "name" attribute to the log messsage.
  * @param TEXT ASCII string
  * @param NAME "name" attribute
@@ -427,6 +445,26 @@
  */
 #define DLT_SIZED_UTF8_ATTR(TEXT, LEN, NAME) \
     (void)dlt_user_log_write_sized_utf8_string_attr(&log_local, TEXT, LEN, ATTR)
+
+/**
+ * Add constant utf8-encoded string parameter with "name" attribute to the log messsage.
+ * @param TEXT Constant UTF8-encoded string
+ * @param NAME "name" attribute
+ */
+#define DLT_CUTF8_ATTR(TEXT, NAME) \
+    (void)dlt_user_log_write_constant_utf8_string_attr(&log_local, TEXT, NAME)
+
+/**
+ * Add constant utf8-encoded string parameter with given length and "name" attribute to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ * @param NAME "name" attribute
+ */
+#define DLT_SIZED_CUTF8_ATTR(TEXT, LEN, NAME) \
+    (void)dlt_user_log_write_sized_constant_utf8_string_attr(&log_local, TEXT, LEN, NAME)
 
 /**
  * Add boolean parameter to the log messsage.
