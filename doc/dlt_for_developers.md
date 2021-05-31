@@ -665,9 +665,9 @@ std::string_view key = line.substr(0, 4);
 std::string_view value = line.substr(6);
 
 if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
-    dlt_user_log_write_constant_string(&myctxdata, "key");
+    dlt_user_log_write_constant_utf8_string(&myctxdata, "key");
     dlt_user_log_write_sized_utf8_string(&myctxdata, key.data(), key.size());
-    dlt_user_log_write_constant_string(&myctxdata, "value");
+    dlt_user_log_write_constant_utf8_string(&myctxdata, "value");
     dlt_user_log_write_sized_utf8_string(&myctxdata, value.data(), value.size());
     dlt_user_log_write_finish(&myctxdata);
 }
