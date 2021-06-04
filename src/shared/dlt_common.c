@@ -2435,8 +2435,8 @@ void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *dat
                     /* write two blocks */
                     memcpy(buf->mem + *write, data, buf->size - (unsigned int) (*write));
                     memcpy(buf->mem, data + buf->size - *write, size - buf->size + (unsigned int) (*write));
+                    *write += (int) (size - buf->size);
                 }
-                *write += (int) (size - buf->size);
             }
 	}
 	else {
@@ -2462,9 +2462,8 @@ void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsig
                 /* read two blocks */
                 memcpy(data, buf->mem + *read, buf->size - (unsigned int)(*read));
                 memcpy(data + buf->size - *read, buf->mem, size - buf->size + (unsigned int)(*read));
+                *read += (int)(size - buf->size);
             }
-
-            *read += (int)(size - buf->size);
         }
     }
     else {
