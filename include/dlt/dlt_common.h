@@ -297,8 +297,6 @@ enum {
 #   define DLT_OUTPUT_ASCII_LIMITED    5
 
 #   define DLT_FILTER_MAX 30 /**< Maximum number of filters */
-#   define JSON_FILTER_NAME_SIZE 16 /* Size of buffer for the filter names in json filter files */
-#   define JSON_FILTER_SIZE 200     /* Size in bytes, that the definition of one filter with all parameters needs */
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
     { \

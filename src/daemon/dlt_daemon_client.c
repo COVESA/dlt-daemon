@@ -1603,7 +1603,7 @@ void dlt_daemon_control_callsw_cinjection(int sock,
 
         usercontext.log_level_pos = context->log_level_pos;
 
-        if (data_length_inject > msg->databuffersize) {
+        if (data_length_inject > (uint32_t) msg->databuffersize) {
             dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
             return;
         }
@@ -2462,7 +2462,7 @@ void dlt_daemon_control_service_logstorage(int sock,
         }
     }
 
-    for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++) {
+    for (i = 0; i < (uint32_t) daemon_local->flags.offlineLogstorageMaxDevices; i++) {
         connection_type = daemon->storage_handle[i].connection_type;
 
         memset(&daemon_mpoint_st, 0, sizeof(struct stat));
@@ -2591,7 +2591,7 @@ void dlt_daemon_control_service_logstorage(int sock,
 
         if (device_index == -1) { /* sync all Logstorage devices */
 
-            for (i = 0; i < daemon_local->flags.offlineLogstorageMaxDevices; i++)
+            for (i = 0; i < (uint32_t) daemon_local->flags.offlineLogstorageMaxDevices; i++)
                 if (daemon->storage_handle[i].connection_type ==
                     DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED)
                     ret = dlt_daemon_logstorage_sync_cache(

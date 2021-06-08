@@ -1985,7 +1985,7 @@ DltReturnValue dlt_receiver_init(DltReceiver *receiver, int fd, DltReceiverType 
     /** Reuse the receiver buffer if it exists and the buffer size
       * is not changed. If not, free the old one and allocate a new buffer.
       */
-    if ((NULL != receiver->buffer) && ((uint32_t) buffersize != receiver->buffersize)) {
+    if ((NULL != receiver->buffer) && ( buffersize != receiver->buffersize)) {
        free(receiver->buffer);
        receiver->buffer = NULL;
     }

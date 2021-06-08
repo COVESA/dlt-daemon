@@ -31,6 +31,7 @@
 #define DLT_CTRL_ECUID_LEN 10
 #define DLT_DAEMON_FLAG_MAX 256
 
+#define JSON_FILTER_NAME_SIZE 16 /* Size of buffer for the filter names in json filter files */
 #define JSON_FILTER_SIZE 200     /* Size in bytes, that the definition of one filter with all parameters needs */
 
 #ifndef pr_fmt
