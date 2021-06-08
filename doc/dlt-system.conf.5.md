@@ -48,7 +48,7 @@ This value defines context id of the syslog adapter.
 
 ## SyslogPort
 
-This value defines the UDP port opened for receiving log messages from syslog. Configuration for syslog to forward log to this port is necessary. Adding this config " *.*  @localhost:47111" in config file of syslog (usually in /etc/rsyslog.d/50-default.conf) and restart the syslog service by command "sudo systemctl restart rsyslog.service".
+This value defines the UDP port opened for receiving log messages from syslog. Configuration for syslog to forward log to this port is necessary. Adding this config `` *.*    @localhost:47111 `` in config file of syslog (usually in /etc/rsyslog.d/50-default.conf) and restart the syslog service by command "sudo systemctl restart rsyslog.service".
 
     Default: 47111
 
