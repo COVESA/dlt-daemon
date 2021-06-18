@@ -1277,8 +1277,20 @@ TEST(t_dlt_buffer_write_block, normal)
 }
 TEST(t_dlt_buffer_write_block, abnormal)
 {
-    /* actual no abnormal test cases */
-    /* because of void funktion and missing gtest tools for that */
+    /* Boundary check of write position */
+    DltBuffer buf;
+    const char *data = "data";
+    int write = DLT_USER_RINGBUFFER_MIN_SIZE;
+    write -= sizeof(DltBufferHead);
+    int size = sizeof(data);
+    // when write = buf->size, it should not throw any warning
+    // and write should equal to size.
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf,DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_NO_THROW(dlt_buffer_write_block(&buf, &write, (unsigned char *)&data, size));
+    EXPECT_EQ(size , write);
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 TEST(t_dlt_buffer_write_block, nullpointer)
 {
@@ -1358,8 +1370,23 @@ TEST(t_dlt_buffer_read_block, normal)
 }
 TEST(t_dlt_buffer_read_block, abnormal)
 {
-    /* actual no abnormal test cases */
-    /* because of void funktion and missing gtest tools for that */
+    /* Boundary check of read position */
+    DltBuffer buf;
+    /* Buffer to read data from DltBuffer */
+    unsigned char *data_read;
+    data_read = (unsigned char *) calloc(1000, sizeof(char));
+    int read = DLT_USER_RINGBUFFER_MIN_SIZE;
+    read -= sizeof(DltBufferHead);
+    int size = 1000;
+    // when read = buf->size, it should not throw any warning
+    // and read position should equal to size.
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_NO_THROW(dlt_buffer_read_block(&buf, &read, data_read, size));
+    EXPECT_EQ(size,read);
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    free(data_read);
 }
 TEST(t_dlt_buffer_read_block, nullpointer)
 {
