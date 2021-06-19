@@ -378,11 +378,8 @@ int main(int argc, char *argv[]) {
     if ((begin < 0) || (end < 0) || (begin > end) ||
         (begin >= file.counter) || (end >= file.counter)) {
         fprintf(stderr, "ERROR: Selected message [begin-end]-[%d-%d] is out of range!\n", begin, end);
-
         dlt_file_free(&file, vflag);
-        if (ovalue)
-            close(ohandle);
-
+	close(ohandle);
         return -1;
     }
 
@@ -396,11 +393,8 @@ int main(int argc, char *argv[]) {
 
     if (timestamp_index == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for message index!\n");
-
         dlt_file_free(&file, vflag);
-        if (ovalue)
-            close(ohandle);
-
+	close(ohandle);
         return -1;
     }
 
@@ -437,11 +431,8 @@ int main(int argc, char *argv[]) {
 
             if (temp_timestamp_index == NULL) {
                 fprintf(stderr, "ERROR: Failed to allocate memory for array\n");
-
                 dlt_file_free(&file, vflag);
-                if (ovalue)
-                    close(ohandle);
-
+		close(ohandle);
                 return -1;
             }
 
@@ -472,9 +463,7 @@ int main(int argc, char *argv[]) {
         write_messages(ohandle, &file, timestamp_index, count);
     }
 
-    if (ovalue)
-        close(ohandle);
-
+    close(ohandle);
     verbose(1, "Tidying up.\n");
     free(timestamp_index);
     timestamp_index = NULL;
