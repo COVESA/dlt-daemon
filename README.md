@@ -1,31 +1,60 @@
 # Diagnostic Log and Trace
 
-Build and Test status: [![build and test status](https://travis-ci.org/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.org/GENIVI/dlt-daemon)
+Build and Test status: [![Build Status](https://travis-ci.com/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.com/GENIVI/dlt-daemon)
 Alerts: [![Total alerts](https://img.shields.io/lgtm/alerts/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/alerts/)
 Code quality: [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/context:cpp)
 
+# Diagnostic Log and Trace
+
+Welcome to GENIVI Diagnostic Log and Trace (DLT). If you are familiar with DLT
+and want to know what's new, check the [Release Notes](ReleaseNotes.md).
+
+**New to DLT? Great! Welcome aboard.** We prepared a brief [overview](#overview)
+for you as well as some information on how to [get started](#get-started)
+immediately. After you made yourself familiar with the basic mechanics of DLT,
+you can [learn more](#learn-more) about advanced concepts and features.
+
 ## Overview
 
-This component provides a log and trace interface, based on the standardised
-protocol specified in the AUTOSAR standard 4.0 DLT. This software can be used
-by GENIVI components and other applications as logging framework.
+GENIVI DLT provides a log and trace interface, based on the standardised
+protocol specified in the
+[AUTOSAR standard 4.0 DLT](https://www.autosar.org/fileadmin/user_upload/standards/classic/4-0/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
+It is used by other GENIVI components but can serve as logging framework for
+other applications without relation to GENIVI.
 
-DLT basically consists of 3 components:
-
-- **DLT Library**: Enables DLT logging for DLT user applications and temporary
-  storage of log messages if daemon isn't available.
-- **DLT Daemon**: Receiving log messages from DLT user applications and
-  temporary storage of log messages if client isn't available. Transmit log
-  messages to DLT Client and response to control messages.
-- **DLT Client**: Receiving and storing log messages from DLT Daemon into one
-  single trace file and sending control message
+The most important terms and parts are depicted in the following figure. Please
+refer to [Glossary](doc/dlt_glossary.md) for a full overview over DLT-specific
+terms.
 
 ![alt text](doc/images/dlt_overview.png "DLT Overview")
 
-Furthermore, the repository contains several adaptors, console utilities as well
-as test applications.
+- A **DLT User** essentially is an application that serves its respective (not
+DLT-related) purpose and produces DLT log messages. It utilizes the DLT library
+to craft and transmit these messages.
+- The **DLT Library** provides a convenient API to DLT Users (i.e. applications)
+to create DLT log messages and hand them over to the DLT Daemon. If the latter
+is not avilable, the library will cache the messages in a ring buffer so they
+don't get lost immediately.
+- The **DLT Daemon** is the DLT communication interface of an ECU. It collects
+and buffers log messages from one or more DLT users running on the ECU and
+provides them to DLT clients upon their request. The daemon also accepts control
+messages from the clients to adjust the daemon's or the aplications' behaviour.
+- A **DLT Client** receives and consumes the log messages from DLT Users by
+fetching them from DLT Daemons. It may also issue control messages to control
+the behaviour of a DLT Daemon or its connected DLT Users. A DLT client can even
+transmit user-defined data to a DLT User through so-calles injection messages.
 
-## Build and install
+This is only the simplest of all use cases that you will further pursue in the
+[Get Started](#get-started) section. Once you want to [learn more](#learn-more),
+you will find that the repository contains advanced features utilizing several
+adaptors and console utilities as well as test applications.
+
+## Get Started
+In this section, you can learn how to [build and install](#build-and-install)
+DLT. Then you can choose to [run a DLT demo](#run-a-dlt-demo) setup or to start
+by [developing your own DLT-featured application](#develop-your-own-dlt-featured-application).
+
+### Build and install
 
 The following packages need to be installed in order to be able to build and
 install DLT daemon:
@@ -36,111 +65,46 @@ install DLT daemon:
 
 On Ubuntu those dependencies can be installed with the following command:
 
-`sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev`
+```
+sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+```
+
+Then proceed to download DLT if you haven't already. We recommend cloning the
+repository, but downloading and extracting a zip-archive is fine as well.
+```bash
+cd /path/to/workspace
+git clone https://github.com/GENIVI/dlt-daemon.git
+```
 
 To build and install the DLT daemon, follow these steps:
 
 ```bash
+cd /path/to/workspace/dlt-daemon
 mkdir build
 cd build
 cmake ..
 make
 optional: sudo make install
-optional: sudo ldconfig
+optional: sudo ldconfig # in case you executed make install
 ```
+CMake accepts a plethora of [build options](doc/dlt_build_options.md) to
+configure the build to suit your needs.
 
-### Configuration
+### Run a DLT demo
+In case you haven't had a look at the brief [overview](#overview), now would be
+the perfect occasion to learn about the most important terms and to get an idea
+where data is buffered. Then go on with our guide on [how to set up a DLT demo
+setup](doc/dlt_demo_setup.md).
 
-#### General Options
+### Develop your own DLT-featured application
 
-Option | Value | Comment
-:--- | :--- | :---
-BUILD\_SHARED\_LIBS | ON | Set to OFF to build static libraries
-DLT\_IPC                          |"FIFO"          | Set to either "UNIX\_SOCKET" or "FIFO"
-WITH\_DLT\_USE\_IPv6              | ON             | Set to ON for IPv6 support
-WITH\_DLT\_EXAMPLES               | ON             | Set to ON to build src/examples binaries
-DLT\_USER                         | genivi         | Set user for process not run as root
-WITH\_CHECK\_CONFIG\_FILE         | OFF            | Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists
-CMAKE\_INSTALL\_PREFIX            | /usr/local
-CMAKE\_BUILD\_TYPE                | RelWithDebInfo
-WITH\_UDP\_CONNECTION             | ON             | Set to ON to enable dlt UDP multicast SUPPORT
+Now that you have seen DLT in action, you probably want to develop your own
+applications using DLT. You will find everything you need in our ["DLT for
+Application Developers" guide](doc/dlt_for_developers.md).
 
-#### Command Line Tool Options
-
- Option | Value | Comment
- :--- | :--- | :---
-WITH\_DLT\_ADAPTOR                | OFF            | Set to ON to build src/adaptor binaries
-WITH\_DLT\_CONSOLE                | ON             | Set to ON to build src/console binaries
-WITH\_DLT\_SYSTEM                 | OFF            | Set to ON to build src/system binaries
-WITH\_DLT\_LOGSTORAGE\_CTRL\_UDEV | OFF            | PROTOTYPE! Set to ON to build
-WITH\_DLT\_KPI                    | OFF            | Set to ON to build src/kpi binaries
-
-#### Linux OS Integration Options
-
- Option | Value | Comment
- :--- | :--- | :---
-WITH\_SYSTEMD                     | OFF            | Set to ON to run CMakeLists.txt in systemd
-WITH\_SYSTEMD\_WATCHDOG           | OFF            | Set to ON to use the systemd watchdog in dlt-daemon
-WITH\_SYSTEMD\_JOURNAL            | OFF            | Set to ON to use the systemd journal in dlt-system
-WITH\_DLT\_DBUS                   | OFF            | Set to ON to build src/dbus binaries
-
-#### Documentation Options
-
-Option | Value | Comment
- :--- | :--- | :---
-WITH\_DOC                         | OFF            | Set to ON to build documentation target
-WITH\_MAN                         | OFF            | Set to OFF to skip building of man pages
-
-#### Test Options
-
-Option | Value | Comment
-:--- | :--- | :---
-WITH\_TESTSCRIPTS                 | OFF            | Set to ON to run CMakeLists.txt in test scripts
-WITH\_DLT\_TESTS                  | ON             | Set to ON to build src/test binaries
-WITH\_DLTTEST                     | OFF            | Set to ON to build with modifications to test User-Daemon communication with corrupt messages
-WITH\_DLT\_UNIT\_TESTS            | OFF            | Set to ON to build unit test binaries
-WITH\_GPROF                       | OFF            | Set \-pg to compile flag
-
-#### Experimental Features Options
-
-Option | Value | Comment
-:--- | :--- | :---
-WITH\_DLT\_SHM\_ENABLE            | OFF            | Set to OFF to use FIFO as IPC from user to daemon
-WITH\_DLT\_CXX11\_EXT             | OFF            | Set to ON to build C++11 extensions
-WITH\_DLT\_COREDUMPHANDLER        | OFF            | EXPERIMENTAL! Set to ON to build src/core\_dump\_handler binaries. EXPERIMENTAL
-
-In order to change these options, you can modify these values with cmake, do the
-appropriate changes in CmakeList.txt or via the commandline for cmake
-
-Change a value with: cmake -D\<Variable\>=\<Value\>, E.g.
-
-```bash
-cmake .. -DWITH_SYSTEMD=ON -DWITH_SYSTEMD_JOURNAL=ON -DCMAKE_INSTALL_PREFIX=/usr
-```
-
-## Documentation
-
-Specific documentation can be found in the following files:
-
-- [ReleaseNotes](ReleaseNotes.md)
-- [Glossary](doc/dlt_glossary.md)
-- [For Developers](doc/dlt_for_developers.md)
-- [Logstorage](doc/dlt_offline_logstorage.md)
-- [MultiNode](doc/dlt_multinode.md)
-- [Extended Network Trace](doc/dlt_extended_network_trace.md)
-- [DLT Filetransfer](doc/dlt_filetransfer.md)
-- [DLT KPI](doc/dlt_kpi.md)
-- [DLT Core Dump Handler](/doc/dlt_cdh.md)
-
-All text based documentation will be replaced with by Markdown-based documentation for convinient access.
-
-Old documentation (not maintained - will be removed in future releases):
-
-- DLT Design Specification: doc/dlt\_design\_specification.txt
-
-### API Documentation
-
-The API documentation is generated with _doxygen_.
+A hint: If you want to read the API documentation, you have to build it locally
+at the moment. The API documentation is generated with _doxygen_. To build it,
+run cmake with the ```-DWITH_DOC=ON``` option, e.g.:
 
 ```bash
 mkdir build
@@ -149,27 +113,50 @@ cmake -DWITH_DOC=ON ..
 make doc
 ```
 
-### Manpages
+### Build DLT debian package
 
-- [dlt-daemon(1)](doc/dlt-daemon.1.md)
-- [dlt.conf(5)](doc/dlt.conf.5.md)
-- [dlt-system(1)](doc/dlt-system.1.md)
-- [dlt-system.conf(5)](doc/dlt-system.conf.5.md)
-- [dlt_gateway.conf(5)](doc/dlt_gateway.conf.5.md)
-- [dlt-convert(1)](doc/dlt-convert.1.md)
-- [dlt-sortbytimestamp(1)](doc/dlt-sortbytimestamp.1.md)
-- [dlt-receive(1)](doc/dlt-receive.1.md)
-- [dlt-control(1)](doc/dlt-control.1.md)
-- [dlt-logstorage-ctrl(1)](doc/dlt-logstorage-ctrl.1.md)
-- [dlt-passive-node-ctrl(1)](doc/dlt-passive-node-ctrl.1.md)
-- [dlt-adaptor-stdin(1)](doc/dlt-adaptor-stdin.1.md)
-- [dlt-adaptor-udp(1)](doc/dlt-adaptor-udp.1.md)
-- [dlt-qnx-system(1)](doc/dlt-qnx-system.md)
+To build the DLT debian package for your own purpose, follow these steps:
+
+```bash
+mkdir build
+cd build
+cmake ..
+cpack
+```
+
+## Learn more
+Once you got your feet wet with developing your first application, you might
+want to learn more. Find out about DLT's [advanced topics](#advanced-topics),
+learn how to [configure, control and interface](#configure-control-and-interface)
+DLT or study its internals by checking out the [design
+specifications](./doc/dlt_design_specification.md).
+
+### Advanced Topics
+The GENIVI DLT implementation is capable of by far more than to "just" send log
+message. You will get an overview of advanced features in this section. Follow
+the links to learn more about the respective concept.
+
+| Document | Description |
+|----|----|
+| [Build Options](./doc/dlt_build_options.md) | The CMake build system provides a large amount of build options. They let you turn on or off certain features and provide alternative implementation details. |
+| [LogStorage](doc/dlt_offline_logstorage.md) | The DLT Daemon as well as the DLT libary provide buffers for caching log data during absence of a consumer. However, some use cases require to write large amounts of log message e.g. to mass storages for long term storage or because no other means of exfiltrating the log data is available. |
+| [MultiNode](doc/dlt_multinode.md) | A DLT Daemon can run as a gateway to connect multiple passive nodes. Each passive node has its owns DLT Applications and runs its own daemon. The gateway node connects to all of them, collects the logs and routes them to the DLT Client. |
+| [Extended Network Trace](doc/dlt_extended_network_trace.md) | Normal DLT messages are limited in size. To overcome this limitation the feature network trace message allows the user to send or truncate messages which would not fit into a normal DLT message. |
+| [DLT Filetransfer](doc/dlt_filetransfer.md) | Although not originally designed for this, files can be transmitted over DLT. A corresponding DLT Client (e.g. DLT Viewer) can receive and decode them accordingly. |
+| [DLT KPI](doc/dlt_kpi.md) | Valueable status information about the monitored system can be read via DLT as well. The information under `/proc` of the target system is at your hands easily. |
+| [DLT Core Dump Handler](/doc/dlt_cdh.md) | This tool collects and extracts debug information then utilize [DLT Filetransfer](doc/dlt_filetransfer.md) to transfer the information to client. |
+
+### Configure, Control and Interface
+
+There is still lots to discover about DLT. If you turn on the generation of
+manpages with the cmake option ```-DWITH_MAN=ON``` you can learn how to
+configure DLT to exactly suit your needs, how to control the behvaiour of
+running instances and how to interface DLT with existing system through
+provided adaptors.
 
 The man pages are generated with *pandoc*.
 
-If the man pages are changed the following command must be executed.
-
+Build manpages (initally or because something changed) with e.g.
 ```bash
 mkdir build
 cd build
@@ -177,7 +164,24 @@ cmake -DWITH_MAN=ON ..
 make generate_man
 ```
 
-The generated man pages overwrite the existing ones.
+| Document | Description |
+|----|----|
+| *Configuration* ||
+|[dlt-daemon(1)](doc/dlt-daemon.1.md) | How to start DLT-Daemon |
+|[dlt.conf(5)](doc/dlt.conf.5.md) | Configure the DLT framework to reflect your use case|
+| *Control running instances of DLT*||
+|[dlt-receive(1)](doc/dlt-receive.1.md)| Receive DLT messages from daemon and print or store the log messages. |
+|[dlt-control(1)](doc/dlt-control.1.md)| Send control messages to daemon. |
+|[dlt-logstorage-ctrl(1)](doc/dlt-logstorage-ctrl.1.md)| Send a trigger to daemon to connect/disconnect certain logstorage device, or send a demand to sync data the internal buffer into logstorage file. |
+|[dlt-passive-node-ctrl(1)](doc/dlt-passive-node-ctrl.1.md)| Send a trigger to daemon to connect/disconnect passive daemon. |
+| *Interfacing DLT* ||
+|[dlt-system(1)](doc/dlt-system.1.md) | DLT-System provides a way to directly access system logs via DLT |
+|[dlt-system.conf(5)](doc/dlt-system.conf.5.md) | Configure DLT-System |
+|[dlt-adaptor-stdin(1)](doc/dlt-adaptor-stdin.1.md)| Adaptor for forwarding input from stdin to daemon. |
+|[dlt-adaptor-udp(1)](doc/dlt-adaptor-udp.1.md)| Adaptor for forwarding received UDP messages to daemon. |
+|[dlt-convert(1)](doc/dlt-convert.1.md)| Convert DLT files into human readable format. |
+|[dlt-sortbytimestamp(1)](doc/dlt-sortbytimestamp.1.md)| Read log messages from DLT file, sort by timestamp, and store them again. |
+|[dlt-qnx-system(1)](doc/dlt-qnx-system.md) | Access system logs in QNX with DLT |
 
 ## Contribution
 
@@ -185,7 +189,9 @@ Start working, best practice is to commit smaller, compilable pieces during the
 work that makes it easier to handle later on.
 
 If you want to commit your changes, create a
-[Pull Request](https://github.com/genivi/dlt-daemon/pulls) in Github.
+[Pull Request](https://github.com/genivi/dlt-daemon/pulls) in Github. Please
+make sure to follow the
+[Rules for commit messages](https://at.projects.genivi.org/wiki/display/PROJ/Rules+for+Commit+Messages)
 
 ### Coding Rules
 
@@ -224,6 +230,6 @@ https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace_lists.
 ## Contact
 
 Saya Sugiura <ssugiura@jp.adit-jv.com>,
-Quynh Le Hoang Ngoc <Quynh.LeHoangNgoc@vn.bosch.com>
+Bui Nguyen Quoc, Thanh <thanh.buinguyenquoc@vn.bosch.com>
 
 ![alt text](doc/images/genivilogo.png "GENIVI")

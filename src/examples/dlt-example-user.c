@@ -102,8 +102,10 @@ void usage()
     printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
     printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
     printf("  -k            Send marker message\n");
-    printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
+    printf("  -m mode       Set log mode 0=off, 1=external, 2=internal, 3=both\n");
     printf("  -l level      Set log level to <level>, level=-1..6\n");
+    printf("  -C ContextID  Set context ID for send message (Default: TEST)\n");
+    printf("  -A AppID      Set app ID for send message (Default: LOG)\n");
     printf("  -t timeout    Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
     printf("  -r size       Send raw data with specified size instead of string\n");
 #ifdef DLT_TEST_ENABLE
@@ -137,6 +139,9 @@ int main(int argc, char *argv[])
     int index;
     int c;
 
+    char *appID = "LOG";
+    char *contextID = "TEST";
+
     char *text;
     int num, maxnum;
     int delay;
@@ -147,10 +152,10 @@ int main(int argc, char *argv[])
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
 
-    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:r:s:l:t:")) != -1)
+    while ((c = getopt (argc, argv, "vgakcd:f:n:m:z:r:s:l:t:A:C:")) != -1)
 #else
 
-    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:r:t:")) != -1)
+    while ((c = getopt (argc, argv, "vgakd:f:n:m:l:r:t:A:C:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c) {
@@ -211,6 +216,16 @@ int main(int argc, char *argv[])
             lvalue = atoi(optarg);
             break;
         }
+        case 'A':
+        {
+            appID = optarg;
+            break;
+        }
+        case 'C':
+        {
+            contextID = optarg;
+            break;
+        }
         case 't':
         {
             tvalue = optarg;
@@ -247,8 +262,8 @@ int main(int argc, char *argv[])
             message = argv[index];
     }
     else { /* allocate raw buffer */
-        message = calloc(sizeof(char), rvalue);
-        memset(message, 'X', rvalue - 1);
+        message = calloc(sizeof(char), (size_t) rvalue);
+        memset(message, 'X', (size_t) (rvalue - 1)) ;
     }
 
     if (message == 0) {
@@ -269,8 +284,8 @@ int main(int argc, char *argv[])
     dlt_with_ecu_id(1);
     dlt_verbose_mode();
 
-    DLT_REGISTER_APP("LOG", "Test Application for Logging");
-    DLT_REGISTER_CONTEXT(mycontext1, "TEST", "Test Context for Logging");
+    DLT_REGISTER_APP(appID, "Test Application for Logging");
+    DLT_REGISTER_CONTEXT(mycontext1, contextID, "Test Context for Logging");
     DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
     DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
@@ -310,12 +325,12 @@ int main(int argc, char *argv[])
         maxnum = 10;
 
     if (dvalue)
-        delay = atoi(dvalue) * 1000000;
+        delay = atoi(dvalue);
     else
-        delay = 500 * 1000000;
+        delay = 500;
 
     if (tvalue)
-        dlt_set_resend_timeout_atexit(atoi(tvalue));
+        dlt_set_resend_timeout_atexit((uint32_t) atoi(tvalue));
 
     if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
@@ -378,8 +393,8 @@ int main(int argc, char *argv[])
         }
 
         if (delay > 0) {
-            ts.tv_sec = delay / 1000000000;
-            ts.tv_nsec = delay % 1000000000;
+            ts.tv_sec = delay / 1000;
+            ts.tv_nsec = (delay % 1000) * 1000000;
             nanosleep(&ts, NULL);
         }
     }

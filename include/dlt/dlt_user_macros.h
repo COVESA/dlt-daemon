@@ -369,11 +369,117 @@
     (void)dlt_user_log_write_sized_utf8_string(&log_local, TEXT, LEN)
 
 /**
+ * Add constant utf8-encoded string parameter to the log messsage.
+ * @param TEXT Constant UTF8-encoded string
+ */
+#define DLT_CUTF8(TEXT) \
+    (void)dlt_user_log_write_constant_utf8_string(&log_local, TEXT)
+
+/**
+ * Add constant utf8-encoded string parameter with given length to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ */
+#define DLT_SIZED_CUTF8(TEXT, LEN) \
+    (void)dlt_user_log_write_sized_constant_utf8_string(&log_local, TEXT, LEN)
+
+/**
+ * Add string parameter with "name" attribute to the log messsage.
+ * @param TEXT ASCII string
+ * @param NAME "name" attribute
+ */
+#define DLT_STRING_ATTR(TEXT, NAME) \
+    (void)dlt_user_log_write_string_attr(&log_local, TEXT, NAME)
+
+/**
+ * Add string parameter with given length and "name" attribute to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT ASCII string
+ * @param LEN length in bytes to take from @a TEXT
+ * @param NAME "name" attribute
+ */
+#define DLT_SIZED_STRING_ATTR(TEXT, LEN, NAME) \
+    (void)dlt_user_log_write_sized_string_attr(&log_local, TEXT, LEN, NAME)
+
+/**
+ * Add constant string parameter with "name" attribute to the log messsage.
+ * @param TEXT Constant ASCII string
+ * @param NAME "name" attribute
+ */
+#define DLT_CSTRING_ATTR(TEXT, NAME) \
+    (void)dlt_user_log_write_constant_string_attr(&log_local, TEXT, NAME)
+
+/**
+ * Add constant string parameter with given length and "name" attribute to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant ASCII string
+ * @param LEN length in bytes to take from @a TEXT
+ * @param NAME "name" attribute
+ */
+#define DLT_SIZED_CSTRING_ATTR(TEXT, LEN, NAME) \
+    (void)dlt_user_log_write_sized_constant_string_attr(&log_local, TEXT, LEN, NAME)
+
+/**
+ * Add utf8-encoded string parameter with "name" attribute to the log messsage.
+ * @param TEXT UTF8-encoded string
+ * @param NAME "name" attribute
+ */
+#define DLT_UTF8_ATTR(TEXT, NAME) \
+    (void)dlt_user_log_write_utf8_string_attr(&log_local, TEXT, NAME)
+
+/**
+ * Add utf8-encoded string parameter with given length and "name" attribute to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ * @param NAME "name" attribute
+ */
+#define DLT_SIZED_UTF8_ATTR(TEXT, LEN, NAME) \
+    (void)dlt_user_log_write_sized_utf8_string_attr(&log_local, TEXT, LEN, ATTR)
+
+/**
+ * Add constant utf8-encoded string parameter with "name" attribute to the log messsage.
+ * @param TEXT Constant UTF8-encoded string
+ * @param NAME "name" attribute
+ */
+#define DLT_CUTF8_ATTR(TEXT, NAME) \
+    (void)dlt_user_log_write_constant_utf8_string_attr(&log_local, TEXT, NAME)
+
+/**
+ * Add constant utf8-encoded string parameter with given length and "name" attribute to the log messsage.
+ * The string in @a TEXT does not need to be null-terminated, but
+ * the copied string will be null-terminated at its destination
+ * in the message buffer.
+ * @param TEXT Constant UTF8-encoded string
+ * @param LEN length in bytes to take from @a TEXT
+ * @param NAME "name" attribute
+ */
+#define DLT_SIZED_CUTF8_ATTR(TEXT, LEN, NAME) \
+    (void)dlt_user_log_write_sized_constant_utf8_string_attr(&log_local, TEXT, LEN, NAME)
+
+/**
  * Add boolean parameter to the log messsage.
  * @param BOOL_VAR Boolean value (mapped to uint8)
  */
 #define DLT_BOOL(BOOL_VAR) \
     (void)dlt_user_log_write_bool(&log_local, BOOL_VAR)
+
+/**
+ * Add boolean parameter with "name" attribute to the log messsage.
+ * @param BOOL_VAR Boolean value (mapped to uint8)
+ * @param NAME "name" attribute
+ */
+#define DLT_BOOL_ATTR(BOOL_VAR, NAME) \
+    (void)dlt_user_log_write_bool_attr(&log_local, BOOL_VAR, NAME)
 
 /**
  * Add float32 parameter to the log messsage.
@@ -388,6 +494,24 @@
  */
 #define DLT_FLOAT64(FLOAT64_VAR) \
     (void)dlt_user_log_write_float64(&log_local, FLOAT64_VAR)
+
+/**
+ * Add float32 parameter with attributes to the log messsage.
+ * @param FLOAT32_VAR Float32 value (mapped to float)
+ * @param NAME "name" attribute
+ * @param UNIT "unit" attribute
+ */
+#define DLT_FLOAT32_ATTR(FLOAT32_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_float32_attr(&log_local, FLOAT32_VAR, NAME, UNIT)
+
+/**
+ * Add float64 parameter with attributes to the log messsage.
+ * @param FLOAT64_VAR Float64 value (mapped to double)
+ * @param NAME "name" attribute
+ * @param UNIT "unit" attribute
+ */
+#define DLT_FLOAT64_ATTR(FLOAT64_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_float64_attr(&log_local, FLOAT64_VAR, NAME, UNIT)
 
 /**
  * Add integer parameter to the log messsage.
@@ -409,6 +533,27 @@
     (void)dlt_user_log_write_int64(&log_local, INT_VAR)
 
 /**
+ * Add integer parameter with attributes to the log messsage.
+ * @param INT_VAR integer value
+ * @param NAME "name" attribute
+ * @param UNIT "unit" attribute
+ */
+#define DLT_INT_ATTR(INT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_int_attr(&log_local, INT_VAR, NAME, UNIT)
+
+#define DLT_INT8_ATTR(INT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_int8_attr(&log_local, INT_VAR, NAME, UNIT)
+
+#define DLT_INT16_ATTR(INT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_int16_attr(&log_local, INT_VAR, NAME, UNIT)
+
+#define DLT_INT32_ATTR(INT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_int32_attr(&log_local, INT_VAR, NAME, UNIT)
+
+#define DLT_INT64_ATTR(INT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_int64_attr(&log_local, INT_VAR, NAME, UNIT)
+
+/**
  * Add unsigned integer parameter to the log messsage.
  * @param UINT_VAR unsigned integer value
  */
@@ -426,6 +571,27 @@
 
 #define DLT_UINT64(UINT_VAR) \
     (void)dlt_user_log_write_uint64(&log_local, UINT_VAR)
+
+/**
+ * Add unsigned integer parameter with attributes to the log messsage.
+ * @param UINT_VAR unsigned integer value
+ * @param NAME "name" attribute
+ * @param UNIT "unit" attribute
+ */
+#define DLT_UINT_ATTR(UINT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_uint_attr(&log_local, UINT_VAR, NAME, UNIT)
+
+#define DLT_UINT8_ATTR(UINT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_uint8_attr(&log_local, UINT_VAR, NAME, UNIT)
+
+#define DLT_UINT16_ATTR(UINT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_uint16_attr(&log_local, UINT_VAR, NAME, UNIT)
+
+#define DLT_UINT32_ATTR(UINT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_uint32_attr(&log_local, UINT_VAR, NAME, UNIT)
+
+#define DLT_UINT64_ATTR(UINT_VAR, NAME, UNIT) \
+    (void)dlt_user_log_write_uint64_attr(&log_local, UINT_VAR, NAME, UNIT)
 
 /**
  * Add binary memory block to the log messages.
@@ -446,6 +612,15 @@
     (void)dlt_user_log_write_uint8_formatted(&log_local, UINT_VAR, DLT_FORMAT_BIN8)
 #define DLT_BIN16(UINT_VAR) \
     (void)dlt_user_log_write_uint16_formatted(&log_local, UINT_VAR, DLT_FORMAT_BIN16)
+
+/**
+ * Add binary memory block with "name" attribute to the log messages.
+ * @param BUF pointer to memory block
+ * @param LEN length of memory block
+ * @param NAME "name" attribute
+ */
+#define DLT_RAW_ATTR(BUF, LEN, NAME) \
+    (void)dlt_user_log_write_raw_attr(&log_local, BUF, LEN, NAME)
 
 /**
  * Architecture independent macro to print pointers

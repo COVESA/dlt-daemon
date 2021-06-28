@@ -66,14 +66,16 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* create socket */
     if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        return -1;
     }
 
 #else
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
+        return -1;
     }
 
 #endif
@@ -83,10 +85,11 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* setsockpt SO_REUSEADDR */
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING,
+        dlt_vlog(LOG_ERR,
                  "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
                  lastErrno,
                  strerror(lastErrno));
+        return -1;
     }
 
     /* bind */
@@ -193,7 +196,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
     while (data_sent < message_size) {
         ssize_t ret = send(sock,
                            (uint8_t*)data_buffer + data_sent,
-                           message_size - data_sent,
+                           (size_t) (message_size - data_sent),
                            0);
 
         if (ret < 0) {
@@ -201,7 +204,7 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
                      "%s: socket send failed [errno: %d]!\n", __func__, errno);
             return DLT_DAEMON_ERROR_SEND_FAILED;
         } else {
-            data_sent += ret;
+            data_sent += (int) ret;
         }
     }
 

@@ -75,6 +75,8 @@
 #include <string.h>
 #include <glob.h>
 #include <syslog.h>
+#include <signal.h>
+#include <sys/socket.h>
 #ifdef __linux__
 #   include <linux/limits.h>
 #else
@@ -85,6 +87,24 @@
 #include "dlt_client.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
+
+DltClient dltclient;
+
+void signal_handler(int signal)
+{
+    switch (signal) {
+    case SIGHUP:
+    case SIGTERM:
+    case SIGINT:
+    case SIGQUIT:
+        /* stop main loop */
+        shutdown(dltclient.receiver.fd, SHUT_RD);
+        break;
+    default:
+        /* This case should never happen! */
+        break;
+    } /* switch */
+}
 
 /* Function prototypes */
 int dlt_receive_message_callback(DltMessage *message, void *data);
@@ -109,6 +129,7 @@ typedef struct {
     int part_num;    /* number of current output file if limit was exceeded */
     DltFile file;
     DltFilter filter;
+    int port;
 } DltReceiveData;
 
 /**
@@ -140,6 +161,8 @@ void usage()
     printf("                When limit is reached, a new file is opened. Use K,M,G as\n");
     printf("                suffix to specify kilo-, mega-, giga-bytes respectively\n");
     printf("  -f filename   Enable filtering of messages\n");
+    printf("  -p port       Use the given port instead the default port\n");
+    printf("                Cannot be used with serial devices\n");
 }
 
 
@@ -290,7 +313,6 @@ void dlt_receive_close_output_file(DltReceiveData *dltdata)
  */
 int main(int argc, char *argv[])
 {
-    DltClient dltclient;
     DltReceiveData dltdata;
     int c;
     int index;
@@ -312,11 +334,21 @@ int main(int argc, char *argv[])
     dltdata.ohandle = -1;
     dltdata.totalbytes = 0;
     dltdata.part_num = -1;
+    dltdata.port = 3490;
+
+    /* Config signal handler */
+    struct sigaction act;
+    act.sa_handler = signal_handler;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGHUP, &act, 0);
+    sigaction(SIGTERM, &act, 0);
+    sigaction(SIGINT, &act, 0);
+    sigaction(SIGQUIT, &act, 0);
 
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashyuxmf:o:e:b:c:")) != -1)
+    while ((c = getopt (argc, argv, "vashyuxmf:o:e:b:c:p:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -392,6 +424,11 @@ int main(int argc, char *argv[])
             dltdata.bvalue = atoi(optarg);
             break;
         }
+        case 'p':
+        {
+            dltdata.port = atoi(optarg);
+            break;
+        }
 
         case 'c':
         {
@@ -441,6 +478,7 @@ int main(int argc, char *argv[])
     }
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
+        dltclient.port = dltdata.port;
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");
@@ -589,12 +627,12 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         /* if file output enabled write message */
         if (dltdata->ovalue) {
             iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = message->headersize;
+            iov[0].iov_len = (uint32_t) message->headersize;
             iov[1].iov_base = message->databuffer;
-            iov[1].iov_len = message->datasize;
+            iov[1].iov_len = (uint32_t) message->datasize;
 
             if (dltdata->climit > -1) {
-                int bytes_to_write = message->headersize + message->datasize;
+                uint32_t bytes_to_write = message->headersize + message->datasize;
 
                 if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
                     dlt_receive_close_output_file(dltdata);
@@ -609,7 +647,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
                 }
             }
 
-            bytes_written = writev(dltdata->ohandle, iov, 2);
+            bytes_written = (int) writev(dltdata->ohandle, iov, 2);
 
             dltdata->totalbytes += bytes_written;
 

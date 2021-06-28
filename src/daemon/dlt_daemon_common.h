@@ -133,6 +133,7 @@ typedef struct
     char apid[DLT_ID_SIZE];                   /**< application id */
     pid_t pid;                   /**< process id of user application */
     int user_handle;    /**< connection handle for connection to user application */
+    bool owns_user_handle; /**< user_handle should be closed when reset */
     char *application_description; /**< context description */
     int num_contexts; /**< number of contexts for this application */
 } DltDaemonApplication;
@@ -189,6 +190,7 @@ typedef struct
     char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
     DltDaemonState state;   /**< the current logging state of dlt daemon. */
     DltLogStorage *storage_handle;
+    int maintain_logstorage_loglevel;     /* Permission to maintain the logstorage loglevel*/
 } DltDaemon;
 
 /**
@@ -245,13 +247,16 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
                                                      char *ecu,
                                                      int verbose);
 /**
- * Loads the user saved configurations to daemon
+ * Init the user saved configurations to daemon.
+ * Since the order of loading runtime config could be different,
+ * this function won't be the place to do that.
+ * This is just for preparation of real load later.
  * @param daemon pointer to dlt daemon structure
  * @param runtime_directory directory path
  * @param verbose if set to true verbose information is printed out
  * @return DLT_RETURN_OK on success, DLT_RETURN_ERROR otherwise
  */
-int dlt_daemon_load_runtime_configuration(DltDaemon *daemon,
+int dlt_daemon_init_runtime_configuration(DltDaemon *daemon,
                                           const char *runtime_directory,
                                           int verbose);
 

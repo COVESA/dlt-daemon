@@ -1,0 +1,32 @@
+#######
+# SPDX license identifier: MPL-2.0
+#
+# Copyright (C) 2021, Martin Willers <M.Willers@gmx.net>
+#
+# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+#
+# This Source Code Form is subject to the terms of the
+# Mozilla Public License (MPL), v. 2.0.
+# If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# For further information see http://www.genivi.org/.
+#######
+
+# Config file for the Genivi::dlt package.
+
+# This file exports the Genivi::dlt CMake target which should be passed to the
+# target_link_libraries command.
+#
+# In addition, the following variable is defined:
+#   @PROJECT_NAME@_FOUND - TRUE if headers and library were found
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(Threads)
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
+
+check_required_components(@PROJECT_NAME@)

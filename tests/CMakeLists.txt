@@ -2,6 +2,8 @@
 add_compile_options(-isystem ${gtest_SOURCE_DIR}/include)
 
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(LIBRARIES gtest gtest_main)

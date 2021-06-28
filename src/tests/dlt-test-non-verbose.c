@@ -173,7 +173,7 @@ int test_macro_interface(void)
 
     for(num2 = 0 ; num2 < 10 ; num2++)
     {
-        buffer[num2] = num2;
+        buffer[num2] = (char) num2;
     }
     DLT_LOG_ID(context_macro_test, DLT_LOG_INFO, 14,
                              DLT_STRING("raw"), DLT_RAW(buffer, 10));
@@ -300,7 +300,7 @@ int test_function_interface(void)
 
     for(num2 = 0 ; num2 < 10 ; num2++)
     {
-        buffer[num2] = num2;
+        buffer[num2] = (char) num2;
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),

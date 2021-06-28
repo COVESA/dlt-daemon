@@ -104,7 +104,7 @@ int get_default_event_type(void)
 
 void set_default_event_type(long type)
 {
-    g_options.event_type = type;
+    g_options.event_type = (int) type;
 }
 
 char *get_default_path(void)
@@ -285,7 +285,7 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
     serv = (DltServiceOfflineLogstorage *)(*body)->data;
 
     serv->service_id = DLT_SERVICE_ID_OFFLINE_LOGSTORAGE;
-    serv->connection_type = conn_type;
+    serv->connection_type = (uint8_t) conn_type;
     /* mount_point is DLT_MOUNT_PATH_MAX + 1 long,
      * and the memory is already zeroed.
      */

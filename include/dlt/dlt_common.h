@@ -75,6 +75,7 @@
 
 #   include <netinet/in.h>
 #   include <stdio.h>
+#   include <stdbool.h>
 #   ifdef __linux__
 #      include <linux/limits.h>
 #      include <sys/socket.h>
@@ -85,6 +86,14 @@
 #   if !defined(_MSC_VER)
 #      include <unistd.h>
 #      include <time.h>
+#   endif
+
+#   if defined(__GNUC__)
+#      define PURE_FUNCTION __attribute__((pure))
+#      define PRINTF_FORMAT(a,b) __attribute__ ((format (printf, a, b)))
+#   else
+#      define PURE_FUNCTION /* nothing */
+#      define PRINTF_FORMAT(a,b) /* nothing */
 #   endif
 
 #   if !defined (__WIN32__) && !defined(_MSC_VER)
@@ -291,10 +300,10 @@ enum {
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
     { \
-        if ((length < 0) || ((length) < ((int32_t)sizeof(type)))) \
+        if ((length < 0) || ((length) < ((int32_t) sizeof(type)))) \
         { length = -1; } \
         else \
-        { dst = *((type *)src); src += sizeof(type); length -= sizeof(type); } \
+        { dst = *((type *)src); src += sizeof(type); length -= (int32_t) sizeof(type); } \
     }
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
@@ -313,7 +322,7 @@ enum {
     } \
     else \
     { \
-        memcpy(dst, src, length); \
+        memcpy(dst, src, (size_t) length); \
         dlt_clean_string(dst, length); \
         dst[length] = 0; \
         src += length; \
@@ -417,7 +426,7 @@ extern const char dltSerialHeader[DLT_ID_SIZE];
  */
 extern char dltSerialHeaderChar[DLT_ID_SIZE];
 
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * The common base-path of the dlt-daemon-fifo and application-generated fifos
  */
@@ -491,14 +500,14 @@ typedef struct sDltMessage
     int32_t resync_offset;
 
     /* size parameters */
-    int32_t headersize;    /**< size of complete header including storage header */
-    int32_t datasize;      /**< size of complete payload */
+    uint32_t headersize;    /**< size of complete header including storage header */
+    uint32_t datasize;      /**< size of complete payload */
 
     /* buffer for current loaded message */
     uint8_t headerbuffer[sizeof(DltStorageHeader) +
                          sizeof(DltStandardHeader) + sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
-    int32_t databuffersize;
+    uint32_t databuffersize;
 
     /* header values of current loaded message */
     DltStorageHeader *storageheader;        /**< pointer to storage header of current loaded header */
@@ -773,14 +782,15 @@ typedef struct
     char *buf;                /**< pointer to position within receiver buffer */
     char *backup_buf;         /** pointer to the buffer with partial messages if any **/
     int fd;                   /**< connection handle */
-    int32_t buffersize;       /**< size of receiver buffer */
+    DltReceiverType type;     /**< type of connection handle */
+    uint32_t buffersize;      /**< size of receiver buffer */
     struct sockaddr_in addr;  /**< socket address information */
 } DltReceiver;
 
 typedef struct
 {
     unsigned char *shm; /* pointer to beginning of shared memory */
-    int size;           /* size of data area in shared memory */
+    unsigned int size;  /* size of data area in shared memory */
     unsigned char *mem; /* pointer to data area in shared memory */
 
     uint32_t min_size;     /**< Minimum size of buffer */
@@ -859,6 +869,17 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
  * @return negative value if there was an error
  */
 DltReturnValue dlt_print_char_string(char **text, int textlength, uint8_t *ptr, int size);
+
+/**
+ * Helper function to determine a bounded length of a string.
+ * This function returns zero if @a str is a null pointer,
+ * and it returns @a maxsize if the null character was not found in the first @a maxsize bytes of @a str.
+ * This is a re-implementation of C11's strnlen_s, which we cannot yet assume to be available.
+ * @param text pointer to string whose length is to be determined
+ * @param maxsize maximal considered length of @a str
+ * @return the bounded length of the string
+ */
+PURE_FUNCTION size_t dlt_strnlen_s(const char* str, size_t maxsize);
 
 /**
  * Helper function to print an id.
@@ -964,7 +985,7 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, int verbose);
+DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose);
 /**
  * Print Header into an ASCII string, selective.
  * @param msg pointer to structure of organising access to DLT messages
@@ -974,7 +995,7 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, int textlength, i
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlength, int flags, int verbose);
+DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose);
 /**
  * Print Payload into an ASCII string.
  * @param msg pointer to structure of organising access to DLT messages
@@ -984,7 +1005,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, int textlen
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_payload(DltMessage *msg, char *text, int textlength, int type, int verbose);
+DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlength, int type, int verbose);
 /**
  * Check if message is filtered or not. All filters are applied (logical OR).
  * @param msg pointer to structure of organising access to DLT messages
@@ -1140,7 +1161,7 @@ DltReturnValue dlt_file_free(DltFile *file, int verbose);
  * @param filename the filename
  */
 void dlt_log_set_filename(const char *filename);
-#ifndef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * Set FIFO base direction
  * @param pipe_dir the pipe direction
@@ -1152,6 +1173,13 @@ void dlt_log_set_fifo_basedir(const char *pipe_dir);
  * @param level the level
  */
 void dlt_log_set_level(int level);
+
+/**
+ * Set whether to print "name" and "unit" attributes in console output
+ * @param state  true = with attributes, false = without attributes
+ */
+void dlt_print_with_attributes(bool state);
+
 /**
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
@@ -1162,7 +1190,7 @@ void dlt_log_init(int mode);
  * @param format format string for message
  * @return negative value if there was an error or the total number of characters written is returned on success
  */
-int dlt_user_printf(const char *format, ...);
+int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1,2);
 /**
  * Log ASCII string with null-termination to (external) logging facility
  * @param prio priority (see syslog() call)
@@ -1194,10 +1222,11 @@ void dlt_log_free(void);
  * Initialising a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @param _fd handle to file/socket/fifo, fram which the data should be received
+ * @param type specify whether received data is from socket or file/fifo
  * @param _buffersize size of data buffer for storing the received data
  * @return negative value if there was an error
  */
-DltReturnValue dlt_receiver_init(DltReceiver *receiver, int _fd, int _buffersize);
+DltReturnValue dlt_receiver_init(DltReceiver *receiver, int _fd, DltReceiverType type, int _buffersize);
 /**
  * De-Initialize a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
@@ -1208,23 +1237,23 @@ DltReturnValue dlt_receiver_free(DltReceiver *receiver);
  * Initialising a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @param fd handle to file/socket/fifo, fram which the data should be received
+ * @param type specify whether received data is from socket or file/fifo
  * @param buffer data buffer for storing the received data
  * @return negative value if there was an error and zero if success
  */
-DltReturnValue dlt_receiver_init_unix_socket(DltReceiver *receiver, int fd, char **buffer);
+DltReturnValue dlt_receiver_init_global_buffer(DltReceiver *receiver, int fd, DltReceiverType type, char **buffer);
 /**
  * De-Initialize a dlt receiver structure
  * @param receiver pointer to dlt receiver structure
  * @return negative value if there was an error and zero if success
  */
-DltReturnValue dlt_receiver_free_unix_socket(DltReceiver *receiver);
+DltReturnValue dlt_receiver_free_global_buffer(DltReceiver *receiver);
 /**
  * Receive data from socket or file/fifo using the dlt receiver structure
  * @param receiver pointer to dlt receiver structure
- * @param from_src specify whether received data is from socket or file/fifo
  * @return number of received bytes or negative value if there was an error
  */
-int dlt_receiver_receive(DltReceiver *receiver, DltReceiverType from_src);
+int dlt_receiver_receive(DltReceiver *receiver);
 /**
  * Remove a specific size of bytes from the received data
  * @param receiver pointer to dlt receiver structure
@@ -1272,7 +1301,7 @@ DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
  * @param required size
  * @return negative value if required size is not sufficient
  * */
-DltReturnValue dlt_check_rcv_data_size(int received, int required);
+DltReturnValue dlt_check_rcv_data_size(uint32_t received, uint32_t required);
 
 /**
  * Initialise static ringbuffer with a size of size.
@@ -1544,7 +1573,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                                           uint8_t **ptr,
                                           int32_t *datalength,
                                           char *text,
-                                          int textlength,
+                                          size_t textlength,
                                           int byteLength,
                                           int verbose);
 
@@ -1599,13 +1628,13 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
  */
 void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
 
-#   ifndef DLT_USE_UNIX_SOCKET_IPC
 /**
- * Create the specified path, recursive if necessary
- * behaves like calling mkdir -p \<dir\> on the console
+ * Helper function to execute the execvp function in a new child process.
+ * @param filename file path to store the stdout of command (NULL if not required)
+ * @param command execution command followed by arguments with NULL-termination
+ * @return negative value if there was an error
  */
-int dlt_mkdir_recursive(const char *dir);
-#   endif
+int dlt_execute_command(char *filename, char *command, ...);
 
 #   ifdef __cplusplus
 }

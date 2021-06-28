@@ -288,7 +288,7 @@ void stress2(void)
 
     printf("Starting stress test2... \n");
 
-    srand(time(NULL));
+    srand((unsigned int) time(NULL));
 
     printf("* Creating %d Threads, each of them registers one context,\n", STRESS2_MAX_NUM_THREADS);
     printf("  sending one log message, then unregisters the context\n");
@@ -350,8 +350,8 @@ void stress3(void)
     printf("* Logging raw data, up to a size of %d\n", STRESS3_MAX_NUM_MESSAGES);
 
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
-        buffer[num] = num;
-        DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer, num));
+        buffer[num] = (char) num;
+        DLT_LOG(context_stress3, DLT_LOG_INFO, DLT_INT(num), DLT_RAW(buffer,(uint16_t) num));
         ts.tv_sec = 0;
         ts.tv_nsec = 10000 * 1000;
         nanosleep(&ts, NULL);

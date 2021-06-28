@@ -110,16 +110,16 @@ typedef struct
     int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
     int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
-    int offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
+    uint32_t offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
     char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
     int offlineLogstorageTimestamp;  /**< (int) Append timestamp in offline logstorage filename */
     char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
     unsigned int offlineLogstorageCacheSize; /**< Max cache size offline logstorage cache */
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
-#else
+#else /* DLT_DAEMON_USE_FIFO_IPC */
     char userPipesDir[DLT_PATH_MAX]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
     char daemonFifoName[DLT_PATH_MAX]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
     char daemonFifoGroup[DLT_PATH_MAX]; /**< (String: Group name) Owner group of local fifo (Default: Primary Group) */
@@ -135,7 +135,8 @@ typedef struct
     int contextLogLevel;  /**< (int) log level sent to context if registered with default log-level or if enforced*/
     int contextTraceStatus;   /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
     int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
-    DltBindAddress_t *ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
+    DltBindAddress_t* ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
+    int injectionMode;  /**< (Boolean) Injection mode */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
@@ -168,8 +169,10 @@ typedef struct
 
 typedef struct
 {
-    int timer_fd;
     unsigned long long wakeups_missed;
+    int period_sec;
+    int starts_in;
+    int timer_id;
 } DltDaemonPeriodicData;
 
 typedef struct
@@ -196,6 +199,10 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
 void dlt_daemon_daemonize(int verbose);
 void dlt_daemon_exit_trigger();
 void dlt_daemon_signal_handler(int sig);
+#ifdef __QNX__
+void dlt_daemon_cleanup_timers();
+void close_pipes(int fds[2]);
+#endif
 int dlt_daemon_process_client_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_client_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *revc, int verbose);
 int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
@@ -208,7 +215,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_l
 int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
-#ifdef DLT_USE_UNIX_SOCKET_IPC
+#if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
 int dlt_daemon_process_app_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 #endif
 int dlt_daemon_process_control_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv,

@@ -61,8 +61,8 @@ applications using the DLT user library.
 The DLT daemon is a standalone application which is running as the center of
 management and this is implemented as a single-thread process. The DLT daemon
 communicates with the DLT clients over TCP/IP connections or over a serial line
-with the applications using the DLT user library over named pipes (FIFOs) or
-UNIX_SOCKET based on compile time configuration.
+with the applications using the DLT user library over named pipes (FIFOs),
+UNIX sockets or VSOCK sockets based on compile time configuration.
 
 The message format is specified in the DLT AUTOSAR Standard. More details
 concerning the exchanged user messages and their content can be found in
@@ -94,6 +94,8 @@ mode, it uses the syslog daemon for log messages of the DLT daemon application.
   - Open DLT output file, if specified
 - After phase 1, the daemon initializes the connection handling:
   - Delete, create and open its own named FIFO /tmp/dlt or UNIX_SOCKET
+  - If VSOCK support is enabled in the daemon, open, bind and listen to VSOCK
+  socket for incoming application connections.
   - Open, bind and listen to TCP socket for incoming connections
   - Setup and open serial device, if specified
 - Then the daemon enters initialization phase 2:
@@ -126,8 +128,8 @@ and possibly on the serial device, via poll() call.
     - Create a new TCP connection
     - If the newly created connection is the first TCP connection, send all log
     messages already stored in ring buffer to DLT client.
-  - Event from incoming named pipe (FIFO) or Unix socket (from DLT user library
-  to DLT daemon):
+  - Event from incoming named pipe (FIFO) or UNIX socket and, if enabled, VSOCK
+  socket (from DLT user library to DLT daemon):
     - Use dlt receiver to read data
     - As long as there are DLT messages available in received data, the handle
     user messages type can be found at src/shared/dlt_user_shared_cfg.h
@@ -213,8 +215,8 @@ contains one entry for each context:
 - Setup signal handler and atexit handler
 - Ignore all pipe signals
 - Create and open own named pipe (with the name /tmp/dlt<PID>, where <PID> is the
-process id of the application using the DLT user library) or Unix socket IPC to
-the DLT daemon
+process id of the application using the DLT user library) or UNIX/VSOCK socket IPC
+to the DLT daemon
 - Open local file for storage, if specified
 - Initialize receiver object
 - Start housekeeper thread for receiving messages
@@ -331,6 +333,12 @@ During sending of a network trace message, the following things occur:
 During registration of a callback function for an injection message, then following
 steps are executed:
 
+  - Check if the environment variable DLT\_DISABLE\_INJECTION\_MSG\_AT\_USER is set.
+    - If yes:
+      - libdlt will ignore all data/messages from dlt-daemon, including:
+      loglevel change, custom injection messages ...
+    - If no (default):
+      - libdlt will handle all data/messages from dlt-daemon as normal.
   - For the specified context, check if service id is already in the table of the
   registered callbacks (this table is dynamically growing in steps of one entry).
     - If yes:
@@ -342,10 +350,18 @@ steps are executed:
       - Store service id in callback table
       - Store function pointer in callback table
 
+#### Android: Thread termination
+
+On Android, `pthread_cancel` is not available in bionic. So current
+implementation uses *SIGUSR1* and `pthread_kill` to terminate housekeeper
+thread. Due to this, application which is linked to DLT library should not
+define *SIGUSR1*.
+
 ### Communication between DLT daemon and DLT user library
 
 The communication mechanism (IPC) used between DLT daemon and DLT user library
-are named pipes (FIFOs or UNIX_SOCKETS, based on compile time configuration).
+are named pipes (FIFOs), UNIX sockets or VSOCK sockets, based on compile time
+configuration).
 
 During the startup of the DLT daemon, the DLT daemon creates and opens the IPC
 (FIFOs or UNIX_SOCKET) on the configured path called /tmp/dlt. If a DLT user
@@ -378,6 +394,16 @@ PID (getpid()), the DLT Daemon has to deal with multiple applications registerin
 itself with the same PID, which is impossible. To solve this problem, the
 UNIX_SOCKETS based communication is used. The UNIX_SOCKETS IPC is also supported
 in the Non-linux platforms (eg: QNX).
+
+If the daemon is built with VSOCK socket support, it can also receive log
+messages from processes running in virtual machines. The communication mechanism
+between the daemon and the DLT user library on the host is still FIFOs or UNIX
+sockets. But the DLT user library for the system running in the virtual machine
+can be built to use VSOCK sockets for sending log messages to the daemon. See
+"man vsock" for more information about VSOCK sockets. This is an alternative to
+using a [multinode](dlt_multinode.md) setup for receiving DLT log messages from
+processes in a virtualized environment. No passive daemon(s) are required and it
+works without having a network configured between the guest and the host.
 
 ### Place of message creation
 
@@ -746,7 +772,7 @@ The shared directory contains the following files:
 | --------- | ----------- |
 | dlt_common.c | Common helper functions, such as: Print functions for DLT messages, Functions for handling DLT Ids, Filter functions, DLT message handling functions, Functions for handling DLT files, DLT receiver functions, Log handling, Ringbuffer functions, Setting and checking of storage header |
 | dlt_common_cfg.h | Compile time configuration for dlt_common.c |
-| dlt_user_shared.c | Shared functions, required by the DLT daemon and the DLT user library, such as: Setting and checking the user header, Sending DLT messages over named pipes (FIFOs) or UNIX_SOCKET |
+| dlt_user_shared.c | Shared functions, required by the DLT daemon and the DLT user library, such as: Setting and checking the user header, Sending DLT messages over named pipes (FIFOs) or UNIX/VSOCK sockets |
 | dlt_user_shared.h | Header file for dlt_user_shared.c |
 | dlt_user_shared_cfg.h | Compile time configuration for dlt_user_shared.c |
 

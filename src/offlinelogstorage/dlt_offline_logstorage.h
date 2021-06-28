@@ -143,6 +143,16 @@ typedef struct DltLogStorageFileList
     struct DltLogStorageFileList *next; /* Pointer to next */
 } DltLogStorageFileList;
 
+typedef struct DltNewestFileName DltNewestFileName;
+
+struct DltNewestFileName
+{
+    char *file_name;    /* The unique name of file in whole a dlt_logstorage.conf */
+    char *newest_file;  /* The real newest name of file which is associated with filename.*/
+    unsigned int wrap_id;   /* Identifier of wrap around happened for this file_name */
+    DltNewestFileName *next; /* Pointer to next */
+};
+
 typedef struct DltLogStorageFilterConfig DltLogStorageFilterConfig;
 
 struct DltLogStorageFilterConfig
@@ -154,6 +164,7 @@ struct DltLogStorageFilterConfig
     int reset_log_level;            /* reset Log level to be sent on disconnect */
     char *file_name;                /* File name for log storage configured for filter */
     char *working_file_name;        /* Current open log file name */
+    unsigned int wrap_id;           /* Identifier of wrap around happened for this filter */
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
@@ -163,7 +174,7 @@ struct DltLogStorageFilterConfig
                                   DltLogStorageUserConfig *file_config,
                                   char *dev_path,
                                   int log_msg_size,
-                                  char *newest_file);
+                                  DltNewestFileName *newest_file_info);
     int (*dlt_logstorage_write)(DltLogStorageFilterConfig *config,
                                 DltLogStorageUserConfig *file_config,
                                 char *dev_path,
@@ -196,15 +207,6 @@ struct DltLogStorageFilterList
     DltLogStorageFilterList *next;    /* Pointer to next */
 };
 
-typedef struct DltNewestFileName DltNewestFileName;
-
-struct DltNewestFileName
-{
-    char *file_name;    /* The unique name of file in whole a dlt_logstorage.conf */
-    char *newest_file;  /* The real newest name of file which is associated with filename.*/
-    DltNewestFileName *next; /* Pointer to next */
-};
-
 typedef struct
 {
     DltLogStorageFilterList *config_list; /* List of all filters */
@@ -215,6 +217,7 @@ typedef struct
     unsigned int config_status;        /* Status of configuration */
     int write_errors;                  /* number of write errors */
     DltNewestFileName *newest_file_list; /* List of newest file name */
+    int maintain_logstorage_loglevel;  /* Permission to maintain the logstorage loglevel*/
 } DltLogStorage;
 
 typedef struct {
@@ -222,6 +225,11 @@ typedef struct {
     int (*func)(DltLogStorage *handle, char *value); /* conf handler */
     int is_opt; /* If configuration is optional or not */
 } DltLogstorageGeneralConf;
+
+typedef enum {
+    DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL = 1,
+    DLT_LOGSTORAGE_GENERAL_CONF_COUNT
+} DltLogstorageGeneralConfType;
 
 typedef struct {
     char *key; /* Configuration key */

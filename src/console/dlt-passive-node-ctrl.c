@@ -344,7 +344,7 @@ static int parse_args(int argc, char *argv[])
             state = (int)strtol(optarg, NULL, 10);
 
             if ((state == DLT_NODE_CONNECT) || (state == DLT_NODE_DISCONNECT)) {
-                set_connection_state(state);
+                set_connection_state((unsigned int) state);
                 set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECT);
             }
             else {
@@ -363,7 +363,7 @@ static int parse_args(int argc, char *argv[])
             set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS);
             break;
         case 't':
-            set_timeout(strtol(optarg, NULL, 10));
+            set_timeout((int) strtol(optarg, NULL, 10));
             break;
         case 'v':
             set_verbosity(1);

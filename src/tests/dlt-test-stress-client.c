@@ -447,7 +447,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         length_tmp = 0; /* the macro can set this variable to -1 */
 
                         ptr = message->databuffer;
-                        datalength = message->datasize;
+                        datalength = (int32_t) message->datasize;
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
@@ -520,7 +520,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = message->datasize;
 
-            bytes_written = writev(dltdata->ohandle, iov, 2);
+            bytes_written = (int) writev(dltdata->ohandle, iov, 2);
 
             if (0 > bytes_written) {
                 printf("dlt_testclient_message_callback, error when: writev(dltdata->ohandle, iov, 2) \n");

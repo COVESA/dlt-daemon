@@ -88,7 +88,7 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
-static long local_timeout;
+static int local_timeout;
 
 int get_verbosity(void)
 {
@@ -130,12 +130,12 @@ void set_ecuid(char *ecuid)
     }
 }
 
-long get_timeout(void)
+int get_timeout(void)
 {
     return local_timeout;
 }
 
-void set_timeout(long t)
+void set_timeout(int t)
 {
     local_timeout = DLT_CTRL_TIMEOUT;
 
@@ -251,16 +251,16 @@ static int dlt_control_send_message_to_socket(int sock, DltMessage *msg)
  */
 static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
 {
-    int shift = 0;
+    uint32_t shift = 0;
 
     pr_verbose("Preparing extra headers.\n");
 
     if (!msg || !header)
         return -1;
 
-    shift = sizeof(DltStorageHeader) +
+    shift = (uint32_t) (sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp);
+        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
     /* Set header extra parameters */
     dlt_set_id(msg->headerextra.ecu, get_ecuid());
@@ -326,12 +326,12 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     msg->standardheader->mcnt = 0;
 
     /* prepare length information */
-    msg->headersize = sizeof(DltStorageHeader) +
+    msg->headersize = (uint32_t) (sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
         sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp);
+        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
-    len = msg->headersize - sizeof(DltStorageHeader) + msg->datasize;
+    len = (uint32_t) (msg->headersize - sizeof(DltStorageHeader) + msg->datasize);
 
     if (len > UINT16_MAX) {
         pr_error("Message header is too long.\n");
@@ -377,7 +377,7 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     }
 
     /* prepare payload of data */
-    msg->databuffersize = msg->datasize = data->size;
+    msg->databuffersize = msg->datasize = (uint32_t) data->size;
 
     /* Allocate memory for Dlt Message's buffer */
     msg->databuffer = (uint8_t *)calloc(1, data->size);
@@ -515,7 +515,7 @@ static int dlt_control_callback(DltMessage *message, void *data)
     pthread_mutex_lock(&answer_lock);
     callback_return = response_analyzer_cb(text,
                                            message->databuffer,
-                                           message->datasize);
+                                           (int) message->datasize);
     pthread_cond_signal(&answer_cond);
     pthread_mutex_unlock(&answer_lock);
 
