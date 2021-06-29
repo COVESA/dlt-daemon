@@ -132,19 +132,19 @@ void init_configuration(DltSystemConfiguration *config)
     int i = 0;
 
     /* Common */
-    config->ApplicationId = "SYS";
+    strncpy(config->ApplicationId, "SYS", DLT_ID_SIZE);
 
     /* Shell */
     config->Shell.Enable = 0;
 
     /* Syslog */
     config->Syslog.Enable = 0;
-    config->Syslog.ContextId = "SYSL";
+    strncpy(config->Syslog.ContextId, "SYSL", DLT_ID_SIZE);
     config->Syslog.Port = 47111;
 
     /* Journal */
     config->Journal.Enable = 0;
-    config->Journal.ContextId = "JOUR";
+    strncpy(config->Journal.ContextId, "JOUR", DLT_ID_SIZE);
     config->Journal.CurrentBoot = 1;
     config->Journal.Follow = 0;
     config->Journal.MapLogLevels = 1;
@@ -152,7 +152,7 @@ void init_configuration(DltSystemConfiguration *config)
 
     /* File transfer */
     config->Filetransfer.Enable = 0;
-    config->Filetransfer.ContextId = "FILE";
+    strncpy(config->Filetransfer.ContextId, "FILE", DLT_ID_SIZE);
     config->Filetransfer.TimeStartup = 30;
     config->Filetransfer.TimeoutBetweenLogs = 10;
     config->Filetransfer.Count = 0;
@@ -168,7 +168,7 @@ void init_configuration(DltSystemConfiguration *config)
     config->LogFile.Count = 0;
 
     for (i = 0; i < DLT_SYSTEM_LOG_FILE_MAX; i++) {
-        config->LogFile.ContextId[i] = NULL;
+        strncpy(config->LogFile.ContextId[i], "\0", DLT_ID_SIZE);
         config->LogFile.Filename[i] = NULL;
         config->LogFile.Mode[i] = 0;
         config->LogFile.TimeDelay[i] = 0;
@@ -176,7 +176,7 @@ void init_configuration(DltSystemConfiguration *config)
 
     /* Log process */
     config->LogProcesses.Enable = 0;
-    config->LogProcesses.ContextId = "PROC";
+    strncpy(config->LogProcesses.ContextId, "PROC", DLT_ID_SIZE);
     config->LogProcesses.Count = 0;
 
     for (i = 0; i < DLT_SYSTEM_LOG_PROCESSES_MAX; i++) {
@@ -239,9 +239,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
         if (token[0] && value[0]) {
             /* Common */
             if (strcmp(token, "ApplicationId") == 0) {
-                config->ApplicationId = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->ApplicationId);
-                strcpy(config->ApplicationId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->ApplicationId, value, DLT_ID_SIZE);
             }
 
             /* Shell */
@@ -257,9 +255,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "SyslogContextId") == 0)
             {
-                config->Syslog.ContextId = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->Syslog.ContextId);
-                strcpy(config->Syslog.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->Syslog.ContextId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "SyslogPort") == 0)
             {
@@ -273,9 +269,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "JournalContextId") == 0)
             {
-                config->Journal.ContextId = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->Journal.ContextId);
-                strcpy(config->Journal.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->Journal.ContextId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "JournalCurrentBoot") == 0)
             {
@@ -301,9 +295,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "FiletransferContextId") == 0)
             {
-                config->Filetransfer.ContextId = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->Filetransfer.ContextId);
-                strcpy(config->Filetransfer.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->Filetransfer.ContextId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "FiletransferTimeStartup") == 0)
             {
@@ -366,9 +358,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "LogFileContextId") == 0)
             {
-                config->LogFile.ContextId[config->LogFile.Count] = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->LogFile.ContextId[config->LogFile.Count]);
-                strcpy(config->LogFile.ContextId[config->LogFile.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->LogFile.ContextId[config->LogFile.Count], value, DLT_ID_SIZE);
 
                 if (config->LogFile.Count < (DLT_SYSTEM_LOG_FILE_MAX - 1)) {
                     config->LogFile.Count++;
@@ -389,9 +379,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "LogProcessesContextId") == 0)
             {
-                config->LogProcesses.ContextId = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->LogProcesses.ContextId);
-                strcpy(config->LogProcesses.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strncpy(config->LogProcesses.ContextId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "LogProcessName") == 0)
             {
@@ -432,4 +420,54 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
     free(token);
     free(line);
     return ret;
+}
+
+void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options)
+{
+    /* command line options */
+    if ((options->ConfigurationFileName) != NULL)
+    {
+        free(options->ConfigurationFileName);
+        options->ConfigurationFileName = NULL;
+    }
+
+    /* File transfer */
+    if ((config->Filetransfer.TempDir) != NULL)
+    {
+        free(config->Filetransfer.TempDir);
+        config->Filetransfer.TempDir = NULL;
+    }
+    for(int i = 0 ; i < DLT_SYSTEM_LOG_DIRS_MAX ; i++)
+    {
+        if ((config->Filetransfer.Directory[i]) != NULL)
+        {
+            free(config->Filetransfer.Directory[i]);
+            config->Filetransfer.Directory[i] = NULL;
+        }
+    }
+
+    /* Log files */
+    for(int i = 0 ; i < DLT_SYSTEM_LOG_FILE_MAX ; i++)
+    {
+        if ((config->LogFile.Filename[i]) != NULL)
+        {
+            free(config->LogFile.Filename[i]);
+            config->LogFile.Filename[i] = NULL;
+        }
+    }
+
+    /* Log Processes */
+    for(int i = 0 ; i < DLT_SYSTEM_LOG_PROCESSES_MAX ; i++)
+    {
+        if ((config->LogProcesses.Filename[i]) != NULL)
+        {
+            free(config->LogProcesses.Filename[i]);
+            config->LogProcesses.Filename[i] = NULL;
+        }
+        if ((config->LogProcesses.Name[i]) != NULL)
+        {
+            free(config->LogProcesses.Name[i]);
+            config->LogProcesses.Name[i] = NULL;
+        }
+    }
 }

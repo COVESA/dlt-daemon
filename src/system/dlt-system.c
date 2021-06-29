@@ -49,6 +49,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
 #   include "sd-daemon.h"
@@ -114,9 +115,10 @@ int main(int argc, char *argv[])
 
     DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Initializing all processes and starting poll for events."));
 
-
     start_dlt_system_processes(&config);
-    return 0;
+
+    cleanup_config(&config, &options);
+    exit(0);
 }
 
 
