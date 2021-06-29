@@ -308,7 +308,6 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
     }
 
     cleanup_processes(pollfd, j, config);
-    exit(0);
 }
 
 void dlt_system_signal_handler(int sig)

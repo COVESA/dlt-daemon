@@ -115,14 +115,14 @@ typedef struct {
 /* Configuration syslog options */
 typedef struct {
     int Enable;
-    char *ContextId;
+    char ContextId[DLT_ID_SIZE];
     int Port;
 } SyslogOptions;
 
 /* Configuration journal options */
 typedef struct {
     int Enable;
-    char *ContextId;
+    char ContextId[DLT_ID_SIZE];
     int CurrentBoot;
     int Follow;
     int MapLogLevels;
@@ -131,7 +131,7 @@ typedef struct {
 
 typedef struct {
     int Enable;
-    char *ContextId;
+    char ContextId[DLT_ID_SIZE];
     int TimeStartup;
     int TimeoutBetweenLogs;
     char *TempDir;
@@ -153,7 +153,7 @@ typedef struct {
 
     /* Variable number of files to transfer */
     int Count;
-    char *ContextId[DLT_SYSTEM_LOG_FILE_MAX];
+    char ContextId[DLT_SYSTEM_LOG_FILE_MAX][DLT_ID_SIZE];
     char *Filename[DLT_SYSTEM_LOG_FILE_MAX];
     int Mode[DLT_SYSTEM_LOG_FILE_MAX];
     int TimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
@@ -161,7 +161,7 @@ typedef struct {
 
 typedef struct {
     int Enable;
-    char *ContextId;
+    char ContextId[DLT_ID_SIZE];
 
     /* Variable number of processes */
     int Count;
@@ -172,7 +172,7 @@ typedef struct {
 } LogProcessOptions;
 
 typedef struct {
-    char *ApplicationId;
+    char ApplicationId[DLT_ID_SIZE];
     ShellOptions Shell;
     SyslogOptions Syslog;
     JournalOptions Journal;
@@ -188,6 +188,7 @@ typedef struct {
 /* In dlt-system-options.c */
 int read_command_line(DltSystemCliOptions *options, int argc, char *argv[]);
 int read_configuration_file(DltSystemConfiguration *config, char *file_name);
+void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options);
 
 /* For dlt-process-handling.c */
 int daemonize();
