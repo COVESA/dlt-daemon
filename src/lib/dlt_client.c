@@ -419,8 +419,10 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
     if (client == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (client->sock != -1)
+    if (client->sock != -1) {
+        dlt_vlog(LOG_INFO, "Closing socket with fd: %d\n", client->sock);
         close(client->sock);
+    }
 
     if (dlt_receiver_free(&(client->receiver)) != DLT_RETURN_OK) {
         dlt_vlog(LOG_WARNING, "%s: Failed to free receiver\n", __func__);
