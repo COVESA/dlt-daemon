@@ -39,6 +39,7 @@ WITH\_DLT\_CONSOLE                | ON             | Set to ON to build src/cons
 WITH\_DLT\_SYSTEM                 | OFF            | Set to ON to build src/system binaries
 WITH\_DLT\_LOGSTORAGE\_CTRL\_UDEV | OFF            | PROTOTYPE! Set to ON to build
 WITH\_DLT\_KPI                    | OFF            | Set to ON to build src/kpi binaries
+WITH\_EXTENDED\_FILTERING         | OFF            | Set to OFF to build without extended filtering. Using json filter files is only supported for Linux based system with json-c and QNX.
 
 ## Linux OS Integration Options
 

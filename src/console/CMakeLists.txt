@@ -14,6 +14,9 @@
 #######
 
 set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
+add_library(dlt_control_common_lib STATIC ${dlt_control_common_SRCS})
+target_link_libraries(dlt_control_common_lib dlt ${DLT_JSON_LIBRARY})
+
 add_subdirectory(logstorage)
 
 set(dlt-sortbytimestamp_SRCS dlt-sortbytimestamp.c)
@@ -30,7 +33,7 @@ foreach(target
         dlt-passive-node-ctrl
         )
     add_executable(${target} ${${target}_SRCS})
-    target_link_libraries(${target} dlt)
+    target_link_libraries(${target} dlt dlt_control_common_lib)
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
 
     install(TARGETS ${target}

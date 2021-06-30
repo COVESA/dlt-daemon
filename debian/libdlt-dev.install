@@ -1,0 +1,3 @@
+INSTALL_PREFIX_PATH/include/dlt/*
+INSTALL_PREFIX_PATH/lib/*/libdlt.so
+INSTALL_PREFIX_PATH/lib/*/pkgconfig/automotive-dlt.pc

@@ -1150,6 +1150,9 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP, dlt_daemon_signal_handler);  /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT, dlt_daemon_signal_handler);
+#ifdef __QNX__
+    signal(SIGUSR1, dlt_daemon_signal_handler); /* for timer threads */
+#endif
 
     return DLT_RETURN_OK;
 }
@@ -1439,7 +1442,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 {
     int fd = -1;
     int mask = 0;
-    DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1447,6 +1449,8 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_vlog(LOG_ERR, "%s: Invalid function parameters\n", __func__);
         return -1;
     }
+
+    DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     /* create and open socket to receive incoming connections from user application
@@ -1705,6 +1709,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 void dlt_daemon_exit_trigger()
 {
+    /* stop event loop */
+    g_exit = -1;
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     char tmp[DLT_PATH_MAX] = { 0 };
@@ -1723,8 +1729,6 @@ void dlt_daemon_exit_trigger()
     dlt_daemon_cleanup_timers();
 #endif
 
-    /* stop event loop */
-    g_exit = -1;
 }
 
 void dlt_daemon_signal_handler(int sig)
@@ -1732,22 +1736,22 @@ void dlt_daemon_signal_handler(int sig)
     g_signo = sig;
 
     switch (sig) {
-    case SIGHUP:
-    case SIGTERM:
-    case SIGINT:
-    case SIGQUIT:
-    {
-        /* finalize the server */
-        dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
-                 strsignal(sig));
-        dlt_daemon_exit_trigger();
-        break;
-    }
-    default:
-    {
-        /* This case should never happen! */
-        break;
-    }
+        case SIGHUP:
+        case SIGTERM:
+        case SIGINT:
+        case SIGQUIT:
+        {
+            /* finalize the server */
+            dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
+                     strsignal(sig));
+            dlt_daemon_exit_trigger();
+            break;
+        }
+        default:
+        {
+            /* This case should never happen! */
+            break;
+        }
     } /* switch */
 
 } /* dlt_daemon_signal_handler() */
@@ -3324,21 +3328,20 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 #ifdef __QNX__
 static void *timer_thread(void *data)
 {
-    sigset_t set;
-    sigset_t pset;
     int pexit = 0;
-
-    /*
-     * In timer thread, it is only expecting to receive SIGUSR1
-     */
-    sigemptyset(&set);
-    sigaddset(&set, SIGUSR1);
-    sigprocmask(SIG_BLOCK, &set, NULL);
+    unsigned int sleep_ret = 0;
 
     DltDaemonPeriodicData* timer_data = (DltDaemonPeriodicData*) data;
 
     /* Timer will start in starts_in sec*/
-    sleep(timer_data->starts_in);
+    if ((sleep_ret = sleep(timer_data->starts_in))) {
+        dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for starting!"
+                "Stop thread of timer [%d]\n",
+                sleep_ret, timer_data->timer_id);
+         close_pipes(dlt_timer_pipes[timer_data->timer_id]);
+         return NULL;
+    }
+
     while (1) {
         if (0 > write(dlt_timer_pipes[timer_data->timer_id][1], "1", 1)) {
             dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
@@ -3346,22 +3349,21 @@ static void *timer_thread(void *data)
             pexit = 1;
         }
 
-        if (sigpending(&pset)) {
-            dlt_log(LOG_ERR, "sigpending error!\n");
-            pexit = 1;
-        }
-
-        if (sigismember(&pset, SIGUSR1)) {
-            dlt_log(LOG_NOTICE, "Received SIGUSR1! Stop thread\n");
-            pexit = 1;
-        }
-
-        if (pexit) {
+        if (pexit || g_exit) {
+            dlt_vlog(LOG_NOTICE, "Received signal!"
+                    "Stop thread of timer [%d]\n",
+                    timer_data->timer_id);
             close_pipes(dlt_timer_pipes[timer_data->timer_id]);
             return NULL;
         }
 
-        sleep(timer_data->period_sec);
+        if ((sleep_ret = sleep(timer_data->period_sec))) {
+            dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for interval!"
+                    "Stop thread of timer [%d]\n",
+                    sleep_ret, timer_data->timer_id);
+             close_pipes(dlt_timer_pipes[timer_data->timer_id]);
+             return NULL;
+        }
     }
 }
 #endif

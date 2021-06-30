@@ -1,0 +1,8 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: dlt-daemon
+Source: https://github.com/GENIVI/dlt-daemon
+
+Files: *
+Copyright:
+	BMW AG et al
+License: MPL-2.0+

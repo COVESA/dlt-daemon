@@ -1,0 +1,59 @@
+Source: dlt-daemon
+Section: utils
+Priority: extra
+Maintainer: Advanced Driver Information Technology
+Build-Depends: debhelper (>= 9), cmake,
+ libdbus-1-dev, pkg-config, zlib1g-dev, libsystemd-dev
+
+
+Package: dlt-daemon
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Diagnostic Log and Trace daemon
+ This component provides a standardised log and trace interface, based
+ on the standardised protocol specified in the AUTOSAR standard 4.0 DLT.
+ This component can be used by GENIVI components and other applications
+ as logging facility providing
+ .
+ The DLT daemon is the central component in GENIVI, which gathers all
+ logs and traces from the DLT user applications. The logs and traces
+ are stored optionally directly in a file in the ECU. The DLT daemon
+ forwards all logs and traces to a connected DLT client.
+ The DLT client can send control messages to the daemon, e.g. to set
+ individual log levels of applications and contexts or get the list of
+ applications and contexts registered in the DLT daemon.
+
+
+Package: libdlt2
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Diagnostic Log and Trace daemon - Library
+ DLT library is used by apps that need to log to a DLT daemon directly and by
+ apps that want to read logs from DLT daemon.
+
+
+Package: libdlt-dev
+Section: libdevel
+Architecture: any
+Depends: libdlt2
+Description: Diagnostic Log and Trace daemon - Headers
+ DLT library is used by apps that need to log to a DLT daemon directly and by
+ apps that want to read logs from DLT daemon. This package provides development
+ files.
+
+
+Package: dlt-tools
+Architecture: any
+Depends: libdlt2, ${shlibs:Depends}, ${misc:Depends}
+Description: Diagnostic Log and Trace daemon - Tools
+ This package includes tools to connect to and experiment with DLT daemon.
+ Most usefully this includes 'dlt-receive' to connect to a (remote) DLT server
+ and save all logs to a DLT file and 'dlt-system' that injects system logs
+ into the DLT server.
+
+
+Package: dlt-examples
+Architecture: any
+Depends: libdlt2, ${shlibs:Depends}, ${misc:Depends}
+Description: Diagnostic Log and Trace daemon - Examples
+ This package includes example binaries to demonstrate several use cases.

@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-receive** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-o** filename\] \[**-c** limit\] \[**-v**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-f** filterfile\] \[**-p** port\] hostname/serial_device_name
+**dlt-receive** \[**-h**\] \[**-a**\] \[**-x**\] \[**-m**\] \[**-s**\] \[**-o** filename\] \[**-c** limit\] \[**-v**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-f** filterfile\] \[**-j** filterfile\] \[**-p** port\] hostname/serial_device_name
 
 # DESCRIPTION
 
@@ -60,7 +60,11 @@ Receive DLT messages from DLT daemon and print or store the messages.
 
 -f
 
-:   Enable filtering of messages.
+:   Enable filtering of messages. Takes a space separated filter file (see [Space separated filter file](#Space-separated-filter-file)).
+
+-j
+
+:   Enable extended filtering of messages. Takes a json filter file ([Json filter file](#Json-filter-file)).
 
 -p
 
@@ -79,6 +83,41 @@ Store received message headers from a dlt-daemon to a log file called log.dlt an
 Store incoming messages in file(s) and restrict file sizes to 1 megabyte. If limit is reached, log.dlt will be renamed into log.0.dlt, log.1.dlt, ... No files will be overwritten in this mode::
     **dlt-receive -o log.dlt -c 1M localhost**
 
+## Space separated filter file
+File that defines multiple filters. Can be used as argument for `-f` option. With this it's only possible to filter messages depending on their Application ID and/or Context ID. The syntax is: first AppID and optional a CtxID behind it, with a space in between. Each line defines a filter and the maximum number of filters is 30.
+
+Example:
+```
+DLTD INTM
+DLT INT
+TEST
+```
+
+## Json filter file
+Only available, when builded with cmake option `WITH_EXTENDED_FILTERING`.
+
+File that defines multiple filters. Can be used as argument for `-j` option. With this it's also possible to filter messages depending on their Application ID, Context ID, log level and payload size. The following example shows the syntax. Names of the filters can be customized, but not more than 15 characters long. The maximum number of filters is also 30.
+
+Example:
+```
+{
+"filter1": {
+    "AppId": "LOG",
+    "ContextId": "TEST",
+    "LogLevel": "3"
+    },
+"filter2": {
+    "AppId": "app",
+    "LogLevel": "4"
+    },
+"filter3": {
+    "AppId": "app2",
+    "ContextId": "con2",
+    "PayloadMin": "20",
+    "PayloadMax": "50"
+    }
+}
+```
 # EXIT STATUS
 
 Non zero is returned in case of failure.

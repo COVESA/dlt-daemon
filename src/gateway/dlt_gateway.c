@@ -313,7 +313,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnectio
             return DLT_RETURN_ERROR;
         }
 
-        con->p_control_msgs->id = (uint32_t) strtol(token, NULL, 16);
+        con->p_control_msgs->id = strtol(token, NULL, 16);
         con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
         con->p_control_msgs->type = CONTROL_MESSAGE_ON_STARTUP;
         con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
@@ -384,7 +384,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
         p_token = strtok_r(token, ":", &p_rest);
 
         if ((p_token != NULL) && (strlen(p_token) != 0)) {
-            id = (uint32_t) strtol(p_token, NULL, 16);
+            id = strtol(p_token, NULL, 16);
 
             /* get back to head */
             con->p_control_msgs = head;
@@ -393,7 +393,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
             while (con->p_control_msgs != NULL) {
                 if (con->p_control_msgs->id == id) {
                     con->p_control_msgs->type = CONTROL_MESSAGE_BOTH;
-                    con->p_control_msgs->interval = (int) strtol(p_rest, NULL, 10);
+                    con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
 
                     if (con->p_control_msgs->interval <= 0)
                         dlt_vlog(LOG_WARNING,
@@ -430,7 +430,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
                 con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
                 con->p_control_msgs->type = CONTROL_MESSAGE_PERIODIC;
                 con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
-                con->p_control_msgs->interval = (int) strtol(p_rest, NULL, 10);
+                con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
 
                 if (con->p_control_msgs->interval <= 0)
                     dlt_vlog(LOG_WARNING,
@@ -697,7 +697,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
         gateway->num_connections = num_sections - 1;
     }
 
-    gateway->connections = calloc((size_t) gateway->num_connections,
+    gateway->connections = calloc(gateway->num_connections,
                                 sizeof(DltGatewayConnection));
 
     if (gateway->connections == NULL) {
@@ -1167,8 +1167,8 @@ DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
             if (dlt_daemon_context_add(daemon,
                                        app.app_id,
                                        con.context_id,
-                                       (int8_t) con.log_level,
-                                       (int8_t) con.trace_status,
+                                       con.log_level,
+                                       con.trace_status,
                                        0,
                                        -1,
                                        con.context_description,
@@ -1254,7 +1254,7 @@ DLT_STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
                                                       int verbose)
 {
     unsigned int connection_type = 0;
-    uint32_t i = 0;
+    int i = 0;
 
     if (daemon_local->flags.offlineLogstorageMaxDevices <= 0) {
         dlt_log(LOG_INFO,
@@ -1269,7 +1269,7 @@ DLT_STATIC int dlt_gateway_control_service_logstorage(DltDaemon *daemon,
             /* Check if log level of running application needs an update */
             dlt_daemon_logstorage_update_application_loglevel(daemon,
                                                               daemon_local,
-                                                              (int) i,
+                                                              i,
                                                               verbose);
     }
 
@@ -1349,7 +1349,7 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
 
     while (dlt_message_read(&msg,
                             (unsigned char *)receiver->buf,
-                            (unsigned int) receiver->bytesRcvd,
+                            receiver->bytesRcvd,
                             0,
                             verbose) == DLT_MESSAGE_ERROR_OK) {
         DltStandardHeaderExtra *header = (DltStandardHeaderExtra *)
@@ -1422,9 +1422,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                        msg.headerbuffer,
                                        sizeof(DltStorageHeader),
                                        msg.headerbuffer + sizeof(DltStorageHeader),
-                                       (int) (msg.headersize - sizeof(DltStorageHeader)),
+                                       msg.headersize - sizeof(DltStorageHeader),
                                        msg.databuffer,
-                                       (int) msg.datasize,
+                                       msg.datasize,
                                        verbose);
         } else { /* otherwise remove this connection and do not connect again */
             dlt_vlog(LOG_WARNING,
@@ -1449,19 +1449,19 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
 
         if (msg.found_serialheader) {
             if (dlt_receiver_remove(receiver,
-                                    (int) (msg.headersize +
+                                    msg.headersize +
                                     msg.datasize -
                                     sizeof(DltStorageHeader) +
-                                    sizeof(dltSerialHeader))) == -1) {
+                                    sizeof(dltSerialHeader)) == -1) {
                 /* Return value ignored */
                 dlt_message_free(&msg, verbose);
                 return DLT_RETURN_ERROR;
             }
         }
         else if (dlt_receiver_remove(receiver,
-                                     (int) (msg.headersize +
+                                     msg.headersize +
                                      msg.datasize -
-                                     sizeof(DltStorageHeader))) == -1) {
+                                     sizeof(DltStorageHeader)) == -1) {
             /* Return value ignored */
             dlt_message_free(&msg, verbose);
             return DLT_RETURN_ERROR;
@@ -1557,7 +1557,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     }
 
     if (con->send_serial) { /* send serial header */
-        ret = (int) send(con->client.sock,
+        ret = send(con->client.sock,
                    (void *)dltSerialHeader,
                    sizeof(dltSerialHeader),
                    0);
@@ -1568,7 +1568,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         }
     }
 
-    ret = (int) send(con->client.sock,
+    ret = send(con->client.sock,
                msg->headerbuffer + sizeof(DltStorageHeader),
                msg->headersize - sizeof(DltStorageHeader),
                0);
@@ -1578,7 +1578,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
         return DLT_RETURN_ERROR;
     }
     else {
-        ret = (int) send(con->client.sock, msg->databuffer, msg->datasize, 0);
+        ret = send(con->client.sock, msg->databuffer, msg->datasize, 0);
 
         if (ret == -1) {
             dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
@@ -1697,7 +1697,7 @@ int dlt_gateway_send_control_message(DltGatewayConnection *con,
     }
 
     if (con->send_serial) { /* send serial header */
-        ret = (int) send(con->client.sock,
+        ret = send(con->client.sock,
                    (void *)dltSerialHeader,
                    sizeof(dltSerialHeader),
                    0);
