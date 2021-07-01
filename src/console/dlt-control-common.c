@@ -671,8 +671,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     struct json_object *j_payload_max;
     enum json_tokener_error jerr;
 
-    char app_id[DLT_ID_SIZE] = "";
-    char context_id[DLT_ID_SIZE] = "";
+    char app_id[DLT_ID_SIZE + 1] = "";
+    char context_id[DLT_ID_SIZE + 1] = "";
     int32_t log_level = 0;
     int32_t payload_max = INT32_MAX;
     int32_t payload_min = 0;
