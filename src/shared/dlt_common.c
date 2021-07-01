@@ -31,7 +31,6 @@
 #include <time.h>     /* for localtime_r(), strftime() */
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
-#include <stdbool.h>
 #include <stdarg.h>
 #include <err.h>
 
