@@ -104,6 +104,7 @@ typedef struct {
     int jvalue;
     int kvalue;
     int bvalue;
+    int port;
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
     char ecuid[4];
@@ -163,6 +164,8 @@ void usage()
     printf("  -j              Get log info\n");
     printf("  -k              Get software version\n");
     printf("  -u              unix port\n");
+    printf("  -p port       Use the given port instead the default port\n");
+    printf("                Cannot be used with serial devices\n");
 }
 /**
  * Function for sending get log info ctrl msg and printing the response.
@@ -301,6 +304,7 @@ int main(int argc, char *argv[])
         .ivalue = -1,
         .oflag = -1,
         .gflag = -1,
+        .port = 3490
     };
 
     /* Fetch command line arguments */
@@ -309,7 +313,7 @@ int main(int argc, char *argv[])
     /* Default return value */
     ret = 0;
 
-    while ((c = getopt (argc, argv, "vhSRye:b:a:c:s:m:x:t:l:r:d:f:i:ogjku")) != -1)
+    while ((c = getopt (argc, argv, "vhSRye:b:a:c:s:m:x:t:l:r:d:f:i:ogjkup:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -451,6 +455,11 @@ int main(int argc, char *argv[])
             dltdata.yflag = DLT_CLIENT_MODE_UNIX;
             break;
         }
+        case 'p':
+        {
+            dltdata.port = atoi(optarg);
+            break;
+        }
         case '?':
         {
             if ((optopt == 'o') || (optopt == 'f'))
@@ -492,6 +501,7 @@ int main(int argc, char *argv[])
     }
 
     if (g_dltclient.mode == DLT_CLIENT_MODE_TCP) {
+        g_dltclient.port = dltdata.port;
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1) {
                 pr_error("set server ip didn't succeed\n");

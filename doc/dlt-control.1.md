@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-control** \[**-v**\] \[**-h**\] \[**-S**\] \[**-R**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-a** id\] \[**-c** id\] \[**-s** id\] \[**-m** message\] \[**-x** message\] \[**-t** milliseconds\] \[**-l** level\] \[**-r** tracestatus\] \[**-d** loglevel\] \[**-f** tracestatus\] \[**-i** enable\] \[**-o**\] \[**-g**\] \[**-j**\] \[**-u**\] hostname/serial\_device\_name
+**dlt-control** \[**-v**\] \[**-h**\] \[**-S**\] \[**-R**\] \[**-y**\] \[**-b** baudrate\] \[**-e** ecuid\] \[**-a** id\] \[**-c** id\] \[**-s** id\] \[**-m** message\] \[**-x** message\] \[**-t** milliseconds\] \[**-l** level\] \[**-r** tracestatus\] \[**-d** loglevel\] \[**-f** tracestatus\] \[**-i** enable\] \[**-o**\] \[**-g**\] \[**-j**\] \[**-u**\] \[**-p** port\] hostname/serial\_device\_name
 
 # DESCRIPTION
 
@@ -125,6 +125,10 @@ is used. See example for detail.
 
 -u
 :    unix port
+
+-p
+
+:    Port for TCP communication (Default: 3490).
 
 # EXAMPLES
 
