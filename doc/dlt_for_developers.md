@@ -28,9 +28,9 @@ this document.
 Please note that the #include statement depends on the means by which you are
 incorporating the DLT library into your project. The `<dlt/dlt.h>` form (i.e.
 with a directory prefix) seen here is necessary when you are using the CMake
-Config file (see below). If you are using pkg-config instead, then this #include
-statement needs to refer to only `<dlt.h>`, due to the way the pkg-config module
-exports the include directory.
+Config file (see below). If you are using pkg-config instead, then for
+backward-compatibility reasons it is also possible to use `#include <dlt.h>`.
+This is not recommended for new code, though.
 
 ```
 #include <dlt/dlt.h>
@@ -74,7 +74,7 @@ that is being generated as part of installation.
 
 You can thus:
 ```
-find_package(automotive-dlt)
+find_package(automotive-dlt REQUIRED)
 ...
 target_link_libraries(myapp PRIVATE Genivi::DLT)
 ```
@@ -82,7 +82,9 @@ which lets your project automatically gain all necessary compile and link flags
 needed by libdlt, including the include directories.
 
 The generated CMake Config file follows "Modern CMake" convention and only
-exports an IMPORTED CMake target; it does not set any variables.
+exports an IMPORTED CMake target; it does not set any variables, except for the
+`automotive-dlt_FOUND` variable that can be used to treat DLT as an optional
+dependency.
 
 ### DLT with pkg-config
 
