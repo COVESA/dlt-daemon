@@ -3,7 +3,7 @@
 Back to [README.md](../README.md)
 
 Table of Contents
-1. [Example Application](#DLT-Example-Application)
+1. [DLT Example Application](#DLT-Example-Application)
 2. [General Rules for Logging](#General-Rules-for-Logging)
 3. [The use of Log Levels](#The-use-of-Log-Levels)
 4. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
