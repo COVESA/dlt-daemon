@@ -3,14 +3,13 @@
 Back to [README.md](../README.md)
 
 Table of Contents
-1. [Summary](#Summary)
-2. [Example Application](#DLT-Example-Application)
-3. [General Rules for Logging](#General-Rules-for-Logging)
-4. [The use of Log Levels](#The-use-of-Log-Levels)
-5. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
-6. [DLT API Usage](#DLT-API-Usage)
-7. [DLT injection messages](#DLT-Injection-Messages)
-8. [Log level changed callback](#Log-level-changed-callback)
+1. [Example Application](#DLT-Example-Application)
+2. [General Rules for Logging](#General-Rules-for-Logging)
+3. [The use of Log Levels](#The-use-of-Log-Levels)
+4. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
+5. [DLT API Usage](#DLT-API-Usage)
+6. [DLT injection messages](#DLT-Injection-Messages)
+7. [Log level changed callback](#Log-level-changed-callback)
 
 ## DLT Example Application
 
