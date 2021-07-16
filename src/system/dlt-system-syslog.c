@@ -44,16 +44,16 @@
 *******************************************************************************/
 
 
-#include <pthread.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <errno.h>
 
-#include "dlt-system.h"
+#include <systemd/sd-journal.h>
+#include <poll.h>
 
-extern DltSystemThreads threads;
+#include "dlt-system.h"
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(syslogContext)
@@ -134,29 +134,27 @@ int read_socket(int sock)
     recv_data[bytes_read] = '\0';
 
     if (bytes_read != 0)
+    {
         DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
+    }
 
     return bytes_read;
 }
 
-void syslog_thread(void *v_conf)
+int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-syslog, in thread."));
+    DLT_REGISTER_CONTEXT(syslogContext, config->Syslog.ContextId, "SYSLOG Adapter");
+    int syslogSock = init_socket(config->Syslog);
+    if (syslogSock < 0) {
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Could not init syslog socket\n"));
+        return -1;
+    }
+    pollfd[i].fd = syslogSock;
+    pollfd[i].events = POLLIN;
+    return syslogSock;
+}
 
-    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
-    DLT_REGISTER_CONTEXT(syslogContext, conf->Syslog.ContextId, "SYSLOG Adapter");
-
-    int sock = init_socket(conf->Syslog);
-
-    if (sock < 0)
-        return;
-
-    while (!threads.shutdown)
-        if (read_socket(sock) < 0) {
-            close(sock);
-            return;
-        }
-
-    close (sock);
+void syslog_fd_handler(int syslogSock)
+{
+    read_socket(syslogSock);
 }

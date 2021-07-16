@@ -153,7 +153,6 @@ void init_configuration(DltSystemConfiguration *config)
     /* File transfer */
     config->Filetransfer.Enable = 0;
     config->Filetransfer.ContextId = "FILE";
-    config->Filetransfer.TimeDelay = 10;
     config->Filetransfer.TimeStartup = 30;
     config->Filetransfer.TimeoutBetweenLogs = 10;
     config->Filetransfer.Count = 0;
@@ -309,10 +308,6 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             else if (strcmp(token, "FiletransferTimeStartup") == 0)
             {
                 config->Filetransfer.TimeStartup = atoi(value);
-            }
-            else if (strcmp(token, "FiletransferTimeDelay") == 0)
-            {
-                config->Filetransfer.TimeDelay = atoi(value);
             }
             else if (strcmp(token, "FiletransferTimeoutBetweenLogs") == 0)
             {

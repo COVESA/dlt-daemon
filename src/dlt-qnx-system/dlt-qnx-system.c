@@ -70,6 +70,18 @@ int main(int argc, char* argv[])
         daemonize();
     }
 
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGTERM);
+    sigaddset(&mask, SIGHUP);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGALRM);
+    if (pthread_sigmask(SIG_BLOCK, &mask, NULL) != 0)
+    {
+        fprintf(stderr, "Couldn't set mask for potential future threads.\n");
+        return -1;
+    }
+
     DLT_REGISTER_APP(config.applicationId, "DLT QNX System");
     DLT_REGISTER_CONTEXT(dltQnxSystem, config.applicationContextId,
             "Context of main dlt qnx system manager");
@@ -78,19 +90,6 @@ int main(int argc, char* argv[])
             DLT_STRING("Setting signals wait for abnormal exit"));
 
     g_threads.mainThread = pthread_self();
-
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGTERM);
-    sigaddset(&mask, SIGHUP);
-    sigaddset(&mask, SIGQUIT);
-    sigaddset(&mask, SIGINT);
-    sigaddset(&mask, SIGALRM);
-    if (pthread_sigmask(SIG_BLOCK, &mask, NULL) == -1) {
-        DLT_LOG(dltQnxSystem, DLT_LOG_WARN,
-                DLT_STRING("Failed to block signals!"));
-        DLT_UNREGISTER_APP();
-        return -1;
-    }
 
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
     start_threads(&config);

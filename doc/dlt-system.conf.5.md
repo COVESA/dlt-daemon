@@ -114,12 +114,6 @@ Time in seconds after startup of dlt-system when first file is transfered.
 
     Default: 0
 
-## FiletransferTimeDelay
-
-Time in seconds to wait between deletion of transferred file and start of next file transfer.
-
-    Default: 10
-
 ## FiletransferTimeoutBetweenLogs
 
 Time in seconds to wait between two file transfer logs of a single file to DLT.

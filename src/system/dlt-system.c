@@ -112,11 +112,10 @@ int main(int argc, char *argv[])
     signal(SIGQUIT, dlt_system_signal_handler);
     signal(SIGINT, dlt_system_signal_handler);
 
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Initializing all processes and starting poll for events."));
 
 
-    start_threads(&config);
-    join_threads();
+    start_dlt_system_processes(&config);
     return 0;
 }
 

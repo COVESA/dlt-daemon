@@ -50,12 +50,26 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
-#include <pthread.h>
 #include <limits.h>
 
-volatile DltSystemThreads threads;
+#include <systemd/sd-journal.h>
+#include <poll.h>
+#include <sys/timerfd.h>
+#include <time.h>
 
 DLT_IMPORT_CONTEXT(dltsystem)
+DLT_IMPORT_CONTEXT(syslogContext)
+DLT_IMPORT_CONTEXT(journalContext)
+DLT_IMPORT_CONTEXT(watchdogContext)
+DLT_IMPORT_CONTEXT(procContext)
+DLT_IMPORT_CONTEXT(filetransferContext)
+extern DltContext logfileContext[DLT_SYSTEM_LOG_FILE_MAX];
+
+volatile uint8_t quit = 0;
+
+#if defined(DLT_FILETRANSFER_ENABLE)
+extern s_ft_inotify ino;
+#endif
 
 int daemonize()
 {
@@ -106,105 +120,195 @@ int daemonize()
     return 0;
 }
 
-void start_threads(DltSystemConfiguration *config)
+/* Unregisters all DLT Contexts and closes all file descriptors */
+void cleanup_processes(struct pollfd *pollfd, sd_journal *j, DltSystemConfiguration *config)
+{
+    //Syslog cleanup
+    if (config->Syslog.Enable)
+        DLT_UNREGISTER_CONTEXT(syslogContext);
+    
+    //Journal cleanup
+#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+    if (config->Journal.Enable)
+        DLT_UNREGISTER_CONTEXT(journalContext);
+    if(j != NULL)
+        sd_journal_close(j);
+#endif
+
+    //Logfile cleanup 
+    if (config->LogFile.Enable) {
+        for (int i = 0; i < config->LogFile.Count; i++)
+            DLT_UNREGISTER_CONTEXT(logfileContext[i]);
+    }
+
+    //LogProcess cleanup 
+    if (config->LogProcesses.Enable) {
+        DLT_UNREGISTER_CONTEXT(procContext);
+    }
+
+    //Watchdog cleanup
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+    DLT_UNREGISTER_CONTEXT(watchdogContext);
+#endif
+
+    //FileTransfer cleanup
+#if defined(DLT_FILETRANSFER_ENABLE)
+    if (config->Filetransfer.Enable) {
+        DLT_UNREGISTER_CONTEXT(filetransferContext);
+    }
+#endif
+
+    for (int i = 0; i < MAX_FD_NUMBER; i++) {
+        if(pollfd[i].fd > 0)
+            close(pollfd[i].fd);
+    }
+}
+
+/* Creates timer for LogFile and LogProcess, that need to be called every second. */
+int register_timer_fd(struct pollfd *pollfd, int fdcnt)
+{
+    struct itimerspec timerValue;
+    memset(&timerValue, '\0', sizeof(timerValue));
+    timerValue.it_value.tv_sec = 1;
+    timerValue.it_value.tv_nsec = 0;
+    timerValue.it_interval.tv_sec = 1;
+    timerValue.it_interval.tv_nsec = 0;
+
+    int timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    if (timerfd < 0) {
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Failed to create timer fd"));
+        return -1;
+    }
+    pollfd[fdcnt].fd = timerfd;
+    pollfd[fdcnt].events = POLLIN;
+
+    if (timerfd_settime(timerfd, 0, &timerValue, NULL) < 0) {   // init timer with 1 second
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Could not start timer"));
+        return -1;
+    }
+    return 0;
+}
+
+/* Routine for executing LogProcess and LogFile, when timer expires */
+void timer_fd_handler(int fd, DltSystemConfiguration *config)
+{
+    long int timersElapsed = 0;
+    int r = read(fd, &timersElapsed, 8);    // only needed to reset fd event
+    if (r < 0) 
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while reading timer fd: "), 
+            DLT_STRING(strerror(r)));
+
+    if(config->LogProcesses.Enable)
+        logprocess_fd_handler(config);
+    if(config->LogFile.Enable)
+        logfile_fd_handler(config);
+}
+
+void start_dlt_system_processes(DltSystemConfiguration *config)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-process-handling, start threads"));
 
-    int i;
-    threads.count = 0;
-    threads.shutdown = 0;
-
-    for (i = 0; i < MAX_THREADS; i++)
-        threads.threads[i] = 0;
-
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-    start_thread(config, watchdog_thread, "systemd watchdog");
-#endif
-
     if (config->Shell.Enable)
         init_shell();
 
-    if (config->LogFile.Enable)
-        start_thread(config, logfile_thread, "log file");
+    int fdcnt = 0;
 
-#if defined(DLT_FILETRANSFER_ENABLE)
-    if (config->Filetransfer.Enable)
-        start_thread(config, filetransfer_thread, "file transfer");
-#endif
+    /* Init FDs for all activated processes*/
+    struct pollfd pollfd[MAX_FD_NUMBER];    // Holds all FDs and events
+    uint8_t fdType[MAX_FD_NUMBER];          // Holds corresponding enum for process identification
 
-    if (config->LogProcesses.Enable)
-        start_thread(config, logprocess_thread, "log process");
-
-    if (config->Syslog.Enable)
-        start_thread(config, syslog_thread, "syslog");
-
-#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
-
-    if (config->Journal.Enable)
-        start_thread(config, journal_thread, "systemd journal");
-
-#endif
-}
-
-/**
- * Start a thread and add it to the thread pool.
- */
-
-void start_thread(DltSystemConfiguration *conf,
-                  void (thread)(void *), const char *name)
-{
-    if (threads.count == MAX_THREADS) {
-        DLT_LOG(dltsystem, DLT_LOG_ERROR,
-                DLT_STRING("Could not create thread for "),
-                DLT_STRING(name),
-                DLT_STRING("Out of thread slots.\n"));
-        return;
+    for(int cnt = 0 ; cnt < MAX_FD_NUMBER ; cnt++) {
+        pollfd[cnt].fd = 0;
+        pollfd[cnt].events = 0;
     }
 
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Creating thread for "),
-            DLT_STRING(name),
-            DLT_STRING("\n"));
-
-    pthread_t pt;
-
-    if (pthread_create(&pt, NULL, (void *)thread, conf) == 0)
-        threads.threads[threads.count++] = pt;
-    else
-        DLT_LOG(dltsystem, DLT_LOG_ERROR,
-                DLT_STRING("Could not create thread for "),
-                DLT_STRING(name),
-                DLT_STRING("\n"));
-}
-
-/**
- * Wait for threads to exit.
- * There's not actually a condition currently
- * to bail out of file transfer without a signal.
- */
-void join_threads()
-{
-    int i;
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-process-handling, waiting for threads to exit."));
-
-    if (threads.count < 1) {
-        DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-                DLT_STRING("dlt-system-process-handling, no threads, waiting for signal."));
-        sleep(UINT_MAX);
-    }
-    else {
-        DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-                DLT_STRING("dlt-system-process-handling, thread count: "),
-                DLT_INT(threads.count));
-
-        for (i = 0; i < threads.count; i++) {
-            pthread_join(threads.threads[i], NULL);
-            DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-                    DLT_STRING("dlt-system-process-handling, thread exit: "),
-                    DLT_INT(threads.threads[i]));
+    //init FD for LogFile and LogProcesses
+    if (config->LogProcesses.Enable || config->LogFile.Enable) {
+        fdType[fdcnt] = fdType_timer;
+        if (register_timer_fd(pollfd, fdcnt) == 0) {
+            if(config->LogProcesses.Enable)
+                logprocess_init(config);
+            if(config->LogFile.Enable)
+                logfile_init(config);
+            fdcnt++;
         }
     }
+
+    //init FD for Syslog
+    int syslogSock = 0;
+    if (config->Syslog.Enable) {
+        fdType[fdcnt] = fdType_syslog;
+        syslogSock = register_syslog_fd(pollfd, fdcnt, config);
+        fdcnt++;
+    }
+
+    //init FD for Journal
+    sd_journal *j = NULL;
+#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+    if (config->Journal.Enable) {
+        register_journal_fd(&j, pollfd, fdcnt, config);
+        fdType[fdcnt] = fdType_journal;
+        fdcnt++;
+    }
+#endif
+
+    //init FD for FileTransfer
+#if defined(DLT_FILETRANSFER_ENABLE)
+    if (config->Filetransfer.Enable) {
+        init_filetransfer_dirs(config);
+        pollfd[fdcnt].fd = ino.handle;
+        pollfd[fdcnt].events = POLLIN;
+        fdType[fdcnt] = fdType_filetransfer;
+        fdcnt++;
+    }
+#endif
+
+    //init FD for Watchdog
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+    fdType[fdcnt] = fdType_watchdog;
+    register_watchdog_fd(pollfd, fdcnt);
+#endif
+
+    while (quit == 0)
+    {
+        int ready;
+        ready = poll(pollfd, MAX_FD_NUMBER, -1);
+        if (ready == -1 && quit == 0)
+            DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while poll. Exit with: "), 
+                DLT_STRING(strerror(ready)));
+
+        for (int i = 0; i < MAX_FD_NUMBER; i++) {
+            if(pollfd[i].revents & POLLIN){
+                if (fdType[i] == fdType_syslog && syslogSock > 0) {
+                    syslog_fd_handler(syslogSock);
+                }
+                else if (fdType[i] == fdType_timer) {
+                    timer_fd_handler(pollfd[i].fd, config);
+                }
+                #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+                else if((fdType[i] == fdType_journal) && (j != NULL)) {
+                    if(sd_journal_process(j) == SD_JOURNAL_APPEND) {
+                        journal_fd_handler(j, config);
+                    }
+                }
+                #endif
+                #if defined(DLT_FILETRANSFER_ENABLE)
+                else if (fdType[i] == fdType_filetransfer) {
+                    filetransfer_fd_handler(config);
+                }
+                #endif
+                #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
+                else if (fdType[i] == fdType_watchdog) {
+                    watchdog_fd_handler(pollfd[i].fd);
+                }
+                #endif
+            }
+        }
+    }
+
+    cleanup_processes(pollfd, j, config);
+    exit(0);
 }
 
 void dlt_system_signal_handler(int sig)
@@ -220,7 +324,7 @@ void dlt_system_signal_handler(int sig)
         DLT_LOG(dltsystem, DLT_LOG_DEBUG,
                 DLT_STRING("dlt-system-process-handling, exit, signal: "),
                 DLT_INT(sig));
-        exit(0);
+        quit = 1;
         break;
     default:
         DLT_LOG(dltsystem, DLT_LOG_WARN,
@@ -228,4 +332,3 @@ void dlt_system_signal_handler(int sig)
         break;
     }
 }
-
