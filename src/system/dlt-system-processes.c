@@ -44,7 +44,6 @@
 *******************************************************************************/
 
 
-#include <pthread.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -60,7 +59,7 @@
 #define SEND_MODE_ONCE 1
 #define SEND_MODE_ON   2
 
-extern DltSystemThreads threads;
+int process_delays[DLT_SYSTEM_LOG_PROCESSES_MAX];
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(procContext)
@@ -125,7 +124,7 @@ void send_process(LogProcessOptions const *popts, int n)
                 DLT_STRING("not running!"));
 }
 
-void logprocess_thread(void *v_conf)
+void logprocess_init(void *v_conf)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-processes, in thread."));
@@ -133,29 +132,26 @@ void logprocess_thread(void *v_conf)
     DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
     DLT_REGISTER_CONTEXT(procContext, conf->LogProcesses.ContextId, "Log Processes");
 
-    int process_delays[DLT_SYSTEM_LOG_PROCESSES_MAX];
-    int i;
-
-    for (i = 0; i < conf->LogProcesses.Count; i++)
+    for (int i = 0; i < conf->LogProcesses.Count; i++)
         process_delays[i] = conf->LogProcesses.TimeDelay[i];
+}
 
-    while (!threads.shutdown) {
-        sleep(1);
+void logprocess_fd_handler(void *v_conf)
+{
+    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    for (int i = 0; i < conf->LogProcesses.Count; i++) {
+        if (conf->LogProcesses.Mode[i] == SEND_MODE_OFF)
+            continue;
 
-        for (i = 0; i < conf->LogProcesses.Count; i++) {
-            if (conf->LogProcesses.Mode[i] == SEND_MODE_OFF)
-                continue;
+        if (process_delays[i] <= 0) {
+            send_process(&(conf->LogProcesses), i);
+            process_delays[i] = conf->LogProcesses.TimeDelay[i];
 
-            if (process_delays[i] <= 0) {
-                send_process(&(conf->LogProcesses), i);
-                process_delays[i] = conf->LogProcesses.TimeDelay[i];
-
-                if (conf->LogProcesses.Mode[i] == SEND_MODE_ONCE)
-                    conf->LogProcesses.Mode[i] = SEND_MODE_OFF;
-            }
-            else {
-                process_delays[i]--;
-            }
+            if (conf->LogProcesses.Mode[i] == SEND_MODE_ONCE)
+                conf->LogProcesses.Mode[i] = SEND_MODE_OFF;
+        }
+        else {
+            process_delays[i]--;
         }
     }
 }

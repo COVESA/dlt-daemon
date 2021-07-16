@@ -54,6 +54,9 @@
 #ifndef DLT_SYSTEM_H_
 #define DLT_SYSTEM_H_
 
+#include <systemd/sd-journal.h>
+#include <poll.h>
+
 /* DLT related includes. */
 #include "dlt.h"
 #include "dlt_common.h"
@@ -70,12 +73,28 @@
 
 #define MAX_LINE 1024
 
-#define MAX_THREADS 8
+/** Total number of file descriptors needed for processing all features:
+*   - Journal file descriptor
+*   - Syslog file descriptor
+*   - Timer file descriptor for processing LogFile and LogProcesses every second
+*   - Inotify file descriptor for FileTransfer
+*   - Timer file descriptor for Watchdog 
+*/
+#define MAX_FD_NUMBER   5
 
 /* Macros */
 #define MALLOC_ASSERT(x) if (x == NULL) { \
         fprintf(stderr, "Out of memory\n"); \
         abort(); }
+
+/* enum for classification of FD */
+enum fdType {
+    fdType_journal = 0,
+    fdType_syslog,
+    fdType_filetransfer,
+    fdType_timer,
+    fdType_watchdog,
+};
 
 /**
  * Configuration structures.
@@ -114,7 +133,6 @@ typedef struct {
     int Enable;
     char *ContextId;
     int TimeStartup;
-    int TimeDelay;
     int TimeoutBetweenLogs;
     char *TempDir;
 
@@ -124,6 +142,11 @@ typedef struct {
     int CompressionLevel[DLT_SYSTEM_LOG_DIRS_MAX];
     char *Directory[DLT_SYSTEM_LOG_DIRS_MAX];
 } FiletransferOptions;
+
+typedef struct {
+    int handle;
+    int fd[DLT_SYSTEM_LOG_DIRS_MAX];
+} s_ft_inotify;
 
 typedef struct {
     int Enable;
@@ -158,12 +181,6 @@ typedef struct {
     LogProcessOptions LogProcesses;
 } DltSystemConfiguration;
 
-typedef struct {
-    pthread_t threads[MAX_THREADS];
-    int count;
-    int shutdown;
-} DltSystemThreads;
-
 /**
  * Forward declarations for the whole application
  */
@@ -172,28 +189,28 @@ typedef struct {
 int read_command_line(DltSystemCliOptions *options, int argc, char *argv[]);
 int read_configuration_file(DltSystemConfiguration *config, char *file_name);
 
-/* In dlt-process-handling.c */
+/* For dlt-process-handling.c */
 int daemonize();
-void start_threads(DltSystemConfiguration *config);
-void start_thread(DltSystemConfiguration *conf,
-                  void (thread)(void *), const char *nam);
-void join_threads();
-void dlt_system_signal_handler(int sig);
-void register_with_dlt(DltSystemConfiguration *config);
-
-/* Threads */
 void init_shell();
-void syslog_thread(void *v_conf);
-void filetransfer_thread(void *v_conf);
-void logfile_thread(void *v_conf);
-void logprocess_thread(void *v_conf);
+void dlt_system_signal_handler(int sig);
 
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
-void watchdog_thread(void *v_conf);
-#endif
+/* Main function for creating/registering all needed file descriptors and starting the poll for all of them. */
+void start_dlt_system_processes(DltSystemConfiguration *config);
 
-#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
-void journal_thread(void *v_conf);
-#endif
+/* Init process, create file descriptors and register them into main pollfd. */
+int register_watchdog_fd(struct pollfd *pollfd, int fdcnt);
+int init_filetransfer_dirs(DltSystemConfiguration *config);
+void logfile_init(void *v_conf);
+void logprocess_init(void *v_conf);
+void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSystemConfiguration *config);
+int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config);
+
+/* Routines that are called, when a fd event was raised. */
+void logfile_fd_handler(void *v_conf);
+void logprocess_fd_handler(void *v_conf);
+void filetransfer_fd_handler(DltSystemConfiguration *config);
+void watchdog_fd_handler(int fd);
+void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config);
+void syslog_fd_handler(int syslogSock);
 
 #endif /* DLT_SYSTEM_H_ */

@@ -49,7 +49,6 @@
 *******************************************************************************/
 
 
-#include <pthread.h>
 #include <unistd.h>
 #ifdef linux
 #   include <sys/inotify.h>
@@ -61,6 +60,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <poll.h>
 
 #include "dlt-system.h"
 #include "dlt.h"
@@ -76,8 +76,6 @@
 #define SUBDIR_TOSEND ".tosend"
 
 
-
-extern DltSystemThreads threads;
 /* From dlt_filetransfer */
 extern uint32_t getFileSerialNumber(const char *file, int *ok);
 
@@ -85,11 +83,6 @@ DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(filetransferContext)
 
 #ifdef linux
-typedef struct {
-    int handle;
-    int fd[DLT_SYSTEM_LOG_DIRS_MAX];
-} s_ft_inotify;
-
 s_ft_inotify ino;
 #endif
 
@@ -260,7 +253,6 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-filetransfer, sending a file."));
-    sleep(opts->TimeDelay);
 
     /* Prepare all needed file names */
     char *fn = basename(src);
@@ -374,7 +366,6 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
 
 int flush_dir_send(FiletransferOptions const *opts, const char *compress_dir, const char *send_dir)
 {
-
     struct dirent *dp;
     DIR *dir;
     dir = opendir(send_dir);
@@ -568,8 +559,6 @@ int flush_dir_original(FiletransferOptions const *opts, int which)
  */
 int flush_dir(FiletransferOptions const *opts, int which)
 {
-
-
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-filetransfer, flush directory of old files."));
 
@@ -611,11 +600,13 @@ int flush_dir(FiletransferOptions const *opts, int which)
 
 /*!Initializes the surveyed directories */
 /**On startup, the inotifiy handlers are created, and existing files shall be sent into DLT stream
- * @param opts FiletransferOptions
+ * @param config DltSystemConfiguration
  * @return Returns 0 if everything was okay. If there was a failure a value < 0 will be returned.
  */
-int init_filetransfer_dirs(FiletransferOptions const *opts)
+int init_filetransfer_dirs(DltSystemConfiguration *config)
 {
+    FiletransferOptions const *opts = &(config->Filetransfer);
+    DLT_REGISTER_CONTEXT(filetransferContext, config->Filetransfer.ContextId, "Filetransfer Adapter");
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-filetransfer, initializing inotify on directories."));
     int i;
@@ -690,20 +681,19 @@ int init_filetransfer_dirs(FiletransferOptions const *opts)
         flush_dir(opts, i);
 
     }
-
     return 0;
 }
 
-int wait_for_files(FiletransferOptions const *opts)
+int process_files(FiletransferOptions const *opts)
 {
 #ifdef linux
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, waiting for files."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, processing files."));
     static char buf[INOTIFY_LEN];
     ssize_t len = read(ino.handle, buf, INOTIFY_LEN);
 
     if (len < 0) {
         DLT_LOG(filetransferContext, DLT_LOG_ERROR,
-                DLT_STRING("Error while waiting for files in dlt-system file transfer."));
+                DLT_STRING("Error while reading events for files in dlt-system file transfer."));
         return -1;
     }
 
@@ -748,24 +738,7 @@ int wait_for_files(FiletransferOptions const *opts)
     return 0;
 }
 
-void filetransfer_thread(void *v_conf)
+void filetransfer_fd_handler(DltSystemConfiguration *config)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-filetransfer, in thread."));
-    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
-    DLT_REGISTER_CONTEXT(filetransferContext, conf->Filetransfer.ContextId,
-                         "File transfer manager.");
-
-    sleep(conf->Filetransfer.TimeStartup);
-
-    if (init_filetransfer_dirs(&(conf->Filetransfer)) < 0)
-        return;
-
-    while (!threads.shutdown) {
-        if (wait_for_files(&(conf->Filetransfer)) < 0) {
-            DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while waiting files. File transfer shutdown."));
-            return;
-        }
-
-        sleep(conf->Filetransfer.TimeDelay);
-    }
+    process_files(&(config->Filetransfer));
 }

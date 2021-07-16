@@ -44,7 +44,6 @@
 *******************************************************************************/
 
 
-#include <pthread.h>
 #include <unistd.h>
 #include "dlt-system.h"
 
@@ -55,8 +54,8 @@
 
 DLT_IMPORT_CONTEXT(dltsystem)
 
-extern DltSystemThreads threads;
 DltContext logfileContext[DLT_SYSTEM_LOG_FILE_MAX];
+int logfile_delays[DLT_SYSTEM_LOG_FILE_MAX];
 
 void send_file(LogFileOptions const *fileopt, int n)
 {
@@ -108,7 +107,7 @@ void register_contexts(LogFileOptions const *fileopts)
                              (*fileopts).Filename[i]);
 }
 
-void logfile_thread(void *v_conf)
+void logfile_init(void *v_conf)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-logfile, in thread."));
@@ -116,29 +115,26 @@ void logfile_thread(void *v_conf)
 
     register_contexts(&(conf->LogFile));
 
-    int logfile_delays[DLT_SYSTEM_LOG_FILE_MAX];
-    int i;
-
-    for (i = 0; i < conf->LogFile.Count; i++)
+    for (int i = 0; i < conf->LogFile.Count; i++)
         logfile_delays[i] = conf->LogFile.TimeDelay[i];
+}
 
-    while (!threads.shutdown) {
-        sleep(1);
+void logfile_fd_handler(void *v_conf)
+{
+    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    for (int i = 0; i < conf->LogFile.Count; i++) {
+        if (conf->LogFile.Mode[i] == SEND_MODE_OFF)
+            continue;
 
-        for (i = 0; i < conf->LogFile.Count; i++) {
-            if (conf->LogFile.Mode[i] == SEND_MODE_OFF)
-                continue;
+        if (logfile_delays[i] <= 0) {
+            send_file(&(conf->LogFile), i);
+            logfile_delays[i] = conf->LogFile.TimeDelay[i];
 
-            if (logfile_delays[i] <= 0) {
-                send_file(&(conf->LogFile), i);
-                logfile_delays[i] = conf->LogFile.TimeDelay[i];
-
-                if (conf->LogFile.Mode[i] == SEND_MODE_ONCE)
-                    conf->LogFile.Mode[i] = SEND_MODE_OFF;
-            }
-            else {
-                logfile_delays[i]--;
-            }
+            if (conf->LogFile.Mode[i] == SEND_MODE_ONCE)
+                conf->LogFile.Mode[i] = SEND_MODE_OFF;
+        }
+        else {
+            logfile_delays[i]--;
         }
     }
 }
