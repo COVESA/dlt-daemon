@@ -300,10 +300,10 @@ enum {
 
 #   define DLT_MSG_READ_VALUE(dst, src, length, type) \
     { \
-        if ((length < 0) || ((length) < ((int32_t) sizeof(type)))) \
+        if ((length < 0) || ((length) < ((int32_t)sizeof(type)))) \
         { length = -1; } \
         else \
-        { dst = *((type *)src); src += sizeof(type); length -= (int32_t) sizeof(type); } \
+        { dst = *((type *)src); src += sizeof(type); length -= sizeof(type); } \
     }
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
@@ -322,7 +322,7 @@ enum {
     } \
     else \
     { \
-        memcpy(dst, src, (size_t) length); \
+        memcpy(dst, src, length); \
         dlt_clean_string(dst, length); \
         dst[length] = 0; \
         src += length; \
@@ -500,14 +500,14 @@ typedef struct sDltMessage
     int32_t resync_offset;
 
     /* size parameters */
-    uint32_t headersize;    /**< size of complete header including storage header */
-    uint32_t datasize;      /**< size of complete payload */
+    int32_t headersize;    /**< size of complete header including storage header */
+    int32_t datasize;      /**< size of complete payload */
 
     /* buffer for current loaded message */
     uint8_t headerbuffer[sizeof(DltStorageHeader) +
                          sizeof(DltStandardHeader) + sizeof(DltStandardHeaderExtra) + sizeof(DltExtendedHeader)]; /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
-    uint32_t databuffersize;
+    int32_t databuffersize;
 
     /* header values of current loaded message */
     DltStorageHeader *storageheader;        /**< pointer to storage header of current loaded header */
@@ -736,6 +736,9 @@ typedef struct
 {
     char apid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< application id */
     char ctid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< context id */
+    int log_level[DLT_FILTER_MAX];          /**< log level */
+    int32_t payload_max[DLT_FILTER_MAX];        /**< upper border for payload */
+    int32_t payload_min[DLT_FILTER_MAX];        /**< lower border for payload */
     int counter;                            /**< number of filters */
 } DltFilter;
 
@@ -778,12 +781,12 @@ typedef struct
     int32_t lastBytesRcvd;    /**< bytes received in last receive call */
     int32_t bytesRcvd;        /**< received bytes */
     int32_t totalBytesRcvd;   /**< total number of received bytes */
-    char *buffer;             /**< pointer to receiver buffer */
-    char *buf;                /**< pointer to position within receiver buffer */
-    char *backup_buf;         /** pointer to the buffer with partial messages if any **/
-    int fd;                   /**< connection handle */
+    char *buffer;         /**< pointer to receiver buffer */
+    char *buf;            /**< pointer to position within receiver buffer */
+    char *backup_buf;     /** pointer to the buffer with partial messages if any **/
+    int fd;               /**< connection handle */
     DltReceiverType type;     /**< type of connection handle */
-    uint32_t buffersize;      /**< size of receiver buffer */
+    int32_t buffersize;       /**< size of receiver buffer */
     struct sockaddr_in addr;  /**< socket address information */
 } DltReceiver;
 
@@ -926,9 +929,9 @@ DltReturnValue dlt_filter_free(DltFilter *filter, int verbose);
  */
 DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verbose);
 /**
- * Save filter list to file.
+ * Save filter in space separated list to text file.
  * @param filter pointer to structure of organising DLT filter
- * @param filename filename to load filters from
+ * @param filename filename to safe filters into
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
@@ -938,28 +941,40 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be found in filter list
  * @param ctid context id to be found in filter list
+ * @param log_level log level to be found in filter list
+ * @param payload_min minimum payload lenght to be found in filter list
+ * @param payload_max maximum payload lenght to be found in filter list
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error (or not found), else return index of filter
  */
-int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 /**
  * Add new filter to filter list.
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be added to filter list (must always be set).
  * @param ctid context id to be added to filter list. empty equals don't care.
+ * @param log_level log level to be added to filter list. 0 equals don't care.
+ * @param payload_min min lenght of payload to be added to filter list. 0 equals don't care.
+ * @param payload_max max lenght of payload to be added to filter list. INT32_MAX equals don't care.
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 /**
  * Delete filter from filter list
  * @param filter pointer to structure of organising DLT filter
  * @param apid application id to be deleted from filter list
  * @param ctid context id to be deleted from filter list
+ * @param log_level log level to be deleted from filter list
+ * @param payload_min minimum payload lenght to be deleted from filter list
+ * @param payload_max maximum payload lenght to be deleted from filter list
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, int verbose);
+DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 
 /**
  * Initialise the structure used to access a DLT message.
@@ -1301,7 +1316,7 @@ DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
  * @param required size
  * @return negative value if required size is not sufficient
  * */
-DltReturnValue dlt_check_rcv_data_size(uint32_t received, uint32_t required);
+DltReturnValue dlt_check_rcv_data_size(int received, int required);
 
 /**
  * Initialise static ringbuffer with a size of size.

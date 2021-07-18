@@ -65,7 +65,12 @@ int dlt_daemon_socket_close(int sock);
 
 int dlt_daemon_socket_get_send_qeue_max_size(int sock);
 
-int dlt_daemon_socket_send(int sock, void *data1, int size1, void *data2, int size2, char serialheader);
+int dlt_daemon_socket_send(int sock,
+                           void *data1,
+                           int size1,
+                           void *data2,
+                           int size2,
+                           char serialheader);
 
 /**
  * @brief dlt_daemon_socket_sendreliable - sends data to socket with additional checks and resending functionality - trying to be reliable

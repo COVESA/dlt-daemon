@@ -262,8 +262,8 @@ int main(int argc, char *argv[])
             message = argv[index];
     }
     else { /* allocate raw buffer */
-        message = calloc(sizeof(char), (size_t) rvalue);
-        memset(message, 'X', (size_t) (rvalue - 1)) ;
+        message = calloc(sizeof(char), rvalue);
+        memset(message, 'X', rvalue - 1);
     }
 
     if (message == 0) {
@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
         delay = 500;
 
     if (tvalue)
-        dlt_set_resend_timeout_atexit((uint32_t) atoi(tvalue));
+        dlt_set_resend_timeout_atexit(atoi(tvalue));
 
     if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */

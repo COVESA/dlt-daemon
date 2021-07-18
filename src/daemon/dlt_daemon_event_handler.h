@@ -32,7 +32,7 @@
 #include "dlt-daemon.h"
 
 #ifndef DLT_DAEMON_EVENT_HANDLER_H
-#   define DLT_DAEMON_EVENT_HANDLER_H
+#define DLT_DAEMON_EVENT_HANDLER_H
 
 int dlt_daemon_prepare_event_handling(DltEventHandler *);
 int dlt_daemon_handle_event(DltEventHandler *, DltDaemon *, DltDaemonLocal *);
@@ -56,11 +56,11 @@ int dlt_event_handler_unregister_connection(DltEventHandler *,
 int dlt_connection_check_activate(DltEventHandler *,
                                   DltConnection *,
                                   int);
-#   ifdef DLT_UNIT_TESTS
+#ifdef DLT_UNIT_TESTS
 int dlt_daemon_remove_connection(DltEventHandler *ev,
                                  DltConnection *to_remove);
 
 void dlt_daemon_add_connection(DltEventHandler *ev,
                                DltConnection *connection);
-#   endif
+#endif
 #endif /* DLT_DAEMON_EVENT_HANDLER_H */

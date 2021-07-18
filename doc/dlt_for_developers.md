@@ -3,14 +3,13 @@
 Back to [README.md](../README.md)
 
 Table of Contents
-1. [Summary](#Summary)
-2. [Example Application](#DLT-Example-Application)
-3. [General Rules for Logging](#General-Rules-for-Logging)
-4. [The use of Log Levels](#The-use-of-Log-Levels)
-5. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
-6. [DLT API Usage](#DLT-API-Usage)
-7. [DLT injection messages](#DLT-Injection-Messages)
-8. [Log level changed callback](#Log-level-changed-callback)
+1. [DLT Example Application](#DLT-Example-Application)
+2. [General Rules for Logging](#General-Rules-for-Logging)
+3. [The use of Log Levels](#The-use-of-Log-Levels)
+4. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
+5. [DLT API Usage](#DLT-API-Usage)
+6. [DLT injection messages](#DLT-Injection-Messages)
+7. [Log level changed callback](#Log-level-changed-callback)
 
 ## DLT Example Application
 
@@ -28,9 +27,9 @@ this document.
 Please note that the #include statement depends on the means by which you are
 incorporating the DLT library into your project. The `<dlt/dlt.h>` form (i.e.
 with a directory prefix) seen here is necessary when you are using the CMake
-Config file (see below). If you are using pkg-config instead, then this #include
-statement needs to refer to only `<dlt.h>`, due to the way the pkg-config module
-exports the include directory.
+Config file (see below). If you are using pkg-config instead, then for
+backward-compatibility reasons it is also possible to use `#include <dlt.h>`.
+This is not recommended for new code, though.
 
 ```
 #include <dlt/dlt.h>
@@ -74,7 +73,7 @@ that is being generated as part of installation.
 
 You can thus:
 ```
-find_package(automotive-dlt)
+find_package(automotive-dlt REQUIRED)
 ...
 target_link_libraries(myapp PRIVATE Genivi::DLT)
 ```
@@ -82,7 +81,9 @@ which lets your project automatically gain all necessary compile and link flags
 needed by libdlt, including the include directories.
 
 The generated CMake Config file follows "Modern CMake" convention and only
-exports an IMPORTED CMake target; it does not set any variables.
+exports an IMPORTED CMake target; it does not set any variables, except for the
+`automotive-dlt_FOUND` variable that can be used to treat DLT as an optional
+dependency.
 
 ### DLT with pkg-config
 

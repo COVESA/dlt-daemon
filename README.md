@@ -62,11 +62,13 @@ install DLT daemon:
 - cmake
 - zlib
 - dbus
+- json-c (only required for dlt-receives extended filtering)
 
 On Ubuntu those dependencies can be installed with the following command:
 
-```
+```bash
 sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+optional: sudo apt-get install libjson-c-dev # in case you want to use dlt-receives extended filtering
 ```
 
 Then proceed to download DLT if you haven't already. We recommend cloning the
@@ -118,10 +120,7 @@ make doc
 To build the DLT debian package for your own purpose, follow these steps:
 
 ```bash
-mkdir build
-cd build
-cmake ..
-cpack
+dpkg-buildpackage -us -uc
 ```
 
 ## Learn more
@@ -154,7 +153,7 @@ configure DLT to exactly suit your needs, how to control the behvaiour of
 running instances and how to interface DLT with existing system through
 provided adaptors.
 
-The man pages are generated with *pandoc*.
+The man pages are generated with *pandoc*, which also needs *asciidoc* as dependency.
 
 Build manpages (initally or because something changed) with e.g.
 ```bash

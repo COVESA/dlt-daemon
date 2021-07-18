@@ -66,11 +66,14 @@ int init_socket(SyslogOptions opts)
             DLT_INT(opts.Port));
 
     int sock = -1;
-    struct sockaddr_in syslog_addr;
 
 #ifdef DLT_USE_IPv6
+    /* declare struct for IPv6 socket address*/
+    struct sockaddr_in6 syslog_addr;
     sock = socket(AF_INET6, SOCK_DGRAM, 0);
 #else
+    /* declare struct for IPv4 socket address*/
+    struct sockaddr_in syslog_addr;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
 #endif
 
@@ -80,19 +83,25 @@ int init_socket(SyslogOptions opts)
         return -1;
     }
 
+    /* initialize struct syslog_addr */
+    memset(&syslog_addr, 0, sizeof(syslog_addr));
 #ifdef DLT_USE_IPv6
-    syslog_addr.sin_family = AF_INET6;
+    syslog_addr.sin6_family = AF_INET6;
+    syslog_addr.sin6_addr = in6addr_any;
+    syslog_addr.sin6_port = htons(opts.Port);
 #else
     syslog_addr.sin_family = AF_INET;
-#endif
-    syslog_addr.sin_port = htons(opts.Port);
     syslog_addr.sin_addr.s_addr = INADDR_ANY;
+    syslog_addr.sin_port = htons(opts.Port);
     memset(&(syslog_addr.sin_zero), 0, 8);
+#endif
 
+    /* bind the socket address to local interface */
     if (bind(sock, (struct sockaddr *)&syslog_addr,
-             sizeof(struct sockaddr)) == -1) {
+             sizeof(syslog_addr)) == -1) {
         DLT_LOG(syslogContext, DLT_LOG_FATAL,
-                DLT_STRING("Unable to bind socket for SYSLOG."));
+                DLT_STRING("Unable to bind socket for SYSLOG, error description: "),
+                DLT_STRING(strerror(errno)));
         close(sock);
         return -1;
     }

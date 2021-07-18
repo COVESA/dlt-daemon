@@ -4,9 +4,47 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.6 STABLE
+2.18.7 STABLE
 
 ## Changes
+
+### 2.18.7
+
+   * dlt_common: correct read/write position
+   * Update document and fix conversion warning
+   * dlt_common: Increment size after memcpy()
+   * Using dlt_vlog in verbose option in dlt_client.c
+   * dlt-logstorage-ctrl: Improve option force to sync
+   * Do not use Cpack
+   * Debian packaging
+   * Update dlt-system.conf documentation
+   * dlt_user: correct handling return value
+   * Update dlt-system-syslog with IPv6
+   * Alternative solutions for json-c dependency
+   * dlt-receive:Fix compiler warning
+   * daemon: Improve signal handler for timers
+   * dlt-doc:Fix generating HTML documentation and man pages
+   * Apply uncrustify for src/daemon/* and src/lib/*
+   * Update uncrustify
+   * dlt-receive: Implemented gtest for extended filtering
+   * dlt-receive: Enabled more filtering by using json filter files
+   * dlt_receive: handle exception in signal handler.
+   * dlt message header broken
+   * Add missing string functions (#309)
+   * gtest: Find system-provided external gtest (#301)
+   * Make nonverbose mode non exclusive (#300)
+   * Merge pull request from GHSA-7cqp-2hqj-mh3f
+   * daemon: check the conf inputs
+   * Export cmake config file (#289)
+   * Better formatting of RAWD (#291)
+   * fix bad funcion cast in dlt_user_log_out_error_handling (#294)
+   * Contact information update (#299)
+   * dlt-receive: Add option to configure port of dlt receive (#293)
+   * Add verbose mode attribute handling (#292)
+   * Resolving broken link in README (#297)
+   * fscanf() uses dynamic formatting to prevent buffer overflow (#288)
+   * Make dlt pipe only readable by user (#285)
+   * dlt_client_main_loop running in an infinite loop restricts graceful exit of DLT Client code (#284)
 
 ### 2.18.6
 

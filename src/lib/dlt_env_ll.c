@@ -59,20 +59,24 @@ int dlt_env_extract_id(char **const env, char *id)
 {
     int i;
 
-    if (!env || !id)
+    if (!env || !id) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
     memset(id, 0, 4);
 
-    for (i = 0; (i < 4) && (**env != ':') && (**env != 0); ++i)
+    for (i = 0; (i < 4) && (**env != ':') && (**env != 0); ++i) {
         *id++ = *((*env)++);
+    }
 
     /* the next/last character must be ':' */
-    if ((0 != **env) && (':' == **env))
+    if ((0 != **env) && (':' == **env)) {
         return 0;
+    }
 
     return -1;
 }
@@ -88,19 +92,22 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
     int count = 0;
     char ch;
 
-    if (!env || !result)
+    if (!env || !result) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
     ch = *(*env);
 
     while (ch && (count < res_len - 1) && (ch != ';')) {
-        if ((ch >= 'A') && (ch <= 'Z'))
-            result[count] = (char) (ch + 'a' - 'A');
-        else
+        if ((ch >= 'A') && (ch <= 'Z')) {
+            result[count] = ch + 'a' - 'A';
+        } else {
             result[count] = ch;
+        }
 
         ch = *(++(*env));
         ++count;
@@ -108,10 +115,11 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 
     result[count] = 0;
 
-    if (!ch || (ch == ';')) /* full input was parsed */
+    if (!ch || (ch == ';')) { /* full input was parsed */
         return 0;
-    else
+    } else {
         return -1;
+    }
 }
 
 
@@ -119,38 +127,41 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
 {
     char result[strlen("verbose") + 1];
 
-    if (!env || !ll)
+    if (!env || !ll) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
-    if (dlt_env_helper_to_lower(env, &result[0], (int) sizeof(result)) == 0) {
-        if (strncmp("default", result, sizeof(result)) == 0)
+    if (dlt_env_helper_to_lower(env, &result[0], sizeof(result)) == 0) {
+        if (strncmp("default", result, sizeof(result)) == 0) {
             *ll = -1;
-        else if (strncmp("off", result, sizeof(result)) == 0)
+        } else if (strncmp("off", result, sizeof(result)) == 0) {
             *ll = 0;
-        else if (strncmp("fatal", result, sizeof(result)) == 0)
+        } else if (strncmp("fatal", result, sizeof(result)) == 0) {
             *ll = 1;
-        else if (strncmp("error", result, sizeof(result)) == 0)
+        } else if (strncmp("error", result, sizeof(result)) == 0) {
             *ll = 2;
-        else if (strncmp("warning", result, sizeof(result)) == 0)
+        } else if (strncmp("warning", result, sizeof(result)) == 0) {
             *ll = 3;
-        else if (strncmp("info", result, sizeof(result)) == 0)
+        } else if (strncmp("info", result, sizeof(result)) == 0) {
             *ll = 4;
-        else if (strncmp("debug", result, sizeof(result)) == 0)
+        } else if (strncmp("debug", result, sizeof(result)) == 0) {
             *ll = 5;
-        else if (strncmp("verbose", result, sizeof(result)) == 0)
+        } else if (strncmp("verbose", result, sizeof(result)) == 0) {
             *ll = 6;
-        else
+        } else {
             return -1;
+        }
 
-        if (**env != 0)
+        if (**env != 0) {
             (*env)++;
+        }
 
         return 0;
-    }
-    else {
+    } else {
         return -1;
     }
 }
@@ -186,11 +197,13 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
  */
 int dlt_env_extract_ll(char **const env, int8_t *ll)
 {
-    if (!env || !ll)
+    if (!env || !ll) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
     /* extract number */
     if (**env == '-') {
@@ -200,19 +213,19 @@ int dlt_env_extract_ll(char **const env, int8_t *ll)
             *ll = -1;
             (*env)++;
         }
-    }
-    else {
+    } else {
         if ((**env >= '0') && (**env < '7')) {
-            *ll = (int8_t) (**env - '0');
+            *ll = **env - '0';
             (*env)++;
-        }
-        else if (dlt_env_extract_symbolic_ll(env, ll) != 0)
+        } else if (dlt_env_extract_symbolic_ll(env, ll) != 0) {
             return -1;
+        }
     }
 
     /* check end, either next char is NULL or ';' */
-    if ((**env == ';') || (**env == 0))
+    if ((**env == ';') || (**env == 0)) {
         return 0;
+    }
 
     return -1;
 }
@@ -227,29 +240,34 @@ int dlt_env_extract_ll_item(char **const env, dlt_env_ll_item *const item)
 {
     int ret = -1;
 
-    if (!env || !item)
+    if (!env || !item) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
     memset(item, 0, sizeof(dlt_env_ll_item));
     ret = dlt_env_extract_id(env, item->appId);
 
-    if (ret == -1)
+    if (ret == -1) {
         return -1;
+    }
 
     (*env)++;
     ret = dlt_env_extract_id(env, item->ctxId);
 
-    if (ret == -1)
+    if (ret == -1) {
         return -1;
+    }
 
     (*env)++;
     ret = dlt_env_extract_ll(env, &item->ll);
 
-    if (ret == -1)
+    if (ret == -1) {
         return -1;
+    }
 
     return 0;
 }
@@ -265,8 +283,9 @@ int dlt_env_extract_ll_item(char **const env, dlt_env_ll_item *const item)
  */
 int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
 {
-    if (!ll_set)
+    if (!ll_set) {
         return -1;
+    }
 
     ll_set->array_size = DLT_ENV_LL_SET_INCREASE;
     ll_set->item = (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
@@ -287,8 +306,9 @@ int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
  */
 void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set)
 {
-    if (!ll_set)
+    if (!ll_set) {
         return;
+    }
 
     if (ll_set->item != NULL) {
         free(ll_set->item);
@@ -311,8 +331,9 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
     dlt_env_ll_item *old_set;
     size_t old_size;
 
-    if (!ll_set)
+    if (!ll_set) {
         return -1;
+    }
 
     old_set = ll_set->item;
     old_size = ll_set->array_size;
@@ -324,8 +345,7 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
         /* should trigger a warning: no memory left */
         ll_set->array_size -= DLT_ENV_LL_SET_INCREASE;
         return -1;
-    }
-    else {
+    } else {
         memcpy(ll_set->item, old_set, sizeof(dlt_env_ll_item) * old_size);
         free(old_set);
         return 0;
@@ -343,26 +363,32 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
  */
 int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
 {
-    if (!env || !ll_set)
+    if (!env || !ll_set) {
         return -1;
+    }
 
-    if (!(*env))
+    if (!(*env)) {
         return -1;
+    }
 
-    if (dlt_env_init_ll_set(ll_set) == -1)
+    if (dlt_env_init_ll_set(ll_set) == -1) {
         return -1;
+    }
 
     do {
         if (ll_set->num_elem == ll_set->array_size) {
-            if (dlt_env_increase_ll_set(ll_set) == -1)
+            if (dlt_env_increase_ll_set(ll_set) == -1) {
                 return -1;
+            }
         }
 
-        if (dlt_env_extract_ll_item(env, &ll_set->item[ll_set->num_elem++]) == -1)
+        if (dlt_env_extract_ll_item(env, &ll_set->item[ll_set->num_elem++]) == -1) {
             return -1;
+        }
 
-        if (**env == ';')
+        if (**env == ';') {
             (*env)++;
+        }
     } while (**env != 0);
 
     return 0;
@@ -376,17 +402,21 @@ int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
  */
 int dlt_env_ids_match(char const *const a, char const *const b)
 {
-    if (a[0] != b[0])
+    if (a[0] != b[0]) {
         return 0;
+    }
 
-    if (a[1] != b[1])
+    if (a[1] != b[1]) {
         return 0;
+    }
 
-    if (a[2] != b[2])
+    if (a[2] != b[2]) {
         return 0;
+    }
 
-    if (a[3] != b[3])
+    if (a[3] != b[3]) {
         return 0;
+    }
 
     return 1;
 }
@@ -403,23 +433,26 @@ int dlt_env_ids_match(char const *const a, char const *const b)
  *
  * In case of error, -1 is returned.
  */
-int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item, char const *const apid, char const *const ctid)
+int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
+                                      char const *const apid,
+                                      char const *const ctid)
 {
-    if ((!item) || (!apid) || (!ctid))
+    if ((!item) || (!apid) || (!ctid)) {
         return -1;
+    }
 
     if (item->appId[0] == 0) {
         if (item->ctxId[0] == 0) {
             return 1;
-        }
-        else if (dlt_env_ids_match(item->ctxId, ctid))
+        } else if (dlt_env_ids_match(item->ctxId, ctid)) {
             return 2;
-    }
-    else if (dlt_env_ids_match(item->appId, apid)) {
-        if (item->ctxId[0] == 0)
+        }
+    } else if (dlt_env_ids_match(item->appId, apid)) {
+        if (item->ctxId[0] == 0) {
             return 3;
-        else if (dlt_env_ids_match(item->ctxId, ctid))
+        } else if (dlt_env_ids_match(item->ctxId, ctid)) {
             return 4;
+        }
     }
 
     return 0;
@@ -440,8 +473,9 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
                                char const *const ctid,
                                int const ll)
 {
-    if ((!ll_set) || (!apid) || (!ctid))
+    if ((!ll_set) || (!apid) || (!ctid)) {
         return ll;
+    }
 
     int res = ll;
     int prio = 0; /* no match so far */
@@ -454,8 +488,9 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
             prio = p;
             res = ll_set->item[i].ll;
 
-            if (p == 4) /* maximum reached, immediate return */
+            if (p == 4) { /* maximum reached, immediate return */
                 return res;
+            }
         }
     }
 
