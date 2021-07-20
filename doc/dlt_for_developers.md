@@ -387,14 +387,15 @@ environment variables are described:
 
 ### Initial Log level
 
-The default log level of DLT User library is DLT\_LOG\_INFO. This can be changed
+The default log level of DLT User library is DLT\_LOG\_INFO (when using macro
+DLT\_REGISTER\_CONTEXT or dlt\_register\_context() api). This can be changed
 using a DLT client application (e.g. DLT Viewer). But there might be situations
-where DEBUG or VERBOSE messages are needed before the DLT Daemon updated the
-user library.
+where DEBUG or VERBOSE messages are needed before the DLT Daemon updated the user library.
 
-In this case DLT\_INITIAL\_LOG\_LEVEL can be exported. Using this environment
-variable, the user can specify log level for contexts that will be used on
-library startup.
+There are several ways to initialize log level in DLT library startup phase.
+ 
+1. It is possible to do that by exporting environment variable DLT\_INITIAL\_LOG\_LEVEL.
+   By using this way, the user can specify log level for contexts.
 
 For example, an application "EXA1" has two contexts "CON1" and "CON2". For
 "CON1" log level DEBUG and for "CON2" log level VERBOSE shall be used. The
@@ -413,6 +414,31 @@ If the log level for all contexts of application "EXA1" shall be initialized, th
 If the log level of context "CON1" shall be initialized, then:
 
 > export DLT\_INITIAL\_LOG\_LEVEL=":CON1:2"
+
+In case only the log level of context "CON1" of application "EXA1" shall be
+initialized, and other contexts will be ignored, then:
+
+> export DLT\_INITIAL\_LOG\_LEVEL="::0;EXA1:CON1:2"
+
+2. If DLT\_INITIAL\_LOG\_LEVEL variable is not exported in the environment,
+log level for it each context can be changed in the config file (/etc/dlt.conf).
+
+Default log level will be 4 (DLT\_LOG\_INFO)
+
+> ContextLogLevel = 4
+
+3. DLT user can use dlt\_register\_context\_ll\_ts() api to initialize log
+level for each context.
+
+Example:
+> //Register new context to daemon, with initial log level is DLT\_LOG\_VERBOSE
+>
+> dlt\_register\_context\_ll\_ts(&con\_exa1, "CON", "First context", DLT\_LOG\_VERBOSE, DLT\_TRACE\_STATUS\_OFF);
+
+The priority of context log level would be as follows:
+- Priority 1: Using dlt\_register\_context\_ll\_ts() api
+- Priority 2: Using environment variable DLT\_INITIAL\_LOG\_LEVEL
+- Priority 3: Setting in config file dlt.conf
 
 ### Local print mode
 
