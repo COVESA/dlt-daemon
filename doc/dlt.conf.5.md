@@ -103,6 +103,13 @@ The step size the Ringbuffer is increased, used for storing temporary DLT messag
 
     Default: 500000
 
+## Daemon FIFOSize
+
+The size of Daemon FIFO (MinSize: depend on pagesize of system, MaxSize: please check `/proc/sys/fs/pipe-max-size`)
+This is only supported for Linux.
+
+    Default: 65536
+
 ## ContextLogLevel
 
 Initial log-level that is sent when an application registers. DLT_LOG_OFF = 0, DLT_LOG_FATAL = 1, DLT_LOG_ERROR = 2, DLT_LOG_WARN = 3, DLT_LOG_INFO = 4, DLT_LOG_DEBUG = 5, DLT_LOG_VERBOSE = 6
