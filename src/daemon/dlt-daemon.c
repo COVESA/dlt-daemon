@@ -553,12 +553,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                 value, &(daemon_local->RingbufferStepSize)) < 0)
                             return -1;
                     }
-                    else if (strcmp(token, "DaemonFIFOSize") == 0)
-                    {
-                        if (dlt_daemon_check_numeric_setting(token,
-                                value, &(daemon_local->daemonFifoSize)) < 0)
-                            return -1;
-                    }
                     else if (strcmp(token, "SharedMemorySize") == 0)
                     {
                         daemon_local->flags.sharedMemorySize = atoi(value);
@@ -714,6 +708,15 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
+                    else if (strcmp(token, "DaemonFIFOSize") == 0)
+                    {
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->daemonFifoSize)) < 0)
+                            return -1;
+#ifndef __linux__
+                            printf("Option DaemonFIFOSize is set but only supported on Linux. Ignored.\n");
+#endif
+                    }
                     else if (strcmp(token, "DaemonFifoGroup") == 0)
                     {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
@@ -1375,11 +1378,16 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         return -1;
     } /* if */
 
+#ifdef __linux__
+    /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
+     * For other OSes it depends on its system e.g. pipe manager.
+     */
     if (daemon_local->daemonFifoSize != 0) {
         /* Set Daemon FIFO size */
         if (fcntl(fd, F_SETPIPE_SZ, daemon_local->daemonFifoSize) == -1)
             dlt_vlog(LOG_ERR, "set FIFO size error: %s\n", strerror(errno));
     }
+#endif
 
     /* Get Daemon FIFO size */
     if ((fifo_size = fcntl(fd, F_GETPIPE_SZ, 0)) == -1)
