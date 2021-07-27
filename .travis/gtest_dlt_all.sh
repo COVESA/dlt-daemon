@@ -60,7 +60,7 @@ gtest_run_test gtest_dlt_daemon_gateway
 ./gtest_dlt_daemon_gateway.sh -w > /dev/null
 gtest_run_test gtest_dlt_daemon_gateway
 
-./gtest_dlt_daemon_logstorage.sh > /dev/null
+./gtest_dlt_daemon_offline_log.sh > /dev/null
 gtest_run_test gtest_dlt_daemon_offline_log
 
 popd > /dev/null
