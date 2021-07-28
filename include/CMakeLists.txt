@@ -13,5 +13,6 @@
 # For further information see http://www.genivi.org/.
 #######
 
-ADD_SUBDIRECTORY( dlt )
+
+add_subdirectory( dlt )
 
