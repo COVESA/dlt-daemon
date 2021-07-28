@@ -17,22 +17,20 @@ set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
 add_library(dlt_control_common_lib STATIC ${dlt_control_common_SRCS})
 target_link_libraries(dlt_control_common_lib dlt ${DLT_JSON_LIBRARY})
 
-add_subdirectory(logstorage)
+set(TARGET_LIST dlt-convert dlt-receive)
 
-set(dlt-sortbytimestamp_SRCS dlt-sortbytimestamp.c)
-set(dlt-convert_SRCS dlt-convert.c)
-set(dlt-receive_SRCS dlt-receive.c)
-set(dlt-control_SRCS dlt-control.c ${dlt_control_common_SRCS})
-set(dlt-passive-node-ctrl_SRCS dlt-passive-node-ctrl.c ${dlt_control_common_SRCS})
+if(NOT WITH_DLT_CONSOLE_WO_CTRL)
+    add_subdirectory(logstorage)
+    list(APPEND TARGET_LIST dlt-control dlt-passive-node-ctrl)
+endif()
 
-foreach(target
-        dlt-sortbytimestamp
-        dlt-convert
-        dlt-receive
-        dlt-control
-        dlt-passive-node-ctrl
-        )
-    add_executable(${target} ${${target}_SRCS})
+if(NOT WITH_DLT_CONSOLE_WO_SBTM)
+    list(APPEND TARGET_LIST dlt-sortbytimestamp)
+endif()
+
+foreach(target IN LISTS TARGET_LIST)
+    set(target_SRCS ${target})
+    add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} dlt dlt_control_common_lib)
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
 
