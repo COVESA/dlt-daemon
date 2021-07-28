@@ -56,6 +56,7 @@
 #include <string.h>
 #include "dlt_filetransfer.h"
 #include "dlt_common.h"
+#include "dlt_user_macros.h"
 
 /*!Defines the buffer size of a single file package which will be logged to dlt */
 #define BUFFER_SIZE 1024

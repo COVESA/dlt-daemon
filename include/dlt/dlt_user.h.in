@@ -78,6 +78,8 @@
 #cmakedefine DLT_NETWORK_TRACE_ENABLE
 #endif
 
+#cmakedefine01 DLT_DISABLE_MACRO
+
 #ifdef DLT_NETWORK_TRACE_ENABLE
 #   include <mqueue.h>
 #else
@@ -92,8 +94,10 @@
 #   endif
 
 #   include "dlt_types.h"
-#   include "dlt_user_macros.h"
 #   include "dlt_shm.h"
+#if !DLT_DISABLE_MACRO
+#   include "dlt_user_macros.h"
+#endif
 
 #   ifdef __cplusplus
 extern "C" {

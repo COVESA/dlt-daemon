@@ -156,10 +156,6 @@ if(WITH_DLT_USE_IPv6)
     add_definitions(-DDLT_USE_IPv6)
 endif()
 
-if(WITH_DLT_DISABLE_MACRO)
-    add_definitions(-DDLT_DISABLE_MACRO)
-endif()
-
 if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc")
     message(FATAL_ERROR "Can only compile for QNX with a QNX compiler.")
 endif()

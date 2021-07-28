@@ -75,6 +75,8 @@
 
 #include "dlt_common.h"
 #include "dlt_user.h"
+#include "dlt_user_macros.h"
+
 
 /* Port number, to which the syslogd-ng sends its log messages */
 #define RCVPORT               47111
