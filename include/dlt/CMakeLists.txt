@@ -13,6 +13,10 @@
 # For further information see http://www.genivi.org/.
 #######
 
+if(WITH_DLT_DISABLE_MACRO)
+    set(DLT_DISABLE_MACRO 1)
+endif()
+
 configure_file(dlt_user.h.in dlt_user.h)
 
 set(HEADER_LIST dlt.h dlt_user_macros.h dlt_client.h dlt_protocol.h

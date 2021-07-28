@@ -52,6 +52,7 @@
 #define DLT_QNX_SYSTEM_H_
 
 #include "dlt.h"
+#include "dlt_user_macros.h"
 
 /* Constants */
 #define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-qnx-system.conf")

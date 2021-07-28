@@ -69,6 +69,7 @@
 
 #include "dlt_common.h"
 #include "dlt_user.h"
+#include "dlt_user_macros.h"
 
 #define MAXSTRLEN 1024
 
