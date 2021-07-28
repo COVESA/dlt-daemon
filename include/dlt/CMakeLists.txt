@@ -15,17 +15,21 @@
 
 configure_file(dlt_user.h.in dlt_user.h)
 
-install(FILES dlt.h dlt_user_macros.h dlt_client.h dlt_protocol.h
-              dlt_common.h dlt_types.h dlt_shm.h dlt_offline_trace.h
-              dlt_filetransfer.h dlt_common_api.h
-              ${CMAKE_CURRENT_BINARY_DIR}/dlt_version.h
-              ${CMAKE_CURRENT_BINARY_DIR}/dlt_user.h
-        DESTINATION include/dlt
-        COMPONENT devel)
+set(HEADER_LIST dlt.h dlt_user_macros.h dlt_client.h dlt_protocol.h
+                dlt_common.h dlt_types.h dlt_shm.h dlt_offline_trace.h
+                dlt_filetransfer.h dlt_common_api.h
+                ${CMAKE_CURRENT_BINARY_DIR}/dlt_version.h
+                ${CMAKE_CURRENT_BINARY_DIR}/dlt_user.h)
+
+if(WITH_DLT_DISABLE_MACRO)
+    list(REMOVE_ITEM HEADER_LIST dlt_user_macros.h)
+endif()
 
 if(WITH_DLT_CXX11_EXT)
-    install(FILES dlt_cpp_extension.hpp
-            DESTINATION include/dlt
-            COMPONENT devel)
+    list(APPEND HEADER_LIST dlt_cpp_extension.hpp)
 endif()
+
+install(FILES ${HEADER_LIST}
+        DESTINATION include/dlt
+        COMPONENT devel)
 
