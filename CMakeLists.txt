@@ -261,7 +261,7 @@ endif()
 
 add_subdirectory(doc)
 add_subdirectory(src)
-add_subdirectory(include/dlt)
+add_subdirectory(include)
 add_subdirectory(testscripts)
 if (WITH_DLT_UNIT_TESTS)
     find_package(GTest)
