@@ -462,6 +462,7 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
                     DLT_STRING(
                         "dlt_user_log_file_header_alias, Error getting serial number of file:"),
                     DLT_STRING(filename));
+            return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
         }
 
         uint32_t fsize = getFilesize(filename, &ok);
@@ -633,6 +634,8 @@ int dlt_user_log_file_data(DltContext *fileContext,
                 DLT_LOG(*fileContext, DLT_LOG_ERROR,
                         DLT_STRING("failed to get FileSerialNumber for: "),
                         DLT_STRING(filename));
+                fclose (file);
+                return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
             }
 
             DLT_LOG(*fileContext, DLT_LOG_INFO,
@@ -661,6 +664,8 @@ int dlt_user_log_file_data(DltContext *fileContext,
                         DLT_LOG(*fileContext, DLT_LOG_ERROR,
                                 DLT_STRING("failed to get FileSerialNumber for: "),
                                 DLT_STRING(filename));
+                        fclose(file);
+                        return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
                     }
 
                     DLT_LOG(*fileContext, DLT_LOG_INFO,
@@ -705,6 +710,7 @@ int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int del
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
                     DLT_STRING("failed to get FileSerialNumber for: "),
                     DLT_STRING(filename));
+            return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
         }
 
         DLT_LOG(*fileContext, DLT_LOG_INFO,
