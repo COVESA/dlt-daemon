@@ -818,7 +818,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     return 0;
 }
 
-#ifdef DLT_DAEMON_USE_FIFO_IPC
 static int dlt_mkdir_recursive(const char *dir)
 {
     int ret = 0;
@@ -838,21 +837,30 @@ static int dlt_mkdir_recursive(const char *dir)
     for (p = tmp + 1; ((*p) && (ret == 0)) || ((ret == -1 && errno == EEXIST) && (p != end)); p++)
         if (*p == '/') {
             *p = 0;
-            ret = mkdir(tmp, S_IRWXU);
+            ret = mkdir(tmp,
+            #ifdef DLT_DAEMON_USE_FIFO_IPC
+                        S_IRWXU);
+            #else
+                        S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
+            #endif
             *p = '/';
         }
 
 
 
     if ((ret == 0) || ((ret == -1) && (errno == EEXIST)))
-        ret = mkdir(tmp, S_IRWXU);
+        ret = mkdir(tmp,
+        #ifdef DLT_DAEMON_USE_FIFO_IPC
+                    S_IRWXU);
+        #else
+                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
+        #endif
 
     if ((ret == -1) && (errno == EEXIST))
         ret = 0;
 
     return ret;
 }
-#endif
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
 static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
@@ -937,11 +945,17 @@ int main(int argc, char *argv[])
 
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
+/* Make sure the parent user directory is created */
 #ifdef DLT_DAEMON_USE_FIFO_IPC
 
-    /* Make sure the parent user directory is created */
     if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
         dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
+        return -1;
+    }
+
+#else
+    if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
+        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", daemon_local.flags.appSockPath);
         return -1;
     }
 
