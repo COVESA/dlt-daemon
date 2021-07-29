@@ -260,7 +260,7 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     char dltSockBaseDir[DLT_IPC_PATH_MAX];
 
     DLT_SEM_LOCK();
-    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    int sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
 
     if (sockfd == DLT_FD_INIT) {
         dlt_log(LOG_CRIT, "Failed to create socket\n");
