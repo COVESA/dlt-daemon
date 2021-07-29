@@ -632,6 +632,7 @@ int dlt_control_deinit(void)
 {
     /* Stopping the listener thread */
     pthread_cancel(daemon_connect_thread);
+    pthread_join(daemon_connect_thread, NULL);
     /* Closing the socket */
     return dlt_client_cleanup(&g_client, get_verbosity());
 }
