@@ -95,13 +95,22 @@ TEST(t_dlt_gateway_init, nullpointer)
 /* Begin Method: dlt_gateway::t_dlt_gateway_send_control_message*/
 TEST(t_dlt_gateway_send_control_message, Normal)
 {
-    int ret = 0;
     DltDaemonLocal daemon_local;
     DltGatewayConnection connections;
     DltConnection connections1;
     DltReceiver receiver1;
+    DltPassiveControlMessage p_control_msgs;
+    DltServiceSetLogLevel req;
+    memset(&daemon_local,0, sizeof(DltDaemonLocal));
+    memset(&connections, 0, sizeof(DltGatewayConnection));
+    memset(&p_control_msgs,0, sizeof(DltPassiveControlMessage));
+    strcpy(req.apid,"LOG");
+    strcpy(req.ctid,"TES");
+    req.log_level = 1;
+
     daemon_local.pGateway.connections = &connections;
     daemon_local.pEvent.connections = &connections1;
+    daemon_local.pGateway.connections->p_control_msgs = &p_control_msgs;
     daemon_local.pEvent.connections->next = NULL;
     daemon_local.pEvent.pfd = 0;
     daemon_local.pEvent.nfds = 0;
@@ -109,20 +118,56 @@ TEST(t_dlt_gateway_send_control_message, Normal)
     daemon_local.pEvent.connections->receiver = &receiver1;
     memset(daemon_local.flags.gatewayConfigFile, 0, DLT_DAEMON_FLAG_MAX);
     strncpy(daemon_local.flags.gatewayConfigFile, "/tmp/dlt_gateway.conf", DLT_DAEMON_FLAG_MAX - 1);
-    ret = dlt_gateway_init(&daemon_local, 0);
+    (void) dlt_gateway_init(&daemon_local, 0);
 
-    EXPECT_EQ(DLT_RETURN_OK, ret);
+    daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_GET_LOG_INFO;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_send_control_message(daemon_local.pGateway.connections,
+                                                              daemon_local.pGateway.connections->p_control_msgs,
+                                                              NULL, 0));
 
-    dlt_gateway_send_control_message(daemon_local.pGateway.connections,
-                                     daemon_local.pGateway.connections->p_control_msgs,
-                                     NULL,
-                                     0);
-    dlt_gateway_deinit(&daemon_local.pGateway, 0);
+    daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_send_control_message(daemon_local.pGateway.connections,
+                                                              daemon_local.pGateway.connections->p_control_msgs,
+                                                              NULL, 0));
+
+    daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+    EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_send_control_message(daemon_local.pGateway.connections,
+                                                              daemon_local.pGateway.connections->p_control_msgs,
+                                                              NULL, 0));
+
+    daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_send_control_message(daemon_local.pGateway.connections,
+                                                              daemon_local.pGateway.connections->p_control_msgs,
+                                                              (void*)&req, 0));
 }
 
 TEST(t_dlt_gateway_send_control_message, nullpointer)
 {
+    DltDaemonLocal daemon_local;
+    DltFilterConfiguration current;
+    daemon_local.pFilter.current = &current;
+    DltGatewayConnection connections;
+    DltConnection connections1;
+    DltReceiver receiver1;
+    DltPassiveControlMessage p_control_msgs;
+    memset(&daemon_local,0, sizeof(DltDaemonLocal));
+    memset(&connections, 0, sizeof(DltGatewayConnection));
+    memset(&p_control_msgs,0, sizeof(DltPassiveControlMessage));
+    daemon_local.pGateway.connections = &connections;
+    daemon_local.pEvent.connections = &connections1;
+    daemon_local.pGateway.connections->p_control_msgs = &p_control_msgs;
+    daemon_local.pEvent.connections->next = NULL;
+    daemon_local.pEvent.connections->receiver = &receiver1;
+    memset(daemon_local.flags.gatewayConfigFile,0,DLT_DAEMON_FLAG_MAX);
+    strncpy(daemon_local.flags.gatewayConfigFile, "/tmp/dlt_gateway.conf", DLT_DAEMON_FLAG_MAX - 1);
+
     EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_gateway_send_control_message(NULL, NULL, NULL, 0));
+
+    daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+    EXPECT_EQ(DLT_RETURN_ERROR,dlt_gateway_send_control_message(daemon_local.pGateway.connections,
+                                                                daemon_local.pGateway.connections->p_control_msgs,
+                                                                NULL, 0));
 }
 
 /* Begin Method: dlt_gateway::t_dlt_gateway_store_connection*/
