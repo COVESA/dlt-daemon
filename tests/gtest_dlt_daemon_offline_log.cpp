@@ -107,15 +107,17 @@ TEST(t_dlt_logstorage_list_find, normal)
         data->ctids = strdup(ctid);
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        ASSERT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &list));
 
         num_configs = dlt_logstorage_list_find(key, &list, config);
 
-        ASSERT_EQ(1, num_configs);
-        ASSERT_NE((DltLogStorageFilterConfig *)NULL, config[0]);
+        EXPECT_EQ(1, num_configs);
+        EXPECT_NE((DltLogStorageFilterConfig *)NULL, config[0]);
 
-        EXPECT_STREQ(apid, config[0]->apids);
-        EXPECT_STREQ(ctid, config[0]->ctids);
+        if (num_configs > 0) {
+            EXPECT_STREQ(apid, config[0]->apids);
+            EXPECT_STREQ(ctid, config[0]->ctids);
+        }
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
@@ -1679,6 +1681,7 @@ TEST(t_dlt_logstorage_find_last_dlt_header, normal)
         free(config.cache);
     }
 }
+
 TEST(t_dlt_logstorage_find_last_dlt_header, null)
 {
     char data[] = {'N','o','H','e','a','d','e','r'};
