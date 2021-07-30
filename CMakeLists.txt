@@ -230,6 +230,8 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
         "Set directory to install systemd unit files")
 
     add_subdirectory(systemd)
+else()
+    set(systemd_SRCS "")
 endif()
 
 if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
