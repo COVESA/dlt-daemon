@@ -26,6 +26,10 @@ set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer)
 install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
         DESTINATION share/dlt-filetransfer)
 
+if(WITH_DLT_CXX11_EXT)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension)
+endif()
+
 #TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage
 if (NOT WITH_DLT_DISABLE_MACRO)
     set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose)
