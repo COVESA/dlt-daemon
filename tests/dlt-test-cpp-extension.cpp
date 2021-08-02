@@ -25,6 +25,7 @@
 #include "dlt_cpp_extension.hpp"
 #include <stdio.h>
 #include <string.h>
+#include "dlt_user_macros.h"
 
 struct MyStruct
 {

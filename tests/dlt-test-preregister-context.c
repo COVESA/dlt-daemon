@@ -25,6 +25,7 @@
 #include <unistd.h> /* for fork() */
 
 #include "dlt.h"
+#include "dlt_user_macros.h"
 
 /**
  * @brief sample code for using pre-registered contexts
