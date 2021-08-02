@@ -329,8 +329,10 @@ TEST(t_dlt_buffer_push, normal)
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    for (unsigned int i = 0; i <= (DLT_USER_RINGBUFFER_MIN_SIZE / size); i++)
+    for (unsigned int i = 0; i <= (DLT_USER_RINGBUFFER_MIN_SIZE / (size + sizeof(DltBufferBlockHead))); i++)
+    {
         EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&test, size));
+    }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
@@ -417,7 +419,7 @@ TEST(t_dlt_buffer_push3, normal)
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    for (int i = 0; i <= (DLT_USER_RINGBUFFER_MIN_SIZE / size); i++)
+    for (unsigned int i = 0; i <= (DLT_USER_RINGBUFFER_MIN_SIZE / (size * 3 + sizeof(DltBufferBlockHead))); i++)
         EXPECT_LE(DLT_RETURN_OK,
                   dlt_buffer_push3(&buf, (unsigned char *)&test, size, (unsigned char *)&test, size,
                                    (unsigned char *)&test,
@@ -1106,27 +1108,27 @@ TEST(t_dlt_buffer_get_message_count, normal)
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
     /*printf("##### %i\n", dlt_buffer_get_message_count(&buf)); */
-    EXPECT_LE(0, dlt_buffer_get_message_count(&buf));
+    EXPECT_EQ(0, dlt_buffer_get_message_count(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* Normal Use-Case, with pushing data, expected > 0 */
+    /* Normal Use-Case, with pushing data, expected 1 */
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&header, sizeof(DltUserHeader)));
     /*printf("#### %i\n", dlt_buffer_get_message_count(&buf)); */
-    EXPECT_LE(0, dlt_buffer_get_message_count(&buf));
+    EXPECT_EQ(1, dlt_buffer_get_message_count(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* Pushing 1000 mesages, expected 10000 */
+    /* Pushing DLT_USER_RINGBUFFER_MIN_SIZE / (sizeof(DltUserHeader) + sizeof(DltBufferBlockHead)) mesages */
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    for (int i = 1; i <= 10000; i++) {
+    for (unsigned int i = 1; i <= DLT_USER_RINGBUFFER_MIN_SIZE / (sizeof(DltUserHeader) + sizeof(DltBufferBlockHead)); i++) {
         EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&header, sizeof(DltUserHeader)));
         /*printf("#### %i\n", dlt_buffer_get_message_count(&buf)); */
-        EXPECT_LE(i, dlt_buffer_get_message_count(&buf));
+        EXPECT_EQ(i, dlt_buffer_get_message_count(&buf));
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
@@ -1193,33 +1195,35 @@ TEST(t_dlt_buffer_get_used_size, normal)
 {
     DltBuffer buf;
     DltUserHeader header;
+    int sum = 0;
 
     /* Normal Use Cas buffer empty, expected 0 */
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
     /*printf("##### %i\n", dlt_buffer_get_used_size(&buf)); */
-    EXPECT_LE(0, dlt_buffer_get_used_size(&buf));
+    EXPECT_EQ(0, dlt_buffer_get_used_size(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* Normal Use-Case with pushing data, expected > 0 */
+    /* Normal Use-Case with pushing data, expected sum of DltUserHeader and DltBufferBlockHead */
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&header, sizeof(DltUserHeader)));
     /*printf("##### %i\n", dlt_buffer_get_used_size(&buf)); */
-    EXPECT_LE(0, dlt_buffer_get_used_size(&buf));
+    EXPECT_EQ(sizeof(DltUserHeader) + sizeof(DltBufferBlockHead), dlt_buffer_get_used_size(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* Normal Use-Case with pushing 10000 data, expected > 0 */
+    /* Normal Use-Case with pushing DLT_USER_RINGBUFFER_MIN_SIZE / (sizeof(DltUserHeader) + sizeof(DltBufferBlockHead)) data */
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    for (int i = 1; i <= 10000; i++) {
+    for (unsigned int i = 1; i <= DLT_USER_RINGBUFFER_MIN_SIZE / (sizeof(DltUserHeader) + sizeof(DltBufferBlockHead)); i++) {
         EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&header, sizeof(DltUserHeader)));
         /*printf("#### %i\n", dlt_buffer_get_used_size(&buf)); */
-        EXPECT_LE(1, dlt_buffer_get_used_size(&buf));
+        sum += sizeof(DltUserHeader) + sizeof(DltBufferBlockHead);
+        EXPECT_EQ(sum, dlt_buffer_get_used_size(&buf));
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
