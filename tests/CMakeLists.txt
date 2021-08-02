@@ -42,8 +42,7 @@ foreach(target IN LISTS TARGET_LIST)
     add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} ${DLT_LIBRARIES})
     add_test(NAME ${target}
-             COMMAND ${target}
-             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+             COMMAND ${target})
 endforeach()
 
 ###################
@@ -65,13 +64,12 @@ foreach(target IN LISTS TARGET_LIST)
     if(${target} STREQUAL "gtest_dlt_daemon_event_handler" OR
        ${target} STREQUAL "gtest_dlt_shm")
         add_test(NAME ${target}
-                 COMMAND ${target}
-                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+                 COMMAND ${target})
     else()
+        configure_file(${PROJECT_SOURCE_DIR}/tests/${target}.sh ${PROJECT_BINARY_DIR}/tests COPYONLY)
         add_test(NAME ${target}
                  COMMAND /bin/sh "${target}.sh"
-                         ${target}
-                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+                         ${target})
     endif()
 endforeach()
 
@@ -84,7 +82,6 @@ if(WITH_EXTENDED_FILTERING)
     add_executable(gtest_dlt_json_filter gtest_dlt_json_filter.cpp)
     target_link_libraries(gtest_dlt_json_filter ${DLT_CONTROL_LIBRARIES})
     add_test(NAME gtest_dlt_json_filter
-        COMMAND gtest_dlt_json_filter
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        COMMAND gtest_dlt_json_filter)
 endif()
 
