@@ -755,12 +755,11 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
     if (client == NULL)
         return ret;
 
-    req = (DltServiceSetLogLevel *)malloc(sizeof(DltServiceSetLogLevel));
+    req = calloc(1, sizeof(DltServiceSetLogLevel));
 
     if (req == NULL)
         return ret;
 
-    memset(req, 0, sizeof(DltServiceSetLogLevel));
     req->service_id = DLT_SERVICE_ID_SET_LOG_LEVEL;
     dlt_set_id(req->apid, apid);
     dlt_set_id(req->ctid, ctid);
@@ -866,15 +865,12 @@ DltReturnValue dlt_client_get_software_version(DltClient *client)
 DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus)
 {
     DltServiceSetLogLevel *req;
-    uint8_t *payload;
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetLogLevel));
+    req = calloc(1,sizeof(DltServiceSetLogLevel));
 
-    if (payload == 0)
+    if (req == 0)
         return DLT_RETURN_ERROR;
 
-    req = (DltServiceSetLogLevel *)payload;
-    memset(req, 0, sizeof(DltServiceSetLogLevel));
     req->service_id = DLT_SERVICE_ID_SET_TRACE_STATUS;
     dlt_set_id(req->apid, apid);
     dlt_set_id(req->ctid, ctid);
@@ -882,12 +878,13 @@ DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char 
     dlt_set_id(req->com, "remo");
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload, sizeof(DltServiceSetLogLevel)) == DLT_RETURN_ERROR) {
-        free(payload);
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
+                                 sizeof(DltServiceSetLogLevel)) == DLT_RETURN_ERROR) {
+        free(req);
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
@@ -895,27 +892,24 @@ DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char 
 DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel)
 {
     DltServiceSetDefaultLogLevel *req;
-    uint8_t *payload;
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
+    req = calloc(1, sizeof(DltServiceSetDefaultLogLevel));
 
-    if (payload == 0)
+    if (req == 0)
         return DLT_RETURN_ERROR;
-
-    req = (DltServiceSetDefaultLogLevel *)payload;
 
     req->service_id = DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
     req->log_level = defaultLogLevel;
     dlt_set_id(req->com, "remo");
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload,
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
                                  sizeof(DltServiceSetDefaultLogLevel)) == DLT_RETURN_ERROR) {
-        free(payload);
+        free(req);
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
@@ -923,26 +917,24 @@ DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defa
 DltReturnValue dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel)
 {
     DltServiceSetDefaultLogLevel *req;
-    uint8_t *payload;
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
+    req = calloc(1, sizeof(DltServiceSetDefaultLogLevel));
 
-    if (payload == 0)
+    if (req == 0)
         return DLT_RETURN_ERROR;
-
-    req = (DltServiceSetDefaultLogLevel *)payload;
 
     req->service_id = DLT_SERVICE_ID_SET_ALL_LOG_LEVEL;
     req->log_level = LogLevel;
     dlt_set_id(req->com, "remo");
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload, sizeof(DltServiceSetDefaultLogLevel)) == -1) {
-        free(payload);
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
+                                 sizeof(DltServiceSetDefaultLogLevel)) == -1) {
+        free(req);
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
@@ -950,27 +942,24 @@ DltReturnValue dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel
 DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus)
 {
     DltServiceSetDefaultLogLevel *req;
-    uint8_t *payload;
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
+    req = calloc(1, sizeof(DltServiceSetDefaultLogLevel));
 
-    if (payload == 0)
+    if (req == 0)
         return DLT_RETURN_ERROR;
-
-    req = (DltServiceSetDefaultLogLevel *)payload;
 
     req->service_id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
     req->log_level = defaultTraceStatus;
     dlt_set_id(req->com, "remo");
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload,
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
                                  sizeof(DltServiceSetDefaultLogLevel)) == DLT_RETURN_ERROR) {
-        free(payload);
+        free(req);
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
@@ -978,33 +967,31 @@ DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t d
 DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t traceStatus)
 {
     DltServiceSetDefaultLogLevel *req;
-    uint8_t *payload;
 
     if (client == NULL) {
         dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetDefaultLogLevel));
+    req = calloc(1, sizeof(DltServiceSetDefaultLogLevel));
 
-    if (payload == 0) {
+    if (req == 0) {
         dlt_vlog(LOG_ERR, "%s: Could not allocate memory %zu\n", __func__, sizeof(DltServiceSetDefaultLogLevel));
         return DLT_RETURN_ERROR;
     }
-
-    req = (DltServiceSetDefaultLogLevel *)payload;
 
     req->service_id = DLT_SERVICE_ID_SET_ALL_TRACE_STATUS;
     req->log_level = traceStatus;
     dlt_set_id(req->com, "remo");
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload, sizeof(DltServiceSetDefaultLogLevel)) == -1) {
-        free(payload);
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
+                                 sizeof(DltServiceSetDefaultLogLevel)) == -1) {
+        free(req);;
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
@@ -1012,25 +999,23 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
 DltReturnValue dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets)
 {
     DltServiceSetVerboseMode *req;
-    uint8_t *payload;
 
-    payload = (uint8_t *)malloc(sizeof(DltServiceSetVerboseMode));
+    req = calloc(1, sizeof(DltServiceSetVerboseMode));
 
-    if (payload == 0)
+    if (req == 0)
         return DLT_RETURN_ERROR;
-
-    req = (DltServiceSetVerboseMode *)payload;
 
     req->service_id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
     req->new_status = timingPakets;
 
     /* free message */
-    if (dlt_client_send_ctrl_msg(client, "APP", "CON", payload, sizeof(DltServiceSetVerboseMode)) == DLT_RETURN_ERROR) {
-        free(payload);
+    if (dlt_client_send_ctrl_msg(client, "APP", "CON", (uint8_t*) req,
+                                 sizeof(DltServiceSetVerboseMode)) == DLT_RETURN_ERROR) {
+        free(req);
         return DLT_RETURN_ERROR;
     }
 
-    free(payload);
+    free(req);
 
     return DLT_RETURN_OK;
 }
