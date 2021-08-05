@@ -4812,9 +4812,9 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
     DLT_SEM_LOCK();
 
     if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                         ptr1, (unsigned char)len1,
-                         ptr2, (unsigned char)len2,
-                         ptr3, (unsigned char)len3) == DLT_RETURN_ERROR) {
+                         ptr1, (unsigned int)len1,
+                         ptr2, (unsigned int)len2,
+                         ptr3, (unsigned int)len3) == DLT_RETURN_ERROR) {
         if (dlt_user.overflow_counter == 0)
             dlt_log(LOG_WARNING, "Buffer full! Messages will be discarded.\n");
 
