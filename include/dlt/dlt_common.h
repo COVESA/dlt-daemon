@@ -1506,7 +1506,17 @@ void dlt_get_minor_version(char *buf, size_t size);
 /*                                                          */
 
 /**
- * Common part of initialisation
+ * Common part of initialisation. Evaluates the following environment variables
+ * and stores them in dlt_user struct:
+ * - DLT_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE
+ * - DLT_LOCAL_PRINT_MODE (AUTOMATIC: 0, FORCE_ON: 2, FORCE_OFF: 3)
+ * - DLT_INITIAL_LOG_LEVEL (e.g. APPx:CTXa:6;APPx:CTXb:5)
+ * - DLT_FORCE_BLOCKING
+ * - DLT_USER_BUFFER_MIN
+ * - DLT_USER_BUFFER_MAX
+ * - DLT_USER_BUFFER_STEP
+ * - DLT_LOG_MSG_BUF_LEN
+ * - DLT_DISABLE_INJECTION_MSG_AT_USER
  * @return negative value if there was an error
  */
 DltReturnValue dlt_init_common(void);
