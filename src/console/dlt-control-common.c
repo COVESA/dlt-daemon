@@ -630,6 +630,15 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
  */
 int dlt_control_deinit(void)
 {
+    /* At this stage, we want to stop sending/receiving
+     * from dlt-daemon. So in order to avoid cancellation
+     * at recv(), shutdown and close the socket
+     */
+    if (g_client.receiver.fd) {
+        shutdown(g_client.receiver.fd, SHUT_RDWR);
+        close(g_client.receiver.fd);
+        g_client.receiver.fd = -1;
+    }
     /* Stopping the listener thread */
     pthread_cancel(daemon_connect_thread);
     pthread_join(daemon_connect_thread, NULL);
