@@ -23,6 +23,7 @@
  */
 
 #include "dlt_cpp_extension.hpp"
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "dlt_user_macros.h"
