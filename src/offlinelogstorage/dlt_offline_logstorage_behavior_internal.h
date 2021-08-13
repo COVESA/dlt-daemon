@@ -51,8 +51,10 @@
 
 void dlt_logstorage_log_file_name(char *log_file_name,
                                   DltLogStorageUserConfig *file_config,
-                                  DltLogStorageFilterConfig *filter_config,
-                                  int idx);
+                                  const DltLogStorageFilterConfig *filter_config,
+                                  const char *name,
+                                  const int num_files,
+                                  const int idx);
 
 unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
 

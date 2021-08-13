@@ -71,45 +71,59 @@ DLT_STATIC void dlt_logstorage_concat_logfile_name(char *log_file_name, const ch
  *      timestamp:      yyyy-mm-dd-hh-mm-ss (enabled/disabled in dlt.conf)
  *      index:          Index len depends on wrap around value in dlt.conf
  *                      ex: wrap around = 99, index will 01..99
+ *                      (enabled/disabled in dlt.conf)
  *
- * @param log_file_name     contains complete logfile name
- * @param file_config       User configurations for log file
- * @param name              file name given in configuration file
- * @param idx               continous index of log files
+ * @param[out] log_file_name     target buffer for the complete logfile name.
+ *                               it needs to fit DLT_MOUNT_PATH_MAX chars
+ * @param[in]  file_config       User configurations for log file
+ * @param[in]  name              file name given in configuration file
+ * @param[in]  num_files         max files given in configuration file
+ * @param[in]  idx               continous index of log files
  * @ return                 None
  */
 void dlt_logstorage_log_file_name(char *log_file_name,
                                   DltLogStorageUserConfig *file_config,
-                                  DltLogStorageFilterConfig *filter_config,
-                                  int idx)
+                                  const DltLogStorageFilterConfig *filter_config,
+                                  const char *name,
+                                  const int num_files,
+                                  const int idx)
 {
     if ((log_file_name == NULL) || (file_config == NULL) || (filter_config == NULL))
         return;
 
-    char file_index[10] = { '\0' };
+    const char delim = file_config->logfile_delimiter;
+    int index_width = file_config->logfile_counteridxlen;
 
-    /* create log file name */
-    memset(log_file_name, '\0', DLT_MOUNT_PATH_MAX * sizeof(char));
-    dlt_logstorage_concat_logfile_name(log_file_name, filter_config->file_name);
-    dlt_logstorage_concat_logfile_name(log_file_name, &file_config->logfile_delimiter);
-
-    snprintf(file_index, 10, "%d", idx);
-
-    if (file_config->logfile_maxcounter != UINT_MAX) {
-        /* Setup 0's to be appended in file index until max index len*/
-        unsigned int digit_idx = 0;
-        unsigned int i = 0;
-        snprintf(file_index, 10, "%d", idx);
-        digit_idx = strlen(file_index);
-
-        if (file_config->logfile_counteridxlen > digit_idx)
-        {
-            for (i = 0 ; i < (file_config->logfile_counteridxlen - digit_idx) ; i++)
-                dlt_logstorage_concat_logfile_name(log_file_name, "0");
-        }
+    if (file_config->logfile_maxcounter == UINT_MAX) {
+        index_width = 0;
     }
 
-    dlt_logstorage_concat_logfile_name(log_file_name, file_index);
+    const char * suffix = ".dlt";
+    const int smax = DLT_MOUNT_PATH_MAX - strlen(suffix) - 1;
+    int spos = 0;
+    log_file_name[spos] = '\0';
+    int rt;
+
+    /* Append file name */
+    spos += strlen(name);
+    dlt_logstorage_concat_logfile_name(log_file_name, filter_config->file_name);
+
+    /* Append index */
+    /* Do not append if there is only one file and optional index mode is true*/
+    if (!(num_files == 1 && file_config->logfile_optional_counter)) {
+        rt = snprintf(log_file_name+spos, smax-spos, "%c%0*d", delim, index_width, idx);
+        if (rt >= smax-spos) {
+            dlt_vlog(LOG_WARNING, "%s: snprintf truncation %s\n", __func__, log_file_name);
+            spos = smax;
+        } else if (rt < 0) {
+            dlt_vlog(LOG_ERR, "%s: snprintf error rt=%d\n", __func__, rt);
+            const char *fmt_err = "fmt_err";
+            memcpy(log_file_name, fmt_err, strlen(fmt_err)+1);
+            spos = strlen(fmt_err) + 1;
+        } else {
+            spos += rt;
+        }
+    }
 
     /* Add time stamp if user has configured */
     if (file_config->logfile_timestamp) {
@@ -122,7 +136,7 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         n = snprintf(stamp,
                      DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + 1,
                      "%c%04d%02d%02d-%02d%02d%02d",
-                     file_config->logfile_delimiter,
+                     delim,
                      1900 + tm_info.tm_year,
                      1 + tm_info.tm_mon,
                      tm_info.tm_mday,
@@ -343,6 +357,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     }
 
     for (i = 0; i < cnt; i++) {
+        const char* suffix = ".dlt";
         int len = 0;
         int fname_len = 0;
         len = strlen(config->file_name);
@@ -500,7 +515,12 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 
     /* need new file*/
     if (num_log_files == 0) {
-        dlt_logstorage_log_file_name(file_name, file_config, config, 1);
+        dlt_logstorage_log_file_name(file_name,
+                                     file_config,
+                                     config,
+                                     config->file_name,
+                                     config->num_files,
+                                     1);
 
         /* concatenate path and file and open absolute path */
         strcat(absolute_file_path, storage_path);
@@ -563,7 +583,12 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 config->wrap_id += 1;
             }
 
-            dlt_logstorage_log_file_name(file_name, file_config, config, idx);
+            dlt_logstorage_log_file_name(file_name,
+                                         file_config,
+                                         config,
+                                         config->file_name,
+                                         config->num_files,
+                                         idx);
 
             /* concatenate path and file and open absolute path */
             memset(absolute_file_path,
@@ -588,7 +613,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                          __func__, absolute_file_path, num_log_files, config->num_files);
             }
 
-            dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
+            config->log = fopen(absolute_file_path, "w+");
 
             dlt_vlog(LOG_DEBUG,
                      "%s: Filename and Index after updating [%s]-[%u]\n",
@@ -610,25 +635,29 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 
             /* check if number of log files exceeds configured max value */
             if (num_log_files > config->num_files) {
-                /* delete oldest */
-                DltLogStorageFileList **head = &config->records;
-                DltLogStorageFileList *n = *head;
-                memset(absolute_file_path,
-                       0,
-                       sizeof(absolute_file_path) / sizeof(char));
-                strcat(absolute_file_path, storage_path);
-                strcat(absolute_file_path, (*head)->name);
-                dlt_vlog(LOG_DEBUG,
-                         "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
-                         __func__, absolute_file_path, num_log_files,
-                         config->num_files);
-                remove(absolute_file_path);
-                free((*head)->name);
-                (*head)->name = NULL;
-                *head = n->next;
-                n->next = NULL;
-                free(n);
+                if (!(config->num_files == 1 && file_config->logfile_optional_counter)) {
+                    /* delete oldest */
+                    DltLogStorageFileList **head = &config->records;
+                    DltLogStorageFileList *n = *head;
+                    memset(absolute_file_path,
+                           0,
+                           sizeof(absolute_file_path) / sizeof(char));
+                    strcat(absolute_file_path, storage_path);
+                    strcat(absolute_file_path, (*head)->name);
+                    dlt_vlog(LOG_DEBUG,
+                             "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
+                             __func__, absolute_file_path, num_log_files,
+                             config->num_files, config->file_name);
+                    remove(absolute_file_path);
+
+                    free((*head)->name);
+                    (*head)->name = NULL;
+                    *head = n->next;
+                    n->next = NULL;
+                    free(n);
+                }
             }
+
         }
     }
 
@@ -702,7 +731,7 @@ DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
     const char *cache = (char*)ptr + offset;
 
     unsigned int i;
-    for (i = cnt; i > 0; i--) {
+    for (i = cnt - (DLT_ID_SIZE - 1) ; i > 0; i--) {
         if ((cache[i] == 'D') && (strncmp(&cache[i], magic, 4) == 0))
             return i;
     }
@@ -853,6 +882,10 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         return -1;
     }
 
+    if (config->skip == 1) {
+        return 0;
+    }
+
     remain_file_size = config->file_size - config->current_write_file_offset;
 
     if (count > remain_file_size)
@@ -938,7 +971,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
 
     if ((config == NULL) || (file_config == NULL) || (dev_path == NULL) ||
         (newest_file_info == NULL)) {
-        dlt_vlog(LOG_DEBUG, "Wrong paratemters\n");
+        dlt_vlog(LOG_INFO, "%s: Wrong paratemters\n", __func__);
         return -1;
     }
 

@@ -10,6 +10,7 @@
  * History     : 30-Jun-2016
  */
 #include <gtest/gtest.h>
+#include <regex>
 
 int connectServer(void);
 
@@ -559,9 +560,8 @@ TEST(t_dlt_logstorage_device_connected, normal)
     handle.write_errors = 0;
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
-    strncpy(handle.device_mount_point, "/tmp", DLT_MOUNT_PATH_MAX);
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_connected(&handle, handle.device_mount_point));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_connected(&handle, "/tmp"));
 }
 
 TEST(t_dlt_logstorage_device_connected, null)
@@ -772,24 +772,73 @@ TEST(t_dlt_logstorage_log_file_name, normal)
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     file_config.logfile_delimiter = '/';
     file_config.logfile_maxcounter = 0;
-    file_config.logfile_timestamp = 1;
+    file_config.logfile_timestamp = 0;
     file_config.logfile_counteridxlen = 10;
-    int cmpRes = 0;
     char name[] = "log";
 
     DltLogStorageFilterConfig filter_config;
     memset(&filter_config, 0, sizeof(filter_config));
     filter_config.file_name = &name[0];
 
-    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, 0);
-    cmpRes = strncmp(log_file_name, "log/0000000000", 14);
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 10, 0);
+    EXPECT_EQ(std::string("log/0000000000.dlt"), log_file_name);
 
-    EXPECT_EQ(0, cmpRes);
+    file_config.logfile_counteridxlen = 3;
+    file_config.logfile_delimiter = '_';
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 9, 98);
+    EXPECT_EQ(std::string("log_098.dlt"), log_file_name);
+}
+
+TEST(t_dlt_logstorage_log_file_name, tmsp)
+{
+    char log_file_name[DLT_MOUNT_PATH_MAX] = { '\0' };
+    DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
+    file_config.logfile_delimiter = '_';
+    file_config.logfile_maxcounter = 9;
+    file_config.logfile_timestamp = 1;
+    file_config.logfile_counteridxlen = 2;
+    char name[] = "log";
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 8,  4);
+
+    // log_04_20210810-094602.dlt
+    std::regex r("log_04_\\d{8}-\\d{6}\\.dlt");
+    std::cmatch m;
+    EXPECT_TRUE(std::regex_search(log_file_name, m, r));
+}
+
+TEST(t_dlt_logstorage_log_file_name, optional_index)
+{
+    char log_file_name[DLT_MOUNT_PATH_MAX];
+    DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
+    file_config.logfile_delimiter = '_';
+    file_config.logfile_maxcounter = 1;
+    file_config.logfile_timestamp = 0;
+    file_config.logfile_counteridxlen = 4;
+    file_config.logfile_optional_counter = true;
+    char name[] = "APID";
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "APID", 1, 0);
+    EXPECT_EQ(std::string("APID.dlt"), log_file_name);
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "APID", 2, 0);
+    EXPECT_EQ(std::string("APID_0000.dlt"), log_file_name);
 }
 
 TEST(t_dlt_logstorage_log_file_name, null)
 {
-    dlt_logstorage_log_file_name(NULL, NULL, NULL, 0);
+    char name[] = "log";
+    dlt_logstorage_log_file_name(NULL, NULL, NULL, name, 0, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sort_file_name*/
@@ -998,6 +1047,7 @@ TEST(t_dlt_logstorage_storage_dir_info, null)
 TEST(t_dlt_logstorage_open_log_file, normal)
 {
     DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     file_config.logfile_timestamp = 191132;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
@@ -1225,10 +1275,11 @@ TEST(t_dlt_logstorage_write_on_msg, null)
 TEST(t_dlt_logstorage_sync_on_msg, normal)
 {
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     char apids;
     char ctids;
-    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.apids = &apids;
     config.ctids = &ctids;
     config.file_name = (char *)"Test";
@@ -1272,6 +1323,10 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     config.working_file_name = NULL;
     config.wrap_id = 0;
     g_logstorage_cache_max = 16;
+    newest_info.file_name = (char *)"Test";
+    newest_info.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_info.wrap_id = 0;
+    newest_info.next = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1, &newest_info));
 
@@ -1701,8 +1756,8 @@ TEST(t_dlt_daemon_logstorage_cleanup, normal)
     DltDaemonLocal daemon_local;
     daemon_local.flags.offlineLogstorageMaxDevices = 1;
     DltLogStorage storage_handle;
+    memset(&storage_handle, 0, sizeof(DltLogStorage));
     daemon.storage_handle = &storage_handle;
-    daemon.storage_handle->config_status = 0;
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_cleanup(&daemon, &daemon_local, 0));
 }
 
@@ -1986,7 +2041,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if (cpid) {
+    if (!cpid) {
         int i = GTEST_SOCKS_ACCEPTED;
         int j, optval = 1;
         char buffer[256];

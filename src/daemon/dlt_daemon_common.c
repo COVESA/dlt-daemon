@@ -972,10 +972,10 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
         }
 
         context = &(user_list->contexts[user_list->num_contexts - 1]);
+        memset(context, 0, sizeof(DltDaemonContext));
 
         dlt_set_id(context->apid, apid);
         dlt_set_id(context->ctid, ctid);
-        context->context_description = NULL;
 
         application->num_contexts++;
         new_context = 1;

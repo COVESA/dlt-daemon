@@ -1160,6 +1160,38 @@ DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *con
 }
 
 /**
+ * dlt_logstorage_check_overwrite_strategy
+ *
+ * Evaluate overwrite strategy. The sync strategy is an optional filter
+ * configuration parameter.
+ * If the given value cannot be associated with a strategy, the default
+ * strategy will be assigned.
+ *
+ * @param[in] config    DltLogStorageFilterConfig
+ * @param[in] value     string given in config file
+ * @return              0 on success, 1 on unknown value, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_check_overwrite_strategy(DltLogStorageFilterConfig *config,
+                                                  char *value)
+{
+    if ((config == NULL) || (value == NULL))
+        return -1;
+
+    if (strcasestr(value, "DISCARD_OLD") != NULL) {
+        config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD;
+    } else if (strcasestr(value, "DISCARD_NEW") != NULL) {
+        config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW;
+    } else {
+        dlt_log(LOG_WARNING,
+                "Unknown overwrite strategy. Set default DISCARD_OLD\n");
+        config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD;
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
  * dlt_logstorage_check_ecuid
  *
  * Evaluate if ECU idenfifier given in config file
@@ -1234,6 +1266,11 @@ DLT_STATIC DltLogstorageFilterConf
         .func = dlt_logstorage_check_sync_strategy,
         .is_opt = 1
     },
+    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
+        .key = "OverwriteBehavior",
+        .func = dlt_logstorage_check_overwrite_strategy,
+        .is_opt = 1
+    },
     [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
         .key = "EcuID",
         .func = dlt_logstorage_check_ecuid,
@@ -1294,6 +1331,11 @@ DLT_STATIC DltLogstorageFilterConf
         .func = dlt_logstorage_check_sync_strategy,
         .is_opt = 1
     },
+    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
+        .key = NULL,
+        .func = dlt_logstorage_check_overwrite_strategy,
+        .is_opt = 1
+    },
     [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
         .key = "EcuID",
         .func = dlt_logstorage_check_ecuid,
@@ -1351,6 +1393,11 @@ DLT_STATIC DltLogstorageFilterConf
     [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] = {
         .key = NULL,
         .func = dlt_logstorage_check_sync_strategy,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
+        .key = NULL,
+        .func = dlt_logstorage_check_overwrite_strategy,
         .is_opt = 1
     },
     [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
@@ -1839,7 +1886,7 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
  * @param mount_point    Device mount path
  * @return               0 on success, -1 on error, 1 on warning
  */
-int dlt_logstorage_device_connected(DltLogStorage *handle, char *mount_point)
+int dlt_logstorage_device_connected(DltLogStorage *handle, const char *mount_point)
 {
     if ((handle == NULL) || (mount_point == NULL)) {
         dlt_log(LOG_ERR, "Handle error \n");
@@ -2280,6 +2327,9 @@ int dlt_logstorage_write(DltLogStorage *handle,
         if (config[i]->file_name == NULL)
             continue;
 
+        if (config[i]->skip == 1)
+            continue;
+
         tmp = handle->newest_file_list;
         while (tmp) {
             if (strcmp(tmp->file_name, config[i]->file_name) == 0) {
@@ -2309,6 +2359,10 @@ int dlt_logstorage_write(DltLogStorage *handle,
                                                 handle->device_mount_point,
                                                 size1 + size2 + size3,
                                                 tmp);
+
+        if (ret == 0 && config[i]->skip == 1) {
+            continue;
+        }
 
         if (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
                  config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) {

@@ -1036,6 +1036,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
     file_config.logfile_timestamp = user_config->offlineLogstorageTimestamp;
     file_config.logfile_delimiter = user_config->offlineLogstorageDelimiter;
     file_config.logfile_maxcounter = user_config->offlineLogstorageMaxCounter;
+    file_config.logfile_optional_counter = user_config->offlineLogstorageOptionalCounter;
     file_config.logfile_counteridxlen =
         user_config->offlineLogstorageMaxCounterIdx;
 
@@ -1143,6 +1144,8 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
                                         daemon_local->flags.offlineLogstorageMaxCounter;
             (&daemon->storage_handle[i])->uconfig.logfile_timestamp =
                                         daemon_local->flags.offlineLogstorageTimestamp;
+            (&daemon->storage_handle[i])->uconfig.logfile_optional_counter =
+                daemon_local->flags.offlineLogstorageOptionalCounter;
 
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
@@ -1183,6 +1186,8 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                 daemon_local->flags.offlineLogstorageMaxCounter;
             handle->uconfig.logfile_timestamp =
                 daemon_local->flags.offlineLogstorageTimestamp;
+            handle->uconfig.logfile_optional_counter =
+                daemon_local->flags.offlineLogstorageOptionalCounter;
 
             if (dlt_logstorage_sync_caches(handle) != 0)
                 return DLT_RETURN_ERROR;
@@ -1201,6 +1206,8 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                     daemon_local->flags.offlineLogstorageMaxCounter;
                 daemon->storage_handle[i].uconfig.logfile_timestamp =
                     daemon_local->flags.offlineLogstorageTimestamp;
+                daemon->storage_handle[i].uconfig.logfile_optional_counter =
+                    daemon_local->flags.offlineLogstorageOptionalCounter;
 
                 if (dlt_logstorage_sync_caches(&daemon->storage_handle[i]) != 0)
                     return DLT_RETURN_ERROR;

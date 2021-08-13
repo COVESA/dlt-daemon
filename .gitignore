@@ -17,3 +17,7 @@ include/dlt/dlt_user.h
 cmake-build-debug/
 .vscode/
 googletest/
+
+# exclude temporary files
+cscope.out
+*.swp

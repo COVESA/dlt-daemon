@@ -115,6 +115,12 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S)&(s))
 
+/* Offline Logstorage overwrite strategies */
+#define DLT_LOGSTORAGE_OVERWRITE_ERROR         -1 /* error case */
+#define DLT_LOGSTORAGE_OVERWRITE_UNSET          0 /* strategy not set */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD    1 /* default, discard old */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW   (1 << 1) /* discard new */
+
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
 /* current logstorage cache size */
@@ -135,6 +141,7 @@ typedef struct
     char logfile_delimiter;             /* Choice of delimiter */
     unsigned int logfile_maxcounter;    /* Maximum file index counter */
     unsigned int logfile_counteridxlen; /* File index counter length */
+    int logfile_optional_counter;       /* Don't append counter for num_files=1 */
 } DltLogStorageUserConfig;
 
 typedef struct DltLogStorageFileList
@@ -170,6 +177,8 @@ struct DltLogStorageFilterConfig
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
+    int overwrite;                  /* Overwrite strategy */
+    int skip;                       /* Flag to skip file logging if DISCARD_NEW */
     char *ecuid;                    /* ECU identifier */
     unsigned int gzip_compression;  /* Toggle if log files should be gzip compressed */
     /* callback function for filter configurations */
@@ -253,6 +262,7 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_FILESIZE,
     DLT_LOGSTORAGE_FILTER_CONF_NOFILES,
     DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR,
+    DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR,
     DLT_LOGSTORAGE_FILTER_CONF_ECUID,
     DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
     DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION,
@@ -270,7 +280,7 @@ typedef enum {
  * @return               0 on success, -1 on error
  */
 int dlt_logstorage_device_connected(DltLogStorage *handle,
-                                    char *mount_point);
+                                    const char *mount_point);
 
 /**
  * dlt_logstorage_device_disconnected

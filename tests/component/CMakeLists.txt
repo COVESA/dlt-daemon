@@ -1,0 +1,2 @@
+add_subdirectory(logstorage_one_file)
+add_subdirectory(logstorage_multi_file)

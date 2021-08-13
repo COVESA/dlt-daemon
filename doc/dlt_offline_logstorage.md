@@ -53,6 +53,9 @@ options exist:
 # Wrap around value for log file count in file name (Default: UINT_MAX)
 # OfflineLogstorageMaxCounter = 999
 
+# Don't append counter for NOFiles=1 (Default: 0)
+# OfflineLogstorageOptionalIndex = 1
+
 # Maximal used memory for Logstorage Cache in KB (Default: 30000 KB)
 # OfflineLogstorageCacheSize = 30000
 ```
@@ -71,13 +74,14 @@ LogLevel=<Log level>                 # Define log level, e.g. DLT_LOG_INFO or DL
 File=<file name>                     # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
 FileSize=<file size in bytes>        # Maximum file size in bytes
 NOFiles=<number of files>            # Number of created files before oldest is deleted and a new one is created
-SyncBehavior=<strategy>              # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Rinbuffer Implementation below.
+SyncBehavior=<strategy>              # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Ringbuffer Implementation below.
 EcuID=<ECUid>                        # Specify ECU identifier
 SpecificSize=<spec size in bytes>    # Store logs in storage devices after specific size is reached.
 GzipCompression=<on or off>          # Write the logfiles with gzip compression.
+OverwriteBehavior=<strategy>        # Specify overwrite strategy. Default: Delete oldest file and continue. See Logstorage Ringbuffer Implementation below.
 ```
 
-The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all
+The Parameter "SyncBehavior", "OverwriteBehavior", "EcuID" and "SpecificSize" are optional - all
 others are mandatory.
 
 If both of the parameter "LogAppName" and "ContextName" are set to wildcard or
@@ -115,6 +119,17 @@ FileSize=250000
 NOFiles=5
 SyncBehavior=ON_FILE_SIZE,ON_DEMAND
 EcuID=ECU1
+
+[FILTER4]
+LogAppName=APP2
+ContextName=.*
+LogLevel=DLT_LOG_INFO
+File=App2
+FileSize=10000
+NOFiles=5
+SyncBehavior=ON_FILE_SIZE
+EcuID=ECU1
+OverwriteBehavior=DISCARD_NEW
 ```
 
 In case of Non-Verbose mode, following filters should be used.
@@ -245,6 +260,9 @@ The following procedure can be used to test Offline Logstorage:
 
 - To check the content of the file open it with dlt-convert or DLT Viewer.
 
+Example sequence can be found under `tests/component/logstorage_one_file`
+and `tests/component/logstorage_multi_file`.
+
 ## Logstorage Ring Buffer Implementation
 
 The DLT Logstorage is mainly used to store a configurable set of logs on an
@@ -276,6 +294,15 @@ Note :
 1. Combinations (not allowed: combinations with ON_MSG,combination of ON\_FILE\_SIZE with ON\_SPECIFIC\_SIZE)
 2. If on\_demand sync strategy alone is specified, it is advised to concatenate the log files in sequential order before viewing it on viewer.
 3. In case multiple FILTERs use the same `File` value, it is recommened that the following settings must also have same values: `NOFiles`, `FileSize` and `SpecificSize`
+
+### OverwriteBehavior - What should be discarded?
+
+The ring buffer behaviour can be modified for specific filters by changing the
+OverwriteBehavior.
+
+The following strategies are implemented:
+- DISCARD\_OLD - remove the oldest file before creating a new one(Default)
+- DISCARD\_NEW - stop writing and discard all new messages
 
 ## Maintain Logstorage Log Level Implementation
 
