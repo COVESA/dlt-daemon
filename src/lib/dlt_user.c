@@ -55,6 +55,8 @@
 
 #include <stdbool.h>
 
+#include <stdatomic.h>
+
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
 #   include <sys/socket.h>
 #endif
@@ -439,6 +441,16 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 
 DltReturnValue dlt_init(void)
 {
+    /* Compare 'dlt_user_initialised' to false. If equal, 'dlt_user_initialised' will be set to true.
+    Calls retruns true, if 'dlt_user_initialised' was false.
+    That way it's no problem, if two threads enter this function, because only the very first one will
+    pass fully. The other one will immediately return, because when it executes the atomic function
+    'dlt_user_initialised' will be for sure already set to true.
+    */
+    bool expected = false;
+    if (!(atomic_compare_exchange_strong(&dlt_user_initialised, &expected, true)))
+        return DLT_RETURN_OK;
+
     /* check environment variables */
     dlt_check_envvar();
 
@@ -448,10 +460,6 @@ DltReturnValue dlt_init(void)
         /* return negative value, to stop the current log */
         return DLT_RETURN_LOGGING_DISABLED;
     }
-
-    /* WARNING: multithread unsafe ! */
-    /* Another thread will check that dlt_user_initialised != 0, but the lib is not initialised ! */
-    dlt_user_initialised = true;
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
     if (dlt_init_common() == DLT_RETURN_ERROR) {
@@ -539,7 +547,15 @@ DltReturnValue dlt_init_file(const char *name)
     if (!name)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_user_initialised = true;
+    /* Compare 'dlt_user_initialised' to false. If equal, 'dlt_user_initialised' will be set to true.
+    Calls retruns true, if 'dlt_user_initialised' was false.
+    That way it's no problem, if two threads enter this function, because only the very first one will
+    pass fully. The other one will immediately return, because when it executes the atomic function
+    'dlt_user_initialised' will be for sure already set to true.
+    */
+    bool expected = false;
+    if (!(atomic_compare_exchange_strong(&dlt_user_initialised, &expected, true)))
+        return DLT_RETURN_OK;
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
     if (dlt_init_common() == DLT_RETURN_ERROR) {
