@@ -1,6 +1,10 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
 
+# Debian host name can be different between each architectures
+# Preparing it's name for libdlt.so path
+DEB_HOST_MULTIARCH = $(shell dpkg-architecture -q DEB_HOST_MULTIARCH)
+
 %:
 	dh $@ --buildsystem cmake --builddirectory=build
 
@@ -10,7 +14,12 @@ override_dh_auto_configure:
 	-DWITH_MAN=ON -DWITH_DLT_DBUS=ON \
 	-DWITH_DLT_KPI=ON -DWITH_DLT_ADAPTOR=ON \
 	-DWITH_DLT_SYSTEM=ON -DCMAKE_INSTALL_PREFIX=/opt/tooling/dlt \
-	-DCMAKE_INSTALL_SYSCONFDIR=/opt/tooling/dlt/etc
+	-DCMAKE_INSTALL_SYSCONFDIR=/opt/tooling/dlt/etc \
+	-DCMAKE_INSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH)
+
+# Specific the path of libdlt.so for linking 
+override_dh_shlibdeps:
+	dh_shlibdeps -l$(CURDIR)/debian/tmp/opt/tooling/dlt/lib/$(DEB_HOST_MULTIARCH)/
 
 override_dh_install:
 	sed -i 's/INSTALL_PREFIX_PATH/opt\/tooling\/dlt/g' debian/*.install; \
