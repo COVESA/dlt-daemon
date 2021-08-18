@@ -144,6 +144,10 @@ pthread_mutex_t mq_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t mq_init_condition;
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
+/* use these variables from common.c*/
+extern int logging_mode;
+extern FILE *logging_handle;
+
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
     int32_t lock_mutex_result = pthread_mutex_lock(mutex);
@@ -453,6 +457,12 @@ DltReturnValue dlt_init(void)
 
     /* check environment variables */
     dlt_check_envvar();
+
+    /* Check logging mode and internal log file is opened or not*/
+    if(logging_mode == DLT_LOG_TO_FILE && logging_handle == NULL)
+    {
+        dlt_log_init(logging_mode);
+    }
 
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0) {
