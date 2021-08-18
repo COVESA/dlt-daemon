@@ -77,11 +77,11 @@ char dltShmName[NAME_MAX + 1] = "/dlt-shm";
 #endif
 
 /* internal logging parameters */
-static int logging_mode = DLT_LOG_TO_CONSOLE;
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
-static FILE *logging_handle = NULL;
 static bool print_with_attributes = false;
+int logging_mode = DLT_LOG_TO_CONSOLE;
+FILE *logging_handle = NULL;
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
 char *log_info[] = { "", "fatal", "error", "warn", "info", "debug", "verbose", "", "", "", "", "", "", "", "", "" };
