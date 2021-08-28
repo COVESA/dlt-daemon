@@ -24,12 +24,8 @@ within the standard include directory.
 This example gives an overview of DLT usage inside an application by using a
 minimal code example. Detailed information about the API can be found later in
 this document.
-Please note that the #include statement depends on the means by which you are
-incorporating the DLT library into your project. The `<dlt/dlt.h>` form (i.e.
-with a directory prefix) seen here is necessary when you are using the CMake
-Config file (see below). If you are using pkg-config instead, then for
-backward-compatibility reasons it is also possible to use `#include <dlt.h>`.
-This is not recommended for new code, though.
+Please note that for backwards compatibility also the legacy #include statement
+`<dlt.h>` is supported. Using it for new code is not recommended, though.
 
 ```
 #include <dlt/dlt.h>
