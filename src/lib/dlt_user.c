@@ -46,9 +46,6 @@
 #include <poll.h>
 
 #include <limits.h>
-#ifdef linux
-#   include <sys/prctl.h>
-#endif
 
 #include <sys/types.h> /* needed for getpid() */
 #include <unistd.h>
@@ -2949,9 +2946,6 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 {
     /* Unused on purpose. */
     (void)unused;
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
-#endif
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
     s_segmented_data *data;
@@ -3540,10 +3534,6 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
                 strerror(errno));
         in_loop = false;
     }
-#endif
-
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
 #endif
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
@@ -4708,12 +4698,22 @@ int dlt_start_threads()
         dlt_log(LOG_CRIT, "Can't create housekeeper thread!\n");
         return -1;
     }
+    if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+    {
+        dlt_log(LOG_CRIT, "Can't rename housekeeper thread!\n");
+        return -1;
+    }
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
     /* Start the segmented thread */
     if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
                        (void *)dlt_user_trace_network_segmented_thread, NULL)) {
         dlt_log(LOG_CRIT, "Can't start segmented thread!\n");
+        return -1;
+    }
+    if (pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented"))
+    {
+        dlt_log(LOG_CRIT, "Can't rename segmented thread!\n");
         return -1;
     }
 #endif
