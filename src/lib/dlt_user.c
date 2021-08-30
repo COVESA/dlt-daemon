@@ -2292,13 +2292,13 @@ DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, 
 
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 {
-    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL | DLT_TYLE_8BIT;
     return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name)
 {
-    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL | DLT_TYLE_8BIT;
     const VarInfo var_info = { name, NULL, false };
     return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
 }
