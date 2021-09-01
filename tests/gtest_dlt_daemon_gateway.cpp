@@ -121,6 +121,7 @@ TEST(t_dlt_gateway_send_control_message, Normal)
     (void) dlt_gateway_init(&daemon_local, 0);
 
     daemon_local.pGateway.connections->p_control_msgs->id = DLT_SERVICE_ID_GET_LOG_INFO;
+    daemon_local.pGateway.connections->p_control_msgs->type = CONTROL_MESSAGE_ON_DEMAND;
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_send_control_message(daemon_local.pGateway.connections,
                                                               daemon_local.pGateway.connections->p_control_msgs,
                                                               NULL, 0));

@@ -8,8 +8,12 @@ configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/te
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
 
-set(GTEST_LIBS gtest gtest_main)
-set(GTEST_LIBS ${GTEST_LIBS} CACHE STRING "Gtest libraries")
+if("${GTEST_BOTH_LIBRARIES}" STREQUAL "")
+    set(GTEST_LIBS gtest gtest_main)
+    set(GTEST_LIBS ${GTEST_LIBS} CACHE STRING "Gtest libraries")
+else()
+    set(GTEST_LIBS ${GTEST_BOTH_LIBRARIES})
+endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(LIBRARIES "")
@@ -17,9 +21,9 @@ else()
     set(LIBRARIES socket)
 endif()
 
-set(DLT_LIBRARIES dlt ${GTEST_BOTH_LIBRARIES} ${LIBRARIES})
-set(DLT_DAEMON_LIBRARIES dlt_daemon ${GTEST_BOTH_LIBRARIES} ${LIBRARIES})
-set(DLT_CONTROL_LIBRARIES dlt dlt_control_common_lib ${GTEST_BOTH_LIBRARIES})
+set(DLT_LIBRARIES dlt ${GTEST_LIBS} ${LIBRARIES})
+set(DLT_DAEMON_LIBRARIES dlt_daemon ${GTEST_LIBS} ${LIBRARIES})
+set(DLT_CONTROL_LIBRARIES dlt dlt_control_common_lib ${GTEST_LIBS})
 
 #Receiver used for QTs. add_test() is not required
 add_executable(dlt_test_receiver dlt_test_receiver.c)
