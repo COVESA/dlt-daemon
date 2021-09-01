@@ -169,8 +169,10 @@ setupTest()
     echo "SendControl=0x03,0x13" >>$tmpPath/dlt_gateway.conf
     echo "SendSerialHeader=0" >>$tmpPath/dlt_gateway.conf
     echo "NOFiles=1" >>$tmpPath/dlt_gateway.conf
+
     return 0
 }
+
 #
 # Function:     -startDaemons()
 #
@@ -184,7 +186,7 @@ startDaemons()
 {
     DLT_PASSIVE_SHM_NAME=""
     tmpPath=/tmp
-    dlt-daemon -d
+    dlt-daemon -c $tmpPath/dlt_passive.conf &
     sleep 1
 
     # Check if the dlt shm file exist (DLT_SHM_ENABLE=ON)
@@ -192,7 +194,7 @@ startDaemons()
         DLT_PASSIVE_SHM_NAME="-s dlt-shm-passive"
     fi
 
-    dlt-daemon -d -p 3495 -c $tmpPath/dlt.conf $DLT_PASSIVE_SHM_NAME
+    dlt-daemon -p 3495 -c $tmpPath/dlt.conf $DLT_PASSIVE_SHM_NAME &
     return 0
 }
 
@@ -212,7 +214,7 @@ checkDaemonStart()
 
     if [ $total -ne '2' ]; then
         echo "Initialization of dlt-daemon instances failed"
-        exit
+        exit 1
     fi
 }
 
