@@ -11,6 +11,7 @@
  */
 #include <gtest/gtest.h>
 #include <regex>
+#include <fstream>
 
 int connectServer(void);
 
@@ -995,7 +996,7 @@ TEST(t_dlt_logstorage_rearrange_file_name, null)
 TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1022,7 +1023,7 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, null)
 TEST(t_dlt_logstorage_storage_dir_info, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1048,7 +1049,7 @@ TEST(t_dlt_logstorage_open_log_file, normal)
 {
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1064,18 +1065,21 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     config.working_file_name = NULL;
     config.wrap_id = 0;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, false));
+    EXPECT_STREQ("Test_01.dlt", config.working_file_name);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, true));
+    EXPECT_STREQ("Test_01.dlt", config.working_file_name);
 }
 TEST(t_dlt_logstorage_open_log_file, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_open_log_file(NULL, NULL, NULL, 0, true));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_open_log_file(NULL, NULL, NULL, 0, true, false));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_prepare_on_msg*/
 TEST(t_dlt_logstorage_prepare_on_msg, normal1)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1104,7 +1108,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
 TEST(t_dlt_logstorage_prepare_on_msg, normal2)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1146,7 +1150,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
 TEST(t_dlt_logstorage_prepare_on_msg, normal3)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1195,7 +1199,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, null)
 TEST(t_dlt_logstorage_write_on_msg, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1301,7 +1305,7 @@ TEST(t_dlt_logstorage_sync_on_msg, null)
 TEST(t_dlt_logstorage_prepare_msg_cache, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1890,7 +1894,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
 {
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 6;
     file_config.logfile_counteridxlen = 2;
@@ -1912,7 +1916,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     config.file_size = 50;
     g_logstorage_cache_max = 16;
     unsigned int size = 10;
-    unsigned char data1[10] = "dlt_data0";
+    unsigned char data1[10] = {'a', 'b', 'D', 'L', 'T', 0x01 , 'c', 'd', 'e', 'f'};
     unsigned char data2[10] = "dlt_data1";
     unsigned char data3[10] = "dlt_data2";
     newest_info.wrap_id = 0;
@@ -1930,6 +1934,26 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path,
                   footer, footer->last_sync_offset, footer->offset));
+        EXPECT_STREQ("Test_03.dlt", config.working_file_name);
+        std::stringstream file_path;
+        file_path << path << "/" << config.working_file_name;
+        std::ifstream f(file_path.str());
+        if (f.is_open())
+        {
+            std::string line;
+            EXPECT_TRUE(std::getline(f, line));
+            int idx = -2;
+            // First 2 characters should not appear
+            for (auto i=2; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data1[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data2[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data3[i]);
+            f.close();
+        }
         free(config.cache);
         config.cache = NULL;
     }
@@ -1946,7 +1970,6 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
 {
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
     file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 8;
@@ -1971,7 +1994,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
     g_logstorage_cache_max = 16;
 
     unsigned int size = 10;
-    unsigned char data1[10] = "dlt_dataA";
+    unsigned char data1[10] = {'a', 'b', 'D', 'L', 'T', 0x01 , 'c', 'd', 'e', 'f'};;
     unsigned char data2[10] = "dlt_dataB";
     unsigned char data3[10] = "dlt_dataC";
 
@@ -1982,6 +2005,26 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path, data1, size, data2, size, data3, size));
         EXPECT_EQ(DLT_RETURN_OK,
                   dlt_logstorage_sync_msg_cache(&config, &file_config, path, DLT_LOGSTORAGE_SYNC_ON_DEMAND));
+        EXPECT_STREQ("Test_04.dlt", config.working_file_name);
+        std::stringstream file_path;
+        file_path << path << "/" << config.working_file_name;
+        std::ifstream f(file_path.str());
+        if (f.is_open())
+        {
+            std::string line;
+            EXPECT_TRUE(std::getline(f, line));
+            int idx = -2;
+            // First 2 characters should not appear
+            for (auto i=2; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data1[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data2[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data3[i]);
+            f.close();
+        }
         free(config.cache);
         config.cache = NULL;
     }

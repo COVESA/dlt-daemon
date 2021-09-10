@@ -474,7 +474,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  DltLogStorageUserConfig *file_config,
                                  char *dev_path,
                                  int msg_size,
-                                 bool is_update_required)
+                                 bool is_update_required,
+                                 bool is_sync)
 {
     int ret = 0;
     char absolute_file_path[DLT_MOUNT_PATH_MAX + DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN + 1] = { '\0' };
@@ -563,8 +564,12 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 
         ret = stat(absolute_file_path, &s);
 
-        /* if size is enough, open it */
-        if ((ret == 0) && (s.st_size + msg_size <= (int)config->file_size)) {
+        /* if file stats is read and, either
+         * is_sync is true (other than ON_MSG sync behavior) or
+         * msg_size fit into the size (ON_MSG or par of cache needs to be written into new file), open it */
+        if ((ret == 0) &&
+            (is_sync ||
+             (!is_sync && (s.st_size + msg_size <= (int)config->file_size)))) {
             dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
             config->current_write_file_offset = s.st_size;
         }
@@ -877,7 +882,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     config->current_write_file_offset = 0;
 
     if (dlt_logstorage_open_log_file(config, file_config,
-            dev_path, count, true) != 0) {
+            dev_path, count, true, true) != 0) {
         dlt_vlog(LOG_ERR, "%s: failed to open log file\n", __func__);
         return -1;
     }
@@ -927,11 +932,16 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         /* Prepare log file */
         if (config->log == NULL)
         {
-            if (dlt_logstorage_prepare_on_msg(config, file_config, dev_path,
-                                              count, NULL) != 0)
+            if (dlt_logstorage_open_log_file(config, file_config, dev_path,
+                                             count, true, false) != 0)
             {
-                dlt_vlog(LOG_ERR, "%s: failed to prepare log file\n", __func__);
+                dlt_vlog(LOG_ERR, "%s: failed to open log file\n", __func__);
                 return -1;
+            }
+
+            if (config->skip == 1)
+            {
+                return 0;
             }
         }
 
@@ -996,7 +1006,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                            file_config,
                                            dev_path,
                                            log_msg_size,
-                                           true);
+                                           true,
+                                           false);
     }
     else { /* already open, check size and create a new file if needed */
         ret = fstat(config->fd, &s);
@@ -1028,7 +1039,8 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                                    file_config,
                                                    dev_path,
                                                    log_msg_size,
-                                                   true);
+                                                   true,
+                                                   false);
             }
             else { /*everything is prepared */
                 ret = 0;
