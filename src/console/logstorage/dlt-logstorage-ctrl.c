@@ -409,6 +409,8 @@ static void usage(void)
     printf("  -S --send-header           Send message with serial header (Default: Without serial header)\n");
     printf("  -R --resync-header         Enable resync serial header\n");
     printf("  -v --verbose               Set verbose flag (Default:%d)\n", get_verbosity());
+    printf("  -C filename                DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR
+           "/dlt.conf)\n");
 }
 
 static struct option long_options[] = {
@@ -441,7 +443,7 @@ static int parse_args(int argc, char *argv[])
 
     while ((c = getopt_long(argc,
                             argv,
-                            ":s::t:hSRe:p:d::c:v",
+                            ":s::t:hSRe:p:d::c:vC:",
                             long_options,
                             &long_index)) != -1)
         switch (c) {
@@ -495,6 +497,10 @@ static int parse_args(int argc, char *argv[])
             set_verbosity(1);
             pr_verbose("Now in verbose mode.\n");
             break;
+        case 'C':
+            set_conf(optarg);
+            pr_verbose("Set %s to read options\n", optarg);
+            break;
         case ':':
             pr_error("Option -%c requires an argument.\n", optopt);
             usage();
@@ -520,6 +526,10 @@ static int parse_args(int argc, char *argv[])
         pr_error("Sync caches not available in daemon mode\n");
         return -1;
     }
+
+    /* Retrieve ECUID from dlt.conf */
+    if (get_ecuid() == NULL)
+        set_ecuid(NULL);
 
     return 0;
 }
@@ -547,7 +557,6 @@ int main(int argc, char *argv[])
 {
     int ret = 0;
 
-    set_ecuid(NULL);
     set_timeout(DLT_CTRL_TIMEOUT);
     set_send_serial_header(0);
     set_resync_serial_header(0);

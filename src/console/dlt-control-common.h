@@ -73,6 +73,8 @@ void set_verbosity(int);
 char *get_ecuid(void);
 void set_ecuid(char *);
 
+void set_conf(char *);
+
 int get_timeout(void);
 void set_timeout(int);
 

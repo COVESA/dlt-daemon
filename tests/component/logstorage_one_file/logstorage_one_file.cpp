@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <stdlib.h>
+#include <time.h>
 #include <dlt/dlt.h>
 
 int main(int argc, char *argv[])
@@ -7,12 +8,18 @@ int main(int argc, char *argv[])
     int i = 0;
     int c = 0;
     int num_context = 4;
+    int max_msg = 200;
 
-    while ((c = getopt(argc, argv, "c:")) != -1) {
+    while ((c = getopt(argc, argv, "c:n:")) != -1) {
         switch (c) {
             case 'c':
             {
                 num_context = atoi(optarg);
+                break;
+            }
+            case 'n':
+            {
+                max_msg = atoi(optarg);
                 break;
             }
             default:
@@ -32,10 +39,12 @@ int main(int argc, char *argv[])
         DLT_REGISTER_CONTEXT(ctx[i], ctid, ctdesc);
     }
 
-    for (i = 0; i <= 200; i++) {
+    for (i = 0; i <= max_msg; i++) {
         for (int j = 0; j < num_context; j++) {
             DLT_LOG(ctx[j], DLT_LOG_INFO, DLT_STRING("Log message"), DLT_UINT32(j + 1), DLT_STRING("#"), DLT_UINT32(i));
         }
+        struct timespec tv = {0, 1000000};
+        nanosleep(&tv, NULL);
     }
 
     for (i = 0; i < num_context; i++) {
