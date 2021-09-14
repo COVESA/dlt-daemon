@@ -47,7 +47,7 @@
 
 #include <limits.h>
 #ifdef linux
-#   include <sys/prctl.h>
+#   include <sys/prctl.h> /* for PR_SET_NAME */
 #endif
 
 #include <sys/types.h> /* needed for getpid() */
@@ -2949,8 +2949,12 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 {
     /* Unused on purpose. */
     (void)unused;
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    if (pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented"))
+        dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
+#elif linux
+    if (prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0) < 0)
+        dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
 #endif
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
@@ -3542,8 +3546,12 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
     }
 #endif
 
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+        dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
+#elif linux
+    if (prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0) < 0)
+        dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
 #endif
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
