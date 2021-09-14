@@ -1054,7 +1054,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                 dlt_log(LOG_ERR,
                         "dlt_daemon_logstorage_write: failed. "
                         "Disable storage device\n");
-                /* DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS happened,
+                /* DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS happened,
                  * therefore remove logstorage device */
                 dlt_logstorage_device_disconnected(
                     &(daemon->storage_handle[i]),

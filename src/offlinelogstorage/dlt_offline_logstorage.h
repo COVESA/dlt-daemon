@@ -69,8 +69,8 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES              2 /* sync logstorage caches */
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN             15 /* Maximum size for key */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN       50 /* Maximum file name length of the log file */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   100 /* Maximum file name length of the log file including path under mount point */
 
 #define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN       4
 #define DLT_OFFLINE_LOGSTORAGE_GZ_FILE_EXTENSION_LEN    7
@@ -85,17 +85,16 @@
                                                     DLT_OFFLINE_LOGSTORAGE_INDEX_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
 
-#define DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN 50
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME    "dlt_logstorage.conf"
 
 /* +3 because of device number and \0 */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN (DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + \
-                                             DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN + 3)
+                                             DLT_MOUNT_PATH_MAX + 3)
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX(A, B)   ((A) > (B) ? (A) : (B))
 #define DLT_OFFLINE_LOGSTORAGE_MIN(A, B)   ((A) < (B) ? (A) : (B))
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS     5
+#define DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS           5
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          8
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
@@ -231,6 +230,7 @@ typedef struct
     char device_mount_point[DLT_MOUNT_PATH_MAX + 1]; /* Device mount path */
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
+    int prepare_errors;                /* number of prepare errors */
     int write_errors;                  /* number of write errors */
     DltNewestFileName *newest_file_list; /* List of newest file name */
     int maintain_logstorage_loglevel;  /* Permission to maintain the logstorage loglevel*/

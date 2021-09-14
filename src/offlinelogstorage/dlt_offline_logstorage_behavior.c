@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <libgen.h>
 
 #include "dlt_common.h"
 #include "dlt_offline_logstorage.h"
@@ -312,6 +313,9 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     unsigned int current_idx = 0;
     DltLogStorageFileList *n = NULL;
     DltLogStorageFileList *n1 = NULL;
+    char storage_path[DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN + 1] = { '\0' };
+    char file_name[DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN + 1] = { '\0' };
+    char* dir = NULL;
 
     if ((config == NULL) ||
         (file_config == NULL) ||
@@ -319,14 +323,37 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         (config->file_name == NULL))
         return -1;
 
-    cnt = scandir(path, &files, 0, alphasort);
+    strncpy(storage_path, path, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN);
+
+    if (strstr(config->file_name, "/") != NULL) {
+        /* Append directory path */
+        char tmpdir[DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN + 1] = { '\0' };
+        char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN + 1] = { '\0' };
+        char *file;
+        strncpy(tmpdir, config->file_name, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
+        strncpy(tmpfile, config->file_name, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
+        dir = dirname(tmpdir);
+        file = basename(tmpfile);
+        if ((strlen(path) + strlen(dir)) > DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN) {
+            dlt_vlog(LOG_ERR, "%s: Directory name [%s] is too long to store (file name [%s])\n",
+                     __func__, dir, file);
+            return -1;
+        }
+        strncat(storage_path, dir, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - strlen(dir));
+        strncpy(file_name, file, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
+    } else {
+        strncpy(file_name, config->file_name, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
+    }
+
+    cnt = scandir(storage_path, &files, 0, alphasort);
 
     if (cnt < 0) {
-        dlt_vlog(LOG_ERR, "%s: Failed to scan directory\n", __func__);
+        dlt_vlog(LOG_ERR, "%s: Failed to scan directory [%s] for file name [%s]\n",
+                 __func__, storage_path, file_name);
         return -1;
     }
 
-    dlt_vlog(LOG_DEBUG, "%s: Scanned [%d] files from %s\n", __func__, cnt, path);
+    dlt_vlog(LOG_DEBUG, "%s: Scanned [%d] files from %s\n", __func__, cnt, storage_path);
 
     /* In order to have a latest status of file list,
      * the existing records must be deleted before updating
@@ -359,16 +386,32 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     for (i = 0; i < cnt; i++) {
         const char* suffix = ".dlt";
         int len = 0;
-        int fname_len = 0;
-        len = strlen(config->file_name);
-        fname_len = strlen(files[i]->d_name);
+        len = strlen(file_name);
 
-        if ((strncmp(files[i]->d_name, config->file_name, len) == 0) &&
-            (files[i]->d_name[len] == file_config->logfile_delimiter) &&
-            (fname_len > suffix_len && strncmp(&files[i]->d_name[fname_len - suffix_len], suffix, suffix_len) == 0))
-        {
+        dlt_vlog(LOG_DEBUG,
+                 "%s: Scanned file name=[%s], filter file name=[%s]\n",
+                  __func__, files[i]->d_name, file_name);
+        if (strncmp(files[i]->d_name, file_name, len) == 0) {
+            if (config->num_files == 1 && file_config->logfile_optional_counter) {
+                /* <filename>.dlt or <filename>_<tmsp>.dlt */
+                if ((files[i]->d_name[len] == suffix[0]) ||
+                    (file_config->logfile_timestamp &&
+                     (files[i]->d_name[len] == file_config->logfile_delimiter))) {
+                    current_idx = 1;
+                } else {
+                    continue;
+                }
+            } else {
+                /* <filename>_idx.dlt or <filename>_idx_<tmsp>.dlt */
+                if (files[i]->d_name[len] == file_config->logfile_delimiter) {
+                    current_idx = dlt_logstorage_get_idx_of_log_file(file_config, config, 
+                                                                     files[i]->d_name);
+                } else {
+                    continue;
+                }
+            }
+
             DltLogStorageFileList **tmp = NULL;
-            current_idx = dlt_logstorage_get_idx_of_log_file(file_config, config, files[i]->d_name);
 
             if (config->records == NULL) {
                 config->records = malloc(sizeof(DltLogStorageFileList));
@@ -396,7 +439,14 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                 }
             }
 
-            (*tmp)->name = strdup(files[i]->d_name);
+            char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = { '\0' };
+            if (dir != NULL) {
+                /* Append directory path */
+                strcat(tmpfile, dir);
+                strcat(tmpfile, "/");
+            }
+            strcat(tmpfile, files[i]->d_name);
+            (*tmp)->name = strdup(tmpfile);
             (*tmp)->idx = current_idx;
             (*tmp)->next = NULL;
             check++;
@@ -404,7 +454,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     }
 
     dlt_vlog(LOG_DEBUG, "%s: After dir scan: [%d] files of [%s]\n", __func__,
-             check, config->file_name);
+             check, file_name);
 
     if (ret == 0) {
         max_idx = dlt_logstorage_sort_file_name(&config->records);
@@ -478,23 +528,23 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  bool is_sync)
 {
     int ret = 0;
-    char absolute_file_path[DLT_MOUNT_PATH_MAX + DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN + 1] = { '\0' };
-    char storage_path[DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN + 1] = { '\0' };
+    char absolute_file_path[DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN + 1] = { '\0' };
+    char storage_path[DLT_MOUNT_PATH_MAX + 1] = { '\0' };
+    char file_name[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = { '\0' };
     unsigned int num_log_files = 0;
     struct stat s;
     DltLogStorageFileList **tmp = NULL;
     DltLogStorageFileList **newest = NULL;
-    char file_name[DLT_MOUNT_PATH_MAX + 1] = { '\0' };
 
     if (config == NULL)
         return -1;
 
-    if (strlen(dev_path) > DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN) {
+    if (strlen(dev_path) > DLT_MOUNT_PATH_MAX) {
         dlt_vlog(LOG_ERR, "device path '%s' is too long to store\n", dev_path);
         return -1;
     }
 
-    snprintf(storage_path, DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN, "%s/", dev_path);
+    snprintf(storage_path, DLT_MOUNT_PATH_MAX, "%s/", dev_path);
 
     /* check if there are already files stored */
     if (config->records == NULL || is_update_required) {

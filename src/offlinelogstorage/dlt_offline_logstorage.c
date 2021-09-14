@@ -2364,8 +2364,9 @@ int dlt_logstorage_write(DltLogStorage *handle,
             continue;
         }
 
-        if (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
-                 config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) {
+        if ((ret == 0) &&
+            (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
+             config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG)) {
             /* It is abnormal if working file is still NULL after preparation. */
             if (!config[i]->working_file_name) {
                 dlt_vlog(LOG_ERR, "Failed to prepare working file for %s\n",
@@ -2430,7 +2431,7 @@ int dlt_logstorage_write(DltLogStorage *handle,
                 handle->write_errors += 1;
 
                 if (handle->write_errors >=
-                    DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS)
+                    DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS)
                     err = -1;
 
                 dlt_log(LOG_ERR,
@@ -2438,8 +2439,18 @@ int dlt_logstorage_write(DltLogStorage *handle,
             }
         }
         else {
-            dlt_log(LOG_ERR,
-                    "dlt_logstorage_write: Unable to prepare.\n");
+            handle->prepare_errors += 1;
+
+            if (handle->prepare_errors >=
+                DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS) {
+                config[i]->skip = 1;
+                dlt_vlog(LOG_WARNING,
+                         "%s: Unable to prepare. Skip filename [%s] because maxmimum trial has been reached.\n",
+                         __func__, config[i]->file_name);
+            } else {
+                dlt_vlog(LOG_ERR,
+                         "%s: Unable to prepare.\n", __func__);
+            }
         }
     }
 
