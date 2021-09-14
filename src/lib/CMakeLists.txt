@@ -51,6 +51,7 @@ target_include_directories(dlt
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/dlt>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/dlt>
         $<INSTALL_INTERFACE:include>
+        $<INSTALL_INTERFACE:include/dlt>
 )
 
 if(WITH_LIB_SHORT_VERSION)
