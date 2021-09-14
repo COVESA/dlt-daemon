@@ -985,7 +985,7 @@ int main(int argc, char *argv[])
 
     /* --- Daemon init phase 2 end --- */
 
-   if (daemon_local.flags.offlineLogstorageDirPath[0])
+    if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
                 &daemon,
                 &daemon_local,
