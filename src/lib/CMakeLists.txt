@@ -51,8 +51,14 @@ target_include_directories(dlt
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/dlt>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/dlt>
         $<INSTALL_INTERFACE:include>
-        $<INSTALL_INTERFACE:include/dlt>
 )
+# With this option set, a legacy include path is added in addition to the regular one.
+if(WITH_LEGACY_INCLUDE_PATH)
+    target_include_directories(dlt
+        PUBLIC
+            $<INSTALL_INTERFACE:include/dlt>
+    )
+endif()
 
 if(WITH_LIB_SHORT_VERSION)
     set_target_properties(dlt PROPERTIES VERSION ${PROJECT_VERSION_MAJOR} SOVERSION ${PROJECT_VERSION_MAJOR})

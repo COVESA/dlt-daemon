@@ -24,8 +24,6 @@ within the standard include directory.
 This example gives an overview of DLT usage inside an application by using a
 minimal code example. Detailed information about the API can be found later in
 this document.
-Please note that for backwards compatibility also the legacy #include statement
-`<dlt.h>` is supported. Using it for new code is not recommended, though.
 
 ```
 #include <dlt/dlt.h>
@@ -80,6 +78,15 @@ The generated CMake Config file follows "Modern CMake" convention and only
 exports an IMPORTED CMake target; it does not set any variables, except for the
 `automotive-dlt_FOUND` variable that can be used to treat DLT as an optional
 dependency.
+
+The generated CMake config file (which is implicitly being used when you call
+`find_package(automotive-dlt)`) by default only adds the top-level directory
+to the compiler's header search path; this requires that users' #include
+directives are written in the regular form e.g. `<dlt/dlt.h>`. If you want
+to be able to use the legacy form `<dlt.h>` as well (as is always allowed by
+the pkg-config module for backwards compatibility reasons), you can configure
+DLT with the CMake option `-DWITH_LEGACY_INCLUDE_PATH=On` in order to
+achieve that.
 
 ### DLT with pkg-config
 
