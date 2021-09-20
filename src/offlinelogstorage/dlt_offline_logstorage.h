@@ -222,6 +222,10 @@ struct DltLogStorageFilterList
     DltLogStorageFilterList *next;    /* Pointer to next */
 };
 
+typedef enum {
+    DLT_LOGSTORAGE_CONFIG_FILE = 0,   /* Use dlt-logstorage.conf file from device */
+} DltLogStorageConfigMode;
+
 typedef struct
 {
     DltLogStorageFilterList *config_list; /* List of all filters */
@@ -234,6 +238,7 @@ typedef struct
     int write_errors;                  /* number of write errors */
     DltNewestFileName *newest_file_list; /* List of newest file name */
     int maintain_logstorage_loglevel;  /* Permission to maintain the logstorage loglevel*/
+    DltLogStorageConfigMode config_mode;                   /* Configuration Mechanism */
 } DltLogStorage;
 
 typedef struct {

@@ -1944,8 +1944,13 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, const char *mount_poi
     handle->num_configs = 0;
     handle->newest_file_list = NULL;
 
-    /* Setup logstorage with config file settings */
-    return dlt_logstorage_load_config(handle);
+    switch (handle->config_mode) {
+      case DLT_LOGSTORAGE_CONFIG_FILE:
+        /* Setup logstorage with config file settings */
+        return dlt_logstorage_load_config(handle);
+      default:
+        return -1;
+    }
 }
 
 /**
