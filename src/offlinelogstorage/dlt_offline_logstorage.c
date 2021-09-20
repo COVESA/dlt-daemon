@@ -329,7 +329,7 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
+DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value)
 {
     int i = 0;
     int y = 0;
@@ -360,7 +360,8 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
     if (*names == NULL)
         return -1;
 
-    tok = strtok(value, ",");
+    tok = strdup(value);
+    tok = strtok(tok, ",");
 
     i = 1;
 
@@ -378,6 +379,20 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, char *value)
         i++;
         tok = strtok(NULL, ",");
     }
+
+    free(tok);
+
+    return 0;
+}
+
+DLT_STATIC int dlt_logstorage_set_number(unsigned int *number, unsigned int value)
+{
+    if ((value == 0) || (value > UINT_MAX)) {
+        dlt_log(LOG_ERR, "Invalid, is not a number \n");
+        return -1;
+    }
+
+    *number = value;
 
     return 0;
 }
@@ -416,14 +431,7 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 
     size = strtoul(value, NULL, 10);
 
-    if ((size == 0) || (size > UINT_MAX)) {
-        dlt_log(LOG_ERR, "Invalid, is not a number \n");
-        return -1;
-    }
-
-    *number = (unsigned int)size;
-
-    return 0;
+    return dlt_logstorage_set_number(number, size);
 }
 
 /**
@@ -939,12 +947,26 @@ DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
     if ((config == NULL) || (value == NULL))
         return -1;
 
-    return dlt_logstorage_read_list_of_names(&config->ctids, value);
+    return dlt_logstorage_read_list_of_names(&config->ctids, (const char*)value);
+}
+
+DLT_STATIC int dlt_logstorage_set_loglevel(int *log_level,
+                                           int value)
+{
+    *log_level = value;
+    if ((value <= DLT_LOG_DEFAULT) || (value >= DLT_LOG_MAX)) {
+        *log_level = -1;
+        dlt_log(LOG_ERR, "Invalid log level \n");
+        return -1;
+    }
+    return 0;
 }
 
 DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
                                              char *value)
 {
+    int ll = -1;
+
     if ((config == NULL) || (value == NULL))
         return -1;
 
@@ -954,35 +976,30 @@ DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
     }
 
     if (strcmp(value, "DLT_LOG_FATAL") == 0) {
-        config->log_level = 1;
+        ll = 1;
     }
     else if (strcmp(value, "DLT_LOG_ERROR") == 0)
     {
-        config->log_level = 2;
+        ll = 2;
     }
     else if (strcmp(value, "DLT_LOG_WARN") == 0)
     {
-        config->log_level = 3;
+        ll = 3;
     }
     else if (strcmp(value, "DLT_LOG_INFO") == 0)
     {
-        config->log_level = 4;
+        ll = 4;
     }
     else if (strcmp(value, "DLT_LOG_DEBUG") == 0)
     {
-        config->log_level = 5;
+        ll = 5;
     }
     else if (strcmp(value, "DLT_LOG_VERBOSE") == 0)
     {
-        config->log_level = 6;
-    }
-    else {
-        config->log_level = -1;
-        dlt_log(LOG_ERR, "Invalid log level \n");
-        return -1;
+        ll = 6;
     }
 
-    return 0;
+    return dlt_logstorage_set_loglevel(&config->log_level, ll);
 }
 
 DLT_STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config,
@@ -1107,6 +1124,22 @@ DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *conf
         return -1;
 
     return dlt_logstorage_read_number(&config->specific_size, value);
+}
+
+DLT_STATIC int dlt_logstorage_set_sync_strategy(int *sync,
+                                                int value)
+{
+    *sync = value;
+
+    if (value == 0)
+    {
+        dlt_log(LOG_WARNING,
+                "Unknown sync strategies. Set default ON_MSG\n");
+        *sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
+        return 1;
+    }
+
+    return 0;
 }
 
 /**
@@ -1416,6 +1449,7 @@ DLT_STATIC DltLogstorageFilterConf
         .is_opt = 1
     }
 };
+
 /**
  * Check filter configuration parameter is valid.
  *
