@@ -29,7 +29,7 @@ cc_defaults {
         "-DDLT_DAEMON_USE_UNIX_SOCKET_IPC",
         "-DDLT_LIB_USE_UNIX_SOCKET_IPC",
         "-DCONFIGURATION_FILES_DIR=\"/vendor/etc\"",
-        "-DDLT_USER_IPC_PATH=\"/data/local/tmp\"",
+        "-DDLT_USER_IPC_PATH=\"/dev/socket\"",
     ] + [
         "-Wno-unused-parameter",
         "-W",
