@@ -2,4 +2,6 @@ service dlt-daemon /vendor/bin/dlt-daemon
     class late_start
     user root
     group root
+    socket dlt stream 666 root root
+    socket dlt-ctrl.sock stream 660 root root
     disabled

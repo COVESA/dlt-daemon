@@ -28,16 +28,58 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/un.h>
-#include <sys/socket.h>
+#if defined(ANDROID)
+#   include <cutils/sockets.h> /* for android_get_control_socket() */
+#   include <libgen.h> /* for basename() */
+#else
+#   include <sys/socket.h> /* for socket(), connect(), (), and recv() */
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <syslog.h>
 #include <errno.h>
+
 #include "dlt-daemon.h"
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_unix_socket.h"
+
+#ifdef ANDROID
+DltReturnValue dlt_daemon_unix_android_get_socket(int *sock, const char *sock_path)
+{
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    if ((sock == NULL) || (sock_path == NULL)) {
+        dlt_log(LOG_ERR, "dlt_daemon_unix_android_get_socket: arguments invalid");
+        ret = DLT_RETURN_WRONG_PARAMETER;
+    }
+    else {
+        const char* sock_name = basename(sock_path);
+        if (sock_name == NULL) {
+            dlt_log(LOG_WARNING,
+                    "dlt_daemon_unix_android_get_socket: can't get socket name from its path");
+            ret = DLT_RETURN_ERROR;
+        }
+        else {
+            *sock = android_get_control_socket(sock_name);
+            if (*sock < 0) {
+                dlt_log(LOG_WARNING,
+                        "dlt_daemon_unix_android_get_socket: can get socket from init");
+                ret = DLT_RETURN_ERROR;
+            }
+            else {
+                if (listen(*sock, 1) == -1) {
+                    dlt_vlog(LOG_WARNING, "unix socket: listen error: %s", strerror(errno));
+                    ret = DLT_RETURN_ERROR;
+                }
+            }
+        }
+    }
+
+    return ret;
+}
+#endif
 
 int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
 {

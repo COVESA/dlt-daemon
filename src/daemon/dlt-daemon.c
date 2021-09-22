@@ -1458,12 +1458,111 @@ static int dlt_daemon_init_vsock(DltDaemonLocal *daemon_local)
 }
 #endif
 
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
+static DltReturnValue dlt_daemon_init_app_socket(DltDaemonLocal *daemon_local)
+{
+    /* socket access permission set to srw-rw-rw- (666) */
+    int mask = S_IXUSR | S_IXGRP | S_IXOTH;
+    DltReturnValue ret = DLT_RETURN_OK;
+    int fd = -1;
+
+    if (daemon_local == NULL) {
+        dlt_vlog(LOG_ERR, "%s: Invalid function parameters\n", __func__);
+        return DLT_RETURN_ERROR;
+    }
+
+#ifdef ANDROID
+    /* on android if we want to use security contexts on Unix sockets,
+     * they should be created by init (see dlt-daemon.rc in src/daemon)
+     * and recovered through the below API */
+    ret = dlt_daemon_unix_android_get_socket(&fd, daemon_local->flags.appSockPath);
+    if (ret < DLT_RETURN_OK) {
+        /* we failed to get app socket created by init.
+         * To avoid blocking users to launch dlt-daemon only through
+         * init on android (e.g: by hand for debugging purpose), try to
+         * create app socket by ourselves */
+        ret = dlt_daemon_unix_socket_open(&fd,
+                                          daemon_local->flags.appSockPath,
+                                          SOCK_STREAM,
+                                          mask);
+    }
+#else
+    ret = dlt_daemon_unix_socket_open(&fd,
+                                      daemon_local->flags.appSockPath,
+                                      SOCK_STREAM,
+                                      mask);
+#endif
+    if (ret == DLT_RETURN_OK) {
+        if (dlt_connection_create(daemon_local,
+                                  &daemon_local->pEvent,
+                                  fd,
+                                  POLLIN,
+                                  DLT_CONNECTION_APP_CONNECT)) {
+            dlt_log(LOG_CRIT, "Could not create connection for app socket.\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+    else {
+        dlt_log(LOG_CRIT, "Could not create and open app socket.\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    return ret;
+}
+#endif
+
+static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal *daemon_local)
+{
+    /* socket access permission set to srw-rw---- (660)  */
+    int mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
+    DltReturnValue ret = DLT_RETURN_OK;
+    int fd = -1;
+
+    if (daemon_local == NULL) {
+        dlt_vlog(LOG_ERR, "%s: Invalid function parameters\n", __func__);
+        return -1;
+    }
+
+#ifdef ANDROID
+    /* on android if we want to use security contexts on Unix sockets,
+     * they should be created by init (see dlt-daemon.rc in src/daemon)
+     * and recovered through the below API */
+    ret = dlt_daemon_unix_android_get_socket(&fd, daemon_local->flags.ctrlSockPath);
+    if (ret < DLT_RETURN_OK) {
+        /* we failed to get app socket created by init.
+         * To avoid blocking users to launch dlt-daemon only through
+         * init on android (e.g by hand for debugging purpose), try to
+         * create app socket by ourselves */
+        ret = dlt_daemon_unix_socket_open(&fd,
+                                          daemon_local->flags.ctrlSockPath,
+                                          SOCK_STREAM,
+                                          mask);
+    }
+#else
+    ret = dlt_daemon_unix_socket_open(&fd,
+                                      daemon_local->flags.ctrlSockPath,
+                                      SOCK_STREAM,
+                                      mask);
+#endif
+    if (ret == DLT_RETURN_OK) {
+        if (dlt_connection_create(daemon_local,
+                                  &daemon_local->pEvent,
+                                  fd,
+                                  POLLIN,
+                                  DLT_CONNECTION_CONTROL_CONNECT) < DLT_RETURN_OK) {
+            dlt_log(LOG_ERR, "Could not initialize control socket.\n");
+            ret = DLT_RETURN_ERROR;
+        }
+    }
+
+    return ret;
+}
+
 int dlt_daemon_local_connection_init(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      int verbose)
 {
     int fd = -1;
-    int mask = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1475,25 +1574,9 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    /* create and open socket to receive incoming connections from user application
-     * socket access permission set to srw-rw-rw- (666) */
-    mask = S_IXUSR | S_IXGRP | S_IXOTH;
-
-    if (dlt_daemon_unix_socket_open(&fd,
-                                    daemon_local->flags.appSockPath,
-                                    SOCK_STREAM,
-                                    mask) == DLT_RETURN_OK) {
-        if (dlt_connection_create(daemon_local,
-                                  &daemon_local->pEvent,
-                                  fd,
-                                  POLLIN,
-                                  DLT_CONNECTION_APP_CONNECT)) {
-            dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
-            return DLT_RETURN_ERROR;
-        }
-    }
-    else {
-        dlt_log(LOG_CRIT, "Could not initialize app socket.\n");
+    /* create and open socket to receive incoming connections from user application */
+    if (dlt_daemon_init_app_socket(daemon_local) < DLT_RETURN_OK) {
+        dlt_log(LOG_ERR, "Unable to initialize app socket.\n");
         return DLT_RETURN_ERROR;
     }
 
@@ -1570,24 +1653,8 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 #endif
 
     /* create and open unix socket to receive incoming connections from
-     * control application
-     * socket access permission set to srw-rw---- (660)  */
-    mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
-
-    if (dlt_daemon_unix_socket_open(&fd,
-                                    daemon_local->flags.ctrlSockPath,
-                                    SOCK_STREAM,
-                                    mask) == DLT_RETURN_OK) {
-        if (dlt_connection_create(daemon_local,
-                                  &daemon_local->pEvent,
-                                  fd,
-                                  POLLIN,
-                                  DLT_CONNECTION_CONTROL_CONNECT)) {
-            dlt_log(LOG_ERR, "Could not initialize control socket.\n");
-            return DLT_RETURN_ERROR;
-        }
-    }
-    else {
+     * control application */
+    if (dlt_daemon_initialize_control_socket(daemon_local) < DLT_RETURN_OK) {
         dlt_log(LOG_ERR, "Could not initialize control socket.\n");
         return DLT_RETURN_ERROR;
     }
