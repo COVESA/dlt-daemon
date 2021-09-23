@@ -1,3 +1,4 @@
+add_subdirectory(logstorage_filepath)
 add_subdirectory(logstorage_one_file)
 add_subdirectory(logstorage_multi_file)
-add_subdirectory(logstorage_filepath)
+add_subdirectory(logstorage_max_cache_size)

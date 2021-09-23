@@ -1,6 +1,7 @@
 set(NAME logstorage_one_file)
 
 add_executable(${NAME} ${NAME}.cpp)
+target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 
 target_link_libraries(${NAME} PRIVATE dlt)
 

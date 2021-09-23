@@ -1289,8 +1289,10 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
              sizeof(DltLogStorageCacheFooter)) >
              g_logstorage_cache_max)
         {
-            dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.");
+            dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.\n");
             return -1;
+        } else {
+            dlt_vlog(LOG_DEBUG, "dlt_logstorage_prepare_msg_cache: Logstorage total: %d , requested cache size: %d, max: %d\n", g_logstorage_cache_size, cache_size, g_logstorage_cache_max);
         }
 
         /* create cache */

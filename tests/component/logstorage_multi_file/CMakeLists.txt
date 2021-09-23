@@ -1,7 +1,7 @@
 set(NAME logstorage_multi_file)
 
 add_executable(${NAME} ${NAME}.cpp)
-
+target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_link_libraries(${NAME} PRIVATE dlt)
 
 set(CTXNUM 12)

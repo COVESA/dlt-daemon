@@ -1,7 +1,8 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <time.h>
-#include <dlt/dlt.h>
+#include "dlt/dlt.h"
+#include "dlt/dlt_user_macros.h"
 
 int main(int argc, char *argv[])
 {
