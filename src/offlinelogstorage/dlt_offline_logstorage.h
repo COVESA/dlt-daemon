@@ -120,6 +120,12 @@
 #define DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD    1 /* default, discard old */
 #define DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW   (1 << 1) /* discard new */
 
+/* Offline Logstorage disable network routing */
+#define DLT_LOGSTORAGE_DISABLE_NW_ERROR         -1 /* error case */
+#define DLT_LOGSTORAGE_DISABLE_NW_UNSET          0 /* not set */
+#define DLT_LOGSTORAGE_DISABLE_NW_OFF            1 /* default, enable network routing */
+#define DLT_LOGSTORAGE_DISABLE_NW_ON            (1 << 1) /* disable network routing */
+
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
 /* current logstorage cache size */
@@ -210,6 +216,7 @@ struct DltLogStorageFilterConfig
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
     DltLogStorageFileList *records; /* File name list */
+    int disable_network_routing;    /* Flag to disable routing to network client */
 };
 
 typedef struct DltLogStorageFilterList DltLogStorageFilterList;
@@ -271,6 +278,7 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_ECUID,
     DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
     DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION,
+    DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK,
     DLT_LOGSTORAGE_FILTER_CONF_COUNT
 } DltLogstorageFilterConfType;
 
@@ -345,6 +353,7 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param size2     Size of extended message body
  * @param data3     Data buffer of message body
  * @param size3     Size of message body
+ * @param disable_nw Flag to disable network routing
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,
@@ -354,7 +363,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
                          unsigned char *data2,
                          int size2,
                          unsigned char *data3,
-                         int size3);
+                         int size3,
+                         int *disable_nw);
 
 /**
  * dlt_logstorage_sync_caches

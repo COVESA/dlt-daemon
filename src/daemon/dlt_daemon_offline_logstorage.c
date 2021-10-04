@@ -1009,8 +1009,9 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
  * @param size2         message extended header size
  * @param data3         message data buffer
  * @param size3         message data size
+ * @return              0 on success, -1 on error, 1 on disable network routing
  */
-void dlt_daemon_logstorage_write(DltDaemon *daemon,
+int dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  DltDaemonFlags *user_config,
                                  unsigned char *data1,
                                  int size1,
@@ -1020,6 +1021,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  int size3)
 {
     int i = 0;
+    int ret = 0;
     DltLogStorageUserConfig file_config;
 
     if ((daemon == NULL) || (user_config == NULL) ||
@@ -1028,7 +1030,7 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
         dlt_vlog(LOG_DEBUG,
                  "%s: message type is not LOG. Skip storing.\n",
                  __func__);
-        return;
+        return -1;
         /* Log Level changed callback */
     }
 
@@ -1040,17 +1042,19 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
     file_config.logfile_counteridxlen =
         user_config->offlineLogstorageMaxCounterIdx;
 
-    for (i = 0; i < user_config->offlineLogstorageMaxDevices; i++)
+    for (i = 0; i < user_config->offlineLogstorageMaxDevices; i++) {
         if (daemon->storage_handle[i].config_status ==
             DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE) {
-            if (dlt_logstorage_write(&(daemon->storage_handle[i]),
+            int disable_nw = 0;
+            if ((ret = dlt_logstorage_write(&(daemon->storage_handle[i]),
                                      &file_config,
                                      data1,
                                      size1,
                                      data2,
                                      size2,
                                      data3,
-                                     size3) != 0) {
+                                     size3,
+                                     &disable_nw)) < 0) {
                 dlt_log(LOG_ERR,
                         "dlt_daemon_logstorage_write: failed. "
                         "Disable storage device\n");
@@ -1060,7 +1064,19 @@ void dlt_daemon_logstorage_write(DltDaemon *daemon,
                     &(daemon->storage_handle[i]),
                     DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
             }
+            if (i == 0) {
+                if (disable_nw == 1) {
+                    ret = 1;
+                }
+            } else {
+                dlt_vlog(LOG_WARNING,
+                         "%s: DisableNetwork is not supported for more than one device yet\n",
+                         __func__);
+            }
         }
+    }
+
+    return ret;
 }
 
 /**

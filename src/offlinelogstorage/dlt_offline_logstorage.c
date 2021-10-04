@@ -1240,6 +1240,38 @@ DLT_STATIC int dlt_logstorage_check_overwrite_strategy(DltLogStorageFilterConfig
 }
 
 /**
+ * dlt_logstorage_check_disable_network
+ *
+ * Evaluate disable network. The disable network is an optional filter
+ * configuration parameter.
+ * If the given value cannot be associated with a flag, the default
+ * flag will be assigned.
+ *
+ * @param[in] config    DltLogStorageFilterConfig
+ * @param[in] value     string given in config file
+ * @return              0 on success, 1 on unknown value, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_check_disable_network(DltLogStorageFilterConfig *config,
+                                                  char *value)
+{
+    if ((config == NULL) || (value == NULL))
+        return -1;
+
+    if (strcasestr(value, "ON") != NULL) {
+        config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_ON;
+    } else if (strcasestr(value, "OFF") != NULL) {
+        config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
+    } else {
+        dlt_log(LOG_WARNING,
+                "Unknown disable network flag. Set default OFF\n");
+        config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
  * dlt_logstorage_check_ecuid
  *
  * Evaluate if ECU idenfifier given in config file
@@ -1333,6 +1365,11 @@ DLT_STATIC DltLogstorageFilterConf
         .key = "GzipCompression",
         .func = dlt_logstorage_check_gzip_compression,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+        .key = "DisableNetwork",
+        .func = dlt_logstorage_check_disable_network,
+        .is_opt = 1
     }
 };
 
@@ -1398,6 +1435,11 @@ DLT_STATIC DltLogstorageFilterConf
         .key = "GzipCompression",
         .func = dlt_logstorage_check_gzip_compression,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+        .key = NULL,
+        .func = dlt_logstorage_check_disable_network,
+        .is_opt = 1
     }
 };
 
@@ -1461,6 +1503,11 @@ DLT_STATIC DltLogstorageFilterConf
     [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
         .key = "GzipCompression",
         .func = dlt_logstorage_check_gzip_compression,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+        .key = NULL,
+        .func = dlt_logstorage_check_disable_network,
         .is_opt = 1
     }
 };
@@ -1602,6 +1649,7 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
     memset(&tmp_data, 0, sizeof(DltLogStorageFilterConfig));
     tmp_data.log_level = DLT_LOG_VERBOSE;
     tmp_data.reset_log_level = DLT_LOG_OFF;
+    tmp_data.disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
 
     for (i = 0; i < DLT_LOGSTORAGE_FILTER_CONF_COUNT; i++) {
         ret = dlt_logstorage_get_filter_value(config_file, sec_name, i, value);
@@ -2289,6 +2337,7 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
  * @param size2     Size of extended message body
  * @param data3     Data buffer of message body
  * @param size3     Size of message body
+ * @param disable_nw Flag to disable network routing
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,
@@ -2298,7 +2347,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
                          unsigned char *data2,
                          int size2,
                          unsigned char *data3,
-                         int size3)
+                         int size3,
+                         int *disable_nw)
 {
     DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
 
@@ -2406,6 +2456,17 @@ int dlt_logstorage_write(DltLogStorage *handle,
                      "%s: config[%d]->file_name is NULL, which equals to non verbose control filter. Continue the filter loop\n",
                      __func__, i);
             continue;
+        }
+
+        /* Disable network routing */
+        if ((config[i]->disable_network_routing & DLT_LOGSTORAGE_DISABLE_NW_ON) > 0) {
+            *disable_nw = 1;
+            if (config[i]->ecuid == NULL)
+                dlt_vlog(LOG_DEBUG, "%s: Disable routing to network for ApId-CtId-EcuId [%s]-[%s]-[]\n", __func__,
+                         config[i]->apids, config[i]->ctids);
+            else
+                dlt_vlog(LOG_DEBUG, "%s: Disable routing to network for ApId-CtId-EcuId [%s]-[%s]-[%s]\n", __func__,
+                         config[i]->apids, config[i]->ctids, config[i]->ecuid);
         }
 
         if (config[i]->skip == 1)

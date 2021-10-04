@@ -78,11 +78,12 @@ SyncBehavior=<strategy>              # Specify sync strategy. Default: Sync'ed a
 EcuID=<ECUid>                        # Specify ECU identifier
 SpecificSize=<spec size in bytes>    # Store logs in storage devices after specific size is reached.
 GzipCompression=<on or off>          # Write the logfiles with gzip compression.
-OverwriteBehavior=<strategy>        # Specify overwrite strategy. Default: Delete oldest file and continue. See Logstorage Ringbuffer Implementation below.
+OverwriteBehavior=<strategy>         # Specify overwrite strategy. Default: Delete oldest file and continue. See Logstorage Ringbuffer Implementation below.
+DisableNetwork=<ON/OFF>              # Specify if the message shall be routed to network client.
 ```
 
-The Parameter "SyncBehavior", "OverwriteBehavior", "EcuID" and "SpecificSize" are optional - all
-others are mandatory.
+The Parameter "SyncBehavior", "OverwriteBehavior", "DisableNetwork", "EcuID" and
+"SpecificSize" are optional - all others are mandatory.
 
 If both of the parameter "LogAppName" and "ContextName" are set to wildcard or
 not present in the configuration file, "EcuID" must be specified.
@@ -130,6 +131,7 @@ NOFiles=5
 SyncBehavior=ON_FILE_SIZE
 EcuID=ECU1
 OverwriteBehavior=DISCARD_NEW
+DisableNetwork=ON
 ```
 
 In case of Non-Verbose mode, following filters should be used.
@@ -303,6 +305,14 @@ OverwriteBehavior.
 The following strategies are implemented:
 - DISCARD\_OLD - remove the oldest file before creating a new one(Default)
 - DISCARD\_NEW - stop writing and discard all new messages
+
+### Disable network routing - What should be forwarded?
+
+Routing to network client (e.g. DLT Viewer) can be changed by the DisableNetwork.
+
+The following flags are implemented:
+- OFF - Forward log messages to network client (Default)
+- ON  - Do not forward log messages to network client and only log to file
 
 ## Maintain Logstorage Log Level Implementation
 
