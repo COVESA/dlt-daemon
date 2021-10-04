@@ -337,8 +337,10 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
     char *tok;
     int num = 1;
 
-    if ((names == NULL) || (value == NULL))
+    if ((names == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Arguments are set to NULL\n", __func__);
         return -1;
+    }
 
     /* free, alloce'd memory to store new apid/ctid */
     if (*names != NULL) {
@@ -348,8 +350,11 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
 
     len = strlen(value);
 
-    if (len == 0)
+    if (len == 0) {
+        dlt_vlog(LOG_ERR, "%s: Length of string given in config file is 0\n",
+                 __func__);
         return -1;
+    }
 
     /* count number of delimiters to get actual number off names */
     num = dlt_logstorage_count_ids(value);
@@ -357,8 +362,10 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
     /* need to alloc space for 5 chars, 4 for the name and "," and "\0" */
     *names = (char *)calloc(num * 5, sizeof(char));
 
-    if (*names == NULL)
+    if (*names == NULL) {
+        dlt_vlog(LOG_ERR, "%s: Cannot allocate memory\n", __func__);
         return -1;
+    }
 
     tok = strdup(value);
     tok = strtok(tok, ",");
@@ -1054,8 +1061,10 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
 {
     int len;
 
-    if ((value == NULL) || (strcmp(value, "") == 0))
+    if ((value == NULL) || (strcmp(value, "") == 0)) {
+        dlt_vlog(LOG_ERR, "%s: Arguments are set to NULL\n", __func__);
         return -1;
+    }
 
     if (config->file_name != NULL) {
         free(config->file_name);
@@ -1063,6 +1072,12 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
     }
 
     len = strlen(value);
+
+    if (len == 0) {
+        dlt_vlog(LOG_ERR, "%s: Length of string given in config file is 0\n",
+                 __func__);
+        return -1;
+    }
 
     /* do not allow the user to change directory by adding a relative path */
     if (strstr(value, "..") == NULL) {
@@ -2220,17 +2235,27 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
     num = dlt_logstorage_get_config(handle, config, apid, ctid, ecuid);
 
     if (num == 0) {
-        dlt_log(LOG_DEBUG, "No valid filter configuration found\n");
+        dlt_vlog(LOG_DEBUG,
+                 "%s: No valid filter configuration found for apid=[%.4s] ctid=[%.4s] ecuid=[%.4s]\n",
+                 __func__, apid, ctid, ecuid);
         return 0;
     }
 
     for (i = 0 ; i < num ; i++)
     {
         if (config[i] == NULL)
+        {
+            dlt_vlog(LOG_DEBUG,
+                     "%s: config[%d] is NULL, continue the filter loop\n",
+                     __func__, i);
             continue;
+        }
 
         /* filter on log level */
         if (log_level > config[i]->log_level) {
+            dlt_vlog(LOG_DEBUG,
+                     "%s: Requested log level (%d) is higher than config[%d]->log_level (%d). Set the config to NULL and continue the filter loop\n",
+                     __func__, log_level, i, config[i]->log_level);
             config[i] = NULL;
             continue;
         }
@@ -2238,7 +2263,12 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
         /* filter on ECU id only if EcuID is set */
         if (config[i]->ecuid != NULL) {
             if (strncmp(ecuid, config[i]->ecuid, DLT_ID_SIZE) != 0)
+            {
+                dlt_vlog(LOG_DEBUG,
+                         "%s: ECUID does not match (Requested=%s, config[%d]=%s). Set the config to NULL and continue the filter loop\n",
+                         __func__, ecuid, i, config[i]->ecuid);
                 config[i] = NULL;
+            }
         }
     }
 
@@ -2314,7 +2344,7 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
         /* check if size2 is big enough to contain expected DLT message header */
         if ((unsigned int)size2 < header_len) {
-            dlt_log(LOG_ERR, "DLT message header is too small\n");
+            dlt_vlog(LOG_ERR, "%s: DLT message header is too small\n", __func__);
             return 0;
         }
 
@@ -2329,7 +2359,9 @@ int dlt_logstorage_write(DltLogStorage *handle,
                                     extendedHeader->ctid, extraHeader->ecu, log_level);
 
         if ((num == 0) || (num == -1)) {
-            dlt_log(LOG_DEBUG, "No valid filter configuration found!\n");
+            dlt_vlog(LOG_DEBUG,
+                     "%s: No valid filter configuration found for apid=[%.4s] ctid=[%.4s] ecuid=[%.4s]!\n",
+                     __func__, extendedHeader->apid, extendedHeader->ctid, extraHeader->ecu);
             return 0;
         }
     }
@@ -2359,15 +2391,30 @@ int dlt_logstorage_write(DltLogStorage *handle,
     for (i = 0; i < num; i++)
     {
         if (config[i] == NULL)
+        {
+            dlt_vlog(LOG_DEBUG,
+                     "%s: config[%d] is NULL. Continue the filter loop\n",
+                     __func__, i);
             continue;
+        }
 
         /* If file name is not present, the filter is non verbose control filter
          * hence skip storing */
         if (config[i]->file_name == NULL)
+        {
+            dlt_vlog(LOG_DEBUG,
+                     "%s: config[%d]->file_name is NULL, which equals to non verbose control filter. Continue the filter loop\n",
+                     __func__, i);
             continue;
+        }
 
         if (config[i]->skip == 1)
+        {
+            dlt_vlog(LOG_DEBUG,
+                     "%s: config[%d] (filename=%s) is skipped. Continue the filter loop\n",
+                     __func__, i, config[i]->file_name);
             continue;
+        }
 
         tmp = handle->newest_file_list;
         while (tmp) {
