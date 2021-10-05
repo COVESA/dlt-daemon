@@ -77,8 +77,7 @@ option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"             
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
 option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   OFF)
 option(WITH_LIB_SHORT_VERSION "Set to ON to build library with only major number in version"                    OFF)
-option(WITH_LEGACY_INCLUDE_PATH "Set to ON to add <prefix>/dlt to include paths for the CMake config file, in addition to only <prefix>"
-   OFF)
+option(WITH_LEGACY_INCLUDE_PATH "Set to ON to add <prefix>/dlt to include paths for the CMake config file, in addition to only <prefix>"    ON)
 option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering. Using json filter files is only supported for Linux based system with json-c and QNX." OFF)
 
 option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"                                   OFF)
