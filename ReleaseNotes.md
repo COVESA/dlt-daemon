@@ -4,9 +4,61 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.7 STABLE
+2.18.8 STABLE
 
 ## Changes
+
+### 2.18.8
+
+   * lib: Fix wrong type alert from lgtm
+   * gtest_dlt_daemon_gateway: fix gtest build failed
+   * lib: generate dlt library internal log file
+   * tests: add stdlib to dlt_cpp_extension
+   * dlt_user: Make dlt_init thread safe
+   * remove clang-tidy analyzer warnings: incompatible pointer type
+   * debian: improve debian build package
+   * dlt-control-common: shutdown and close socket
+   * dlt_common: improve function description
+   * gtest: Bring-in changes
+   * gtest: Rework WORKING_DIRECTORY
+   * gtest: Correct data amount in gtest_dlt_common
+   * cmake: Set empty to systemd_SRCS
+   * gtest: Refactor tests/CMakeLists.txt
+   * lib: Add SOCK_CLOEXEC to socket
+   * daemon: Create parent directory for unix socket
+   * cmake: Correct added subdirectories
+   * console: Add cmake options for control and timestamp
+   * tests: Adapt to DLT_DISABLE_MACRO
+   * header: Adapt to DLT_DISABLE_MACRO
+   * include: Refactor CMakeLists.txt
+   * gtest: Change script name to gtest_dlt_daemon_offline_log.sh
+   * daemon: Enable to use FIFO on QNX
+   * tests: Add new test case with given buffer
+   * tests: Enable macro disabling
+   * lib: Add new interfaces with given buffer
+   * Implemention of tests for the dlt-qnx-system module
+   * lib: Add MaxFileSize handling
+   * client: pthread_join for deinit
+   * doc: update initial log level document
+   * dlt-system: Fix memory leak in dlt-system config
+   * dlt_common: remove duplicate stdbool header
+   * dlt-control: Add option to config port
+   * system: use signalfd for dlt-system
+   * console: provides args option to enable send/receive serial header
+   * fix malformed printf format strings (#295)
+   * cmake: Set WITH_LEGACY_INCLUDE_PATH to ON as default (#334)
+   * Make the legacy include path a CMake option (#332)
+   * daemon: Call dlt_daemon_configuration_load() properly (#330)
+   * dlt_user: Use pthread_setname_np() if available (#326)
+   * libdlt: Add legacy include path in exported CMake config file (#327)
+   * lib: Set TYLE to 1 for BOOL type (#320)
+   * file-transfer: Abort file transfer if get serial number failed
+   * dlt_user.c: fixing casting wrong type
+   * dlt-sortbytimestamp: Remove duplicated conditional statements code
+   * dlt-convert: Remove duplicated conditional statements code
+   * doc: Minor fix in dlt_for_developers.md (#321)
+   * dlt-control-common.c: Fix build failure due to out-of-bound write -Werror=stringop-truncation
+   * Extend include path in *.pc file (#319)
 
 ### 2.18.7
 
