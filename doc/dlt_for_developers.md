@@ -3,14 +3,13 @@
 Back to [README.md](../README.md)
 
 Table of Contents
-1. [Summary](#Summary)
-2. [Example Application](#DLT-Example-Application)
-3. [General Rules for Logging](#General-Rules-for-Logging)
-4. [The use of Log Levels](#The-use-of-Log-Levels)
-5. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
-6. [DLT API Usage](#DLT-API-Usage)
-7. [DLT injection messages](#DLT-Injection-Messages)
-8. [Log level changed callback](#Log-level-changed-callback)
+1. [DLT Example Application](#DLT-Example-Application)
+2. [General Rules for Logging](#General-Rules-for-Logging)
+3. [The use of Log Levels](#The-use-of-Log-Levels)
+4. [DLT Library Runtime Configuration](#DLT-Library-Runtime-Configuration)
+5. [DLT API Usage](#DLT-API-Usage)
+6. [DLT injection messages](#DLT-Injection-Messages)
+7. [Log level changed callback](#Log-level-changed-callback)
 
 ## DLT Example Application
 
@@ -27,7 +26,7 @@ minimal code example. Detailed information about the API can be found later in
 this document.
 
 ```
-#include <dlt.h>
+#include <dlt/dlt.h>
 
 DLT_DECLARE_CONTEXT(ctx); /* declare context */
 
@@ -62,14 +61,66 @@ string. On application cleanup, all DLT contexts, as well as the DLT
 application have to be unregistered.
 
 ### DLT with cmake
-To use DLT with cmake, the following lines are the important ones:
+
+To use DLT with CMake, the recommended way is to use the CMake Config file
+that is being generated as part of installation.
+
+You can thus:
+```
+find_package(automotive-dlt REQUIRED)
+...
+target_link_libraries(myapp PRIVATE Genivi::DLT)
+```
+which lets your project automatically gain all necessary compile and link flags
+needed by libdlt, including the include directories.
+
+The generated CMake Config file follows "Modern CMake" convention and only
+exports an IMPORTED CMake target; it does not set any variables, except for the
+`automotive-dlt_FOUND` variable that can be used to treat DLT as an optional
+dependency.
+
+The generated CMake config file (which is implicitly being used when you call
+`find_package(automotive-dlt)`) by default only adds the top-level directory
+to the compiler's header search path; this requires that users' #include
+directives are written in the regular form e.g. `<dlt/dlt.h>`. If you want
+to be able to use the legacy form `<dlt.h>` as well (as is always allowed by
+the pkg-config module for backwards compatibility reasons), you can configure
+DLT with the CMake option `-DWITH_LEGACY_INCLUDE_PATH=On` in order to
+achieve that.
+
+### DLT with pkg-config
+
+Alternatively to the CMake integration detailed above, it is also possible
+to use DLT via pkg-config. This can also be done with CMake's PkgConfig
+module as well.
+
+#### PkgConfig usage with "Modern CMake"
+
+Here, you let the PkgConfig module create targets as well; the target's name
+is however determined by the PkgConfig module:
+
+```
+find_package(PkgConfig)
+pkg_check_modules(DLT REQUIRED IMPORTED_TARGET automotive-dlt)
+```
+
+As per "Modern CMake", there are again no variables to be added, but only
+a CMake target to be added to the link libraries:
+
+```
+target_link_libraries(myapp PRIVATE PkgConfig::DLT)
+```
+
+#### PkgConfig usage with "Legacy CMake" (<3.0)
+
+Here, you let the PkgConfig module only create variables, but not targets:
 
 ```
 find_package(PkgConfig)
 pkg_check_modules(DLT REQUIRED automotive-dlt)
 ```
 
-to INCLUDE\_DIRECTORIES, add
+to INCLUDE\_DIRECTORIES (or, since CMake 2.8.11, TARGET\_INCLUDE\_DIRECTORIES), add
 
 ```
 ${DLT_INCLUDE_DIRS}
@@ -78,7 +129,21 @@ ${DLT_INCLUDE_DIRS}
 and to TARGET\_LINK\_LIBRARIES:
 
 ```
-${DLT_LIBRARIES}
+${DLT_LINK_LIBRARIES}  (preferred, for CMake >= 3.12)
+${DLT_LIBRARIES}       (otherwise)
+```
+
+The contents of `${DLT_LIBRARIES}` do not include the library's path
+(e.g. `-L/path/to/lib`), so if the library resides in a location that is not
+on the linker's default search path, you'll either have to add that path
+to LINK\_DIRECTORIES:
+```
+link_directories(${DLT_LIBRARY_DIRS})
+```
+or, alternatively, not use `${DLT_LIBRARIES}`, but `${DLT_LDFLAGS}` instead,
+which combines `${DLT_LIBRARIES}` and `${DLT_LIBRARY_DIRS}`:
+```
+target_link_libraries(myapp ${DLT_LDFLAGS})
 ```
 
 ### Limitation
@@ -499,9 +564,14 @@ int main(int argc, const char* argv[])
 
 ### Logging command
 
-DLT provides functions and macros for logging, whereas the interface for
-Verbose and Non-Verbose differs. The following table shows an example of all 4
-types for logging using a constant string and an integer.
+DLT provides functions that allow for flexible construction of messages
+with an arbitrary number of arguments. Both Verbose and Non-Verbose
+messages are supported, with different APIs. Sending a message using
+these functions require multiple function calls, for starting message
+construction, adding the arguments, and sending off the message.
+
+The following table shows an example of all 4 types for logging
+using a constant string and an integer.
 
 #### Verbose vs. Non-Verbose API
 
@@ -545,30 +615,37 @@ if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
 }
 ```
 
-Drawback of that solution is that the developer has to decide during
-development if Verbose or Non-Verbose mode shall be used and the code most
-likely ends up as written in the dlt-example-user application:
+#### Statefulness of Verbose/Non-Verbose
 
-```
-if (gflag) {
-    /* Non-verbose mode */
-    DLT_LOG_ID(ctx, DLT_LOG_INFO, 42 /* unique msg ID */, DLT_INT(num),
-               DLT_STRING(text));
-}
-else {
-    /* Verbose mode */
-    DLT_LOG(ctx, DLT_LOG_INFO, DLT_INT(num), DLT_STRING(text));
-}
-```
+The library uses a global state that applies to all logging commands being used.
+If the library is in global "Verbose" mode, both the "Verbose" and the "Non-Verbose"
+API calls shown above will always result in Verbose messages being sent.
 
-##### Switching Verbose and Non-Verbose
+However, if the library is in global "Non-Verbose" mode, it is possible to send
+both Verbose and Non-Verbose messages in a single session; all "Verbose" APIs will
+send Verbose messages, and all "Non-Verbose" APIs will send Non-Verbose messages.
+
+It does not make sense to send a Non-Verbose message via a Verbose API, as there
+is then no sensible message ID, which is however mandatory when sending
+Non-Verbose messages.
+
+#### Switching Verbose and Non-Verbose
 
 To switch Verbose/Non-Verbose mode (Verbose mode is default), the following
 APIs are available:
 
+##### MACRO
+
 ```
 DLT_VERBOSE_MODE();
 DLT_NONVERBOSE_MODE();
+```
+
+##### Function
+
+```
+dlt_verbose_mode();
+dlt_nonverbose_mode();
 ```
 
 #### String arguments
@@ -592,9 +669,9 @@ std::string_view key = line.substr(0, 4);
 std::string_view value = line.substr(6);
 
 if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
-    dlt_user_log_write_constant_string(&myctxdata, "key");
+    dlt_user_log_write_constant_utf8_string(&myctxdata, "key");
     dlt_user_log_write_sized_utf8_string(&myctxdata, key.data(), key.size());
-    dlt_user_log_write_constant_string(&myctxdata, "value");
+    dlt_user_log_write_constant_utf8_string(&myctxdata, "value");
     dlt_user_log_write_sized_utf8_string(&myctxdata, value.data(), value.size());
     dlt_user_log_write_finish(&myctxdata);
 }

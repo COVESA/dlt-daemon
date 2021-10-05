@@ -13,6 +13,7 @@ endif()
 
 set(DLT_LIBRARIES ${LIBRARIES} dlt)
 set(DLT_DAEMON_LIBRARIES ${LIBRARIES} dlt_daemon)
+set(DLT_CONTROL_LIBRARIES ${LIBRARIES} dlt dlt_control_common_lib)
 
 if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
   add_definitions( -DSD_EXPORT_SYMBOLS )
@@ -23,6 +24,16 @@ target_link_libraries(gtest_dlt_common ${DLT_LIBRARIES})
 add_test(NAME gtest_dlt_common
     COMMAND gtest_dlt_common
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(WITH_EXTENDED_FILTERING)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_extended.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.json ${PROJECT_BINARY_DIR}/tests COPYONLY)
+    add_executable(gtest_dlt_json_filter gtest_dlt_json_filter.cpp)
+    target_link_libraries(gtest_dlt_json_filter ${DLT_CONTROL_LIBRARIES})
+    add_test(NAME gtest_dlt_json_filter
+        COMMAND gtest_dlt_json_filter
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 add_executable(gtest_dlt_user gtest_dlt_user.cpp)
 target_link_libraries(gtest_dlt_user ${DLT_LIBRARIES})

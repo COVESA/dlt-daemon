@@ -60,6 +60,11 @@
 #include "dlt_common.h"
 #include "dlt_user.h"
 
-int dlt_daemon_serial_send(int sock, void *data1, int size1, void *data2, int size2, char serialheader);
+int dlt_daemon_serial_send(int sock,
+                           void *data1,
+                           int size1,
+                           void *data2,
+                           int size2,
+                           char serialheader);
 
 #endif /* DLT_DAEMON_SERIAL_H */

@@ -47,7 +47,7 @@
 
 #include <limits.h>
 #ifdef linux
-#   include <sys/prctl.h>
+#   include <sys/prctl.h> /* for PR_SET_NAME */
 #endif
 
 #include <sys/types.h> /* needed for getpid() */
@@ -622,6 +622,12 @@ DltReturnValue dlt_init_message_queue(void)
     return DLT_RETURN_OK;
 }
 #endif /* DLT_NETWORK_TRACE_ENABLE */
+
+/* Return true if verbose mode is to be used for this DltContextData */
+static inline bool is_verbose_mode(int8_t dltuser_verbose_mode, const DltContextData* log)
+{
+    return (dltuser_verbose_mode == 1) || (log != NULL && log->verbose_mode);
+}
 
 DltReturnValue dlt_init_common(void)
 {
@@ -1686,15 +1692,30 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
 
 /* ********************************************************************************************* */
 
+static DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
+                                                        DltContextData *log,
+                                                        DltLogLevelType loglevel,
+                                                        uint32_t messageid,
+                                                        bool is_verbose);
+
 inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel)
 {
-    return dlt_user_log_write_start_id(handle, log, loglevel, DLT_USER_DEFAULT_MSGID);
+    return dlt_user_log_write_start_internal(handle, log, loglevel, DLT_USER_DEFAULT_MSGID, true);
 }
 
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
                                            uint32_t messageid)
+{
+    return dlt_user_log_write_start_internal(handle, log, loglevel, messageid, false);
+}
+
+DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
+                                           DltContextData *log,
+                                           DltLogLevelType loglevel,
+                                           uint32_t messageid,
+                                           bool is_verbose)
 {
     DLT_LOG_FATAL_RESET_TRAP(loglevel);
     DltReturnValue ret = DLT_RETURN_OK;
@@ -1733,9 +1754,10 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
     log->log_level = loglevel;
     log->size = 0;
     log->use_timestamp = DLT_AUTO_TIMESTAMP;
+    log->verbose_mode = is_verbose;
 
     /* In non-verbose mode, insert message id */
-    if (dlt_user.verbose_mode == 0) {
+    if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
         if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
 
@@ -1787,7 +1809,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         uint32_t type_info = DLT_TYPE_INFO_RAWD;
 
         needed_size += sizeof(uint32_t);  // Type Info field
@@ -1819,7 +1841,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     memcpy(log->buffer + log->size, &length, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         if (with_var_info) {
             // Write length of "name" attribute.
             // We assume that the protocol allows zero-sized strings here (which this code will create
@@ -1879,7 +1901,7 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         bool with_var_info = (varinfo != NULL);
 
         uint16_t name_size;
@@ -1958,7 +1980,7 @@ static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, 
     if ((log->size + needed_size) > dlt_user.log_buf_len)
         return DLT_RETURN_USER_BUFFER_FULL;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         needed_size += sizeof(uint32_t);  // Type Info field
         if ((log->size + needed_size) > dlt_user.log_buf_len)
             return DLT_RETURN_USER_BUFFER_FULL;
@@ -2270,13 +2292,13 @@ DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, 
 
 DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data)
 {
-    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL | DLT_TYLE_8BIT;
     return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
 }
 
 DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name)
 {
-    uint32_t type_info = DLT_TYPE_INFO_BOOL;
+    uint32_t type_info = DLT_TYPE_INFO_BOOL | DLT_TYLE_8BIT;
     const VarInfo var_info = { name, NULL, false };
     return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, &var_info);
 }
@@ -2304,25 +2326,25 @@ DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const c
 DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_string(log, text) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_string_attr(log, text, name) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_string(log, text, length) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
 {
     /* Send parameter only in verbose mode */
-    return dlt_user.verbose_mode ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_string_attr(log, text, length, name) : DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text)
@@ -2345,6 +2367,30 @@ DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, co
     return dlt_user_log_write_sized_string_utils_attr(log, text, length, UTF8_STRING, name, true);
 }
 
+DltReturnValue dlt_user_log_write_constant_utf8_string(DltContextData *log, const char *text)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_utf8_string(log, text) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_constant_utf8_string_attr(DltContextData *log, const char *text, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_utf8_string_attr(log, text, name) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_sized_constant_utf8_string(DltContextData *log, const char *text, uint16_t length)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_utf8_string(log, text, length) : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_sized_constant_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name)
+{
+    /* Send parameter only in verbose mode */
+    return is_verbose_mode(dlt_user.verbose_mode, log) ? dlt_user_log_write_sized_utf8_string_attr(log, text, length, name) : DLT_RETURN_OK;
+}
+
 static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData *log, const char *text, uint16_t length, const enum StringType type, const char *name, bool with_var_info)
 {
     if ((log == NULL) || (text == NULL))
@@ -2363,7 +2409,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
     uint32_t type_info = 0;
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         new_log_size += sizeof(uint32_t);
         if (with_var_info) {
             new_log_size += sizeof(uint16_t);  // length of "name" attribute
@@ -2386,7 +2432,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
         size_t min_payload_str_truncate_msg = log->size + str_truncate_message_length + sizeof(uint16_t);
 
-        if (dlt_user.verbose_mode) {
+        if (is_verbose_mode(dlt_user.verbose_mode, log)) {
             min_payload_str_truncate_msg += sizeof(uint32_t);
             arg_size -= (uint16_t) sizeof(uint32_t);
             if (with_var_info) {
@@ -2430,7 +2476,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
         }
     }
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         switch (type) {
         case ASCII_STRING:
             type_info |= DLT_TYPE_INFO_STRG | DLT_SCOD_ASCII;
@@ -2450,7 +2496,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
-    if (dlt_user.verbose_mode) {
+    if (is_verbose_mode(dlt_user.verbose_mode, log)) {
         if (with_var_info) {
             // Write length of "name" attribute.
             // We assume that the protocol allows zero-sized strings here (which this code will create
@@ -2903,8 +2949,12 @@ void dlt_user_trace_network_segmented_thread(void *unused)
 {
     /* Unused on purpose. */
     (void)unused;
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0);
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    if (pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented"))
+        dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
+#elif linux
+    if (prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0) < 0)
+        dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
 #endif
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
@@ -3204,14 +3254,14 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)
 {
-    DltReturnValue ret = DLT_RETURN_OK;
-    DltContextData log;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
@@ -3225,14 +3275,14 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
 
 DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data)
 {
-    DltReturnValue ret = DLT_RETURN_OK;
-    DltContextData log;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
@@ -3247,14 +3297,14 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
 
 DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data)
 {
-    DltReturnValue ret = DLT_RETURN_OK;
-    DltContextData log;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if ((handle == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
@@ -3269,13 +3319,13 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
 
 DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data)
 {
-    DltContextData log;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
         return DLT_RETURN_ERROR;
+
+    DltContextData log;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
         dlt_user_log_write_int(&log, data);
@@ -3289,13 +3339,13 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
 
 DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data)
 {
-    DltContextData log;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
+
+    DltContextData log;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
         dlt_user_log_write_uint(&log, data);
@@ -3309,14 +3359,14 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
 
 DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length)
 {
-    DltContextData log;
-    DltReturnValue ret = DLT_RETURN_OK;
-
-    if (dlt_user.verbose_mode == 0)
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
 
     if (handle == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
+
+    DltContextData log;
+    DltReturnValue ret = DLT_RETURN_OK;
 
     if (dlt_user_log_write_start(handle, &log, loglevel) > 0) {
         if ((ret = dlt_user_log_write_raw(&log, data, length)) < DLT_RETURN_OK) {
@@ -3496,8 +3546,12 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
     }
 #endif
 
-#ifdef linux
-    prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0);
+#ifdef DLT_USE_PTHREAD_SETNAME_NP
+    if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+        dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
+#elif linux
+    if (prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0) < 0)
+        dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
 #endif
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
@@ -3611,7 +3665,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         msg.headerextra.seid = (uint32_t) getpid();
     }
 
-    if (dlt_user.verbose_mode)
+    if (is_verbose_mode(dlt_user.verbose_mode, log))
         /* In verbose mode, send extended header */
         msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
     else
@@ -3668,7 +3722,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
         }
 
         /* If in verbose mode, set flag in header for verbose mode */
-        if (dlt_user.verbose_mode)
+        if (is_verbose_mode(dlt_user.verbose_mode, log))
             msg.extendedheader->msin |= DLT_MSIN_VERB;
 
         msg.extendedheader->noar = (uint8_t) log->args_num;              /* number of arguments */
@@ -3756,32 +3810,36 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
 #endif
         }
 
+        DltReturnValue process_error_ret = DLT_RETURN_OK;
         /* store message in ringbuffer, if an error has occured */
         if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
-            ret = dlt_user_log_out_error_handling(&(userheader),
+            process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbuffer + sizeof(DltStorageHeader),
                                                   msg.headersize - sizeof(DltStorageHeader),
                                                   log->buffer,
                                                   log->size);
 
-        switch (ret) {
-        case DLT_RETURN_BUFFER_FULL:
-        {
+        if (process_error_ret == DLT_RETURN_OK)
+            return DLT_RETURN_OK;
+        if (process_error_ret == DLT_RETURN_BUFFER_FULL) {
             /* Buffer full */
             dlt_user.overflow_counter += 1;
             return DLT_RETURN_BUFFER_FULL;
         }
-        case DLT_RETURN_PIPE_FULL:
-        {
-            /* data could not be written */
-            return DLT_RETURN_PIPE_FULL;
-        }
-        case DLT_RETURN_PIPE_ERROR:
-        {
-            /* handle not open or pipe error */
-            close(dlt_user.dlt_log_handle);
-            dlt_user.dlt_log_handle = -1;
+
+        /* handle return value of function dlt_user_log_out3() when process_error_ret < 0*/
+        switch (ret) {
+            case DLT_RETURN_PIPE_FULL:
+            {
+                /* data could not be written */
+                return DLT_RETURN_PIPE_FULL;
+            }
+            case DLT_RETURN_PIPE_ERROR:
+            {
+                /* handle not open or pipe error */
+                close(dlt_user.dlt_log_handle);
+                dlt_user.dlt_log_handle = -1;
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
@@ -4752,19 +4810,19 @@ static void dlt_fork_child_fork_handler()
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
                                                size_t len3)
 {
-    int ret = DLT_RETURN_ERROR;
+    DltReturnValue ret = DLT_RETURN_ERROR;
     size_t msg_size = len1 + len2 + len3;
 
     DLT_SEM_LOCK();
-    ret = (int) dlt_buffer_check_size(&(dlt_user.startup_buffer), (int) msg_size);
+    ret = dlt_buffer_check_size(&(dlt_user.startup_buffer), (int)msg_size);
     DLT_SEM_FREE();
 
     DLT_SEM_LOCK();
 
     if (dlt_buffer_push3(&(dlt_user.startup_buffer),
-                         ptr1, (unsigned char) len1,
-                         ptr2, (unsigned char) len2,
-                         ptr3, (unsigned char) len3) == DLT_RETURN_ERROR) {
+                         ptr1, (unsigned int)len1,
+                         ptr2, (unsigned int)len2,
+                         ptr3, (unsigned int)len3) == DLT_RETURN_ERROR) {
         if (dlt_user.overflow_counter == 0)
             dlt_log(LOG_WARNING, "Buffer full! Messages will be discarded.\n");
 

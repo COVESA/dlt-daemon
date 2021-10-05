@@ -29,6 +29,7 @@ WITH\_UDP\_CONNECTION             | OFF            | Set to ON to enable dlt UDP
 WITH\_DLT\_DAEMON\_VSOCK\_IPC     | OFF            | Set to ON for VSOCK support in daemon.
 WITH\_DLT\_LIB\_VSOCK\_IPC        | OFF            | Set to ON for VSOCK support in libdlt (DLT\_IPC is overridden in libdlt).
 DLT\_VSOCK\_PORT                  | 13490          | Port to use for VSOCK communication.
+WITH\_LEGACY\_INCLUDE\_PATH       | ON             | Set to ON to add <prefix>/dlt to include paths for the CMake config file, in addition to only <prefix>
 
 ## Command Line Tool Options
 
@@ -39,6 +40,7 @@ WITH\_DLT\_CONSOLE                | ON             | Set to ON to build src/cons
 WITH\_DLT\_SYSTEM                 | OFF            | Set to ON to build src/system binaries
 WITH\_DLT\_LOGSTORAGE\_CTRL\_UDEV | OFF            | PROTOTYPE! Set to ON to build
 WITH\_DLT\_KPI                    | OFF            | Set to ON to build src/kpi binaries
+WITH\_EXTENDED\_FILTERING         | OFF            | Set to OFF to build without extended filtering. Using json filter files is only supported for Linux based system with json-c and QNX.
 
 ## Linux OS Integration Options
 

@@ -112,7 +112,10 @@ void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(
 DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
 {
     if (verbose && (port != DLT_DAEMON_TCP_PORT))
-        dlt_vlog(LOG_INFO, "Init dlt client struct with port %d\n", port);
+        dlt_vlog(LOG_INFO,
+                 "%s: Init dlt client struct with port %d\n",
+                 __func__,
+                 port);
 
     if (client == NULL)
         return DLT_RETURN_ERROR;
@@ -147,7 +150,8 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 
         if ((tmp_port < IPPORT_RESERVED) || ((unsigned)tmp_port > USHRT_MAX)) {
             dlt_vlog(LOG_ERR,
-                     "Specified port is out of possible range: %d.\n",
+                     "%s: Specified port is out of possible range: %d.\n",
+                     __func__,
                      tmp_port);
             return DLT_RETURN_ERROR;
         }
@@ -158,7 +162,8 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 
     if (verbose)
         dlt_vlog(LOG_INFO,
-                 "Init dlt client struct with default port: %hu.\n",
+                 "%s: Init dlt client struct with default port: %hu.\n",
+                 __func__,
                  servPort);
     return dlt_client_init_port(client, servPort, verbose);
 }
@@ -166,7 +171,6 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     const int yes = 1;
-    int connect_errno = 0;
     char portnumbuffer[33];
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
@@ -185,18 +189,23 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         snprintf(portnumbuffer, 32, "%d", client->port);
 
         if ((rv = getaddrinfo(client->servIP, portnumbuffer, &hints, &servinfo)) != 0) {
-            fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+            dlt_vlog(LOG_ERR,
+                    "%s: getaddrinfo: %s\n",
+                     __func__,
+                     gai_strerror(rv));
             return DLT_RETURN_ERROR;
         }
 
         for (p = servinfo; p != NULL; p = p->ai_next) {
             if ((client->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
-                dlt_vlog(LOG_WARNING, "socket() failed! %s\n", strerror(errno));
+                dlt_vlog(LOG_WARNING,
+                         "%s: socket() failed! %s\n",
+                         __func__,
+                         strerror(errno));
                 continue;
             }
 
             if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
-                connect_errno = errno;
                 close(client->sock);
                 continue;
             }
@@ -207,7 +216,10 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         freeaddrinfo(servinfo);
 
         if (p == NULL) {
-            dlt_vlog(LOG_ERR, "ERROR: failed to connect! %s\n", strerror(connect_errno));
+            dlt_vlog(LOG_INFO,
+                     "%s: Connected to DLT daemon (%s)\n",
+                     __func__,
+                     client->servIP);
             return DLT_RETURN_ERROR;
         }
 
@@ -222,7 +234,10 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         client->sock = open(client->serialDevice, O_RDWR);
 
         if (client->sock < 0) {
-            fprintf(stderr, "ERROR: Failed to open device %s\n", client->serialDevice);
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: Failed to open device %s\n",
+                     __func__,
+                     client->serialDevice);
             return DLT_RETURN_ERROR;
         }
 
@@ -230,8 +245,11 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             #if !defined (__WIN32__)
 
             if (dlt_setup_serial(client->sock, client->baudrate) < DLT_RETURN_OK) {
-                fprintf(stderr, "ERROR: Failed to configure serial device %s (%s) \n", client->serialDevice,
-                        strerror(errno));
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: Failed to configure serial device %s (%s) \n",
+                         __func__,
+                         client->serialDevice,
+                         strerror(errno));
                 return DLT_RETURN_ERROR;
             }
 
@@ -241,16 +259,20 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         }
         else {
             if (verbose)
-                fprintf(stderr,
-                        "ERROR: Device is not a serial device, device = %s (%s) \n",
-                        client->serialDevice,
-                        strerror(errno));
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: Device is not a serial device, device = %s (%s) \n",
+                         __func__,
+                         client->serialDevice,
+                         strerror(errno));
 
             return DLT_RETURN_ERROR;
         }
 
         if (verbose)
-            printf("Connected to %s\n", client->serialDevice);
+            dlt_vlog(LOG_INFO,
+                         "%s: Connected to %s\n",
+                         __func__,
+                         client->serialDevice);
 
         receiver_type = DLT_RECEIVE_FD;
 
@@ -258,7 +280,11 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
     case DLT_CLIENT_MODE_UNIX:
 
         if ((client->sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-            fprintf(stderr, "ERROR: (unix) socket error: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: (unix) socket error: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
@@ -269,13 +295,20 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         if (connect(client->sock,
                     (struct sockaddr *) &addr,
                     sizeof(addr)) == -1) {
-            fprintf(stderr, "ERROR: (unix) connect error: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: (unix) connect error: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
         if (client->sock < 0) {
-            fprintf(stderr, "ERROR: Failed to open device %s\n",
-                    client->socketPath);
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: Failed to open device %s\n",
+                     __func__,
+                     client->socketPath);
+
             return DLT_RETURN_ERROR;
         }
 
@@ -286,14 +319,22 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         if ((client->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
         {
-            fprintf(stderr, "ERROR: socket error: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: socket error: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
         /* allow multiple sockets to use the same PORT number */
         if (setsockopt(client->sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
         {
-            fprintf(stderr, "ERROR: Reusing address failed: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: Reusing address failed: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
@@ -305,7 +346,11 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         /* bind to receive address */
         if (bind(client->sock, (struct sockaddr*) &client->receiver.addr, sizeof(client->receiver.addr)) < 0)
         {
-            fprintf(stderr, "ERROR: bind failed: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: bind failed: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
@@ -316,20 +361,31 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         }
         if (client->servIP == NULL)
         {
-            fprintf(stderr, "ERROR: server address not set\n");
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: server address not set\n",
+                     __func__);
+
             return DLT_RETURN_ERROR;
         }
 
         mreq.imr_multiaddr.s_addr = inet_addr(client->servIP);
         if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
         {
-            fprintf(stderr, "ERROR: server address not not valid %s\n", client->servIP);
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: server address not not valid %s\n",
+                     __func__,
+                     client->servIP);
+
             return DLT_RETURN_ERROR;
         }
 
         if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
         {
-            fprintf(stderr, "ERROR: setsockopt add membership failed: %s\n", strerror(errno));
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: setsockopt add membership failed: %s\n",
+                     __func__,
+                     strerror(errno));
+
             return DLT_RETURN_ERROR;
         }
 
@@ -337,15 +393,16 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         break;
     default:
-
-        if (verbose)
-            fprintf(stderr, "ERROR: Mode not supported: %d\n", client->mode);
+        dlt_vlog(LOG_ERR,
+                 "%s: ERROR: Mode not supported: %d\n",
+                 __func__,
+                 client->mode);
 
         return DLT_RETURN_ERROR;
     }
 
     if (dlt_receiver_init(&(client->receiver), client->sock, receiver_type, DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK) {
-        fprintf(stderr, "ERROR initializing receiver\n");
+        dlt_vlog(LOG_ERR, "%s: ERROR initializing receiver\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -357,7 +414,7 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
     int ret = DLT_RETURN_OK;
 
     if (verbose)
-        printf("Cleanup dlt client\n");
+        dlt_vlog(LOG_INFO, "%s: Cleanup dlt client\n", __func__);
 
     if (client == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -366,8 +423,8 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose)
         close(client->sock);
 
     if (dlt_receiver_free(&(client->receiver)) != DLT_RETURN_OK) {
-        dlt_vlog(LOG_WARNING, "Failed to free receiver\n");
-        ret = DLT_RETURN_ERROR;
+        dlt_vlog(LOG_WARNING, "%s: Failed to free receiver\n", __func__);
+		ret = DLT_RETURN_ERROR;
     }
 
     if (client->serialDevice) {
@@ -545,8 +602,11 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
 
     if (len > UINT16_MAX) {
-        fprintf(stderr, "Critical: Huge injection message discarded!\n");
-        dlt_message_free(&msg, 0);
+        dlt_vlog(LOG_ERR,
+                 "%s: Critical: Huge injection message discarded!\n",
+                 __func__);
+
+		dlt_message_free(&msg, 0);
 
         return DLT_RETURN_ERROR;
     }
@@ -560,7 +620,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
             (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
 
         if (0 > ret) {
-            dlt_log(LOG_ERR, "Sending message failed\n");
+            dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
             dlt_message_free(&msg, 0);
             return DLT_RETURN_ERROR;
         }
@@ -568,7 +628,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         ret = (int) write(client->sock, msg.databuffer, msg.datasize);
 
         if (0 > ret) {
-            dlt_log(LOG_ERR, "Sending message failed\n");
+            dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
             dlt_message_free(&msg, 0);
             return DLT_RETURN_ERROR;
         }
@@ -577,7 +637,8 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         id = DLT_ENDIAN_GET_32(msg.standardheader->htyp, id_tmp);
 
         dlt_vlog(LOG_INFO,
-                 "Control message forwarded : %s\n",
+                 "%s: Control message forwarded : %s\n",
+                 __func__,
                  dlt_get_service_name(id));
     }
     else {
@@ -968,7 +1029,7 @@ int dlt_client_set_server_ip(DltClient *client, char *ipaddr)
     client->servIP = strdup(ipaddr);
 
     if (client->servIP == NULL) {
-        dlt_log(LOG_ERR, "ERROR: failed to duplicate server IP\n");
+        dlt_vlog(LOG_ERR, "%s: ERROR: failed to duplicate server IP\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -980,7 +1041,7 @@ int dlt_client_set_host_if_address(DltClient *client, char *hostip)
     client->hostip = strdup(hostip);
 
     if (client->hostip == NULL) {
-        dlt_log(LOG_ERR, "ERROR: failed to duplicate UDP interface address\n");
+        dlt_vlog(LOG_ERR, "%s: ERROR: failed to duplicate UDP interface address\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -992,7 +1053,7 @@ int dlt_client_set_serial_device(DltClient *client, char *serial_device)
     client->serialDevice = strdup(serial_device);
 
     if (client->serialDevice == NULL) {
-        dlt_log(LOG_ERR, "ERROR: failed to duplicate serial device\n");
+        dlt_vlog(LOG_ERR, "%s: ERROR: failed to duplicate serial device\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -1004,7 +1065,7 @@ int dlt_client_set_socket_path(DltClient *client, char *socket_path)
     client->socketPath = strdup(socket_path);
 
     if (client->socketPath == NULL) {
-        dlt_log(LOG_ERR, "ERROR: failed to duplicate socket path\n");
+        dlt_vlog(LOG_ERR, "%s: ERROR: failed to duplicate socket path\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -1089,15 +1150,18 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
         (resp->status > GET_LOG_INFO_STATUS_MAX)) {
         if (resp->status == GET_LOG_INFO_STATUS_NO_MATCHING_CTX)
             dlt_vlog(LOG_WARNING,
-                     "The status(%d) is invalid: NO matching Context IDs\n",
+                     "%s: The status(%d) is invalid: NO matching Context IDs\n",
+                     __func__,
                      resp->status);
         else if (resp->status == GET_LOG_INFO_STATUS_RESP_DATA_OVERFLOW)
             dlt_vlog(LOG_WARNING,
-                     "The status(%d) is invalid: Response data over flow\n",
+                     "%s: The status(%d) is invalid: Response data over flow\n",
+                     __func__,
                      resp->status);
         else
             dlt_vlog(LOG_WARNING,
-                     "The status(%d) is invalid\n",
+                     "%s: The status(%d) is invalid\n",
+                     __func__,
                      resp->status);
 
         return DLT_RETURN_ERROR;
@@ -1111,7 +1175,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
             (resp->log_info_type.count_app_ids, sizeof(AppIDsType));
 
     if (resp->log_info_type.app_ids == NULL) {
-        dlt_vlog(LOG_ERR, "calloc failed for app_ids\n");
+        dlt_vlog(LOG_ERR, "%s: calloc failed for app_ids\n", __func__);
         dlt_client_free_calloc_failed_get_log_info(resp, 0);
         return DLT_RETURN_ERROR;
     }
@@ -1130,7 +1194,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
 
         if (app->context_id_info == NULL) {
             dlt_vlog(LOG_ERR,
-                     "calloc failed for context_id_info\n");
+                     "%s: calloc failed for context_id_info\n", __func__);
             dlt_client_free_calloc_failed_get_log_info(resp, i);
             return DLT_RETURN_ERROR;
         }
@@ -1161,7 +1225,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                         ((size_t) (con->len_context_description + 1), sizeof(char));
 
                 if (con->context_description == 0) {
-                    dlt_log(LOG_ERR, "calloc failed for context description\n");
+                    dlt_vlog(LOG_ERR, "%s: calloc failed for context description\n", __func__);
                     dlt_client_free_calloc_failed_get_log_info(resp, i);
                     return DLT_RETURN_ERROR;
                 }
@@ -1181,7 +1245,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                     ((size_t) (app->len_app_description + 1), sizeof(char));
 
             if (app->app_description == 0) {
-                dlt_log(LOG_ERR, "calloc failed for application description\n");
+                dlt_vlog(LOG_ERR, "%s: calloc failed for application description\n", __func__);
                 dlt_client_free_calloc_failed_get_log_info(resp, i);
                 return DLT_RETURN_ERROR;
             }

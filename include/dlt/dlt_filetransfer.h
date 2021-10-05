@@ -52,6 +52,8 @@
 #define DLT_FILETRANSFER_ERROR_INFO_ABOUT -700
 /* ! Error code for dlt_user_log_file_packagesCount */
 #define DLT_FILETRANSFER_ERROR_PACKAGE_COUNT -800
+/* ! Error code for failed get serial number */
+#define DLT_FILETRANSFER_FILE_SERIAL_NUMBER -900
 
 
 /* !Transfer the complete file as several dlt logs. */

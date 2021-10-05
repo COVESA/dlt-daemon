@@ -89,6 +89,10 @@
 
 static int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, char *str, int verbose);
 
+static int dlt_daemon_check_numeric_setting(char *token,
+                                            char *value,
+                                            unsigned long *data);
+
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
 #endif
@@ -97,6 +101,9 @@ static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] 
 int g_exit = 0;
 
 int g_signo = 0;
+
+/* used for value from conf file */
+static int value_length = 1024;
 
 static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
     [DLT_TIMER_PACKET] = DLT_CONNECTION_ONE_S_TIMER,
@@ -318,7 +325,6 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 int option_file_parser(DltDaemonLocal *daemon_local)
 {
     FILE *pFile;
-    int value_length = 1024;
     char line[value_length - 1];
     char token[value_length];
     char value[value_length];
@@ -531,19 +537,27 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "RingbufferMinSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferMinSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferMinSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "RingbufferMaxSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferMaxSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferMaxSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "RingbufferStepSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->RingbufferStepSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->RingbufferStepSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "DaemonFIFOSize") == 0)
                     {
-                        sscanf(value, "%lu", &(daemon_local->daemonFifoSize));
+                        if (dlt_daemon_check_numeric_setting(token,
+                                value, &(daemon_local->daemonFifoSize)) < 0)
+                            return -1;
                     }
                     else if (strcmp(token, "SharedMemorySize") == 0)
                     {
@@ -956,6 +970,12 @@ int main(int argc, char *argv[])
         dlt_log(LOG_ERR, "Could not load runtime config\n");
         return -1;
     }
+ 
+    /*
+     * Load dlt-runtime.cfg if available.
+     * This must be loaded before offline setup
+     */
+    dlt_daemon_configuration_load(&daemon, daemon.runtime_configuration, daemon_local.flags.vflag);
 
     /* --- Daemon init phase 2 begin --- */
     if (dlt_daemon_local_init_p2(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
@@ -964,12 +984,6 @@ int main(int argc, char *argv[])
     }
 
     /* --- Daemon init phase 2 end --- */
-
-    /*
-     * Load dlt-runtime.cfg if available.
-     * This must be loaded before offline setup
-     */
-    dlt_daemon_configuration_load(&daemon, daemon.runtime_configuration, daemon_local.flags.vflag);
 
     if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
@@ -1136,6 +1150,9 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP, dlt_daemon_signal_handler);  /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT, dlt_daemon_signal_handler);
+#ifdef __QNX__
+    signal(SIGUSR1, dlt_daemon_signal_handler); /* for timer threads */
+#endif
 
     return DLT_RETURN_OK;
 }
@@ -1425,7 +1442,6 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
 {
     int fd = -1;
     int mask = 0;
-    DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1433,6 +1449,8 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         dlt_vlog(LOG_ERR, "%s: Invalid function parameters\n", __func__);
         return -1;
     }
+
+    DltBindAddress_t *head = daemon_local->flags.ipNodes;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     /* create and open socket to receive incoming connections from user application
@@ -1691,6 +1709,8 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
 void dlt_daemon_exit_trigger()
 {
+    /* stop event loop */
+    g_exit = -1;
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     char tmp[DLT_PATH_MAX] = { 0 };
@@ -1709,8 +1729,6 @@ void dlt_daemon_exit_trigger()
     dlt_daemon_cleanup_timers();
 #endif
 
-    /* stop event loop */
-    g_exit = -1;
 }
 
 void dlt_daemon_signal_handler(int sig)
@@ -1718,22 +1736,22 @@ void dlt_daemon_signal_handler(int sig)
     g_signo = sig;
 
     switch (sig) {
-    case SIGHUP:
-    case SIGTERM:
-    case SIGINT:
-    case SIGQUIT:
-    {
-        /* finalize the server */
-        dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
-                 strsignal(sig));
-        dlt_daemon_exit_trigger();
-        break;
-    }
-    default:
-    {
-        /* This case should never happen! */
-        break;
-    }
+        case SIGHUP:
+        case SIGTERM:
+        case SIGINT:
+        case SIGQUIT:
+        {
+            /* finalize the server */
+            dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
+                     strsignal(sig));
+            dlt_daemon_exit_trigger();
+            break;
+        }
+        default:
+        {
+            /* This case should never happen! */
+            break;
+        }
     } /* switch */
 
 } /* dlt_daemon_signal_handler() */
@@ -1906,6 +1924,22 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     free(msg.databuffer);
 
+    return 0;
+}
+
+int dlt_daemon_check_numeric_setting(char *token,
+                                    char *value,
+                                    unsigned long *data)
+{
+    char value_check[value_length];
+    value_check[0] = 0;
+    sscanf(value, "%lu%s", data, value_check);
+    if (value_check[0] || !isdigit(value[0])) {
+        fprintf(stderr, "Invalid input [%s] detected in option %s\n",
+                value,
+                token);
+        return -1;
+    }
     return 0;
 }
 
@@ -3298,21 +3332,20 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 #ifdef __QNX__
 static void *timer_thread(void *data)
 {
-    sigset_t set;
-    sigset_t pset;
     int pexit = 0;
-
-    /*
-     * In timer thread, it is only expecting to receive SIGUSR1
-     */
-    sigemptyset(&set);
-    sigaddset(&set, SIGUSR1);
-    sigprocmask(SIG_BLOCK, &set, NULL);
+    unsigned int sleep_ret = 0;
 
     DltDaemonPeriodicData* timer_thread_data = (DltDaemonPeriodicData*) data;
 
     /* Timer will start in starts_in sec*/
-    sleep(timer_thread_data->starts_in);
+    if ((sleep_ret = sleep(timer_thread_data->starts_in))) {
+        dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for starting!"
+                "Stop thread of timer [%d]\n",
+                sleep_ret, timer_thread_data->timer_id);
+         close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
+         return NULL;
+    }
+
     while (1) {
         if (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1)) {
             dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
@@ -3320,22 +3353,21 @@ static void *timer_thread(void *data)
             pexit = 1;
         }
 
-        if (sigpending(&pset)) {
-            dlt_log(LOG_ERR, "sigpending error!\n");
-            pexit = 1;
-        }
-
-        if (sigismember(&pset, SIGUSR1)) {
-            dlt_log(LOG_NOTICE, "Received SIGUSR1! Stop thread\n");
-            pexit = 1;
-        }
-
-        if (pexit) {
+        if (pexit || g_exit) {
+            dlt_vlog(LOG_NOTICE, "Received signal!"
+                    "Stop thread of timer [%d]\n",
+                    timer_thread_data->timer_id);
             close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
             return NULL;
         }
 
-        sleep(timer_thread_data->period_sec);
+        if ((sleep_ret = sleep(timer_thread_data->period_sec))) {
+            dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for interval!"
+                    "Stop thread of timer [%d]\n",
+                    sleep_ret, timer_thread_data->timer_id);
+             close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
+             return NULL;
+        }
     }
 }
 #endif

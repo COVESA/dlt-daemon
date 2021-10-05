@@ -472,10 +472,7 @@ int main(int argc, char *argv[])
 
                     if (0 > bytes_written) {
                         printf("in main: writev(ohandle, iov, 2); returned an error!");
-
-                        if (ovalue)
-                            close(ohandle);
-
+                        close(ohandle);
                         dlt_file_free(&file, vflag);
                         return -1;
                     }
