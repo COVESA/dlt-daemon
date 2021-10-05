@@ -1028,7 +1028,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
     if (verbose)
         dlt_vlog(LOG_DEBUG,
-                 "Allocate %d bytes for response msg databuffer\n",
+                 "Allocate %u bytes for response msg databuffer\n",
                  resp.datasize);
 
     /* Allocate buffer for response message */
@@ -2587,7 +2587,7 @@ void dlt_daemon_control_service_logstorage(int sock,
     /* Check for cache synchronization request from log storage ctrl app */
     else if (req->connection_type == DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES)
     {
-        int ret = 0;
+        ret = 0;
 
         if (device_index == -1) { /* sync all Logstorage devices */
 

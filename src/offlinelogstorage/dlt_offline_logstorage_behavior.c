@@ -491,7 +491,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         strcat(absolute_file_path, config->working_file_name);
 
         dlt_vlog(LOG_DEBUG,
-                 "%s: Number of log files-newest file-wrap_id [%d]-[%s]-[%d]\n",
+                 "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
                  __func__, num_log_files, config->working_file_name,
                  config->wrap_id);
 
@@ -542,14 +542,14 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 remove(absolute_file_path);
                 num_log_files -= 1;
                 dlt_vlog(LOG_DEBUG,
-                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d)\n",
+                         "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
                          __func__, absolute_file_path, num_log_files, config->num_files);
             }
 
             config->log = fopen(absolute_file_path, "a+");
 
             dlt_vlog(LOG_DEBUG,
-                     "%s: Filename and Index after updating [%s]-[%d]\n",
+                     "%s: Filename and Index after updating [%s]-[%u]\n",
                      __func__, file_name, idx);
 
             /* Add file to file list */
@@ -577,7 +577,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 strcat(absolute_file_path, storage_path);
                 strcat(absolute_file_path, (*head)->name);
                 dlt_vlog(LOG_DEBUG,
-                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d)\n",
+                         "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
                          __func__, absolute_file_path, num_log_files,
                          config->num_files);
                 remove(absolute_file_path);

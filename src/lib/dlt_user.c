@@ -783,7 +783,7 @@ DltReturnValue dlt_init_common(void)
         else {
             dlt_user.log_buf_len = (uint16_t) buffer_max_configured;
             dlt_vlog(LOG_INFO,
-                     "Configured buffer size to [%d bytes]\n",
+                     "Configured buffer size to [%u bytes]\n",
                      buffer_max_configured);
         }
     }
@@ -1001,7 +1001,7 @@ DltReturnValue dlt_free(void)
                      * If read fails, time to close the socket then.
                      */
                     dlt_vlog(LOG_DEBUG, "[%s] polling returns [%d] with revent [0x%x]."
-                            "There are something to read\n", __func__, ret, nfd[0].revents);
+                            "There are something to read\n", __func__, ret, (unsigned int)nfd[0].revents);
 
                     bytes_read = read(dlt_user.dlt_log_handle, dlt_user.resend_buffer, dlt_user.log_buf_len);
                     prev_errno = errno;
@@ -1010,7 +1010,7 @@ DltReturnValue dlt_free(void)
                         dlt_vlog(LOG_WARNING, "[%s] Failed to read with error [%s]\n",
                                 __func__, strerror(prev_errno));
 
-                        if ((prev_errno == EAGAIN) || (prev_errno == EWOULDBLOCK))
+                        if ((prev_errno == EAGAIN) || (EWOULDBLOCK != EAGAIN && prev_errno == EWOULDBLOCK))
                             continue;
                         else
                             break;
@@ -1018,7 +1018,7 @@ DltReturnValue dlt_free(void)
                     if (bytes_read >= 0) {
                         if (!bytes_read)
                             break;
-                        dlt_vlog(LOG_NOTICE, "[%s] data is still readable... [%d] bytes read\n",
+                        dlt_vlog(LOG_NOTICE, "[%s] data is still readable... [%ld] bytes read\n",
                                 __func__, bytes_read);
                     }
                 }
@@ -1794,7 +1794,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
 
     /* Have to cast type to signed type because some compilers assume that DltFormatType is unsigned and issue a warning */
     if (((int16_t)type < DLT_FORMAT_DEFAULT) || (type >= DLT_FORMAT_MAX)) {
-        dlt_vlog(LOG_ERR, "Format type %d is outside valid range", type);
+        dlt_vlog(LOG_ERR, "Format type %u is outside valid range", type);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -2725,7 +2725,7 @@ DltReturnValue dlt_user_trace_network_segmented_start(uint32_t *id,
         return DLT_RETURN_WRONG_PARAMETER;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
-        dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
+        dlt_vlog(LOG_ERR, "Network trace type %u is outside valid range", nw_trace_type);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -2817,7 +2817,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
     struct timespec ts;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
-        dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
+        dlt_vlog(LOG_ERR, "Network trace type %u is outside valid range", nw_trace_type);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -2895,7 +2895,7 @@ DltReturnValue dlt_user_trace_network_segmented_end(uint32_t id, DltContext *han
     int ret = DLT_RETURN_ERROR;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
-        dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
+        dlt_vlog(LOG_ERR, "Network trace type %u is outside valid range", nw_trace_type);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -3162,7 +3162,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
         return DLT_RETURN_WRONG_PARAMETER;
 
     if ((nw_trace_type < DLT_NW_TRACE_IPC) || (nw_trace_type >= DLT_NW_TRACE_MAX)) {
-        dlt_vlog(LOG_ERR, "Network trace type %d is outside valid range", nw_trace_type);
+        dlt_vlog(LOG_ERR, "Network trace type %u is outside valid range", nw_trace_type);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 

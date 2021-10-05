@@ -166,17 +166,17 @@ static int analyze_response(char *data, void *payload, int len)
 
     snprintf(resp_ok,
              MAX_RESPONSE_LENGTH,
-             "service(%u), ok",
+             "service(%d), ok",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
     snprintf(resp_warning,
              MAX_RESPONSE_LENGTH,
-             "service(%u), warning",
+             "service(%d), warning",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
     snprintf(resp_perm_denied,
              MAX_RESPONSE_LENGTH,
-             "service(%u), perm_denied",
+             "service(%d), perm_denied",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
     if (strncmp(data, resp_ok, strlen(resp_ok)) == 0)

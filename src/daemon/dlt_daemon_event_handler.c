@@ -246,7 +246,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         callback = dlt_connection_get_callback(con);
 
         if (!callback) {
-            dlt_vlog(LOG_CRIT, "Unable to find function for %d handle type.\n",
+            dlt_vlog(LOG_CRIT, "Unable to find function for %u handle type.\n",
                      type);
             return -1;
         }
@@ -256,7 +256,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                      daemon_local,
                      con->receiver,
                      daemon_local->flags.vflag) == -1) {
-            dlt_vlog(LOG_CRIT, "Processing from %d handle type failed!\n",
+            dlt_vlog(LOG_CRIT, "Processing from %u handle type failed!\n",
                      type);
             return -1;
         }
@@ -402,7 +402,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case ACTIVE:
 
         if (activation_type == DEACTIVATE) {
-            dlt_vlog(LOG_INFO, "Deactivate connection type: %d\n", con->type);
+            dlt_vlog(LOG_INFO, "Deactivate connection type: %u\n", con->type);
 
             dlt_event_handler_disable_fd(evhdl, con->receiver->fd);
 
@@ -416,7 +416,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
     case INACTIVE:
 
         if (activation_type == ACTIVATE) {
-            dlt_vlog(LOG_INFO, "Activate connection type: %d\n", con->type);
+            dlt_vlog(LOG_INFO, "Activate connection type: %u\n", con->type);
 
             dlt_event_handler_enable_fd(evhdl,
                                         con->receiver->fd,
@@ -427,7 +427,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
 
         break;
     default:
-        dlt_vlog(LOG_ERR, "Unknown connection status: %d\n", con->status);
+        dlt_vlog(LOG_ERR, "Unknown connection status: %u\n", con->status);
         return -1;
     }
 
