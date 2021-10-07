@@ -192,8 +192,8 @@ int register_timer_fd(struct pollfd *pollfd, int fdcnt)
 /* Routine for executing LogProcess and LogFile, when timer expires */
 void timer_fd_handler(int fd, DltSystemConfiguration *config)
 {
-    long int timersElapsed = 0;
-    int r = read(fd, &timersElapsed, 8);    // only needed to reset fd event
+    uint64_t timersElapsed = 0ULL;
+    int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if (r < 0) 
         DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while reading timer fd: "), 
             DLT_STRING(strerror(r)));
