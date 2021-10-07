@@ -166,6 +166,7 @@ typedef struct {
     /* Variable number of processes */
     int Count;
     char *Name[DLT_SYSTEM_LOG_PROCESSES_MAX];
+    unsigned int Name_sz[DLT_SYSTEM_LOG_PROCESSES_MAX];
     char *Filename[DLT_SYSTEM_LOG_PROCESSES_MAX];
     int Mode[DLT_SYSTEM_LOG_PROCESSES_MAX];
     int TimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];

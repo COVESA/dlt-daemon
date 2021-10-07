@@ -181,6 +181,7 @@ void init_configuration(DltSystemConfiguration *config)
 
     for (i = 0; i < DLT_SYSTEM_LOG_PROCESSES_MAX; i++) {
         config->LogProcesses.Name[i] = NULL;
+        config->LogProcesses.Name_sz[i] = 0U;
         config->LogProcesses.Filename[i] = NULL;
         config->LogProcesses.Mode[i] = 0;
         config->LogProcesses.TimeDelay[i] = 0;
@@ -383,6 +384,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "LogProcessName") == 0)
             {
+                config->LogProcesses.Name_sz[config->LogProcesses.Count] = strlen(value);
                 config->LogProcesses.Name[config->LogProcesses.Count] = malloc(strlen(value) + 1);
                 MALLOC_ASSERT(config->LogProcesses.Name[config->LogProcesses.Count]);
                 strcpy(config->LogProcesses.Name[config->LogProcesses.Count], value); /* strcpy unritical here, because size matches exactly the size to be copied */

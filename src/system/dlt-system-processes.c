@@ -90,8 +90,8 @@ void send_process(LogProcessOptions const *popts, int n)
                     fclose(pFile);
                 }
 
-                if ((strcmp((*popts).Name[n], "*") == 0) ||
-                    (strcmp(buffer, (*popts).Name[n]) == 0)) {
+                if (('*' == (*popts).Name[n][0]) ||
+                    (strncmp(buffer, (*popts).Name[n], (*popts).Name_sz[n]) == 0)) {
                     found = 1;
                     snprintf(filename, PATH_MAX, "/proc/%s/%s", dp->d_name, (*popts).Filename[n]);
                     pFile = fopen(filename, "r");
