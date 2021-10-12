@@ -4,4 +4,7 @@ service dlt-daemon /vendor/bin/dlt-daemon
     group root
     socket dlt stream 666 root root
     socket dlt-ctrl.sock stream 660 root root
-    disabled
+    <dlt_android_auto_start>
+
+on post-fs-data
+    mkdir /data/vendor/dlt 0775 root root
