@@ -91,7 +91,7 @@
 #endif /* DLT_FATAL_LOG_RESET_ENABLE */
 
 static DltUser dlt_user;
-static bool dlt_user_initialised = false;
+static atomic_bool dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
 static bool dlt_user_file_reach_max = false;
 
@@ -594,7 +594,7 @@ DltReturnValue dlt_set_filesize_max(unsigned int filesize)
     {
         dlt_vlog(LOG_ERR, "%s: Library is not configured to log to file\n",
                  __func__);
-        return DLT_LOG_ERROR;
+        return DLT_RETURN_ERROR;
     }
 
     if (filesize == 0) {
