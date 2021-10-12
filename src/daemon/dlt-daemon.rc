@@ -5,3 +5,6 @@ service dlt-daemon /vendor/bin/dlt-daemon
     socket dlt stream 666 root root
     socket dlt-ctrl.sock stream 660 root root
     disabled
+
+on post-fs-data
+   mkdir /data/vendor/dlt 0775 root root
