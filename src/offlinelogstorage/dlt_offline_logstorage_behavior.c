@@ -1289,10 +1289,15 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
              sizeof(DltLogStorageCacheFooter)) >
              g_logstorage_cache_max)
         {
-            dlt_log(LOG_ERR, "Max size of Logstorage Cache already used.\n");
+            dlt_vlog(LOG_ERR,
+                     "%s: Max size of Logstorage Cache already used. (ApId=[%s] CtId=[%s]) \n",
+                     __func__, config->apids, config->ctids);
             return -1;
         } else {
-            dlt_vlog(LOG_DEBUG, "dlt_logstorage_prepare_msg_cache: Logstorage total: %d , requested cache size: %d, max: %d\n", g_logstorage_cache_size, cache_size, g_logstorage_cache_max);
+            dlt_vlog(LOG_DEBUG,
+                     "%s: Logstorage total: %d , requested cache size: %d, max: %d (ApId=[%s] CtId=[%s])\n",
+                     __func__, g_logstorage_cache_size, cache_size,
+                     g_logstorage_cache_max, config->apids, config->ctids);
         }
 
         /* create cache */
@@ -1306,7 +1311,7 @@ int dlt_logstorage_prepare_msg_cache(DltLogStorageFilterConfig *config,
         else
         {
             /* update current used cache size */
-            g_logstorage_cache_size = cache_size + sizeof(DltLogStorageCacheFooter);
+            g_logstorage_cache_size += cache_size + sizeof(DltLogStorageCacheFooter);
         }
     }
 
