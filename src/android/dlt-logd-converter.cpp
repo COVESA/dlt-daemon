@@ -229,11 +229,8 @@ int main(int argc, char *argv[])
     android_logger_list_free(logger_list);
 
     DLT_UNREGISTER_CONTEXT(dlt_ctx_krnl);
-    DLT_UNREGISTER_CONTEXT(dlt_ctx_secu);
-    DLT_UNREGISTER_CONTEXT(dlt_ctx_stat);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_crsh);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_syst);
-    DLT_UNREGISTER_CONTEXT(dlt_ctx_evnt);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_rdio);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_main);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_self);
