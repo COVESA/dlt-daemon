@@ -837,12 +837,17 @@ static int dlt_mkdir_recursive(const char *dir)
     for (p = tmp + 1; ((*p) && (ret == 0)) || ((ret == -1 && errno == EEXIST) && (p != end)); p++)
         if (*p == '/') {
             *p = 0;
-            ret = mkdir(tmp,
-            #ifdef DLT_DAEMON_USE_FIFO_IPC
-                        S_IRWXU);
-            #else
-                        S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
-            #endif
+
+            struct stat s;
+            if (stat(tmp, &s) == 0 && !S_ISDIR(s.st_mode)) {
+                ret = mkdir(tmp,
+                #ifdef DLT_DAEMON_USE_FIFO_IPC
+                                S_IRWXU);
+                #else
+                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
+                #endif
+            }
+
             *p = '/';
         }
 
