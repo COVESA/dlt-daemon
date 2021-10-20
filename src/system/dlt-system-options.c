@@ -81,7 +81,7 @@ void usage(char *prog_name)
  */
 void init_cli_options(DltSystemCliOptions *options)
 {
-    options->ConfigurationFileName = DEFAULT_CONF_FILE;
+    options->ConfigurationFileName = strdup(DEFAULT_CONF_FILE);
     options->Daemonize = 0;
 }
 
