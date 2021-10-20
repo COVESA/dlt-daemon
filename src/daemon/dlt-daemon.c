@@ -33,7 +33,7 @@
 #include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <unistd.h>     /* for close() and access */
 #include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
@@ -837,12 +837,16 @@ static int dlt_mkdir_recursive(const char *dir)
     for (p = tmp + 1; ((*p) && (ret == 0)) || ((ret == -1 && errno == EEXIST) && (p != end)); p++)
         if (*p == '/') {
             *p = 0;
-            ret = mkdir(tmp,
-            #ifdef DLT_DAEMON_USE_FIFO_IPC
-                        S_IRWXU);
-            #else
-                        S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
-            #endif
+
+            if (access(tmp, F_OK) != 0 && errno == ENOENT) {
+                ret = mkdir(tmp,
+                #ifdef DLT_DAEMON_USE_FIFO_IPC
+                                S_IRWXU);
+                #else
+                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
+                #endif
+            }
+
             *p = '/';
         }
 
