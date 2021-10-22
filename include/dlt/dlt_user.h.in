@@ -99,6 +99,14 @@
 #   include "dlt_user_macros.h"
 #endif
 
+#   ifdef DLT_LIB_USE_QNX_MESSAGE_IPC
+#      ifdef __QNX__
+#          include <sys/iofunc.h>
+#          include <sys/dispatch.h>
+#      else
+#          error DLT_IPC="QNX_MESSAGE" can only be built for QNX
+#      endif /* __QNX__ */
+#   endif /* DLT_LIB_USE_QNX_MESSAGE_IPC */
 #   ifdef __cplusplus
 extern "C" {
 #   endif
@@ -260,9 +268,12 @@ typedef struct
     int corrupt_message_size;
     int16_t corrupt_message_size_size;
 #   endif
-#   if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
+#   if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC || DLT_LIB_USE_QNX_MESSAGE_IPC
     DltUserConnectionState connection_state;
 #   endif
+#ifdef DLT_LIB_USE_QNX_MESSAGE_IPC
+    name_attach_t *attach;
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
     uint16_t log_buf_len;        /**< length of message buffer, by default: DLT_USER_BUF_MAX_SIZE */
 } DltUser;
 

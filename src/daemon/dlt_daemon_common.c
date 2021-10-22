@@ -85,6 +85,19 @@
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_serial.h"
 
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+    struct extattr {
+        iofunc_attr_t    attr;
+        DltReceiver      *receiver;
+    };
+    #define IOFUNC_ATTR_T       struct extattr
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
+#ifdef __QNX__
+#   include <sys/neutrino.h>
+#   include <sys/iofunc.h>
+#   include <sys/dispatch.h>
+#endif /* __QNX__ */
+
 char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
 sem_t dlt_daemon_mutex;
 
@@ -527,6 +540,16 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
             dlt_user_handle = fd;
             owns_user_handle = false;
         }
+#elif defined DLT_DAEMON_USE_QNX_MESSAGE_IPC
+        char filename[DLT_PATH_MAX] = {0};
+        snprintf(filename,
+                 DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                 "dltapp%d",
+                 pid);
+        dlt_user_handle = name_open( filename, 0 );
+        if (dlt_user_handle < 0) {
+            dlt_vlog("name_open() failed to %s, errno=%d (%s)!\n", filename, errno, strerror(errno));
+        }
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         if (dlt_user_handle < DLT_FD_MINIMUM) {
@@ -608,6 +631,11 @@ int dlt_daemon_application_del(DltDaemon *daemon,
         memset(&(user_list->applications[user_list->num_applications - 1]),
                0,
                sizeof(DltDaemonApplication));
+
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+        name_close( application->user_handle );
+        application->user_handle = -1;
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
 
         user_list->num_applications--;
     }
@@ -1379,9 +1407,15 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
 
     /* log to FIFO */
     errno = 0;
+#ifndef DLT_DAEMON_USE_QNX_MESSAGE_IPC
     ret = dlt_user_log_out2(context->user_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(usercontext), sizeof(DltUserControlMsgLogLevel));
+#else
+    ret = dlt_user_log_out2_qnx_msg(context->user_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgLogLevel));
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
 
     if (ret < DLT_RETURN_OK) {
         dlt_vlog(LOG_ERR, "Failed to send data to application in %s: %s",
@@ -1415,9 +1449,15 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
     logstate.log_state = daemon->connectionState;
 
     /* log to FIFO */
+#ifndef DLT_DAEMON_USE_QNX_MESSAGE_IPC
     ret = dlt_user_log_out2(app->user_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(logstate), sizeof(DltUserControlMsgLogState));
+#else
+    ret = dlt_user_log_out2_qnx_msg(app->user_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(logstate), sizeof(DltUserControlMsgLogState));
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
 
     if (ret < DLT_RETURN_OK) {
         if (errno == EPIPE)
@@ -1637,3 +1677,132 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
         break;
     }
 }
+
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+static int io_write(resmgr_context_t *ctp, io_write_t *msg, iofunc_ocb_t *ocb)
+{
+    struct _xtype_offset *xoffset;
+    IOFUNC_ATTR_T        *attr = ocb->attr;
+
+    if (attr->receiver == NULL) {
+        dlt_log(LOG_WARNING,
+                "recource manager receiver was not inited\n");
+        return -1;
+    }
+
+    int status = iofunc_write_verify(ctp, msg, ocb, NULL);
+    if (status != EOK){
+        return (status);
+    }
+
+    // Check and Process Override
+    uint32_t xtype = msg->i.xtype & _IO_XTYPE_MASK;
+
+    if (xtype == _IO_XTYPE_OFFSET) {
+        xoffset = (struct _xtype_offset*)(&msg->i + 1);
+        attr->receiver->offset = sizeof(msg->i) + sizeof(*xoffset);
+    } else if (xtype == _IO_XTYPE_NONE) {
+        attr->receiver->offset = sizeof(msg->i);
+    } else {
+        return (ENOSYS);
+    }
+
+    /*
+    *  get the data from the sender's message buffer,
+    *  skipping all possible header information
+    */
+    int32_t res = dlt_receiver_receive(attr->receiver);
+    if (res <= 0) {
+        dlt_log(LOG_WARNING,
+                "dlt_receiver_receive() for messages from resource manager interface "
+                "failed!\n");
+        return -1;
+    }
+
+    // Set how many bytes the "write" client function should return
+    _IO_SET_WRITE_NBYTES(ctp, attr->receiver->nbytes);
+
+    // If data is written, update POSIX data structure and OCB offset
+    if (attr->receiver->nbytes) {
+        attr->attr.flags |= IOFUNC_ATTR_MTIME | IOFUNC_ATTR_DIRTY_TIME;
+        if (xtype == _IO_XTYPE_NONE) {
+            ocb->offset += attr->receiver->nbytes;
+        }
+    }
+
+    dlt_daemon_call_process_user_func(attr->receiver);
+
+    return (_RESMGR_NPARTS (0));
+}
+
+DltReturnValue dlt_resmgr_create(dispatch_t **dpp, dispatch_context_t **ctp, DltReceiver **receiver)
+{
+    /* declare variables we'll be using */
+    static resmgr_attr_t        resmgr_attr;
+    DltReceiver *ret = NULL;
+
+    static resmgr_connect_funcs_t    connect_funcs;
+    static resmgr_io_funcs_t         io_funcs;
+    static IOFUNC_ATTR_T             attr = {.receiver = NULL};
+
+    /* initialize dispatch interface */
+    *dpp = dispatch_create();
+    if (*dpp == NULL) {
+        fprintf(stderr, "Unable to allocate dispatch handle for recourse manager.\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    /* getting the receiver structure for messaging. */
+    ret = calloc(1, sizeof(DltReceiver));
+    if (ret) {
+        dlt_receiver_init_global_buffer(ret, -1, DLT_RECEIVE_MSG, &app_recv_buffer);
+        if (*receiver) {
+            free(*receiver);
+        }
+        *receiver = ret;
+        attr.receiver = ret;
+    }
+
+    /* initialize resource manager attributes */
+    memset(&resmgr_attr, 0, sizeof resmgr_attr);
+    resmgr_attr.nparts_max = 1;
+    resmgr_attr.msg_max_size = 2048;
+
+    /* initialize functions for handling messages */
+    iofunc_func_init(_RESMGR_CONNECT_NFUNCS, &connect_funcs,
+                     _RESMGR_IO_NFUNCS, &io_funcs);
+    io_funcs.write = io_write;
+    io_funcs.write64 = io_write;
+
+    /* initialize attribute structure used by the device */
+    iofunc_attr_init(&attr, S_IFNAM | 0666, 0, 0);
+
+    /* attach our device name */
+    uint32_t id = resmgr_attach(
+                *dpp,           /* dispatch handle        */
+                &resmgr_attr,   /* resource manager attrs */
+                "/dev/dltlog",  /* device name            */
+                _FTYPE_ANY,     /* open type              */
+                0,              /* flags                  */
+                &connect_funcs, /* connect routines       */
+                &io_funcs,      /* I/O routines           */
+                &attr);         /* handle                 */
+
+    if(id == -1) {
+        fprintf(stderr, "Unable to attach name for recourse manager.\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    /* allocate a context structure */
+    *ctp = dispatch_context_alloc(*dpp);
+
+    return DLT_RETURN_OK;
+}
+
+void dlt_resmgr_free(DltReceiver *receiver)
+{
+    dlt_receiver_free_global_buffer(receiver);
+    free(receiver);
+    receiver = NULL;
+}
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */

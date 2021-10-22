@@ -75,6 +75,21 @@
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 
+#ifdef __QNX__
+#   include <stdio.h>
+#   include <stdlib.h>
+#   include <unistd.h>
+#   include <string.h>
+#   include <time.h>
+#   include <stdint.h>
+#   include <sys/neutrino.h>
+#   include <sys/iofunc.h>
+#   define RECV_BUFLEN 255
+#   define MSGSEND_TIMEOUT 100  // Timeout for MsgSend() by default
+    int timeoutMs = MSGSEND_TIMEOUT;
+    static DltReturnValue SendMessage(int fd, iov_t *iov, int iovcnt);
+#endif /* __QNX__ */
+
 DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype)
 {
     if (userheader == 0)
@@ -176,3 +191,97 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
 
     return DLT_RETURN_OK;
 }
+
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+DltReturnValue dlt_user_log_out2_qnx_msg(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2)
+{
+    if (handle < 0)
+        /* Invalid handle */
+        return DLT_RETURN_ERROR;
+
+    io_write_t whdr = {.i.type = 2, .i.nbytes = (len1 + len2)};
+    iov_t msg_iov[3];
+
+    // set up the IOV to point to both parts:
+    SETIOV (msg_iov + 0, &whdr, sizeof (whdr));
+    SETIOV (msg_iov + 1, ptr1, len1);
+    SETIOV (msg_iov + 2, ptr2, len2);
+
+    return SendMessage(handle, msg_iov, 3);
+}
+
+DltReturnValue dlt_user_log_out3_qnx_msg(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3)
+{
+    if (handle < 0)
+        /* Invalid handle */
+        return DLT_RETURN_ERROR;
+
+    io_write_t whdr = {.i.type = 3, .i.nbytes = (len1 + len2 + len3)};
+    iov_t msg_iov[4];
+
+    // set up the IOV to point to both parts:
+    SETIOV (msg_iov + 0, &whdr, sizeof (whdr));
+    SETIOV (msg_iov + 1, ptr1, len1);
+    SETIOV (msg_iov + 2, ptr2, len2);
+    SETIOV (msg_iov + 3, ptr3, len3);
+
+    return SendMessage(handle, msg_iov, 4);
+}
+
+DltReturnValue dlt_attach_channel(name_attach_t **attach)
+{
+    DltReturnValue rc = DLT_RETURN_OK;
+    char filename[DLT_PATH_MAX];
+    char* env_test_unit = getenv("DLT_MESSAGING_SEND_TIMEOUT");
+
+    snprintf(filename, DLT_PATH_MAX,  "dltapp%d", getpid());
+    *attach = name_attach( NULL, filename, 0 );
+
+    if (*attach == NULL || (*attach)->chid == -1) {
+        fprintf(stderr, "server: ERROR: Couldn't create a channel errno %d (%s))\n", errno, strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+
+    // Set timeout
+    if (env_test_unit != NULL) {
+        timeoutMs = (uint32_t)strtol(env_test_unit, NULL, 10);
+    }
+
+    return rc;
+}
+
+static DltReturnValue SendMessage(int fd, iov_t *iov, int iovcnt)
+{
+    DltReturnValue rc = DLT_RETURN_ERROR;
+    iov_t recv_iov[1];
+    char recv_msg[RECV_BUFLEN];
+    int rc_MS = -1;
+
+    SETIOV (recv_iov, recv_msg, RECV_BUFLEN);
+
+    if (fd != -1) {
+        if (-1 != timeoutMs) {
+            struct sigevent event;
+            uint64_t timeout;
+
+            SIGEV_UNBLOCK_INIT(&event);
+            timeout = (uint64_t)timeoutMs * (uint64_t)(1000 * 1000);
+            (void)TimerTimeout(CLOCK_MONOTONIC, _NTO_TIMEOUT_SEND | _NTO_TIMEOUT_REPLY, &event, &timeout, NULL);
+        }
+
+        /* This function will block until the message is received.  Ensure that it
+        * is not a problem for the app to be blocked, or that the server always
+        * replies soon enough to avoid problems, or both. */
+        rc_MS = MsgSendv(fd, iov, iovcnt, recv_iov, 1);
+    }
+
+    if(rc_MS == -1) {
+        fprintf(stdout, "SendMessage: MsgSendv returned an , errno=%d (%s)!\n", errno, strerror(errno));
+        rc = DLT_RETURN_ERROR;
+    } else {
+        rc = DLT_RETURN_OK;
+    }
+
+    return rc;
+}
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */

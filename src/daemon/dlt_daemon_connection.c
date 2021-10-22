@@ -221,6 +221,9 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
     case DLT_CONNECTION_APP_MSG:
         ret = calloc(1, sizeof(DltReceiver));
 
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+        receiver_type = DLT_RECEIVE_MSG;
+#else
         receiver_type = DLT_RECEIVE_FD;
 
         if (fstat(fd, &statbuf) == 0) {
@@ -230,6 +233,7 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
             dlt_vlog(LOG_WARNING,
                      "Failed to determine receive type for DLT_CONNECTION_APP_MSG, using \"FD\"\n");
         }
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
 
         if (ret)
             dlt_receiver_init_global_buffer(ret, fd, receiver_type, &app_recv_buffer);

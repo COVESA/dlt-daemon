@@ -73,6 +73,15 @@
 
 #include <sys/types.h>
 
+#ifdef DLT_LIB_USE_QNX_MESSAGE_IPC
+#    ifdef __QNX__
+#        include <sys/iofunc.h>
+#        include <sys/dispatch.h>
+#    else
+#        error DLT_IPC="QNX_MESSAGE" can only be built for QNX
+#    endif /* __QNX__ */
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
+
 /**
  * This is the header of each message to be exchanged between application and daemon.
  */
@@ -223,5 +232,45 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
+
+#ifdef DLT_DAEMON_USE_QNX_MESSAGE_IPC
+/** @brief Create QNX messaging channel for receiving new log levels from dlt-daemon.
+ *
+ * This function registers a name in the pathname space and create a channel
+ * @param attach - pointer to a name_attach_t structure that looks like this:
+ * typedef struct _name_attach {
+ *     dispatch_t* dpp;
+ *     int         chid;
+ *     int         mntid;
+ *     int         zero[2];
+ * } name_attach_t;
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_attach_channel(name_attach_t **attach);
+
+/**
+ * Atomic write to file descriptor, using vector of 2 elements
+ * @param handle file descriptor
+ * @param ptr1 generic pointer to first segment of data to be written
+ * @param len1 length of first segment of data to be written
+ * @param ptr2 generic pointer to second segment of data to be written
+ * @param len2 length of second segment of data to be written
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_out2_qnx_msg(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
+
+/**
+ * Atomic write to file descriptor, using vector of 3 elements
+ * @param handle file descriptor
+ * @param ptr1 generic pointer to first segment of data to be written
+ * @param len1 length of first segment of data to be written
+ * @param ptr2 generic pointer to second segment of data to be written
+ * @param len2 length of second segment of data to be written
+ * @param ptr3 generic pointer to third segment of data to be written
+ * @param len3 length of third segment of data to be written
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_out3_qnx_msg(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
+#endif /* DLT_DAEMON_USE_QNX_MESSAGE_IPC */
 
 #endif /* DLT_USER_SHARED_H */

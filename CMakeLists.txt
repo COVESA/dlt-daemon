@@ -67,7 +67,7 @@ option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"            
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
 option(WITH_DLT_QNX_SYSTEM    "Set to ON to build QNX system binary dlt-qnx-system"                              OFF)
 
-set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
+set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO,QNX_MESSAGE")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
 
 option(WITH_DLT_PKGCONFIG     "Set to ON to generate pkgconfig .pc files"                                        ON)
@@ -121,7 +121,7 @@ include_directories(
 
 add_definitions(-D_GNU_SOURCE)
 
-if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO")
+if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO" AND NOT DLT_IPC STREQUAL "QNX_MESSAGE")
     message(FATAL_ERROR "${DLT_IPC} is not a valid value for DLT_IPC")
 endif()
 add_definitions(-DDLT_DAEMON_USE_${DLT_IPC}_IPC)
