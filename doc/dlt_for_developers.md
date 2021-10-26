@@ -10,6 +10,8 @@ Table of Contents
 5. [DLT API Usage](#DLT-API-Usage)
 6. [DLT injection messages](#DLT-Injection-Messages)
 7. [Log level changed callback](#Log-level-changed-callback)
+8. [Disable injection messages](#Disable-injection-messages)
+9. [Use DLT in library](#Use-DLT-in-library)
 
 ## DLT Example Application
 
@@ -989,6 +991,7 @@ context changed. The usage is similar to DLT\_REGISTER\_INJECTION\_CALLBACK.
 ```
 DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(CONTEXT, CALLBACK)
 ```
+
 ## Disable injection messages
 
 An environment variable named `DLT_DISABLE_INJECTION_MSG_AT_USER` could be used in case
@@ -1005,3 +1008,34 @@ To clear:
 ```
 unset DLT_DISABLE_INJECTION_MSG_AT_USER
 ```
+
+## Use DLT in library
+
+There are cases where a library wants to use DLT interface to output its log message.
+In such case, applications and contexts can be registered using following way.
+
+### Application registration
+
+The library can check if an application is already registered or not by
+`DLT_GET_APPID()` API. If returned application ID is not NULL, it can be considered
+that application was already registered previously. If it's NULL, then application
+can be registered.
+
+```Example
+// Check if an application is already registered in this process
+char appid[DLT_ID_SIZE];
+DLT_GET_APPID(&appid);
+if (appid[0] != '\0')
+{
+  printf("Application is already registered with AppID=[%s]\n", appid);
+}
+else
+{
+  DLT_REGISTER_APP("APP", "Application for library xxx");
+}
+```
+
+### Context registration
+
+The same context ID can be used among different applications, so context can be
+registered as usual.
