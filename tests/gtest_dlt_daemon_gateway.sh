@@ -41,6 +41,21 @@ getOSname()
 }
 
 ################################################################################
+# Function:    -getDltDaemonPath()
+#
+# Description  -Retrieves path to dlt-daemon
+#
+getDltDaemonPath()
+{
+    if [ -z "${DLT_UT_DAEMON_PATH}" ]; then
+        echo "WARNNG: env variable DLT_UT_DAEMON_PATH is not set"
+        DLT_DAEMON=`which dlt-daemon`
+    else
+        DLT_DAEMON="${DLT_UT_DAEMON_PATH}"
+    fi
+}
+
+################################################################################
 #
 # Function:    -cleanup()
 #
@@ -92,10 +107,11 @@ cleanup()
 
     cd $tmpPath
 
-    PIDOF dlt-daemon
+    BASE=`basename $DLT_DAEMON`
+    PIDOF $BASE
     if [ $? -eq '0' ]
     then
-        KILLALL dlt-daemon
+        KILLALL $BASE
         if [ $? -eq '1' ]
         then
             echo "Failed to kill daemons"
@@ -205,11 +221,12 @@ startDaemons()
 #
 checkDaemonStart()
 {
+    BASE=`basename $DLT_DAEMON`
     if [ "$OS" = "QNX" ]; then
-        slay -p dlt-daemon > /dev/null
+        slay -p $BASE > /dev/null
         total=$?
     else
-        total=`pgrep -c dlt-daemon`
+        total=`pgrep -c $BASE`
     fi
 
     if [ $total -ne '2' ]; then
@@ -233,6 +250,8 @@ executeTests()
 ########################################################################################
 
 getOSname
+
+getDltDaemonPath
 
 echo "Cleaning up dlt-daemon instances"
 cleanup
