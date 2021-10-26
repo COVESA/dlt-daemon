@@ -137,6 +137,9 @@ static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *
     if (param == NULL)
         return -1;
 
+    if (info->data_type == SLOG2_TYPE_ONLINE)
+        info->severity = SLOG2_INFO;
+
     DltLogLevelType loglevel;
     switch (info->severity)
     {
