@@ -94,16 +94,6 @@ extern "C" {
 #   define DLT_DAEMON_SEND_TO_ALL     -3/**< Constant value to identify the command "send to all" */
 #   define DLT_DAEMON_SEND_FORCE      -4/**< Constant value to identify the command "send force to all" */
 
-/* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
-
-#define DLT_DAEMON_SEM_LOCK() do{\
-    while ((sem_wait(&dlt_daemon_mutex) == -1) && (errno == EINTR)) \
-        continue;       /* Restart if interrupted */ \
-    } while(false)
-
-#define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
-extern sem_t dlt_daemon_mutex;
-
 /* UDPMulticart Default IP and Port */
 #   ifdef UDP_CONNECTION_SUPPORT
     #      define MULTICASTIPADDRESS "225.0.0.37"

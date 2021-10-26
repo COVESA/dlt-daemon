@@ -1490,12 +1490,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if (daemon_local->flags.sendMessageTime)
         daemon->timingpackets = 1;
 
-    /* Binary semaphore for thread */
-    if (sem_init(&dlt_daemon_mutex, 0, 1) == -1) {
-        dlt_log(LOG_ERR, "Could not initialize binary semaphore\n");
-        return -1;
-    }
-
     /* Get ECU version info from a file. If it fails, use dlt_version as fallback. */
     if (dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0) {
         daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
@@ -3457,6 +3451,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
              * or the headers are corrupted (error case). */
             dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
 
+        if (dlt_receiver_remove(rec, rec->bytesRcvd) != DLT_RETURN_OK) {
+            /* In certain rare scenarios where only a partial message has been received
+             * (Eg: kernel IPC buffer memory being full), we want to discard the message
+             * and not broadcast it forward to connected clients. Since the DLT library
+             * checks return value of the writev() call against the sent total message
+             * length, the partial message will be buffered and retransmitted again.
+             * This implicitly ensures that no message loss occurs.
+             */
+            dlt_log(LOG_WARNING, "failed to remove required bytes from receiver.\n");
+        }
+
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
@@ -3736,7 +3741,8 @@ static void *timer_thread(void *data)
     }
 
     while (1) {
-        if (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1)) {
+        if ((dlt_timer_pipes[timer_thread_data->timer_id][1] > 0) &&
+                (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1))) {
             dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
                     dlt_timer_names[timer_thread_data->timer_id]);
             pexit = 1;

@@ -151,12 +151,14 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     old_mask = umask(mask);
 
     if (bind(*sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        dlt_log(LOG_WARNING, "unix socket: bind() error");
+        dlt_vlog(LOG_WARNING, "%s: bind() error (%s)\n", __func__,
+                 strerror(errno));
         return -1;
     }
 
     if (listen(*sock, 1) == -1) {
-        dlt_log(LOG_WARNING, "unix socket: listen error");
+        dlt_vlog(LOG_WARNING, "%s: listen error (%s)\n", __func__,
+                 strerror(errno));
         return -1;
     }
 

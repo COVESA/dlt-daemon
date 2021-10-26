@@ -4,9 +4,9 @@ enable_testing()
 SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
 
-configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${PROJECT_BINARY_DIR}/tests COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 
 if("${GTEST_BOTH_LIBRARIES}" STREQUAL "")
     set(GTEST_LIBS gtest gtest_main)
@@ -45,7 +45,7 @@ set(TARGET_LIST gtest_dlt_common
 foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
     if(${target} STREQUAL "gtest_dlt_daemon_common")
-        set(target_SRCS ${target_SRCS} ../src/daemon/dlt_daemon_common.c)
+        set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     endif()
     add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} ${DLT_LIBRARIES})
@@ -91,12 +91,12 @@ endforeach()
 # DLT control tests
 #####################
 if(WITH_EXTENDED_FILTERING)
-    configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_extended.dlt ${PROJECT_BINARY_DIR}/tests COPYONLY)
-    configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.json ${PROJECT_BINARY_DIR}/tests COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_extended.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+
     add_executable(gtest_dlt_json_filter gtest_dlt_json_filter.cpp)
     target_link_libraries(gtest_dlt_json_filter ${DLT_CONTROL_LIBRARIES})
     add_test(NAME gtest_dlt_json_filter
              COMMAND gtest_dlt_json_filter)
     set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
 endif()
-

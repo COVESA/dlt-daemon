@@ -24,7 +24,7 @@
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-options.c                                                  **
+**  SRC-MODULE: dlt-system-options.c                                          **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **

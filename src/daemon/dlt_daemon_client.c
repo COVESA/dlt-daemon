@@ -129,11 +129,9 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
         if ((temp == NULL) || (temp->receiver == NULL) ||
             !((1 << temp->type) & type_mask)) {
-            dlt_vlog(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
+            dlt_log(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
             continue;
         }
-
-        DLT_DAEMON_SEM_LOCK();
 
         ret = dlt_connection_send_multiple(temp,
                                            data1,
@@ -141,7 +139,6 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                            data2,
                                            size2,
                                            daemon->sendserialheader);
-        DLT_DAEMON_SEM_FREE();
 
         if ((ret != DLT_DAEMON_ERROR_OK) &&
             (DLT_CONNECTION_CLIENT_MSG_TCP == temp->type)) {
@@ -175,6 +172,7 @@ int dlt_daemon_client_send(int sock,
                            int verbose)
 {
     int sent, ret;
+    static int sent_message_overflow_cnt = 0;
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid arguments\n", __func__);
@@ -184,26 +182,19 @@ int dlt_daemon_client_send(int sock,
     if ((sock != DLT_DAEMON_SEND_TO_ALL) && (sock != DLT_DAEMON_SEND_FORCE)) {
         /* Send message to specific socket */
         if (isatty(sock)) {
-            DLT_DAEMON_SEM_LOCK();
-
-            if ((ret = dlt_daemon_serial_send(sock, data1, size1, data2, size2, (char) daemon->sendserialheader))) {
-                DLT_DAEMON_SEM_FREE();
+            if ((ret =
+                     dlt_daemon_serial_send(sock, data1, size1, data2, size2,
+                                            daemon->sendserialheader))) {
                 dlt_vlog(LOG_WARNING, "%s: serial send dlt message failed\n", __func__);
                 return ret;
             }
-
-            DLT_DAEMON_SEM_FREE();
-        }
-        else {
-            DLT_DAEMON_SEM_LOCK();
-
-            if ((ret = dlt_daemon_socket_send(sock, data1, size1, data2, size2, (char) daemon->sendserialheader))) {
-                DLT_DAEMON_SEM_FREE();
+        } else {
+            if ((ret =
+                     dlt_daemon_socket_send(sock, data1, size1, data2, size2,
+                                            daemon->sendserialheader))) {
                 dlt_vlog(LOG_WARNING, "%s: socket send dlt message failed\n", __func__);
                 return ret;
             }
-
-            DLT_DAEMON_SEM_FREE();
         }
 
         return DLT_DAEMON_ERROR_OK;
@@ -275,11 +266,8 @@ int dlt_daemon_client_send(int sock,
         ((daemon->state == DLT_DAEMON_STATE_BUFFER) || (daemon->state == DLT_DAEMON_STATE_SEND_BUFFER) ||
          (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))) {
         if (daemon->state != DLT_DAEMON_STATE_BUFFER_FULL) {
-            DLT_DAEMON_SEM_LOCK();
             /* Store message in history buffer */
-            ret = dlt_buffer_push3(&(daemon->client_ringbuffer), data1, (unsigned int) size1, data2, (unsigned int) size2, 0, 0);
-            DLT_DAEMON_SEM_FREE();
-
+            ret = dlt_buffer_push3(&(daemon->client_ringbuffer), data1, size1, data2, size2, 0, 0);
             if (ret < DLT_RETURN_OK) {
                 dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER_FULL);
             }
@@ -293,11 +281,22 @@ int dlt_daemon_client_send(int sock,
         }
     } else {
         if ((daemon->overflow_counter > 0) &&
-            (daemon_local->client_connections > 0) &&
-            (dlt_daemon_send_message_overflow(daemon, daemon_local, verbose) == DLT_DAEMON_ERROR_OK)) {
-            dlt_vlog(LOG_WARNING, "%s: %u messages discarded! Now able to send messages to the client.\n",
-                     __func__, daemon->overflow_counter);
-            daemon->overflow_counter = 0;
+            (daemon_local->client_connections > 0)) {
+            sent_message_overflow_cnt++;
+            if (sent_message_overflow_cnt >= 2) {
+                sent_message_overflow_cnt--;
+            }
+            else {
+                if (dlt_daemon_send_message_overflow(daemon, daemon_local,
+                                          verbose) == DLT_DAEMON_ERROR_OK) {
+                    dlt_vlog(LOG_WARNING,
+                             "%s: %u messages discarded! Now able to send messages to the client.\n",
+                             __func__,
+                             daemon->overflow_counter);
+                    daemon->overflow_counter = 0;
+                    sent_message_overflow_cnt--;
+                }
+            }
         }
     }
 

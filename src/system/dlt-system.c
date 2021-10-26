@@ -59,8 +59,8 @@ DLT_DECLARE_CONTEXT(dltsystem)
 
 int main(int argc, char *argv[])
 {
-    DltSystemCliOptions options;
-    DltSystemConfiguration config;
+    DltSystemCliOptions options = {0};
+    DltSystemConfiguration config = {0};
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
     int ret;
