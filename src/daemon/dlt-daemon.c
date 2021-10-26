@@ -2060,6 +2060,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     cli_size = sizeof(cli);
 
     if ((in_sock = accept(receiver->fd, (struct sockaddr *)&cli, &cli_size)) < 0) {
+        if (errno == ECONNABORTED) // Caused by nmap -v -p 3490 -Pn <IP of dlt-daemon>
+            return 0;
         dlt_vlog(LOG_ERR, "accept() for socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
     }
