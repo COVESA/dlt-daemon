@@ -1030,7 +1030,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             if (strcmp(text, "Next line: DLT_LOG_RAW") == 0)
                 dltdata->test_counter_macro[4]++;
 
-            if (strcmp(text, "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f") == 0)
+            if (strcmp(text, "00\'01\'02\'03\'04\'05\'06\'07\'08\'09\'0a\'0b\'0c\'0d\'0e\'0f") == 0)
                 dltdata->test_counter_macro[4]++;
 
             if (strcmp(text, "Next line: DLT_LOG_STRING_INT") == 0)
@@ -2053,7 +2053,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
             if (strcmp(text, "Next line: dlt_log_raw()") == 0)
                 dltdata->test_counter_function[4]++;
 
-            if (strcmp(text, "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f") == 0)
+            if (strcmp(text, "00\'01\'02\'03\'04\'05\'06\'07\'08\'09\'0a\'0b\'0c\'0d\'0e\'0f") == 0)
                 dltdata->test_counter_function[4]++;
 
             if (strcmp(text, "Next line: dlt_log_string_int()") == 0)
