@@ -1488,7 +1488,7 @@ DltReturnValue dlt_file_open(DltFile *file, const char *filename, int verbose)
 
     if (verbose)
         /* print file length */
-        dlt_vlog(LOG_DEBUG, "File is %lu bytes long\n", file->file_length);
+        dlt_vlog(LOG_DEBUG, "File is %" PRIu64 "bytes long\n", file->file_length);
 
     return DLT_RETURN_OK;
 }
@@ -1521,14 +1521,14 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
 
     /* set to end of last succesful read message, because of conflicting calls to dlt_file_read and dlt_file_message */
     if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
-        dlt_vlog(LOG_WARNING, "Seek failed to file_position %lu\n",
+        dlt_vlog(LOG_WARNING, "Seek failed to file_position %" PRIu64 "\n",
                  file->file_position);
         return DLT_RETURN_ERROR;
     }
 
     /* get file position at start of DLT message */
     if (verbose)
-        dlt_vlog(LOG_INFO, "Position in file: %lu\n", file->file_position);
+        dlt_vlog(LOG_INFO, "Position in file: %" PRIu64 "\n", file->file_position);
 
     /* read header */
     if (dlt_file_read_header(file, verbose) < DLT_RETURN_OK) {
@@ -1639,7 +1639,7 @@ DltReturnValue dlt_file_read_raw(DltFile *file, int resync, int verbose)
 
     /* get file position at start of DLT message */
     if (verbose)
-        dlt_vlog(LOG_DEBUG, "Position in file: %lu\n", file->file_position);
+        dlt_vlog(LOG_DEBUG, "Position in file: %" PRIu64 "\n", file->file_position);
 
     /* read header */
     if (dlt_file_read_header_raw(file, resync, verbose) < DLT_RETURN_OK) {
@@ -4148,7 +4148,7 @@ DltReturnValue dlt_file_quick_parsing(DltFile *file, const char *filename,
     while (ret >= DLT_RETURN_OK && file->file_position < file->file_length) {
         /* get file position at start of DLT message */
         if (verbose)
-            dlt_vlog(LOG_DEBUG, "Position in file: %lu\n", file->file_position);
+            dlt_vlog(LOG_DEBUG, "Position in file: %" PRIu64 "\n", file->file_position);
 
         /* read all header and payload */
         ret = dlt_file_read_header(file, verbose);
