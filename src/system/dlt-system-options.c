@@ -305,12 +305,6 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             {
                 config->Filetransfer.TimeoutBetweenLogs = atoi(value);
             }
-            else if (strcmp(token, "FiletransferTempDir") == 0)
-            {
-                config->Filetransfer.TempDir = malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->Filetransfer.TempDir);
-                strcpy(config->Filetransfer.TempDir, value); /* strcpy unritical here, because size matches exactly the size to be copied */
-            }
             else if (strcmp(token, "FiletransferDirectory") == 0)
             {
                 config->Filetransfer.Directory[config->Filetransfer.Count] = malloc(strlen(value) + 1);
@@ -432,11 +426,6 @@ void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options
     }
 
     /* File transfer */
-    if ((config->Filetransfer.TempDir) != NULL)
-    {
-        free(config->Filetransfer.TempDir);
-        config->Filetransfer.TempDir = NULL;
-    }
     for(int i = 0 ; i < DLT_SYSTEM_LOG_DIRS_MAX ; i++)
     {
         if ((config->Filetransfer.Directory[i]) != NULL)

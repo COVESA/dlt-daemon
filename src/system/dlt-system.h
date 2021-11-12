@@ -134,7 +134,6 @@ typedef struct {
     char ContextId[DLT_ID_SIZE];
     int TimeStartup;
     int TimeoutBetweenLogs;
-    char *TempDir;
 
     /* Variable number of file transfer dirs */
     int Count;
