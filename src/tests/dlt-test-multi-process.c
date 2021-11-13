@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <errno.h>

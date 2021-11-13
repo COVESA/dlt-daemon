@@ -72,6 +72,7 @@
 #include <syslog.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <sys/socket.h> /* send() */
 

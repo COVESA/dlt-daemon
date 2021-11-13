@@ -68,6 +68,7 @@
 #include <ctype.h>      /* for isprint() */
 #include <stdlib.h>     /* for atoi() */
 #include <string.h>     /* for strcmp() */
+#include <fcntl.h>
 #include <sys/uio.h>    /* for writev() */
 
 #include "dlt_client.h"

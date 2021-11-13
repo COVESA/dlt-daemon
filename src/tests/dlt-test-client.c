@@ -72,6 +72,7 @@
 #include <sys/uio.h>    /* for writev() */
 #include <stdbool.h>
 #include <limits.h>
+#include <fcntl.h>
 
 #include "dlt_client.h"
 #include "dlt_protocol.h"

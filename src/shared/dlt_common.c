@@ -56,6 +56,7 @@
 #   include <io.h>
 #else
 #   include <unistd.h>  /* for read(), close() */
+#   include <fcntl.h>
 #   include <sys/time.h> /* for gettimeofday() */
 #endif
 

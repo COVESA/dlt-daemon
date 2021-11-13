@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
