@@ -1405,13 +1405,13 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         if (fcntl(fd, F_SETPIPE_SZ, daemon_local->daemonFifoSize) == -1)
             dlt_vlog(LOG_ERR, "set FIFO size error: %s\n", strerror(errno));
     }
-#endif
 
     /* Get Daemon FIFO size */
     if ((fifo_size = fcntl(fd, F_GETPIPE_SZ, 0)) == -1)
         dlt_vlog(LOG_ERR, "get FIFO size error: %s\n", strerror(errno));
     else
         dlt_vlog(LOG_INFO, "FIFO size: %d\n", fifo_size);
+#endif
 
     /* Early init, to be able to catch client (app) connections
      * as soon as possible. This registration is automatically ignored

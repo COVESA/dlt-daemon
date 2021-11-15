@@ -15,7 +15,7 @@ else()
     set(GTEST_LIBS ${GTEST_BOTH_LIBRARIES})
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN")
     set(LIBRARIES "")
 else()
     set(LIBRARIES socket)
