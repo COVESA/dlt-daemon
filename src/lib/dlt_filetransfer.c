@@ -676,8 +676,10 @@ int dlt_user_log_file_data(DltContext *fileContext,
                             DLT_RAW(buffer, readBytes),
                             DLT_STRING("FLDA")
                             );
+                } else {
+                    fclose(file);
+                    return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
                 }
-
                 doTimeout(timeout);
             }
         }
