@@ -75,7 +75,6 @@
 
 #define DLT_CTRL_APID    "DLTC"
 #define DLT_CTRL_CTID    "DLTC"
-#define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH "/tmp/dlt-ctrl.sock"
 
 /** @brief Analyze the daemon answer
  *
@@ -98,6 +97,7 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static int local_timeout;
+static char local_filename[DLT_MOUNT_PATH_MAX]= {0}; /* Path to dlt.conf */
 
 int get_verbosity(void)
 {
@@ -181,7 +181,11 @@ int dlt_parse_config_param(char *config_id, char **config_data)
         *config_data = NULL;
 
     /* open configuration file */
-    filename = CONFIGURATION_FILES_DIR "/dlt.conf";
+    if (local_filename[0] != 0) {
+        filename = local_filename;
+    } else {
+        filename = CONFIGURATION_FILES_DIR "/dlt.conf";
+    }
     pFile = fopen(filename, "r");
 
     if (pFile != NULL) {
