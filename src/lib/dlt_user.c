@@ -2157,6 +2157,71 @@ DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t da
     return dlt_user_log_write_generic_attr(log, &data, sizeof(float64_t), type_info, &var_info);
 }
 
+DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
+{
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (!dlt_user_initialised) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    switch (sizeof(unsigned int)) {
+    case 1:
+    {
+        return dlt_user_log_write_uint8(log, (uint8_t)data);
+        break;
+    }
+    case 2:
+    {
+        return dlt_user_log_write_uint16(log, (uint16_t)data);
+        break;
+    }
+    case 4:
+    {
+        return dlt_user_log_write_uint32(log, (uint32_t)data);
+        break;
+    }
+    case 8:
+    {
+        return dlt_user_log_write_uint64(log, (uint64_t)data);
+        break;
+    }
+    default:
+    {
+        return DLT_RETURN_ERROR;
+        break;
+    }
+    }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, NULL);
+}
+
 DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit)
 {
     if (log == NULL)
@@ -2196,35 +2261,6 @@ DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int da
     }
 
     return DLT_RETURN_OK;
-}
-
-DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint8_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint16_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint32_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_UINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(uint64_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
-{
-    return dlt_user_log_write_uint_attr(log, data, NULL, NULL);
 }
 
 DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit)
@@ -2307,6 +2343,71 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
+{
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (!dlt_user_initialised) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+
+    switch (sizeof(int)) {
+    case 1:
+    {
+        return dlt_user_log_write_int8(log, (int8_t)data);
+        break;
+    }
+    case 2:
+    {
+        return dlt_user_log_write_int16(log, (int16_t)data);
+        break;
+    }
+    case 4:
+    {
+        return dlt_user_log_write_int32(log, (int32_t)data);
+        break;
+    }
+    case 8:
+    {
+        return dlt_user_log_write_int64(log, (int64_t)data);
+        break;
+    }
+    default:
+    {
+        return DLT_RETURN_ERROR;
+        break;
+    }
+    }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, NULL);
+}
+
+DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data)
+{
+    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
+    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, NULL);
+}
+
 DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const char *name, const char *unit)
 {
     if (log == NULL)
@@ -2346,35 +2447,6 @@ DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const 
     }
 
     return DLT_RETURN_OK;
-}
-
-DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_8BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int8_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_16BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int16_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_32BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int32_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data)
-{
-    uint32_t type_info = DLT_TYPE_INFO_SINT | DLT_TYLE_64BIT;
-    return dlt_user_log_write_generic_attr(log, &data, sizeof(int64_t), type_info, NULL);
-}
-
-DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
-{
-    return dlt_user_log_write_int_attr(log, data, NULL, NULL);
 }
 
 DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit)
