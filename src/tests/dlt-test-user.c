@@ -91,7 +91,7 @@ static const char *loglevelstr[DLT_LOG_MAX] = {
 
 /* Test functions... */
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
 /* for macro interface */
 int test1m(void);
 int test2m(void);
@@ -129,7 +129,7 @@ void test11f_internal(DltContext context, DltContextData contextData, uint32_t t
 /* Context declaration.. */
 DltContext context_info;
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
 /* for macro interface */
 DLT_DECLARE_CONTEXT(context_macro_callback)
 DLT_DECLARE_CONTEXT(context_macro_test[DLT_TEST_NUM_CONTEXT])
@@ -159,7 +159,7 @@ void usage()
     printf("  -n count      Repeats of tests (Default: 1)\n");
     printf("  -t test num   Test number to be executed (Default: all)\n");
     printf("Tests:\n");
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
     printf("  1m: (Macro IF)    Test all log levels\n");
     printf("  2m: (Macro IF)    Test all variable types (verbose) \n");
     printf("  3m: (Macro IF)    Test all variable types (non-verbose) \n");
@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
     /* Register CONTEXTS... */
     dlt_register_context(&context_info, "INFO", "Information context");
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
     /* used for macro interface tests */
     DLT_REGISTER_CONTEXT(context_macro_callback, "CBM", "Callback Test context for macro interface");
 
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
 
     /* Register callbacks... */
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
     /* with macro interface */
     DLT_LOG(context_macro_callback, DLT_LOG_INFO,
             DLT_STRING("Register callback (Macro Interface) for Injection ID: 0xFFF"));
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
         switch(tvalue) {
         case 1:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test1m();
 #endif
             test1f();
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
         }
         case 2:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test2m();
 #endif
             test2f();
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
         }
         case 3:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test3m();
 #endif
             test3f();
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
         }
         case 4:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test4m();
 #endif
             test4f();
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
         }
         case 5:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test5m();
 #endif
             test5f();
@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
         }
         case 6:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test6m();
 #endif
             test6f();
@@ -366,7 +366,7 @@ int main(int argc, char *argv[])
         }
         case 7:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test7m();
 #endif
             test7f();
@@ -374,7 +374,7 @@ int main(int argc, char *argv[])
         }
         case 8:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test8m();
 #endif
             test8f();
@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
         }
         case 9:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test9m();
 #endif
             test9f();
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
         }
         case 10:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test10m();
 #endif
             test10f();
@@ -398,14 +398,14 @@ int main(int argc, char *argv[])
         }
         case 11:
         {
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             test11m();
 #endif
             test11f();
             break;
         }
         default:
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
             /* with macro interface */
             test1m();
             test2m();
@@ -452,7 +452,7 @@ int main(int argc, char *argv[])
     /* Unregister CONTEXTS... */
     dlt_unregister_context(&context_info);
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
     /* used for macro interface tests */
     for (i = 0; i < DLT_TEST_NUM_CONTEXT; i++)
         DLT_UNREGISTER_CONTEXT(context_macro_test[i]);
@@ -476,7 +476,7 @@ int main(int argc, char *argv[])
 /* The test cases */
 /******************/
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
 int test1m(void)
 {
     /* Test 1: (Macro IF) Test all log levels */
@@ -1528,7 +1528,7 @@ int test11f(void)
     return 0;
 }
 
-#ifndef DLT_DISABLE_MACRO
+#if !DLT_DISABLE_MACRO
 int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t length)
 {
     char text[1024];
