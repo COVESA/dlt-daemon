@@ -146,8 +146,6 @@ TEST(t_dlt_gateway_send_control_message, Normal)
 TEST(t_dlt_gateway_send_control_message, nullpointer)
 {
     DltDaemonLocal daemon_local;
-    DltFilterConfiguration current;
-    daemon_local.pFilter.current = &current;
     DltGatewayConnection connections;
     DltConnection connections1;
     DltReceiver receiver1;

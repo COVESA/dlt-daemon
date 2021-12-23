@@ -54,7 +54,6 @@ endforeach()
 ###################
 set(TARGET_LIST gtest_dlt_daemon_gateway
                 gtest_dlt_daemon_offline_log
-                gtest_dlt_daemon_filter
                 gtest_dlt_daemon_event_handler
                 )
 if(WITH_DLT_SHM_ENABLE)
