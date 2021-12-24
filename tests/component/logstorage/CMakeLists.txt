@@ -1,0 +1,1 @@
+add_subdirectory(logstorage_fsync)

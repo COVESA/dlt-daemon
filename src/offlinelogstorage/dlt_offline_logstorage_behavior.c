@@ -1073,6 +1073,16 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 (strcmp(config->working_file_name, newest_file_info->newest_file) != 0) ||
                 (config->wrap_id < newest_file_info->wrap_id)) {
 
+                /* Sync only if on_msg */
+                if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
+                    (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
+                    if (fsync(fileno(config->log)) != 0) {
+                        if (errno != ENOSYS) {
+                            dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+                        }
+                    }
+                }
+
                 dlt_logstorage_close_file(config);
 
                 /* Sync the wrap id and working file name before opening log file */
@@ -1097,8 +1107,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
             }
         }
         else {
-            dlt_log(LOG_ERR,
-                    "dlt_logstorage_prepare_log_file: stat() failed.\n");
+            dlt_vlog(LOG_ERR, "%s: stat() failed.\n", __func__);
             ret = -1;
         }
     }
