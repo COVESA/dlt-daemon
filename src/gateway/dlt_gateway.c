@@ -40,6 +40,7 @@
 #include "dlt_gateway_internal.h"
 #include "dlt_config_file_parser.h"
 #include "dlt_common.h"
+#include "dlt_log.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_common_cfg.h"
 #include "dlt_daemon_event_handler.h"

@@ -67,6 +67,7 @@
 
 #include <dlt_shm.h>
 #include <dlt_common.h>
+#include <dlt_log.h>
 
 void dlt_shm_print_hex(char *ptr, int size)
 {

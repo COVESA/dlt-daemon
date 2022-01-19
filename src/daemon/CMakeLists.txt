@@ -32,6 +32,7 @@ set(dlt_daemon_SRCS
     ${PROJECT_SOURCE_DIR}/src/lib/dlt_client.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_config_file_parser.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_log.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_multiple_files.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_offline_trace.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_protocol.c
