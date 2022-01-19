@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <float.h>
+#include <chrono>
 
 extern "C" {
 #include "dlt_user.h"
@@ -5246,6 +5247,92 @@ TEST(t_dlt_user_is_logLevel_enabled, normal)
 TEST(t_dlt_user_is_logLevel_enabled, nullpointer)
 {
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_is_logLevel_enabled(NULL, DLT_LOG_FATAL));
+}
+
+/*/////////////////////////////////////// */
+/* t_dlt_user_shutdown_while_init_is_running */
+
+struct ShutdownWhileInitParams {
+    ShutdownWhileInitParams() = default;
+    // delete copy constructor
+    ShutdownWhileInitParams(const ShutdownWhileInitParams&) = delete;
+
+    std::chrono::time_point<std::chrono::steady_clock> stop_time;
+
+    pthread_cond_t dlt_free_done = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t dlt_free_mtx = PTHREAD_MUTEX_INITIALIZER;
+    bool has_error = false;
+
+};
+
+void* dlt_free_call_and_deadlock_detection(void *arg) {
+    auto *params = static_cast<ShutdownWhileInitParams *>(arg);
+
+    // allow thread to be canceled
+    int old_thread_type;
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_thread_type);
+
+    dlt_free();
+
+    // signal that we are done
+    pthread_mutex_lock(&params->dlt_free_mtx);
+    pthread_cond_signal(&params->dlt_free_done);
+    pthread_mutex_unlock(&params->dlt_free_mtx);
+    return nullptr;
+}
+
+void *dlt_free_thread(void *arg) {
+    auto *params = static_cast<ShutdownWhileInitParams *>(arg);
+    while (std::chrono::steady_clock::now() < params->stop_time && !params->has_error) {
+
+        // pthread cond_timedwait expects an absolute time to wait
+        struct timespec abs_time{};
+        clock_gettime(CLOCK_REALTIME, &abs_time);
+        abs_time.tv_sec += 3; // wait at most 3 seconds
+
+        pthread_t dlt_free_deadlock_detection_thread_id;
+
+        pthread_mutex_lock(&params->dlt_free_mtx);
+        pthread_create(&dlt_free_deadlock_detection_thread_id, nullptr, dlt_free_call_and_deadlock_detection, params);
+        const auto err = pthread_cond_timedwait(&params->dlt_free_done, &params->dlt_free_mtx, &abs_time);
+        pthread_mutex_unlock(&params->dlt_free_mtx);
+
+        if (err == ETIMEDOUT) {
+            fprintf(stderr, "\n%s: detected DLT-deadlock!\n", __func__);
+            params->has_error = true;
+
+            // cancel thread after timeout, so join won't block forever.
+            pthread_cancel(dlt_free_deadlock_detection_thread_id);
+        }
+
+        pthread_join(dlt_free_deadlock_detection_thread_id, nullptr);
+    }
+
+    return nullptr;
+}
+
+TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
+    const auto max_runtime = std::chrono::seconds(15);
+    const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
+
+    struct ShutdownWhileInitParams args{};
+    args.stop_time = stop_time;
+
+    pthread_t dlt_free_thread_id;
+    pthread_create(&dlt_free_thread_id, nullptr, dlt_free_thread, &args);
+
+    while (std::chrono::steady_clock::now() < stop_time && !args.has_error) {
+        dlt_init();
+    }
+
+    pthread_join(dlt_free_thread_id, nullptr);
+    EXPECT_FALSE(args.has_error);
+
+    const auto last_init = dlt_init();
+    const auto last_free = dlt_free();
+
+    EXPECT_EQ(last_init, DLT_RETURN_OK);
+    EXPECT_EQ(last_free, DLT_RETURN_OK);
 }
 
 /*/////////////////////////////////////// */
