@@ -55,6 +55,7 @@ endforeach()
 set(TARGET_LIST gtest_dlt_daemon_gateway
                 gtest_dlt_daemon_offline_log
                 gtest_dlt_daemon_event_handler
+                gtest_dlt_daemon_multiple_files_logging
                 )
 if(WITH_DLT_SHM_ENABLE)
     list(APPEND TARGET_LIST gtest_dlt_shm)
@@ -64,8 +65,9 @@ foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
     target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES})
-    if(${target} STREQUAL "gtest_dlt_daemon_event_handler" OR
-       ${target} STREQUAL "gtest_dlt_shm")
+    if(${target} STREQUAL "gtest_dlt_daemon_event_handler"
+            OR ${target} STREQUAL "gtest_dlt_shm"
+            OR ${target} STREQUAL "gtest_dlt_daemon_multiple_files_logging")
         add_test(NAME ${target}
                  COMMAND ${target})
     else()

@@ -79,6 +79,26 @@ If LoggingMode is set to 2 logs are written to the file path given here.
 
     Default: /tmp/dlt.log
 
+## EnableLoggingFileLimit
+
+Only relevant for logging in file (LoggingMode = 2).
+If EnableLoggingFileLimit is set to 0, the daemon logs to one logging file without any size limit.
+If EnableLoggingFileLimit is set to 1, the daemon considers the size limits configured by LoggingFileSize and LoggingFileMaxSize. If the limits are configured accordingly, multiple log files are used.
+
+    Default: 0
+
+## LoggingFileSize
+
+Only considered for logging in file (LoggingMode = 2) and EnableLoggingFileLimit = 1. Maximum size in bytes of one logging file.
+    
+    Default: 250000
+
+## LoggingFileMaxSize
+
+Only considered for logging in file (LoggingMode = 2) and EnableLoggingFileLimit = 1. Maximum size in bytes of all logging files.
+
+    Default: 1000000
+
 ## TimeOutOnSend
 
 Socket timeout in seconds for sending to clients.
