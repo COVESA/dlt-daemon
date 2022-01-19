@@ -52,6 +52,7 @@
 #endif
 
 #include "dlt_types.h"
+#include "dlt_log.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_common_cfg.h"
