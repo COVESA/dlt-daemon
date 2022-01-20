@@ -59,6 +59,11 @@ option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"         
 option(WITH_DLT_CONSOLE       "Set to ON to build src/console binaries"                                          ON)
 option(WITH_DLT_CONSOLE_WO_CTRL    "Set to ON not to build control commands under src/console"                   OFF)
 option(WITH_DLT_CONSOLE_WO_SBTM    "Set to ON not to build dlt-sortbytimestamp under src/console"                OFF)
+option(WITH_DLT_CONSOLE_RECEIVE    "Set to OFF to skip building dlt_receive"                                     ON)
+option(WITH_DLT_CONSOLE_CONVERT    "Set to OFF to skip building dlt_convert"                                     ON)
+option(WITH_DLT_CONSOLE_CONTROL    "Set to OFF to skip building dlt_control"                                     ON)
+option(WITH_DLT_CONSOLE_PASSIVE_NODE_CTRL   "Set to OFF to skip building dlt_passive_node_ctrl"                  ON)
+
 option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"                                         ON)
 option(WITH_DLT_FILETRANSFER  "Set to ON to build dlt-system with filetransfer support"                          OFF)
 option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                           OFF)
