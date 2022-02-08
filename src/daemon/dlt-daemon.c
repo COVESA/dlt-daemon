@@ -330,7 +330,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     char value[value_length];
     char *pch;
     const char *filename;
-    ssize_t n;
+    int n;
 
     /* set default values for configuration */
     daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
@@ -353,7 +353,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
                 __func__, n, daemon_local->flags.loggingFilename);
     }
 
