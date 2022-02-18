@@ -615,10 +615,10 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         ret = stat(absolute_file_path, &s);
 
         /* if file stats is read and, either
-         * is_sync is true (other than ON_MSG sync behavior) or
+         * is_sync is true and (other than ON_MSG sync behavior and current size is less than configured size) or
          * msg_size fit into the size (ON_MSG or par of cache needs to be written into new file), open it */
         if ((ret == 0) &&
-            (is_sync ||
+            ((is_sync && (s.st_size < (int)config->file_size)) ||
              (!is_sync && (s.st_size + msg_size <= (int)config->file_size)))) {
             dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
             config->current_write_file_offset = s.st_size;
