@@ -1088,11 +1088,15 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     config.records = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
+    config.file_size = 50;
+    char tmp_file[100] = "";
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, false));
     EXPECT_STREQ("Test_01.dlt", config.working_file_name);
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, true));
     EXPECT_STREQ("Test_01.dlt", config.working_file_name);
+    sprintf(tmp_file, "%s/%s", path, config.working_file_name);
+    remove(tmp_file);
 }
 TEST(t_dlt_logstorage_open_log_file, null)
 {
@@ -1251,9 +1255,13 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
+    char tmp_file[100] = "";
+
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
               data1, size, data2, size, data3, size));
+    sprintf(tmp_file, "%s/%s", path, config.working_file_name);
+    remove(tmp_file);
 }
 
 #ifdef DLT_LOGSTORAGE_USE_GZIP
@@ -2003,6 +2011,8 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
         }
         free(config.cache);
         config.cache = NULL;
+        std::string tmp_file = file_path.str();
+        remove(tmp_file.c_str());
     }
 }
 
@@ -2073,6 +2083,8 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
         }
         free(config.cache);
         config.cache = NULL;
+        std::string tmp_file = file_path.str();
+        remove(tmp_file.c_str());
     }
 }
 

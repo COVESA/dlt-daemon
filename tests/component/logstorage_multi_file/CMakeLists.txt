@@ -5,9 +5,13 @@ target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_link_libraries(${NAME} PRIVATE dlt)
 
 set(CTXNUM 12)
+set(MESSAGE_FILTER_CONFIGURATION_FILE ${CMAKE_CURRENT_SOURCE_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf)
 
 add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
-cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/
+if [ ${CMAKE_CURRENT_SOURCE_DIR} != ${CMAKE_CURRENT_BINARY_DIR} ];
+then cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/;
+fi
 rm -f ${CMAKE_CURRENT_BINARY_DIR}/MLTI*.dlt
 $<TARGET_FILE:dlt-daemon> -c ${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf &
 sleep 0.2

@@ -5,9 +5,13 @@ target_include_directories(${NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include/)
 target_link_libraries(${NAME} PRIVATE dlt)
 
 set(CTXNUM 2)
+set(MESSAGE_FILTER_CONFIGURATION_FILE ${CMAKE_CURRENT_SOURCE_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf)
 
 add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
-cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/
+if [ ${CMAKE_CURRENT_SOURCE_DIR} != ${CMAKE_CURRENT_BINARY_DIR} ];
+then cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/;
+fi
 rm -rf ${CMAKE_CURRENT_BINARY_DIR}/test
 rm -rf ${CMAKE_CURRENT_BINARY_DIR}/aa
 mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/test

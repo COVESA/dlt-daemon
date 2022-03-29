@@ -13,6 +13,8 @@ target_link_libraries(${NAME} PRIVATE dlt)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR})
 
 set(APPID "FSNC")
+set(MESSAGE_FILTER_CONFIGURATION_FILE ${CMAKE_CURRENT_SOURCE_DIR})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf)
 
 add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
 rm -f ${CMAKE_CURRENT_BINARY_DIR}/${APPID}*.dlt
