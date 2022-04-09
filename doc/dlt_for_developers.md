@@ -69,7 +69,7 @@ You can thus:
 ```
 find_package(automotive-dlt REQUIRED)
 ...
-target_link_libraries(myapp PRIVATE Genivi::DLT)
+target_link_libraries(myapp PRIVATE Genivi::dlt)
 ```
 which lets your project automatically gain all necessary compile and link flags
 needed by libdlt, including the include directories.
