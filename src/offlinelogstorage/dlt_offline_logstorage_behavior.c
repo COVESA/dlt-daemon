@@ -785,7 +785,7 @@ DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
     const char magic[] = {'D', 'L', 'T', 0x01};
     const char *cache = (char*)ptr + offset;
 
-    unsigned int i;
+    int i;
     for (i = cnt - (DLT_ID_SIZE - 1) ; i > 0; i--) {
         if ((cache[i] == 'D') && (strncmp(&cache[i], magic, 4) == 0))
             return i;
