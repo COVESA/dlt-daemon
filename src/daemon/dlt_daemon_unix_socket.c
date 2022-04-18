@@ -115,6 +115,8 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
         return -1;
     }
 
+    dlt_vlog(LOG_INFO, "dlt_daemon_unix_socket_open: Listening on %s for connections\n", sock_path);
+
     /* restore permissions */
     umask(old_mask);
 

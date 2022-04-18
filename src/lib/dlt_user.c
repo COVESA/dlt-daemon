@@ -281,7 +281,13 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     }
 
     remote.sun_family = AF_UNIX;
-    snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+    
+    char *env_unix_socket_name = getenv("DLT_UNIX_SOCKET_NAME");
+    if (env_unix_socket_name != NULL)
+        strncpy(dltSockBaseDir, env_unix_socket_name, DLT_IPC_PATH_MAX);
+    else
+        snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+    
     strncpy(remote.sun_path, dltSockBaseDir, sizeof(remote.sun_path));
 
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)

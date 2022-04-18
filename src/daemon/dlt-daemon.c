@@ -199,6 +199,14 @@ void usage()
     printf("                custom shm name need to be started with the environment \n");
     printf("                variable DLT_SHM_NAME set appropriately)\n");
 #endif
+
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
+    printf("  -u filename   The file name to create the unix socket (Default: /%s/dlt)\n", DLT_USER_IPC_PATH);
+    printf("                (Applications wanting to connect to a daemon using a\n");
+    printf("                custom unix socket file need to be started with the environment \n");
+    printf("                variable DLT_UNIX_SOCKET_NAME set appropriately)\n");
+#endif
+
     printf("  -p port       port to monitor for incoming requests (Default: 3490)\n");
     printf("                (Applications wanting to connect to a daemon using a custom\n");
     printf("                port need to be started with the environment variable\n");
@@ -227,6 +235,10 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH);
 #endif
 
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
+    snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+#endif
+
 #ifdef DLT_SHM_ENABLE
     strncpy(dltShmName, "/dlt-shm", NAME_MAX);
 #endif
@@ -235,10 +247,10 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
 #ifdef DLT_SHM_ENABLE
 
-    while ((c = getopt (argc, argv, "hdc:t:s:p:")) != -1)
+    while ((c = getopt (argc, argv, "hdc:t:u:s:p:")) != -1)
 #else
 
-    while ((c = getopt (argc, argv, "hdc:t:p:")) != -1)
+    while ((c = getopt (argc, argv, "hdc:t:u:p:")) != -1)
 #endif
         switch (c) {
         case 'd':
@@ -255,6 +267,14 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
         case 't':
         {
             dlt_log_set_fifo_basedir(optarg);
+            break;
+        }
+#endif
+
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
+        case 'u':
+        {
+            strncpy(daemon_local->flags.appSockPath, optarg, NAME_MAX);
             break;
         }
 #endif
@@ -377,14 +397,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     strncpy(daemon_local->flags.ctrlSockPath,
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath));
-#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
-
-    if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
-        fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
-                daemon_local->flags.appSockPath);
-
-#else /* DLT_DAEMON_USE_FIFO_IPC */
+#ifdef DLT_DAEMON_USE_FIFO_IPC
     memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
 #endif
     daemon_local->flags.gatewayMode = 0;

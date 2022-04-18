@@ -34,6 +34,13 @@ GENIVI system or more likely on a external tester device.
 :   Directory for local fifo and user-pipes (Default: /tmp).
     Applications wanting to connect to a daemon using a custom directory need to be started with the environment variable DLT_PIPE_DIR set appropriately.
 
+-u
+
+:   The path to create the unix socket file (Default: /tmp/dlt).
+    Applications wanting to connect to a daemon using a custom socket file 
+    need to be started with the environment variable DLT_UNIX_SOCKET_NAME 
+    set appropriately.
+
 -p
 
 :   Port to monitor for incoming requests (Default: 3490)
