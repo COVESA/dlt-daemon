@@ -87,7 +87,6 @@
 #include "dlt_daemon_serial.h"
 
 char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
-sem_t dlt_daemon_mutex;
 
 static int dlt_daemon_cmp_apid(const void *m1, const void *m2)
 {
