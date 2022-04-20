@@ -1490,12 +1490,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if (daemon_local->flags.sendMessageTime)
         daemon->timingpackets = 1;
 
-    /* Binary semaphore for thread */
-    if (sem_init(&dlt_daemon_mutex, 0, 1) == -1) {
-        dlt_log(LOG_ERR, "Could not initialize binary semaphore\n");
-        return -1;
-    }
-
     /* Get ECU version info from a file. If it fails, use dlt_version as fallback. */
     if (dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0) {
         daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
