@@ -202,7 +202,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Hex-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_hex_string(text, textlength, (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)), DLT_COMMON_HEX_CHARS);
+        if (dlt_print_hex_string(text, textlength,
+                (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
+                DLT_COMMON_HEX_CHARS) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         text += ((2 * DLT_COMMON_HEX_CHARS) + (DLT_COMMON_HEX_CHARS - 1)); /* 32 characters + 15 spaces */
 
         snprintf(text, 2, " ");
@@ -211,8 +214,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Char-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_char_string(&text, textlength, (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
-                              DLT_COMMON_HEX_CHARS);
+        if (dlt_print_char_string(&text, textlength,
+                (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
+                DLT_COMMON_HEX_CHARS) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
 
         if (html == 0) {
             snprintf(text, 2, "\n");
@@ -240,10 +245,11 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Hex-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_hex_string(text,
+        if (dlt_print_hex_string(text,
                              textlength,
                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)),
-                             rest);
+                             rest) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         text += 2 * rest + (rest - 1);
 
         for (i = 0; i < (DLT_COMMON_HEX_CHARS - rest); i++) {
@@ -257,8 +263,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Char-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_char_string(&text, textlength,
-                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)), rest);
+        if (dlt_print_char_string(&text, textlength,
+                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)),
+                              rest) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
     }
 
     return DLT_RETURN_OK;
@@ -670,6 +678,9 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((msg == NULL) || (text == NULL) || (textlength <= 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((DLT_IS_HTYP_UEH(msg->standardheader->htyp)) && (msg->extendedheader == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     if ((flags < DLT_HEADER_SHOW_NONE) || (flags > DLT_HEADER_SHOW_ALL))
@@ -3239,7 +3250,8 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s\n", text);
 
     return DLT_RETURN_OK;
@@ -3250,9 +3262,12 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3263,9 +3278,12 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3276,9 +3294,12 @@ DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, ui
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s \n", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3289,9 +3310,13 @@ DltReturnValue dlt_message_print_mixed_html(DltMessage *message, char *text, uin
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s \n", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_HTML, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_HTML, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3901,7 +3926,8 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'');
+        if (dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'') < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         *ptr += length;
         *datalength -= length;
     }
