@@ -148,6 +148,7 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
 
     if (s->keys == NULL) {
         free(s->name);
+        s->name = NULL;
         dlt_log(LOG_ERR, "Cannot allocate memory for internal data structure\n");
         return -1;
     }
