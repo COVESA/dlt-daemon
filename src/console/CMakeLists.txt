@@ -17,11 +17,24 @@ set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
 add_library(dlt_control_common_lib STATIC ${dlt_control_common_SRCS})
 target_link_libraries(dlt_control_common_lib dlt ${DLT_JSON_LIBRARY})
 
-set(TARGET_LIST dlt-convert dlt-receive)
+set(TARGET_LIST "")
+
+if (WITH_DLT_CONSOLE_RECEIVE)
+    list(APPEND TARGET_LIST dlt-receive)
+endif()
+
+if (WITH_DLT_CONSOLE_CONVERT)
+    list(APPEND TARGET_LIST dlt-convert)
+endif()
 
 if(NOT WITH_DLT_CONSOLE_WO_CTRL)
     add_subdirectory(logstorage)
-    list(APPEND TARGET_LIST dlt-control dlt-passive-node-ctrl)
+    if (WITH_DLT_CONSOLE_CONTROL)
+        list(APPEND TARGET_LIST dlt-control)
+    endif()
+    if (WITH_DLT_CONSOLE_PASSIVE_NODE_CTRL)
+        list(APPEND TARGET_LIST dlt-passive-node-ctrl)
+    endif()
 endif()
 
 if(NOT WITH_DLT_CONSOLE_WO_SBTM)
