@@ -3177,8 +3177,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
-        ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                                           daemon_local, verbose);
+        /* discard non-allowed levels if enforcement is on */
+        bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+        if (keep_message)
+          dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
         if (DLT_DAEMON_ERROR_OK != ret)
             dlt_log(LOG_ERR, "failed to send message to client.\n");
@@ -3205,7 +3207,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
-    dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
+    /* discard non-allowed levels if enforcement is on */
+    bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+    if (keep_message)
+      dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
     /* keep not read data in buffer */
     size = (int) (daemon_local->msg.headersize +
@@ -3223,6 +3228,18 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #endif
 
     return DLT_DAEMON_ERROR_OK;
+}
+
+bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local) {
+  if (daemon_local->flags.enforceContextLLAndTS &&
+      daemon_local->msg.extendedheader) {
+    const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
+    if (mtin > daemon_local->flags.contextLogLevel) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
