@@ -791,6 +791,10 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
                              configuration_entries[j].key, value);
             }
 
+            if (!tmp.ip_address) {
+                invalid = 1;
+            }
+
             if (invalid) {
                 dlt_vlog(LOG_ERR,
                          "%s configuration is invalid.\n"
