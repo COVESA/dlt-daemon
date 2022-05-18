@@ -1195,7 +1195,7 @@ void dlt_print_with_attributes(bool state);
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
  */
-void dlt_log_init(int mode);
+DltReturnValue dlt_log_init(int mode);
 /**
  * Print with variable arguments to specified file descriptor by DLT_LOG_MODE environment variable (like fprintf)
  * @param format format string for message

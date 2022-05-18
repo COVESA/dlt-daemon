@@ -1803,11 +1803,11 @@ void dlt_print_with_attributes(bool state)
     print_with_attributes = state;
 }
 
-void dlt_log_init(int mode)
+DltReturnValue dlt_log_init(int mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
         dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
-        return;
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     logging_mode = mode;
@@ -1818,14 +1818,16 @@ void dlt_log_init(int mode)
 
         if (logging_handle == NULL) {
             dlt_user_printf("Internal log file %s cannot be opened!\n", logging_filename);
-            return;
+            return DLT_RETURN_ERROR;
         }
     }
+
+    return DLT_RETURN_OK;
 }
 
 void dlt_log_free(void)
 {
-    if (logging_mode == DLT_LOG_TO_FILE)
+    if (logging_mode == DLT_LOG_TO_FILE && logging_handle)
         fclose(logging_handle);
 }
 

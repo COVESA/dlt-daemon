@@ -940,7 +940,25 @@ int main(int argc, char *argv[])
     /* Initialize internal logging facility */
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
-    dlt_log_init(daemon_local.flags.loggingMode);
+    DltReturnValue log_init_result =
+        dlt_log_init(daemon_local.flags.loggingMode);
+
+    if (log_init_result != DLT_RETURN_OK) {
+      fprintf(stderr, "Failed to init internal logging\n");
+
+#if WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK
+        if (daemon_local.flags.loggingMode == DLT_LOG_TO_FILE) {
+          fprintf(stderr, "Falling back to syslog mode\n");
+
+          daemon_local.flags.loggingMode = DLT_LOG_TO_SYSLOG;
+          log_init_result = dlt_log_init(daemon_local.flags.loggingMode);
+          if (log_init_result != DLT_RETURN_OK) {
+            fprintf(stderr, "Failed to setup syslog logging, internal logs will "
+                            "not be available\n");
+          }
+      }
+#endif
+    }
 
     /* Print version information */
     dlt_get_version(version, DLT_DAEMON_TEXTBUFSIZE);
@@ -955,7 +973,7 @@ int main(int argc, char *argv[])
     if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
         dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
         return -1;
-    }
+  }
 
 #else
     if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
