@@ -195,8 +195,12 @@ cc_binary {
     shared_libs: [
         "libdlt",
         "liblog",
+        "libjsoncpp",
+    ],
+    include_dirs: [
+        "system/logging/liblog/include",
+        "external/jsoncpp/include",
     ],
 }
 
 // vim: ft=python
-
