@@ -1,20 +1,42 @@
 /**
- * @licence app begin@
- * Copyright (C) 2019 Advanced Driver Information Technology.
+ * Copyright (C) 2019-2022 Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * DLT logd converter: Retrieve log entries from logd and forward them to DLT.
+ * dlt-logd-converter : Retrieve log entries from logd and forward them to DLT.
  *
  * \copyright
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * \file: dlt-logd-convert
+ *
+ * \Author Luu Quang Minh <Minh.LuuQuang@vn.bosch.com> ADIT 2022
+ *
+ * \file: dlt-logd-converter.cpp
  * For further information see http://www.covesa.org/.
- * @licence end@
- */
+ **/
+
+/*******************************************************************************
+**                                                                            **
+**  SRC-MODULE: dlt-logd-converter.cpp                                        **
+**                                                                            **
+**  TARGET    : ANDROID                                                       **
+**                                                                            **
+**  PROJECT   : DLT                                                           **
+**                                                                            **
+**  AUTHOR    : Minh.LuuQuang@vn.bosch.com                                    **
+**                                                                            **
+**  PURPOSE   : Retrieve log entries from logd and forward them to DLT.       **
+**                                                                            **
+**  REMARKS   :                                                               **
+**                                                                            **
+**  PLATFORM DEPENDANT [yes/no]: yes                                          **
+**                                                                            **
+**  TO BE CHANGED BY USER [yes/no]: no                                        **
+**                                                                            **
+*******************************************************************************/
+
 #include <cerrno>
 #include <cstring>
 #include <cstdio>
@@ -23,7 +45,14 @@
 
 #include <log/log_read.h>
 
+#include <fstream>
+#include <iostream>
+#include <unordered_map>
+#include <getopt.h>
+#include <json/json.h>
 #include <dlt.h>
+
+using namespace std;
 
 DLT_DECLARE_CONTEXT(dlt_ctx_self)
 DLT_DECLARE_CONTEXT(dlt_ctx_main)
@@ -34,15 +63,259 @@ DLT_DECLARE_CONTEXT(dlt_ctx_crsh)
 DLT_DECLARE_CONTEXT(dlt_ctx_stat) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_secu) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_krnl)
+DLT_DECLARE_CONTEXT(dlt_ctx_othe)
 
+/* MACRO */
+#define CONFIGURATION_FILE_DIR "/vendor/etc/dlt-logd-converter.conf"
+#define JSON_FILE_DIR "/vendor/etc/dlt-logdctxt.json"
+#define MAX_LINE 1024
+
+/* Global variables and data structures */
+typedef struct
+{
+    char *appID;
+    char *ctxID;
+    char *json_file_dir;
+    char *default_ctxID;
+    char *conf_file_dir;
+} dlt_logd_configuration;
+
+static dlt_logd_configuration *logd_conf = nullptr;
 volatile sig_atomic_t exit_parser_loop = false;
+static unordered_map<string, DltContext*> map_ctx_json;
+bool json_is_available = false;
+
+/**
+ * Print manual page for instruction.
+ */
+static void usage(char *prog_name)
+{
+    char version[255];
+    dlt_get_version(version, 255);
+
+    cout << "Usage: " << prog_name << " [-h] [-c FILENAME]" << endl;
+    cout << "Application to manage Android logs." << endl;
+    cout << "Format and forward Android messages from ANDROID to DLT." << endl;
+    cout << version << endl;
+    cout << "Options:" << endl;
+    cout << " -h           Display a short help text." << endl;
+    cout << " -c filename  Use an alternative configuration file." << endl;
+    cout << "              Default: " << CONFIGURATION_FILE_DIR << endl;
+}
+
+/**
+ * Initialize configuration to default values.
+ */
+static int init_configuration()
+{
+    logd_conf = new dlt_logd_configuration;
+    if (logd_conf == nullptr) {
+        cerr << "Fail to allocate, out of memory!" << endl;
+        return -1;
+    }
+    logd_conf->appID = strdup("LOGD");
+    logd_conf->ctxID = strdup("LOGF");
+    logd_conf->json_file_dir = strdup(JSON_FILE_DIR);
+    logd_conf->default_ctxID = strdup("OTHE");
+    logd_conf->conf_file_dir = strdup(CONFIGURATION_FILE_DIR);
+    return 0;
+}
+
+/**
+ * Read command line options and set the values in provided structure
+ */
+static int read_command_line(int argc, char *argv[])
+{
+    int opt;
+    while ((opt = getopt(argc, argv, "hc:")) != -1) {
+        switch (opt) {
+            case 'h':
+            {
+                usage(argv[0]);
+                exit(0);
+                return -1;
+            }
+            case 'c':
+            {
+                if (logd_conf->conf_file_dir) {
+                    delete logd_conf->conf_file_dir;
+                    logd_conf->conf_file_dir = nullptr;
+                }
+                logd_conf->conf_file_dir = new char [strlen(optarg)+1];
+                strcpy(logd_conf->conf_file_dir, optarg);
+                break;
+            }
+            default:
+            {
+                usage(argv[0]);
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * Read options from the configuration file
+ */
+static int load_configuration_file(const char *file_name)
+{
+    ifstream file(file_name);
+    char *token;
+    string pattern;
+
+    if (!file.is_open()) {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
+                DLT_STRING("dlt-logd-converter could not open cofiguration file."),
+                DLT_STRING("Initial values applied."));
+        cout << "Configuration file could not be opened, inital values applied" << endl;
+        return -1;
+    }
+
+    while (!file.eof()) {
+        getline(file, pattern);
+        if (pattern.size() == 0) {
+            continue;
+        }
+        if (pattern[0] != '#') {
+            token = strtok(&pattern[0], " \t=");
+            if (strcmp(token, "ApplicationID") == 0) {
+                if (logd_conf->appID) {
+                    delete logd_conf->appID;
+                }
+                token = strtok(nullptr, " \t=");
+                logd_conf->appID = strndup(token, DLT_ID_SIZE);
+            }
+            else if (strcmp(token, "ContextID") == 0) {
+                if (logd_conf->ctxID) {
+                    delete logd_conf->ctxID;
+                }
+                token = strtok(NULL, " \t=");
+                logd_conf->ctxID = strndup(token, DLT_ID_SIZE);
+            }
+            else if (strcmp(token, "AndroidLogdJSONpath") == 0) {
+                if (logd_conf->json_file_dir) {
+                    delete logd_conf->json_file_dir;
+                }
+                token = strtok(NULL, " \t=");
+                logd_conf->json_file_dir = strndup(token, MAX_LINE);
+            }
+            else if (strcmp(token, "AndroidLogdContextID") == 0) {
+                if (logd_conf->default_ctxID) {
+                    delete logd_conf->default_ctxID;
+                }
+                token = strtok(NULL, " \t=");
+                logd_conf->default_ctxID = strndup(token, DLT_ID_SIZE);
+            }
+        }
+    }
+    file.close();
+    return 0;
+}
+
+static void clean_mem()
+{
+    if (logd_conf->appID) {
+        delete logd_conf->appID;
+        logd_conf->appID = nullptr;
+    }
+    if (logd_conf->ctxID) {
+        delete logd_conf->ctxID;
+        logd_conf->ctxID = nullptr;
+    }
+    if (logd_conf->json_file_dir) {
+        delete logd_conf->json_file_dir;
+        logd_conf->json_file_dir = nullptr;
+    }
+    if (logd_conf->default_ctxID) {
+        delete logd_conf->default_ctxID;
+        logd_conf->default_ctxID = nullptr;
+    }
+    if (logd_conf->conf_file_dir) {
+        delete logd_conf->conf_file_dir;
+        logd_conf->conf_file_dir = nullptr;
+    }
+    if (logd_conf) {
+        delete logd_conf;
+        logd_conf = nullptr;
+    }
+    if (json_is_available) {
+        for (auto &map_malloc: map_ctx_json) {
+            delete map_malloc.second;
+            map_malloc.second = nullptr;
+        }
+        map_ctx_json.clear();
+    }
+}
+
+/**
+ * Parses data from a json file into an internal data
+ * structure and do registration with the new ctxID.
+ */
+static void json_parser()
+{
+    Json::Value console = Json::nullValue;
+    Json::CharReaderBuilder builder;
+    string errs;
+    ifstream file(logd_conf->json_file_dir);
+    if (parseFromStream(builder, file, &console, &errs)) {
+        json_is_available = true;
+    }
+
+    if (json_is_available) {
+        Json::Value::iterator iter;
+        DLT_REGISTER_CONTEXT(dlt_ctx_othe, logd_conf->default_ctxID, "");
+
+        for (iter = console.begin(); iter != console.end(); ++iter) {
+            string json_ctxID = iter.key().asString();
+            string json_tag = (*iter)["tag"].asString();
+            string json_description = (*iter)["description"].asString();
+
+            DltContext *ctx = new DltContext();
+            auto ret = map_ctx_json.emplace(json_tag, ctx);
+            if (!ret.second) {
+                DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
+                        DLT_STRING(json_tag.c_str()),
+                        DLT_STRING("is duplicated, please check the json file."));
+            }
+            DLT_REGISTER_CONTEXT(*(ret.first->second),
+                                 json_ctxID.c_str(),
+                                 json_description.c_str());
+        }
+    }
+    file.close();
+}
+
+/**
+ * Doing tag matching in a loop from first
+ * elementof json vector to the end of the list.
+ */
+static DltContext* find_tag_in_json(const char *tag)
+{
+    string tag_str(tag);
+    auto search = map_ctx_json.find(tag_str);
+    if (search == map_ctx_json.end()) {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE,
+                DLT_STRING(tag),
+                DLT_STRING("could not be found. Apply default contextID:"),
+                DLT_STRING(logd_conf->default_ctxID));
+        return &(dlt_ctx_othe);
+    }
+    else {
+         DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE,
+                DLT_STRING("Tag found and applied:"),
+                DLT_STRING(tag));
+        return search->second;
+    }
+}
 
 static inline struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id)
 {
     struct logger *logger;
     logger = android_logger_open(logger_list, log_id);
     if (logger == nullptr) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("could not open logd buffer id="), DLT_INT64(log_id));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
+                DLT_STRING("Could not open logd buffer ID = "), DLT_INT64(log_id));
     }
     return logger;
 }
@@ -52,7 +325,7 @@ static struct logger_list *init_logger_list(bool skip_binary_buffers)
     struct logger_list *logger_list;
     logger_list = android_logger_list_alloc(O_RDONLY, 0, 0);
     if (logger_list == nullptr) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("could not allocate logger list"));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("Could not allocate logger list"));
         return nullptr;
     }
 
@@ -142,6 +415,7 @@ static int logd_parser_loop(struct logger_list *logger_list)
 {
     struct log_msg log_msg;
     int ret;
+    DltContext *ctx = nullptr;
 
     DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING("Entering parsing loop"));
 
@@ -152,32 +426,40 @@ static int logd_parser_loop(struct logger_list *logger_list)
                 break;
             }
             continue;
-        } else if (ret == -EINVAL || ret == -ENOMEM || ret == -ENODEV || ret == -EIO) {
-            DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("Could not cannot retrieve logs, permanent error="), DLT_INT32(ret));
-            return ret;
-        } else if (ret <= 0) {
-            DLT_LOG(dlt_ctx_self, DLT_LOG_ERROR, DLT_STRING("android_logger_list_read unexpected return="), DLT_INT32(ret));
+        }
+        else if (ret == -EINVAL || ret == -ENOMEM || ret == -ENODEV || ret == -EIO) {
+            DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL,
+                    DLT_STRING("Could not retrieve logs, permanent error="), DLT_INT32(ret));
             return ret;
         }
-
-        DltContext *ctx = nullptr;
-        ctx = get_log_context_from_log_msg(&log_msg);
-
-        DltLogLevelType log_level;
-        log_level = get_log_level_from_log_msg(&log_msg);
+        else if (ret <= 0) {
+            DLT_LOG(dlt_ctx_self, DLT_LOG_ERROR,
+                    DLT_STRING("android_logger_list_read unexpected return="), DLT_INT32(ret));
+            return ret;
+        }
 
         /* Look into system/core/liblog/logprint.c for buffer format.
            "<priority:1><tag:N>\0<message:N>\0" */
         const char *tag = "";
-        const char *message= "";
-        if(log_msg.entry.len > 1)
-           tag = log_msg.msg() + 1;
-        if (log_msg.entry.len > 1 + strlen(tag) + 1)
+        const char *message = "";
+        if (log_msg.entry.len > 1) {
+            tag = log_msg.msg() + 1;
+        }
+        if (log_msg.entry.len > 1 + strlen(tag) + 1) {
             message = tag + strlen(tag) + 1;
+        }
 
+        /* Find tag in JSON file, apply new contextID if available */
+        if ((log_msg.id() == LOG_ID_MAIN) && (json_is_available)) {
+            ctx = find_tag_in_json(tag);
+        }
+        else {
+            ctx = get_log_context_from_log_msg(&log_msg);
+        }
 
-        uint32_t ts;
-        ts = get_timestamp_from_log_msg(&log_msg);
+        DltLogLevelType log_level = get_log_level_from_log_msg(&log_msg);
+
+        uint32_t ts = get_timestamp_from_log_msg(&log_msg);
 
         /* Binary buffers are not supported by DLT_STRING DLT_RAW would need the message length */
         DLT_LOG_TS(*ctx, log_level, ts,
@@ -197,18 +479,44 @@ int main(int argc, char *argv[])
     (void) argc;
     (void) argv;
     bool skip_binary_buffers = true;
+    if (init_configuration() < 0) {
+        cerr << "dlt-logd-converter could not allocate memory." << endl;
+        return -1;
+    }
+    if (read_command_line(argc, argv) < 0) {
+        cerr << "Failed to read command line!" << endl;
+        return -1;
+    }
+    if (load_configuration_file(logd_conf->conf_file_dir) < 0) {
+        cout << "No configuration file found, use default values!" << endl;
+    }
 
-    DLT_REGISTER_APP("LOGD", "logd -> dlt adapter");
-    DLT_REGISTER_CONTEXT(dlt_ctx_self, "LOGF", "logd retriever");
-    DLT_REGISTER_CONTEXT(dlt_ctx_main, "MAIN", "logd type: main");
+    DLT_REGISTER_APP(logd_conf->appID, "logd -> dlt adapter");
+    DLT_REGISTER_CONTEXT(dlt_ctx_self, logd_conf->ctxID, "logd retriever");
     DLT_REGISTER_CONTEXT(dlt_ctx_rdio, "RDIO", "logd type: rdio");
     DLT_REGISTER_CONTEXT(dlt_ctx_syst, "SYST", "logd type: syst");
     DLT_REGISTER_CONTEXT(dlt_ctx_crsh, "CRSH", "logd type: crsh");
     DLT_REGISTER_CONTEXT(dlt_ctx_krnl, "KRNL", "logd type: krnl");
-    if(!skip_binary_buffers){
+    if (!skip_binary_buffers) {
         DLT_REGISTER_CONTEXT(dlt_ctx_evnt, "EVNT", "logd type: evnt");
         DLT_REGISTER_CONTEXT(dlt_ctx_stat, "STAT", "logd type: stat");
         DLT_REGISTER_CONTEXT(dlt_ctx_secu, "SECU", "logd type: secu");
+    }
+
+    /* Parse json data into internal data structure and do registration */
+    json_parser();
+    if (json_is_available) {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_INFO,
+                        DLT_STRING("Found JSON file at "),
+                        DLT_STRING(logd_conf->json_file_dir),
+                        DLT_STRING(". Extension is ON!"));
+    }
+    else {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_INFO,
+                        DLT_STRING("No JSON file available at "),
+                        DLT_STRING(logd_conf->json_file_dir);
+                        DLT_STRING(". Extension is OFF!"));
+        DLT_REGISTER_CONTEXT(dlt_ctx_main, "MAIN", "logd type: main");
     }
 
     struct sigaction act;
@@ -220,11 +528,14 @@ int main(int argc, char *argv[])
     struct logger_list *logger_list;
     /* Binary buffers are currently not supported */
     logger_list = init_logger_list(skip_binary_buffers);
-    if (logger_list == nullptr)
+    if (logger_list == nullptr) {
         return EXIT_FAILURE;
+    }
 
     int ret;
-    ret = logd_parser_loop(logger_list); /* Main loop */
+
+    /* Main loop */
+    ret = logd_parser_loop(logger_list);
 
     android_logger_list_free(logger_list);
 
@@ -232,15 +543,23 @@ int main(int argc, char *argv[])
     DLT_UNREGISTER_CONTEXT(dlt_ctx_crsh);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_syst);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_rdio);
-    DLT_UNREGISTER_CONTEXT(dlt_ctx_main);
     DLT_UNREGISTER_CONTEXT(dlt_ctx_self);
-    if(!skip_binary_buffers){
+    if (!skip_binary_buffers) {
         DLT_UNREGISTER_CONTEXT(dlt_ctx_evnt);
         DLT_UNREGISTER_CONTEXT(dlt_ctx_stat);
         DLT_UNREGISTER_CONTEXT(dlt_ctx_secu);
     }
 
+    if (json_is_available) {
+        DLT_UNREGISTER_CONTEXT(dlt_ctx_othe);
+        for (auto &tag_map: map_ctx_json) {
+            DLT_UNREGISTER_CONTEXT(*(tag_map.second));
+        }
+    }
+	else {
+        DLT_UNREGISTER_CONTEXT(dlt_ctx_main);
+    }
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
-
+    clean_mem();
     return ret;
 }
