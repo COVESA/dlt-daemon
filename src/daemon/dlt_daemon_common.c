@@ -141,6 +141,92 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
     dlt_vlog(LOG_ERR, "Cannot find user list for ECU: %4s\n", ecu);
     return (DltDaemonRegisteredUsers *)NULL;
 }
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+
+static int dlt_daemon_cmp_log_settings(const void *lhs, const void *rhs) {
+    if ((lhs == NULL) || (rhs == NULL))
+        return -1;
+
+    DltDaemonContextLogSettings *settings1 = (DltDaemonContextLogSettings *)lhs;
+    DltDaemonContextLogSettings *settings2 = (DltDaemonContextLogSettings *)rhs;
+
+    int cmp = memcmp(settings1->apid, settings2->apid, DLT_ID_SIZE);
+
+    if (cmp < 0)
+        return -1;
+    else if (cmp == 0)
+        return memcmp(settings1->ctid, settings2->ctid, DLT_ID_SIZE);
+    else
+        return 1;
+}
+
+/**
+ * Find configuration for app/ctx id specific log settings configuration
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
+    const DltDaemon *daemon, const char *apid, const char *ctid) {
+    DltDaemonContextLogSettings *app_id_settings = NULL;
+    for (int i = 0; i < daemon->num_app_id_log_level_settings; ++i) {
+        DltDaemonContextLogSettings *settings = &daemon->app_id_log_level_settings[i];
+
+        if (strncmp(apid, settings->apid, DLT_ID_SIZE) != 0) {
+            if (app_id_settings != NULL)
+                return app_id_settings;
+            continue;
+        }
+
+        if (strlen(settings->ctid) == 0) {
+            app_id_settings = settings;
+        }
+
+        if (ctid == NULL || strlen(ctid) == 0) {
+            if (app_id_settings != NULL) {
+                return app_id_settings;
+            }
+        } else {
+            if (strncmp(ctid, settings->ctid, DLT_ID_SIZE) == 0) {
+                return settings;
+            }
+        }
+    }
+
+    return app_id_settings;
+}
+
+/**
+ * Find configured log levels in a given DltDaemonApplication for the passed context id.
+ * @param app The application settings which contain the previously loaded ap id settings
+ * @param ctid The context id to find.
+ * @return Pointer to DltDaemonApplicationLogSettings containing the log level
+ *         for the requested application or NULL if none found.
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_app_log_level_config(
+    const DltDaemonApplication *const app, const char *const ctid) {
+
+    if (NULL == ctid)
+        return NULL;
+
+    DltDaemonContextLogSettings settings;
+    memcpy(settings.apid, app->apid, DLT_ID_SIZE);
+    memcpy(settings.ctid, ctid, DLT_ID_SIZE);
+
+    DltDaemonContextLogSettings* log_settings = NULL;
+    log_settings =
+        (DltDaemonContextLogSettings *)bsearch(
+            &settings, app->context_log_level_settings,
+            (size_t)app->num_context_log_level_settings,
+            sizeof(DltDaemonContextLogSettings),
+            dlt_daemon_cmp_log_settings);
+    return log_settings;
+}
+
+#endif
+
 int dlt_daemon_init_runtime_configuration(DltDaemon *daemon, const char *runtime_directory, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -273,6 +359,12 @@ int dlt_daemon_free(DltDaemon *daemon, int verbose)
 
     free(daemon->user_list);
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    if (daemon->app_id_log_level_settings != NULL) {
+      free(daemon->app_id_log_level_settings);
+    }
+#endif
+
     if (app_recv_buffer)
         free(app_recv_buffer);
 
@@ -371,6 +463,12 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
 
     for (i = 0; i < user_list->num_applications; i++)
         if (user_list->applications[i].application_description != NULL) {
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+            if (user_list->applications[i].context_log_level_settings)
+                free(user_list->applications[i].context_log_level_settings);
+#endif
+
             free(user_list->applications[i].application_description);
             user_list->applications[i].application_description = NULL;
         }
@@ -570,6 +668,11 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         /* Find new position of application with apid*/
         application = dlt_daemon_application_find(daemon, apid, ecu, verbose);
     }
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    application->num_context_log_level_settings = 0;
+    application->context_log_level_settings = NULL;
+#endif
 
     return application;
 }
@@ -893,19 +996,53 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
         }
     }
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* configure initial log level */
+    DltDaemonContextLogSettings *settings = NULL;
+    settings = dlt_daemon_find_configured_app_id_ctx_id_settings(
+            daemon, context->apid, ctid);
+
+    if (settings != NULL) {
+        /* set log level */
+        log_level = settings->log_level;
+
+        DltDaemonContextLogSettings *ct_settings = NULL;
+        ct_settings = dlt_daemon_find_app_log_level_config(application, ctid);
+
+        /* ct_settings != null: context and app id combination already exists */
+        if (ct_settings == NULL) {
+          /* copy the configuration into the DltDaemonApplication for faster access later */
+          DltDaemonContextLogSettings *tmp =
+              realloc(application->context_log_level_settings,
+                      (++application->num_context_log_level_settings) *
+                          sizeof(DltDaemonContextLogSettings));
+          application->context_log_level_settings = tmp;
+
+          ct_settings =
+              &application->context_log_level_settings[application->num_context_log_level_settings - 1];
+          memcpy(ct_settings, settings, sizeof(DltDaemonContextLogSettings));
+          memcpy(ct_settings->ctid, ctid, DLT_ID_SIZE);
+      }
+    }
+#endif
+
     if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) && (daemon->force_ll_ts)) {
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        if (log_level > daemon->default_log_level && settings == NULL)
+#else
         if (log_level > daemon->default_log_level)
+#endif
             log_level = daemon->default_log_level;
 
         if (trace_status > daemon->default_trace_status)
             trace_status = daemon->default_trace_status;
 
         dlt_vlog(LOG_NOTICE,
-                 "Adapting ll_ts for context: %.4s:%.4s with %i %i\n",
-                 apid,
-                 ctid,
-                 log_level,
-                 trace_status);
+            "Adapting ll_ts for context: %.4s:%.4s with %i %i\n",
+            apid,
+            ctid,
+            log_level,
+            trace_status);
     }
 
     /* Store log level and trace status,
@@ -942,6 +1079,43 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
     return context;
 }
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+static void dlt_daemon_free_context_log_settings(
+    DltDaemonApplication *application,
+    DltDaemonContext *context)
+{
+    DltDaemonContextLogSettings *ct_settings;
+    int i;
+    int skipped = 0;
+
+    ct_settings = dlt_daemon_find_app_log_level_config(application, context->ctid);
+    if (ct_settings == NULL) {
+        return;
+    }
+
+    /* move all data forward */
+    for (i = 0; i < application->num_context_log_level_settings; ++i) {
+        /* skip given context to delete it */
+        if (i + skipped < application->num_context_log_level_settings &&
+            strncmp(application->context_log_level_settings[i+skipped].ctid, context->ctid, DLT_ID_SIZE) == 0) {
+            ++skipped;
+            continue;
+        }
+
+        memcpy(&application->context_log_level_settings[i-skipped],
+                &application->context_log_level_settings[i],
+                sizeof(DltDaemonContextLogSettings));
+    }
+
+    application->num_context_log_level_settings -= skipped;
+
+    /* if size is equal to zero, and ptr is not NULL, then realloc is equivalent to free(ptr) */
+    application->context_log_level_settings = realloc(application->context_log_level_settings,
+            sizeof(DltDaemonContextLogSettings) * (application->num_context_log_level_settings));
+
+}
+#endif
+
 int dlt_daemon_context_del(DltDaemon *daemon,
                            DltDaemonContext *context,
                            char *ecu,
@@ -964,6 +1138,9 @@ int dlt_daemon_context_del(DltDaemon *daemon,
     if (user_list->num_contexts > 0) {
         application = dlt_daemon_application_find(daemon, context->apid, ecu, verbose);
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        dlt_daemon_free_context_log_settings(application, context);
+#endif
         /* Free description of context to be deleted */
         if (context->context_description) {
             free(context->context_description);
@@ -1515,7 +1692,11 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
     }
 }
 
-void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_level, int verbose)
+void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
+                                               int enforce_context_ll_and_ts,
+                                               int8_t context_log_level,
+                                               int8_t log_level,
+                                               int verbose)
 {
     int32_t count = 0;
     DltDaemonContext *context = NULL;
@@ -1537,6 +1718,22 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_lev
         if (context) {
             if (context->user_handle >= DLT_FD_MINIMUM) {
                 context->log_level = log_level;
+
+                if (enforce_context_ll_and_ts) {
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                    DltDaemonContextLogSettings *settings =
+                        dlt_daemon_find_configured_app_id_ctx_id_settings(
+                            daemon, context->apid, context->ctid);
+                    if (settings != NULL) {
+                        if (log_level > settings->log_level) {
+                          context->log_level = settings->log_level;
+                        }
+                    } else
+#endif
+                    if (log_level > context_log_level) {
+                        context->log_level = (int8_t)context_log_level;
+                    }
+                }
 
                 if (dlt_daemon_user_send_log_level(daemon,
                                                    context,

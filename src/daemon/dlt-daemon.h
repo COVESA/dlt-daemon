@@ -99,6 +99,9 @@ typedef struct
     char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
     char ivalue[NAME_MAX + 1];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
     char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    char avalue[NAME_MAX + 1];    /**< (String: Directory) Filename of the app id default level config (Default: /etc/dlt-log-levels.conf) */
+#endif
     int sharedMemorySize;        /**< (int) Size of shared memory (Default: 100000) */
     int sendMessageTime;        /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
@@ -255,7 +258,11 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                         DltReceiver *rec,
                                         int verbose);
 
-bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local);
+bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            ,DltDaemonApplication *app
+#endif
+                                            );
 
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,

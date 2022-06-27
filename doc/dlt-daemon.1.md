@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-daemon** \[**-h**\] \[**-d**\] \[**-c** filename\] \[**-t** directory\] \[**-p** port\]
+**dlt-daemon** \[**-h**\] \[**-d**\] \[**-c** filename\] \[**-t** directory\] \[**-p** port\] \[**-a** filename\]
 
 # DESCRIPTION
 
@@ -40,6 +40,12 @@ GENIVI system or more likely on a external tester device.
     Applications wanting to connect to a daemon using a custom
     port need to be started with the environment variable
     DLT_DAEMON_TCP_PORT set appropriately.
+
+-a
+
+:   Load an alternative configuration for app id log level defaults.
+    By default, the configuration file /etc/dlt-log-levels.conf is loaded.
+
 
 # EXAMPLES
 
