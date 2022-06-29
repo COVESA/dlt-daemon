@@ -1,10 +1,8 @@
 # Diagnostic Log and Trace
 
-Build and Test status: [![Build Status](https://github.com/thanhbnq/dlt-daemon/actions/workflows/cmake.yml/badge.svg)](https://github.com/thanhbnq/dlt-daemon/actions/workflows/cmake.yml)
+Build and Test status: [![Build Status](https://travis-ci.com/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.com/GENIVI/dlt-daemon)
 Alerts: [![Total alerts](https://img.shields.io/lgtm/alerts/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/alerts/)
 Code quality: [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/context:cpp)
-
-The Github Actions is now used for Build Status, former is Travis CI
 
 # Diagnostic Log and Trace
 
