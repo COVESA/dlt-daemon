@@ -651,8 +651,7 @@ int dlt_control_deinit(void)
         close(g_client.receiver.fd);
         g_client.receiver.fd = -1;
     }
-    /* Stopping the listener thread */
-    pthread_cancel(daemon_connect_thread);
+    /* Waiting for thread to complete */
     pthread_join(daemon_connect_thread, NULL);
     /* Closing the socket */
     return dlt_client_cleanup(&g_client, get_verbosity());
