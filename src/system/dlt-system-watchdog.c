@@ -107,7 +107,11 @@ int register_watchdog_fd(struct pollfd *pollfd, int fdcnt)
     return 0;
 }
 
+#if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+void watchdog_fd_handler(int fd, int* received_message_since_last_watchdog_interval)
+#else
 void watchdog_fd_handler(int fd)
+#endif
 {
     uint64_t timersElapsed = 0ULL;
     int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
@@ -115,10 +119,17 @@ void watchdog_fd_handler(int fd)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
             DLT_STRING(strerror(r)));
 
+    #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
+    if (!*received_message_since_last_watchdog_interval) {
+      dlt_log(LOG_WARNING, "No new messages received since last watchdog timer run\n");
+      return;
+    }
+    *received_message_since_last_watchdog_interval = 0;
+    #endif
+
     if (sd_notify(0, "WATCHDOG=1") < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog\n"));
 
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("systemd watchdog waited periodic\n"));
 }
 #endif
-

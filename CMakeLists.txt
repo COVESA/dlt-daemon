@@ -47,6 +47,8 @@ endif()
 option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"                                             ON)
 option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           OFF)
 option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"                              OFF)
+option(WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX "Set to ON to trigger systemd watchdog of dlt-daemon only when a message was received since the last trigger" OFF)
+option(WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM "Set to ON to trigger systemd watchdog of dlt-system only when a message was received since the last trigger" OFF)
 option(WITH_SYSTEMD_JOURNAL   "Set to ON to use the systemd journal in dlt-system"                               OFF)
 option(WITH_SYSTEMD_SOCKET_ACTIVATION "Set to ON to use systemd socket activation"                               OFF)
 option(WITH_DOC               "Set to ON to build documentation target"                                          OFF)
@@ -56,7 +58,7 @@ option(WITH_TESTSCRIPTS       "Set to ON to run CMakeLists.txt in testscripts"  
 option(WITH_GPROF             "Set -pg to compile flags"                                                         OFF)
 option(WITH_DLTTEST           "Set to ON to build with modifications to test User-Daemon communication with corrupt messages" OFF)
 option(WITH_DLT_SHM_ENABLE    "EXPERIMENTAL! Set to ON to use shared memory as IPC. EXPERIMENTAL!"               OFF)
-option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF) 
+option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF)
 option(WITH_DLT_ADAPTOR_STDIN "Set to ON to build src/adaptor/stdin binaries"                                    OFF)
 option(WITH_DLT_ADAPTOR_UDP   "Set to ON to build src/adaptor/udp binaries"                                      OFF)
 option(WITH_DLT_CONSOLE       "Set to ON to build src/console binaries"                                          ON)
@@ -234,7 +236,13 @@ else()
     message(STATUS "Network trace interface disabled")
 endif()
 
-if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL OR WITH_SYSTEMD_SOCKET_ACTIVATION)
+if(WITH_SYSTEMD
+    OR WITH_SYSTEMD_WATCHDOG
+    OR WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX
+    OR WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM
+    OR WITH_SYSTEMD_JOURNAL
+    OR WITH_SYSTEMD_SOCKET_ACTIVATION)
+
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
     string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
@@ -249,6 +257,14 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL OR WITH_SYSTEMD
 
     if(WITH_SYSTEMD_JOURNAL)
         add_definitions(-DDLT_SYSTEMD_JOURNAL_ENABLE)
+    endif()
+
+    if (WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX)
+        add_definitions(-DDLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE)
+    endif()
+
+    if (WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM)
+        add_definitions(-DDLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYTSTEM)
     endif()
 
     if (WITH_SYSTEMD_SOCKET_ACTIVATION)
@@ -346,6 +362,8 @@ message(STATUS "TARGET_CPU_NAME = ${TARGET_CPU_NAME}")
 if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
     message(STATUS "SYSTEMD_VERSION = ${SYSTEMD_VERSION}")
     message(STATUS "SYSTEMD_UNITDIR = ${SYSTEMD_UNITDIR}")
+    message(STATUS "WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX = ${WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX}" )
+    message(STATUS "WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM = ${WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM}" )
 endif()
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")

@@ -300,7 +300,11 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
                 #endif
                 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)
                 else if (fdType[i] == fdType_watchdog) {
+                    #if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+                    watchdog_fd_handler(pollfd[i].fd, &config->Journal.MessageReceived);
+                    #else
                     watchdog_fd_handler(pollfd[i].fd);
+                    #endif
                 }
                 #endif
             }

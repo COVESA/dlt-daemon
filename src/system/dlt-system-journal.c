@@ -229,6 +229,10 @@ void get_journal_msg(sd_journal *j, DltSystemConfiguration *config)
             return;
         }
 
+        #if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+        config->Journal.MessageReceived = 1;
+        #endif
+
         /* get all data from current journal entry */
         dlt_system_journal_get_timestamp(j, &timestamp);
 
