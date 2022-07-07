@@ -160,7 +160,8 @@ void write_messages(int ohandle, DltFile *file,
         if ((0 == i % 1001) || (i == message_count - 1))
             verbose(2, "Writing message %d\r", i);
 
-        dlt_file_message(file, timestamps[i].num, 0);
+        if (dlt_file_message(file, timestamps[i].num, 0) < DLT_RETURN_OK)
+            continue;
         iov[0].iov_base = file->msg.headerbuffer;
         iov[0].iov_len = file->msg.headersize;
         iov[1].iov_base = file->msg.databuffer;
@@ -402,7 +403,8 @@ int main(int argc, char *argv[]) {
     verbose(1, "Filling %d entries\n", message_count);
 
     for (num = begin; num <= end; num++) {
-        dlt_file_message(&file, num, vflag);
+        if (dlt_file_message(&file, num, vflag) < DLT_RETURN_OK)
+            continue;
         timestamp_index[num - begin].num = num;
         timestamp_index[num - begin].systmsp = file.msg.storageheader->seconds;
         timestamp_index[num - begin].tmsp = file.msg.headerextra.tmsp;

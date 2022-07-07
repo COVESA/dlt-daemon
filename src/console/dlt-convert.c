@@ -432,31 +432,37 @@ int main(int argc, char *argv[])
             }
 
             for (num = begin; num <= end; num++) {
-                dlt_file_message(&file, num, vflag);
+                if (dlt_file_message(&file, num, vflag) < DLT_RETURN_OK)
+                    continue;
 
                 if (xflag) {
                     printf("%d ", num);
-                    dlt_message_print_hex(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag);
+                    if (dlt_message_print_hex(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
+                        continue;
                 }
                 else if (aflag) {
                     printf("%d ", num);
 
-                    dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag);
+                    if (dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
+                        continue;
 
                     printf("%s ", text);
 
-                    dlt_message_payload(&file.msg, text, DLT_CONVERT_TEXTBUFSIZE, DLT_OUTPUT_ASCII, vflag);
+                    if (dlt_message_payload(&file.msg, text, DLT_CONVERT_TEXTBUFSIZE, DLT_OUTPUT_ASCII, vflag) < DLT_RETURN_OK)
+                        continue;
 
                     printf("[%s]\n", text);
                 }
                 else if (mflag) {
                     printf("%d ", num);
-                    dlt_message_print_mixed_plain(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag);
+                    if (dlt_message_print_mixed_plain(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
+                        continue;
                 }
                 else if (sflag) {
                     printf("%d ", num);
 
-                    dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag);
+                    if (dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
+                        continue;
 
                     printf("%s \n", text);
                 }
