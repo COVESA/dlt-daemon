@@ -166,9 +166,7 @@ static int load_configuration_file(const char *file_name)
 
     if (!file.is_open()) {
         DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
-                DLT_STRING("dlt-logd-converter could not open cofiguration file."),
-                DLT_STRING("Initial values applied."));
-        cout << "Configuration file could not be opened, inital values applied" << endl;
+                DLT_STRING("No configuration file found, use default values!"));
         return -1;
     }
 
@@ -277,10 +275,14 @@ static void json_parser()
                 DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
                         DLT_STRING(json_tag.c_str()),
                         DLT_STRING("is duplicated, please check the json file."));
+                delete ctx;
+                ctx = nullptr;
             }
-            DLT_REGISTER_CONTEXT(*(ret.first->second),
-                                 json_ctxID.c_str(),
-                                 json_description.c_str());
+            else {
+                DLT_REGISTER_CONTEXT(*(ret.first->second),
+                                    json_ctxID.c_str(),
+                                    json_description.c_str());
+            }
         }
     }
     file.close();
