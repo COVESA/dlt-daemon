@@ -3451,6 +3451,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
              * or the headers are corrupted (error case). */
             dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
 
+        if (dlt_receiver_remove(rec, rec->bytesRcvd) != DLT_RETURN_OK) {
+            /* In certain rare scenarios where only a partial message has been received
+             * (Eg: kernel IPC buffer memory being full), we want to discard the message
+             * and not broadcast it forward to connected clients. Since the DLT library
+             * checks return value of the writev() call against the sent total message
+             * length, the partial message will be buffered and retransmitted again.
+             * This implicitly ensures that no message loss occurs.
+             */
+            dlt_log(LOG_WARNING, "failed to remove required bytes from receiver.\n");
+        }
+
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
