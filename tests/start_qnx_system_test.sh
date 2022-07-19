@@ -92,24 +92,22 @@ dlt_qnx_run_app()
 {
     pr_verbose "$0" "Start dlt-qnx-system testing"
 
-    export LD_LIBRARY_PATH=/opt/lib_tmp:$LD_LIBRARY_PATH
-
     # Prepare a text file to filter log messages by specific AppID and Ctx ID
     echo "QSYM QSLA" > "${DLT_RECEIVE_FILTER}"
 
     # Start dlt-receive
     echo "Start dlt-receive"
-    "${DEV_AAP_DLT_PATH}"/dlt-receive -a -f "${DLT_RECEIVE_FILTER}" localhost > "${DLT_TEST_RESULT}" &
+    "${DEV_DLT_PATH}"/dlt-receive -a -f "${DLT_RECEIVE_FILTER}" 127.0.0.1 > "${DLT_TEST_RESULT}" &
     sleep "${SLEEP_TIME}"
 
     # Start dlt-qnx-system
     echo "Start dlt-qnx-system"
-    "${DEV_AAP_DLT_PATH}"/dlt-qnx-system > /dev/null &
+    "${DEV_DLT_PATH}"/dlt-qnx-system > /dev/null &
     sleep "${SLEEP_TIME}"
 
     # Start dlt-test-qnx-slogger and wait until it's done
     echo "Start dlt-test-qnx-slogger"
-    "${DEV_AAP_DLT_PATH}"/dlt-test-qnx-slogger -n "${COUNT}" -d "${DELAY}" -l "${LENGTH}" > /dev/null
+    "${DEV_DLT_PATH}"/dlt-test-qnx-slogger -n "${COUNT}" -d "${DELAY}" -l "${LENGTH}" > /dev/null
     sleep "${SLEEP_TIME}"
 }
 
@@ -220,7 +218,7 @@ LENGTH=100
 DLT_TEST_RESULT="dlt_qnx_system_test.txt"
 DLT_RECEIVE_FILTER="dlt_receive_filter.txt"
 
-DEV_AAP_DLT_PATH="/usr/bin"
+DEV_DLT_PATH="/usr/bin"
 
 # OS
 if [ "$(uname)" != "QNX" ]; then
@@ -257,16 +255,16 @@ echo "   Payload length: ${LENGTH} bytes"
 echo "*******************************"
 echo ""
 
-# Verify if rb-dltd is running
-if [ ! "$(slay -p -Q rb-dltd)" ]; then
-    echo "Start rb-dltd before running this script!"
-    exit 1
+# Start dlt-daemon
+if [ ! "$(pidin u | grep dlt-daemon)" ]; then
+    echo "Start dlt-daemon in daemonized mode"
+    dlt-daemon -d
 fi
 
 # Verify necessary binaries are available under the target
-dlt_qnx_verify_app ${DEV_AAP_DLT_PATH}/dlt-receive
-dlt_qnx_verify_app ${DEV_AAP_DLT_PATH}/dlt-qnx-system
-dlt_qnx_verify_app ${DEV_AAP_DLT_PATH}/dlt-test-qnx-slogger
+dlt_qnx_verify_app ${DEV_DLT_PATH}/dlt-receive
+dlt_qnx_verify_app ${DEV_DLT_PATH}/dlt-qnx-system
+dlt_qnx_verify_app ${DEV_DLT_PATH}/dlt-test-qnx-slogger
 
 #dlt_qnx_configure_setup
 
@@ -278,3 +276,5 @@ dlt_qnx_clean_app
 
 dlt_qnx_test_result
 dlt_qnx_clean_log
+
+slay dlt-daemon
