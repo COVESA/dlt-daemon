@@ -165,8 +165,6 @@ static int load_configuration_file(const char *file_name)
     string pattern;
 
     if (!file.is_open()) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
-                DLT_STRING("No configuration file found, use default values!"));
         return -1;
     }
 
