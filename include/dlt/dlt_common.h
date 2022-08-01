@@ -1194,8 +1194,17 @@ void dlt_print_with_attributes(bool state);
 /**
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
+ * @param overwrite_flag 1 = overwrite LoggingFilename, 0 = append LoggingFilename
  */
-void dlt_log_init(int mode);
+void dlt_log_init_p1(int mode, int overwrite_flag);
+
+/**
+ * Reinitialize (external) logging facility
+ * Should be called after dlt_log_init_p1() to reinitialize after fork
+ * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
+ */
+void dlt_log_init_p2(int mode);
+
 /**
  * Print with variable arguments to specified file descriptor by DLT_LOG_MODE environment variable (like fprintf)
  * @param format format string for message

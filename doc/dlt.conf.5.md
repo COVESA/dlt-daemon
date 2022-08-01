@@ -79,6 +79,12 @@ If LoggingMode is set to 2 logs are written to the file path given here.
 
     Default: /tmp/dlt.log
 
+## LoggingFileMode
+
+If set to 1 overwrites LoggingFilename. If set to 0 appends LoggingFilename.
+
+    Default: 0
+
 ## TimeOutOnSend
 
 Socket timeout in seconds for sending to clients.

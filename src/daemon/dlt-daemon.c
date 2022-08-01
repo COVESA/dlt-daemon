@@ -409,7 +409,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     else
         filename = CONFIGURATION_FILES_DIR "/dlt.conf";
 
-    /*printf("Load configuration from file: %s\n",filename); */
+    dlt_vlog("Load configuration from file: %s\n",filename);
     pFile = fopen (filename, "r");
 
     if (pFile != NULL) {
@@ -528,6 +528,11 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                 value,
                                 sizeof(daemon_local->flags.loggingFilename) - 1);
                         daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename) - 1] = 0;
+                        /*printf("Option: %s=%s\n",token,value); */
+                    }
+                    else if (strcmp(token, "LoggingFileMode") == 0)
+                    {
+                        daemon_local->flags.fflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
                     }
                     else if (strcmp(token, "TimeOutOnSend") == 0)
@@ -940,7 +945,7 @@ int main(int argc, char *argv[])
     /* Initialize internal logging facility */
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
-    dlt_log_init(daemon_local.flags.loggingMode);
+    dlt_log_init_p1(daemon_local.flags.loggingMode, daemon_local.flags.fflag);
 
     /* Print version information */
     dlt_get_version(version, DLT_DAEMON_TEXTBUFSIZE);
@@ -1153,7 +1158,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Re-Initialize internal logging facility after fork */
     dlt_log_set_filename(daemon_local->flags.loggingFilename);
     dlt_log_set_level(daemon_local->flags.loggingLevel);
-    dlt_log_init(daemon_local->flags.loggingMode);
+    dlt_log_init_p2(daemon_local->flags.loggingMode);
 
     /* initialise structure to use DLT file */
     ret = dlt_file_init(&(daemon_local->file), daemon_local->flags.vflag);

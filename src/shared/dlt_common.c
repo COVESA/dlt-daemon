@@ -1814,7 +1814,7 @@ void dlt_print_with_attributes(bool state)
     print_with_attributes = state;
 }
 
-void dlt_log_init(int mode)
+void dlt_log_init_internal(int mode, const char* file_mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
         dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
@@ -1825,13 +1825,27 @@ void dlt_log_init(int mode)
 
     if (logging_mode == DLT_LOG_TO_FILE) {
         /* internal logging to file */
-        logging_handle = fopen(logging_filename, "a");
+        logging_handle = fopen(logging_filename, file_mode);
 
         if (logging_handle == NULL) {
             dlt_user_printf("Internal log file %s cannot be opened!\n", logging_filename);
             return;
         }
     }
+}
+
+void dlt_log_init_p1(int mode, int overwrite_flag)
+{
+    if (overwrite_flag) {
+        dlt_log_init_internal(mode, "w");
+    } else {
+        dlt_log_init_internal(mode, "a");
+    }
+}
+
+void dlt_log_init_p2(int mode)
+{
+    dlt_log_init_internal(mode, "a");
 }
 
 void dlt_log_free(void)
@@ -3992,7 +4006,7 @@ void dlt_check_envvar()
         int mode = 0;
 
         if (sscanf(env_log_mode, "%d", &mode))
-            dlt_log_init(mode);
+            dlt_log_init_p2(mode);
     }
 
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC

@@ -93,6 +93,7 @@ typedef struct
     int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
     int mflag;      /**< (Boolean) Sync to serial header on serial connection */
     int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
+    int fflag;      /**< (Boolean) Overwrite previous LoggingFilename */
     char evalue[NAME_MAX + 1];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
     char bvalue[NAME_MAX + 1];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
     char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
