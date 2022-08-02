@@ -3741,7 +3741,8 @@ static void *timer_thread(void *data)
     }
 
     while (1) {
-        if (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1)) {
+        if ((dlt_timer_pipes[timer_thread_data->timer_id][1] > 0) &&
+                (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1))) {
             dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
                     dlt_timer_names[timer_thread_data->timer_id]);
             pexit = 1;
