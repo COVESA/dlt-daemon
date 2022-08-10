@@ -1621,6 +1621,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         }
     }
     else {
+        bool any_open = false;
         while (head != NULL) { /* open socket for each IP in the bindAddress list */
 
             if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
@@ -1629,16 +1630,21 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
                                           fd,
                                           POLLIN,
                                           DLT_CONNECTION_CLIENT_CONNECT)) {
-                    dlt_log(LOG_ERR, "Could not initialize main socket.\n");
-                    return DLT_RETURN_ERROR;
+                    dlt_vlog(LOG_ERR, "Could not create connection, for binding %s\n", head->ip);
+                } else {
+                    any_open = true;
                 }
             }
             else {
-                dlt_log(LOG_ERR, "Could not initialize main socket.\n");
-                return DLT_RETURN_ERROR;
+                dlt_vlog(LOG_ERR, "Could not open main socket, for binding %s\n", head->ip);
             }
 
             head = head->next;
+        }
+
+        if (!any_open) {
+            dlt_vlog(LOG_ERR, "Failed create main socket for any configured binding\n");
+            return DLT_RETURN_ERROR;
         }
     }
 
