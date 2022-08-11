@@ -37,22 +37,7 @@
 **                                                                            **
 *******************************************************************************/
 
-#include <cerrno>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <csignal>
-
-#include <log/log_read.h>
-
-#include <fstream>
-#include <iostream>
-#include <unordered_map>
-#include <getopt.h>
-#include <json/json.h>
-#include <dlt.h>
-
-using namespace std;
+#include "dlt-logd-converter.hpp"
 
 DLT_DECLARE_CONTEXT(dlt_ctx_self)
 DLT_DECLARE_CONTEXT(dlt_ctx_main)
@@ -65,30 +50,16 @@ DLT_DECLARE_CONTEXT(dlt_ctx_secu) /* Binary Buffer */
 DLT_DECLARE_CONTEXT(dlt_ctx_krnl)
 DLT_DECLARE_CONTEXT(dlt_ctx_othe)
 
-/* MACRO */
-#define CONFIGURATION_FILE_DIR "/vendor/etc/dlt-logd-converter.conf"
-#define JSON_FILE_DIR "/vendor/etc/dlt-logdctxt.json"
-#define MAX_LINE 1024
-
-/* Global variables and data structures */
-typedef struct
-{
-    char *appID;
-    char *ctxID;
-    char *json_file_dir;
-    char *default_ctxID;
-    char *conf_file_dir;
-} dlt_logd_configuration;
-
-static dlt_logd_configuration *logd_conf = nullptr;
+/* Global variables */
+DLT_STATIC dlt_logd_configuration *logd_conf = nullptr;
 volatile sig_atomic_t exit_parser_loop = false;
-static unordered_map<string, DltContext*> map_ctx_json;
+DLT_STATIC unordered_map<string, DltContext*> map_ctx_json;
 bool json_is_available = false;
 
 /**
  * Print manual page for instruction.
  */
-static void usage(char *prog_name)
+DLT_STATIC void usage(char *prog_name)
 {
     char version[255];
     dlt_get_version(version, 255);
@@ -106,7 +77,7 @@ static void usage(char *prog_name)
 /**
  * Initialize configuration to default values.
  */
-static int init_configuration()
+DLT_STATIC int init_configuration()
 {
     logd_conf = new dlt_logd_configuration;
     if (logd_conf == nullptr) {
@@ -124,7 +95,7 @@ static int init_configuration()
 /**
  * Read command line options and set the values in provided structure
  */
-static int read_command_line(int argc, char *argv[])
+DLT_STATIC int read_command_line(int argc, char *argv[])
 {
     int opt;
     while ((opt = getopt(argc, argv, "hc:")) != -1) {
@@ -158,7 +129,7 @@ static int read_command_line(int argc, char *argv[])
 /**
  * Read options from the configuration file
  */
-static int load_configuration_file(const char *file_name)
+DLT_STATIC int load_configuration_file(const char *file_name)
 {
     ifstream file(file_name);
     char *token;
@@ -209,7 +180,7 @@ static int load_configuration_file(const char *file_name)
     return 0;
 }
 
-static void clean_mem()
+DLT_STATIC void clean_mem()
 {
     if (logd_conf->appID) {
         delete logd_conf->appID;
@@ -248,8 +219,9 @@ static void clean_mem()
  * Parses data from a json file into an internal data
  * structure and do registration with the new ctxID.
  */
-static void json_parser()
+DLT_STATIC void json_parser()
 {
+#ifndef DLT_UNIT_TESTS
     Json::Value console = Json::nullValue;
     Json::CharReaderBuilder builder;
     string errs;
@@ -266,7 +238,27 @@ static void json_parser()
             string json_ctxID = iter.key().asString();
             string json_tag = (*iter)["tag"].asString();
             string json_description = (*iter)["description"].asString();
+#endif
+#ifdef DLT_UNIT_TESTS
+    if (json_is_available) {
+        string json_ctxID;
+        string json_tag;
+        string json_description;
+        string str = t_load_json_file();
+        char *token = strtok(&str[0], " ");
+        while(token != nullptr) {
+            json_ctxID = string(token);
+            token = strtok(nullptr, " ");
 
+            json_tag = string(token);
+            token = strtok(nullptr, " ");
+
+            json_description = string(token);
+            if (json_description == "null") {
+                json_description = "";
+            }
+            token = strtok(nullptr, " ");
+#endif
             DltContext *ctx = new DltContext();
             auto ret = map_ctx_json.emplace(json_tag, ctx);
             if (!ret.second) {
@@ -281,16 +273,22 @@ static void json_parser()
                                     json_ctxID.c_str(),
                                     json_description.c_str());
             }
+#ifdef DLT_UNIT_TESTS
+        }
+    }
+#endif
+#ifndef DLT_UNIT_TESTS
         }
     }
     file.close();
+#endif
 }
 
 /**
  * Doing tag matching in a loop from first
  * elementof json vector to the end of the list.
  */
-static DltContext* find_tag_in_json(const char *tag)
+DLT_STATIC DltContext* find_tag_in_json(const char *tag)
 {
     string tag_str(tag);
     auto search = map_ctx_json.find(tag_str);
@@ -309,26 +307,38 @@ static DltContext* find_tag_in_json(const char *tag)
     }
 }
 
-static inline struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id)
+DLT_STATIC struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id)
 {
     struct logger *logger;
+#ifndef DLT_UNIT_TESTS
     logger = android_logger_open(logger_list, log_id);
     if (logger == nullptr) {
         DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
                 DLT_STRING("Could not open logd buffer ID = "), DLT_INT64(log_id));
     }
+#endif
+#ifdef DLT_UNIT_TESTS
+    logger = t_android_logger_open(logger_list, log_id);
+#endif
     return logger;
 }
 
-static struct logger_list *init_logger_list(bool skip_binary_buffers)
+DLT_STATIC struct logger_list *init_logger_list(bool skip_binary_buffers)
 {
     struct logger_list *logger_list;
+#ifndef DLT_UNIT_TESTS
     logger_list = android_logger_list_alloc(O_RDONLY, 0, 0);
     if (logger_list == nullptr) {
         DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("Could not allocate logger list"));
         return nullptr;
     }
-
+#endif
+#ifdef DLT_UNIT_TESTS
+    logger_list = t_android_logger_list_alloc(READ_ONLY, 0, 0);
+    if (logger_list == nullptr) {
+        return nullptr;
+    }
+#endif
     /**
      * logd buffer types are defined in:
      * system/core/include/log/android/log.h
@@ -348,7 +358,7 @@ static struct logger_list *init_logger_list(bool skip_binary_buffers)
     return logger_list;
 }
 
-static DltContext *get_log_context_from_log_msg(struct log_msg *log_msg)
+DLT_STATIC DltContext *get_log_context_from_log_msg(struct log_msg *log_msg)
 {
     switch (log_msg->id()) {
     case LOG_ID_MAIN:
@@ -372,13 +382,13 @@ static DltContext *get_log_context_from_log_msg(struct log_msg *log_msg)
     }
 }
 
-static uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
+DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
 {
     /* in 0.1 ms = 100 us */
     return (uint32_t)log_msg->entry.sec * 10000 + (uint32_t)log_msg->entry.nsec / 100000;
 }
 
-static DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
+DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
 {
     android_LogPriority priority = static_cast<android_LogPriority>(log_msg->msg()[0]);
     switch (priority) {
@@ -411,12 +421,12 @@ void signal_handler(int signal)
     }
 }
 
-static int logd_parser_loop(struct logger_list *logger_list)
+DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
 {
-    struct log_msg log_msg;
     int ret;
     DltContext *ctx = nullptr;
-
+#ifndef DLT_UNIT_TESTS
+    struct log_msg log_msg;
     DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING("Entering parsing loop"));
 
     while (!exit_parser_loop) {
@@ -437,7 +447,18 @@ static int logd_parser_loop(struct logger_list *logger_list)
                     DLT_STRING("android_logger_list_read unexpected return="), DLT_INT32(ret));
             return ret;
         }
-
+#endif
+#ifdef DLT_UNIT_TESTS
+        extern struct dlt_log_container *dlt_log_data;
+        extern struct log_msg t_log_msg;
+        struct log_msg &log_msg = t_log_msg;
+        ret = t_android_logger_list_read(logger_list, &log_msg);
+            if (ret == -EAGAIN || ret == -EINTR ||
+                ret == -EINVAL || ret == -ENOMEM ||
+                ret == -ENODEV || ret == -EIO) {
+        return ret;
+        }
+#endif
         /* Look into system/core/liblog/logprint.c for buffer format.
            "<priority:1><tag:N>\0<message:N>\0" */
         const char *tag = "";
@@ -461,6 +482,7 @@ static int logd_parser_loop(struct logger_list *logger_list)
 
         uint32_t ts = get_timestamp_from_log_msg(&log_msg);
 
+#ifndef DLT_UNIT_TESTS
         /* Binary buffers are not supported by DLT_STRING DLT_RAW would need the message length */
         DLT_LOG_TS(*ctx, log_level, ts,
                     DLT_STRING(tag),
@@ -470,10 +492,18 @@ static int logd_parser_loop(struct logger_list *logger_list)
     }
 
     DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING("Exited parsing loop"));
-
+#endif
+#ifdef DLT_UNIT_TESTS
+    dlt_log_data->ctx = ctx;
+    dlt_log_data->log_level = log_level;
+    dlt_log_data->ts = ts;
+    dlt_log_data->tag = tag;
+    dlt_log_data->message = message;
+#endif
     return EXIT_SUCCESS;
 }
 
+#ifndef DLT_UNIT_TESTS
 int main(int argc, char *argv[])
 {
     (void) argc;
@@ -563,3 +593,4 @@ int main(int argc, char *argv[])
     clean_mem();
     return ret;
 }
+#endif
