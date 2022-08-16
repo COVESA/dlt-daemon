@@ -129,7 +129,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
         if ((temp == NULL) || (temp->receiver == NULL) ||
             !((1 << temp->type) & type_mask)) {
-            dlt_vlog(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
+            dlt_log(LOG_DEBUG, "The connection not found or the connection type not TCP/Serial.\n");
             continue;
         }
 
@@ -172,6 +172,7 @@ int dlt_daemon_client_send(int sock,
                            int verbose)
 {
     int sent, ret;
+    static int sent_message_overflow_cnt = 0;
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid arguments\n", __func__);
@@ -280,11 +281,22 @@ int dlt_daemon_client_send(int sock,
         }
     } else {
         if ((daemon->overflow_counter > 0) &&
-            (daemon_local->client_connections > 0) &&
-            (dlt_daemon_send_message_overflow(daemon, daemon_local, verbose) == DLT_DAEMON_ERROR_OK)) {
-            dlt_vlog(LOG_WARNING, "%s: %u messages discarded! Now able to send messages to the client.\n",
-                     __func__, daemon->overflow_counter);
-            daemon->overflow_counter = 0;
+            (daemon_local->client_connections > 0)) {
+            sent_message_overflow_cnt++;
+            if (sent_message_overflow_cnt >= 2) {
+                sent_message_overflow_cnt--;
+            }
+            else {
+                if (dlt_daemon_send_message_overflow(daemon, daemon_local,
+                                          verbose) == DLT_DAEMON_ERROR_OK) {
+                    dlt_vlog(LOG_WARNING,
+                             "%s: %u messages discarded! Now able to send messages to the client.\n",
+                             __func__,
+                             daemon->overflow_counter);
+                    daemon->overflow_counter = 0;
+                    sent_message_overflow_cnt--;
+                }
+            }
         }
     }
 
