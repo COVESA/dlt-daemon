@@ -1622,7 +1622,7 @@ void dlt_daemon_control_callsw_cinjection(int sock,
 
         /* write to FIFO */
         DltReturnValue ret =
-            dlt_user_log_out3(context->user_handle, &(userheader), sizeof(DltUserHeader),
+            dlt_user_log_out3_with_timeout(context->user_handle, &(userheader), sizeof(DltUserHeader),
                               &(usercontext), sizeof(DltUserControlMsgInjection),
                               userbuffer, (size_t) data_length_inject);
 

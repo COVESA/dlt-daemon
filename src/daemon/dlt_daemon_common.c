@@ -1380,7 +1380,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
 
     /* log to FIFO */
     errno = 0;
-    ret = dlt_user_log_out2(context->user_handle,
+    ret = dlt_user_log_out2_with_timeout(context->user_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(usercontext), sizeof(DltUserControlMsgLogLevel));
 
@@ -1416,7 +1416,7 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
     logstate.log_state = daemon->connectionState;
 
     /* log to FIFO */
-    ret = dlt_user_log_out2(app->user_handle,
+    ret = dlt_user_log_out2_with_timeout(app->user_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(logstate), sizeof(DltUserControlMsgLogState));
 
