@@ -368,27 +368,32 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             return DLT_RETURN_ERROR;
         }
 
-        mreq.imr_multiaddr.s_addr = inet_addr(client->servIP);
-        if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
-        {
-            dlt_vlog(LOG_ERR,
-                     "%s: ERROR: server address not not valid %s\n",
-                     __func__,
-                     client->servIP);
+        char delimiter[] = ",";
+        char* servIP = strtok(client->servIP, delimiter);
 
-            return DLT_RETURN_ERROR;
+        while(servIP != NULL) {
+            mreq.imr_multiaddr.s_addr = inet_addr(servIP);
+            if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
+            {
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: server address not not valid %s\n",
+                         __func__,
+                         servIP);
+
+                return DLT_RETURN_ERROR;
+            }
+
+            if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
+            {
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: setsockopt add membership failed: %s\n",
+                         __func__,
+                         strerror(errno));
+
+                return DLT_RETURN_ERROR;
+            }
+            servIP = strtok(NULL, delimiter);
         }
-
-        if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
-        {
-            dlt_vlog(LOG_ERR,
-                     "%s: ERROR: setsockopt add membership failed: %s\n",
-                     __func__,
-                     strerror(errno));
-
-            return DLT_RETURN_ERROR;
-        }
-
         receiver_type = DLT_RECEIVE_UDP_SOCKET;
 
         break;

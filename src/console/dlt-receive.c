@@ -514,11 +514,30 @@ int main(int argc, char *argv[])
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
         dltclient.port = dltdata.port;
-        for (index = optind; index < argc; index++)
-            if (dlt_client_set_server_ip(&dltclient, argv[index]) == -1) {
+
+        unsigned int servIPLength = 1; // Counting the terminating 0 byte
+        for (index = optind; index < argc; index++) {
+            servIPLength += strlen(argv[index]);
+            if (index > optind)
+            {
+                servIPLength++; // For the comma delimiter
+            }
+        }
+        if (servIPLength > 0) {
+            char* servIPString = malloc(servIPLength);
+            strcpy(servIPString, argv[optind]);
+            for (index = optind + 1; index < argc; index++) {
+                strcat(servIPString, ",");
+                strcat(servIPString, argv[index]);
+            }
+            int retval = dlt_client_set_server_ip(&dltclient, servIPString);
+            free(servIPString);
+
+            if (retval == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");
                 return -1;
             }
+        }
 
         if (dltclient.servIP == 0) {
             /* no hostname selected, show usage and terminate */
