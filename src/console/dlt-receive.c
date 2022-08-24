@@ -135,6 +135,7 @@ typedef struct {
     DltFile file;
     DltFilter filter;
     int port;
+    char *ifaddr;
 } DltReceiveData;
 
 /**
@@ -161,6 +162,7 @@ void usage()
     printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -u            UDP multicast mode\n");
+    printf("  -i addr       Host interface address\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
@@ -338,6 +340,7 @@ int main(int argc, char *argv[])
     dltdata.totalbytes = 0;
     dltdata.part_num = -1;
     dltdata.port = 3490;
+    dltdata.ifaddr = 0;
 
     /* Config signal handler */
     struct sigaction act;
@@ -354,7 +357,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:")) != -1)
+    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -404,6 +407,11 @@ int main(int argc, char *argv[])
         case 'u':
         {
             dltdata.uflag = 1;
+            break;
+        }
+        case 'i':
+        {
+            dltdata.ifaddr = optarg;
             break;
         }
         case 'f':
@@ -518,6 +526,15 @@ int main(int argc, char *argv[])
             usage();
             dlt_client_cleanup(&dltclient, dltdata.vflag);
             return -1;
+        }
+
+        if (dltdata.ifaddr != 0)
+        {
+            if (dlt_client_set_host_if_address(&dltclient, dltdata.ifaddr) != DLT_RETURN_OK)
+            {
+                fprintf(stderr, "set host interface address didn't succeed\n");
+                return -1;
+            }
         }
     }
     else {
