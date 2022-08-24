@@ -135,6 +135,7 @@ typedef struct {
     DltFile file;
     DltFilter filter;
     int port;
+    char *ifaddr;
 } DltReceiveData;
 
 /**
@@ -161,6 +162,7 @@ void usage()
     printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -u            UDP multicast mode\n");
+    printf("  -i addr       Host interface address\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
     printf("  -o filename   Output messages in new DLT file\n");
@@ -314,28 +316,13 @@ void dlt_receive_close_output_file(DltReceiveData *dltdata)
 int main(int argc, char *argv[])
 {
     DltReceiveData dltdata;
+    memset(&dltdata, 0, sizeof(dltdata));
     int c;
     int index;
 
     /* Initialize dltdata */
-    dltdata.aflag = 0;
-    dltdata.sflag = 0;
-    dltdata.xflag = 0;
-    dltdata.mflag = 0;
-    dltdata.vflag = 0;
-    dltdata.yflag = 0;
-    dltdata.uflag = 0;
-    dltdata.ovalue = 0;
-    dltdata.ovaluebase = 0;
-    dltdata.fvalue = 0;
-    dltdata.jvalue = 0;
-    dltdata.evalue = 0;
-    dltdata.bvalue = 0;
-    dltdata.sendSerialHeaderFlag = 0;
-    dltdata.resyncSerialHeaderFlag = 0;
     dltdata.climit = -1; /* default: -1 = unlimited */
     dltdata.ohandle = -1;
-    dltdata.totalbytes = 0;
     dltdata.part_num = -1;
     dltdata.port = 3490;
 
@@ -354,7 +341,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:")) != -1)
+    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -404,6 +391,11 @@ int main(int argc, char *argv[])
         case 'u':
         {
             dltdata.uflag = 1;
+            break;
+        }
+        case 'i':
+        {
+            dltdata.ifaddr = optarg;
             break;
         }
         case 'f':
@@ -538,6 +530,13 @@ int main(int argc, char *argv[])
             usage();
             dlt_client_cleanup(&dltclient, dltdata.vflag);
             return -1;
+        }
+
+        if (dltdata.ifaddr != 0) {
+            if (dlt_client_set_host_if_address(&dltclient, dltdata.ifaddr) != DLT_RETURN_OK) {
+                fprintf(stderr, "set host interface address didn't succeed\n");
+                return -1;
+            }
         }
     }
     else {
