@@ -63,6 +63,12 @@ if(WITH_SYSTEMD)
         install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt-adaptor-udp.service DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
     endif(WITH_DLT_ADAPTOR_UDP)
 
+    if (WITH_SYSTEMD_SOCKET_ACTIVATION)
+        configure_file(${PROJECT_SOURCE_DIR}/systemd/dlt.socket.cmake ${PROJECT_BINARY_DIR}/systemd/dlt.socket)
+        message( STATUS "Configured systemd socket file:dlt.socket" )
+        install(FILES ${PROJECT_BINARY_DIR}/systemd/dlt.socket DESTINATION ${SYSTEMD_CONFIGURATIONS_FILES_DIR} )
+    endif()
+
     message(STATUS "Unit files will be installed to ${SYSTEMD_CONFIGURATIONS_FILES_DIR} after make install" )
 
 endif(WITH_SYSTEMD)
