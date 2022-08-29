@@ -498,7 +498,7 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
     int curr_len = 0;
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, strlen(ecuid));
+        strncpy(curr_str, ecuid, DLT_ID_SIZE);
         strncat(curr_str, "::", 2);
     }
     else {
@@ -530,7 +530,7 @@ DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
     int curr_len = 0;
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, strlen(ecuid));
+        strncpy(curr_str, ecuid, DLT_ID_SIZE);
         strncat(curr_str, ":", 1);
     }
     else {
@@ -564,7 +564,7 @@ DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
     int curr_len = 0;
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, strlen(ecuid));
+        strncpy(curr_str, ecuid, DLT_ID_SIZE);
         strncat(curr_str, ":", 1);
     }
     else {
@@ -595,7 +595,7 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
 
-    strncpy(curr_str, ecuid, strlen(ecuid));
+    strncpy(curr_str, ecuid, DLT_ID_SIZE);
     strncat(curr_str, "::", 2);
 
     strncpy(key, curr_str, strlen(curr_str));
