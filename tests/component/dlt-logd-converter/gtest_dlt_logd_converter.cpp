@@ -378,7 +378,7 @@ TEST(t_find_tag_in_json, normal)
 
 TEST(t_find_tag_in_json, nullpointer)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
     ASSERT_ANY_THROW(find_tag_in_json(nullptr));
 }
 
@@ -458,7 +458,7 @@ TEST(t_get_log_context_from_log_msg, normal)
 
 TEST(t_get_log_context_from_log_msg, nullpointer)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
     ASSERT_EXIT((get_log_context_from_log_msg(nullptr),exit(SIGSEGV)),
                 ::testing::KilledBySignal(SIGSEGV),".*");
 }
@@ -480,7 +480,7 @@ TEST(t_get_timestamp_from_log_msg, normal)
 
 TEST(t_get_timestamp_from_log_msg, nullpointer)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
     ASSERT_EXIT((get_timestamp_from_log_msg(nullptr), exit(SIGSEGV)),
                 ::testing::KilledBySignal(SIGSEGV), ".*");
 }
@@ -516,7 +516,7 @@ TEST(t_get_log_level_from_log_msg, abnormal)
 {
     struct log_msg t_log_msg;
     t_log_msg.entry.hdr_size = 10000;
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
     t_log_msg.buf[t_log_msg.entry.hdr_size] = (unsigned char)ANDROID_LOG_VERBOSE;
     ASSERT_EXIT((get_log_level_from_log_msg(&t_log_msg), exit(SIGSEGV)),
                 ::testing::KilledBySignal(SIGSEGV), ".*");
@@ -524,7 +524,7 @@ TEST(t_get_log_level_from_log_msg, abnormal)
 
 TEST(t_get_log_level_from_log_msg, nullpointer)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
     ASSERT_EXIT((get_log_level_from_log_msg(nullptr), exit(SIGSEGV)),
                 ::testing::KilledBySignal(SIGSEGV), ".*");
 }
