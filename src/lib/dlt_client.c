@@ -1146,6 +1146,7 @@ DLT_STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoR
 
     free(resp->log_info_type.app_ids);
     resp->log_info_type.app_ids = NULL;
+    resp->log_info_type.count_app_ids = 0;
 
     return;
 }
@@ -1159,6 +1160,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
     int j = 0;
     char *rp = NULL;
     int rp_count = 0;
+    char temp_id[DLT_ID_SIZE + 1] = {0};
 
     if ((resp == NULL) || (resp_text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1225,7 +1227,10 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
     for (i = 0; i < resp->log_info_type.count_app_ids; i++) {
         app = &(resp->log_info_type.app_ids[i]);
         /* get app id */
-        dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, app->app_id, DLT_ID_SIZE);
+        dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, temp_id, DLT_ID_SIZE);
+
+        /* the above method also sets a NULL terminator so we need a temp buffer that has space for that */
+        dlt_set_id(app->app_id, temp_id);
 
         /* count_con_ids */
         app->count_context_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
@@ -1246,8 +1251,11 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
             /* get con id */
             dlt_getloginfo_conv_ascii_to_id(rp,
                                             &rp_count,
-                                            con->context_id,
+                                            temp_id,
                                             DLT_ID_SIZE);
+
+            /* the above method also sets a NULL terminator so we need a temp buffer that has space for that */
+            dlt_set_id(con->context_id, temp_id);
 
             /* log_level */
             if ((resp->status == 4) || (resp->status == 6) || (resp->status == 7))
@@ -1266,7 +1274,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                 con->context_description = (char *)calloc
                         ((size_t) (con->len_context_description + 1), sizeof(char));
 
-                if (con->context_description == 0) {
+                if (con->context_description == NULL) {
                     dlt_vlog(LOG_ERR, "%s: calloc failed for context description\n", __func__);
                     dlt_client_free_calloc_failed_get_log_info(resp, i);
                     return DLT_RETURN_ERROR;
@@ -1286,7 +1294,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
             app->app_description = (char *)calloc
                     ((size_t) (app->len_app_description + 1), sizeof(char));
 
-            if (app->app_description == 0) {
+            if (app->app_description == NULL) {
                 dlt_vlog(LOG_ERR, "%s: calloc failed for application description\n", __func__);
                 dlt_client_free_calloc_failed_get_log_info(resp, i);
                 return DLT_RETURN_ERROR;

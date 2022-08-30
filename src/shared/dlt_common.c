@@ -4060,7 +4060,7 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count)
     num_work[4] = 0;
     *rp_count += 6;
 
-    return (unsigned char)strtol(num_work, &endptr, 16);
+    return (unsigned short)strtol(num_work, &endptr, 16);
 }
 
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
