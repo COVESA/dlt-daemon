@@ -226,7 +226,8 @@ for(int index=0; index<MAX; index++)
 Good example:
 
 ```
-for(int index=0; index<MAX; index++)
+int index = 0;
+for(; index<MAX; index++)
 {
   /* ... */
 }
