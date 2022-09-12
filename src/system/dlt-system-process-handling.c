@@ -56,6 +56,7 @@
 #include <poll.h>
 #include <sys/timerfd.h>
 #include <time.h>
+#include <errno.h>
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_IMPORT_CONTEXT(syslogContext)
@@ -121,21 +122,28 @@ int daemonize()
 }
 
 /* Unregisters all DLT Contexts and closes all file descriptors */
-void cleanup_processes(struct pollfd *pollfd, sd_journal *j, DltSystemConfiguration *config)
+void cleanup_processes(struct pollfd *pollfd, struct pollfd *journalPollFd, sd_journal *j, DltSystemConfiguration *config)
 {
     //Syslog cleanup
     if (config->Syslog.Enable)
         DLT_UNREGISTER_CONTEXT(syslogContext);
-    
+
     //Journal cleanup
 #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
     if (config->Journal.Enable)
         DLT_UNREGISTER_CONTEXT(journalContext);
     if(j != NULL)
         sd_journal_close(j);
+
+    if(journalPollFd->fd > 0)
+        close(journalPollFd->fd);
+#else
+    // silence warnings
+    (void)j;
+    (void)journalPollFd->fd;
 #endif
 
-    //Logfile cleanup 
+    //Logfile cleanup
     if (config->LogFile.Enable) {
         for (int i = 0; i < config->LogFile.Count; i++)
             DLT_UNREGISTER_CONTEXT(logfileContext[i]);
@@ -245,11 +253,21 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
 
     //init FD for Journal
     sd_journal *j = NULL;
+    struct pollfd journalPollFd;
 #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+    pthread_t journalThreadHandle;
     if (config->Journal.Enable) {
-        register_journal_fd(&j, pollfd, fdcnt, config);
-        fdType[fdcnt] = fdType_journal;
-        fdcnt++;
+        register_journal_fd(&j, &journalPollFd, 0, config);
+        struct journal_fd_params params = {
+                &quit,
+                &journalPollFd,
+                j,
+                config
+        };
+        if (pthread_create(&journalThreadHandle, NULL, &journal_thread, (void*)&params) != 0) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Failed to create journal_thread thread "),
+                    DLT_STRING(strerror(errno)));
+        }
     }
 #endif
 
@@ -286,13 +304,6 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
                 else if (fdType[i] == fdType_timer) {
                     timer_fd_handler(pollfd[i].fd, config);
                 }
-                #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
-                else if((fdType[i] == fdType_journal) && (j != NULL)) {
-                    if(sd_journal_process(j) == SD_JOURNAL_APPEND) {
-                        journal_fd_handler(j, config);
-                    }
-                }
-                #endif
                 #if defined(DLT_FILETRANSFER_ENABLE)
                 else if (fdType[i] == fdType_filetransfer) {
                     filetransfer_fd_handler(config);
@@ -311,7 +322,12 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
         }
     }
 
-    cleanup_processes(pollfd, j, config);
+#if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+    if (config->Journal.Enable) {
+        pthread_join(journalThreadHandle, NULL);
+    }
+#endif
+    cleanup_processes(pollfd, &journalPollFd, j, config);
 }
 
 void dlt_system_signal_handler(int sig)
