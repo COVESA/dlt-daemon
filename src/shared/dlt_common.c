@@ -81,7 +81,7 @@ char dltShmName[NAME_MAX + 1] = "/dlt-shm";
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 static bool print_with_attributes = false;
-int logging_mode = DLT_LOG_TO_CONSOLE;
+int logging_mode = DLT_LOG_TO_STDERR;
 FILE *logging_handle = NULL;
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
