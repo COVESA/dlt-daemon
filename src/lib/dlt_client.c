@@ -91,6 +91,7 @@
 #include <string.h> /* for strlen(), memcmp(), memmove() */
 #include <errno.h>
 #include <limits.h>
+#include <poll.h>
 
 #include "dlt_types.h"
 #include "dlt_client.h"
@@ -171,12 +172,18 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     const int yes = 1;
-    char portnumbuffer[33];
+    char portnumbuffer[33] = {0};
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
     int rv;
     struct ip_mreq mreq;
     DltReceiverType receiver_type = DLT_RECEIVE_FD;
+
+    struct pollfd pfds[1];
+    int ret;
+    int n;
+    socklen_t m = sizeof(n);
+    int connect_errno = 0;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
@@ -205,9 +212,58 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
                 continue;
             }
 
-            if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+            /* Set socket to Non-blocking mode */
+            if(fcntl(client->sock, F_SETFL, fcntl(client->sock,F_GETFL,0) | O_NONBLOCK) < 0)
+            {
+                dlt_vlog(LOG_WARNING,
+                 "%s: Socket cannot be changed to NON BLOCK: %s\n",
+                 __func__, strerror(errno));
                 close(client->sock);
                 continue;
+            }
+
+            if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+                if (errno == EINPROGRESS) {
+                    pfds[0].fd = client->sock;
+                    pfds[0].events = POLLOUT;
+                    ret = poll(pfds, 1, 500);
+                    if (ret < 0) {
+                        dlt_vlog(LOG_ERR, "%s: Failed to poll with err [%s]\n",
+                        __func__, strerror(errno));
+                        close(client->sock);
+                        continue;
+                    }
+                    else if ((pfds[0].revents & POLLOUT) &&
+                            getsockopt(client->sock, SOL_SOCKET,
+                                    SO_ERROR, (void*)&n, &m) == 0) {
+                        if (n == 0) {
+                            dlt_vlog(LOG_DEBUG, "%s: Already connect\n", __func__);
+                            if(fcntl(client->sock, F_SETFL,
+                                    fcntl(client->sock,F_GETFL,0) & ~O_NONBLOCK) < 0) {
+                                dlt_vlog(LOG_WARNING,
+                                "%s: Socket cannot be changed to BLOCK with err [%s]\n",
+                                __func__, strerror(errno));
+                                close(client->sock);
+                                continue;
+                            }
+                        }
+                        else {
+                            connect_errno = n;
+                            close(client->sock);
+                            continue;
+                        }
+                    }
+                    else {
+                        connect_errno = errno;
+                        close(client->sock);
+                        continue;
+                    }
+                }
+                else {
+                    connect_errno = errno;
+                    close(client->sock);
+                    continue;
+                }
             }
 
             break;
@@ -216,15 +272,19 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         freeaddrinfo(servinfo);
 
         if (p == NULL) {
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: failed to connect! %s\n",
+                     __func__,
+                     strerror(connect_errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        if (verbose) {
             dlt_vlog(LOG_INFO,
                      "%s: Connected to DLT daemon (%s)\n",
                      __func__,
                      client->servIP);
-            return DLT_RETURN_ERROR;
         }
-
-        if (verbose)
-            printf("Connected to DLT daemon (%s)\n", client->servIP);
 
         receiver_type = DLT_RECEIVE_SOCKET;
 
