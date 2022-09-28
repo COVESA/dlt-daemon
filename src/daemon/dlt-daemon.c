@@ -1045,7 +1045,7 @@ int main(int argc, char *argv[])
     /* initiate gateway */
     if (daemon_local.flags.gatewayMode == 1) {
         if (dlt_gateway_init(&daemon_local, daemon_local.flags.vflag) == -1) {
-            dlt_log(LOG_CRIT, "Fail to create gateway\n");
+            dlt_log(LOG_CRIT, "Failed to create gateway\n");
             return -1;
         }
 
