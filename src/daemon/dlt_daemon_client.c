@@ -1690,7 +1690,7 @@ void dlt_daemon_find_multiple_context_and_send_log_level(int sock,
     int count = 0;
     DltDaemonContext *context = NULL;
     char src_str[DLT_ID_SIZE + 1] = { 0 };
-    int8_t ret = 0;
+    int ret = 0;
     DltDaemonRegisteredUsers *user_list = NULL;
 
     if (daemon == 0) {
@@ -1712,7 +1712,7 @@ void dlt_daemon_find_multiple_context_and_send_log_level(int sock,
             else
                 strncpy(src_str, context->ctid, DLT_ID_SIZE);
 
-            ret = (int8_t) strncmp(src_str, str, (size_t) len);
+            ret = strncmp(src_str, str, len);
 
             if (ret == 0)
                 dlt_daemon_send_log_level(sock, daemon, daemon_local, context, loglevel, verbose);
@@ -1863,7 +1863,7 @@ void dlt_daemon_find_multiple_context_and_send_trace_status(int sock,
     int count = 0;
     DltDaemonContext *context = NULL;
     char src_str[DLT_ID_SIZE + 1] = { 0 };
-    int8_t ret = 0;
+    int ret = 0;
     DltDaemonRegisteredUsers *user_list = NULL;
 
     if (daemon == 0) {
@@ -1885,7 +1885,7 @@ void dlt_daemon_find_multiple_context_and_send_trace_status(int sock,
             else
                 strncpy(src_str, context->ctid, DLT_ID_SIZE);
 
-            ret = (int8_t) strncmp(src_str, str, (size_t) len);
+            ret = strncmp(src_str, str, len);
 
             if (ret == 0)
                 dlt_daemon_send_trace_status(sock, daemon, daemon_local, context, tracestatus, verbose);
