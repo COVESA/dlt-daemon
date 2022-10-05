@@ -48,6 +48,7 @@ option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"            
 option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           OFF)
 option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"                              OFF)
 option(WITH_SYSTEMD_JOURNAL   "Set to ON to use the systemd journal in dlt-system"                               OFF)
+option(WITH_SYSTEMD_SOCKET_ACTIVATION "Set to ON to use systemd socket activation"                               OFF)
 option(WITH_DOC               "Set to ON to build documentation target"                                          OFF)
 option(WITH_MAN               "Set to ON to build man pages"                                                     OFF)
 option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists" OFF)
@@ -92,6 +93,7 @@ option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering. 
 
 option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"                                   OFF)
 option(WITH_DLT_LIB_VSOCK_IPC    "Set to ON to enable VSOCK support in library (DLT_IPC is not used in library)" OFF)
+
 set(DLT_VSOCK_PORT "13490" CACHE STRING "VSOCK port number for logging traffic.")
 
 # RPM settings
@@ -214,7 +216,7 @@ else()
     message(STATUS "Disable network trace interface since message queue is not supported")
 endif()
 
-if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
+if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL OR WITH_SYSTEMD_SOCKET_ACTIVATION)
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
     string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
@@ -229,6 +231,13 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 
     if(WITH_SYSTEMD_JOURNAL)
         add_definitions(-DDLT_SYSTEMD_JOURNAL_ENABLE)
+    endif()
+
+    if (WITH_SYSTEMD_SOCKET_ACTIVATION)
+        if(NOT DLT_IPC STREQUAL "UNIX_SOCKET")
+            message(FATAL_ERROR "WITH_SYSTEMD_SOCKET_ACTIVATION is only supported for UNIX_SOCKET")
+        endif()
+        add_definitions(-DDLT_SYSTEM_SOCKET_ACTIVATION_ENABLE)
     endif()
 
     set(systemd_SRCS ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
