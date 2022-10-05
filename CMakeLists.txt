@@ -74,6 +74,7 @@ option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"            
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                             ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
 option(WITH_DLT_QNX_SYSTEM    "Set to ON to build QNX system binary dlt-qnx-system"                              OFF)
+option(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK "Set to ON to enable fallback to syslog if dlt logging to file fails" OFF)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
@@ -169,6 +170,10 @@ endif()
 
 if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc")
     message(FATAL_ERROR "Can only compile for QNX with a QNX compiler.")
+endif()
+
+if (WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
+    add_definitions(-DWITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
 endif()
 
 if(WITH_GPROF)
@@ -345,6 +350,7 @@ message(STATUS "WITH_LIB_SHORT_VERSION = ${WITH_LIB_SHORT_VERSION}")
 message(STATUS "WITH_LEGACY_INCLUDE_PATH = ${WITH_LEGACY_INCLUDE_PATH}")
 message(STATUS "WITH_EXTENDED_FILTERING = ${WITH_EXTENDED_FILTERING}")
 message(STATUS "WITH_DLT_DISABLE_MACRO = ${WITH_DLT_DISABLE_MACRO}")
+message(STATUS "WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK = ${WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK}" )
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)
