@@ -1631,15 +1631,28 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
  */
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
 
+
 /**
- * Convert get log info from ASCII to ID
+ * Convert get log info from ASCII to string (with '\0' termination)
  *
  * @param rp        char
  * @param rp_count  int
  * @param wp        char
  * @param len       int
  */
-void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
+void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len);
+
+
+/**
+ * Convert get log info from ASCII to ID (without '\0' termination)
+ *
+ * @param rp        char
+ * @param rp_count  int
+ * @param wp        char Array needs to be 1 byte larger than len to store '\0'
+ * @param len       int
+ * @return position of last read character in wp
+ */
+int dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len);
 
 /**
  * Convert from hex ASCII to binary
