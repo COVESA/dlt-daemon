@@ -1817,7 +1817,7 @@ void dlt_print_with_attributes(bool state)
 DltReturnValue dlt_log_init(int mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
-        dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
+        dlt_user_printf("Wrong parameter for mode: %d\n", mode);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
