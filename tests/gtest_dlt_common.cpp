@@ -4284,7 +4284,6 @@ TEST(dlt_client_parse_get_log_info_resp_text, normal)
 
     ret = dlt_client_parse_get_log_info_resp_text(resp, input);
     EXPECT_EQ(DLT_RETURN_OK, ret);
-    EXPECT_EQ(DLT_RETURN_OK, ret);
 
     EXPECT_EQ(2,resp->log_info_type.count_app_ids);
 

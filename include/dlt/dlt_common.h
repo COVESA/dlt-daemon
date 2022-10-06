@@ -1637,7 +1637,7 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
  *
  * @param rp        char
  * @param rp_count  int
- * @param wp        char
+ * @param wp        char Array needs to be 1 byte larger than len to store '\0'
  * @param len       int
  */
 void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len);
@@ -1648,7 +1648,7 @@ void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int 
  *
  * @param rp        char
  * @param rp_count  int
- * @param wp        char Array needs to be 1 byte larger than len to store '\0'
+ * @param wp        char
  * @param len       int
  * @return position of last read character in wp
  */
