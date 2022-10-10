@@ -1272,7 +1272,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                     return DLT_RETURN_ERROR;
                 }
 
-                dlt_getloginfo_conv_ascii_to_id(rp,
+                dlt_getloginfo_conv_ascii_to_string(rp,
                                                 &rp_count,
                                                 con->context_description,
                                                 con->len_context_description);
@@ -1292,7 +1292,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                 return DLT_RETURN_ERROR;
             }
 
-            dlt_getloginfo_conv_ascii_to_id(rp,
+            dlt_getloginfo_conv_ascii_to_string(rp,
                                             &rp_count,
                                             app->app_description,
                                             app->len_app_description);
