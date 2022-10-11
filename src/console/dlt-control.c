@@ -212,9 +212,9 @@ void dlt_process_get_log_info(void)
             dlt_print_id(apid, app.app_id);
 
             if (app.app_description != 0)
-                printf("APID:%4s %s\n", apid, app.app_description);
+                printf("APID:%4.4s %s\n", apid, app.app_description);
             else
-                printf("APID:%4s \n", apid);
+                printf("APID:%4.4s \n", apid);
 
             for (j = 0; j < app.count_context_ids; j++) {
                 con = app.context_id_info[j];
@@ -222,13 +222,13 @@ void dlt_process_get_log_info(void)
                 dlt_print_id(ctid, con.context_id);
 
                 if (con.context_description != 0)
-                    printf("CTID:%4s %2d %2d %s\n",
+                    printf("CTID:%4.4s %2d %2d %s\n",
                         ctid,
                         con.log_level,
                         con.trace_status,
                         con.context_description);
                 else
-                    printf("CTID:%4s %2d %2d\n",
+                    printf("CTID:%4.4s %2d %2d\n",
                         ctid,
                         con.log_level,
                         con.trace_status);

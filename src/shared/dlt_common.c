@@ -4084,17 +4084,31 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
     return (signed char)strtol(num_work, &endptr, 16);
 }
 
-void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
+void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len)
+{
+    if ((rp == NULL ) || (rp_count == NULL ) || (wp == NULL ))
+        return;
+    /* ------------------------------------------------------
+     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
+     *  ------------------------------------------------------ */
+
+    int count = dlt_getloginfo_conv_ascii_to_id(rp, rp_count, wp, len);
+    *(wp + count) = '\0';
+
+    return;
+}
+
+int dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
 {
     char number16[3] = { 0 };
     char *endptr;
     int count;
 
     if ((rp == NULL) || (rp_count == NULL) || (wp == NULL))
-        return;
+        return 0;
 
     /* ------------------------------------------------------
-     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
+     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f]
      *  ------------------------------------------------------ */
     for (count = 0; count < len; count++) {
         number16[0] = *(rp + *rp_count + 0);
@@ -4103,8 +4117,7 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
         *rp_count += 3;
     }
 
-    *(wp + count) = 0;
-    return;
+    return count;
 }
 
 void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size)

@@ -34,6 +34,8 @@ extern "C"
 #include "dlt-daemon_cfg.h"
 #include "dlt_user_cfg.h"
 #include "dlt_version.h"
+#include "dlt_client.h"
+#include "dlt_protocol.h"
 
 int dlt_buffer_increase_size(DltBuffer *);
 int dlt_buffer_minimize_size(DltBuffer *);
@@ -4260,7 +4262,97 @@ TEST(dlt_get_minor_version, nullpointer)
 /* End Method:dlt_common::dlt_get_minor_version */
 
 
+TEST(dlt_client_parse_get_log_info_resp_text, normal)
+{
+    char input[] = "get_log_info, 07, 02 00 4c 4f 47 00 03 00 54 45 53 54 ff ff 18 00 54 65 73 74 20 43 6f 6e 74 65 78 74 20 66 6f 72 20 4c 6f 67 67 69 6e 67 54 53 31 00 ff ff 1b 00 54 65 73 74 20 43 6f 6e 74 65 78 74 31 20 66 6f 72 20 69 6e 6a 65 63 74 69 6f 6e 54 53 32 00 ff ff 1b 00 54 65 73 74 20 43 6f 6e 74 65 78 74 32 20 66 6f 72 20 69 6e 6a 65 63 74 69 6f 6e 1c 00 54 65 73 74 20 41 70 70 6c 69 63 61 74 69 6f 6e 20 66 6f 72 20 4c 6f 67 67 69 6e 67 53 59 53 00 02 00 4a 4f 55 52 ff ff 0f 00 4a 6f 75 72 6e 61 6c 20 41 64 61 70 74 65 72 4d 47 52 00 ff ff 22 00 43 6f 6e 74 65 78 74 20 6f 66 20 6d 61 69 6e 20 64 6c 74 20 73 79 73 74 65 6d 20 6d 61 6e 61 67 65 72 12 00 44 4c 54 20 53 79 73 74 65 6d 20 4d 61 6e 61 67 65 72 72 65 6d 6f";
+    /* expected output:
+     * APID:LOG- Test Application for Logging
+     * CTID:TEST -1 -1 Test Context for Logging
+     * CTID:TS1- -1 -1 Test Context1 for injection
+     * CTID:TS2- -1 -1 Test Context2 for injection
+     * APID:SYS- DLT System Manager
+     * CTID:JOUR -1 -1 Journal Adapter
+     * CTID:MGR- -1 -1 Context of main dlt system manager
+     */
 
+    DltServiceGetLogInfoResponse * resp = (DltServiceGetLogInfoResponse *)malloc(sizeof(DltServiceGetLogInfoResponse ));
+    DltReturnValue ret = (DltReturnValue) dlt_set_loginfo_parse_service_id(
+            input, &resp->service_id, &resp->status);
+    EXPECT_EQ(DLT_RETURN_OK, ret);
+    EXPECT_EQ(DLT_SERVICE_ID_GET_LOG_INFO, resp->service_id);
+    EXPECT_EQ(GET_LOG_INFO_STATUS_MAX, resp->status);
+
+    ret = dlt_client_parse_get_log_info_resp_text(resp, input);
+    EXPECT_EQ(DLT_RETURN_OK, ret);
+
+    EXPECT_EQ(2,resp->log_info_type.count_app_ids);
+
+    EXPECT_EQ(0, memcmp( "LOG", resp->log_info_type.app_ids[0].app_id,4));
+    EXPECT_EQ(0, strcmp("Test Application for Logging", resp->log_info_type.app_ids[0].app_description));
+    EXPECT_EQ(28, resp->log_info_type.app_ids[0].len_app_description);
+
+    EXPECT_EQ(3, resp->log_info_type.app_ids[0].count_context_ids);
+
+    EXPECT_EQ(0, memcmp( "TEST", resp->log_info_type.app_ids[0].context_id_info[0].context_id,4));
+    EXPECT_EQ(0, strcmp( "Test Context for Logging",resp->log_info_type.app_ids[0].context_id_info[0].context_description ));
+    EXPECT_EQ(24,resp->log_info_type.app_ids[0].context_id_info[0].len_context_description);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[0].log_level);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[0].trace_status);
+
+    EXPECT_EQ(0, memcmp( "TS1", resp->log_info_type.app_ids[0].context_id_info[1].context_id,4));
+    EXPECT_EQ(0, strcmp( "Test Context1 for injection",resp->log_info_type.app_ids[0].context_id_info[1].context_description ));
+    EXPECT_EQ(27,resp->log_info_type.app_ids[0].context_id_info[1].len_context_description);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[1].log_level);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[1].trace_status);
+
+    EXPECT_EQ(0, memcmp( "TS2", resp->log_info_type.app_ids[0].context_id_info[2].context_id,4));
+    EXPECT_EQ(0, strcmp( "Test Context2 for injection",resp->log_info_type.app_ids[0].context_id_info[2].context_description ));
+    EXPECT_EQ(27,resp->log_info_type.app_ids[0].context_id_info[2].len_context_description);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[2].log_level);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[0].context_id_info[2].trace_status);
+
+    EXPECT_EQ(0, memcmp( "SYS", resp->log_info_type.app_ids[1].app_id,4));
+    EXPECT_EQ(0, strcmp("DLT System Manager", resp->log_info_type.app_ids[1].app_description));
+    EXPECT_EQ(18, resp->log_info_type.app_ids[1].len_app_description);
+
+    EXPECT_EQ(2, resp->log_info_type.app_ids[1].count_context_ids);
+
+    EXPECT_EQ(0, memcmp( "JOUR", resp->log_info_type.app_ids[1].context_id_info[0].context_id,4));
+    EXPECT_EQ(0, strcmp( "Journal Adapter",resp->log_info_type.app_ids[1].context_id_info[0].context_description ));
+    EXPECT_EQ(15,resp->log_info_type.app_ids[1].context_id_info[0].len_context_description);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[1].context_id_info[0].log_level);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[1].context_id_info[0].trace_status);
+
+    EXPECT_EQ(0, memcmp( "MGR", resp->log_info_type.app_ids[1].context_id_info[1].context_id,4));
+    EXPECT_EQ(0, strcmp( "Context of main dlt system manager",resp->log_info_type.app_ids[1].context_id_info[1].context_description ));
+    EXPECT_EQ(34,resp->log_info_type.app_ids[1].context_id_info[1].len_context_description);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[1].context_id_info[1].log_level);
+    EXPECT_EQ(-1,resp->log_info_type.app_ids[1].context_id_info[1].trace_status);
+
+    ret = (DltReturnValue)dlt_client_cleanup_get_log_info(resp);
+    EXPECT_EQ(DLT_RETURN_OK,ret);
+}
+
+TEST(dlt_getloginfo_conv_ascii_to_string, normal)
+{
+    /* NULL-Pointer, expect exeption */
+    char rp_1[] = "72 65 6d 6f";
+    char rp_2[] = "123456789 72 65 6d 6f";
+    int rp_count = 0;
+    char rp_str[] =
+    { 0x72, 0x65, 0x6d, 0x6f, 0x00 };
+    char wp[5];
+
+    dlt_getloginfo_conv_ascii_to_string(rp_1, &rp_count, wp, 4);
+    EXPECT_EQ(0, strcmp(rp_str, wp));
+    EXPECT_EQ(12, rp_count);
+
+    rp_count = 10;
+    dlt_getloginfo_conv_ascii_to_string(rp_2, &rp_count, wp, 4);
+    EXPECT_EQ(0, strcmp(rp_str, wp));
+    EXPECT_EQ(22, rp_count);
+
+}
 
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
