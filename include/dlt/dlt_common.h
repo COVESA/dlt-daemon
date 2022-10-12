@@ -307,7 +307,13 @@ enum {
         if ((length < 0) || ((length) < DLT_ID_SIZE)) \
         { length = -1; } \
         else \
-        { memcpy(dst, src, DLT_ID_SIZE); src += DLT_ID_SIZE; length -= DLT_ID_SIZE; } \
+        { 	uint8_t value_tmp_mac[sizeof(type)];	memset(value_tmp_mac, 0x00, sizeof(value_tmp_mac));\
+		uint8_t loop_tmp = 0;\
+		for (loop_tmp = 0; loop_tmp < sizeof(type); loop_tmp++)\
+		{value_tmp_mac[loop_tmp] = *((*ptr) + loop_tmp);}\
+		memcpy(&dst, value_tmp_mac, sizeof(type));\
+		src += sizeof(type); length -= sizeof(type); \
+		} \
     } while(0)
 
 #   define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
