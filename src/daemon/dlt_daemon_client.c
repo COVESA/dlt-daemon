@@ -484,7 +484,7 @@ int dlt_daemon_client_process_control(int sock,
 
     /* check if the message needs to be forwarded */
     if (daemon_local->flags.gatewayMode == 1) {
-        if (strcmp(daemon_local->flags.evalue, extra.ecu) != 0)
+        if (strncmp(daemon_local->flags.evalue, extra.ecu, DLT_ID_SIZE) != 0)
             return dlt_gateway_forward_control_message(&daemon_local->pGateway,
                                                        daemon_local,
                                                        msg,
