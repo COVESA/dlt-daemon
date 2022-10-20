@@ -31,6 +31,10 @@ extern "C"
 #include <fcntl.h>
 }
 
+
+#define DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR 1
+#define DLT_CONFIG_FILE_SECTIONS 3
+
 unsigned int g_logstorage_cache_max;
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
 TEST(t_dlt_logstorage_list_add, normal)
@@ -324,12 +328,12 @@ TEST(t_dlt_logstorage_check_apids, normal)
 {
     char value[] = "a,b,c,d";
     DltLogStorageFilterConfig config;
-    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
+    /* Initialize id pointer as NULL pointer for testing only */
     config.apids = (char *)calloc (1, sizeof(char));
 
     if (config.apids != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_apids(&config, value));
-
+        EXPECT_EQ(DLT_RETURN_OK, strncmp(config.apids, value, 7));
         free(config.apids);
     }
 }
@@ -344,12 +348,12 @@ TEST(t_dlt_logstorage_check_ctids, normal)
 {
     char value[] = "a,b,c,d";
     DltLogStorageFilterConfig config;
-    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
+    /* Initialize id pointer as NULL pointer for testing only */
     config.ctids = (char *)calloc (1, sizeof(char));
 
     if (config.ctids != NULL) {
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_ctids(&config, value));
-
+        EXPECT_EQ(DLT_RETURN_OK, strncmp(config.ctids, value, 7));
         free(config.ctids);
     }
 }
@@ -357,6 +361,63 @@ TEST(t_dlt_logstorage_check_ctids, normal)
 TEST(t_dlt_logstorage_check_ctids, null)
 {
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_check_ctids(NULL, NULL));
+}
+
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_store_config_excluded_apids*/
+TEST(t_dlt_logstorage_store_config_excluded_apids, normal)
+{
+    char value[] = "a,b,c,d";
+    DltLogStorageFilterConfig config;
+    /* Initialize id pointer as NULL pointer for testing only */
+    config.excluded_apids = (char *)calloc (1, sizeof(char));
+
+    if (config.excluded_apids != NULL) {
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_store_config_excluded_apids(&config, value));
+        EXPECT_EQ(DLT_RETURN_OK, strncmp(config.excluded_apids, value, 7));
+        free(config.excluded_apids);
+    }
+}
+
+TEST(t_dlt_logstorage_store_config_excluded_apids, null)
+{
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_store_config_excluded_apids(NULL, NULL));
+}
+
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_store_config_excluded_ctids*/
+TEST(t_dlt_logstorage_store_config_excluded_ctids, normal)
+{
+    char value[] = "a,b,c,d";
+    DltLogStorageFilterConfig config;
+    /* Initialize id pointer as NULL pointer for testing only */
+    config.excluded_ctids = (char *)calloc (1, sizeof(char));
+
+    if (config.excluded_ctids != NULL) {
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_store_config_excluded_ctids(&config, value));
+        EXPECT_EQ(DLT_RETURN_OK, strncmp(config.excluded_ctids, value, 7));
+        free(config.excluded_ctids);
+    }
+}
+
+TEST(t_dlt_logstorage_store_config_excluded_ctids, null)
+{
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_store_config_excluded_ctids(NULL, NULL));
+}
+
+/* Begin Method: dlt_logstorage::t_dlt_logstorage_check_excluded_ids*/
+TEST(t_dlt_logstorage_check_excluded_ids, normal)
+{
+    char id[] = "log4";
+    char not_excluded_id[] = "log0";
+    char delim[] = ",";
+    char excluded_ids[] = "log1,log2,log3,log4";
+
+    EXPECT_TRUE(dlt_logstorage_check_excluded_ids(id, delim, excluded_ids));
+    EXPECT_FALSE(dlt_logstorage_check_excluded_ids(not_excluded_id, delim, excluded_ids));
+}
+
+TEST(t_dlt_logstorage_check_excluded_ids, null)
+{
+    EXPECT_FALSE(dlt_logstorage_check_excluded_ids(NULL, NULL, NULL));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_check_loglevel*/
@@ -512,7 +573,9 @@ TEST(t_dlt_logstorage_check_param, null)
 TEST(t_dlt_logstorage_store_filters, normal)
 {
     DltLogStorage handle;
+    memset(&handle, 0, sizeof(DltLogStorage));
     DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     char *path = (char*)"/tmp";
     char config_file_name[] = "/tmp/dlt_logstorage.conf";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
@@ -663,11 +726,12 @@ TEST(t_dlt_logstorage_filter, normal)
 {
     char apid[] = "1234";
     char ctid[] = "5678";
+    char t_apid[] = "4321";
+    char t_ctid[] = "8765";
     char ecuid[] = "12";
     char filename[] = "file_name";
     int num = 1;
-    DltLogStorageFilterConfig value;
-    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
+    DltLogStorageFilterConfig value = {};
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
@@ -676,7 +740,7 @@ TEST(t_dlt_logstorage_filter, normal)
     char key0[] = ":1234:\000\000\000\000";
     char key1[] = "::5678\000\000\000\000";
     char key2[] = ":1234:5678";
-    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
     DltLogStorage handle;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
@@ -691,6 +755,117 @@ TEST(t_dlt_logstorage_filter, normal)
     num = dlt_logstorage_filter(&handle, config, apid, ctid, ecuid, 0);
 
     EXPECT_EQ(num, 3);
+    EXPECT_TRUE(config[0] != NULL);
+    EXPECT_TRUE(config[1] != NULL);
+    EXPECT_TRUE(config[2] != NULL);
+
+    /* Filter on excluded application and context */
+    value.excluded_apids = apid;
+    value.excluded_ctids = ctid;
+    DltLogStorageFilterConfig *neg_filter_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, neg_filter_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(neg_filter_config[0] == NULL);
+    EXPECT_TRUE(neg_filter_config[1] == NULL);
+    EXPECT_TRUE(neg_filter_config[2] == NULL);
+
+    /* Change excluded fields */
+    value.excluded_apids = t_apid;
+    value.excluded_ctids = t_ctid;
+    DltLogStorageFilterConfig *t_neg_filter_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, t_neg_filter_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(t_neg_filter_config[0] != NULL);
+    EXPECT_TRUE(t_neg_filter_config[1] != NULL);
+    EXPECT_TRUE(t_neg_filter_config[2] != NULL);
+
+    /* Only filter on excluded contexts */
+    value.excluded_apids = NULL;
+    value.excluded_ctids = ctid;
+    DltLogStorageFilterConfig *neg_filter_ctid_only_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, neg_filter_ctid_only_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(neg_filter_ctid_only_config[0] == NULL);
+    EXPECT_TRUE(neg_filter_ctid_only_config[1] == NULL);
+    EXPECT_TRUE(neg_filter_ctid_only_config[2] == NULL);
+
+    /* Change excluded fields */
+    value.excluded_apids = NULL;
+    value.excluded_ctids = t_ctid;
+    DltLogStorageFilterConfig *t_neg_filter_ctid_only_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, t_neg_filter_ctid_only_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(t_neg_filter_ctid_only_config[0] != NULL);
+    EXPECT_TRUE(t_neg_filter_ctid_only_config[1] != NULL);
+    EXPECT_TRUE(t_neg_filter_ctid_only_config[2] != NULL);
+
+    /* Only filter on excluded applications */
+    value.excluded_apids = apid;
+    value.excluded_ctids = NULL;
+    DltLogStorageFilterConfig *neg_filter_apid_only_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, neg_filter_apid_only_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(neg_filter_apid_only_config[0] == NULL);
+    EXPECT_TRUE(neg_filter_apid_only_config[1] == NULL);
+    EXPECT_TRUE(neg_filter_apid_only_config[2] == NULL);
+
+    /* Change excluded fields */
+    value.excluded_apids = t_apid;
+    value.excluded_ctids = NULL;
+    DltLogStorageFilterConfig *t_neg_filter_apid_only_config[DLT_CONFIG_FILE_SECTIONS] = { 0 };
+    handle.config_list = NULL;
+    handle.newest_file_list = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
+
+    num = dlt_logstorage_filter(&handle, t_neg_filter_apid_only_config, apid, ctid, ecuid, 0);
+
+    EXPECT_EQ(num, 3);
+    EXPECT_TRUE(t_neg_filter_apid_only_config[0] != NULL);
+    EXPECT_TRUE(t_neg_filter_apid_only_config[1] != NULL);
+    EXPECT_TRUE(t_neg_filter_apid_only_config[2] != NULL);
 }
 
 TEST(t_dlt_logstorage_filter, null)
@@ -715,8 +890,7 @@ TEST(t_dlt_logstorage_write, normal)
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
-    DltLogStorageFilterConfig value;
-    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
+    DltLogStorageFilterConfig value = {};
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
@@ -775,8 +949,7 @@ TEST(t_dlt_logstorage_sync_caches, normal)
     DltLogStorage handle;
     handle.num_configs = 1;
     handle.config_list = NULL;
-    DltLogStorageFilterConfig configs;
-    memset(&configs, 0, sizeof(DltLogStorageFilterConfig));
+    DltLogStorageFilterConfig configs = {};
     configs.apids = apid;
     configs.ctids = ctid;
     configs.ecuid = ecuid;
@@ -1844,8 +2017,7 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
     daemon.storage_handle->num_configs = 1;
     daemon.storage_handle->config_list = NULL;
     strncpy(daemon.storage_handle->device_mount_point, "/tmp", 5);
-    DltLogStorageFilterConfig configs;
-    memset(&configs, 0, sizeof(DltLogStorageFilterConfig));
+    DltLogStorageFilterConfig configs = {};
     configs.apids = apid;
     configs.ctids = ctid;
     configs.ecuid = ecuid;
