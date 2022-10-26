@@ -296,6 +296,9 @@ int dlt_offline_trace_delete_oldest_file(DltOfflineTrace *trace)
     /* go through all dlt files in directory */
     DIR *dir = opendir(trace->directory);
 
+    if(!dir)
+        return -1;
+
     while ((dp = readdir(dir)) != NULL)
         if (strstr(dp->d_name, DLT_OFFLINETRACE_FILENAME_BASE)) {
             int res = snprintf(filename, sizeof(filename), "%s/%s", trace->directory, dp->d_name);

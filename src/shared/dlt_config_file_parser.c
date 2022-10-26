@@ -496,6 +496,7 @@ int dlt_config_file_get_section_name(const DltConfigFile *file,
         return -1;
 
     strncpy(name, (file->sections + num)->name, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
+    name[DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1] = '\0';
 
     return 0;
 }

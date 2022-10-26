@@ -1813,27 +1813,34 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
     if (ret == DLT_RETURN_TRUE) {
         /* initialize values */
-        if (log->buffer == NULL) {
+        if ((NULL != log->buffer))
+        {
+            free(log->buffer);
+            log->buffer = NULL;
+        }
+        else
+        {
             log->buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
-
-            if (log->buffer == NULL) {
-                dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
-                return DLT_RETURN_ERROR;
-            }
         }
 
-        /* In non-verbose mode, insert message id */
-        if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
-            if ((sizeof(uint32_t)) > dlt_user.log_buf_len) {
-                return DLT_RETURN_USER_BUFFER_FULL;
+        if (log->buffer == NULL) {
+            dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
+            return DLT_RETURN_ERROR;
+        }
+        else
+        {
+            /* In non-verbose mode, insert message id */
+            if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
+                if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
+                    return DLT_RETURN_USER_BUFFER_FULL;
+
+                /* Write message id */
+                memcpy(log->buffer, &(messageid), sizeof(uint32_t));
+                log->size = sizeof(uint32_t);
+
+                /* as the message id is part of each message in non-verbose mode,
+                * it doesn't increment the argument counter in extended header (if used) */
             }
-
-            /* Write message id */
-            memcpy(log->buffer, &(messageid), sizeof(uint32_t));
-            log->size = sizeof(uint32_t);
-
-            /* as the message id is part of each message in non-verbose mode,
-             * it doesn't increment the argument counter in extended header (if used) */
         }
     }
 
@@ -1874,7 +1881,7 @@ DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
 
     return ret;
  }
- 
+
 DltReturnValue dlt_user_log_write_finish(DltContextData *log)
 {
     int ret = DLT_RETURN_ERROR;
