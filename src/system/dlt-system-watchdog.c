@@ -121,3 +121,4 @@ void watchdog_fd_handler(int fd)
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("systemd watchdog waited periodic\n"));
 }
 #endif
+
