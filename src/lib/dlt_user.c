@@ -3465,6 +3465,53 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
     return DLT_RETURN_OK;
 }
+#else  /* DLT_NETWORK_TRACE_ENABLE not set */
+DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
+                                                DltNetworkTraceType nw_trace_type,
+                                                uint16_t header_len,
+                                                void *header,
+                                                uint16_t payload_len,
+                                                void *payload)
+{
+    /**
+     *  vsomeip uses the DLT_TRACE_NETWORK_SEGMENTED macro that calls this function.
+     *  It's not possible to rewrite this macro directly to a no-op,
+     *  because the macro is used on vsomeip side and there our defines are not set.
+     *  Add an empty function to the dlt-lib to avoid a broken build.
+     */
+    (void)handle;
+    (void)nw_trace_type;
+    (void)header_len;
+    (void)header;
+    (void)payload_len;
+    (void)payload;
+    return DLT_RETURN_LOGGING_DISABLED;
+}
+
+DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
+                                                DltNetworkTraceType nw_trace_type,
+                                                uint16_t header_len,
+                                                void *header,
+                                                uint16_t payload_len,
+                                                void *payload,
+                                                int allow_truncate)
+{
+    /**
+     *  vsomeip uses the DLT_TRACE_NETWORK_TRUNCATED macro that calls this function.
+     *  It's not possible to rewrite this macro directly to a no-op,
+     *  because the macro is used on vsomeip side and there our defines are not set.
+     *  Add an empty function to the dlt-lib to avoid a broken build.
+     */
+    (void)handle;
+    (void)nw_trace_type;
+    (void)header_len;
+    (void)header;
+    (void)payload_len;
+    (void)payload;
+    (void)allow_truncate;
+    return DLT_RETURN_LOGGING_DISABLED;
+}
+
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)

@@ -56,7 +56,7 @@ option(WITH_TESTSCRIPTS       "Set to ON to run CMakeLists.txt in testscripts"  
 option(WITH_GPROF             "Set -pg to compile flags"                                                         OFF)
 option(WITH_DLTTEST           "Set to ON to build with modifications to test User-Daemon communication with corrupt messages" OFF)
 option(WITH_DLT_SHM_ENABLE    "EXPERIMENTAL! Set to ON to use shared memory as IPC. EXPERIMENTAL!"               OFF)
-option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF) 
+option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF)
 option(WITH_DLT_ADAPTOR_STDIN "Set to ON to build src/adaptor/stdin binaries"                                    OFF)
 option(WITH_DLT_ADAPTOR_UDP   "Set to ON to build src/adaptor/udp binaries"                                      OFF)
 option(WITH_DLT_CONSOLE       "Set to ON to build src/console binaries"                                          ON)
