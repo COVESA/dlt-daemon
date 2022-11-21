@@ -233,7 +233,6 @@ TEST(t_load_configuration_file, normal)
     EXPECT_STREQ("OTHE", logd_conf->default_ctxID);
 }
 
-/*
 TEST(t_load_configuration_file, abnormal)
 {
     logd_conf->appID = strdup("LOGD");
@@ -244,11 +243,11 @@ TEST(t_load_configuration_file, abnormal)
     int ret = load_configuration_file(ABNORMAL_CONFIGURATION_FILE_DIR);
 
     EXPECT_EQ(DLT_RETURN_OK, ret);
-    EXPECT_STREQ("LOGDCONV", logd_conf->appID);
+    EXPECT_STREQ("DLOG", logd_conf->appID);
     EXPECT_STREQ("DLT", logd_conf->ctxID);
-    EXPECT_STREQ("/vendor/etc/dlt-logdctxt.json", logd_conf->json_file_dir);
+    EXPECT_STREQ("dlt-logdctxt.json", logd_conf->json_file_dir);
     EXPECT_STREQ("OTHE", logd_conf->default_ctxID);
-}*/
+}
 
 TEST(t_load_configuration_file, nullpointer)
 {

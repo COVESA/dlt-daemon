@@ -147,32 +147,40 @@ DLT_STATIC int load_configuration_file(const char *file_name)
         if (pattern[0] != '#') {
             token = strtok(&pattern[0], " \t=");
             if (strcmp(token, "ApplicationID") == 0) {
-                if (logd_conf->appID) {
-                    delete logd_conf->appID;
+                token = strtok(NULL, " \t=");
+                if (token != nullptr) {
+                    if (logd_conf->appID) {
+                        delete logd_conf->appID;
+                    }
+                    logd_conf->appID = strndup(token, DLT_ID_SIZE);
                 }
-                token = strtok(nullptr, " \t=");
-                logd_conf->appID = strndup(token, DLT_ID_SIZE);
             }
             else if (strcmp(token, "ContextID") == 0) {
-                if (logd_conf->ctxID) {
-                    delete logd_conf->ctxID;
-                }
                 token = strtok(NULL, " \t=");
-                logd_conf->ctxID = strndup(token, DLT_ID_SIZE);
+                if (token != nullptr) {
+                    if (logd_conf->ctxID) {
+                        delete logd_conf->ctxID;
+                    }
+                    logd_conf->ctxID = strndup(token, DLT_ID_SIZE);
+                }
             }
             else if (strcmp(token, "AndroidLogdJSONpath") == 0) {
-                if (logd_conf->json_file_dir) {
-                    delete logd_conf->json_file_dir;
-                }
                 token = strtok(NULL, " \t=");
-                logd_conf->json_file_dir = strndup(token, MAX_LINE);
+                if (token != nullptr) {
+                    if (logd_conf->json_file_dir) {
+                        delete logd_conf->json_file_dir;
+                    }
+                    logd_conf->json_file_dir = strndup(token, MAX_LINE);
+                }
             }
             else if (strcmp(token, "AndroidLogdContextID") == 0) {
-                if (logd_conf->default_ctxID) {
-                    delete logd_conf->default_ctxID;
-                }
                 token = strtok(NULL, " \t=");
-                logd_conf->default_ctxID = strndup(token, DLT_ID_SIZE);
+                if (token != nullptr) {
+                    if (logd_conf->default_ctxID) {
+                        delete logd_conf->default_ctxID;
+                    }
+                    logd_conf->default_ctxID = strndup(token, DLT_ID_SIZE);
+                }
             }
         }
     }
@@ -391,7 +399,7 @@ DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
     }
     else {
         DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("Could not receive any log message"));
-        return EXIT_FAILURE;
+        return (uint32_t)DLT_FAIL_TO_GET_LOG_MSG;
     }
 }
 

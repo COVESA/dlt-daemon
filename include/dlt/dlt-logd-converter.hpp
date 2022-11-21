@@ -65,6 +65,7 @@ using namespace std;
 #define CONFIGURATION_FILE_DIR "/vendor/etc/dlt-logd-converter.conf"
 #define JSON_FILE_DIR "/vendor/etc/dlt-logdctxt.json"
 #define MAX_LINE 1024
+#define DLT_FAIL_TO_GET_LOG_MSG 0
 
 typedef struct
 {
