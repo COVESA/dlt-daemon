@@ -238,8 +238,7 @@ DLT_STATIC void json_parser()
             string json_ctxID = iter.key().asString();
             string json_tag = (*iter)["tag"].asString();
             string json_description = (*iter)["description"].asString();
-#endif
-#ifdef DLT_UNIT_TESTS
+#else
     if (json_is_available) {
         string json_ctxID;
         string json_tag;
@@ -276,8 +275,7 @@ DLT_STATIC void json_parser()
 #ifdef DLT_UNIT_TESTS
         }
     }
-#endif
-#ifndef DLT_UNIT_TESTS
+#else
         }
     }
     file.close();
@@ -316,8 +314,7 @@ DLT_STATIC struct logger *init_logger(struct logger_list *logger_list, log_id_t 
         DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
                 DLT_STRING("Could not open logd buffer ID = "), DLT_INT64(log_id));
     }
-#endif
-#ifdef DLT_UNIT_TESTS
+#else
     logger = t_android_logger_open(logger_list, log_id);
 #endif
     return logger;
@@ -332,8 +329,7 @@ DLT_STATIC struct logger_list *init_logger_list(bool skip_binary_buffers)
         DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("Could not allocate logger list"));
         return nullptr;
     }
-#endif
-#ifdef DLT_UNIT_TESTS
+#else
     logger_list = t_android_logger_list_alloc(READ_ONLY, 0, 0);
     if (logger_list == nullptr) {
         return nullptr;
@@ -360,55 +356,72 @@ DLT_STATIC struct logger_list *init_logger_list(bool skip_binary_buffers)
 
 DLT_STATIC DltContext *get_log_context_from_log_msg(struct log_msg *log_msg)
 {
-    switch (log_msg->id()) {
-    case LOG_ID_MAIN:
-        return &dlt_ctx_main;
-    case LOG_ID_RADIO:
-        return &dlt_ctx_rdio;
-    case LOG_ID_EVENTS:
-        return &dlt_ctx_evnt;
-    case LOG_ID_SYSTEM:
-        return &dlt_ctx_syst;
-    case LOG_ID_CRASH:
-        return &dlt_ctx_crsh;
-    case LOG_ID_STATS:
-        return &dlt_ctx_stat;
-    case LOG_ID_SECURITY:
-        return &dlt_ctx_secu;
-    case LOG_ID_KERNEL:
-        return &dlt_ctx_krnl;
-    default:
+    if (log_msg) {
+        switch (log_msg->id()) {
+        case LOG_ID_MAIN:
+            return &dlt_ctx_main;
+        case LOG_ID_RADIO:
+            return &dlt_ctx_rdio;
+        case LOG_ID_EVENTS:
+            return &dlt_ctx_evnt;
+        case LOG_ID_SYSTEM:
+            return &dlt_ctx_syst;
+        case LOG_ID_CRASH:
+            return &dlt_ctx_crsh;
+        case LOG_ID_STATS:
+            return &dlt_ctx_stat;
+        case LOG_ID_SECURITY:
+            return &dlt_ctx_secu;
+        case LOG_ID_KERNEL:
+            return &dlt_ctx_krnl;
+        default:
+            return &dlt_ctx_self;
+        }
+    }
+    else {
         return &dlt_ctx_self;
     }
 }
 
 DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
 {
-    /* in 0.1 ms = 100 us */
-    return (uint32_t)log_msg->entry.sec * 10000 + (uint32_t)log_msg->entry.nsec / 100000;
+    if (log_msg) {
+        /* in 0.1 ms = 100 us */
+        return (uint32_t)log_msg->entry.sec * 10000 + (uint32_t)log_msg->entry.nsec / 100000;
+    }
+    else {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("Could not receive any log message"));
+        return EXIT_FAILURE;
+    }
 }
 
 DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
 {
-    android_LogPriority priority = static_cast<android_LogPriority>(log_msg->msg()[0]);
-    switch (priority) {
-    case ANDROID_LOG_VERBOSE:
-        return DLT_LOG_VERBOSE;
-    case ANDROID_LOG_DEBUG:
-        return DLT_LOG_DEBUG;
-    case ANDROID_LOG_INFO:
-        return DLT_LOG_INFO;
-    case ANDROID_LOG_WARN:
-        return DLT_LOG_WARN;
-    case ANDROID_LOG_ERROR:
-        return DLT_LOG_ERROR;
-    case ANDROID_LOG_FATAL:
-        return DLT_LOG_FATAL;
-    case ANDROID_LOG_SILENT:
-        return DLT_LOG_OFF;
-    case ANDROID_LOG_UNKNOWN:
-    case ANDROID_LOG_DEFAULT:
-    default:
+    if (log_msg) {
+        android_LogPriority priority = static_cast<android_LogPriority>(log_msg->msg()[0]);
+        switch (priority) {
+        case ANDROID_LOG_VERBOSE:
+            return DLT_LOG_VERBOSE;
+        case ANDROID_LOG_DEBUG:
+            return DLT_LOG_DEBUG;
+        case ANDROID_LOG_INFO:
+            return DLT_LOG_INFO;
+        case ANDROID_LOG_WARN:
+            return DLT_LOG_WARN;
+        case ANDROID_LOG_ERROR:
+            return DLT_LOG_ERROR;
+        case ANDROID_LOG_FATAL:
+            return DLT_LOG_FATAL;
+        case ANDROID_LOG_SILENT:
+            return DLT_LOG_OFF;
+        case ANDROID_LOG_UNKNOWN:
+        case ANDROID_LOG_DEFAULT:
+        default:
+            return DLT_LOG_DEFAULT;
+        }
+    }
+    else {
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("Could not receive any log message"));
         return DLT_LOG_DEFAULT;
     }
 }
@@ -447,8 +460,7 @@ DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
                     DLT_STRING("android_logger_list_read unexpected return="), DLT_INT32(ret));
             return ret;
         }
-#endif
-#ifdef DLT_UNIT_TESTS
+#else
         extern struct dlt_log_container *dlt_log_data;
         extern struct log_msg t_log_msg;
         struct log_msg &log_msg = t_log_msg;
@@ -492,8 +504,7 @@ DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
     }
 
     DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING("Exited parsing loop"));
-#endif
-#ifdef DLT_UNIT_TESTS
+#else
     dlt_log_data->ctx = ctx;
     dlt_log_data->log_level = log_level;
     dlt_log_data->ts = ts;

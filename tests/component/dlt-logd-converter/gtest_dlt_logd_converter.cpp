@@ -424,8 +424,8 @@ TEST(t_init_logger, nullpointer)
 
 TEST(t_init_logger_list, normal)
 {
-    EXPECT_EQ(0b0000000010011011, (init_logger_list(true)->log_mask) & 0x00FF);
-    EXPECT_EQ(0b0000000011111111, (init_logger_list(false)->log_mask) & 0x00FF);
+    EXPECT_EQ(0x009B, (init_logger_list(true)->log_mask) & 0x00FF);
+    EXPECT_EQ(0x00FF, (init_logger_list(false)->log_mask) & 0x00FF);
     delete t_logger_list;
     t_logger_list = nullptr;
 }
@@ -458,9 +458,8 @@ TEST(t_get_log_context_from_log_msg, normal)
 
 TEST(t_get_log_context_from_log_msg, nullpointer)
 {
-    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
-    ASSERT_EXIT((get_log_context_from_log_msg(nullptr),exit(SIGSEGV)),
-                ::testing::KilledBySignal(SIGSEGV),".*");
+    struct log_msg *t_log_msg = nullptr;
+    EXPECT_EQ(&dlt_ctx_self, get_log_context_from_log_msg(t_log_msg));
 }
 
 TEST(t_get_timestamp_from_log_msg, normal)
@@ -480,9 +479,8 @@ TEST(t_get_timestamp_from_log_msg, normal)
 
 TEST(t_get_timestamp_from_log_msg, nullpointer)
 {
-    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
-    ASSERT_EXIT((get_timestamp_from_log_msg(nullptr), exit(SIGSEGV)),
-                ::testing::KilledBySignal(SIGSEGV), ".*");
+    struct log_msg *t_log_msg = nullptr;
+    EXPECT_EQ(EXIT_FAILURE, get_timestamp_from_log_msg(t_log_msg));
 }
 
 TEST(t_get_log_level_from_log_msg, normal)
@@ -512,21 +510,10 @@ TEST(t_get_log_level_from_log_msg, normal)
     t_log_msg = nullptr;
 }
 
-TEST(t_get_log_level_from_log_msg, abnormal)
-{
-    struct log_msg t_log_msg;
-    t_log_msg.entry.hdr_size = 10000;
-    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
-    t_log_msg.buf[t_log_msg.entry.hdr_size] = (unsigned char)ANDROID_LOG_VERBOSE;
-    ASSERT_EXIT((get_log_level_from_log_msg(&t_log_msg), exit(SIGSEGV)),
-                ::testing::KilledBySignal(SIGSEGV), ".*");
-}
-
 TEST(t_get_log_level_from_log_msg, nullpointer)
 {
-    (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
-    ASSERT_EXIT((get_log_level_from_log_msg(nullptr), exit(SIGSEGV)),
-                ::testing::KilledBySignal(SIGSEGV), ".*");
+    struct log_msg *t_log_msg = nullptr;
+    EXPECT_EQ(DLT_LOG_DEFAULT, get_log_level_from_log_msg(t_log_msg));
 }
 
 TEST(t_signal_handler, normal)
