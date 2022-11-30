@@ -1211,6 +1211,7 @@ DLT_STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoR
 
     free(resp->log_info_type.app_ids);
     resp->log_info_type.app_ids = NULL;
+    resp->log_info_type.count_app_ids = 0;
 
     return;
 }
@@ -1331,7 +1332,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                 con->context_description = (char *)calloc
                         ((size_t) (con->len_context_description + 1), sizeof(char));
 
-                if (con->context_description == 0) {
+                if (con->context_description == NULL) {
                     dlt_vlog(LOG_ERR, "%s: calloc failed for context description\n", __func__);
                     dlt_client_free_calloc_failed_get_log_info(resp, i);
                     return DLT_RETURN_ERROR;
@@ -1351,7 +1352,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
             app->app_description = (char *)calloc
                     ((size_t) (app->len_app_description + 1), sizeof(char));
 
-            if (app->app_description == 0) {
+            if (app->app_description == NULL) {
                 dlt_vlog(LOG_ERR, "%s: calloc failed for application description\n", __func__);
                 dlt_client_free_calloc_failed_get_log_info(resp, i);
                 return DLT_RETURN_ERROR;
