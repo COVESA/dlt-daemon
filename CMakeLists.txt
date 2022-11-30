@@ -75,6 +75,7 @@ option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"            
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
 option(WITH_DLT_QNX_SYSTEM    "Set to ON to build QNX system binary dlt-qnx-system"                              OFF)
 option(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK "Set to ON to enable fallback to syslog if dlt logging to file fails" OFF)
+option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message queue is supported)"                ON)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
@@ -212,13 +213,17 @@ add_definitions(-DCONFIGURATION_FILES_DIR="${CONFIGURATION_FILES_DIR}")
 
 add_subdirectory(cmake)
 
-# Message queue
-if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
-   HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
-    add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
-    set(DLT_NETWORK_TRACE_ENABLE 1)
+if (WITH_DLT_NETWORK_TRACE)
+    # Message queue
+    if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
+       HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
+        add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
+        set(DLT_NETWORK_TRACE_ENABLE 1)
+    else()
+        message(STATUS "Disable network trace interface since message queue is not supported")
+    endif()
 else()
-    message(STATUS "Disable network trace interface since message queue is not supported")
+    message(STATUS "Network trace interface disabled")
 endif()
 
 if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL OR WITH_SYSTEMD_SOCKET_ACTIVATION)
@@ -346,6 +351,7 @@ message(STATUS "WITH_DLT_LIB_VSOCK_IPC = ${WITH_DLT_LIB_VSOCK_IPC}")
 message(STATUS "DLT_VSOCK_PORT = ${DLT_VSOCK_PORT}")
 message(STATUS "WITH_UDP_CONNECTION = ${WITH_UDP_CONNECTION}")
 message(STATUS "WITH_DLT_QNX_SYSTEM = ${WITH_DLT_QNX_SYSTEM}")
+message(STATUS "WITH_DLT_NETWORK_TRACE = ${WITH_DLT_NETWORK_TRACE}")
 message(STATUS "WITH_LIB_SHORT_VERSION = ${WITH_LIB_SHORT_VERSION}")
 message(STATUS "WITH_LEGACY_INCLUDE_PATH = ${WITH_LEGACY_INCLUDE_PATH}")
 message(STATUS "WITH_EXTENDED_FILTERING = ${WITH_EXTENDED_FILTERING}")
