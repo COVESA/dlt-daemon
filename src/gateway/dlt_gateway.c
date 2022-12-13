@@ -1289,6 +1289,7 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     DltGateway *gateway = NULL;
     DltGatewayConnection *con = NULL;
     DltMessage msg = { 0 };
+    bool b_reset_receiver = false;
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
@@ -1305,12 +1306,10 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
     }
 
     for (i = 0; i < gateway->num_connections; i++)
-        if (gateway->connections[i].client.sock == receiver->fd) {
+        if ((gateway->connections[i].status == DLT_GATEWAY_CONNECTED) && (gateway->connections[i].client.sock == receiver->fd)) {
             con = &gateway->connections[i];
             break;
         }
-
-
 
     if (con == NULL) {
         dlt_log(LOG_ERR, "Cannot associate fd to passive Node connection\n");
@@ -1362,14 +1361,15 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
              sizeof(DltStandardHeader));
 
         /* only forward messages if the received ECUid is the expected one */
-        if (strncmp(header->ecu, con->ecuid, strlen(con->ecuid)) == 0) {
+        if (strncmp(header->ecu, con->ecuid, DLT_ID_SIZE) == 0) {
             uint32_t id;
             uint32_t id_tmp;
             DltPassiveControlMessage *control_msg = con->p_control_msgs;
 
             dlt_vlog(LOG_DEBUG,
-                     "Received ECUid (%s) similar to configured ECUid(%s). "
+                     "Received ECUid (%.*s) similar to configured ECUid(%s). "
                      "Forwarding message (%s).\n",
+                     DLT_ID_SIZE,
                      header->ecu,
                      con->ecuid,
                      msg.databuffer);
@@ -1432,8 +1432,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                        verbose);
         } else { /* otherwise remove this connection and do not connect again */
             dlt_vlog(LOG_WARNING,
-                     "Received ECUid (%s) differs to configured ECUid(%s). "
+                     "Received ECUid (%.*s) differs to configured ECUid(%s). "
                      "Discard this message.\n",
+                     DLT_ID_SIZE,
                      header->ecu,
                      con->ecuid);
 
@@ -1449,6 +1450,11 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
 
             dlt_log(LOG_WARNING,
                     "Disconnect from passive node due to invalid ECUid\n");
+
+            /* it is possible that a partial log was received through the last recv call */
+            /* however, the rest will never be received since the socket will be closed by above method */
+            /* as such, we need to reset the receiver to prevent permanent corruption */
+            b_reset_receiver = true;
         }
 
         if (msg.found_serialheader) {
@@ -1471,6 +1477,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             return DLT_RETURN_ERROR;
         }
     }
+
+    if (b_reset_receiver)
+        dlt_receiver_remove(receiver, receiver->bytesRcvd);
 
     if (dlt_receiver_move_to_begin(receiver) == -1) {
         /* Return value ignored */
@@ -1543,7 +1552,7 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     for (i = 0; i < gateway->num_connections; i++)
         if (strncmp(gateway->connections[i].ecuid,
                     ecu,
-                    strlen(gateway->connections[i].ecuid)) == 0) {
+                    DLT_ID_SIZE) == 0) {
             con = &gateway->connections[i];
             break;
         }
