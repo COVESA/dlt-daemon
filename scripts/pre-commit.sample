@@ -1,0 +1,28 @@
+#!/bin/sh
+
+gitclangformat=$(which git-clang-format)
+
+if [ "$gitclangformat" == "" ]
+then
+    gitclangformat=$(find /usr/bin/ -name "git-clang-format*")
+fi
+
+against=`git rev-parse --verify HEAD 2>&1`
+
+if [ $against == "" ]
+then
+    # Initial commit: diff against an empty tree object
+    against=5394c6fa5bf40d9bc8619026cbc4c306211a8499
+fi
+
+$gitclangformat $against -f -q
+
+if [ $? != 0 ]
+then
+    echo "Format error!"
+    echo "Use git clang-format"
+    exit 1
+fi
+
+# Now update format changes and commit
+git add $(git diff --name-only --cached)

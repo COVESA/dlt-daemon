@@ -196,10 +196,22 @@ make sure to follow the
 
 ### Coding Rules
 
-Before contributing code, run uncrustify to harmonize code style.
+This project is now using clang-format as replacement of uncrustify.
 
-Configuration: util/uncrustify.cfg
-uncrustify version: 0.68\_f
+For convenience, any code changes will be harmonized before commit by hooks/pre-commit.
+
+- Install clang-format
+
+- Install pre-commit script by:
+
+  ```bash
+  cp scripts/pre-commit.sample .git/hooks/pre-commit
+  ```
+
+- Configuration: .clang-format
+
+For reference to clang-format, you can check with:
+[Configurator](https://zed0.co.uk/clang-format-configurator/)
 
 ## Known issues
 
