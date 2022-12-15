@@ -38,6 +38,9 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <errno.h>
+#if DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
+#include <systemd/sd-daemon.h>
+#endif
 
 #include "dlt-daemon.h"
 #include "dlt_common.h"
@@ -91,6 +94,48 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
         return -1;
     }
 
+#ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
+
+    char **names = NULL;
+    const int num_fds = sd_listen_fds_with_names(0, &names);
+    bool sd_socket_open = false;
+    int i;
+
+    if (num_fds <= 0) {
+        dlt_vlog(LOG_WARNING, "unix socket: no sockets configured via systemd, error: %s\n", strerror(errno));
+    } else {
+        for (i = 0; i < num_fds; ++i) {
+            if (strcmp(sock_path, names[i]) != 0) {
+                continue;
+            }
+
+            if (sd_is_socket_unix(i + SD_LISTEN_FDS_START, type, 1, names[i], strlen(names[i])) < 0) {
+                dlt_vlog(LOG_WARNING,
+                        "unix socket: socket with matching name is not of correct type or not in listen mode, error: %s\n",
+                        strerror(errno));
+                continue;
+            }
+
+            *sock = i + SD_LISTEN_FDS_START;
+            sd_socket_open = true;
+            dlt_vlog(LOG_INFO, "unix socket: sock_path %s found systemd socket %s\n", sock_path, names[i]);
+            break;
+        }
+
+        /*
+         * The caller [of sd_listen_fds_with_names] needs to free the array
+         * itself and each of its elements with libc's free() call after use.
+         * */
+        for (i = 0; i < num_fds; ++i) {
+            free(names[i]);
+        }
+        free(names);
+    }
+
+    if (!sd_socket_open) {
+        dlt_vlog(LOG_INFO, "unix socket: sock_path %s no systemd socket found\n", sock_path);
+#endif
+
     if ((*sock = socket(AF_UNIX, type, 0)) == -1) {
         dlt_log(LOG_WARNING, "unix socket: socket() error");
         return -1;
@@ -119,6 +164,11 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
 
     /* restore permissions */
     umask(old_mask);
+
+#ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
+    } // end of: if (!sd_socket_open) {
+#endif
+
 
     return 0;
 }

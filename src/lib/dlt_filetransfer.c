@@ -179,7 +179,7 @@ void getFileCreationDate2(const char *file, int *ok, char *date)
 
     if (-1 == stat(file, &st)) {
         *ok = 0;
-        date = 0;
+        return;
     }
 
     *ok = 1;
@@ -259,7 +259,7 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
                     DLT_STRING(filename));
         }
 
-        char fcreationdate[50];
+        char fcreationdate[50] = {0};
         getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok) {
@@ -326,7 +326,7 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
                     DLT_STRING(filename));
         }
 
-        char creationdate[50];
+        char creationdate[50] = {0};
         getFileCreationDate2(filename, &ok, creationdate);
 
         if (!ok) {
@@ -475,7 +475,7 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
                     DLT_STRING(filename));
         }
 
-        char fcreationdate[50];
+        char fcreationdate[50] = {0};
         getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok) {
@@ -536,7 +536,7 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
                     DLT_STRING(filename));
         }
 
-        char fcreationdate[50];
+        char fcreationdate[50] = {0};
         getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok) {
@@ -657,6 +657,13 @@ int dlt_user_log_file_data(DltContext *fileContext,
                 if (checkUserBufferForFreeSpace() > 0) {
                     pkgNumber++;
                     readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+
+                    if (readBytes == 0) {
+                        // If the file size is divisible by the package size don't send
+                        // one empty FLDA. Also we send the correct number of FLDAs too.
+                        break;
+                    }
+
                     int ok;
 
                     uint32_t fserial = getFileSerialNumber(filename, &ok);

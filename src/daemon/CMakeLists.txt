@@ -61,6 +61,9 @@ endif(WITH_UDP_CONNECTION)
 
 add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
 target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+if (WITH_SYSTEMD_SOCKET_ACTIVATION)
+    target_link_libraries(dlt-daemon systemd)
+endif()
 
 install(TARGETS dlt-daemon
         RUNTIME DESTINATION bin

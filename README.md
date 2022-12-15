@@ -1,8 +1,10 @@
 # Diagnostic Log and Trace
 
-Build and Test status: [![Build Status](https://travis-ci.com/GENIVI/dlt-daemon.svg?branch=master)](https://travis-ci.com/GENIVI/dlt-daemon)
+Build and Test status: [![Build Status](https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml/badge.svg)]( https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml)
 Alerts: [![Total alerts](https://img.shields.io/lgtm/alerts/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/alerts/)
 Code quality: [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/GENIVI/dlt-daemon.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/GENIVI/dlt-daemon/context:cpp)
+
+The Github Actions is now used for Build Status, former is Travis CI
 
 # Diagnostic Log and Trace
 
@@ -194,10 +196,22 @@ make sure to follow the
 
 ### Coding Rules
 
-Before contributing code, run uncrustify to harmonize code style.
+This project is now using clang-format as replacement of uncrustify.
 
-Configuration: util/uncrustify.cfg
-uncrustify version: 0.68\_f
+For convenience, any code changes will be harmonized before commit by hooks/pre-commit.
+
+- Install clang-format
+
+- Install pre-commit script by:
+
+  ```bash
+  cp scripts/pre-commit.sample .git/hooks/pre-commit
+  ```
+
+- Configuration: .clang-format
+
+For reference to clang-format, you can check with:
+[Configurator](https://zed0.co.uk/clang-format-configurator/)
 
 ## Known issues
 
@@ -228,7 +242,7 @@ https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace_lists.
 
 ## Contact
 
-Saya Sugiura <ssugiura@jp.adit-jv.com>,
+Michael Methner <mmethner@de.adit-jv.com>,
 Bui Nguyen Quoc, Thanh <thanh.buinguyenquoc@vn.bosch.com>
 
 ![alt text](doc/images/genivilogo.png "GENIVI")

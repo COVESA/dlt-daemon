@@ -109,8 +109,8 @@ int register_watchdog_fd(struct pollfd *pollfd, int fdcnt)
 
 void watchdog_fd_handler(int fd)
 {
-    long int timersElapsed = 0;
-    int r = read(fd, &timersElapsed, 8);    // only needed to reset fd event
+    uint64_t timersElapsed = 0ULL;
+    int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if(r < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
             DLT_STRING(strerror(r)));
@@ -121,3 +121,4 @@ void watchdog_fd_handler(int fd)
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("systemd watchdog waited periodic\n"));
 }
 #endif
+

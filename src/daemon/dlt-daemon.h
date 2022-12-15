@@ -249,6 +249,9 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                         DltDaemonLocal *daemon_local,
                                         DltReceiver *rec,
                                         int verbose);
+
+bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local);
+
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   DltReceiver *rec,
@@ -270,4 +273,3 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 #endif /* DLT_DAEMON_H */
-

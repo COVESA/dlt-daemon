@@ -48,6 +48,7 @@ option(BUILD_SHARED_LIBS      "Set to OFF to build static libraries"            
 option(WITH_SYSTEMD           "Set to ON to create unit files and systemd check on dlt-daemon startup"           OFF)
 option(WITH_SYSTEMD_WATCHDOG  "Set to ON to use the systemd watchdog in dlt-daemon"                              OFF)
 option(WITH_SYSTEMD_JOURNAL   "Set to ON to use the systemd journal in dlt-system"                               OFF)
+option(WITH_SYSTEMD_SOCKET_ACTIVATION "Set to ON to use systemd socket activation"                               OFF)
 option(WITH_DOC               "Set to ON to build documentation target"                                          OFF)
 option(WITH_MAN               "Set to ON to build man pages"                                                     OFF)
 option(WITH_CHECK_CONFIG_FILE "Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists" OFF)
@@ -55,10 +56,17 @@ option(WITH_TESTSCRIPTS       "Set to ON to run CMakeLists.txt in testscripts"  
 option(WITH_GPROF             "Set -pg to compile flags"                                                         OFF)
 option(WITH_DLTTEST           "Set to ON to build with modifications to test User-Daemon communication with corrupt messages" OFF)
 option(WITH_DLT_SHM_ENABLE    "EXPERIMENTAL! Set to ON to use shared memory as IPC. EXPERIMENTAL!"               OFF)
-option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF)
+option(WITH_DLT_ADAPTOR       "Set to ON to build src/adaptor binaries"                                          OFF) 
+option(WITH_DLT_ADAPTOR_STDIN "Set to ON to build src/adaptor/stdin binaries"                                    OFF)
+option(WITH_DLT_ADAPTOR_UDP   "Set to ON to build src/adaptor/udp binaries"                                      OFF)
 option(WITH_DLT_CONSOLE       "Set to ON to build src/console binaries"                                          ON)
 option(WITH_DLT_CONSOLE_WO_CTRL    "Set to ON not to build control commands under src/console"                   OFF)
 option(WITH_DLT_CONSOLE_WO_SBTM    "Set to ON not to build dlt-sortbytimestamp under src/console"                OFF)
+option(WITH_DLT_CONSOLE_RECEIVE    "Set to OFF to skip building dlt_receive"                                     ON)
+option(WITH_DLT_CONSOLE_CONVERT    "Set to OFF to skip building dlt_convert"                                     ON)
+option(WITH_DLT_CONSOLE_CONTROL    "Set to OFF to skip building dlt_control"                                     ON)
+option(WITH_DLT_CONSOLE_PASSIVE_NODE_CTRL   "Set to OFF to skip building dlt_passive_node_ctrl"                  ON)
+
 option(WITH_DLT_EXAMPLES      "Set to ON to build src/examples binaries"                                         ON)
 option(WITH_DLT_FILETRANSFER  "Set to ON to build dlt-system with filetransfer support"                          OFF)
 option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"                                           OFF)
@@ -66,6 +74,8 @@ option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"            
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                             ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
 option(WITH_DLT_QNX_SYSTEM    "Set to ON to build QNX system binary dlt-qnx-system"                              OFF)
+option(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK "Set to ON to enable fallback to syslog if dlt logging to file fails" OFF)
+option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message queue is supported)"                ON)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
@@ -85,6 +95,7 @@ option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering. 
 
 option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"                                   OFF)
 option(WITH_DLT_LIB_VSOCK_IPC    "Set to ON to enable VSOCK support in library (DLT_IPC is not used in library)" OFF)
+
 set(DLT_VSOCK_PORT "13490" CACHE STRING "VSOCK port number for logging traffic.")
 
 # RPM settings
@@ -162,6 +173,10 @@ if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc")
     message(FATAL_ERROR "Can only compile for QNX with a QNX compiler.")
 endif()
 
+if (WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
+    add_definitions(-DWITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
+endif()
+
 if(WITH_GPROF)
     add_compile_options(-pg)
 endif()
@@ -198,16 +213,20 @@ add_definitions(-DCONFIGURATION_FILES_DIR="${CONFIGURATION_FILES_DIR}")
 
 add_subdirectory(cmake)
 
-# Message queue
-if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
-   HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
-    add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
-    set(DLT_NETWORK_TRACE_ENABLE 1)
+if (WITH_DLT_NETWORK_TRACE)
+    # Message queue
+    if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
+       HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
+        add_definitions(-DDLT_NETWORK_TRACE_ENABLE)
+        set(DLT_NETWORK_TRACE_ENABLE 1)
+    else()
+        message(STATUS "Disable network trace interface since message queue is not supported")
+    endif()
 else()
-    message(STATUS "Disable network trace interface since message queue is not supported")
+    message(STATUS "Network trace interface disabled")
 endif()
 
-if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
+if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL OR WITH_SYSTEMD_SOCKET_ACTIVATION)
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
     string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
@@ -222,6 +241,13 @@ if(WITH_SYSTEMD OR WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD_JOURNAL)
 
     if(WITH_SYSTEMD_JOURNAL)
         add_definitions(-DDLT_SYSTEMD_JOURNAL_ENABLE)
+    endif()
+
+    if (WITH_SYSTEMD_SOCKET_ACTIVATION)
+        if(NOT DLT_IPC STREQUAL "UNIX_SOCKET")
+            message(FATAL_ERROR "WITH_SYSTEMD_SOCKET_ACTIVATION is only supported for UNIX_SOCKET")
+        endif()
+        add_definitions(-DDLT_SYSTEM_SOCKET_ACTIVATION_ENABLE)
     endif()
 
     set(systemd_SRCS ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
@@ -285,6 +311,8 @@ message(STATUS "WITH_DOC = ${WITH_DOC}")
 
 message(STATUS "WITH_MAN = ${WITH_MAN}")
 message(STATUS "WITH_DLT_ADAPTOR = ${WITH_DLT_ADAPTOR}")
+message(STATUS "WITH_DLT_ADAPTOR_UDP = ${WITH_DLT_ADAPTOR_UDP}")
+message(STATUS "WITH_DLT_CONSOLE = ${WITH_DLT_CONSOLE}")
 message(STATUS "WITH_DLT_CONSOLE = ${WITH_DLT_CONSOLE}")
 message(STATUS "WITH_DLT_CONSOLE_WO_CTRL = ${WITH_DLT_CONSOLE_WO_CTRL}")
 message(STATUS "WITH_DLT_CONSOLE_WO_SBTM = ${WITH_DLT_CONSOLE_WO_SBTM}")
@@ -323,10 +351,12 @@ message(STATUS "WITH_DLT_LIB_VSOCK_IPC = ${WITH_DLT_LIB_VSOCK_IPC}")
 message(STATUS "DLT_VSOCK_PORT = ${DLT_VSOCK_PORT}")
 message(STATUS "WITH_UDP_CONNECTION = ${WITH_UDP_CONNECTION}")
 message(STATUS "WITH_DLT_QNX_SYSTEM = ${WITH_DLT_QNX_SYSTEM}")
+message(STATUS "WITH_DLT_NETWORK_TRACE = ${WITH_DLT_NETWORK_TRACE}")
 message(STATUS "WITH_LIB_SHORT_VERSION = ${WITH_LIB_SHORT_VERSION}")
 message(STATUS "WITH_LEGACY_INCLUDE_PATH = ${WITH_LEGACY_INCLUDE_PATH}")
 message(STATUS "WITH_EXTENDED_FILTERING = ${WITH_EXTENDED_FILTERING}")
 message(STATUS "WITH_DLT_DISABLE_MACRO = ${WITH_DLT_DISABLE_MACRO}")
+message(STATUS "WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK = ${WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK}" )
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)

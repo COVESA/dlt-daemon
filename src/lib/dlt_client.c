@@ -91,6 +91,7 @@
 #include <string.h> /* for strlen(), memcmp(), memmove() */
 #include <errno.h>
 #include <limits.h>
+#include <poll.h>
 
 #include "dlt_types.h"
 #include "dlt_client.h"
@@ -171,12 +172,18 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
 DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 {
     const int yes = 1;
-    char portnumbuffer[33];
+    char portnumbuffer[33] = {0};
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_un addr;
     int rv;
     struct ip_mreq mreq;
     DltReceiverType receiver_type = DLT_RECEIVE_FD;
+
+    struct pollfd pfds[1];
+    int ret;
+    int n;
+    socklen_t m = sizeof(n);
+    int connect_errno = 0;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
@@ -205,9 +212,58 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
                 continue;
             }
 
-            if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+            /* Set socket to Non-blocking mode */
+            if(fcntl(client->sock, F_SETFL, fcntl(client->sock,F_GETFL,0) | O_NONBLOCK) < 0)
+            {
+                dlt_vlog(LOG_WARNING,
+                 "%s: Socket cannot be changed to NON BLOCK: %s\n",
+                 __func__, strerror(errno));
                 close(client->sock);
                 continue;
+            }
+
+            if (connect(client->sock, p->ai_addr, p->ai_addrlen) < 0) {
+                if (errno == EINPROGRESS) {
+                    pfds[0].fd = client->sock;
+                    pfds[0].events = POLLOUT;
+                    ret = poll(pfds, 1, 500);
+                    if (ret < 0) {
+                        dlt_vlog(LOG_ERR, "%s: Failed to poll with err [%s]\n",
+                        __func__, strerror(errno));
+                        close(client->sock);
+                        continue;
+                    }
+                    else if ((pfds[0].revents & POLLOUT) &&
+                            getsockopt(client->sock, SOL_SOCKET,
+                                    SO_ERROR, (void*)&n, &m) == 0) {
+                        if (n == 0) {
+                            dlt_vlog(LOG_DEBUG, "%s: Already connect\n", __func__);
+                            if(fcntl(client->sock, F_SETFL,
+                                    fcntl(client->sock,F_GETFL,0) & ~O_NONBLOCK) < 0) {
+                                dlt_vlog(LOG_WARNING,
+                                "%s: Socket cannot be changed to BLOCK with err [%s]\n",
+                                __func__, strerror(errno));
+                                close(client->sock);
+                                continue;
+                            }
+                        }
+                        else {
+                            connect_errno = n;
+                            close(client->sock);
+                            continue;
+                        }
+                    }
+                    else {
+                        connect_errno = errno;
+                        close(client->sock);
+                        continue;
+                    }
+                }
+                else {
+                    connect_errno = errno;
+                    close(client->sock);
+                    continue;
+                }
             }
 
             break;
@@ -216,15 +272,19 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
         freeaddrinfo(servinfo);
 
         if (p == NULL) {
+            dlt_vlog(LOG_ERR,
+                     "%s: ERROR: failed to connect! %s\n",
+                     __func__,
+                     strerror(connect_errno));
+            return DLT_RETURN_ERROR;
+        }
+
+        if (verbose) {
             dlt_vlog(LOG_INFO,
                      "%s: Connected to DLT daemon (%s)\n",
                      __func__,
                      client->servIP);
-            return DLT_RETURN_ERROR;
         }
-
-        if (verbose)
-            printf("Connected to DLT daemon (%s)\n", client->servIP);
 
         receiver_type = DLT_RECEIVE_SOCKET;
 
@@ -368,27 +428,32 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
             return DLT_RETURN_ERROR;
         }
 
-        mreq.imr_multiaddr.s_addr = inet_addr(client->servIP);
-        if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
-        {
-            dlt_vlog(LOG_ERR,
-                     "%s: ERROR: server address not not valid %s\n",
-                     __func__,
-                     client->servIP);
+        char delimiter[] = ",";
+        char* servIP = strtok(client->servIP, delimiter);
 
-            return DLT_RETURN_ERROR;
+        while(servIP != NULL) {
+            mreq.imr_multiaddr.s_addr = inet_addr(servIP);
+            if (mreq.imr_multiaddr.s_addr == (in_addr_t)-1)
+            {
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: server address not not valid %s\n",
+                         __func__,
+                         servIP);
+
+                return DLT_RETURN_ERROR;
+            }
+
+            if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
+            {
+                dlt_vlog(LOG_ERR,
+                         "%s: ERROR: setsockopt add membership failed: %s\n",
+                         __func__,
+                         strerror(errno));
+
+                return DLT_RETURN_ERROR;
+            }
+            servIP = strtok(NULL, delimiter);
         }
-
-        if (setsockopt(client->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
-        {
-            dlt_vlog(LOG_ERR,
-                     "%s: ERROR: setsockopt add membership failed: %s\n",
-                     __func__,
-                     strerror(errno));
-
-            return DLT_RETURN_ERROR;
-        }
-
         receiver_type = DLT_RECEIVE_UDP_SOCKET;
 
         break;
@@ -1146,6 +1211,7 @@ DLT_STATIC void dlt_client_free_calloc_failed_get_log_info(DltServiceGetLogInfoR
 
     free(resp->log_info_type.app_ids);
     resp->log_info_type.app_ids = NULL;
+    resp->log_info_type.count_app_ids = 0;
 
     return;
 }
@@ -1266,13 +1332,13 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                 con->context_description = (char *)calloc
                         ((size_t) (con->len_context_description + 1), sizeof(char));
 
-                if (con->context_description == 0) {
+                if (con->context_description == NULL) {
                     dlt_vlog(LOG_ERR, "%s: calloc failed for context description\n", __func__);
                     dlt_client_free_calloc_failed_get_log_info(resp, i);
                     return DLT_RETURN_ERROR;
                 }
 
-                dlt_getloginfo_conv_ascii_to_id(rp,
+                dlt_getloginfo_conv_ascii_to_string(rp,
                                                 &rp_count,
                                                 con->context_description,
                                                 con->len_context_description);
@@ -1286,13 +1352,13 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
             app->app_description = (char *)calloc
                     ((size_t) (app->len_app_description + 1), sizeof(char));
 
-            if (app->app_description == 0) {
+            if (app->app_description == NULL) {
                 dlt_vlog(LOG_ERR, "%s: calloc failed for application description\n", __func__);
                 dlt_client_free_calloc_failed_get_log_info(resp, i);
                 return DLT_RETURN_ERROR;
             }
 
-            dlt_getloginfo_conv_ascii_to_id(rp,
+            dlt_getloginfo_conv_ascii_to_string(rp,
                                             &rp_count,
                                             app->app_description,
                                             app->len_app_description);

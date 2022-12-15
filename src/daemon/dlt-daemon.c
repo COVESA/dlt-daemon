@@ -953,7 +953,25 @@ int main(int argc, char *argv[])
     /* Initialize internal logging facility */
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
-    dlt_log_init(daemon_local.flags.loggingMode);
+    DltReturnValue log_init_result =
+        dlt_log_init(daemon_local.flags.loggingMode);
+
+    if (log_init_result != DLT_RETURN_OK) {
+      fprintf(stderr, "Failed to init internal logging\n");
+
+#if WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK
+        if (daemon_local.flags.loggingMode == DLT_LOG_TO_FILE) {
+          fprintf(stderr, "Falling back to syslog mode\n");
+
+          daemon_local.flags.loggingMode = DLT_LOG_TO_SYSLOG;
+          log_init_result = dlt_log_init(daemon_local.flags.loggingMode);
+          if (log_init_result != DLT_RETURN_OK) {
+            fprintf(stderr, "Failed to setup syslog logging, internal logs will "
+                            "not be available\n");
+          }
+      }
+#endif
+    }
 
     /* Print version information */
     dlt_get_version(version, DLT_DAEMON_TEXTBUFSIZE);
@@ -968,7 +986,7 @@ int main(int argc, char *argv[])
     if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
         dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
         return -1;
-    }
+  }
 
 #else
     if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
@@ -1004,7 +1022,7 @@ int main(int argc, char *argv[])
         dlt_log(LOG_ERR, "Could not load runtime config\n");
         return -1;
     }
- 
+
     /*
      * Load dlt-runtime.cfg if available.
      * This must be loaded before offline setup
@@ -1058,7 +1076,7 @@ int main(int argc, char *argv[])
     /* initiate gateway */
     if (daemon_local.flags.gatewayMode == 1) {
         if (dlt_gateway_init(&daemon_local, daemon_local.flags.vflag) == -1) {
-            dlt_log(LOG_CRIT, "Fail to create gateway\n");
+            dlt_log(LOG_CRIT, "Failed to create gateway\n");
             return -1;
         }
 
@@ -1634,6 +1652,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         }
     }
     else {
+        bool any_open = false;
         while (head != NULL) { /* open socket for each IP in the bindAddress list */
 
             if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
@@ -1642,16 +1661,21 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
                                           fd,
                                           POLLIN,
                                           DLT_CONNECTION_CLIENT_CONNECT)) {
-                    dlt_log(LOG_ERR, "Could not initialize main socket.\n");
-                    return DLT_RETURN_ERROR;
+                    dlt_vlog(LOG_ERR, "Could not create connection, for binding %s\n", head->ip);
+                } else {
+                    any_open = true;
                 }
             }
             else {
-                dlt_log(LOG_ERR, "Could not initialize main socket.\n");
-                return DLT_RETURN_ERROR;
+                dlt_vlog(LOG_ERR, "Could not open main socket, for binding %s\n", head->ip);
             }
 
             head = head->next;
+        }
+
+        if (!any_open) {
+            dlt_vlog(LOG_ERR, "Failed create main socket for any configured binding\n");
+            return DLT_RETURN_ERROR;
         }
     }
 
@@ -2146,6 +2170,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
 
         if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
             dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+            close(in_sock);
+            in_sock = -1;
             return -1;
         }
 
@@ -3190,8 +3216,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
-        ret = dlt_daemon_client_send_message_to_all_client(daemon,
-                                                           daemon_local, verbose);
+        /* discard non-allowed levels if enforcement is on */
+        bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+        if (keep_message)
+          dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
         if (DLT_DAEMON_ERROR_OK != ret)
             dlt_log(LOG_ERR, "failed to send message to client.\n");
@@ -3218,7 +3246,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
-    dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
+    /* discard non-allowed levels if enforcement is on */
+    bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+    if (keep_message)
+      dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
     /* keep not read data in buffer */
     size = (int) (daemon_local->msg.headersize +
@@ -3236,6 +3267,18 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #endif
 
     return DLT_DAEMON_ERROR_OK;
+}
+
+bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local) {
+  if (daemon_local->flags.enforceContextLLAndTS &&
+      daemon_local->msg.extendedheader) {
+    const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
+    if (mtin > daemon_local->flags.contextLogLevel) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,

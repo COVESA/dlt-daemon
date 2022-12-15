@@ -81,7 +81,7 @@ char dltShmName[NAME_MAX + 1] = "/dlt-shm";
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 static bool print_with_attributes = false;
-int logging_mode = DLT_LOG_TO_CONSOLE;
+int logging_mode = DLT_LOG_TO_STDERR;
 FILE *logging_handle = NULL;
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
@@ -202,7 +202,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Hex-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_hex_string(text, textlength, (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)), DLT_COMMON_HEX_CHARS);
+        if (dlt_print_hex_string(text, textlength,
+                (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
+                DLT_COMMON_HEX_CHARS) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         text += ((2 * DLT_COMMON_HEX_CHARS) + (DLT_COMMON_HEX_CHARS - 1)); /* 32 characters + 15 spaces */
 
         snprintf(text, 2, " ");
@@ -211,8 +214,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Char-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_char_string(&text, textlength, (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
-                              DLT_COMMON_HEX_CHARS);
+        if (dlt_print_char_string(&text, textlength,
+                (uint8_t *)(ptr + (lines * DLT_COMMON_HEX_CHARS)),
+                DLT_COMMON_HEX_CHARS) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
 
         if (html == 0) {
             snprintf(text, 2, "\n");
@@ -240,10 +245,11 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Hex-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_hex_string(text,
+        if (dlt_print_hex_string(text,
                              textlength,
                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)),
-                             rest);
+                             rest) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         text += 2 * rest + (rest - 1);
 
         for (i = 0; i < (DLT_COMMON_HEX_CHARS - rest); i++) {
@@ -257,8 +263,10 @@ DltReturnValue dlt_print_mixed_string(char *text, int textlength, uint8_t *ptr, 
         /* Char-Output */
         /* It is not required to decrement textlength, as it was already checked, that
          * there is enough space for the complete output */
-        dlt_print_char_string(&text, textlength,
-                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)), rest);
+        if (dlt_print_char_string(&text, textlength,
+                              (uint8_t *)(ptr + ((size / DLT_COMMON_HEX_CHARS) * DLT_COMMON_HEX_CHARS)),
+                              rest) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
     }
 
     return DLT_RETURN_OK;
@@ -670,6 +678,9 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((msg == NULL) || (text == NULL) || (textlength <= 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((DLT_IS_HTYP_UEH(msg->standardheader->htyp)) && (msg->extendedheader == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
     if ((flags < DLT_HEADER_SHOW_NONE) || (flags > DLT_HEADER_SHOW_ALL))
@@ -1803,11 +1814,11 @@ void dlt_print_with_attributes(bool state)
     print_with_attributes = state;
 }
 
-void dlt_log_init(int mode)
+DltReturnValue dlt_log_init(int mode)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
-        dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
-        return;
+        dlt_user_printf("Wrong parameter for mode: %d\n", mode);
+        return DLT_RETURN_WRONG_PARAMETER;
     }
 
     logging_mode = mode;
@@ -1818,14 +1829,16 @@ void dlt_log_init(int mode)
 
         if (logging_handle == NULL) {
             dlt_user_printf("Internal log file %s cannot be opened!\n", logging_filename);
-            return;
+            return DLT_RETURN_ERROR;
         }
     }
+
+    return DLT_RETURN_OK;
 }
 
 void dlt_log_free(void)
 {
-    if (logging_mode == DLT_LOG_TO_FILE)
+    if (logging_mode == DLT_LOG_TO_FILE && logging_handle)
         fclose(logging_handle);
 }
 
@@ -3239,7 +3252,8 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s\n", text);
 
     return DLT_RETURN_OK;
@@ -3250,9 +3264,12 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3263,9 +3280,12 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3276,9 +3296,12 @@ DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, ui
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s \n", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3289,9 +3312,13 @@ DltReturnValue dlt_message_print_mixed_html(DltMessage *message, char *text, uin
     if ((message == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    dlt_message_header(message, text, size, verbose);
+    if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
     dlt_user_printf("%s \n", text);
-    dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_HTML, verbose);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_HTML, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
     dlt_user_printf("[%s]\n", text);
 
     return DLT_RETURN_OK;
@@ -3901,7 +3928,8 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
         if ((*datalength) < length)
             return DLT_RETURN_ERROR;
 
-        dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'');
+        if (dlt_print_hex_string_delim(value_text, (int) textlength, *ptr, length, '\'') < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         *ptr += length;
         *datalength -= length;
     }
@@ -4034,7 +4062,7 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count)
     num_work[4] = 0;
     *rp_count += 6;
 
-    return (unsigned char)strtol(num_work, &endptr, 16);
+    return (uint16_t)strtol(num_work, &endptr, 16);
 }
 
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
@@ -4056,17 +4084,31 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
     return (signed char)strtol(num_work, &endptr, 16);
 }
 
-void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
+void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len)
+{
+    if ((rp == NULL ) || (rp_count == NULL ) || (wp == NULL ))
+        return;
+    /* ------------------------------------------------------
+     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
+     *  ------------------------------------------------------ */
+
+    int count = dlt_getloginfo_conv_ascii_to_id(rp, rp_count, wp, len);
+    *(wp + count) = '\0';
+
+    return;
+}
+
+int dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
 {
     char number16[3] = { 0 };
     char *endptr;
     int count;
 
     if ((rp == NULL) || (rp_count == NULL) || (wp == NULL))
-        return;
+        return 0;
 
     /* ------------------------------------------------------
-     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f,0x00]
+     *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f]
      *  ------------------------------------------------------ */
     for (count = 0; count < len; count++) {
         number16[0] = *(rp + *rp_count + 0);
@@ -4075,8 +4117,7 @@ void dlt_getloginfo_conv_ascii_to_id(char *rp, int *rp_count, char *wp, int len)
         *rp_count += 3;
     }
 
-    *(wp + count) = 0;
-    return;
+    return count;
 }
 
 void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size)
