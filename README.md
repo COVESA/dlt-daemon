@@ -236,13 +236,10 @@ file.
 Full information on the license for the cityhash code is available in "COPYING"
 file in src/core\_dump\_handler/cityhash\_c.
 
-## Mailinglist
-
-https://lists.genivi.org/mailman/listinfo/genivi-diagnostic-log-and-trace_lists.genivi.org
 
 ## Contact
 
-Michael Methner <mmethner@de.adit-jv.com>,
-Bui Nguyen Quoc, Thanh <thanh.buinguyenquoc@vn.bosch.com>
+Methner, Michael <mmethner@de.adit-jv.com>,
+Le Van, Khanh <Khanh.LeVan@vn.bosch.com>
 
 ![alt text](doc/images/genivilogo.png "GENIVI")
