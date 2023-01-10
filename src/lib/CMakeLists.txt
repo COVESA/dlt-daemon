@@ -44,6 +44,12 @@ else()
     message(STATUS "pthread_setname_np API not available on this platform")
 endif()
 
+# Test for Atomics
+include(CheckAtomic)
+if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+	target_link_libraries(dlt "atomic")
+endif()
+
 target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} Threads::Threads)
 
 target_include_directories(dlt
