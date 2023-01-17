@@ -111,6 +111,10 @@ static char dlt_daemon_fifo[DLT_PATH_MAX];
 static sem_t dlt_mutex;
 static pthread_t dlt_housekeeperthread_handle;
 
+/* Sync housekeeper thread start */
+pthread_mutex_t dlt_housekeeper_running_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t dlt_housekeeper_running_cond = PTHREAD_COND_INITIALIZER;
+
 /* calling dlt_user_atexit_handler() second time fails with error message */
 static int atexit_registered = 0;
 
@@ -455,7 +459,7 @@ DltReturnValue dlt_init(void)
 {
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0) {
-        dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting", __func__);
+        dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting\n", __func__);
         /* return negative value, to stop the current log */
         return DLT_RETURN_LOGGING_DISABLED;
     }
@@ -3736,10 +3740,12 @@ static void dlt_user_cleanup_handler(void *arg)
     DLT_SEM_FREE();
 }
 
-void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
+void dlt_user_housekeeperthread_function(void *ptr)
 {
     struct timespec ts;
     bool in_loop = true;
+    int signal_status = 0;
+    bool* dlt_housekeeper_running = (bool*)ptr;
 
 #ifdef __ANDROID_API__
     sigset_t set;
@@ -3766,6 +3772,13 @@ void dlt_user_housekeeperthread_function(__attribute__((unused)) void *ptr)
 #endif
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
+
+    // signal dlt thread to be running
+    *dlt_housekeeper_running = true;
+    signal_status = pthread_cond_signal(&dlt_housekeeper_running_cond);
+    if (signal_status != 0) {
+        dlt_log(LOG_CRIT, "Housekeeper thread failed to signal running state\n");
+    }
 
     while (in_loop) {
         /* Check for new messages from DLT daemon */
@@ -4944,15 +4957,37 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 
 int dlt_start_threads()
 {
-    /* Start housekeeper thread */
+    struct timespec time_to_wait;
+    struct timeval now;
+    int signal_status;
+    bool dlt_housekeeper_running;
+
     if (pthread_create(&(dlt_housekeeperthread_handle),
                        0,
                        (void *)&dlt_user_housekeeperthread_function,
-                       0) != 0) {
+                       &dlt_housekeeper_running) != 0) {
         dlt_log(LOG_CRIT, "Can't create housekeeper thread!\n");
         return -1;
     }
 
+    /* wait at most 5s */
+    gettimeofday(&now,NULL);
+    time_to_wait.tv_sec = now.tv_sec+5;
+    time_to_wait.tv_nsec = 0;
+
+     /* 
+     * wait until the house keeper is up and running
+     * use the predicate to protect against spurious wake ups
+     * */
+    while (!dlt_housekeeper_running) {
+        signal_status = pthread_cond_timedwait(
+            &dlt_housekeeper_running_cond, 
+            &dlt_housekeeper_running_mutex,
+            &time_to_wait);
+        if (signal_status != 0) {
+            dlt_log(LOG_CRIT, "Failed to wait for house keeper thread!\n");
+        }
+    }
 #ifdef DLT_NETWORK_TRACE_ENABLE
     /* Start the segmented thread */
     if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
