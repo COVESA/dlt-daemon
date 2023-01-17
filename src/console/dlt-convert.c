@@ -420,6 +420,7 @@ int main(int argc, char *argv[])
                 if (ovalue)
                     close(ohandle);
 
+                dlt_file_free(&file, vflag);
                 return -1;
             }
 
@@ -428,6 +429,7 @@ int main(int argc, char *argv[])
                 if (ovalue)
                     close(ohandle);
 
+                dlt_file_free(&file, vflag);
                 return -1;
             }
 
