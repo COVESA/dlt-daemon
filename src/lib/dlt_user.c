@@ -91,7 +91,7 @@
 #endif /* DLT_FATAL_LOG_RESET_ENABLE */
 
 static DltUser dlt_user;
-static atomic_bool dlt_user_initialised = false;
+static atomic_int dlt_user_initialised = false;
 static int dlt_user_freeing = 0;
 static bool dlt_user_file_reach_max = false;
 
@@ -451,7 +451,7 @@ DltReturnValue dlt_init(void)
     pass fully. The other one will immediately return, because when it executes the atomic function
     'dlt_user_initialised' will be for sure already set to true.
     */
-    bool expected = false;
+    int expected = false;
     if (!(atomic_compare_exchange_strong(&dlt_user_initialised, &expected, true)))
         return DLT_RETURN_OK;
 
@@ -563,7 +563,7 @@ DltReturnValue dlt_init_file(const char *name)
     pass fully. The other one will immediately return, because when it executes the atomic function
     'dlt_user_initialised' will be for sure already set to true.
     */
-    bool expected = false;
+    int expected = false;
     if (!(atomic_compare_exchange_strong(&dlt_user_initialised, &expected, true)))
         return DLT_RETURN_OK;
 
