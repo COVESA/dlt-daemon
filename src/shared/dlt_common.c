@@ -1718,7 +1718,7 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* check if message is in range */
-    if (index >= file->counter) {
+    if (index < 0 || index >= file->counter) {
         dlt_vlog(LOG_WARNING, "Message %d out of range!\r\n", index);
         return DLT_RETURN_WRONG_PARAMETER;
     }
