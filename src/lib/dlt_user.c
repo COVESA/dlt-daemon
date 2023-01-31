@@ -113,7 +113,7 @@ static pthread_t dlt_housekeeperthread_handle;
 
 /* Sync housekeeper thread start */
 pthread_mutex_t dlt_housekeeper_running_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t dlt_housekeeper_running_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t dlt_housekeeper_running_cond;
 
 /* calling dlt_user_atexit_handler() second time fails with error message */
 static int atexit_registered = 0;
@@ -3745,7 +3745,7 @@ void dlt_user_housekeeperthread_function(void *ptr)
     struct timespec ts;
     bool in_loop = true;
     int signal_status = 0;
-    bool* dlt_housekeeper_running = (bool*)ptr;
+    atomic_bool* dlt_housekeeper_running = (atomic_bool*)ptr;
 
 #ifdef __ANDROID_API__
     sigset_t set;
@@ -4958,9 +4958,18 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 int dlt_start_threads()
 {
     struct timespec time_to_wait;
-    struct timeval now;
+    struct timespec now;
     int signal_status;
-    bool dlt_housekeeper_running;
+    atomic_bool dlt_housekeeper_running = false;
+
+    /*
+    * Configure the condition varibale to use CLOCK_MONOTONIC.
+    * This makes sure we're protected against changes in the system clock
+    */
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&dlt_housekeeper_running_cond, &attr);
 
     if (pthread_create(&(dlt_housekeeperthread_handle),
                        0,
@@ -4970,24 +4979,41 @@ int dlt_start_threads()
         return -1;
     }
 
-    /* wait at most 5s */
-    gettimeofday(&now,NULL);
-    time_to_wait.tv_sec = now.tv_sec+5;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    /* wait at most 10s */
+    time_to_wait.tv_sec = now.tv_sec + 10;
     time_to_wait.tv_nsec = 0;
 
-     /* 
-     * wait until the house keeper is up and running
-     * use the predicate to protect against spurious wake ups
-     * */
-    while (!dlt_housekeeper_running) {
+    /*
+    * wait until the house keeper is up and running
+    * Even though the condition variable and the while are
+    * using the same time out the while loop is not a no op.
+    * This is due to the fact that the pthread_cond_timedwait
+    * can be woken before time is up and dlt_housekeeper_running is not true yet.
+    * (spurious wakeup)
+    * To protect against this, a while loop with a timeout is added
+    * */
+    while (!dlt_housekeeper_running 
+        && now.tv_sec <= time_to_wait.tv_sec) {
         signal_status = pthread_cond_timedwait(
-            &dlt_housekeeper_running_cond, 
-            &dlt_housekeeper_running_mutex,
-            &time_to_wait);
-        if (signal_status != 0) {
-            dlt_log(LOG_CRIT, "Failed to wait for house keeper thread!\n");
+                &dlt_housekeeper_running_cond,
+                &dlt_housekeeper_running_mutex,
+                &time_to_wait);
+
+        /* otherwise it might be a spurious wakeup, try again until the time is over */
+        if (signal_status == 0) {
+            break;
         }
-    }
+
+        clock_gettime(CLOCK_MONOTONIC, &now);
+     }
+
+     if (signal_status != 0 && !dlt_housekeeper_running) {
+         dlt_log(LOG_CRIT, "Failed to wait for house keeper thread!\n");
+         dlt_stop_threads();
+         return -1;
+     }
+
 #ifdef DLT_NETWORK_TRACE_ENABLE
     /* Start the segmented thread */
     if (pthread_create(&(dlt_user.dlt_segmented_nwt_handle), NULL,
