@@ -175,6 +175,57 @@ TEST(t_dlt_logstorage_read_number, null)
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_number(&number, NULL));
 }
 
+TEST(t_dlt_logstorage_read_boolean, normal)
+{
+    unsigned int val;
+    {
+        char str[] = "0";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "1";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "off";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "on";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "false";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "true";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "invalidvalue";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "not";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+}
+
+TEST(t_dlt_logstorage_read_boolean, null)
+{
+    unsigned int val;
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_bool(&val, NULL));
+}
+
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_create_keys*/
 TEST(t_dlt_logstorage_create_keys, normal)
 {
@@ -708,7 +759,12 @@ TEST(t_dlt_logstorage_log_file_name, normal)
     file_config.logfile_counteridxlen = 10;
     int cmpRes = 0;
     char name[] = "log";
-    dlt_logstorage_log_file_name(log_file_name, &file_config, name, 0);
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, 0);
     cmpRes = strncmp(log_file_name, "log/0000000000", 14);
 
     EXPECT_EQ(0, cmpRes);
@@ -716,8 +772,7 @@ TEST(t_dlt_logstorage_log_file_name, normal)
 
 TEST(t_dlt_logstorage_log_file_name, null)
 {
-    char name[] = "log";
-    dlt_logstorage_log_file_name(NULL, NULL, name, 0);
+    dlt_logstorage_log_file_name(NULL, NULL, NULL, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sort_file_name*/
@@ -878,13 +933,23 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
+    char name[] = "Test";
     char *file = (char *)"Test_002_20160509_191132.dlt";
 
-    EXPECT_EQ(2, dlt_logstorage_get_idx_of_log_file(&file_config, file));
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    EXPECT_EQ(2, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, file));
+
+    char *gz_file = (char *)"Test_142_20160509_191132.dlt.gz";
+    filter_config.gzip_compression = 1;
+
+    EXPECT_EQ(142, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, gz_file));
 }
 TEST(t_dlt_logstorage_get_idx_of_log_file, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_get_idx_of_log_file(NULL, NULL));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_get_idx_of_log_file(NULL, NULL, NULL));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_storage_dir_info*/
@@ -954,6 +1019,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
 
@@ -982,6 +1048,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
 
@@ -1024,6 +1091,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal3)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.working_file_name = strdup(working_file_name);
     config.wrap_id = 0;
 
@@ -1071,8 +1139,10 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
+    config.gzip_compression = 0;
     unsigned int size = 8;
     unsigned char data1[] = "dlt_data";
     unsigned char data2[] = "dlt_data";
@@ -1081,6 +1151,42 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     DltNewestFileName newest_file_name;
     newest_file_name.file_name = (char *)"Test";
     newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.wrap_id = 0;
+    newest_file_name.next = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
+              data1, size, data2, size, data3, size));
+}
+
+TEST(t_dlt_logstorage_write_on_msg, gzip)
+{
+    DltLogStorageUserConfig file_config;
+    file_config.logfile_timestamp = 191132;
+    file_config.logfile_delimiter = { '_' };
+    file_config.logfile_maxcounter = 2;
+    file_config.logfile_counteridxlen = 2;
+    char *path = (char *)"/tmp";
+    DltLogStorageFilterConfig config;
+    char apids;
+    char ctids;
+    config.apids = &apids;
+    config.ctids = &ctids;
+    config.file_name = (char *)"Test";
+    config.records = NULL;
+    config.log = NULL;
+    config.gzlog = NULL;
+    config.working_file_name = NULL;
+    config.wrap_id = 0;
+    config.gzip_compression = 1;
+    unsigned int size = 8;
+    unsigned char data1[] = "dlt_data";
+    unsigned char data2[] = "dlt_data";
+    unsigned char data3[] = "dlt_data";
+
+    DltNewestFileName newest_file_name;
+    newest_file_name.file_name = (char *)"Test";
+    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt.gz";
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
@@ -1107,6 +1213,7 @@ TEST(t_dlt_logstorage_sync_on_msg, normal)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
     char *path = NULL;
@@ -1130,6 +1237,7 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
     DltNewestFileName newest_info;
+    memset(&newest_info, 0, sizeof(DltNewestFileName));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -1137,6 +1245,7 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.cache = NULL;
     config.file_size = 0;
     config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
@@ -1717,6 +1826,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.cache = NULL;
     config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
     config.num_files = 6;
@@ -1773,6 +1883,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
     config.file_name = (char *)"Test";
     config.records = NULL;
     config.log = NULL;
+    config.gzlog = NULL;
     config.cache = NULL;
     config.file_size = 50;
     config.sync = DLT_LOGSTORAGE_SYNC_ON_DEMAND;
