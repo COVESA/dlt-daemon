@@ -46,6 +46,7 @@
 #include "dlt_daemon_connection.h"
 #include "dlt_daemon_client.h"
 #include "dlt_daemon_offline_logstorage.h"
+#include "dlt_heart_beat.h"
 
 /**
  * Check if given string is a valid IP address
@@ -347,6 +348,38 @@ DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnectio
     return DLT_RETURN_OK;
 }
 
+
+/**
+ * Initialize the heart beat message
+ *
+ * @param control_message the control message
+ * @param interval the interval to send heart beat signal
+ * @return true if it is initialized
+ */
+bool init_heart_beat(DltPassiveControlMessage *control_message, int interval)
+{
+  if(control_message == NULL || control_message->id != DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL )
+  {
+    return false;
+  }
+  control_message->interval = interval;
+
+  return true;
+}
+
+/**
+ *  reset heart beat in connection
+ *
+ * @param con the DltGatewayConnection
+ */
+void reset_conn_heart_beat(DltGatewayConnection *con)
+{
+    if(con){
+        con->heart_beat_flag = 0;
+        con->heart_beat_wait = HEART_BEAT_WAIT;
+    }
+}
+
 /**
  * Check the specified periodic control messages identifier
  *
@@ -361,6 +394,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
     char *token = NULL;
     char *rest = NULL;
     DltPassiveControlMessage *head = NULL;
+    bool heart_beat_initialized = false;
 
     if ((con == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
@@ -394,6 +428,9 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
                 if (con->p_control_msgs->id == id) {
                     con->p_control_msgs->type = CONTROL_MESSAGE_BOTH;
                     con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
+                    if(heart_beat_initialized == false) {
+                        heart_beat_initialized = init_heart_beat(con->p_control_msgs, HEART_BEAT_INTERVAL);
+                    }
 
                     if (con->p_control_msgs->interval <= 0)
                         dlt_vlog(LOG_WARNING,
@@ -432,6 +469,10 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
                 con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
                 con->p_control_msgs->interval = strtol(p_rest, NULL, 10);
 
+                if(heart_beat_initialized == false) {
+                    heart_beat_initialized = init_heart_beat(con->p_control_msgs, HEART_BEAT_INTERVAL);
+                }
+
                 if (con->p_control_msgs->interval <= 0)
                     dlt_vlog(LOG_WARNING,
                              "%s interval is %d. It won't be send periodically.\n",
@@ -459,6 +500,23 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
         }
 
         token = strtok_r(NULL, ",", &rest);
+    }
+
+    if(heart_beat_initialized == false)
+    {
+        /* go to last pointer */
+        SLIST_LAST(con->p_control_msgs, head);
+
+        if (dlt_gateway_allocate_control_messages(con) != DLT_RETURN_OK) {
+            dlt_log(LOG_ERR, "Passive Control Message could not be allocated\n");
+            return DLT_RETURN_ERROR;
+        }
+
+        con->p_control_msgs->id = DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL;
+        con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+        con->p_control_msgs->type = CONTROL_MESSAGE_PERIODIC;
+        con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
+        heart_beat_initialized = init_heart_beat(con->p_control_msgs, HEART_BEAT_INTERVAL);
     }
 
     /* get back to head */
@@ -719,6 +777,7 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
         /* Set default */
         tmp.send_serial = gateway->send_serial;
         tmp.port = DLT_DAEMON_TCP_PORT;
+        reset_conn_heart_beat(&tmp);
 
         ret = dlt_config_file_get_section_name(file, i, section);
         if (ret != 0) {
@@ -1019,6 +1078,32 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
             /* immediately send periodic configured control messages */
             control_msg = con->p_control_msgs;
 
+            if(con->heart_beat_flag == 1)
+            {
+                if(con->heart_beat_wait == 0){
+
+                    /* disconnect from passive node */
+                    con->status = DLT_GATEWAY_DISCONNECTED;
+                    con->trigger = DLT_GATEWAY_ON_STARTUP;
+
+                    if (dlt_event_handler_unregister_connection(&daemon_local->pEvent,
+                                                          daemon_local,
+                                                          con->client.sock) != 0) {
+                      dlt_log(LOG_ERR, "heart beat unregister connection failed\n");
+                    }
+
+                    dlt_log(LOG_WARNING, "heart beat detection failed\n");
+
+                    reset_conn_heart_beat(con);
+                }
+                else {
+                    con->heart_beat_wait--;
+                    dlt_log(LOG_DEBUG, "heart beat detection wait\n");
+                }
+
+                return DLT_RETURN_OK;
+            }
+
             while (control_msg != NULL) {
                 if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
                     (control_msg->type == CONTROL_MESSAGE_BOTH)) {
@@ -1026,7 +1111,13 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
                                                          control_msg,
                                                          NULL,
                                                          verbose) == DLT_RETURN_OK)
+                    {
                         control_msg->req = CONTROL_MESSAGE_REQUESTED;
+                        if(control_msg->id == DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL) {
+                            con->heart_beat_flag = 1;
+                            dlt_log(LOG_DEBUG, "heart beat detection start\n");
+                        }
+                    }
                 }
 
                 control_msg = control_msg->next;
@@ -1398,6 +1489,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             }
             else if (id == DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL)
             {
+                reset_conn_heart_beat(con);
+                dlt_log(LOG_DEBUG, "heart beat detection clear\n");
+
                 if (dlt_gateway_parse_get_default_log_level(
                         daemon,
                         daemon_local,
