@@ -479,7 +479,7 @@ TEST(t_get_timestamp_from_log_msg, normal)
 TEST(t_get_timestamp_from_log_msg, nullpointer)
 {
     struct log_msg *t_log_msg = nullptr;
-    EXPECT_EQ(EXIT_FAILURE, get_timestamp_from_log_msg(t_log_msg));
+    EXPECT_EQ(DLT_FAIL_TO_GET_LOG_MSG, get_timestamp_from_log_msg(t_log_msg));
 }
 
 TEST(t_get_log_level_from_log_msg, normal)
