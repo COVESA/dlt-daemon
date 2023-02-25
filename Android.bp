@@ -60,6 +60,13 @@ genrule {
     out: ["dlt_user.h"],
 }
 
+prebuilt_etc {
+    name: "dlt-daemon-configuration",
+    vendor: true,
+    src: "src/daemon/dlt.conf",
+    filename_from_src: true,
+}
+
 cc_binary {
 
     name: "dlt-daemon",
@@ -103,6 +110,8 @@ cc_binary {
         "libutils",
         "libcutils",
     ],
+
+    required: ["dlt-daemon-configuration"],
 }
 
 cc_library_shared {
