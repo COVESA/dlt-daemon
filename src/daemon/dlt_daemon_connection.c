@@ -402,6 +402,21 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
         return -1;
     }
 
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    char *watchdogUSec = getenv("WATCHDOG_USEC");
+    if (watchdogUSec) {
+        timeout.tv_sec = atoi(watchdogUSec) / 1000000;
+        timeout.tv_usec = atoi(watchdogUSec) % 1000000;
+    }
+#endif
+
+    if (setsockopt (temp->receiver->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0)  {
+        dlt_vlog(LOG_WARNING, "Unable to set send timeout %s.\n", strerror(errno));
+    }
+
     /* We are single threaded no need for protection. */
     temp->id = connectionId++;
 
