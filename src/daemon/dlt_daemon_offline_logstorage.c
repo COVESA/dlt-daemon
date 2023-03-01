@@ -893,6 +893,9 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
 
     handle = &(daemon->storage_handle[dev_num]);
 
+    if(handle->maintain_logstorage_loglevel == 0)
+        return;
+
     if ((handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) ||
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
         return;
