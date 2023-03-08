@@ -22,7 +22,6 @@
 #include <csignal>
 
 #include <log/log_read.h>
-#include <log/logprint.h>
 
 #include <dlt.h>
 
@@ -51,7 +50,7 @@ static inline struct logger *init_logger(struct logger_list *logger_list, log_id
 static struct logger_list *init_logger_list(bool skip_binary_buffers)
 {
     struct logger_list *logger_list;
-    logger_list = android_logger_list_alloc(ANDROID_LOG_RDONLY, 0, 0);
+    logger_list = android_logger_list_alloc(O_RDONLY, 0, 0);
     if (logger_list == nullptr) {
         DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("could not allocate logger list"));
         return nullptr;
