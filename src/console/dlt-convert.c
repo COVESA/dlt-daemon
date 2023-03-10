@@ -126,17 +126,6 @@ void usage()
     printf("  -t            Handling input compressed files (tar.gz)\n");
 }
 
-char *get_filename_ext(const char *filename)
-{
-    if (filename == NULL)
-            fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
-
-    char *dot = strrchr(filename, '.');
-    if(!dot || dot == filename)
-        return "";
-    return dot + 1;
-}
-
 void empty_dir(const char *dir)
 {
     struct dirent **files = { 0 };

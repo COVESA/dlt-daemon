@@ -669,6 +669,9 @@ int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose)
 
     /* read configuration file */
     file = dlt_config_file_init(config_file);
+    if(file == NULL) {
+        return DLT_RETURN_ERROR;
+    }
 
     /* get number of entries and allocate memory to store information */
     ret = dlt_config_file_get_num_sections(file, &num_sections);

@@ -69,6 +69,7 @@
 
 #include <limits.h> /* for NAME_MAX */
 #include <sys/time.h>
+#include <stdarg.h>
 
 #include "dlt_daemon_common.h"
 #include "dlt_user_shared.h"
@@ -103,10 +104,13 @@ typedef struct
     char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
     int offlineTraceFileSize;     /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
     int offlineTraceMaxSize;     /**< (int) Maximum size of all trace files (Default: 4000000) */
-    int offlineTraceFilenameTimestampBased;  /**< (int) timestamp based or index based (Default: 1 Timestamp based) */
-    int loggingMode;     /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
+    bool offlineTraceFilenameTimestampBased;  /**< (Boolean) timestamp based or index based (Default: true=Timestamp based) */
+    DltLoggingMode loggingMode;     /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
     int loggingLevel;     /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
     char loggingFilename[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
+    bool enableLoggingFileLimit;     /**< (Boolean) Indicate whether size of logging file(s) is limited (Default: false) */
+    int loggingFileSize;         /**< (int) Maximum size in bytes of one logging file (Default: 250000) */
+    int loggingFileMaxSize;      /**< (int) Maximum size in bytes of all logging files (Default: 1000000) */
     int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
     int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
@@ -154,7 +158,8 @@ typedef struct
     DltShm dlt_shm;                /**< Shared memory handling */
     unsigned char *recv_buf_shm;   /**< buffer for receive message from shm */
 #endif
-    DltOfflineTrace offlineTrace; /**< Offline trace handling */
+    MultipleFilesRingBuffer offlineTrace; /**< Offline trace handling */
+    MultipleFilesRingBuffer dltLogging; /**< Dlt logging handling */
     int timeoutOnSend;
     unsigned long RingbufferMinSize;
     unsigned long RingbufferMaxSize;

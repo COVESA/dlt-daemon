@@ -191,13 +191,13 @@
 #      define LOG_DAEMON  (3 << 3)
 #   endif
 
-enum {
+typedef enum {
     DLT_LOG_TO_CONSOLE = 0,
     DLT_LOG_TO_SYSLOG = 1,
     DLT_LOG_TO_FILE = 2,
     DLT_LOG_TO_STDERR = 3,
     DLT_LOG_DROPPED = 4
-};
+} DltLoggingMode;
 
 /**
  * The standard TCP Port used for DLT daemon, can be overwritten via -p \<port\> when starting dlt-daemon
@@ -1669,6 +1669,57 @@ void dlt_hex_ascii_to_binary(const char *ptr, uint8_t *binary, int *size);
  * @return negative value if there was an error
  */
 int dlt_execute_command(char *filename, char *command, ...);
+
+/**
+ * Return the extension of given file name.
+ * @param filename Only file names without prepended path allowed.
+ * @return pointer to extension
+ */
+char *get_filename_ext(const char *filename);
+
+/**
+ * Extract the base name of given file name (without the extension).
+ * @param abs_file_name Absolute path to file name.
+ * @param base_name Base name it is extracted to.
+ * @param base_name_length Base name length.
+ * @return indicating success
+ */
+bool dlt_extract_base_name_without_ext(const char* const abs_file_name, char* base_name, long base_name_len);
+
+/**
+ * Initialize (external) logging facility
+ * @param mode DltLoggingMode, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
+ * @param enable_multiple_logfiles, true if multiple logfiles (incl. size limits) should be use
+ * @param logging_file_size, maximum size in bytes of one logging file
+ * @param logging_files_max_size, maximum size in bytes of all logging files
+ */
+DltReturnValue dlt_log_init_multiple_logfiles_support(DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size, int logging_files_max_size);
+
+/**
+ * Initialize (external) logging facility for single logfile.
+ */
+DltReturnValue dlt_log_init_single_logfile();
+
+/**
+ * Initialize (external) logging facility for multiple files logging.
+ */
+DltReturnValue dlt_log_init_multiple_logfiles(int logging_file_size, int logging_files_max_size);
+
+/**
+ * Logs into log files represented by the multiple files buffer.
+ * @param format First element in a specific format that will be logged.
+ * @param ... Further elements in a specific format that will be logged.
+ */
+void dlt_log_multiple_files_write(const char* format, ...);
+
+void dlt_log_free_single_logfile();
+
+void dlt_log_free_multiple_logfiles();
+
+/**
+ * Checks whether (internal) logging in multiple files is active.
+ */
+bool dlt_is_log_in_multiple_files_active();
 
 #   ifdef __cplusplus
 }
