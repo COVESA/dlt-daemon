@@ -194,9 +194,6 @@ cc_binary {
         "libdlt",
         "liblog",
     ],
-    include_dirs: [
-        "system/core/include",
-    ],
 }
 
 // vim: ft=python
