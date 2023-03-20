@@ -108,7 +108,7 @@ static uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
 
 static DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
 {
-    android_LogPriority priority = static_cast<android_LogPriority>(log_msg->buf[0]);
+    android_LogPriority priority = static_cast<android_LogPriority>(log_msg->msg()[0]);
     switch (priority) {
     case ANDROID_LOG_VERBOSE:
         return DLT_LOG_VERBOSE;
