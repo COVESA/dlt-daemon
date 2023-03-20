@@ -31,6 +31,7 @@
 #include <time.h>     /* for localtime_r(), strftime() */
 #include <limits.h>   /* for NAME_MAX */
 #include <inttypes.h> /* for PRI formatting macro */
+#include <libgen.h>   /* dirname */
 #include <stdarg.h>
 #include <err.h>
 
@@ -41,6 +42,7 @@
 #include "dlt_user_shared.h"
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
+#include "dlt_multiple_files.h"
 
 #include "dlt_version.h"
 
@@ -83,6 +85,17 @@ static char logging_filename[NAME_MAX + 1] = "";
 static bool print_with_attributes = false;
 int logging_mode = DLT_LOG_TO_STDERR;
 FILE *logging_handle = NULL;
+
+//use ohandle as an indicator that multiple files logging is active
+MultipleFilesRingBuffer multiple_files_ring_buffer = {
+        .directory={0},
+        .filename={0},
+        .fileSize=0,
+        .maxSize=0,
+        .filenameTimestampBased=false,
+        .filenameBase={0},
+        .filenameExt={0},
+        .ohandle=-1};
 
 char *message_type[] = { "log", "app_trace", "nw_trace", "control", "", "", "", "" };
 char *log_info[] = { "", "fatal", "error", "warn", "info", "debug", "verbose", "", "", "", "", "", "", "", "", "" };
@@ -1718,7 +1731,7 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* check if message is in range */
-    if (index >= file->counter) {
+    if (index < 0 || index >= file->counter) {
         dlt_vlog(LOG_WARNING, "Message %d out of range!\r\n", index);
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -1816,34 +1829,114 @@ void dlt_print_with_attributes(bool state)
 
 DltReturnValue dlt_log_init(int mode)
 {
+    return dlt_log_init_multiple_logfiles_support((DltLoggingMode)mode, false, 0, 0);
+}
+
+DltReturnValue dlt_log_init_multiple_logfiles_support(const DltLoggingMode mode, const bool enable_multiple_logfiles,
+                                            const int logging_file_size, const int logging_files_max_size)
+{
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
-        dlt_user_printf("Wrong parameter for mode: %d\n", mode);
+        dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
     logging_mode = mode;
 
-    if (logging_mode == DLT_LOG_TO_FILE) {
-        /* internal logging to file */
-        logging_handle = fopen(logging_filename, "a");
-
-        if (logging_handle == NULL) {
-            dlt_user_printf("Internal log file %s cannot be opened!\n", logging_filename);
-            return DLT_RETURN_ERROR;
-        }
+    if (logging_mode != DLT_LOG_TO_FILE) {
+        return DLT_RETURN_OK;
     }
 
+    if (enable_multiple_logfiles) {
+        dlt_user_printf("configure dlt logging using file limits\n");
+        int result = dlt_log_init_multiple_logfiles(logging_file_size, logging_files_max_size);
+        if (result == DLT_RETURN_OK) {
+            return DLT_RETURN_OK;
+        }
+        dlt_user_printf("dlt logging for limits fails with error code=%d, use logging without limits as fallback\n", result);
+        return dlt_log_init_single_logfile();
+    } else {
+        dlt_user_printf("configure dlt logging without file limits\n");
+        return dlt_log_init_single_logfile();
+    }
+}
+
+DltReturnValue dlt_log_init_single_logfile()
+{
+    /* internal logging to file */
+    errno = 0;
+    logging_handle = fopen(logging_filename, "a");
+
+    if (logging_handle == NULL) {
+        dlt_user_printf("Internal log file %s cannot be opened, error: %s\n", logging_filename, strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
     return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_log_init_multiple_logfiles(const int logging_file_size, const int logging_files_max_size)
+{
+    char path_logging_filename[PATH_MAX + 1];
+    strncpy(path_logging_filename, logging_filename, PATH_MAX);
+    path_logging_filename[PATH_MAX] = 0;
+
+    const char *directory = dirname(path_logging_filename);
+    if (directory[0]) {
+        char basename_logging_filename[NAME_MAX + 1];
+        strncpy(basename_logging_filename, logging_filename, NAME_MAX);
+        basename_logging_filename[NAME_MAX] = 0;
+
+        const char *file_name = basename(basename_logging_filename);
+        char filename_base[NAME_MAX];
+        if (!dlt_extract_base_name_without_ext(file_name, filename_base, sizeof(filename_base))) return DLT_RETURN_ERROR;
+
+        const char *filename_ext = get_filename_ext(file_name);
+        if (!filename_ext) return DLT_RETURN_ERROR;
+
+        DltReturnValue result = multiple_files_buffer_init(
+                &multiple_files_ring_buffer,
+                directory,
+                logging_file_size,
+                logging_files_max_size,
+                false,
+                true,
+                filename_base,
+                filename_ext);
+
+        return result;
+    }
+
+    return DLT_RETURN_ERROR;
 }
 
 void dlt_log_free(void)
 {
-    if (logging_mode == DLT_LOG_TO_FILE && logging_handle)
+    if (logging_mode == DLT_LOG_TO_FILE) {
+        if (dlt_is_log_in_multiple_files_active()) {
+            dlt_log_free_multiple_logfiles();
+        } else {
+            dlt_log_free_single_logfile();
+        }
+    }
+}
+
+void dlt_log_free_single_logfile()
+{
+    if (logging_handle)
         fclose(logging_handle);
+}
+
+void dlt_log_free_multiple_logfiles()
+{
+    if (DLT_RETURN_ERROR == multiple_files_buffer_free(&multiple_files_ring_buffer)) return;
+
+    // reset indicator of multiple files usage
+    multiple_files_ring_buffer.ohandle = -1;
 }
 
 int dlt_user_printf(const char *format, ...)
 {
+    if (format == NULL) return -1;
+
     va_list args;
     va_start(args, format);
 
@@ -1922,9 +2015,13 @@ DltReturnValue dlt_log(int prio, char *s)
 #endif
         break;
     case DLT_LOG_TO_FILE:
-
         /* log to file */
-        if (logging_handle) {
+
+        if (dlt_is_log_in_multiple_files_active()) {
+            dlt_log_multiple_files_write(sFormatString, (unsigned int)sTimeSpec.tv_sec,
+                                         (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(), asSeverity[prio], s);
+        }
+        else if (logging_handle) {
             fprintf(logging_handle, sFormatString, (unsigned int)sTimeSpec.tv_sec,
                     (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(), asSeverity[prio], s);
             fflush(logging_handle);
@@ -4307,4 +4404,43 @@ int dlt_execute_command(char *filename, char *command, ...)
 
     free(args);
     return ret;
+}
+
+char *get_filename_ext(const char *filename)
+{
+    if (filename == NULL) {
+        fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
+        return NULL;
+    }
+
+    char *dot = strrchr(filename, '.');
+    return (!dot || dot == filename) ? NULL : dot;
+}
+
+bool dlt_extract_base_name_without_ext(const char* const abs_file_name, char* base_name, long base_name_len) {
+    if (abs_file_name == NULL || base_name == NULL) return false;
+
+    const char* last_separator = strrchr(abs_file_name, '.');
+    if (!last_separator) return false;
+    long length = last_separator - abs_file_name;
+    length = length > base_name_len ? base_name_len : length;
+
+    strncpy(base_name, abs_file_name, length);
+    base_name[length] = '\0';
+    return true;
+}
+
+void dlt_log_multiple_files_write(const char* format, ...)
+{
+    char output_string[2048] = { 0 };
+    va_list args;
+    va_start (args, format);
+    vsnprintf(output_string, 2047, format, args);
+    va_end (args);
+    multiple_files_buffer_write(&multiple_files_ring_buffer, (unsigned char*)output_string, strlen(output_string));
+}
+
+bool dlt_is_log_in_multiple_files_active()
+{
+    return multiple_files_ring_buffer.ohandle > -1;
 }

@@ -30,7 +30,7 @@ if (WITH_DLT_ADAPTOR_UDP OR WITH_DLT_ADAPTOR)
 	target_link_libraries(dlt-adaptor-udp dlt)
 	set_target_properties(dlt-adaptor-udp PROPERTIES LINKER_LANGUAGE C)
 
-	install(TARGETS dlt-adaptor-stdin
+	install(TARGETS dlt-adaptor-udp
 		RUNTIME DESTINATION bin
 		COMPONENT base)
 endif()

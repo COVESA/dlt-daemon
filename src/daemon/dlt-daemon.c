@@ -46,6 +46,8 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <libgen.h>
+
 #if defined(linux) && defined(__NR_statx)
 #   include <linux/stat.h>
 #endif
@@ -338,7 +340,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.offlineTraceDirectory[0] = 0;
     daemon_local->flags.offlineTraceFileSize = 1000000;
     daemon_local->flags.offlineTraceMaxSize = 4000000;
-    daemon_local->flags.offlineTraceFilenameTimestampBased = 1;
+    daemon_local->flags.offlineTraceFilenameTimestampBased = true;
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
 
@@ -356,6 +358,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
         dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
                 __func__, n, daemon_local->flags.loggingFilename);
     }
+    daemon_local->flags.enableLoggingFileLimit = false;
+    daemon_local->flags.loggingFileSize = 250000;
+    daemon_local->flags.loggingFileMaxSize = 1000000;
 
     daemon_local->timeoutOnSend = 4;
     daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -514,7 +519,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "LoggingMode") == 0)
                     {
-                        daemon_local->flags.loggingMode = atoi(value);
+                        daemon_local->flags.loggingMode = (DltLoggingMode)atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
                     }
                     else if (strcmp(token, "LoggingLevel") == 0)
@@ -529,6 +534,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                 sizeof(daemon_local->flags.loggingFilename) - 1);
                         daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename) - 1] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
+                    }
+                    else if (strcmp(token, "EnableLoggingFileLimit") == 0)
+                    {
+                        daemon_local->flags.enableLoggingFileLimit = (bool)atoi(value);
+                    }
+                    else if (strcmp(token, "LoggingFileSize") == 0)
+                    {
+                        daemon_local->flags.loggingFileSize = atoi(value);
+                    }
+                    else if (strcmp(token, "LoggingFileMaxSize") == 0)
+                    {
+                        daemon_local->flags.loggingFileMaxSize = atoi(value);
                     }
                     else if (strcmp(token, "TimeOutOnSend") == 0)
                     {
@@ -578,7 +595,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "OfflineTraceFileNameTimestampBased") == 0)
                     {
-                        daemon_local->flags.offlineTraceFilenameTimestampBased = atoi(value);
+                        daemon_local->flags.offlineTraceFilenameTimestampBased = (bool)atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
                     }
                     else if (strcmp(token, "SendECUSoftwareVersion") == 0)
@@ -941,7 +958,10 @@ int main(int argc, char *argv[])
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
     DltReturnValue log_init_result =
-        dlt_log_init(daemon_local.flags.loggingMode);
+            dlt_log_init_multiple_logfiles_support(daemon_local.flags.loggingMode,
+                                                   daemon_local.flags.enableLoggingFileLimit,
+                                                   daemon_local.flags.loggingFileSize,
+                                                   daemon_local.flags.loggingFileMaxSize);
 
     if (log_init_result != DLT_RETURN_OK) {
       fprintf(stderr, "Failed to init internal logging\n");
@@ -1126,6 +1146,8 @@ int main(int argc, char *argv[])
 
     dlt_log(LOG_NOTICE, "Leaving DLT daemon\n");
 
+    dlt_log_free();
+
     return 0;
 
 } /* main() */
@@ -1171,7 +1193,12 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Re-Initialize internal logging facility after fork */
     dlt_log_set_filename(daemon_local->flags.loggingFilename);
     dlt_log_set_level(daemon_local->flags.loggingLevel);
-    dlt_log_init(daemon_local->flags.loggingMode);
+    // 'free' dlt logging and corresponding file handle before re-initializing
+    dlt_log_free();
+    dlt_log_init_multiple_logfiles_support(daemon_local->flags.loggingMode,
+                                           daemon_local->flags.enableLoggingFileLimit,
+                                           daemon_local->flags.loggingFileSize,
+                                           daemon_local->flags.loggingFileMaxSize);
 
     /* initialise structure to use DLT file */
     ret = dlt_file_init(&(daemon_local->file), daemon_local->flags.vflag);
@@ -1218,11 +1245,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* init offline trace */
     if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&
         daemon_local->flags.offlineTraceDirectory[0]) {
-        if (dlt_offline_trace_init(&(daemon_local->offlineTrace),
-                                   daemon_local->flags.offlineTraceDirectory,
-                                   daemon_local->flags.offlineTraceFileSize,
-                                   daemon_local->flags.offlineTraceMaxSize,
-                                   daemon_local->flags.offlineTraceFilenameTimestampBased) == -1) {
+        if (multiple_files_buffer_init(&(daemon_local->offlineTrace),
+                                       daemon_local->flags.offlineTraceDirectory,
+                                       daemon_local->flags.offlineTraceFileSize,
+                                       daemon_local->flags.offlineTraceMaxSize,
+                                       daemon_local->flags.offlineTraceFilenameTimestampBased,
+                                       false,
+                                       DLT_OFFLINETRACE_FILENAME_BASE,
+                                       DLT_OFFLINETRACE_FILENAME_EXT) == -1) {
             dlt_log(LOG_ERR, "Could not initialize offline trace\n");
             return -1;
         }
@@ -1786,7 +1816,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
     /* free shared memory */
     if (daemon_local->flags.offlineTraceDirectory[0])
-        dlt_offline_trace_free(&(daemon_local->offlineTrace));
+        multiple_files_buffer_free(&(daemon_local->offlineTrace));
 
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
