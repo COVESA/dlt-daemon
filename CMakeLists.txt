@@ -105,7 +105,10 @@ set(LICENSE "Mozilla Public License Version 2.0")
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
-if(WITH_DLT_COREDUMPHANDLER OR WITH_DLT_FILETRANSFER OR WITH_DLT_LOGSTORAGE_GZIP)
+if(WITH_DLT_LOGSTORAGE_GZIP)
+    set(ZLIB_LIBRARY "-lz")
+    find_package(ZLIB 1.2.9 REQUIRED)
+elseif(WITH_DLT_COREDUMPHANDLER OR WITH_DLT_FILETRANSFER)
     set(ZLIB_LIBRARY "-lz")
     find_package(ZLIB REQUIRED)
 else()
