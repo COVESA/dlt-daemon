@@ -1188,19 +1188,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     /* Check for daemon mode */
     if (daemon_local->flags.dflag)
-    {
         dlt_daemon_daemonize(daemon_local->flags.vflag);
-
-        /* Re-Initialize internal logging facility after fork */
-        dlt_log_set_filename(daemon_local->flags.loggingFilename);
-        dlt_log_set_level(daemon_local->flags.loggingLevel);
-        // 'free' dlt logging and corresponding file handle before re-initializing
-        dlt_log_free();
-        dlt_log_init_multiple_logfiles_support(daemon_local->flags.loggingMode,
-                                            daemon_local->flags.enableLoggingFileLimit,
-                                            daemon_local->flags.loggingFileSize,
-                                            daemon_local->flags.loggingFileMaxSize);
-    }
 
     /* initialise structure to use DLT file */
     ret = dlt_file_init(&(daemon_local->file), daemon_local->flags.vflag);
