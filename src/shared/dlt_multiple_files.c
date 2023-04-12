@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <stdarg.h>
 
-#include <dlt_multiple_files.h>
+#include "dlt_multiple_files.h"
 #include "dlt_common.h"
 
 unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char *file_name,
@@ -399,8 +399,7 @@ DltReturnValue multiple_files_buffer_open_file_for_append(MultipleFilesRingBuffe
 
     /* open DLT output file */
     errno = 0;
-    files_buffer->ohandle = open(file_path, O_WRONLY | O_APPEND, S_IRUSR | S_IWUSR |
-                                                                S_IRGRP | S_IROTH); /* mode: wb */
+    files_buffer->ohandle = open(file_path, O_WRONLY | O_APPEND); /* mode: wb */
 
     return files_buffer->ohandle == -1 ? DLT_RETURN_ERROR : DLT_RETURN_OK;
 }
