@@ -64,7 +64,7 @@ endif()
 foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
-    target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES})
+    target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
     if(${target} STREQUAL "gtest_dlt_daemon_event_handler"
             OR ${target} STREQUAL "gtest_dlt_shm"
             OR ${target} STREQUAL "gtest_dlt_daemon_multiple_files_logging")

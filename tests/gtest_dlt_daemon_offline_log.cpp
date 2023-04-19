@@ -175,10 +175,62 @@ TEST(t_dlt_logstorage_read_number, null)
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_number(&number, NULL));
 }
 
+TEST(t_dlt_logstorage_read_boolean, normal)
+{
+    unsigned int val;
+    {
+        char str[] = "0";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "1";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "off";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "on";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "false";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "true";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(1, val);
+    }
+    {
+        char str[] = "invalidvalue";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+    {
+        char str[] = "not";
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
+        EXPECT_EQ(0, val);
+    }
+}
+
+TEST(t_dlt_logstorage_read_boolean, null)
+{
+    unsigned int val;
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_bool(&val, NULL));
+}
+
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_create_keys*/
 TEST(t_dlt_logstorage_create_keys, normal)
 {
     DltLogStorageFilterConfig data;
+    memset(&data, 0, sizeof(DltLogStorageFilterConfig));
     char *keys = NULL;
     int num_keys = 0;
     char apids[] = "1234";
@@ -235,6 +287,7 @@ TEST(t_dlt_logstorage_validate_filter_name, null)
 TEST(t_dlt_logstorage_filter_set_strategy, normal)
 {
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     dlt_logstorage_filter_set_strategy(&config, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
     EXPECT_EQ(&dlt_logstorage_prepare_on_msg, config.dlt_logstorage_prepare);
@@ -269,6 +322,7 @@ TEST(t_dlt_logstorage_check_apids, normal)
 {
     char value[] = "a,b,c,d";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.apids = (char *)calloc (1, sizeof(char));
 
     if (config.apids != NULL) {
@@ -288,6 +342,7 @@ TEST(t_dlt_logstorage_check_ctids, normal)
 {
     char value[] = "a,b,c,d";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.ctids = (char *)calloc (1, sizeof(char));
 
     if (config.ctids != NULL) {
@@ -307,6 +362,7 @@ TEST(t_dlt_logstorage_check_loglevel, normal)
 {
     char value[] = "DLT_LOG_FATAL";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_loglevel(&config, value));
     EXPECT_EQ(1, config.log_level);
@@ -322,6 +378,7 @@ TEST(t_dlt_logstorage_check_filename, normal)
 {
     char value[] = "file_name";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.file_name = (char *)calloc (1, sizeof(char));
 
     if (config.file_name != NULL) {
@@ -335,6 +392,7 @@ TEST(t_dlt_logstorage_check_filename, abnormal)
 {
     char value[] = "../file_name";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.file_name = (char *)calloc (1, sizeof(char));
 
     if (config.file_name != NULL) {
@@ -354,6 +412,7 @@ TEST(t_dlt_logstorage_check_filesize, normal)
 {
     char value[] = "100";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_filesize(&config, value));
     EXPECT_EQ(100, config.file_size);
@@ -369,6 +428,7 @@ TEST(t_dlt_logstorage_check_nofiles, normal)
 {
     char value[] = "100";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_nofiles(&config, value));
     EXPECT_EQ(100, config.num_files);
@@ -384,6 +444,7 @@ TEST(t_dlt_logstorage_check_sync_strategy, normal)
 {
     char value[] = "ON_MSG";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.sync = 0;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_sync_strategy(&config, value));
@@ -394,6 +455,7 @@ TEST(t_dlt_logstorage_check_sync_strategy, abnormal)
 {
     char value[] = "UNKNOWN";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.sync = 0;
 
     EXPECT_EQ(DLT_RETURN_TRUE, dlt_logstorage_check_sync_strategy(&config, value));
@@ -410,6 +472,7 @@ TEST(t_dlt_logstorage_check_ecuid, normal)
 {
     char value[] = "213";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.ecuid = (char *)calloc (1, sizeof(char));
 
     if (config.ecuid != NULL) {
@@ -432,6 +495,7 @@ TEST(t_dlt_logstorage_check_param, normal)
 {
     char value[] = "100";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_check_param(&config, DLT_LOGSTORAGE_FILTER_CONF_FILESIZE, value));
     EXPECT_EQ(100, config.file_size);
@@ -560,6 +624,7 @@ TEST(t_dlt_logstorage_get_config, normal)
     char file_name[] = "file_name";
     int num_config = 0;
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.log_level = 0;
     value.apids = apid;
     value.ctids = ctid;
@@ -601,6 +666,7 @@ TEST(t_dlt_logstorage_filter, normal)
     char filename[] = "file_name";
     int num = 1;
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
@@ -653,6 +719,7 @@ TEST(t_dlt_logstorage_write, normal)
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
@@ -685,6 +752,7 @@ TEST(t_dlt_logstorage_sync_caches, normal)
     handle.num_configs = 1;
     handle.config_list = NULL;
     DltLogStorageFilterConfig configs;
+    memset(&configs, 0, sizeof(DltLogStorageFilterConfig));
     configs.apids = apid;
     configs.ctids = ctid;
     configs.ecuid = ecuid;
@@ -708,7 +776,12 @@ TEST(t_dlt_logstorage_log_file_name, normal)
     file_config.logfile_counteridxlen = 10;
     int cmpRes = 0;
     char name[] = "log";
-    dlt_logstorage_log_file_name(log_file_name, &file_config, name, 0);
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, 0);
     cmpRes = strncmp(log_file_name, "log/0000000000", 14);
 
     EXPECT_EQ(0, cmpRes);
@@ -716,8 +789,7 @@ TEST(t_dlt_logstorage_log_file_name, normal)
 
 TEST(t_dlt_logstorage_log_file_name, null)
 {
-    char name[] = "log";
-    dlt_logstorage_log_file_name(NULL, NULL, name, 0);
+    dlt_logstorage_log_file_name(NULL, NULL, NULL, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sort_file_name*/
@@ -878,13 +950,23 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
+    char name[] = "Test";
     char *file = (char *)"Test_002_20160509_191132.dlt";
 
-    EXPECT_EQ(2, dlt_logstorage_get_idx_of_log_file(&file_config, file));
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    EXPECT_EQ(2, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, file));
+
+    char *gz_file = (char *)"Test_142_20160509_191132.dlt.gz";
+    filter_config.gzip_compression = 1;
+
+    EXPECT_EQ(142, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, gz_file));
 }
 TEST(t_dlt_logstorage_get_idx_of_log_file, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_get_idx_of_log_file(NULL, NULL));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_get_idx_of_log_file(NULL, NULL, NULL));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_storage_dir_info*/
@@ -897,6 +979,7 @@ TEST(t_dlt_logstorage_storage_dir_info, normal)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -921,6 +1004,7 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -947,6 +1031,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -975,6 +1060,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -1016,6 +1102,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal3)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     char *working_file_name = (char *)"Test_002_20160509_191132.dlt";
@@ -1064,6 +1151,7 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     file_config.logfile_counteridxlen = 2;
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -1073,6 +1161,7 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     config.log = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
+    config.gzip_compression = 0;
     unsigned int size = 8;
     unsigned char data1[] = "dlt_data";
     unsigned char data2[] = "dlt_data";
@@ -1081,6 +1170,42 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     DltNewestFileName newest_file_name;
     newest_file_name.file_name = (char *)"Test";
     newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.wrap_id = 0;
+    newest_file_name.next = NULL;
+
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
+              data1, size, data2, size, data3, size));
+}
+
+TEST(t_dlt_logstorage_write_on_msg, gzip)
+{
+    DltLogStorageUserConfig file_config;
+    file_config.logfile_timestamp = 191132;
+    file_config.logfile_delimiter = { '_' };
+    file_config.logfile_maxcounter = 2;
+    file_config.logfile_counteridxlen = 2;
+    char *path = (char *)"/tmp";
+    DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
+    char apids;
+    char ctids;
+    config.apids = &apids;
+    config.ctids = &ctids;
+    config.file_name = (char *)"Test";
+    config.records = NULL;
+    config.log = NULL;
+    config.working_file_name = NULL;
+    config.wrap_id = 0;
+    config.gzip_compression = 1;
+    unsigned int size = 8;
+    unsigned char data1[] = "dlt_data";
+    unsigned char data2[] = "dlt_data";
+    unsigned char data3[] = "dlt_data";
+
+    DltNewestFileName newest_file_name;
+    newest_file_name.file_name = (char *)"Test";
+    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt.gz";
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
@@ -1130,6 +1255,8 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     char *path = (char *)"/tmp";
     DltLogStorageFilterConfig config;
     DltNewestFileName newest_info;
+    memset(&newest_info, 0, sizeof(DltNewestFileName));
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
@@ -1374,6 +1501,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     memset(&daemon_local, 0, sizeof(DltDaemonLocal));
     memset(&daemon_local.pGateway, 0, sizeof(DltGateway));
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.log_level = 4;
     value.apids = apid;
     value.ctids = ctid;
@@ -1427,6 +1555,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     memset(&daemon_local, 0, sizeof(DltDaemonLocal));
     memset(&daemon_local.pGateway, 0, sizeof(DltGateway));
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.log_level = 5;
     value.apids = apid;
     value.ctids = ctid;
@@ -1499,6 +1628,7 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     daemon.storage_handle->config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     daemon.storage_handle->config_list = NULL;
     DltLogStorageFilterConfig value;
+    memset(&value, 0, sizeof(DltLogStorageFilterConfig));
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
@@ -1598,6 +1728,7 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
     daemon.storage_handle->config_list = NULL;
     strncpy(daemon.storage_handle->device_mount_point, "/tmp", 5);
     DltLogStorageFilterConfig configs;
+    memset(&configs, 0, sizeof(DltLogStorageFilterConfig));
     configs.apids = apid;
     configs.ctids = ctid;
     configs.ecuid = ecuid;

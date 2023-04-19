@@ -65,6 +65,9 @@ target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_
 if (WITH_SYSTEMD_SOCKET_ACTIVATION)
     target_link_libraries(dlt-daemon systemd)
 endif()
+if (WITH_DLT_LOGSTORAGE_GZIP)
+	target_link_libraries(dlt-daemon ${ZLIB_LIBRARY})
+endif()
 
 install(TARGETS dlt-daemon
         RUNTIME DESTINATION bin

@@ -53,28 +53,30 @@
 
 #include <search.h>
 #include <stdbool.h>
+#include <zlib.h>
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_config_file_parser.h"
 
-#define DLT_OFFLINE_LOGSTORAGE_MAXIDS               100 /* Maximum entries for each apids and ctids */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS   7  /* Max number of possible keys when searching for */
+#define DLT_OFFLINE_LOGSTORAGE_MAXIDS                 100 /* Maximum entries for each apids and ctids */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS        7 /* Max number of possible keys when searching for */
 
-#define DLT_OFFLINE_LOGSTORAGE_INIT_DONE           1  /* For device configuration status */
-#define DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED    1
-#define DLT_OFFLINE_LOGSTORAGE_FREE                0
-#define DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED 0
-#define DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE         1
+#define DLT_OFFLINE_LOGSTORAGE_INIT_DONE                1 /* For device configuration status */
+#define DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED         1
+#define DLT_OFFLINE_LOGSTORAGE_FREE                     0
+#define DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED      0
+#define DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE              1
 
-#define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES         2  /* sync logstorage caches */
+#define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES              2 /* sync logstorage caches */
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   50  /* Maximum file name length of the log file */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN             15 /* Maximum size for key */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN       50 /* Maximum file name length of the log file */
 
-#define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN   4
-#define DLT_OFFLINE_LOGSTORAGE_INDEX_LEN            3
-#define DLT_OFFLINE_LOGSTORAGE_MAX_INDEX          999
-#define DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN       16
+#define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN       4
+#define DLT_OFFLINE_LOGSTORAGE_GZ_FILE_EXTENSION_LEN    7
+#define DLT_OFFLINE_LOGSTORAGE_INDEX_LEN                3
+#define DLT_OFFLINE_LOGSTORAGE_MAX_INDEX              999
+#define DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN           16
 #define DLT_OFFLINE_LOGSTORAGE_INDEX_OFFSET        (DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_INDEX_LEN)
@@ -169,6 +171,7 @@ struct DltLogStorageFilterConfig
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
     char *ecuid;                    /* ECU identifier */
+    unsigned int gzip_compression;  /* Toggle if log files should be gzip compressed */
     /* callback function for filter configurations */
     int (*dlt_logstorage_prepare)(DltLogStorageFilterConfig *config,
                                   DltLogStorageUserConfig *file_config,
@@ -191,6 +194,10 @@ struct DltLogStorageFilterConfig
                                char *dev_path,
                                int status);
     FILE *log;                      /* current open log file */
+    int fd;                         /* The file descriptor for the active log file */
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    gzFile gzlog;                   /* current open gz log file */
+#endif
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
@@ -248,6 +255,7 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR,
     DLT_LOGSTORAGE_FILTER_CONF_ECUID,
     DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
+    DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION,
     DLT_LOGSTORAGE_FILTER_CONF_COUNT
 } DltLogstorageFilterConfType;
 

@@ -51,15 +51,17 @@
 
 void dlt_logstorage_log_file_name(char *log_file_name,
                                   DltLogStorageUserConfig *file_config,
-                                  char *name,
+                                  DltLogStorageFilterConfig *filter_config,
                                   int idx);
 
 unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
 
 void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head);
 
-unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
-                                                char *file);
+unsigned int
+dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
+                                   DltLogStorageFilterConfig *config,
+                                   char *file);
 
 int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                                     char *path,

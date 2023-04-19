@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <ctype.h>
+#include <sys/syslog.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
@@ -72,6 +73,11 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
 
     if (data->log != NULL)
         fclose(data->log);
+
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (data->gzlog != NULL)
+        gzclose(data->gzlog);
+#endif
 
     if (data->cache != NULL) {
         free(data->cache);
@@ -417,6 +423,34 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 
     *number = (unsigned int)size;
 
+    return 0;
+}
+
+/**
+ * dlt_logstorage_read_bool
+ *
+ * Evaluate a boolean config value. Values such as '1', 'on' or 'true' will be
+ * treated as true otherwise the config value will be interpreted as false.
+ *
+ * @param bool     The boolean to populate
+ * @param value    The string from the config file
+ * @returns        0 on success, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_read_bool(unsigned int *boolean, char *value)
+{
+    int len = 0;
+    if (value == NULL)
+        return -1;
+
+    len = strnlen(value, 5);
+    *boolean = 0;
+    if (strncmp(value, "on", len) == 0) {
+        *boolean = 1;
+    } else if (strncmp(value, "true", len) == 0) {
+        *boolean = 1;
+    } else if (strncmp(value, "1", len) == 0) {
+        *boolean = 1;
+    }
     return 0;
 }
 
@@ -1052,6 +1086,20 @@ DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_number(&config->num_files, value);
 }
 
+DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config,
+                                                     char *value)
+{
+    if ((config == NULL) || (value == NULL))
+        return -1;
+
+    int result = dlt_logstorage_read_bool(&config->gzip_compression, value);
+#ifndef DLT_LOGSTORAGE_USE_GZIP
+    dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
+    config->gzip_compression = 0;
+#endif
+    return result;
+}
+
 DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
                                                  char *value)
 {
@@ -1195,6 +1243,11 @@ DLT_STATIC DltLogstorageFilterConf
         .key = "SpecificSize",
         .func = dlt_logstorage_check_specificsize,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
+        .key = "GzipCompression",
+        .func = dlt_logstorage_check_gzip_compression,
+        .is_opt = 1
     }
 };
 
@@ -1250,6 +1303,11 @@ DLT_STATIC DltLogstorageFilterConf
         .key = NULL,
         .func = dlt_logstorage_check_specificsize,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
+        .key = "GzipCompression",
+        .func = dlt_logstorage_check_gzip_compression,
+        .is_opt = 1
     }
 };
 
@@ -1303,6 +1361,11 @@ DLT_STATIC DltLogstorageFilterConf
     [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] = {
         .key = NULL,
         .func = dlt_logstorage_check_specificsize,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
+        .key = "GzipCompression",
+        .func = dlt_logstorage_check_gzip_compression,
         .is_opt = 1
     }
 };

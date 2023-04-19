@@ -28,11 +28,38 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "dlt_common.h"
 #include "dlt_offline_logstorage.h"
 #include "dlt_offline_logstorage_behavior.h"
 #include "dlt_offline_logstorage_behavior_internal.h"
 
 unsigned int g_logstorage_cache_size;
+
+/**
+ * dlt_logstorage_concat
+ *
+ * Concatenates two strings but keeps the size of the result less then dst_size.
+ *
+ * @param dst       The destination string
+ * @param src       The source string to concat
+ */
+DLT_STATIC void dlt_logstorage_concat_logfile_name(char *log_file_name, const char *append)
+{
+    size_t dst_len = strnlen(log_file_name, DLT_MOUNT_PATH_MAX);
+    size_t src_len = strlen(append);
+
+    if (dst_len < DLT_MOUNT_PATH_MAX) {
+        size_t rem_len = DLT_MOUNT_PATH_MAX - dst_len - 1;
+        strncat(log_file_name, append, rem_len);
+    } else {
+        dlt_vlog(LOG_ERR, "Log file name reached max len: %s [%d]\n", log_file_name, DLT_MOUNT_PATH_MAX);
+    }
+
+    if (src_len + dst_len >= DLT_MOUNT_PATH_MAX) {
+        dlt_vlog(LOG_ERR, "Log file path too long. Truncated: %s", log_file_name);
+    }
+}
+
 /**
  * dlt_logstorage_log_file_name
  *
@@ -53,18 +80,18 @@ unsigned int g_logstorage_cache_size;
  */
 void dlt_logstorage_log_file_name(char *log_file_name,
                                   DltLogStorageUserConfig *file_config,
-                                  char *name,
+                                  DltLogStorageFilterConfig *filter_config,
                                   int idx)
 {
-    if ((log_file_name == NULL) || (file_config == NULL))
+    if ((log_file_name == NULL) || (file_config == NULL) || (filter_config == NULL))
         return;
 
     char file_index[10] = { '\0' };
 
     /* create log file name */
-    memset(log_file_name, 0, DLT_MOUNT_PATH_MAX * sizeof(char));
-    strcat(log_file_name, name);
-    strncat(log_file_name, &file_config->logfile_delimiter, 1);
+    memset(log_file_name, '\0', DLT_MOUNT_PATH_MAX * sizeof(char));
+    dlt_logstorage_concat_logfile_name(log_file_name, filter_config->file_name);
+    dlt_logstorage_concat_logfile_name(log_file_name, &file_config->logfile_delimiter);
 
     snprintf(file_index, 10, "%d", idx);
 
@@ -78,11 +105,11 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         if (file_config->logfile_counteridxlen > digit_idx)
         {
             for (i = 0 ; i < (file_config->logfile_counteridxlen - digit_idx) ; i++)
-                strcat(log_file_name, "0");
+                dlt_logstorage_concat_logfile_name(log_file_name, "0");
         }
     }
 
-    strcat(log_file_name, file_index);
+    dlt_logstorage_concat_logfile_name(log_file_name, file_index);
 
     /* Add time stamp if user has configured */
     if (file_config->logfile_timestamp) {
@@ -106,10 +133,13 @@ void dlt_logstorage_log_file_name(char *log_file_name,
             dlt_vlog(LOG_WARNING, "%s: snprintf truncation %s\n", __func__,
                      stamp);
         }
-        strcat(log_file_name, stamp);
+        dlt_logstorage_concat_logfile_name(log_file_name, stamp);
     }
 
-    strcat(log_file_name, ".dlt");
+    dlt_logstorage_concat_logfile_name(log_file_name, ".dlt");
+    if (filter_config->gzip_compression) {
+        dlt_logstorage_concat_logfile_name(log_file_name, ".gz");
+    }
 }
 
 /**
@@ -209,57 +239,35 @@ void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head)
  *
  * Extract index of log file name passed as input argument
  *
- * @param file          file name to extract the index from
  * @param file_config   User configurations for log file
+ * @param config        Filter configurations for log file
+ * @param file          file name to extract the index from
  * @return index on success, -1 if no index is found
  */
-unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
-                                                char *file)
+unsigned int
+dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
+                                   DltLogStorageFilterConfig *config,
+                                   char *file)
 {
-    unsigned int idx = -1;
-    char *endptr;
-    char *filename;
-    unsigned int filename_len = 0;
-    unsigned int fileindex_len = 0;
-
-    if ((file_config == NULL) || (file == NULL))
+    if (file_config == NULL || config == NULL || file == NULL)
         return -1;
 
-    /* Calculate actual file name length */
-    filename = strchr(file, file_config->logfile_delimiter);
+    int idx = 0;
+    int basename_len;
+    char *sptr, *eptr;
 
-    if (filename == NULL) {
-        dlt_vlog(LOG_ERR, "Cannot extract filename from %s\n", file);
-        return -1;
-    }
+    /* Find the next delimiter after the first one:
+     * Eg. base-log-name_<idx>_<timestamp>.dlt
+     *                   ^    ^
+     *                   |    |
+     *       From here --+    +--- To this position
+     */
+    basename_len = strlen(config->file_name);
+    sptr = file + basename_len + 1;
+    eptr = strchr(file + basename_len + 1, file_config->logfile_delimiter);
+    idx = strtol(sptr, &eptr, 10);
 
-    filename_len = strlen(file) - strlen(filename);
-
-    /* index is retrived from file name */
-    if (file_config->logfile_timestamp) {
-        fileindex_len = strlen(file) -
-            (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN +
-             DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN +
-             filename_len + 1);
-
-        idx = (int)strtol(&file[strlen(file) -
-                                (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN +
-                                 fileindex_len +
-                                 DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN)],
-                          &endptr,
-                          10);
-    }
-    else {
-        fileindex_len = strlen(file) -
-            (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN +
-             filename_len + 1);
-
-        idx = (int)strtol(&file[strlen(file) -
-                                (DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN
-                                 + fileindex_len)], &endptr, 10);
-    }
-
-    if ((endptr == file) || (idx == 0))
+    if (idx == 0)
         dlt_log(LOG_ERR,
                 "Unable to calculate index from log file name. Reset to 001.\n");
 
@@ -322,15 +330,30 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         config->records = NULL;
     }
 
+    char suffix[10];
+    int suffix_len;
+    memset(suffix, 0, 10);
+    if (config->gzip_compression) {
+        suffix_len = DLT_OFFLINE_LOGSTORAGE_GZ_FILE_EXTENSION_LEN;
+        strncpy(suffix, ".dlt.gz", suffix_len);
+    }
+    else {
+        suffix_len = DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN;
+        strncpy(suffix, ".dlt", suffix_len);
+    }
+
     for (i = 0; i < cnt; i++) {
         int len = 0;
+        int fname_len = 0;
         len = strlen(config->file_name);
+        fname_len = strlen(files[i]->d_name);
 
         if ((strncmp(files[i]->d_name, config->file_name, len) == 0) &&
-            (files[i]->d_name[len] == file_config->logfile_delimiter)) {
+            (files[i]->d_name[len] == file_config->logfile_delimiter) &&
+            (fname_len > suffix_len && strncmp(&files[i]->d_name[fname_len - suffix_len], suffix, suffix_len) == 0))
+        {
             DltLogStorageFileList **tmp = NULL;
-            current_idx = dlt_logstorage_get_idx_of_log_file(file_config,
-                                                             files[i]->d_name);
+            current_idx = dlt_logstorage_get_idx_of_log_file(file_config, config, files[i]->d_name);
 
             if (config->records == NULL) {
                 config->records = malloc(sizeof(DltLogStorageFileList));
@@ -394,6 +417,32 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
 /**
  * dlt_logstorage_open_log_file
  *
+ * Open a handle to the logfile
+ *
+ * @param config    A pointer to the current DltLogStorageFilterConfig
+ * @param fpath     The file path
+ * @param mode      The mode to open the file with
+ */
+DLT_STATIC void
+dlt_logstorage_open_log_output_file(DltLogStorageFilterConfig *config,
+                                    const char *fpath, const char *mode)
+{
+    FILE *file = fopen(fpath, mode);
+    config->fd = fileno(file);
+    if (config->gzip_compression) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+        dlt_vlog(LOG_DEBUG, "%s: Opening GZIP log file\n", __func__);
+        config->gzlog = gzdopen(config->fd, mode);
+#endif
+    } else {
+        dlt_vlog(LOG_DEBUG, "%s: Opening log file\n", __func__);
+        config->log = file;
+    }
+}
+
+/**
+ * dlt_logstorage_open_log_file
+ *
  * Open a log file. Check storage directory for already created files and open
  * the oldest if there is enough space to store at least msg_size.
  * Otherwise create a new file, but take configured max number of files into
@@ -451,16 +500,13 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 
     /* need new file*/
     if (num_log_files == 0) {
-        dlt_logstorage_log_file_name(file_name,
-                                     file_config,
-                                     config->file_name,
-                                     1);
+        dlt_logstorage_log_file_name(file_name, file_config, config, 1);
 
         /* concatenate path and file and open absolute path */
         strcat(absolute_file_path, storage_path);
         strcat(absolute_file_path, file_name);
         config->working_file_name = strdup(file_name);
-        config->log = fopen(absolute_file_path, "a+");
+        dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
 
         /* Add file to file list */
         *tmp = malloc(sizeof(DltLogStorageFileList));
@@ -498,8 +544,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         ret = stat(absolute_file_path, &s);
 
         /* if size is enough, open it */
-        if ((ret == 0) && (s.st_size + msg_size <= (int) config->file_size)) {
-            config->log = fopen(absolute_file_path, "a+");
+        if ((ret == 0) && (s.st_size + msg_size <= (int)config->file_size)) {
+            dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
             config->current_write_file_offset = s.st_size;
         }
         else {
@@ -507,8 +553,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             unsigned int idx = 0;
 
             /* get index of newest log file */
-            idx = dlt_logstorage_get_idx_of_log_file(file_config,
-                                                     config->working_file_name);
+            idx = dlt_logstorage_get_idx_of_log_file(file_config, config, config->working_file_name);
             idx += 1;
 
             /* wrap around if max index is reached or an error occurred
@@ -518,10 +563,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 config->wrap_id += 1;
             }
 
-            dlt_logstorage_log_file_name(file_name,
-                                         file_config,
-                                         config->file_name,
-                                         idx);
+            dlt_logstorage_log_file_name(file_name, file_config, config, idx);
 
             /* concatenate path and file and open absolute path */
             memset(absolute_file_path,
@@ -546,7 +588,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                          __func__, absolute_file_path, num_log_files, config->num_files);
             }
 
-            config->log = fopen(absolute_file_path, "a+");
+            dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
 
             dlt_vlog(LOG_DEBUG,
                      "%s: Filename and Index after updating [%s]-[%u]\n",
@@ -590,7 +632,11 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         }
     }
 
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (config->gzlog == NULL && config->log == NULL) {
+#else
     if (config->log == NULL) {
+#endif
         if (*tmp != NULL) {
             if ((*tmp)->name != NULL) {
                 free((*tmp)->name);
@@ -665,12 +711,36 @@ DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
 }
 
 /**
+ * dlt_logstorage_write_to_log
+ *
+ * Write logdata to log storage file
+ *
+ * @param ptr       A pointer to the data to write
+ * @param size      The size of the data blocks
+ * @param nmemb     The number of blocks to write
+ * @param config    A pointer to DltLogStorageFilterConfig
+ */
+DLT_STATIC int dlt_logstorage_write_to_log(void *ptr, size_t size, size_t nmemb,
+                                           DltLogStorageFilterConfig *config)
+{
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (config->gzip_compression) {
+        return gzfwrite(ptr, size, nmemb, config->gzlog);
+    } else {
+        return fwrite(ptr, size, nmemb, config->log);
+    }
+#else
+    return fwrite(ptr, size, nmemb, config->log);
+#endif
+}
+
+/**
  * dlt_logstorage_check_write_ret
  *
- * check the return value of fwrite
+ * check the return value of fwrite/gzfwrite
  *
  * @param config      DltLogStorageFilterConfig
- * @param ret         return value of fwrite call
+ * @param ret         return value of fwrite/gzfwrite call
  */
 DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
                                                int ret)
@@ -679,20 +749,60 @@ DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config
         dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
 
     if (ret <= 0) {
-        if (ferror(config->log) != 0)
-            dlt_vlog(LOG_ERR, "%s: failed to write cache into log file\n", __func__);
+        if (config->gzip_compression) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+            const char *msg = gzerror(config->gzlog, &ret);
+            if (msg != NULL) {
+                dlt_vlog(LOG_ERR, "%s: failed to write cache into log file: %s\n", __func__, msg);
+            }
+#endif
+        } else {
+            if (ferror(config->log) != 0)
+                dlt_vlog(LOG_ERR, "%s: failed to write cache into log file\n", __func__);
+        }
     }
     else {
         /* force sync */
-        if (fflush(config->log) != 0)
-            dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
+        if (config->gzip_compression) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+            if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0)
+                dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
+#endif
+        } else {
+            if (fflush(config->log) != 0)
+                dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
+        }
 
-        if (fsync(fileno(config->log)) != 0)
+        if (fsync(config->fd) != 0) {
             /* some filesystem doesn't support fsync() */
-            if (errno != ENOSYS)
-            {
-                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+            if (errno != ENOSYS) {
+                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n",
+                        __func__);
             }
+        }
+    }
+}
+
+/**
+ * dlt_logstorage_close_file
+ *
+ * Close open file handles if any exist in the provided
+ * DltLogStorageFilterConfig
+ *
+ * @param config    The DltLogStorageFilterConfig to operate on
+ */
+DLT_STATIC void dlt_logstorage_close_file(DltLogStorageFilterConfig *config)
+{
+
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (config->gzlog) {
+        gzclose(config->gzlog);
+        config->gzlog = NULL;
+    }
+#endif
+    if (config->log) {
+        fclose(config->log);
+        config->log = NULL;
     }
 }
 
@@ -734,11 +844,8 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     /* In case of cached-based strategy, the newest file information
      * must be updated everytime of synchronization.
      */
-    if (config->log) {
-        fclose(config->log);
-        config->log = NULL;
-        config->current_write_file_offset = 0;
-    }
+    dlt_logstorage_close_file(config);
+    config->current_write_file_offset = 0;
 
     if (dlt_logstorage_open_log_file(config, file_config,
             dev_path, count, true) != 0) {
@@ -761,13 +868,11 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         if ((start_index >= 0) && (end_index > start_index) &&
             (count > 0) && (count <= remain_file_size))
         {
-            ret = fwrite((uint8_t*)config->cache + start_offset + start_index,
-                        count, 1, config->log);
+            dlt_logstorage_write_to_log((uint8_t*)config->cache + start_offset + start_index, count, 1, config);
             dlt_logstorage_check_write_ret(config, ret);
 
             /* Close log file */
-            fclose(config->log);
-            config->log = NULL;
+            dlt_logstorage_close_file(config);
             config->current_write_file_offset = 0;
 
             footer->last_sync_offset = start_offset + count;
@@ -776,8 +881,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         else
         {
             /* Close log file */
-            fclose(config->log);
-            config->log = NULL;
+            dlt_logstorage_close_file(config);
             config->current_write_file_offset = 0;
         }
     }
@@ -798,8 +902,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
             }
         }
 
-        ret = fwrite((uint8_t*)config->cache + start_offset + start_index, count, 1,
-                     config->log);
+        ret = dlt_logstorage_write_to_log((uint8_t *)config->cache + start_offset + start_index, count, 1, config);
         dlt_logstorage_check_write_ret(config, ret);
 
         config->current_write_file_offset += count;
@@ -835,12 +938,16 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
 
     if ((config == NULL) || (file_config == NULL) || (dev_path == NULL) ||
         (newest_file_info == NULL)) {
-        dlt_vlog(LOG_INFO, "Wrong paratemters\n");
+        dlt_vlog(LOG_DEBUG, "Wrong paratemters\n");
         return -1;
     }
 
     /* This is for ON_MSG/UNSET strategy */
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (config->log == NULL && config->gzlog == NULL) {
+#else
     if (config->log == NULL) {
+#endif
         /* Sync the wrap id and working file name before opening log file */
         if (config->wrap_id < newest_file_info->wrap_id) {
             config->wrap_id = newest_file_info->wrap_id;
@@ -859,17 +966,20 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                                            true);
     }
     else { /* already open, check size and create a new file if needed */
-        ret = fstat(fileno(config->log), &s);
+        ret = fstat(config->fd, &s);
 
         if (ret == 0) {
-            /* check if adding new data do not exceed max file size */
-            /* Check if wrap id needs to be updated*/
+            /* Check if adding new data do not exceed max file size
+             *
+             * This is inaccurate for gz compressed files but as long as log
+             * messages aren't gigantic it should be negligeble
+             *
+             * Also check if wrap id needs to be updated */
             if ((s.st_size + log_msg_size > (int)config->file_size) ||
                 (strcmp(config->working_file_name, newest_file_info->newest_file) != 0) ||
                 (config->wrap_id < newest_file_info->wrap_id)) {
 
-                fclose(config->log);
-                config->log = NULL;
+                dlt_logstorage_close_file(config);
 
                 /* Sync the wrap id and working file name before opening log file */
                 if (config->wrap_id <= newest_file_info->wrap_id) {
@@ -935,22 +1045,29 @@ int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
         return -1;
     }
 
-    ret = fwrite(data1, 1, size1, config->log);
+    ret = dlt_logstorage_write_to_log(data1, 1, size1, config);
 
     if (ret != size1)
         dlt_log(LOG_WARNING, "Wrote less data than specified\n");
 
-    ret = fwrite(data2, 1, size2, config->log);
-
+    ret = dlt_logstorage_write_to_log(data2, 1, size2, config);
     if (ret != size2)
         dlt_log(LOG_WARNING, "Wrote less data than specified\n");
 
-    ret = fwrite(data3, 1, size3, config->log);
-
+    ret = dlt_logstorage_write_to_log(data3, 1, size3, config);
     if (ret != size3)
         dlt_log(LOG_WARNING, "Wrote less data than specified\n");
 
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if (config->gzip_compression) {
+        gzerror(config->gzlog, &ret);
+        return ret;
+    } else {
+        return ferror(config->log);
+    }
+#else
     return ferror(config->log);
+#endif
 }
 
 /**
@@ -969,8 +1086,6 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
                                char *dev_path,
                                int status)
 {
-    int ret;
-
     (void)file_config;  /* satisfy compiler */
     (void)dev_path;
 
@@ -978,10 +1093,15 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
         return -1;
 
     if (status == DLT_LOGSTORAGE_SYNC_ON_MSG) { /* sync on every message */
-        ret = fflush(config->log);
-
-        if (ret != 0)
-            dlt_log(LOG_ERR, "fflush failed\n");
+        if (config->gzip_compression) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+            if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0)
+                dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
+#endif
+        } else {
+            if (fflush(config->log) != 0)
+                dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
+        }
     }
 
     return 0;
@@ -1234,7 +1354,7 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
             memcpy(curr_write_addr, data2, size2);
             curr_write_addr += size2;
             memcpy(curr_write_addr, data3, size3);
-         }
+        }
     }
 
 
@@ -1335,8 +1455,7 @@ int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
         if (status == DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE)
         {
             /* Close log file */
-            fclose(config->log);
-            config->log = NULL;
+            dlt_logstorage_close_file(config);
             config->current_write_file_offset = 0;
         }
     }

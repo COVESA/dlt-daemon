@@ -74,6 +74,7 @@ NOFiles=<number of files>            # Number of created files before oldest is 
 SyncBehavior=<strategy>              # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Rinbuffer Implementation below.
 EcuID=<ECUid>                        # Specify ECU identifier
 SpecificSize=<spec size in bytes>    # Store logs in storage devices after specific size is reached.
+GzipCompression=<on or off>          # Write the logfiles with gzip compression.
 ```
 
 The Parameter "SyncBehavior","EcuID" and "SpecificSize" are optional - all
@@ -103,6 +104,7 @@ NOFiles=5
 EcuID=ECU1
 SyncBehavior=ON_SPECIFIC_SIZE
 SpecificSize=5000
+GzipCompression=on
 
 [FILTER3]
 LogAppName=TEST
@@ -123,6 +125,7 @@ EcuID=<ECUid>                                  # Specify ECU identifier
 File=<file name>                               # Base name of the created files that containing the logs, e.g. "example". For further file naming scheme configurations see man dlt.conf
 FileSize=<file size in bytes>                  # Maximum file size in bytes
 NOFiles=<number of files>                      # Number of created files before oldest is deleted and a new one is created
+GzipCompression=on                             # Compress the log files
 
 [NON-VERBOSE-LOGLEVEL-CTRL<unique number>]     # filter configuration name to control log level of Non-Verbose applications
 LogAppName=<APID>                              # Name of application (wildcard allowed)
