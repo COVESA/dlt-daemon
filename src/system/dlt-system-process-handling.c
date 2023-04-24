@@ -312,22 +312,14 @@ void start_dlt_system_processes(DltSystemConfiguration *config)
 
 void dlt_system_signal_handler(int sig)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-process-handling, signal handler"));
-
     switch (sig) {
     case SIGHUP:
     case SIGTERM:
     case SIGINT:
     case SIGQUIT:
-        DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-                DLT_STRING("dlt-system-process-handling, exit, signal: "),
-                DLT_INT(sig));
         quit = 1;
         break;
     default:
-        DLT_LOG(dltsystem, DLT_LOG_WARN,
-                DLT_STRING("dlt-system-process-handling, unknown signal!"));
         break;
     }
 }
