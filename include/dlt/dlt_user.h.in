@@ -74,6 +74,8 @@
  \{
  */
 
+#include <stdbool.h>
+
 #ifndef DLT_NETWORK_TRACE_ENABLE
 #cmakedefine DLT_NETWORK_TRACE_ENABLE
 #endif
@@ -111,7 +113,7 @@ extern "C" {
 #define DLT_SEM_LOCK() do{\
     while ((sem_wait(&dlt_mutex) == -1) && (errno == EINTR)) \
         continue;       /* Restart if interrupted */ \
-    } while(0)
+    } while(false)
 #define DLT_SEM_FREE() { sem_post(&dlt_mutex); }
 
 /**
