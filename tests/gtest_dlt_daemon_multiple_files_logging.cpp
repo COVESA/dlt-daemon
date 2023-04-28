@@ -103,11 +103,11 @@ TEST(t_dlt_logging_multiple_files_append_reinit, normal)
     const char* log2 = "TWO\n";
 
     configure(path, file_name, true, file_size, max_file_size);
-    dlt_vlog(LOG_INFO, log1);
+    dlt_vlog(LOG_INFO, "%s", log1);
     EXPECT_NO_THROW(dlt_log_free());
 
     configure(path, file_name, true, file_size, max_file_size);
-    dlt_vlog(LOG_INFO, log2);
+    dlt_vlog(LOG_INFO, "%s", log2);
     EXPECT_NO_THROW(dlt_log_free());
     verify_in_one_file(path, file_name, log1, log2);
 }
