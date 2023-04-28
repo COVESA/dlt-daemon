@@ -21,8 +21,16 @@ else()
     set(LIBRARIES socket)
 endif()
 
+if(WITH_SYSTEMD_JOURNAL)
+ if(SYSTEMD_VERSION LESS 209)
+  set(SYSTEMD_LIBS systemd-journal systemd-id128)
+ else(SYSTEMD_VERSION LESS 209)
+  set(SYSTEMD_LIBS systemd)
+ endif(SYSTEMD_VERSION LESS 209)
+endif(WITH_SYSTEMD_JOURNAL)
+
 set(DLT_LIBRARIES dlt ${GTEST_LIBS} ${LIBRARIES})
-set(DLT_DAEMON_LIBRARIES dlt_daemon ${GTEST_LIBS} ${LIBRARIES})
+set(DLT_DAEMON_LIBRARIES dlt_daemon ${GTEST_LIBS} ${LIBRARIES} ${SYSTEMD_LIBS})
 set(DLT_CONTROL_LIBRARIES dlt dlt_control_common_lib ${GTEST_LIBS})
 
 #Receiver used for QTs. add_test() is not required
