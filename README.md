@@ -17,7 +17,7 @@ you can [learn more](#learn-more) about advanced concepts and features.
 
 GENIVI DLT provides a log and trace interface, based on the standardised
 protocol specified in the
-[AUTOSAR standard 4.0 DLT](https://www.autosar.org/fileadmin/user_upload/standards/classic/4-0/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
+[AUTOSAR standard 4 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
 It is used by other GENIVI components but can serve as logging framework for
 other applications without relation to GENIVI.
 
