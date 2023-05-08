@@ -99,7 +99,7 @@ extern "C" {
 #define DLT_DAEMON_SEM_LOCK() do{\
     while ((sem_wait(&dlt_daemon_mutex) == -1) && (errno == EINTR)) \
         continue;       /* Restart if interrupted */ \
-    } while(0)
+    } while(false)
 
 #define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
 extern sem_t dlt_daemon_mutex;

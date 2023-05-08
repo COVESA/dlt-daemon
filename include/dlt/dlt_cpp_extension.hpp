@@ -203,7 +203,7 @@ static inline int32_t logToDltVariadic(DltContextData &log, First const &valueA,
             dlt_user_log_write_finish(&log);\
         }\
     }\
-    while(0)
+    while(false)
 
 /**
  * @brief macro to write a log message with variable number of arguments and without the need to specify the type of log data.
@@ -227,6 +227,6 @@ static inline int32_t logToDltVariadic(DltContextData &log, First const &valueA,
             dlt_user_log_write_finish(&log);\
         }\
   }\
-  while(0)
+  while(false)
 
 #endif /* DLT_CPP_EXTENSION_HPP */

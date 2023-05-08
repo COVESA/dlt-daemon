@@ -300,7 +300,7 @@ typedef enum {
         { length = -1; } \
         else \
         { dst = *((type *)src); src += sizeof(type); length -= sizeof(type); } \
-    } while(0)
+    } while(false)
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
     do { \
@@ -308,7 +308,7 @@ typedef enum {
         { length = -1; } \
         else \
         { memcpy(dst, src, DLT_ID_SIZE); src += DLT_ID_SIZE; length -= DLT_ID_SIZE; } \
-    } while(0)
+    } while(false)
 
 #   define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
     do { \
@@ -324,7 +324,7 @@ typedef enum {
             src += length; \
             maxlength -= length; \
         } \
-    } while(0)
+    } while(false)
 
 #   define DLT_MSG_READ_NULL(src, maxlength, length) \
     do { \
@@ -332,7 +332,7 @@ typedef enum {
         { length = -1; } \
         else \
         { src += length; maxlength -= length; } \
-    } while(0)
+    } while(false)
 
 #   define DLT_HEADER_SHOW_NONE       0x0000
 #   define DLT_HEADER_SHOW_TIME       0x0001

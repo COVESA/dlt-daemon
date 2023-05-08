@@ -85,7 +85,7 @@
             int *p = NULL;                 \
             *p = 0;                        \
         }                                  \
-    } while (0)
+    } while (false)
 #else /* DLT_FATAL_LOG_RESET_ENABLE */
 #   define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL)
 #endif /* DLT_FATAL_LOG_RESET_ENABLE */
