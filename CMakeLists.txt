@@ -209,6 +209,12 @@ else()
     set(PACKAGE_DOC "")
 endif()
 
+if (BUILD_SHARED_LIBS)
+    set(CMAKE_STATIC_LIB_PATH "")
+else()
+    set(CMAKE_STATIC_LIB_PATH "-L\$\{libdir\}/static")
+endif()
+
 if(WITH_DLT_PKGCONFIG)
     configure_file(${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.spec.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.spec)
     configure_file(${PROJECT_SOURCE_DIR}/${PROJECT_NAME}.pc.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc @ONLY)
