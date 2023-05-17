@@ -98,6 +98,8 @@ option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"  
 option(WITH_DLT_LIB_VSOCK_IPC    "Set to ON to enable VSOCK support in library (DLT_IPC is not used in library)" OFF)
 
 set(DLT_VSOCK_PORT "13490" CACHE STRING "VSOCK port number for logging traffic.")
+set(DLT_WRITEV_TIMEOUT_SEC "1" CACHE STRING "Set sec timeout for writev to prevent blocking indefinitely")
+set(DLT_WRITEV_TIMEOUT_USEC "0" CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
 set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
@@ -135,6 +137,8 @@ include_directories(
 )
 
 add_definitions(-D_GNU_SOURCE)
+add_definitions(-DDLT_WRITEV_TIMEOUT_SEC=${DLT_WRITEV_TIMEOUT_SEC})
+add_definitions(-DDLT_WRITEV_TIMEOUT_USEC=${DLT_WRITEV_TIMEOUT_USEC})
 
 if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO")
     message(FATAL_ERROR "${DLT_IPC} is not a valid value for DLT_IPC")
