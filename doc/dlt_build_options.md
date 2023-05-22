@@ -48,6 +48,8 @@ WITH\_EXTENDED\_FILTERING         | OFF            | Set to OFF to build without
  :--- | :--- | :---
 WITH\_SYSTEMD                     | OFF            | Set to ON to run CMakeLists.txt in systemd
 WITH\_SYSTEMD\_WATCHDOG           | OFF            | Set to ON to use the systemd watchdog in dlt-daemon
+WITH\_SYSTEMD\_WATCHDOG\_ENFORCE\_MSG\_RX | OFF    | Set to ON to notify the watchdog only if new messages where received in dlt-daemon since last notify
+WITH\_SYSTEMD\_WATCHDOG\_ENFORCE\_MSG\_RX\_DLT\_SYSTEM | OFF    | Set to ON to notify the watchdog only if new messages where received in dlt-system since last notify
 WITH\_SYSTEMD\_JOURNAL            | OFF            | Set to ON to use the systemd journal in dlt-system
 WITH\_DLT\_DBUS                   | OFF            | Set to ON to build src/dbus binaries
 

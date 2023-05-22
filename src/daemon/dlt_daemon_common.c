@@ -244,6 +244,9 @@ int dlt_daemon_init(DltDaemon *daemon,
         return -1;
 
     daemon->storage_handle = NULL;
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
+    daemon->received_message_since_last_watchdog_interval = 0;
+#endif
     return 0;
 }
 

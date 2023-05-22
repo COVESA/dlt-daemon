@@ -127,6 +127,9 @@ typedef struct {
     int Follow;
     int MapLogLevels;
     int UseOriginalTimestamp;
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
+    int MessageReceived;
+#endif
 } JournalOptions;
 
 typedef struct {
@@ -209,7 +212,11 @@ int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *con
 void logfile_fd_handler(void *v_conf);
 void logprocess_fd_handler(void *v_conf);
 void filetransfer_fd_handler(DltSystemConfiguration *config);
+#if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+void watchdog_fd_handler(int fd, int* received_message_since_last_watchdog_interval);
+#else
 void watchdog_fd_handler(int fd);
+#endif
 void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config);
 void syslog_fd_handler(int syslogSock);
 

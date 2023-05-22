@@ -3196,6 +3196,9 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
+    daemon->received_message_since_last_watchdog_interval = 1;
+#endif
 #ifdef DLT_SHM_ENABLE
 
     /** In case of SHM, the header still received via fifo/unix_socket receiver,
@@ -3451,7 +3454,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
 
     if (sd_notify(0, "WATCHDOG=1") < 0)
-        dlt_log(LOG_WARNING, "Could not reset systemd watchdog\n");
+        dlt_vlog(LOG_WARNING, "Could not reset systemd watchdog: %s\n", strerror(errno));
 
     curr_time = dlt_uptime();
 #endif

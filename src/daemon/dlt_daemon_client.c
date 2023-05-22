@@ -2372,6 +2372,14 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
          * let's go on sending notification */
     }
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
+    if (!daemon->received_message_since_last_watchdog_interval) {
+      dlt_log(LOG_WARNING, "No new messages received since last watchdog timer run\n");
+      return 0;
+    }
+    daemon->received_message_since_last_watchdog_interval = 0;
+#endif
+
     if (sd_notify(0, "WATCHDOG=1") < 0)
         dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
 
