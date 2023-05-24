@@ -125,6 +125,18 @@ typedef enum
     DLT_DAEMON_STATE_SEND_DIRECT = 4         /**< External logger is connected or internal logging is active, and buffer is empty */
 } DltDaemonState;
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+/*
+ * The parameter of level per app and context id settings
+ */
+typedef struct
+{
+    char apid[DLT_ID_SIZE];    /**< Application id for which the settings are valid */
+    char ctid[DLT_ID_SIZE];    /**< Context id for which the settings are valid, empty if valid for all ap ids  */
+    DltLogLevelType log_level; /**< Log level to use */
+} DltDaemonContextLogSettings;
+#endif
+
 /**
  * The parameters of a daemon application.
  */
@@ -136,6 +148,10 @@ typedef struct
     bool owns_user_handle; /**< user_handle should be closed when reset */
     char *application_description; /**< context description */
     int num_contexts; /**< number of contexts for this application */
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    DltDaemonContextLogSettings *context_log_level_settings;
+    int num_context_log_level_settings;
+#endif
 } DltDaemonApplication;
 
 /**
@@ -194,6 +210,10 @@ typedef struct
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     int received_message_since_last_watchdog_interval;
 #endif
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    DltDaemonContextLogSettings *app_id_log_level_settings; /**< Settings for app id specific log levels */
+    int num_app_id_log_level_settings;  /** < count of log level settings */
+#endif
 } DltDaemon;
 
 /**
@@ -249,6 +269,32 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
 DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
                                                      char *ecu,
                                                      int verbose);
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+
+/**
+ * Find configuration for app/ctx id specific log settings configuration
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
+    const DltDaemon *daemon, const char *apid, const char *ctid);
+
+
+/**
+ * Find configured log levels in a given DltDaemonApplication for the passed context id.
+ * @param app The application settings which contain the previously loaded ap id settings
+ * @param ctid The context id to find.
+ * @return Pointer to DltDaemonApplicationLogSettings containing the log level
+ *         for the requested application or NULL if none found.
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_app_log_level_config(
+        const DltDaemonApplication *app, const char *ctid);
+
+#endif
+
 /**
  * Init the user saved configurations to daemon.
  * Since the order of loading runtime config could be different,
@@ -475,10 +521,16 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
 /**
  * Send user messages to all user applications context to update with the new log level
  * @param daemon pointer to dlt daemon structure
+ * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
+ * @param context_log_level the log level of the context
  * @param log_level new log level to be set
  * @param verbose if set to true verbose information is printed out.
  */
-void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon, int8_t log_level, int verbose);
+void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
+                                               int enforce_context_ll_and_ts,
+                                               int8_t context_log_level,
+                                               int8_t log_level,
+                                               int verbose);
 
 /**
  * Send user messages to all user applications context to update with the new trace status

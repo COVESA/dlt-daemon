@@ -205,6 +205,11 @@ void usage()
     printf("                (Applications wanting to connect to a daemon using a custom\n");
     printf("                port need to be started with the environment variable\n");
     printf("                DLT_DAEMON_TCP_PORT set appropriately)\n");
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    printf("  -a filename   The filename for load default app id log levels (Default: " CONFIGURATION_FILES_DIR "/dlt-log-levels.conf)\n");
+#endif
+
+#
 } /* usage() */
 
 /**
@@ -213,6 +218,10 @@ void usage()
 int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 {
     int c;
+    char options[255];
+    memset(options, 0, sizeof options);
+    const char *const default_options = "hdc:t:p:";
+    strcpy(options, default_options);
 
     if (daemon_local == 0) {
         fprintf (stderr, "Invalid parameter passed to option_handling()\n");
@@ -236,12 +245,12 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     opterr = 0;
 
 #ifdef DLT_SHM_ENABLE
-
-    while ((c = getopt (argc, argv, "hdc:t:s:p:")) != -1)
-#else
-
-    while ((c = getopt (argc, argv, "hdc:t:p:")) != -1)
+    strcpy(options + strlen(options), "s:");
 #endif
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    strcpy(options + strlen(options), "a:");
+#endif
+    while ((c = getopt(argc, argv, options)) != -1)
         switch (c) {
         case 'd':
         {
@@ -253,6 +262,13 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
             strncpy(daemon_local->flags.cvalue, optarg, NAME_MAX);
             break;
         }
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        case 'a':
+        {
+            strncpy(daemon_local->flags.avalue, optarg, NAME_MAX);
+            break;
+        }
+#endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         case 't':
         {
@@ -286,7 +302,11 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
         }
         case '?':
         {
-            if ((optopt == 'c') || (optopt == 't') || (optopt == 'p'))
+            if ((optopt == 'c') || (optopt == 't') || (optopt == 'p')
+    #ifdef DLT_LOG_LEVEL_APP_CONFIG
+                  || (optopt == 'a')
+    #endif
+          )
                 fprintf (stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint (optopt))
                 fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -835,6 +855,170 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     return 0;
 }
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+/**
+ * Load configuration file parser
+ */
+
+static int compare_app_id_conf(const void *lhs, const void *rhs)
+{
+    return strncmp(((DltDaemonContextLogSettings *)lhs)->apid,
+                   ((DltDaemonContextLogSettings *)rhs)->apid, DLT_ID_SIZE);
+}
+
+int app_id_default_log_level_config_parser(DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local) {
+    FILE *pFile;
+    char line[value_length - 1];
+    char app_id_value[value_length];
+    char ctx_id_value[value_length];
+    DltLogLevelType log_level_value;
+
+    char *pch;
+    const char *filename;
+
+    /* open configuration file */
+    filename = daemon_local->flags.avalue[0]
+                   ? daemon_local->flags.avalue
+                   : CONFIGURATION_FILES_DIR "/dlt-log-levels.conf";
+
+    pFile = fopen(filename, "r");
+    if (pFile == NULL) {
+        dlt_vlog(LOG_WARNING, "Cannot open app log level configuration%s\n", filename);
+        return -errno;
+    }
+
+    /* fetch lines from configuration file */
+    while (fgets(line, value_length - 1, pFile) != NULL) {
+        pch = strtok(line, " \t");
+        memset(app_id_value, 0, value_length);
+        memset(ctx_id_value, 0, value_length);
+        log_level_value = DLT_LOG_MAX;
+
+        /* ignore comments and new lines*/
+        if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0
+            || strlen(pch) < 1)
+            continue;
+
+        strncpy(app_id_value, pch, sizeof(app_id_value) - 1);
+        app_id_value[sizeof(app_id_value) - 1] = 0;
+        if (strlen(app_id_value) == 0 || strlen(app_id_value) > DLT_ID_SIZE) {
+            if (app_id_value[strlen(app_id_value) - 1] == '\n') {
+                dlt_vlog(LOG_WARNING, "Missing log level for apid %s in log settings\n",
+                         app_id_value);
+            } else {
+                dlt_vlog(LOG_WARNING,
+                         "Invalid apid for log settings settings: app id: %s\n",
+                         app_id_value);
+            }
+
+            continue;
+        }
+
+        char *pch_next1 = strtok(NULL, " \t");
+        char *pch_next2 = strtok(NULL, " \t");
+        char *log_level;
+        /* no context id given, log level is next token */
+        if (pch_next2 == NULL || pch_next2[0] == '#') {
+            log_level = pch_next1;
+        } else {
+            /* context id is given, log level is second to next token */
+            log_level = pch_next2;
+
+            /* next token is token id */
+            strncpy(ctx_id_value, pch_next1, sizeof(ctx_id_value) - 1);
+            if (strlen(ctx_id_value) == 0 || strlen(app_id_value) > DLT_ID_SIZE) {
+                dlt_vlog(LOG_WARNING,
+                         "Invalid ctxid for log settings: app id: %s "
+                         "(skipping line)\n",
+                         app_id_value);
+                continue;
+            }
+
+            ctx_id_value[sizeof(ctx_id_value) - 1] = 0;
+        }
+
+        errno = 0;
+        log_level_value = strtol(log_level, NULL, 10);
+        if (errno != 0 || log_level_value >= DLT_LOG_MAX ||
+            log_level_value <= DLT_LOG_DEFAULT) {
+            dlt_vlog(LOG_WARNING,
+                     "Invalid log level (%i), app id %s, conversion error: %s\n",
+                     log_level_value, app_id_value, strerror(errno));
+            continue;
+        }
+
+        DltDaemonContextLogSettings *settings =
+            dlt_daemon_find_configured_app_id_ctx_id_settings(
+                daemon, app_id_value, NULL);
+
+        if (settings != NULL &&
+            strncmp(settings->ctid, ctx_id_value, DLT_ID_SIZE) == 0) {
+            if (strlen(ctx_id_value) > 0) {
+                dlt_vlog(LOG_WARNING,
+                         "Appid %s with ctxid %s is already configured, skipping "
+                         "duplicated entry\n",
+                         app_id_value, ctx_id_value);
+            } else {
+                dlt_vlog(LOG_WARNING,
+                         "Appid %s is already configured, skipping duplicated entry\n",
+                         app_id_value);
+            }
+
+            continue;
+        }
+
+        /* allocate one more element in the trace load settings */
+        DltDaemonContextLogSettings *tmp =
+            realloc(daemon->app_id_log_level_settings,
+                    (++daemon->num_app_id_log_level_settings) *
+                        sizeof(DltDaemonContextLogSettings));
+
+        if (tmp == NULL) {
+            dlt_log(LOG_CRIT, "Failed to allocate memory for app load settings\n");
+            continue;
+        }
+
+        daemon->app_id_log_level_settings = tmp;
+
+        /* update newly created entry */
+        settings = &daemon->app_id_log_level_settings
+                        [daemon->num_app_id_log_level_settings -1];
+
+        memset(settings, 0, sizeof(DltDaemonContextLogSettings));
+        memcpy(settings->apid, app_id_value, DLT_ID_SIZE);
+        memcpy(settings->ctid, ctx_id_value, DLT_ID_SIZE);
+        settings->log_level = log_level_value;
+
+        /* make sure ids are 0 terminated for printing */
+        char apid_buf[DLT_ID_SIZE + 1] = {0};
+        char ctid_buf[DLT_ID_SIZE + 1] = {0};
+        memcpy(apid_buf, app_id_value, DLT_ID_SIZE);
+        memcpy(ctid_buf, ctx_id_value, DLT_ID_SIZE);
+
+        /* log with or without context id */
+        if (strlen(ctid_buf) > 0) {
+            dlt_vlog(
+                LOG_INFO,
+                "Configured trace limits for app id %s, context id %s, level %u\n",
+                apid_buf, ctid_buf, log_level_value);
+        } else {
+            dlt_vlog(LOG_INFO, "Configured trace limits for app id %s, level %u\n",
+                     apid_buf, log_level_value);
+        }
+
+    } /* while */
+    fclose(pFile);
+
+    /* list must be sorted to speed up dlt_daemon_find_configured_app_id_ctx_id_settings */
+    qsort(daemon->app_id_log_level_settings,
+            daemon->num_app_id_log_level_settings,
+            sizeof(DltDaemonContextLogSettings), compare_app_id_conf);
+
+    return 0;
+}
+#endif
+
 static int dlt_mkdir_recursive(const char *dir)
 {
     int ret = 0;
@@ -1041,6 +1225,15 @@ int main(int argc, char *argv[])
         dlt_log(LOG_CRIT, "Initialization of phase 2 failed!\n");
         return -1;
     }
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* Load control app id level configuration file without setting `back` to
+     * prevent exit if file is missing */
+    if (app_id_default_log_level_config_parser(&daemon, &daemon_local) < 0) {
+        dlt_vlog(LOG_WARNING, "app_id_default_log_level_config_parser() failed, "
+                           "no app specific log levels will be configured\n");
+    }
+#endif
 
     /* --- Daemon init phase 2 end --- */
 
@@ -3226,8 +3419,19 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        DltDaemonApplication *app = dlt_daemon_application_find(
+            daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
+#endif
+
         /* discard non-allowed levels if enforcement is on */
-        bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+        bool keep_message = enforce_context_ll_and_ts_keep_message(
+            daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+            , app
+#endif
+        );
+
         if (keep_message)
           dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
@@ -3256,8 +3460,19 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    DltDaemonApplication *app = dlt_daemon_application_find(
+        daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
+#endif
+
     /* discard non-allowed levels if enforcement is on */
-    bool keep_message = enforce_context_ll_and_ts_keep_message(daemon_local);
+    bool keep_message = enforce_context_ll_and_ts_keep_message(
+        daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        , app
+#endif
+    );
+
     if (keep_message)
       dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
@@ -3279,16 +3494,29 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     return DLT_DAEMON_ERROR_OK;
 }
 
-bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local) {
-  if (daemon_local->flags.enforceContextLLAndTS &&
-      daemon_local->msg.extendedheader) {
-    const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
-    if (mtin > daemon_local->flags.contextLogLevel) {
-      return false;
+bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            , DltDaemonApplication *app
+#endif
+)
+{
+    if (!daemon_local->flags.enforceContextLLAndTS ||
+        !daemon_local->msg.extendedheader) {
+        return true;
     }
-  }
 
-  return true;
+    const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    if (app->num_context_log_level_settings > 0) {
+        DltDaemonContextLogSettings *log_settings =
+            dlt_daemon_find_app_log_level_config(app, daemon_local->msg.extendedheader->ctid);
+
+        if (log_settings != NULL) {
+            return mtin <= log_settings->log_level;
+        }
+    }
+#endif
+    return mtin <= daemon_local->flags.contextLogLevel;
 }
 
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,

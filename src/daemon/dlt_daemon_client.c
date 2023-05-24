@@ -2056,13 +2056,15 @@ void dlt_daemon_control_set_all_log_level(int sock,
 
     /* No endianess conversion necessary */
     if ((req != NULL) && ((req->log_level <= DLT_LOG_VERBOSE) || (req->log_level == (uint8_t)DLT_LOG_DEFAULT))) {
-        if (daemon_local->flags.enforceContextLLAndTS)
-            loglevel = getStatus(req->log_level, daemon_local->flags.contextLogLevel);
-        else
-            loglevel = (int8_t) req->log_level; /* No endianess conversion necessary */
+        loglevel = (int8_t) req->log_level;
 
         /* Send Update to all contexts using the new log level */
-        dlt_daemon_user_send_all_log_level_update(daemon, loglevel, verbose);
+        dlt_daemon_user_send_all_log_level_update(
+            daemon,
+            daemon_local->flags.enforceContextLLAndTS,
+            (int8_t)daemon_local->flags.contextLogLevel,
+            loglevel,
+            verbose);
 
         dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
     }
