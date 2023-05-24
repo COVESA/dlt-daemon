@@ -186,7 +186,7 @@ startDaemons()
 {
     DLT_PASSIVE_SHM_NAME=""
     tmpPath=/tmp
-    dlt-daemon -c $tmpPath/dlt_passive.conf &
+    dlt-daemon -d
     sleep 1
 
     # Check if the dlt shm file exist (DLT_SHM_ENABLE=ON)
@@ -194,7 +194,7 @@ startDaemons()
         DLT_PASSIVE_SHM_NAME="-s dlt-shm-passive"
     fi
 
-    dlt-daemon -p 3495 -c $tmpPath/dlt.conf $DLT_PASSIVE_SHM_NAME &
+    dlt-daemon -d -p 3495 -c $tmpPath/dlt.conf $DLT_PASSIVE_SHM_NAME
     return 0
 }
 
