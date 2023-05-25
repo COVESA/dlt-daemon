@@ -3775,7 +3775,9 @@ void dlt_user_housekeeperthread_function(void *ptr)
 
     // signal dlt thread to be running
     *dlt_housekeeper_running = true;
+    pthread_mutex_lock(&dlt_housekeeper_running_mutex);
     signal_status = pthread_cond_signal(&dlt_housekeeper_running_cond);
+    pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
     if (signal_status != 0) {
         dlt_log(LOG_CRIT, "Housekeeper thread failed to signal running state\n");
     }
@@ -4959,7 +4961,7 @@ int dlt_start_threads()
 {
     struct timespec time_to_wait;
     struct timespec now;
-    int signal_status;
+    int signal_status = 1;
     atomic_bool dlt_housekeeper_running = false;
 
     /*
@@ -4995,10 +4997,12 @@ int dlt_start_threads()
     * */
     while (!dlt_housekeeper_running 
         && now.tv_sec <= time_to_wait.tv_sec) {
+        pthread_mutex_lock(&dlt_housekeeper_running_mutex);
         signal_status = pthread_cond_timedwait(
                 &dlt_housekeeper_running_cond,
                 &dlt_housekeeper_running_mutex,
                 &time_to_wait);
+        pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
         /* otherwise it might be a spurious wakeup, try again until the time is over */
         if (signal_status == 0) {
