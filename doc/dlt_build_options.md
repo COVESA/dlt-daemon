@@ -59,6 +59,7 @@ WITH\_DLT\_DBUS                   | OFF            | Set to ON to build src/dbus
 Option | Value | Comment
 :--- | :--- | :---
 WITH\_DLT\_QNX\_SYSTEM            | OFF            | Set to ON to build QNX system binary dlt-qnx-system
+DLT\_QNX\_SLOG\_ADAPTER\_WAIT\_BUFFER\_TIMEOUT\_MS | 100 | Maximum time in milliseconds to wait for buffer space in dlt before messages from the slog will be discarded.
 
 ## Documentation Options
 

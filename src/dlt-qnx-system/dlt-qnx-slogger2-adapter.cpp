@@ -28,9 +28,13 @@
 #include <sys/slog2.h>
 #include <sys/json.h>
 #include <slog2_parse.h>
+#include <thread>
+#include <set>
 
 #include "dlt-qnx-system.h"
 #include "dlt_cpp_extension.hpp"
+using std::chrono_literals::operator""ms;
+using std::chrono_literals::operator""s;
 
 /* Teach dlt about json_decoder_error_t */
 template<>
@@ -42,6 +46,7 @@ inline int32_t logToDlt(DltContextData &log, const json_decoder_error_t &value)
 extern DltContext dltQnxSystem;
 
 static DltContext dltQnxSlogger2Context;
+static std::set<std::string> dltWarnedMissingMappings;
 
 extern DltQnxSystemThreads g_threads;
 
@@ -121,11 +126,46 @@ static DltContext *dlt_context_from_slog2file(const char *file_name) {
 
     auto search = g_slog2file.find(name);
     if (search == g_slog2file.end()) {
-        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_VERBOSE,
-                "slog2 filename not found in mapping: ", name.c_str());
+        // Only warn once about missing mapping.
+        auto it = dltWarnedMissingMappings.find(name);
+        if (it == dltWarnedMissingMappings.end()) {
+            dltWarnedMissingMappings.insert(name);
+            DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_INFO,
+                        "slog2 filename not found in mapping: ", name.c_str());
+        }
+
         return &dltQnxSlogger2Context;
     } else {
         return search->second;
+    }
+}
+
+template <class time, class period>
+static void wait_for_buffer_space(const double max_usage_threshold,
+                                  const std::chrono::duration<time, period> max_wait_time) {
+    int total_size = 0;
+    int used_size = 0;
+    double used_percent = 100.0;
+    bool timeout = false;
+    const auto end_time = std::chrono::steady_clock::now() + max_wait_time;
+
+    do {
+        dlt_user_check_buffer(&total_size, &used_size);
+        used_percent = static_cast<double>(used_size) / total_size;
+        if (used_percent < max_usage_threshold) {
+            break;
+        }
+
+        dlt_user_log_resend_buffer();
+
+        std::this_thread::sleep_for(10ms);
+        timeout = std::chrono::steady_clock::now() < end_time;
+    } while (!timeout);
+
+    if (timeout) {
+        DLT_LOG(dltQnxSystem, DLT_LOG_ERROR,
+                DLT_STRING("failed to get enough buffer space"));
+
     }
 }
 
@@ -176,6 +216,8 @@ static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *
 
     DltContextData log_local; /* Used in DLT_* macros, do not rename */
     DltContext *ctxt = dlt_context_from_slog2file(info->file_name);
+
+    wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS));
 
     int ret;
     ret = dlt_user_log_write_start(ctxt, &log_local, loglevel);
