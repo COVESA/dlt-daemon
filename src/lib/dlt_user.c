@@ -4959,7 +4959,7 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 
 int dlt_start_threads()
 {
-    struct timespec time_to_wait;
+    struct timespec time_to_wait, single_wait;
     struct timespec now;
     int signal_status = 1;
     atomic_bool dlt_housekeeper_running = false;
@@ -4967,7 +4967,7 @@ int dlt_start_threads()
     /*
     * Configure the condition varibale to use CLOCK_MONOTONIC.
     * This makes sure we're protected against changes in the system clock
-    */
+     */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
@@ -4984,7 +4984,7 @@ int dlt_start_threads()
     clock_gettime(CLOCK_MONOTONIC, &now);
     /* wait at most 10s */
     time_to_wait.tv_sec = now.tv_sec + 10;
-    time_to_wait.tv_nsec = 0;
+    time_to_wait.tv_nsec = now.tv_nsec;
 
     /*
     * wait until the house keeper is up and running
@@ -4995,21 +4995,30 @@ int dlt_start_threads()
     * (spurious wakeup)
     * To protect against this, a while loop with a timeout is added
     * */
-    while (!dlt_housekeeper_running 
-        && now.tv_sec <= time_to_wait.tv_sec) {
+    while (!dlt_housekeeper_running
+           && now.tv_sec <= time_to_wait.tv_sec) {
+
+        /*
+        * wait 500ms at a time
+        * this makes sure we don't block too long
+        * even if we missed the signal
+         */
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        single_wait.tv_sec = now.tv_sec;
+        single_wait.tv_nsec = now.tv_nsec + 500000000;
+
+        // pthread_cond_timedwait has to be called on a locked mutex
         pthread_mutex_lock(&dlt_housekeeper_running_mutex);
         signal_status = pthread_cond_timedwait(
-                &dlt_housekeeper_running_cond,
-                &dlt_housekeeper_running_mutex,
-                &time_to_wait);
+            &dlt_housekeeper_running_cond,
+            &dlt_housekeeper_running_mutex,
+            &single_wait);
         pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
         /* otherwise it might be a spurious wakeup, try again until the time is over */
         if (signal_status == 0) {
             break;
         }
-
-        clock_gettime(CLOCK_MONOTONIC, &now);
      }
 
      if (signal_status != 0 && !dlt_housekeeper_running) {
