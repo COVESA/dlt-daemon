@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Advanced Driver Information Technology.
+ * Copyright (C) 2018 Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
@@ -11,11 +11,10 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  *
- * \author Nguyen Dinh Thi <Thi.NguyenDinh@vn.bosch.com>
+ * \author Nguyen Dinh Thi <Thi.NguyenDinh@vn.bosch.com> ADIT 2018
  *
  * \file: dlt-qnx-system.c
  * For further information see http://www.genivi.org/.
- * @licence end@
  */
 
 
@@ -27,6 +26,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <err.h>
+#include <stdbool.h>
 
 #include "dlt.h"
 #include "dlt-qnx-system.h"
@@ -36,18 +36,30 @@ DLT_DECLARE_CONTEXT(dltQnxSystem)
 /* Global variables */
 volatile DltQnxSystemThreads g_threads;
 
+#define INJECTION_SLOG2_ADAPTER     4096
+
+#define DATA_DISABLED   "00"
+#define DATA_ENABLED    "01"
+
+volatile bool g_inj_disable_slog2_cb = false;
+
 /* Function prototype */
 static void daemonize();
-static void start_threads(DltQnxSystemConfiguration *config);
+static void start_threads();
 static void join_threads();
-static int read_configuration_file(DltQnxSystemConfiguration *config,
-                            const char *file_name);
+static int read_configuration_file(const char *file_name);
 static int read_command_line(DltQnxSystemCliOptions *options, int argc, char *argv[]);
+
+static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length);
+
+static DltQnxSystemConfiguration *g_dlt_qnx_conf = NULL;
+static void init_configuration();
+static void clean_up();
+
 
 int main(int argc, char* argv[])
 {
     DltQnxSystemCliOptions options;
-    DltQnxSystemConfiguration config;
     int sigNo = 0;
     int ret = 0;
     sigset_t mask;
@@ -59,7 +71,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    if (read_configuration_file(&config, options.configurationFileName) < 0)
+    if (read_configuration_file(options.configurationFileName) < 0)
     {
         fprintf(stderr, "Failed to read configuration file!\n");
         return -1;
@@ -82,9 +94,11 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    DLT_REGISTER_APP(config.applicationId, "DLT QNX System");
-    DLT_REGISTER_CONTEXT(dltQnxSystem, config.applicationContextId,
+    DLT_REGISTER_APP(g_dlt_qnx_conf->applicationId, "DLT QNX System");
+    DLT_REGISTER_CONTEXT(dltQnxSystem, g_dlt_qnx_conf->applicationContextId,
             "Context of main dlt qnx system manager");
+    dlt_register_injection_callback(&dltQnxSystem,
+            INJECTION_SLOG2_ADAPTER, dlt_injection_cb);
 
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
             DLT_STRING("Setting signals wait for abnormal exit"));
@@ -92,7 +106,7 @@ int main(int argc, char* argv[])
     g_threads.mainThread = pthread_self();
 
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
-    start_threads(&config);
+    start_threads();
 
     ret = sigwait(&mask, &sigNo);
 
@@ -114,6 +128,7 @@ int main(int argc, char* argv[])
             DLT_STRING(strsignal(sigNo)));
 
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
+    clean_up();
     return 0;
 
 }
@@ -193,23 +208,22 @@ static int read_command_line(DltQnxSystemCliOptions *options, int argc, char *ar
 /**
  * Initialize configuration to default values.
  */
-static void init_configuration(DltQnxSystemConfiguration *config)
+static void init_configuration()
 {
+    g_dlt_qnx_conf = calloc(1, sizeof(DltQnxSystemConfiguration));
     /* Common */
-    config->applicationId          = "QSYM";
-    config->applicationContextId   = "QSYC";
-
+    g_dlt_qnx_conf->applicationId          = strdup("QSYM");
+    g_dlt_qnx_conf->applicationContextId   = strdup("QSYC");
     /* Slogger2 */
-    config->qnxslogger2.enable     = 0;
-    config->qnxslogger2.contextId  = "QSLA";
-    config->qnxslogger2.useOriginalTimestamp = 1;
+    g_dlt_qnx_conf->qnxslogger2.enable     = 0;
+    g_dlt_qnx_conf->qnxslogger2.contextId  = strdup("QSLA");
+    g_dlt_qnx_conf->qnxslogger2.useOriginalTimestamp = 1;
 }
 
 /**
  * Read options from the configuration file
  */
-static int read_configuration_file(DltQnxSystemConfiguration *config,
-                             const char *file_name)
+static int read_configuration_file(const char *file_name)
 {
     FILE *file;
     char *line;
@@ -218,12 +232,16 @@ static int read_configuration_file(DltQnxSystemConfiguration *config,
     char *pch;
     int ret = 0;
 
-    init_configuration(config);
+    init_configuration();
+    if (g_dlt_qnx_conf == NULL) {
+        fprintf(stderr,
+                "dlt-qnx-system, could not allocate memory.\n");
+        return -1;
+    }
 
     file = fopen(file_name, "r");
 
-    if (file == NULL)
-    {
+    if (file == NULL) {
         fprintf(stderr,
                 "dlt-qnx-system, could not open configuration file.\n");
         return -1;
@@ -270,42 +288,34 @@ static int read_configuration_file(DltQnxSystemConfiguration *config,
             /* Common */
             if (strcmp(token, "ApplicationId") == 0)
             {
-                config->applicationId = (char *)malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->applicationId);
-                /**
-                 * strcpy unritical here, because size matches exactly the
-                 * size to be copied
-                 */
-                strcpy(config->applicationId, value);
+                if (g_dlt_qnx_conf->applicationId)
+                    free(g_dlt_qnx_conf->applicationId);
+                g_dlt_qnx_conf->applicationId = strndup(value, DLT_ID_SIZE);
+                MALLOC_ASSERT(g_dlt_qnx_conf->applicationId);
             }
             else if (strcmp(token, "ApplicationContextID") == 0)
             {
-                config->applicationContextId = (char *)malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->applicationContextId);
-                /**
-                * strcpy unritical here, because size matches exactly
-                * the size to be copied
-                */
-                strcpy(config->applicationContextId, value);
+                if (g_dlt_qnx_conf->applicationContextId)
+                    free(g_dlt_qnx_conf->applicationContextId);
+                g_dlt_qnx_conf->applicationContextId = strndup(value, DLT_ID_SIZE);
+                MALLOC_ASSERT(g_dlt_qnx_conf->applicationContextId);
+                strncpy(g_dlt_qnx_conf->applicationContextId, value, DLT_ID_SIZE);
             }
             /* Slogger2 */
             else if (strcmp(token, "QnxSlogger2Enable") == 0)
             {
-                config->qnxslogger2.enable = atoi(value);
+                g_dlt_qnx_conf->qnxslogger2.enable = atoi(value);
             }
             else if (strcmp(token, "QnxSlogger2ContextId") == 0)
             {
-                config->qnxslogger2.contextId = (char *)malloc(strlen(value) + 1);
-                MALLOC_ASSERT(config->qnxslogger2.contextId);
-                /**
-                 * strcpy unritical here, because size matches exactly
-                 * the size to be copied
-                 */
-                strcpy(config->qnxslogger2.contextId, value);
+                if (g_dlt_qnx_conf->qnxslogger2.contextId)
+                    free(g_dlt_qnx_conf->qnxslogger2.contextId);
+                g_dlt_qnx_conf->qnxslogger2.contextId = strndup(value, DLT_ID_SIZE);
+                MALLOC_ASSERT(g_dlt_qnx_conf->qnxslogger2.contextId);
             }
             else if (strcmp(token, "QnxSlogger2UseOriginalTimestamp") == 0)
             {
-                config->qnxslogger2.useOriginalTimestamp = atoi(value);
+                g_dlt_qnx_conf->qnxslogger2.useOriginalTimestamp = atoi(value);
             }
             else
             {
@@ -372,15 +382,9 @@ static void daemonize()
     signal(SIGTTIN, SIG_IGN);
 }
 
-static void start_threads(DltQnxSystemConfiguration *config)
+static void start_threads()
 {
     int i = 0;
-
-    /* Check parameter */
-    if (!config)
-    {
-        return;
-    }
 
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-qnx-system, start threads"));
@@ -393,9 +397,9 @@ static void start_threads(DltQnxSystemConfiguration *config)
         g_threads.threads[i] = 0;
     }
 
-    if (config->qnxslogger2.enable)
+    if (g_dlt_qnx_conf->qnxslogger2.enable)
     {
-        start_qnx_slogger2(config);
+        start_qnx_slogger2(g_dlt_qnx_conf);
     }
 }
 
@@ -429,4 +433,46 @@ static void join_threads()
     }
 
     DLT_UNREGISTER_CONTEXT(dltQnxSystem);
+}
+
+static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length)
+{
+    (void) length;
+    DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
+            DLT_STRING("Injection received:"),
+            DLT_INT32(service_id));
+
+    if (service_id != INJECTION_SLOG2_ADAPTER)
+        return -1;
+
+    if (0 == strncmp((char*) data, DATA_DISABLED, sizeof(DATA_DISABLED)-1))
+        g_inj_disable_slog2_cb = true;
+    else if (0 == strncmp((char*) data, DATA_ENABLED, sizeof(DATA_ENABLED)-1)) {
+        if (g_inj_disable_slog2_cb == true) {
+            g_inj_disable_slog2_cb = false;
+            start_threads();
+        }
+    }
+
+    return 0;
+}
+
+static void clean_up()
+{
+    if (g_dlt_qnx_conf->applicationId) {
+        free(g_dlt_qnx_conf->applicationId);
+        g_dlt_qnx_conf->applicationId = NULL;
+    }
+    if (g_dlt_qnx_conf->applicationContextId) {
+        free(g_dlt_qnx_conf->applicationContextId);
+        g_dlt_qnx_conf->applicationContextId = NULL;
+    }
+    if (g_dlt_qnx_conf->qnxslogger2.contextId) {
+        free(g_dlt_qnx_conf->qnxslogger2.contextId);
+        g_dlt_qnx_conf->qnxslogger2.contextId = NULL;
+    }
+    if (g_dlt_qnx_conf) {
+        free(g_dlt_qnx_conf);
+        g_dlt_qnx_conf = NULL;
+    }
 }
