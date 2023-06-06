@@ -69,17 +69,13 @@ foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
     target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
-    if(${target} STREQUAL "gtest_dlt_daemon_event_handler"
-            OR ${target} STREQUAL "gtest_dlt_shm"
-            OR ${target} STREQUAL "gtest_dlt_daemon_multiple_files_logging")
-        add_test(NAME ${target}
-                 COMMAND ${target})
-    else()
+    if(${target} STREQUAL "gtest_dlt_daemon_gateway"
+       OR ${target} STREQUAL "gtest_dlt_daemon_offline_log")
         configure_file(${PROJECT_SOURCE_DIR}/tests/${target}.sh ${PROJECT_BINARY_DIR}/tests COPYONLY)
-        add_test(NAME ${target}
-                 COMMAND /bin/sh "${target}.sh"
-                         ${target})
     endif()
+    add_test(NAME ${target}
+             COMMAND ${target})
+    set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
 endforeach()
 
 #####################
@@ -91,6 +87,7 @@ if(WITH_EXTENDED_FILTERING)
     add_executable(gtest_dlt_json_filter gtest_dlt_json_filter.cpp)
     target_link_libraries(gtest_dlt_json_filter ${DLT_CONTROL_LIBRARIES})
     add_test(NAME gtest_dlt_json_filter
-        COMMAND gtest_dlt_json_filter)
+             COMMAND gtest_dlt_json_filter)
+    set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
 endif()
 

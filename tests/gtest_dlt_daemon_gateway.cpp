@@ -66,6 +66,7 @@ extern "C"
 /* Begin Method: dlt_gateway::t_dlt_gateway_init*/
 TEST(t_dlt_gateway_init, normal)
 {
+    EXPECT_EQ(DLT_RETURN_OK, system("/bin/sh \"gtest_dlt_daemon_gateway.sh\" > /dev/null"));
     DltDaemonLocal daemon_local;
     DltGatewayConnection connections;
     daemon_local.pGateway.connections = &connections;
@@ -714,6 +715,7 @@ TEST(t_dlt_gateway_configure, Normal)
 TEST(t_dlt_gateway_configure, nullpointer)
 {
     EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_gateway_configure(NULL, NULL, 0));
+    EXPECT_EQ(SIGKILL, system("kill -9 $(pgrep -f \"dlt-daemon -d\") > /dev/null"));
 }
 
 int main(int argc, char **argv)
