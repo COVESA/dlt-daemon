@@ -334,7 +334,7 @@ if (WITH_DLT_UNIT_TESTS)
     find_package(GTest)
 
     if (NOT GTEST_FOUND)
-        add_subdirectory( gtest-1.7.0 )
+        add_subdirectory( googletest )
     endif()
     enable_testing()
     add_subdirectory(tests)
