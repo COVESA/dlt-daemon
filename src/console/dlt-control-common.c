@@ -124,9 +124,9 @@ void set_ecuid(char *ecuid)
             if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0) {
                 memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
                 strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
+                local_ecuid[DLT_CTRL_ECUID_LEN -1] = '\0';
                 if (ecuid_conf !=NULL)
                     free(ecuid_conf);
-                local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
             }
             else {
                 pr_error("Cannot read ECUid from dlt.conf\n");
