@@ -82,6 +82,7 @@ option(WITH_DLT_LOG_LEVEL_APP_CONFIG "Set to ON to enable default log levels bas
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
+set(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS "100" CACHE STRING "Timeout in milliseconds to wait before messages are dropped when input buffer is full")
 
 option(WITH_DLT_PKGCONFIG     "Set to ON to generate pkgconfig .pc files"                                        ON)
 option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                              OFF)
@@ -142,6 +143,7 @@ include_directories(
 add_definitions(-D_GNU_SOURCE)
 add_definitions(-DDLT_WRITEV_TIMEOUT_SEC=${DLT_WRITEV_TIMEOUT_SEC})
 add_definitions(-DDLT_WRITEV_TIMEOUT_USEC=${DLT_WRITEV_TIMEOUT_USEC})
+add_definitions(-DDLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS=${DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS})
 
 if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO")
     message(FATAL_ERROR "${DLT_IPC} is not a valid value for DLT_IPC")
@@ -180,8 +182,8 @@ if(WITH_DLT_USE_IPv6)
     add_definitions(-DDLT_USE_IPv6)
 endif()
 
-if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc")
-    message(FATAL_ERROR "Can only compile for QNX with a QNX compiler.")
+if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc|ntoaarch64-gcc|ntox86_64-gcc")
+    message(FATAL_ERROR "Can only compile for QNX with a QNX compiler, but found '${CMAKE_C_COMPILER}'.")
 endif()
 
 if (WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
