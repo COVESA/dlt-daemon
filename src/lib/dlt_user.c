@@ -3775,9 +3775,7 @@ void dlt_user_housekeeperthread_function(void *ptr)
 
     // signal dlt thread to be running
     *dlt_housekeeper_running = true;
-    pthread_mutex_lock(&dlt_housekeeper_running_mutex);
     signal_status = pthread_cond_signal(&dlt_housekeeper_running_cond);
-    pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
     if (signal_status != 0) {
         dlt_log(LOG_CRIT, "Housekeeper thread failed to signal running state\n");
     }
