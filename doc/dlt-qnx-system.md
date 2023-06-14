@@ -100,3 +100,20 @@ The description field is in the registration with libdlt.
   }
 }
 ```
+
+
+### Runtime enable/disable slog2 adapter
+
+The slog2 parser callback can be disabled and reenabled at runtime by using an injection.
+
+| App ID | Context ID | Service ID | Data | Description            |
+|--------|------------|------------|------|------------------------|
+| QSYM   | QSYC       | 0x1000     | 00   | Disable slog2 adapter  |
+| QSYM   | QSYC       | 0x1000     | 01   | Reenable slog2 adapter |
+
+### Example:
+
+```bash
+dlt-control -e QNX -a QSYM -c QSYC -s 4096 -m "00" -u
+dlt-control -e QNX -a QSYM -c QSYC -s 4096 -m "01" -u
+```
