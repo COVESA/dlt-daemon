@@ -407,6 +407,8 @@ TEST(t_dlt_gateway_get_connection_receiver, normal)
     DltReceiver *ret = NULL;
     DltGateway gateway;
     DltGatewayConnection connections;
+    memset(&gateway, 0, sizeof(DltGateway));
+    memset(&connections, 0, sizeof(DltGatewayConnection));
     gateway.connections = &connections;
     int fd = 10;
     gateway.num_connections = 1;
@@ -423,6 +425,8 @@ TEST(t_dlt_gateway_get_connection_receiver, abnormal)
     DltReceiver *ret = NULL;
     DltGateway gateway;
     DltGatewayConnection connections;
+    memset(&gateway, 0, sizeof(DltGateway));
+    memset(&connections, 0, sizeof(DltGatewayConnection));
     gateway.connections = &connections;
     int fd = 10;
     gateway.num_connections = 1;
