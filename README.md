@@ -1,7 +1,11 @@
 # Diagnostic Log and Trace
 
-Status: [![Build Status](https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml/badge.svg)]( https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml)
+
+[![Build Status](https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml/badge.svg)]( https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml)
 [![CodeQL](https://github.com/COVESA/dlt-daemon/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/COVESA/dlt-daemon/actions/workflows/codeql-analysis.yml)
+[![Page-build-deployment](https://github.com/COVESA/dlt-daemon/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/COVESA/dlt-daemon/actions/workflows/pages/pages-build-deployment)
+
+**Code coverage reports online** 📄 [LCOV - code coverage report](https://COVESA.github.io/dlt-daemon/dlt_lcov_report/index.html)
 
 # Diagnostic Log and Trace
 
