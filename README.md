@@ -66,7 +66,7 @@ install DLT daemon:
 On Ubuntu those dependencies can be installed with the following command:
 
 ```bash
-sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev build-essential
 optional: sudo apt-get install libjson-c-dev # in case you want to use dlt-receives extended filtering
 ```
 
