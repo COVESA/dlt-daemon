@@ -65,6 +65,7 @@
 
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
+#include "dlt_buffer_dump.h"
 
 /** Inline function to calculate/set the requested log level or traces status
  *  with default log level or trace status when "ForceContextLogLevelAndTraceStatus"
@@ -2460,6 +2461,18 @@ void dlt_daemon_control_service_logstorage(int sock,
         return;
 
     req = (DltServiceOfflineLogstorage *)(msg->databuffer);
+
+    if(req->connection_type == DLT_OFFLINE_LOGSTORAGE_SYNC_RING_BUFFER) {
+        ret = dlt_buffer_dump(daemon, &(daemon->client_ringbuffer), req->mount_point);
+
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_OFFLINE_LOGSTORAGE,
+                                            ret,
+                                            verbose);
+        return;
+    }
 
     if(req->connection_type != DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES) {
         req_st_status = stat(req->mount_point, &req_mpoint_st);

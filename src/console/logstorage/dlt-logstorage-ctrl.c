@@ -351,7 +351,7 @@ static int dlt_logstorage_ctrl_single_request()
     int ret = 0;
 
     /* in case sync all caches, an empty path is given */
-    if (get_default_event_type() != EVENT_SYNC_CACHE) {
+    if (get_default_event_type() != EVENT_SYNC_CACHE && get_default_event_type() != EVENT_DUMP_RING_BUFFER) {
         /* Check if a 'CONF_NAME' file is present at the given path */
         if (!dlt_logstorage_check_config_file(get_default_path())) {
             pr_error("No '%s' file available at: %s\n",
@@ -411,6 +411,7 @@ static void usage(void)
     printf("  -v --verbose               Set verbose flag (Default:%d)\n", get_verbosity());
     printf("  -C filename                DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR
            "/dlt.conf)\n");
+    printf("  -D --path                  Dump ring buffer to the path\n");
 }
 
 static struct option long_options[] = {
@@ -424,6 +425,7 @@ static struct option long_options[] = {
     {"send-header",   no_argument,        0,  'S'},
     {"resync-header", no_argument,        0,  'R'},
     {"verbose",       no_argument,        0,  'v'},
+    {"dump-buffer",   required_argument,  0,  'D'},
     {0,               0,                  0,  0}
 };
 
@@ -443,7 +445,7 @@ static int parse_args(int argc, char *argv[])
 
     while ((c = getopt_long(argc,
                             argv,
-                            ":s::t:hSRe:p:d::c:vC:",
+                            ":s::t:hSRe:p:d::c:vC:D:",
                             long_options,
                             &long_index)) != -1)
         switch (c) {
@@ -516,6 +518,19 @@ static int parse_args(int argc, char *argv[])
 
             usage();
             return -1;
+        case 'D':
+            {
+                set_default_event_type(EVENT_DUMP_RING_BUFFER);
+
+                if ((optarg != NULL) && (strlen(optarg) >= DLT_MOUNT_PATH_MAX)) {
+                    pr_error("Ring buffer dump path '%s' too long\n", optarg);
+                    return -1;
+                }
+
+                set_default_path(optarg);
+
+                break;
+            }
         default:
             pr_error("Try %s -h for more information.\n", argv[0]);
             return -1;
