@@ -16,3 +16,4 @@ include/dlt/dlt_user.h
 *.swp
 cmake-build-debug/
 .vscode/
+googletest/
