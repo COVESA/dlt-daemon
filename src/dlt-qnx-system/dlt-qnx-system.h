@@ -14,7 +14,7 @@
  * \author Nguyen Dinh Thi <Thi.NguyenDinh@vn.bosch.com> ADIT 2020
  *
  * \file: dlt-qnx-system.h
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  * @licence end@
  */
 

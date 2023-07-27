@@ -12,10 +12,10 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Diagnostic Log and Trace daemon
  This component provides a standardised log and trace interface, based
  on the standardised protocol specified in the AUTOSAR standard 4.0 DLT.
- This component can be used by GENIVI components and other applications
+ This component can be used by COVESA components and other applications
  as logging facility providing
  .
- The DLT daemon is the central component in GENIVI, which gathers all
+ The DLT daemon is the central component in COVESA, which gathers all
  logs and traces from the DLT user applications. The logs and traces
  are stored optionally directly in a file in the ECU. The DLT daemon
  forwards all logs and traces to a connected DLT client.

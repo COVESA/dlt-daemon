@@ -6,7 +6,7 @@
 
 # DESCRIPTION
 
-The DLT daemon is the central application which gathers logs and traces from different applications, stores them temporarily or permanently and transfers them to a DLT client application, which could run directly on the GENIVI system or more likely on some external tester device.
+The DLT daemon is the central application which gathers logs and traces from different applications, stores them temporarily or permanently and transfers them to a DLT client application, which could run directly on the COVESA system or more likely on some external tester device.
 
 The configuration file dlt.conf allows to configure the different
 runtime behaviour of the dlt-daemon. It is loaded during startup of dlt-daemon.
@@ -171,32 +171,32 @@ Read gateway configuration from another location
 # Permission configuration
 
 DLT daemon runs with e.g.
- User: genivi_dlt
- Group: genivi_dlt
+ User: covesa_dlt
+ Group: covesa_dlt
 
 DLT user applications run with different user and group than dlt-daemon but with supplimentory group: dlt_user_apps_group
 
 <basedir>/dlt FIFO will be created by dlt-daemon with
-    User: genivi_dlt
+    User: covesa_dlt
     Group: dlt_user_apps_group
     Permission: 620
 
 so that only dlt-daemon can read and only processes in dlt_user_apps_group can write.
 
 <basedir>/dltpipes will be created by dlt-daemon with
-    User: genivi_dlt
-    Group: genivi_dlt
+    User: covesa_dlt
+    Group: covesa_dlt
     Permission: 3733 (i.e Sticky bit and SGID turned on)
 
 <basedir>/dltpipes/dlt<PID> FIFO will be created by dlt application (user lib) with
     User: <user of the application>
-    Group: genivi_dlt (inherited from <basedir>dltpipes/ due to SGID)
+    Group: covesa_dlt (inherited from <basedir>dltpipes/ due to SGID)
     Permission: 620
 
 Thus DLT user applications (and also or attackers) can create the dlt<PID> FIFO
 (for communication from dlt-daemon to DLT user application) under <basedir>/dltpipes/. Since sticky bit is set the applications who creates the FIFO can only rename/delete it.
 
-Since SGID of <basedir>/dltpipes is set the group of dlt<PID> FIFO will be genivi_dlt which enables dlt daemon to have write permission on all the dlt<PID> FIFO.
+Since SGID of <basedir>/dltpipes is set the group of dlt<PID> FIFO will be covesa_dlt which enables dlt daemon to have write permission on all the dlt<PID> FIFO.
 
 One dlt user application cannot access dlt<PID> FIFO created by other dlt user application(if they run with different user).
 
@@ -376,7 +376,7 @@ Copyright (C) 2015 BMW AG. License MPL-2.0: Mozilla Public License version 2.0 <
 
 # BUGS
 
-See Github issue: <https://github.com/GENIVI/dlt-daemon/issues>
+See Github issue: <https://github.com/COVESA/dlt-daemon/issues>
 
 # SEE ALSO
 

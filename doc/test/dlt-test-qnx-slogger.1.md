@@ -53,7 +53,7 @@ Copyright (C) 2021 ADIT GmbH. License MPL-2.0: Mozilla Public License version 2.
 
 # BUGS
 
-See Github issue: <https://github.com/GENIVI/dlt-daemon/issues>
+See Github issue: <https://github.com/COVESA/dlt-daemon/issues>
 
 # SEE ALSO
 

@@ -3,19 +3,19 @@
 #
 # Copyright (C) 2011-2015, BMW AG
 #
-# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+# This file is part of COVESA Project DLT - Diagnostic Log and Trace.
 #
 # This Source Code Form is subject to the terms of the
 # Mozilla Public License (MPL), v. 2.0.
 # If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# For further information see http://www.genivi.org/.
+# For further information see http://www.covesa.org/.
 #######
 
 Name: @PROJECT_NAME@
 Version: @PROJECT_VERSION@
-Release: @GENIVI_RPM_RELEASE@
+Release: @COVESA_RPM_RELEASE@
 Summary: %{name} - Diagnostic Log and Trace
 Group: System Environment/Base
 Vendor: BMW Group AG
@@ -28,7 +28,7 @@ BuildRequires: cmake
 %description
 This component provides a standardised log and trace interface, based on the
 standardised protocol specified in the AUTOSAR standard 4.0 DLT.
-This component can be used by GENIVI components and other applications as
+This component can be used by COVESA components and other applications as
 logging facility providing
 - the DLT shared library
 - the DLT daemon, including startup scripts

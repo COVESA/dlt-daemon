@@ -21,7 +21,7 @@ BUILD\_SHARED\_LIBS | ON | Set to OFF to build static libraries
 DLT\_IPC                          |"FIFO"          | Set to either "UNIX\_SOCKET" or "FIFO"
 WITH\_DLT\_USE\_IPv6              | ON             | Set to ON for IPv6 support
 WITH\_DLT\_EXAMPLES               | ON             | Set to ON to build src/examples binaries
-DLT\_USER                         | genivi         | Set user for process not run as root
+DLT\_USER                         | covesa         | Set user for process not run as root
 WITH\_CHECK\_CONFIG\_FILE         | OFF            | Set to ON to create a configure file of CheckIncludeFiles and CheckFunctionExists
 CMAKE\_INSTALL\_PREFIX            | /usr/local
 CMAKE\_BUILD\_TYPE                | RelWithDebInfo

@@ -3,14 +3,14 @@ SPDX license identifier: MPL-2.0
 
 Copyright (C) 2011-2015, BMW AG
 
-This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+This file is part of COVESA Project DLT - Diagnostic Log and Trace.
 
 This Source Code Form is subject to the terms of the
 Mozilla Public License (MPL), v. 2.0.
 If a copy of the MPL was not distributed with this file,
 You can obtain one at http://mozilla.org/MPL/2.0/
 
-For further information see http://www.genivi.org/
+For further information see http://www.covesa.org/
 ***
 
 # DLT Design Specification
@@ -20,12 +20,12 @@ Alexander Wenzel <Alexander.AW.Wenzel@bmw.de>
 Luong Hong Duy Khanh <KHANH.LUONGHONGDUY@vn.bosch.com>
 0.0.2, 2020/04/10: Update and convert to markdown format
 
-![genivilogo](images/genivilogo.png "GENIVI")
+![covesalogo](images/covesalogo.png "COVESA")
 
 ## Purpose
 This document specifies the usage of the DLT daemon v2 and also the internal
 functionality of the DLT daemon v2. The DLT daemon v2 is a complete rework of
-the DLT daemon v1, which is part of the GENIVI 1.0 release.
+the DLT daemon v1, which is part of the COVESA 1.0 release.
 
 The DLT daemon component is based on the
 [AUTOSAR 4.0 standard DLT](https://www.autosar.org/fileadmin/user_upload/standards/classic/4-0/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf)
@@ -36,11 +36,11 @@ The DLT daemon component is based on the
 
 ![dlt_overview](images/dlt_overview.png "DLT OVERVIEW")
 
-The DLT daemon is the central component in GENIVI, where logs and traces are
+The DLT daemon is the central component in COVESA, where logs and traces are
 gathered from the DLT user and different applications, stored optionally
 temporarily or permanently in a file in the ECU. The DLT daemon forwards all
 logs and traces to a connected DLT client application, which can run directly
-on the GENIVI system or more likely on an external tester device.
+on the COVESA system or more likely on an external tester device.
 
 The DLT client can send control messages to the daemon, e.g. to set individual
 log levels of applications and contexts or get the list of applications and
