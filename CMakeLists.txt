@@ -13,7 +13,11 @@
 # For further information see http://www.genivi.org/.
 #######
 
+# Set minimum Cmake version and setup policy behavior
 cmake_minimum_required(VERSION 3.3)
+if(${CMAKE_VERSION} VERSION_GREATER "3.20" OR ${CMAKE_VERSION} VERSION_EQUAL "3.20")
+    cmake_policy(SET CMP0115 OLD)
+endif()
 project(automotive-dlt VERSION 2.18.9)
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
