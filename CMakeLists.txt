@@ -3,14 +3,14 @@
 #
 # Copyright(C) 2011-2015, BMW AG
 #
-# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+# This file is part of COVESA Project DLT - Diagnostic Log and Trace.
 #
 # This Source Code Form is subject to the terms of the
 # Mozilla Public License(MPL), v. 2.0.
 # If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# For further information see http://www.genivi.org/.
+# For further information see http://www.covesa.org/.
 #######
 
 cmake_minimum_required(VERSION 3.3)
@@ -82,7 +82,7 @@ option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message que
 option(WITH_DLT_LOG_LEVEL_APP_CONFIG "Set to ON to enable default log levels based on application ids"           OFF)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
-set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
+set(DLT_USER "covesa" CACHE STRING "Set user for process not run as root")
 set(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS "100" CACHE STRING "Timeout in milliseconds to wait before messages are dropped when input buffer is full")
 
 option(WITH_DLT_PKGCONFIG     "Set to ON to generate pkgconfig .pc files"                                        ON)
@@ -107,7 +107,7 @@ set(DLT_WRITEV_TIMEOUT_SEC "1" CACHE STRING "Set sec timeout for writev to preve
 set(DLT_WRITEV_TIMEOUT_USEC "0" CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
-set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
+set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}")
 set(LICENSE "Mozilla Public License Version 2.0")
 
 # Build, project and include settings

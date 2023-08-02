@@ -12,7 +12,7 @@
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * \file: dlt-logd-convert
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  * @licence end@
  */
 #include <cerrno>

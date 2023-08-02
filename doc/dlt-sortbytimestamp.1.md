@@ -71,7 +71,7 @@ License MPL-2.0: Mozilla Public License version 2.0 <http://mozilla.org/MPL/2.0/
 
 # BUGS
 
-See Github issue: <https://github.com/GENIVI/dlt-daemon/issues>
+See Github issue: <https://github.com/COVESA/dlt-daemon/issues>
 
 # SEE ALSO
 

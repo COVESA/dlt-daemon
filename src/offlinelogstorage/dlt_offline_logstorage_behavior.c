@@ -15,7 +15,7 @@
  * \author Syed Hameed <shameed@jp.adit-jv.com> ADIT 2015
  *
  * \file: dlt_offline_logstorage_behavior.c
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 #include <syslog.h>

@@ -3,14 +3,14 @@
 #
 # Copyright (C) 2011-2015, BMW AG
 #
-# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+# This file is part of COVESA Project DLT - Diagnostic Log and Trace.
 #
 # This Source Code Form is subject to the terms of the
 # Mozilla Public License (MPL), v. 2.0.
 # If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# For further information see http://www.genivi.org/.
+# For further information see http://www.covesa.org/.
 #######
 
 # Doxyfile 1.5.8
@@ -46,7 +46,7 @@ PROJECT_NAME           = @PROJECT_NAME@
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = @GENIVI_PROJECT_VERSION@
+PROJECT_NUMBER         = @COVESA_PROJECT_VERSION@
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.

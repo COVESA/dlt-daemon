@@ -14,7 +14,7 @@
  * \author Christoph Lipka <clipka@jp.adit-jv.com> ADIT 2015
  *
  * \file: dlt_offline_logstorage_behavior.h
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*******************************************************************************
