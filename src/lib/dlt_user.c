@@ -2733,8 +2733,12 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     {
         /* Whole string will be copied */
         memcpy(log->buffer + log->size, text, length);
+
         /* The input string might not be null-terminated, so we're doing that by ourselves */
-        log->buffer[log->size + length] = '\0';
+        
+        /*The length of the string is already determined. Why need the null-terminator???*/
+        //log->buffer[log->size + length] = '\0';   //*[Deprecated]
+
         log->size += arg_size;
         break;
     }
