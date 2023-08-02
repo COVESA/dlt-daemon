@@ -2707,7 +2707,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
         memcpy(log->buffer + log->size, &type_info, sizeof(uint32_t));
         log->size += sizeof(uint32_t);
     }
-
+    
     memcpy(log->buffer + log->size, &arg_size, sizeof(uint16_t));
     log->size += sizeof(uint16_t);
 
