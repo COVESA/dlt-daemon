@@ -213,7 +213,7 @@ endif()
 
 add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-std=gnu99>
-    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++11>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++14>
     -Wall
     -Wextra
     # -pedantic
