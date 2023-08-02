@@ -82,6 +82,7 @@ void usage(char *prog_name)
 void init_cli_options(DltSystemCliOptions *options)
 {
     options->ConfigurationFileName = strdup(DEFAULT_CONF_FILE);
+    options->freeConfigFileName = 0;
     options->Daemonize = 0;
 }
 
@@ -103,6 +104,7 @@ int read_command_line(DltSystemCliOptions *options, int argc, char *argv[])
         case 'c':
         {
             options->ConfigurationFileName = malloc(strlen(optarg) + 1);
+            options->freeConfigFileName = 1;
             MALLOC_ASSERT(options->ConfigurationFileName);
             strcpy(options->ConfigurationFileName, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
             break;
@@ -419,7 +421,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options)
 {
     /* command line options */
-    if ((options->ConfigurationFileName) != NULL)
+    if ((options->ConfigurationFileName) != NULL && options->freeConfigFileName)
     {
         free(options->ConfigurationFileName);
         options->ConfigurationFileName = NULL;
