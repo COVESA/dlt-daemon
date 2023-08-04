@@ -65,6 +65,9 @@ set(TARGET_LIST gtest_dlt_daemon_gateway
 if(WITH_DLT_SHM_ENABLE)
     list(APPEND TARGET_LIST gtest_dlt_shm)
 endif()
+if(WITH_SYSTEMD_JOURNAL)
+    list(APPEND TARGET_LIST gtest_dlt_sdjournal_chmap)
+endif(WITH_SYSTEMD_JOURNAL)
 
 foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})

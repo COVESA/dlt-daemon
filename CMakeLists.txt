@@ -156,6 +156,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/src/daemon
     ${PROJECT_SOURCE_DIR}/src/console
     ${PROJECT_SOURCE_DIR}/src/gateway
+    ${PROJECT_SOURCE_DIR}/src/sdjournal
     ${PROJECT_SOURCE_DIR}/systemd/3rdparty
 )
 

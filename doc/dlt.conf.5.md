@@ -168,6 +168,12 @@ Read gateway configuration from another location
 
     Default: /etc/dlt_gateway.conf
 
+## JournalGatewayMode
+
+Enable Systemd Journal gateway mode - use Systemd Journal daemon as the only source of log data.
+
+    Default: 0
+
 # Permission configuration
 
 DLT daemon runs with e.g.

@@ -79,6 +79,7 @@ cc_binary {
     local_include_dirs: [
         "src/daemon",
         "src/gateway",
+        "src/sdjournal",
         "src/lib",
         "src/shared",
         "src/offlinelogstorage",
@@ -95,6 +96,8 @@ cc_binary {
         "src/daemon/dlt_daemon_socket.c",
         "src/daemon/dlt_daemon_unix_socket.c",
         "src/gateway/dlt_gateway.c",
+        "src/sdjournal/dlt_sdjournal.c",
+        "src/sdjournal/dlt_sdjournal_chmap.c",
         "src/lib/dlt_client.c",
         "src/shared/dlt_common.c",
         "src/shared/dlt_config_file_parser.c",

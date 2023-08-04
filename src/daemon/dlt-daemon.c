@@ -428,6 +428,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #endif
     daemon_local->flags.ipNodes = NULL;
     daemon_local->flags.injectionMode = 1;
+    daemon_local->flags.journalGatewayMode = 0;
 
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
@@ -838,6 +839,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "InjectionMode") == 0) {
                         daemon_local->flags.injectionMode = atoi(value);
+                    }
+                    else if (strcmp(token, "JournalGatewayMode") == 0) {
+                        daemon_local->flags.journalGatewayMode = atoi(value);
                     }
                     else {
                         fprintf(stderr, "Unknown option: %s=%s\n", token, value);
@@ -1290,6 +1294,14 @@ int main(int argc, char *argv[])
                         DLT_TIMER_GATEWAY);
     }
 
+    /* initialize Systemd Journal reader */
+    if (daemon_local.flags.journalGatewayMode == 1) {
+        if (dlt_sdjournal_init(&daemon_local, daemon_local.flags.vflag) != DLT_RETURN_OK) {
+            dlt_log(LOG_CRIT, "Fail to create Systemd Journal gateway\n");
+            return -1;
+        }
+    }
+
     /* For offline tracing we still can use the same states */
     /* as for socket sending. Using this trick we see the traces */
     /* In the offline trace AND in the socket stream. */
@@ -1335,6 +1347,8 @@ int main(int argc, char *argv[])
 #ifdef UDP_CONNECTION_SUPPORT
     dlt_daemon_udp_close_connection();
 #endif
+
+    dlt_sdjournal_deinit(&daemon_local, daemon_local.flags.vflag);
 
     dlt_gateway_deinit(&daemon_local.pGateway, daemon_local.flags.vflag);
 

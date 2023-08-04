@@ -45,6 +45,7 @@
 #include "dlt_daemon_common.h"
 #include "dlt_common.h"
 #include "dlt_gateway.h"
+#include "dlt_sdjournal.h"
 #include "dlt_daemon_socket.h"
 
 static DltConnectionId connectionId;
@@ -160,6 +161,7 @@ DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
 
     switch (con->type) {
     case DLT_CONNECTION_GATEWAY:
+    case DLT_CONNECTION_JOURNAL_GATEWAY:
         /* We rely on the gateway for clean-up */
         break;
     case DLT_CONNECTION_APP_MSG:
@@ -258,6 +260,9 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
         /* We rely on the gateway for init */
         ret = dlt_gateway_get_connection_receiver(&daemon_local->pGateway, fd);
         break;
+    case DLT_CONNECTION_JOURNAL_GATEWAY:
+        ret = dlt_sdjournal_get_receiver(daemon_local);
+        break;
     default:
         ret = NULL;
     }
@@ -325,6 +330,9 @@ void *dlt_connection_get_callback(DltConnection *con)
     case DLT_CONNECTION_GATEWAY_TIMER:
         ret = dlt_gateway_process_gateway_timer;
         break;
+    case DLT_CONNECTION_JOURNAL_GATEWAY:
+        ret = dlt_sdjournal_process;
+        break;
     default:
         ret = NULL;
     }
@@ -344,7 +352,9 @@ void *dlt_connection_get_callback(DltConnection *con)
 void dlt_connection_destroy(DltConnection *to_destroy)
 {
     to_destroy->id = 0;
-    close(to_destroy->receiver->fd);
+    if (to_destroy->type != DLT_CONNECTION_JOURNAL_GATEWAY) {
+        close(to_destroy->receiver->fd);
+    } // DLT Gateway cleans up it's own fd
     dlt_connection_destroy_receiver(to_destroy);
     free(to_destroy);
 }

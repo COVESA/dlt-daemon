@@ -65,6 +65,7 @@
 
 #include "dlt_daemon_offline_logstorage.h"
 #include "dlt_gateway.h"
+#include "dlt_sdjournal.h"
 
 /** Inline function to calculate/set the requested log level or traces status
  *  with default log level or trace status when "ForceContextLogLevelAndTraceStatus"
@@ -501,6 +502,98 @@ int dlt_daemon_client_process_control(int sock,
 
     id_tmp = *((uint32_t *)(msg->databuffer));
     id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
+
+    #if defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+    if (daemon_local->flags.journalGatewayMode == 1) {
+        switch (id) {
+            case DLT_SERVICE_ID_SET_LOG_LEVEL:
+            {
+                if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevel)) < 0) {
+                    dlt_daemon_control_service_response(
+                        sock, daemon, daemon_local,
+                        id, DLT_SERVICE_RESPONSE_ERROR,
+                        verbose);
+
+                    break;
+                }
+
+                const DltServiceSetLogLevel* const req = (DltServiceSetLogLevel*)(msg->databuffer);
+
+                char apid[DLT_ID_SIZE + 1] = { 0 };
+                dlt_set_id(apid, req->apid);
+
+                char ctid[DLT_ID_SIZE + 1] = { 0 };
+                dlt_set_id(ctid, req->ctid);
+
+                const int result = dlt_sdjournal_change_app_level(daemon_local, apid, ctid, req->log_level);
+                if (result != DLT_RETURN_OK) {
+                    dlt_daemon_control_service_response(
+                        sock, daemon, daemon_local,
+                        id, DLT_SERVICE_RESPONSE_ERROR,
+                        verbose);
+
+                    break;
+                }
+
+                dlt_daemon_control_service_response(
+                    sock, daemon, daemon_local,
+                    id, DLT_SERVICE_RESPONSE_OK,
+                    verbose);
+
+                break;
+            }
+
+            case DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL:
+            {
+                if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0) {
+                    dlt_daemon_control_service_response(
+                        sock, daemon, daemon_local,
+                        id, DLT_SERVICE_RESPONSE_ERROR,
+                        verbose);
+
+                    break;
+                }
+
+                const DltServiceSetDefaultLogLevel* const req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+                const int result = dlt_sdjournal_change_default_level(daemon_local, req->log_level);
+                if (result != DLT_RETURN_OK) {
+                    dlt_daemon_control_service_response(
+                        sock, daemon, daemon_local,
+                        id, DLT_SERVICE_RESPONSE_ERROR,
+                        verbose);
+
+                    break;
+                }
+
+                dlt_daemon_control_service_response(
+                    sock, daemon, daemon_local,
+                    id, DLT_SERVICE_RESPONSE_OK,
+                    verbose);
+
+                break;
+            }
+
+            case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
+            {
+                dlt_daemon_control_get_software_version(sock, daemon, daemon_local, verbose);
+                break;
+            }
+
+            default:
+            {
+                // Other control messages are not supported in Journal Gateway mode
+                dlt_daemon_control_service_response(
+                    sock, daemon, daemon_local,
+                    id, DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                    verbose);
+                break;
+            }
+        }
+
+        return 0;
+    }
+    #endif
 
     if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_CALLSW_CINJECTION)) {
         /* Control message handling */

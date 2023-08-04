@@ -14,7 +14,7 @@
 #######
 
 
-if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD OR WITH_SYSTEMD_JOURNAL)
     message(STATUS "Added ${systemd_SRCS} to dlt-daemon")
 endif()
 
@@ -29,6 +29,8 @@ set(dlt_daemon_SRCS
     dlt_daemon_socket.c
     dlt_daemon_unix_socket.c
     ${PROJECT_SOURCE_DIR}/src/gateway/dlt_gateway.c
+    ${PROJECT_SOURCE_DIR}/src/sdjournal/dlt_sdjournal.c
+    ${PROJECT_SOURCE_DIR}/src/sdjournal/dlt_sdjournal_chmap.c
     ${PROJECT_SOURCE_DIR}/src/lib/dlt_client.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_config_file_parser.c
@@ -68,6 +70,14 @@ endif()
 if (WITH_DLT_LOGSTORAGE_GZIP)
 	target_link_libraries(dlt-daemon ${ZLIB_LIBRARY})
 endif()
+
+if(WITH_SYSTEMD_JOURNAL)
+ if(SYSTEMD_VERSION LESS 209)
+  target_link_libraries(dlt-daemon systemd-journal systemd-id128)
+ else(SYSTEMD_VERSION LESS 209)
+  target_link_libraries(dlt-daemon systemd)
+ endif(SYSTEMD_VERSION LESS 209)
+endif(WITH_SYSTEMD_JOURNAL)
 
 install(TARGETS dlt-daemon
         RUNTIME DESTINATION bin

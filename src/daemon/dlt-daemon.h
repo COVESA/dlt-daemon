@@ -76,6 +76,7 @@
 #include "dlt_user_shared_cfg.h"
 #include "dlt_daemon_event_handler_types.h"
 #include "dlt_gateway_types.h"
+#include "dlt_sdjournal_types.h"
 #include "dlt_offline_trace.h"
 
 #define DLT_DAEMON_FLAG_MAX 256
@@ -145,6 +146,7 @@ typedef struct
     int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
     DltBindAddress_t* ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
     int injectionMode;  /**< (Boolean) Injection mode */
+    int journalGatewayMode; /**< (Boolean) Enable reading of SystemD Journal */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
@@ -155,6 +157,7 @@ typedef struct
     DltFile file;             /**< struct for file access */
     DltEventHandler pEvent; /**< struct for message producer event handling */
     DltGateway pGateway; /**< struct for passive node connection handling */
+    DltSdJournal pSdJournal; /** struct for Systemd Journal connection handling */
     DltMessage msg;           /**< one dlt message */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
