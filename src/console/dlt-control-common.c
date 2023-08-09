@@ -565,12 +565,18 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
         pr_error("Sending message to daemon failed\n");
         dlt_message_free(msg, get_verbosity());
         free(msg);
+
+        /* make sure the mutex is unlocked to prevent deadlocks */
+        pthread_mutex_unlock(&answer_lock);
         return -1;
     }
 
-    /* If we timeout the lock is not taken back */
-    if (!pthread_cond_timedwait(&answer_cond, &answer_lock, &t))
-        pthread_mutex_unlock(&answer_lock);
+    /*
+    * When a timeouts occurs, pthread_cond_timedwait()
+    * shall nonetheless release and re-acquire the mutex referenced by mutex
+    */
+    pthread_cond_timedwait(&answer_cond, &answer_lock, &t);
+    pthread_mutex_unlock(&answer_lock);
 
     /* Destroying the message */
     dlt_message_free(msg, get_verbosity());
