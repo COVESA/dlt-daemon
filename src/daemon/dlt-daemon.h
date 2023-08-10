@@ -116,6 +116,7 @@ typedef struct
     int loggingFileMaxSize;      /**< (int) Maximum size in bytes of all logging files (Default: 1000000) */
     int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
     char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
+    char ecuSoftwareVersionFileField[DLT_DAEMON_FLAG_MAX]; /**< Reads a specific VALUE from a FIELD=VALUE ECU version file. */
     int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
     int offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
     char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
