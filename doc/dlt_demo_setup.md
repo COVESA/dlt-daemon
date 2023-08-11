@@ -58,7 +58,7 @@ WARNING ```(-l 3)``` containing a string payload.
 ## Read logs
 The DLT daemon now has the messages in its buffer and will keep them there until
 they are fetched. A mighty tool for receiving and processing log messages is the
-[DLT-Viewer](https://github.com/GENIVI/dlt-viewer), which also provides a
+[DLT-Viewer](https://github.com/COVESA/dlt-viewer), which also provides a
 graphical UI. For now, a simple command line client is absolutely sufficient:
 ```bash
 $ dlt-receive -a localhost

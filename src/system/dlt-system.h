@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -74,13 +74,12 @@
 #define MAX_LINE 1024
 
 /** Total number of file descriptors needed for processing all features:
-*   - Journal file descriptor
 *   - Syslog file descriptor
 *   - Timer file descriptor for processing LogFile and LogProcesses every second
 *   - Inotify file descriptor for FileTransfer
 *   - Timer file descriptor for Watchdog 
 */
-#define MAX_FD_NUMBER   5
+#define MAX_FD_NUMBER   4
 
 /* Macros */
 #define MALLOC_ASSERT(x) if (x == NULL) { \
@@ -89,8 +88,7 @@
 
 /* enum for classification of FD */
 enum fdType {
-    fdType_journal = 0,
-    fdType_syslog,
+    fdType_syslog = 0,
     fdType_filetransfer,
     fdType_timer,
     fdType_watchdog,
@@ -104,6 +102,7 @@ enum fdType {
 /* Command line options */
 typedef struct {
     char *ConfigurationFileName;
+    int freeConfigFileName;
     int Daemonize;
 } DltSystemCliOptions;
 
@@ -218,6 +217,13 @@ void watchdog_fd_handler(int fd, int* received_message_since_last_watchdog_inter
 void watchdog_fd_handler(int fd);
 #endif
 void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config);
+struct journal_fd_params {
+    volatile uint8_t* quit;
+    struct pollfd* journalPollFd;
+    sd_journal *j;
+    DltSystemConfiguration *config;
+};
+void *journal_thread(void* journalParams);
 void syslog_fd_handler(int syslogSock);
 
 #endif /* DLT_SYSTEM_H_ */

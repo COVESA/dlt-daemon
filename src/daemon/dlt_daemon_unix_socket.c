@@ -4,14 +4,14 @@
  * Copyright (C) 2015, Advanced Driver Information Technology
  * Copyright of Advanced Driver Information Technology, Bosch and Denso
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -151,12 +151,14 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     old_mask = umask(mask);
 
     if (bind(*sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        dlt_log(LOG_WARNING, "unix socket: bind() error");
+        dlt_vlog(LOG_WARNING, "%s: bind() error (%s)\n", __func__,
+                 strerror(errno));
         return -1;
     }
 
     if (listen(*sock, 1) == -1) {
-        dlt_log(LOG_WARNING, "unix socket: listen error");
+        dlt_vlog(LOG_WARNING, "%s: listen error (%s)\n", __func__,
+                 strerror(errno));
         return -1;
     }
 

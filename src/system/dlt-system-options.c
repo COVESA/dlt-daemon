@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -24,7 +24,7 @@
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-options.c                                                  **
+**  SRC-MODULE: dlt-system-options.c                                          **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -82,6 +82,7 @@ void usage(char *prog_name)
 void init_cli_options(DltSystemCliOptions *options)
 {
     options->ConfigurationFileName = strdup(DEFAULT_CONF_FILE);
+    options->freeConfigFileName = 0;
     options->Daemonize = 0;
 }
 
@@ -103,6 +104,7 @@ int read_command_line(DltSystemCliOptions *options, int argc, char *argv[])
         case 'c':
         {
             options->ConfigurationFileName = malloc(strlen(optarg) + 1);
+            options->freeConfigFileName = 1;
             MALLOC_ASSERT(options->ConfigurationFileName);
             strcpy(options->ConfigurationFileName, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
             break;
@@ -419,7 +421,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
 void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options)
 {
     /* command line options */
-    if ((options->ConfigurationFileName) != NULL)
+    if ((options->ConfigurationFileName) != NULL && options->freeConfigFileName)
     {
         free(options->ConfigurationFileName);
         options->ConfigurationFileName = NULL;

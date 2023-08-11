@@ -3,18 +3,24 @@
 #
 # Copyright(C) 2011-2015, BMW AG
 #
-# This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+# This file is part of COVESA Project DLT - Diagnostic Log and Trace.
 #
 # This Source Code Form is subject to the terms of the
 # Mozilla Public License(MPL), v. 2.0.
 # If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# For further information see http://www.genivi.org/.
+# For further information see http://www.covesa.org/.
 #######
 
+# Set minimum Cmake version and setup policy behavior
 cmake_minimum_required(VERSION 3.3)
+
+if(${CMAKE_VERSION} VERSION_GREATER "3.20" OR ${CMAKE_VERSION} VERSION_EQUAL "3.20")
+    cmake_policy(SET CMP0115 OLD)
+endif()
 project(automotive-dlt VERSION 2.18.10)
+
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
@@ -75,13 +81,14 @@ option(WITH_DLT_SYSTEM        "Set to ON to build src/system binaries"          
 option(WITH_DLT_DBUS          "Set to ON to build src/dbus binaries"                                             OFF)
 option(WITH_DLT_TESTS         "Set to ON to build src/test binaries"                                             ON)
 option(WITH_DLT_UNIT_TESTS    "Set to ON to build gtest framework and tests/binaries"                            OFF)
+option(WITH_DLT_COVERAGE      "Set to ON to generate coverage report for dlt-daemon source code"                 OFF)
 option(WITH_DLT_QNX_SYSTEM    "Set to ON to build QNX system binary dlt-qnx-system"                              OFF)
 option(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK "Set to ON to enable fallback to syslog if dlt logging to file fails" OFF)
 option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message queue is supported)"                ON)
 option(WITH_DLT_LOG_LEVEL_APP_CONFIG "Set to ON to enable default log levels based on application ids"           OFF)
 
 set(DLT_IPC "FIFO" CACHE STRING "UNIX_SOCKET,FIFO")
-set(DLT_USER "genivi" CACHE STRING "Set user for process not run as root")
+set(DLT_USER "covesa" CACHE STRING "Set user for process not run as root")
 set(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS "100" CACHE STRING "Timeout in milliseconds to wait before messages are dropped when input buffer is full")
 
 option(WITH_DLT_PKGCONFIG     "Set to ON to generate pkgconfig .pc files"                                        ON)
@@ -106,7 +113,7 @@ set(DLT_WRITEV_TIMEOUT_SEC "1" CACHE STRING "Set sec timeout for writev to preve
 set(DLT_WRITEV_TIMEOUT_USEC "0" CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
-set(GENIVI_RPM_RELEASE "1")  # ${DLT_REVISION}")
+set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}")
 set(LICENSE "Mozilla Public License Version 2.0")
 
 # Build, project and include settings
@@ -186,11 +193,11 @@ if(WITH_DLT_QNX_SYSTEM AND NOT "${CMAKE_C_COMPILER}" MATCHES "nto-qnx|qcc|ntoaar
     message(FATAL_ERROR "Can only compile for QNX with a QNX compiler, but found '${CMAKE_C_COMPILER}'.")
 endif()
 
-if (WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
+if(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
     add_definitions(-DWITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
 endif()
 
-if (WITH_DLT_LOGSTORAGE_GZIP)
+if(WITH_DLT_LOGSTORAGE_GZIP)
 	add_definitions(-DDLT_LOGSTORAGE_USE_GZIP)
 endif()
 
@@ -198,9 +205,21 @@ if(WITH_GPROF)
     add_compile_options(-pg)
 endif()
 
+if(WITH_DLT_COVERAGE)
+    add_definitions(-DWITH_DLT_COVERAGE)
+    set(WITH_DLT_UNIT_TESTS ON)
+    if(WITH_DLT_UNIT_TESTS)
+        add_definitions(-DDLT_UNIT_TESTS)
+    endif()
+
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} --coverage")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} --coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
 add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-std=gnu99>
-    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++11>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++14>
     -Wall
     -Wextra
     # -pedantic
@@ -214,7 +233,7 @@ else()
     set(PACKAGE_DOC "")
 endif()
 
-if (BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
     set(CMAKE_STATIC_LIB_PATH "")
 else()
     set(CMAKE_STATIC_LIB_PATH "-L\$\{libdir\}/static")
@@ -236,7 +255,7 @@ add_definitions(-DCONFIGURATION_FILES_DIR="${CONFIGURATION_FILES_DIR}")
 
 add_subdirectory(cmake)
 
-if (WITH_DLT_NETWORK_TRACE)
+if(WITH_DLT_NETWORK_TRACE)
     # Message queue
     if(HAVE_MQUEUE_H AND HAVE_FUNC_MQOPEN AND HAVE_FUNC_MQCLOSE AND
        HAVE_FUNC_MQUNLINK AND HAVE_FUNC_MQSEND AND HAVE_FUNC_MQRECEIVE)
@@ -272,15 +291,15 @@ if(WITH_SYSTEMD
         add_definitions(-DDLT_SYSTEMD_JOURNAL_ENABLE)
     endif()
 
-    if (WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX)
+    if(WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX)
         add_definitions(-DDLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE)
     endif()
 
-    if (WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM)
+    if(WITH_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_DLT_SYSTEM)
         add_definitions(-DDLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYTSTEM)
     endif()
 
-    if (WITH_SYSTEMD_SOCKET_ACTIVATION)
+    if(WITH_SYSTEMD_SOCKET_ACTIVATION)
         if(NOT DLT_IPC STREQUAL "UNIX_SOCKET")
             message(FATAL_ERROR "WITH_SYSTEMD_SOCKET_ACTIVATION is only supported for UNIX_SOCKET")
         endif()
@@ -332,11 +351,11 @@ add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(include)
 add_subdirectory(testscripts)
-if (WITH_DLT_UNIT_TESTS)
+if(WITH_DLT_UNIT_TESTS)
     find_package(GTest)
 
-    if (NOT GTEST_FOUND)
-        add_subdirectory( googletest )
+    if(NOT GTEST_FOUND)
+        add_subdirectory(googletest)
     endif()
     enable_testing()
     add_subdirectory(tests)
@@ -362,6 +381,7 @@ message(STATUS "WITH_DLT_FILETRANSFER = ${WITH_DLT_FILETRANSFER}")
 message(STATUS "WITH_DLT_DBUS = ${WITH_DLT_DBUS}")
 message(STATUS "WITH_DLT_TESTS = ${WITH_DLT_TESTS}")
 message(STATUS "WITH_DLT_UNIT_TESTS = ${WITH_DLT_UNIT_TESTS}")
+message(STATUS "WITH_DLT_COVERAGE = ${WITH_DLT_COVERAGE}")
 message(STATUS "WITH_DLT_SHM_ENABLE = ${WITH_DLT_SHM_ENABLE}")
 message(STATUS "WITH_DLTTEST = ${WITH_DLTTEST}")
 message(STATUS "WITH_DLT_PKGCONFIG = ${WITH_DLT_PKGCONFIG}")

@@ -3,7 +3,7 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
  *
  *
  * \copyright
@@ -16,7 +16,7 @@
  * \author Frederic Berat <fberat@de.adit-jv.com> ADIT 2015
  *
  * \file dlt-control-common.c
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*******************************************************************************
@@ -75,7 +75,6 @@
 
 #define DLT_CTRL_APID    "DLTC"
 #define DLT_CTRL_CTID    "DLTC"
-#define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH "/tmp/dlt-ctrl.sock"
 
 /** @brief Analyze the daemon answer
  *
@@ -98,6 +97,7 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static int local_timeout;
+static char local_filename[DLT_MOUNT_PATH_MAX]= {0}; /* Path to dlt.conf */
 
 int get_verbosity(void)
 {
@@ -181,7 +181,11 @@ int dlt_parse_config_param(char *config_id, char **config_data)
         *config_data = NULL;
 
     /* open configuration file */
-    filename = CONFIGURATION_FILES_DIR "/dlt.conf";
+    if (local_filename[0] != 0) {
+        filename = local_filename;
+    } else {
+        filename = CONFIGURATION_FILES_DIR "/dlt.conf";
+    }
     pFile = fopen(filename, "r");
 
     if (pFile != NULL) {
@@ -565,12 +569,18 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
         pr_error("Sending message to daemon failed\n");
         dlt_message_free(msg, get_verbosity());
         free(msg);
+
+        /* make sure the mutex is unlocked to prevent deadlocks */
+        pthread_mutex_unlock(&answer_lock);
         return -1;
     }
 
-    /* If we timeout the lock is not taken back */
-    if (!pthread_cond_timedwait(&answer_cond, &answer_lock, &t))
-        pthread_mutex_unlock(&answer_lock);
+    /*
+    * When a timeouts occurs, pthread_cond_timedwait()
+    * shall nonetheless release and re-acquire the mutex referenced by mutex
+    */
+    pthread_cond_timedwait(&answer_cond, &answer_lock, &t);
+    pthread_mutex_unlock(&answer_lock);
 
     /* Destroying the message */
     dlt_message_free(msg, get_verbosity());
@@ -641,8 +651,7 @@ int dlt_control_deinit(void)
         close(g_client.receiver.fd);
         g_client.receiver.fd = -1;
     }
-    /* Stopping the listener thread */
-    pthread_cancel(daemon_connect_thread);
+    /* Waiting for thread to complete */
     pthread_join(daemon_connect_thread, NULL);
     /* Closing the socket */
     return dlt_client_cleanup(&g_client, get_verbosity());

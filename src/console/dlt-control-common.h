@@ -3,7 +3,7 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
  *
  *
  * \copyright
@@ -16,7 +16,7 @@
  * \author Frederic Berat <fberat@de.adit-jv.com> ADIT 2015
  *
  * \file dlt-control-common.h
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 #ifndef _DLT_CONTROL_COMMON_H_
@@ -50,6 +50,8 @@
     ({ if (get_verbosity()) { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } })
 
 #define DLT_CTRL_DEFAULT_ECUID "ECU1"
+
+#define DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH "/tmp/dlt-ctrl.sock"
 
 #define NANOSEC_PER_MILLISEC 1000000
 #define NANOSEC_PER_SEC 1000000000

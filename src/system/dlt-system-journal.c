@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -55,6 +55,7 @@
 #include <systemd/sd-journal.h>
 #include <systemd/sd-id128.h>
 #include <inttypes.h> /* for PRI formatting macro */
+#include <assert.h>
 
 
 #define DLT_SYSTEM_JOURNAL_BUFFER_SIZE 256
@@ -389,9 +390,28 @@ void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSyste
     *j = j_tmp;
 }
 
-void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config)
+void* journal_thread(void* journalParams)
 {
-    get_journal_msg(j, config);
+    struct journal_fd_params* params = (struct journal_fd_params*)journalParams;
+
+    int ready;
+    while (*params->quit == 0) {
+        ready = poll(params->journalPollFd, 1, -1);
+        if (ready == -1) {
+            DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while poll. Exit with: "),
+                DLT_STRING(strerror(ready)));
+            continue;
+        }
+
+        if(params->journalPollFd->revents & POLLIN) {
+            if (sd_journal_process(params->j) == SD_JOURNAL_APPEND) {
+                get_journal_msg(params->j, params->config);
+            }
+        }
+    }
+
+    // void* is only necessary to fulfill pthread_create signature
+    return NULL;
 }
 
 #endif /* DLT_SYSTEMD_JOURNAL_ENABLE */

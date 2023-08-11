@@ -1,11 +1,15 @@
 # Diagnostic Log and Trace
 
-Status: [![Build Status](https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml/badge.svg)]( https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml)
+
+[![Build Status](https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml/badge.svg)]( https://github.com/COVESA/dlt-daemon/actions/workflows/cmake-ctest.yml)
 [![CodeQL](https://github.com/COVESA/dlt-daemon/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/COVESA/dlt-daemon/actions/workflows/codeql-analysis.yml)
+[![Page-build-deployment](https://github.com/COVESA/dlt-daemon/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/COVESA/dlt-daemon/actions/workflows/pages/pages-build-deployment)
+
+**Code coverage reports online** 📄 [LCOV - code coverage report](https://COVESA.github.io/dlt-daemon/dlt_lcov_report/index.html)
 
 # Diagnostic Log and Trace
 
-Welcome to GENIVI Diagnostic Log and Trace (DLT). If you are familiar with DLT
+Welcome to COVESA Diagnostic Log and Trace (DLT). If you are familiar with DLT
 and want to know what's new, check the [Release Notes](ReleaseNotes.md).
 
 **New to DLT? Great! Welcome aboard.** We prepared a brief [overview](#overview)
@@ -15,11 +19,11 @@ you can [learn more](#learn-more) about advanced concepts and features.
 
 ## Overview
 
-GENIVI DLT provides a log and trace interface, based on the standardised
+COVESA DLT provides a log and trace interface, based on the standardised
 protocol specified in the
 [AUTOSAR standard 4 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
-It is used by other GENIVI components but can serve as logging framework for
-other applications without relation to GENIVI.
+It is used by other COVESA components but can serve as logging framework for
+other applications without relation to COVESA.
 
 The most important terms and parts are depicted in the following figure. Please
 refer to [Glossary](doc/dlt_glossary.md) for a full overview over DLT-specific
@@ -66,7 +70,7 @@ install DLT daemon:
 On Ubuntu those dependencies can be installed with the following command:
 
 ```bash
-sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev
+sudo apt-get install cmake zlib1g-dev libdbus-glib-1-dev build-essential
 optional: sudo apt-get install libjson-c-dev # in case you want to use dlt-receives extended filtering
 ```
 
@@ -74,7 +78,7 @@ Then proceed to download DLT if you haven't already. We recommend cloning the
 repository, but downloading and extracting a zip-archive is fine as well.
 ```bash
 cd /path/to/workspace
-git clone https://github.com/GENIVI/dlt-daemon.git
+git clone https://github.com/COVESA/dlt-daemon.git
 ```
 
 To build and install the DLT daemon, follow these steps:
@@ -130,7 +134,7 @@ DLT or study its internals by checking out the [design
 specifications](./doc/dlt_design_specification.md).
 
 ### Advanced Topics
-The GENIVI DLT implementation is capable of by far more than to "just" send log
+The COVESA DLT implementation is capable of by far more than to "just" send log
 message. You will get an overview of advanced features in this section. Follow
 the links to learn more about the respective concept.
 
@@ -187,9 +191,9 @@ Start working, best practice is to commit smaller, compilable pieces during the
 work that makes it easier to handle later on.
 
 If you want to commit your changes, create a
-[Pull Request](https://github.com/genivi/dlt-daemon/pulls) in Github. Please
+[Pull Request](https://github.com/covesa/dlt-daemon/pulls) in Github. Please
 make sure to follow the
-[Rules for commit messages](https://at.projects.genivi.org/wiki/display/PROJ/Rules+for+Commit+Messages)
+[Rules for commit messages](https://at.projects.covesa.org/wiki/display/PROJ/Rules+for+Commit+Messages)
 
 ### Coding Rules
 
@@ -213,7 +217,7 @@ For reference to clang-format, you can check with:
 ## Known issues
 
 List of open issues can be found on
-[Github](https://github.com/GENIVI/dlt-daemon/issues)
+[Github](https://github.com/COVESA/dlt-daemon/issues)
 
 - DLT library: Usage of dlt\_user\_log\_write\_float64() and DLT\_FLOAT64()
   leads to "Illegal instruction (core dumped)" on ARM target.
@@ -239,4 +243,4 @@ file in src/core\_dump\_handler/cityhash\_c.
 Methner, Michael <mmethner@de.adit-jv.com>,
 Le Van, Khanh <Khanh.LeVan@vn.bosch.com>
 
-![alt text](doc/images/genivilogo.png "GENIVI")
+![alt text](doc/images/covesa-logo.png "COVESA logo")

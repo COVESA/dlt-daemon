@@ -720,7 +720,7 @@ Back to [README.md](../README.md)
 
    * Added unit and functional tests
    * Fixed copyright doxygen comments
-   * Updated license headers to latest GENIVI license policy
+   * Updated license headers to latest COVESA license policy
    * Renamed and cleanup further files to comply with licensing requirements
    * dlt-control: Check for return values
    * dlt-daemon: Explicitly set the default loggingLevel to LOG_INFO

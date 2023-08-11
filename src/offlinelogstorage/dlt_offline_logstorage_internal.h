@@ -14,7 +14,7 @@
  * \author Aditya Paluri <venkataaditya.paluri@in.bosch.com> ADIT 2017
  *
  * \file: dlt_offline_logstorage_internal.h
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*******************************************************************************

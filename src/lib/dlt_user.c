@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -3465,6 +3465,53 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
     return DLT_RETURN_OK;
 }
+#else  /* DLT_NETWORK_TRACE_ENABLE not set */
+DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
+                                                DltNetworkTraceType nw_trace_type,
+                                                uint16_t header_len,
+                                                void *header,
+                                                uint16_t payload_len,
+                                                void *payload)
+{
+    /**
+     *  vsomeip uses the DLT_TRACE_NETWORK_SEGMENTED macro that calls this function.
+     *  It's not possible to rewrite this macro directly to a no-op,
+     *  because the macro is used on vsomeip side and there our defines are not set.
+     *  Add an empty function to the dlt-lib to avoid a broken build.
+     */
+    (void)handle;
+    (void)nw_trace_type;
+    (void)header_len;
+    (void)header;
+    (void)payload_len;
+    (void)payload;
+    return DLT_RETURN_LOGGING_DISABLED;
+}
+
+DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
+                                                DltNetworkTraceType nw_trace_type,
+                                                uint16_t header_len,
+                                                void *header,
+                                                uint16_t payload_len,
+                                                void *payload,
+                                                int allow_truncate)
+{
+    /**
+     *  vsomeip uses the DLT_TRACE_NETWORK_TRUNCATED macro that calls this function.
+     *  It's not possible to rewrite this macro directly to a no-op,
+     *  because the macro is used on vsomeip side and there our defines are not set.
+     *  Add an empty function to the dlt-lib to avoid a broken build.
+     */
+    (void)handle;
+    (void)nw_trace_type;
+    (void)header_len;
+    (void)header;
+    (void)payload_len;
+    (void)payload;
+    (void)allow_truncate;
+    return DLT_RETURN_LOGGING_DISABLED;
+}
+
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)
@@ -4957,15 +5004,15 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 
 int dlt_start_threads()
 {
-    struct timespec time_to_wait;
+    struct timespec time_to_wait, single_wait;
     struct timespec now;
-    int signal_status;
+    int signal_status = 1;
     atomic_bool dlt_housekeeper_running = false;
 
     /*
     * Configure the condition varibale to use CLOCK_MONOTONIC.
     * This makes sure we're protected against changes in the system clock
-    */
+     */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
@@ -4982,7 +5029,7 @@ int dlt_start_threads()
     clock_gettime(CLOCK_MONOTONIC, &now);
     /* wait at most 10s */
     time_to_wait.tv_sec = now.tv_sec + 10;
-    time_to_wait.tv_nsec = 0;
+    time_to_wait.tv_nsec = now.tv_nsec;
 
     /*
     * wait until the house keeper is up and running
@@ -4993,19 +5040,30 @@ int dlt_start_threads()
     * (spurious wakeup)
     * To protect against this, a while loop with a timeout is added
     * */
-    while (!dlt_housekeeper_running 
-        && now.tv_sec <= time_to_wait.tv_sec) {
+    while (!dlt_housekeeper_running
+           && now.tv_sec <= time_to_wait.tv_sec) {
+
+        /*
+        * wait 500ms at a time
+        * this makes sure we don't block too long
+        * even if we missed the signal
+         */
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        single_wait.tv_sec = now.tv_sec;
+        single_wait.tv_nsec = now.tv_nsec + 500000000;
+
+        // pthread_cond_timedwait has to be called on a locked mutex
+        pthread_mutex_lock(&dlt_housekeeper_running_mutex);
         signal_status = pthread_cond_timedwait(
-                &dlt_housekeeper_running_cond,
-                &dlt_housekeeper_running_mutex,
-                &time_to_wait);
+            &dlt_housekeeper_running_cond,
+            &dlt_housekeeper_running_mutex,
+            &single_wait);
+        pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
         /* otherwise it might be a spurious wakeup, try again until the time is over */
         if (signal_status == 0) {
             break;
         }
-
-        clock_gettime(CLOCK_MONOTONIC, &now);
      }
 
      if (signal_status != 0 && !dlt_housekeeper_running) {

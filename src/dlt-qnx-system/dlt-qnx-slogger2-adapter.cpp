@@ -15,7 +15,7 @@
  * \author Felix Herrmann <fherrmann@de.adit-jv.com> ADIT 2020
  *
  * \file: dlt-qnx-slogger2-adapter.cpp
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 #include <cerrno>
 #include <cstring>

@@ -3,7 +3,7 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
  *
  *
  * \copyright
@@ -11,7 +11,7 @@
  * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 cc_defaults {
@@ -195,8 +195,111 @@ cc_binary {
     shared_libs: [
         "libdlt",
         "liblog",
+        "libjsoncpp",
+    ],
+    include_dirs: [
+        "system/logging/liblog/include",
+        "external/jsoncpp/include",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-control",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/console/dlt-control-common.c",
+        "src/console/dlt-control.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-convert",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/console/dlt-convert.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-test-non-verbose",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/tests/dlt-test-non-verbose.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-test-logstorage",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/tests/dlt-test-logstorage.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-test-multi-process",
+    defaults: ["dlt_defaults"],
+
+    srcs: [
+        "src/tests/dlt-test-multi-process.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
+    ],
+}
+
+cc_binary {
+
+    name: "dlt-logstorage-ctrl",
+    defaults: ["dlt_defaults"],
+
+    local_include_dirs: [
+        "systemd/3rdparty/",
+        "src/console",
+        "src/console/logstorage",
+    ],
+
+    srcs: [
+        "src/console/dlt-control-common.c",
+        "src/console/logstorage/dlt-logstorage-common.c",
+        "src/console/logstorage/dlt-logstorage-ctrl.c",
+    ],
+
+    shared_libs: [
+        "libc",
+        "libdlt",
     ],
 }
 
 // vim: ft=python
-

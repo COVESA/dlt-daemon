@@ -1,0 +1,18 @@
+{
+    "QTIV": {
+      "tag": "QtiVehicleHal",
+      "description": ""
+    },
+    "NETW": {
+      "tag": "NetworkSecurityConfig",
+      "description": ""
+    },
+    "PROC": {
+      "tag": "ProcessState",
+      "description": ""
+    },
+    "ZYGO": {
+      "tag": "Zygote",
+      "description": ""
+    }
+  }

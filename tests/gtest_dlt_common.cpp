@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -27,6 +27,10 @@
 #include <gtest/gtest.h>
 #include <limits.h>
 #include <syslog.h>
+
+#define MAX_LINE 200
+#define BINARY_FILE_NAME "/testfile.dlt"
+#define FILTER_FILE_NAME "/testfilter.txt"
 
 extern "C"
 {
@@ -1592,13 +1596,13 @@ TEST(t_dlt_file_open, normal)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -1614,10 +1618,10 @@ TEST(t_dlt_file_open, abnormal)
 {
 /*    DltFile file; */
 /*    / * Get PWD so file can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)]; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* Uninizialsied, expected -1 */
@@ -1634,13 +1638,13 @@ TEST(t_dlt_file_open, nullpointer)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -1661,14 +1665,14 @@ TEST(t_dlt_file_quick_parsing, normal)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
     char output[128] = "/tmp/output_testfile.txt";
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -1683,14 +1687,14 @@ TEST(t_dlt_file_quick_parsing, abnormal)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
     char output[128] = "/tmp/output_testfile.txt";
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Abnormal Use-Case, expected DLT_RETURN_WRONG_PARAMETER (-5) */
@@ -1717,13 +1721,13 @@ TEST(t_dlt_message_print_ascii, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -1750,10 +1754,10 @@ TEST(t_dlt_message_print_ascii, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)]; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -1779,13 +1783,13 @@ TEST(t_dlt_message_print_ascii, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -1815,15 +1819,15 @@ TEST(t_dlt_message_print_ascii_with_filter, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -1867,13 +1871,13 @@ TEST(t_dlt_message_print_header, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -1900,10 +1904,10 @@ TEST(t_dlt_message_print_header, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -1929,13 +1933,13 @@ TEST(t_dlt_message_print_header, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -1966,15 +1970,15 @@ TEST(t_dlt_message_print_header_with_filter, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -2018,13 +2022,13 @@ TEST(t_dlt_message_print_hex, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -2051,10 +2055,10 @@ TEST(t_dlt_message_print_hex, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -2080,13 +2084,13 @@ TEST(t_dlt_message_print_hex, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -2117,15 +2121,15 @@ TEST(t_dlt_message_print_hex_with_filter, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -2169,13 +2173,13 @@ TEST(t_dlt_message_print_mixed_plain, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -2202,10 +2206,10 @@ TEST(t_dlt_message_print_mixed_plain, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -2231,13 +2235,13 @@ TEST(t_dlt_message_print_mixed_plain, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -2268,15 +2272,15 @@ TEST(t_dlt_message_print_mixed_plain_with_filter, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -2319,13 +2323,13 @@ TEST(t_dlt_message_print_mixed_html, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -2352,10 +2356,10 @@ TEST(t_dlt_message_print_mixed_html, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -2381,13 +2385,13 @@ TEST(t_dlt_message_print_mixed_html, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -2417,15 +2421,15 @@ TEST(t_dlt_message_print_mixed_html_with_filter, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -2469,15 +2473,15 @@ TEST(t_dlt_message_filter_check, normal)
     DltFilter filter;
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected > 0 */
@@ -2507,12 +2511,12 @@ TEST(t_dlt_message_filter_check, abnormal)
 /*    DltFilter filter; */
 
     /* Get PWD so file and filter can be used*/
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    char openfilter[117]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
-/*    sprintf(openfilter, "%s/testfilter.txt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)]; */
+/*    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)]; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
+/*    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* No messages read, expected -1 */
@@ -2538,15 +2542,15 @@ TEST(t_dlt_message_filter_check, nullpointer)
     DltFilter filter;
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char openfilter[117];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
-    sprintf(openfilter, "%s/testfilter.txt", pwd);
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -2568,13 +2572,13 @@ TEST(t_dlt_message_get_extraparamters, normal)
     DltFile file;
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect >0 */
@@ -2600,10 +2604,10 @@ TEST(t_dlt_message_get_extraparamters, abnormal)
 /*    DltFile file; */
 
     /* Get PWD so file and filter can be used*/
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
@@ -2641,13 +2645,13 @@ TEST(t_dlt_message_header, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -2676,10 +2680,10 @@ TEST(t_dlt_message_header, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
     /* Get PWD so file and filter can be used*/
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
@@ -2706,13 +2710,13 @@ TEST(t_dlt_message_header, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -2759,13 +2763,13 @@ TEST(t_dlt_message_header_flags, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -2862,10 +2866,10 @@ TEST(t_dlt_message_header_flags, abnormal)
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
 
 /*    / * Get PWD so file and filter can be used* / */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114];; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];;; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
@@ -2914,13 +2918,13 @@ TEST(t_dlt_message_header_flags, nullpointer)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* NULL-Pointer, expected -1 */
@@ -3157,13 +3161,13 @@ TEST(t_dlt_message_payload, normal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */
@@ -3214,11 +3218,11 @@ TEST(t_dlt_message_payload, abnormal)
     static char text[DLT_DAEMON_TEXTSIZE];
 
     /* Get PWD so file and filter can be used*/
-    char pwd[100];
-    if (getcwd(pwd, 100) == NULL) {}
+    char pwd[MAX_LINE];
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    char  openfile[114];
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];;
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
@@ -3363,13 +3367,13 @@ TEST(t_dlt_message_set_extraparamters, normal)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expect 0 */
@@ -3394,10 +3398,10 @@ TEST(t_dlt_message_set_extraparamters, abnormal)
 {
 /*    DltFile file; */
 /*    // Get PWD so file and filter can be used */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
     /*---------------------------------------*/
 
     /* Uninizialised, expected -1 */
@@ -3432,13 +3436,13 @@ TEST(t_dlt_message_read, normal)
 {
     DltFile file;
     /* Get PWD so file can be used */
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     DltBuffer buf;
@@ -3480,13 +3484,13 @@ TEST(t_dlt_message_read, nullpointer)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     /*---------------------------------------*/
 
     DltBuffer buf;
@@ -3508,13 +3512,13 @@ TEST(t_dlt_message_argument_print, normal)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     static char text[DLT_DAEMON_TEXTSIZE];
     /*---------------------------------------*/
     uint8_t *ptr;
@@ -3566,10 +3570,10 @@ TEST(t_dlt_message_argument_print, abnormal)
 {
 /*    DltFile file; */
     /* Get PWD so file and filter can be used */
-/*    char pwd[100]; */
-/*    getcwd(pwd, 100); */
-/*    char  openfile[114]; */
-/*    sprintf(openfile, "%s/testfile.dlt", pwd); */
+/*    char pwd[MAX_LINE]; */
+/*    getcwd(pwd, MAX_LINE); */
+/*    char  openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];; */
+/*    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd); */
 /*    static char text[DLT_DAEMON_TEXTSIZE]; */
     /*---------------------------------------*/
 /*    uint8_t *ptr; */
@@ -3600,13 +3604,13 @@ TEST(t_dlt_message_argument_print, nullpointer)
 {
     DltFile file;
     /* Get PWD so file can be used*/
-    char pwd[100];
-    char openfile[114];
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
 
     /* ignore returned value from getcwd */
-    if (getcwd(pwd, 100) == NULL) {}
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s/testfile.dlt", pwd);
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
     static char text[DLT_DAEMON_TEXTSIZE];
     /*---------------------------------------*/
     uint8_t *ptr;

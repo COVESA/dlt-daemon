@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -91,18 +91,8 @@ extern "C" {
 #   define DLT_DAEMON_RINGBUFFER_MAX_SIZE  10000000/**< Ring buffer size for storing log messages while no client is connected */
 #   define DLT_DAEMON_RINGBUFFER_STEP_SIZE   500000/**< Ring buffer size for storing log messages while no client is connected */
 
-#   define DLT_DAEMON_SEND_TO_ALL     -3/**< Constant value to identify the command "send to all" */
-#   define DLT_DAEMON_SEND_FORCE      -4/**< Constant value to identify the command "send force to all" */
-
-/* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
-
-#define DLT_DAEMON_SEM_LOCK() do{\
-    while ((sem_wait(&dlt_daemon_mutex) == -1) && (errno == EINTR)) \
-        continue;       /* Restart if interrupted */ \
-    } while(false)
-
-#define DLT_DAEMON_SEM_FREE() { sem_post(&dlt_daemon_mutex); }
-extern sem_t dlt_daemon_mutex;
+#define DLT_DAEMON_SEND_TO_ALL     -3   /**< Constant value to identify the command "send to all" */
+#define DLT_DAEMON_SEND_FORCE      -4   /**< Constant value to identify the command "send force to all" */
 
 /* UDPMulticart Default IP and Port */
 #   ifdef UDP_CONNECTION_SUPPORT

@@ -3,7 +3,7 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of GENIVI Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
  *
  *
  * \copyright
@@ -17,7 +17,7 @@
  * \author Frederic Berat <fberat@de.adit-jv.com> ADIT 2015
  *
  * \file dlt-logstorage-common.h
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 #ifndef _DLT_LOGSTORAGE_COMMON_H_

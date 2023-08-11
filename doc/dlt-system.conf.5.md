@@ -28,7 +28,7 @@ The application Id used for the dlt-system process.
 
 ## ShellEnable
 
-Enable the Shell for command line injections. Be careful when you enable this feature. The user can send any kind of shell commands. The commands are executed with the rights of the dlt-system process. Dlt-system is started by default as user genivi.
+Enable the Shell for command line injections. Be careful when you enable this feature. The user can send any kind of shell commands. The commands are executed with the rights of the dlt-system process. Dlt-system is started by default as user covesa.
 
     Default: 0
 
@@ -56,7 +56,7 @@ This value defines the UDP port opened for receiving log messages from syslog. C
 
 ## JournalEnable
 
-Enable the Systemd Journal Adapter. This feature is only available, when dlt is compiled with the option "WITH_SYSTEMD_JOURNAL".  Dlt-system is started by default as user genivi, see dlt-system.service file. The user genivi must be added to one of the groups 'adm', 'wheel' or 'systemd-journal' to have access to all journal entries.
+Enable the Systemd Journal Adapter. This feature is only available, when dlt is compiled with the option "WITH_SYSTEMD_JOURNAL".  Dlt-system is started by default as user covesa, see dlt-system.service file. The user covesa must be added to one of the groups 'adm', 'wheel' or 'systemd-journal' to have access to all journal entries.
 
     Default: 0
 
@@ -204,7 +204,7 @@ Copyright (C) 2015 BMW AG. License MPL-2.0: Mozilla Public License version 2.0 <
 
 # BUGS
 
-See Github issue: <https://github.com/GENIVI/dlt-daemon/issues>
+See Github issue: <https://github.com/COVESA/dlt-daemon/issues>
 
 # SEE ALSO
 

@@ -158,7 +158,7 @@ Copyright (C) 2019 Advanced Driver Information Technology, Bosch and DENSO. Lice
 
 # BUGS
 
-See Github issue: <https://github.com/GENIVI/dlt-daemon/issues>
+See Github issue: <https://github.com/COVESA/dlt-daemon/issues>
 
 # SEE ALSO
 

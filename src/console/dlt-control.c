@@ -3,14 +3,14 @@
  *
  * Copyright (C) 2011-2015, BMW AG
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see http://www.genivi.org/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
@@ -494,7 +494,14 @@ int main(int argc, char *argv[])
     {
         g_dltclient.mode = DLT_CLIENT_MODE_UNIX;
         g_dltclient.socketPath = NULL;
-        dlt_parse_config_param("ControlSocketPath", &g_dltclient.socketPath);
+        if (dlt_parse_config_param("ControlSocketPath",
+                &g_dltclient.socketPath) == DLT_RETURN_ERROR) {
+            /* Failed to read from conf, copy default */
+            if (dlt_client_set_socket_path(&g_dltclient, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1) {
+                pr_error("set socket path didn't succeed\n");
+                return -1;
+            }
+        }
     }
     else {
         g_dltclient.mode = DLT_CLIENT_MODE_TCP;
@@ -507,8 +514,6 @@ int main(int argc, char *argv[])
                 pr_error("set server ip didn't succeed\n");
                 return -1;
             }
-
-
 
         if (g_dltclient.servIP == 0) {
             /* no hostname selected, show usage and terminate */
@@ -525,8 +530,6 @@ int main(int argc, char *argv[])
                 pr_error("set serial device didn't succeed\n");
                 return -1;
             }
-
-
 
         if (g_dltclient.serialDevice == 0) {
             /* no serial device name selected, show usage and terminate */
