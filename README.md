@@ -243,4 +243,4 @@ file in src/core\_dump\_handler/cityhash\_c.
 Methner, Michael <mmethner@de.adit-jv.com>,
 Le Van, Khanh <Khanh.LeVan@vn.bosch.com>
 
-![alt text](https://covesa.global/sites/all/themes/resp_1/images/covesa-logo.png)
+![alt text](doc/images/covesa-logo.png "COVESA logo")
