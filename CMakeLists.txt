@@ -14,7 +14,7 @@
 #######
 
 cmake_minimum_required(VERSION 3.3)
-project(automotive-dlt VERSION 2.18.9)
+project(automotive-dlt VERSION 2.18.10)
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
