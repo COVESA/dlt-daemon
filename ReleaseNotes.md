@@ -4,9 +4,44 @@ Back to [README.md](../README.md)
 
 ## Version
 
-2.18.9 STABLE
+2.18.10 STABLE
 
 ## Changes
+
+### 2.18.10
+## What's Changed
+   * Update ReleaseNotes and version to v2.18.9 by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/468
+   * Update status badges on README.md by @michael-methner in https://github.com/COVESA/dlt-daemon/pull/467
+   * logstorage: Adds option to write logs in gzip format by @LiquidityC in https://github.com/COVESA/dlt-daemon/pull/442
+   * Re-Initialize internal logging in daemon mode only by @lvklevankhanh in https://github.com/COVESA/dlt-daemon/pull/459
+   * Remove use of DLT_LOG in signal handler by @michael-methner in https://github.com/COVESA/dlt-daemon/pull/472
+   * Update gtest_dlt_daemon_multiple_files_logging.cpp by @LocutusOfBorg in https://github.com/COVESA/dlt-daemon/pull/481
+   * Update AUTOSAR standard link by @lucafrance in https://github.com/COVESA/dlt-daemon/pull/480
+   * cmake: set version to 2.18.9 by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/478
+   * Fix macro code  to use boolean value in while instruction (false) by @michael-methner in https://github.com/COVESA/dlt-daemon/pull/469
+   * dlt_user_shared: Add timeout to writev by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/385
+   * build: add static lib only if necessary by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/479
+   * Update CMakeLists.txt by @LocutusOfBorg in https://github.com/COVESA/dlt-daemon/pull/482
+   * watchdog: improve dlt watchdog by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/470
+   * log-level-config: add option to configure log levels by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/474
+   * gtest_dlt_daemon_gateway: dlt-daemon run without dlt_passive.conf file by @lti9hc in https://github.com/COVESA/dlt-daemon/pull/487
+   * dlt_unit_test: Fix and improve quality of unit tests by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/494
+   * dlt-qnx-system improvement by @lvklevankhanh in https://github.com/COVESA/dlt-daemon/pull/495
+   * gtest: Init submodule and update version by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/497
+   * dlt-qnx-system: prevent message loss in high load situations by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/490
+   * Fix compile error stringop-truncation with GCC 9.4 by @michael-methner in https://github.com/COVESA/dlt-daemon/pull/499
+   * Update README.md by @lvklevankhanh in https://github.com/COVESA/dlt-daemon/pull/503
+   * dlt-coverage: Add coverage report generator for dlt by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/501
+   * dlt-system: move journal reading to its own thread by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/471
+   * Switch from GENIVI to COVESA by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/511
+   * Update CMakeLists.txt: set required std version to gnu++14 by @LocutusOfBorg in https://github.com/COVESA/dlt-daemon/pull/504
+   * cmake: Policy CMP0115 set to OLD behavior for dlt-daemon with cmake >= 3.20 by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/510
+   * fix usage of pthread_cond_timedwait by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/491
+   * DLT Upstream for minor release by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/515
+   * cmake: disable network trace by @alexmohr in https://github.com/COVESA/dlt-daemon/pull/477
+   * doc: add COVESA logo image by @minminlittleshrimp in https://github.com/COVESA/dlt-daemon/pull/516
+
+   **Full Changelog**: https://github.com/COVESA/dlt-daemon/compare/v2.18.9...v2.18.10
 
 ### 2.18.9
 
