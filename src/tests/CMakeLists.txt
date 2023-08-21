@@ -34,9 +34,6 @@ endif()
 #TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage
 if (NOT WITH_DLT_DISABLE_MACRO)
     set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose)
-    if(WITH_DLT_CXX11_EXT)
-        set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension)
-    endif()
 endif()
 
 if(WITH_DLT_QNX_SYSTEM)
