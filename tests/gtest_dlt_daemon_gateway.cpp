@@ -456,8 +456,8 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
     char ecuid[] = "ECU2";
     uint32_t sid = DLT_SERVICE_ID_GET_LOG_INFO;
     uint8_t status = 7;
-    uint16_t count_app_ids = 1;
-    uint16_t count_context_ids = 1;
+    uint16_t count_app_ids = DLT_HTOLE_16(1);
+    uint16_t count_context_ids =DLT_HTOLE_16(1);
     const char *apid = "LOG";
     const char *ctid = "TEST";
     const char *com = "remo";
@@ -531,6 +531,9 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
 
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
+#if (BYTE_ORDER == BIG_ENDIAN)
+    msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
+#endif
     msg.standardheader->mcnt = 0;
 
     dlt_set_id(msg.headerextra.ecu, ecuid);
