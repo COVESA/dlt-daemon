@@ -1,0 +1,33 @@
+name: CMake QEMU s390x-focal
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup multiarch/qemu-user-static
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset
+    - name: ubuntu-core:s390x-focal
+      uses: docker://multiarch/ubuntu-core:s390x-focal
+      with:
+        args: >
+          bash -c "
+            TZ=America/Los_Angeles &&
+            ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &&
+            apt-get update &&
+            apt -y install git cmake g++ zlib1g-dev libdbus-glib-1-dev build-essential &&
+            git clone https://github.com/COVESA/dlt-daemon.git &&
+            cd dlt-daemon &&
+            mkdir build &&
+            cd build &&
+            cmake .. -DWITH_DLT_UNIT_TESTS=ON &&
+            make -j 16 &&
+            ctest
+          "
