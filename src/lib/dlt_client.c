@@ -1276,8 +1276,9 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
     }
 
     /* count_app_ids */
-    resp->log_info_type.count_app_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
-                                                                              &rp_count);
+    int16_t ret = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
+    if (ret >= 0)
+        resp->log_info_type.count_app_ids = ret;
 
     resp->log_info_type.app_ids = (AppIDsType *)calloc
             (resp->log_info_type.count_app_ids, sizeof(AppIDsType));
@@ -1294,8 +1295,9 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
         dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, app->app_id, DLT_ID_SIZE);
 
         /* count_con_ids */
-        app->count_context_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
-                                                                       &rp_count);
+        ret = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
+        if (ret >= 0)
+            app->count_context_ids = ret;
 
         app->context_id_info = (ContextIDsInfoType *)calloc
                 (app->count_context_ids, sizeof(ContextIDsInfoType));

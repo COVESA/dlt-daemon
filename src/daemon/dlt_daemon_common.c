@@ -1635,7 +1635,10 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
     if (fd != NULL) {
         /* Close and delete file */
         fclose(fd);
-        unlink(filename);
+        if (unlink(filename) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                    __func__, strerror(errno));
+        }
     }
 
     fd = fopen(filename1, "r");

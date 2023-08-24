@@ -179,6 +179,7 @@ void getFileCreationDate2(const char *file, int *ok, char *date)
 
     if (-1 == stat(file, &st)) {
         *ok = 0;
+        date = 0;
         return;
     }
 

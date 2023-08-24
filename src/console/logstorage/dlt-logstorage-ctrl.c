@@ -456,7 +456,8 @@ static int parse_args(int argc, char *argv[])
             set_default_path(optarg);
             break;
         case 't':
-            set_timeout((int) strtol(optarg, NULL, 10));
+            if (optarg != NULL)
+                set_timeout((int) strtol(optarg, NULL, 10));
             break;
         case 'S':
         {
@@ -481,7 +482,7 @@ static int parse_args(int argc, char *argv[])
             break;
         case 'p':
 
-            if (strlen(optarg) >= DLT_MOUNT_PATH_MAX) {
+            if ((optarg != NULL) && (strlen(optarg) >= DLT_MOUNT_PATH_MAX)) {
                 pr_error("Mount path '%s' too long\n", optarg);
                 return -1;
             }
@@ -489,7 +490,8 @@ static int parse_args(int argc, char *argv[])
             set_default_path(optarg);
             break;
         case 'c':
-            set_default_event_type(strtol(optarg, NULL, 10));
+            if (optarg != NULL)
+                set_default_event_type(strtol(optarg, NULL, 10));
             break;
         case 'v':
             set_verbosity(1);

@@ -385,7 +385,7 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
         case DLT_CONFIG_FILE_NEW_DATA:     /* store str1 and str2 as new data for section */
 
             if (is_section_valid == 0)
-                ret = dlt_config_file_set_section_data(file, str1, str2);
+                dlt_config_file_set_section_data(file, str1, str2);
 
             break;
         default:     /* something is wrong with the line */

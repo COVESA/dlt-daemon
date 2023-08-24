@@ -202,7 +202,11 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
 {
     int n = 0;
     socklen_t m = sizeof(n);
-    getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *)&n, &m);
+    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *)&n, &m) < 0) {
+        dlt_vlog(LOG_ERR,
+                 "%s: socket get failed!\n", __func__);
+        return -errno;
+    }
 
     return n;
 }
@@ -228,4 +232,3 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
 
     return DLT_DAEMON_ERROR_OK;
 }
-

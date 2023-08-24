@@ -622,7 +622,10 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                          "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
                          __func__, absolute_file_path, num_log_files,
                          config->num_files);
-                remove(absolute_file_path);
+
+                if (remove(absolute_file_path) != 0)
+                    dlt_log(LOG_ERR, "Could not remove file\n");
+
                 free((*head)->name);
                 (*head)->name = NULL;
                 *head = n->next;
@@ -745,8 +748,10 @@ DLT_STATIC int dlt_logstorage_write_to_log(void *ptr, size_t size, size_t nmemb,
 DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
                                                int ret)
 {
-    if (config == NULL)
+    if (config == NULL) {
         dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
+        return;
+    }
 
     if (ret <= 0) {
         if (config->gzip_compression) {
@@ -1267,11 +1272,6 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
     }
 
     footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
-    if (footer == NULL)
-    {
-        dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
-        return -1;
-    }
     msg_size = size1 + size2 + size3;
     remain_cache_size = cache_size - footer->offset;
 
@@ -1407,11 +1407,6 @@ int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
         }
 
         footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
-        if (footer == NULL)
-        {
-            dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
-            return -1;
-        }
 
         /* sync cache data to file */
         if (footer->wrap_around_cnt < 1)

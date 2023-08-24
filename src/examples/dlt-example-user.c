@@ -320,7 +320,8 @@ int main(int argc, char *argv[])
 
     if (mvalue) {
         printf("Set log mode to %d\n", atoi(mvalue));
-        dlt_set_log_mode(atoi(mvalue));
+        if (dlt_set_log_mode(atoi(mvalue)) == DLT_RETURN_ERROR)
+            printf("Set log mode failed\n");
     }
 
     if (gflag)
@@ -463,4 +464,3 @@ void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE], uint8_t l
 
     printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n", text, log_level, trace_status);
 }
-

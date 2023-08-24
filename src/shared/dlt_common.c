@@ -1558,7 +1558,10 @@ DltReturnValue dlt_file_read(DltFile *file, int verbose)
     /* read header */
     if (dlt_file_read_header(file, verbose) < DLT_RETURN_OK) {
         /* go back to last position in file */
-        fseek(file->handle, file->file_position, SEEK_SET);
+        if (0 != fseek(file->handle, file->file_position, SEEK_SET)) {
+            dlt_vlog(LOG_WARNING, "Seek failed to file_position %ld \n",
+                    file->file_position);
+        }
         return DLT_RETURN_ERROR;
     }
 
@@ -4398,8 +4401,11 @@ int dlt_execute_command(char *filename, char *command, ...)
     {
         ret = -1;
     }
-    else { /* parent */
-        wait(&ret);
+    else /* parent */
+    {
+        if (wait(&ret) == -1) {
+            err(-1, "%s failed on wait()", __func__);
+        }
     }
 
     free(args);
@@ -4410,7 +4416,7 @@ char *get_filename_ext(const char *filename)
 {
     if (filename == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
-        return NULL;
+        return "";
     }
 
     char *dot = strrchr(filename, '.');

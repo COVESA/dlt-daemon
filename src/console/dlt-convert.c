@@ -134,8 +134,10 @@ void empty_dir(const char *dir)
     char tmp_filename[FILENAME_SIZE] = { 0 };
     uint32_t i;
 
-    if (dir == NULL)
+    if (dir == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
+        return;
+    }
 
     if (stat(dir, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {

@@ -145,7 +145,10 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     addr.sun_family = AF_UNIX;
     memcpy(addr.sun_path, sock_path, sizeof(addr.sun_path));
 
-    unlink(sock_path);
+    if (unlink(sock_path) != 0) {
+        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                __func__, strerror(errno));
+    }
 
     /* set appropriate access permissions */
     old_mask = umask(mask);

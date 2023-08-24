@@ -1090,6 +1090,8 @@ DltReturnValue dlt_free(void)
                             break;
                     }
                     if (bytes_read >= 0) {
+                        dlt_vlog(LOG_DEBUG, "%s - %d: %d bytes read from resend buffer\n",
+                                __func__, __LINE__, (int)bytes_read);
                         if (!bytes_read)
                             break;
                         dlt_vlog(LOG_NOTICE, "[%s] data is still readable... [%zd] bytes read\n",
@@ -4754,7 +4756,8 @@ DltReturnValue dlt_user_log_check_user_message(void)
                 {
                     dlt_log(LOG_WARNING, "Invalid user message type received!\n");
                     /* Ignore result */
-                    dlt_receiver_remove(receiver, sizeof(DltUserHeader));
+                    if (dlt_receiver_remove(receiver, sizeof(DltUserHeader)) == -1)
+                        dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
                     /* In next invocation of while loop, a resync will be triggered if additional data was received */
                 }
                 break;
