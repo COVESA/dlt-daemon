@@ -91,7 +91,10 @@ void dlt_logstorage_log_file_name(char *log_file_name,
     /* create log file name */
     memset(log_file_name, '\0', DLT_MOUNT_PATH_MAX * sizeof(char));
     dlt_logstorage_concat_logfile_name(log_file_name, filter_config->file_name);
-    dlt_logstorage_concat_logfile_name(log_file_name, &file_config->logfile_delimiter);
+   
+    char logfile_delimiter[2] = { '\0' };
+    logfile_delimiter[0] = file_config->logfile_delimiter;
+    dlt_logstorage_concat_logfile_name(log_file_name, logfile_delimiter);
 
     snprintf(file_index, 10, "%d", idx);
 
