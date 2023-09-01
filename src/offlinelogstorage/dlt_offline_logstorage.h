@@ -69,8 +69,8 @@
 
 #define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES              2 /* sync logstorage caches */
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN             15 /* Maximum size for key */
-#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN       50 /* Maximum file name length of the log file */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
+#define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   100 /* Maximum file name length of the log file including path under mount point */
 
 #define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN       4
 #define DLT_OFFLINE_LOGSTORAGE_GZ_FILE_EXTENSION_LEN    7
@@ -85,17 +85,16 @@
                                                     DLT_OFFLINE_LOGSTORAGE_INDEX_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
 
-#define DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN 50
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME    "dlt_logstorage.conf"
 
 /* +3 because of device number and \0 */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN (DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + \
-                                             DLT_OFFLINE_LOGSTORAGE_CONFIG_DIR_PATH_LEN + 3)
+                                             DLT_MOUNT_PATH_MAX + 3)
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX(A, B)   ((A) > (B) ? (A) : (B))
 #define DLT_OFFLINE_LOGSTORAGE_MIN(A, B)   ((A) < (B) ? (A) : (B))
 
-#define DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS     5
+#define DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS           5
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_NUM          8
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION "FILTER"
@@ -114,6 +113,18 @@
 #define DLT_LOGSTORAGE_SYNC_ON_FILE_SIZE              (1 << 5) /* sync on file size reached */
 
 #define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S)&(s))
+
+/* Offline Logstorage overwrite strategies */
+#define DLT_LOGSTORAGE_OVERWRITE_ERROR         -1 /* error case */
+#define DLT_LOGSTORAGE_OVERWRITE_UNSET          0 /* strategy not set */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD    1 /* default, discard old */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW   (1 << 1) /* discard new */
+
+/* Offline Logstorage disable network routing */
+#define DLT_LOGSTORAGE_DISABLE_NW_ERROR         -1 /* error case */
+#define DLT_LOGSTORAGE_DISABLE_NW_UNSET          0 /* not set */
+#define DLT_LOGSTORAGE_DISABLE_NW_OFF            1 /* default, enable network routing */
+#define DLT_LOGSTORAGE_DISABLE_NW_ON            (1 << 1) /* disable network routing */
 
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
@@ -135,6 +146,7 @@ typedef struct
     char logfile_delimiter;             /* Choice of delimiter */
     unsigned int logfile_maxcounter;    /* Maximum file index counter */
     unsigned int logfile_counteridxlen; /* File index counter length */
+    int logfile_optional_counter;       /* Don't append counter for num_files=1 */
 } DltLogStorageUserConfig;
 
 typedef struct DltLogStorageFileList
@@ -170,6 +182,8 @@ struct DltLogStorageFilterConfig
     unsigned int file_size;         /* MAX File size of storage file configured for filter */
     unsigned int num_files;         /* MAX number of storage files configured for filters */
     int sync;                       /* Sync strategy */
+    int overwrite;                  /* Overwrite strategy */
+    int skip;                       /* Flag to skip file logging if DISCARD_NEW */
     char *ecuid;                    /* ECU identifier */
     unsigned int gzip_compression;  /* Toggle if log files should be gzip compressed */
     /* callback function for filter configurations */
@@ -202,6 +216,7 @@ struct DltLogStorageFilterConfig
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
     DltLogStorageFileList *records; /* File name list */
+    int disable_network_routing;    /* Flag to disable routing to network client */
 };
 
 typedef struct DltLogStorageFilterList DltLogStorageFilterList;
@@ -214,6 +229,10 @@ struct DltLogStorageFilterList
     DltLogStorageFilterList *next;    /* Pointer to next */
 };
 
+typedef enum {
+    DLT_LOGSTORAGE_CONFIG_FILE = 0,   /* Use dlt-logstorage.conf file from device */
+} DltLogStorageConfigMode;
+
 typedef struct
 {
     DltLogStorageFilterList *config_list; /* List of all filters */
@@ -222,9 +241,11 @@ typedef struct
     char device_mount_point[DLT_MOUNT_PATH_MAX + 1]; /* Device mount path */
     unsigned int connection_type;      /* Type of connection */
     unsigned int config_status;        /* Status of configuration */
+    int prepare_errors;                /* number of prepare errors */
     int write_errors;                  /* number of write errors */
     DltNewestFileName *newest_file_list; /* List of newest file name */
     int maintain_logstorage_loglevel;  /* Permission to maintain the logstorage loglevel*/
+    DltLogStorageConfigMode config_mode;                   /* Configuration Mechanism */
 } DltLogStorage;
 
 typedef struct {
@@ -253,9 +274,11 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_FILESIZE,
     DLT_LOGSTORAGE_FILTER_CONF_NOFILES,
     DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR,
+    DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR,
     DLT_LOGSTORAGE_FILTER_CONF_ECUID,
     DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
     DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION,
+    DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK,
     DLT_LOGSTORAGE_FILTER_CONF_COUNT
 } DltLogstorageFilterConfType;
 
@@ -270,7 +293,7 @@ typedef enum {
  * @return               0 on success, -1 on error
  */
 int dlt_logstorage_device_connected(DltLogStorage *handle,
-                                    char *mount_point);
+                                    const char *mount_point);
 
 /**
  * dlt_logstorage_device_disconnected
@@ -330,6 +353,7 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key);
  * @param size2     Size of extended message body
  * @param data3     Data buffer of message body
  * @param size3     Size of message body
+ * @param disable_nw Flag to disable network routing
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,
@@ -339,7 +363,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
                          unsigned char *data2,
                          int size2,
                          unsigned char *data3,
-                         int size3);
+                         int size3,
+                         int *disable_nw);
 
 /**
  * dlt_logstorage_sync_caches

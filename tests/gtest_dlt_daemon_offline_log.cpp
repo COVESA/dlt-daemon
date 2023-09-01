@@ -10,6 +10,8 @@
  * History     : 30-Jun-2016
  */
 #include <gtest/gtest.h>
+#include <regex>
+#include <fstream>
 
 int connectServer(void);
 
@@ -559,9 +561,9 @@ TEST(t_dlt_logstorage_device_connected, normal)
     handle.write_errors = 0;
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
-    strncpy(handle.device_mount_point, "/tmp", DLT_MOUNT_PATH_MAX);
+    handle.config_mode = DLT_LOGSTORAGE_CONFIG_FILE;
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_connected(&handle, handle.device_mount_point));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_connected(&handle, "/tmp"));
 }
 
 TEST(t_dlt_logstorage_device_connected, null)
@@ -707,12 +709,8 @@ TEST(t_dlt_logstorage_write, normal)
     char file_name[] = "file_name";
     DltLogStorage handle;
     DltLogStorageUserConfig uconfig;
-    unsigned char data1[] = "123";
-    int size1 = 3;
-    unsigned char data2[] = "123";
-    int size2 = 3;
-    unsigned char data3[] = "123";
-    int size3 = 3;
+    unsigned char data[] = "123";
+    int size = 3;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
@@ -727,16 +725,43 @@ TEST(t_dlt_logstorage_write, normal)
     char key1[] = "::5678\000\000\000\000";
     char key2[] = ":1234:5678";
     int num_keys = 1;
+    int disable_nw = 0;
+
+    DltMessage msg;
+    DltUserHeader userheader;
+    int log_level = 4;
+    dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG);
+    dlt_message_init(&msg, 0);
+    msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
+    dlt_set_storageheader(msg.storageheader, ecuid);
+    msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
+    msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1|DLT_HTYP_UEH;
+    msg.standardheader->mcnt = 0;
+    dlt_message_set_extraparameters(&msg, 0);
+    msg.extendedheader = (DltExtendedHeader *)(msg.headerbuffer +
+                         sizeof(DltStorageHeader) +
+                         sizeof(DltStandardHeader) +
+                         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+    msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+                               ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
+    msg.extendedheader->noar = 1;
+    dlt_set_id(msg.extendedheader->apid, apid);
+    dlt_set_id(msg.extendedheader->ctid, ctid);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(handle.config_list)));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write(&handle, &uconfig, data1, size1, data2, size2, data3, size3));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write(&handle, &uconfig,
+                                             (unsigned char*)&(userheader), sizeof(DltUserHeader),
+                                             msg.headerbuffer + sizeof(DltStorageHeader),
+                                             msg.headersize - sizeof(DltStorageHeader),
+                                             data, size, &disable_nw));
+    dlt_message_free(&msg, 0);
 }
 
 TEST(t_dlt_logstorage_write, null)
 {
-    EXPECT_EQ(0, dlt_logstorage_write(NULL, NULL, NULL, 1, NULL, 1, NULL, 1));
+    EXPECT_EQ(0, dlt_logstorage_write(NULL, NULL, NULL, 1, NULL, 1, NULL, 1, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sync_caches*/
@@ -772,24 +797,73 @@ TEST(t_dlt_logstorage_log_file_name, normal)
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     file_config.logfile_delimiter = '/';
     file_config.logfile_maxcounter = 0;
-    file_config.logfile_timestamp = 1;
+    file_config.logfile_timestamp = 0;
     file_config.logfile_counteridxlen = 10;
-    int cmpRes = 0;
     char name[] = "log";
 
     DltLogStorageFilterConfig filter_config;
     memset(&filter_config, 0, sizeof(filter_config));
     filter_config.file_name = &name[0];
 
-    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, 0);
-    cmpRes = strncmp(log_file_name, "log/0000000000", 14);
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 10, 0);
+    EXPECT_EQ(std::string("log/0000000000.dlt"), log_file_name);
 
-    EXPECT_EQ(0, cmpRes);
+    file_config.logfile_counteridxlen = 3;
+    file_config.logfile_delimiter = '_';
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 9, 98);
+    EXPECT_EQ(std::string("log_098.dlt"), log_file_name);
+}
+
+TEST(t_dlt_logstorage_log_file_name, tmsp)
+{
+    char log_file_name[DLT_MOUNT_PATH_MAX] = { '\0' };
+    DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
+    file_config.logfile_delimiter = '_';
+    file_config.logfile_maxcounter = 9;
+    file_config.logfile_timestamp = 1;
+    file_config.logfile_counteridxlen = 2;
+    char name[] = "log";
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "log", 8,  4);
+
+    // log_04_20210810-094602.dlt
+    std::regex r("log_04_\\d{8}-\\d{6}\\.dlt");
+    std::cmatch m;
+    EXPECT_TRUE(std::regex_search(log_file_name, m, r));
+}
+
+TEST(t_dlt_logstorage_log_file_name, optional_index)
+{
+    char log_file_name[DLT_MOUNT_PATH_MAX];
+    DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
+    file_config.logfile_delimiter = '_';
+    file_config.logfile_maxcounter = 1;
+    file_config.logfile_timestamp = 0;
+    file_config.logfile_counteridxlen = 4;
+    file_config.logfile_optional_counter = true;
+    char name[] = "APID";
+
+    DltLogStorageFilterConfig filter_config;
+    memset(&filter_config, 0, sizeof(filter_config));
+    filter_config.file_name = &name[0];
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "APID", 1, 0);
+    EXPECT_EQ(std::string("APID.dlt"), log_file_name);
+
+    dlt_logstorage_log_file_name(log_file_name, &file_config, &filter_config, "APID", 2, 0);
+    EXPECT_EQ(std::string("APID_0000.dlt"), log_file_name);
 }
 
 TEST(t_dlt_logstorage_log_file_name, null)
 {
-    dlt_logstorage_log_file_name(NULL, NULL, NULL, 0);
+    char name[] = "log";
+    dlt_logstorage_log_file_name(NULL, NULL, NULL, name, 0, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_sort_file_name*/
@@ -946,7 +1020,7 @@ TEST(t_dlt_logstorage_rearrange_file_name, null)
 TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -973,7 +1047,7 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, null)
 TEST(t_dlt_logstorage_storage_dir_info, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -998,7 +1072,8 @@ TEST(t_dlt_logstorage_storage_dir_info, null)
 TEST(t_dlt_logstorage_open_log_file, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
+    file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1013,19 +1088,26 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     config.records = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
+    config.file_size = 50;
+    char tmp_file[100] = "";
 
-    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, false));
+    EXPECT_STREQ("Test_01.dlt", config.working_file_name);
+    EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_open_log_file(&config, &file_config, path, 1, true, true));
+    EXPECT_STREQ("Test_01.dlt", config.working_file_name);
+    sprintf(tmp_file, "%s/%s", path, config.working_file_name);
+    remove(tmp_file);
 }
 TEST(t_dlt_logstorage_open_log_file, null)
 {
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_open_log_file(NULL, NULL, NULL, 0, true));
+    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_open_log_file(NULL, NULL, NULL, 0, true, false));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_prepare_on_msg*/
 TEST(t_dlt_logstorage_prepare_on_msg, normal1)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1054,7 +1136,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
 TEST(t_dlt_logstorage_prepare_on_msg, normal2)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1096,7 +1178,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
 TEST(t_dlt_logstorage_prepare_on_msg, normal3)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1145,7 +1227,7 @@ TEST(t_dlt_logstorage_prepare_on_msg, null)
 TEST(t_dlt_logstorage_write_on_msg, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1173,9 +1255,13 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
+    char tmp_file[100] = "";
+
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path,
               data1, size, data2, size, data3, size));
+    sprintf(tmp_file, "%s/%s", path, config.working_file_name);
+    remove(tmp_file);
 }
 
 #ifdef DLT_LOGSTORAGE_USE_GZIP
@@ -1225,10 +1311,11 @@ TEST(t_dlt_logstorage_write_on_msg, null)
 TEST(t_dlt_logstorage_sync_on_msg, normal)
 {
     DltLogStorageFilterConfig config;
+    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     DltLogStorageUserConfig file_config;
+    memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
     char apids;
     char ctids;
-    memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     config.apids = &apids;
     config.ctids = &ctids;
     config.file_name = (char *)"Test";
@@ -1250,7 +1337,7 @@ TEST(t_dlt_logstorage_sync_on_msg, null)
 TEST(t_dlt_logstorage_prepare_msg_cache, normal)
 {
     DltLogStorageUserConfig file_config;
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 1;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
@@ -1272,6 +1359,10 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     config.working_file_name = NULL;
     config.wrap_id = 0;
     g_logstorage_cache_max = 16;
+    newest_info.file_name = (char *)"Test";
+    newest_info.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_info.wrap_id = 0;
+    newest_info.next = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1, &newest_info));
 
@@ -1622,10 +1713,8 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     uconfig.offlineLogstorageMaxCounter = 5;
     uconfig.offlineLogstorageMaxCounterIdx = 1;
     uconfig.offlineLogstorageMaxDevices = 1;
-    unsigned char data1[] = "123";
-    unsigned char data2[] = "123";
-    unsigned char data3[] = "123";
-    int size = 10 * sizeof(uint32_t);
+    unsigned char data[] = "123";
+    int size = 3;
     daemon.storage_handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     daemon.storage_handle->config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     daemon.storage_handle->config_list = NULL;
@@ -1635,20 +1724,46 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = "1234:\000\000\000\000";
-    char key1[] = ":5678\000\000\000\000";
-    char key2[] = "1234:5678";
+    char key0[] = ":1234:\000\000\000\000";
+    char key1[] = "::5678\000\000\000\000";
+    char key2[] = ":1234:5678";
     int num_keys = 1;
+
+    DltMessage msg;
+    DltUserHeader userheader;
+    int log_level = 4;
+    dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG);
+    dlt_message_init(&msg, 0);
+    msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
+    dlt_set_storageheader(msg.storageheader, ecuid);
+    msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
+    msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1|DLT_HTYP_UEH;
+    msg.standardheader->mcnt = 0;
+    dlt_message_set_extraparameters(&msg, 0);
+    msg.extendedheader = (DltExtendedHeader *)(msg.headerbuffer +
+                         sizeof(DltStorageHeader) +
+                         sizeof(DltStandardHeader) +
+                         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+    msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+                               ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
+    msg.extendedheader->noar = 1;
+    dlt_set_id(msg.extendedheader->apid, apid);
+    dlt_set_id(msg.extendedheader->ctid, ctid);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key0, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key1, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key2, num_keys, &value, &(daemon.storage_handle->config_list)));
-    EXPECT_NO_THROW(dlt_daemon_logstorage_write(&daemon, &uconfig, data1, size, data2, size, data3, size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_write(&daemon, &uconfig,
+                                             (unsigned char*)&(userheader), sizeof(DltUserHeader),
+                                             msg.headerbuffer + sizeof(DltStorageHeader),
+                                             msg.headersize - sizeof(DltStorageHeader),
+                                             data, size));
+    dlt_message_free(&msg, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_write, null)
 {
-    EXPECT_NO_THROW(dlt_daemon_logstorage_write(NULL, NULL, NULL, 0, NULL, 0, NULL, 0));
+    EXPECT_EQ(-1, dlt_daemon_logstorage_write(NULL, NULL, NULL, 0, NULL, 0, NULL, 0));
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_daemon_logstorage_setup_internal_storage*/
@@ -1701,8 +1816,8 @@ TEST(t_dlt_daemon_logstorage_cleanup, normal)
     DltDaemonLocal daemon_local;
     daemon_local.flags.offlineLogstorageMaxDevices = 1;
     DltLogStorage storage_handle;
+    memset(&storage_handle, 0, sizeof(DltLogStorage));
     daemon.storage_handle = &storage_handle;
-    daemon.storage_handle->config_status = 0;
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_cleanup(&daemon, &daemon_local, 0));
 }
 
@@ -1835,7 +1950,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
 {
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
+    file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 6;
     file_config.logfile_counteridxlen = 2;
@@ -1857,7 +1972,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     config.file_size = 50;
     g_logstorage_cache_max = 16;
     unsigned int size = 10;
-    unsigned char data1[10] = "dlt_data0";
+    unsigned char data1[10] = {'a', 'b', 'D', 'L', 'T', 0x01 , 'c', 'd', 'e', 'f'};
     unsigned char data2[10] = "dlt_data1";
     unsigned char data3[10] = "dlt_data2";
     newest_info.wrap_id = 0;
@@ -1875,8 +1990,29 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_to_file(&config, &file_config, path,
                   footer, footer->last_sync_offset, footer->offset));
+        std::stringstream file_path;
+        file_path << path << "/" << config.working_file_name;
+        std::ifstream f(file_path.str());
+        if (f.is_open())
+        {
+            std::string line;
+            EXPECT_TRUE(std::getline(f, line));
+            int idx = -2;
+            // First 2 characters should not appear
+            for (auto i=2; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data1[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data2[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data3[i]);
+            f.close();
+        }
         free(config.cache);
         config.cache = NULL;
+        std::string tmp_file = file_path.str();
+        remove(tmp_file.c_str());
     }
 }
 
@@ -1891,7 +2027,6 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
 {
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    file_config.logfile_timestamp = 191132;
     file_config.logfile_timestamp = 0;
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 8;
@@ -1916,7 +2051,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
     g_logstorage_cache_max = 16;
 
     unsigned int size = 10;
-    unsigned char data1[10] = "dlt_dataA";
+    unsigned char data1[10] = {'a', 'b', 'D', 'L', 'T', 0x01 , 'c', 'd', 'e', 'f'};;
     unsigned char data2[10] = "dlt_dataB";
     unsigned char data3[10] = "dlt_dataC";
 
@@ -1927,8 +2062,29 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write_msg_cache(&config, &file_config, path, data1, size, data2, size, data3, size));
         EXPECT_EQ(DLT_RETURN_OK,
                   dlt_logstorage_sync_msg_cache(&config, &file_config, path, DLT_LOGSTORAGE_SYNC_ON_DEMAND));
+        std::stringstream file_path;
+        file_path << path << "/" << config.working_file_name;
+        std::ifstream f(file_path.str());
+        if (f.is_open())
+        {
+            std::string line;
+            EXPECT_TRUE(std::getline(f, line));
+            int idx = -2;
+            // First 2 characters should not appear
+            for (auto i=2; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data1[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data2[i]);
+            idx += 10;
+            for (auto i=0; i < 10; i++)
+                EXPECT_TRUE(line[i+idx] == data3[i]);
+            f.close();
+        }
         free(config.cache);
         config.cache = NULL;
+        std::string tmp_file = file_path.str();
+        remove(tmp_file.c_str());
     }
 }
 
@@ -1986,7 +2142,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if (cpid) {
+    if (!cpid) {
         int i = GTEST_SOCKS_ACCEPTED;
         int j, optval = 1;
         char buffer[256];

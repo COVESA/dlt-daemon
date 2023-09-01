@@ -172,6 +172,7 @@ int dlt_daemon_client_send(int sock,
                            int verbose)
 {
     int sent, ret;
+    int ret_logstorage = 0;
     static int sent_message_overflow_cnt = 0;
 
     if ((daemon == NULL) || (daemon_local == NULL)) {
@@ -224,40 +225,47 @@ int dlt_daemon_client_send(int sock,
          * this need to be checked because the function is dlt_daemon_client_send is called by
          * newly introduced dlt_daemon_log_internal */
         if (daemon_local->flags.offlineLogstorageMaxDevices > 0)
-            dlt_daemon_logstorage_write(daemon,
-                                        &daemon_local->flags,
-                                        storage_header,
-                                        storage_header_size,
-                                        data1,
-                                        size1,
-                                        data2,
-                                        size2);
+            ret_logstorage = dlt_daemon_logstorage_write(daemon,
+                                                         &daemon_local->flags,
+                                                         storage_header,
+                                                         storage_header_size,
+                                                         data1,
+                                                         size1,
+                                                         data2,
+                                                         size2);
     }
 
     /* send messages to daemon socket */
     if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) {
 #ifdef UDP_CONNECTION_SUPPORT
-
-        if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED)
-            dlt_daemon_udp_dltmsg_multicast(data1,
-                                            size1,
-                                            data2,
-                                            size2,
-                                            verbose);
+        if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
+            /* Forward message to network client if network routing is not disabled */
+            if (ret_logstorage != 1) {
+                dlt_daemon_udp_dltmsg_multicast(data1,
+                                                size1,
+                                                data2,
+                                                size2,
+                                                verbose);
+            }
+        }
 
 #endif
 
         if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)) {
-            sent = dlt_daemon_client_send_all_multiple(daemon,
-                                                       daemon_local,
-                                                       data1,
-                                                       size1,
-                                                       data2,
-                                                       size2,
-                                                       verbose);
+            /* Forward message to network client if network routing is not disabled */
+            if (ret_logstorage != 1) {
+                sent = dlt_daemon_client_send_all_multiple(daemon,
+                                                           daemon_local,
+                                                           data1,
+                                                           size1,
+                                                           data2,
+                                                           size2,
+                                                           verbose);
 
-            if ((sock == DLT_DAEMON_SEND_FORCE) && !sent)
-                return DLT_DAEMON_ERROR_SEND_FAILED;
+                if ((sock == DLT_DAEMON_SEND_FORCE) && !sent) {
+                    return DLT_DAEMON_ERROR_SEND_FAILED;
+                }
+            }
         }
     }
 

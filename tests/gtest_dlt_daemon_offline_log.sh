@@ -23,6 +23,7 @@ cleanup()
     tmpPath=/tmp
     cd $tmpPath
     rm -rf $tmpPath/dlt_logstorage.conf
+    rm -rf $tmpPath/Test*.dlt
     return 0
 }
 

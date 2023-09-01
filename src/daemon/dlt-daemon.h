@@ -123,7 +123,8 @@ typedef struct
     char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
     unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
     unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
-    unsigned int offlineLogstorageCacheSize; /**< Max cache size offline logstorage cache */
+    unsigned int offlineLogstorageCacheSize;            /**< (int) Max cache size offline logstorage cache */
+    int offlineLogstorageOptionalCounter;               /**< (Boolean) Do not append index to filename if NOFiles=1 */
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
 #else /* DLT_DAEMON_USE_FIFO_IPC */

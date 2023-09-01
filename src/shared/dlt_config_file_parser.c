@@ -430,7 +430,7 @@ DltConfigFile *dlt_config_file_init(char *file_name)
     DltConfigFile *file;
     FILE *hdl = NULL;
 
-    if ((file_name == NULL) || (strlen(file_name) >= DLT_CONFIG_FILE_PATH_MAX_LEN)) {
+    if ((file_name == NULL) || (strlen(file_name) >= DLT_PATH_MAX)) {
         dlt_log(LOG_ERR, "Given configuration file invalid\n");
         return NULL;
     }
