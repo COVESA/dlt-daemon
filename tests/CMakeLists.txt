@@ -1,6 +1,10 @@
+SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
+
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/test_dlt.conf ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 
 if("${GTEST_BOTH_LIBRARIES}" STREQUAL "")
     set(GTEST_LIBS gtest gtest_main)
@@ -42,9 +46,12 @@ foreach(target IN LISTS TARGET_LIST)
         set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     endif()
     add_executable(${target} ${target_SRCS})
-    target_link_libraries(${target} ${DLT_LIBRARIES})
+    target_link_libraries(${target} ${DLT_LIBRARIES} ${DLT_CONTROL_LIBRARIES})
     add_test(NAME ${target}
              COMMAND ${target})
+    target_compile_definitions(${target}
+        PRIVATE
+            DLTPATH=${CMAKE_CURRENT_SOURCE_DIR})
 endforeach()
 
 ###################
@@ -72,7 +79,7 @@ foreach(target IN LISTS TARGET_LIST)
                 sleep 0.5 ; \
                 killall -v $<TARGET_FILE:dlt-daemon> || echo 'Could not find any daemon to kill' ;
                 exit $TESTS_FAILED")
-        set_tests_properties(${target} PROPERTIES ENVIRONMENT "PATH=$<TARGET_FILE_DIR:dlt-daemon>:$ENV{PATH}")
+        set_tests_properties(${target} PROPERTIES ENVIRONMENT "PATH=$<TARGET_FILE_DIR:dlt-daemon>:$ENV{PATH};DLT_UT_DAEMON_PATH=$<TARGET_FILE:dlt-daemon>")
     else()
         add_test(NAME ${target}
                  COMMAND ${target})
@@ -92,3 +99,6 @@ if(WITH_EXTENDED_FILTERING)
              COMMAND gtest_dlt_json_filter)
     set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
 endif()
+
+add_subdirectory(component)
+

@@ -1,5 +1,3 @@
-add_subdirectory(logstorage_filepath)
-add_subdirectory(logstorage_one_file)
-add_subdirectory(logstorage_multi_file)
-add_subdirectory(logstorage_max_cache_size)
-add_subdirectory(disable_network)
+add_subdirectory(logstorage)
+add_subdirectory(lib)
+add_subdirectory(dlt-logd-converter)
