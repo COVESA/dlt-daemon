@@ -2144,7 +2144,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                               POLLIN,
                               DLT_CONNECTION_CLIENT_MSG_TCP)) {
         dlt_log(LOG_ERR, "Failed to register new client. \n");
-        /* TODO: Perform clean-up */
+        close(in_sock);
         return -1;
     }
 

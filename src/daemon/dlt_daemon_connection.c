@@ -415,6 +415,12 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
 
     if (setsockopt (temp->receiver->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0)  {
         dlt_vlog(LOG_WARNING, "Unable to set send timeout %s.\n", strerror(errno));
+        // as this function is used for non socket connection as well
+        // we only can return an error here if it is a socket
+        if (errno != ENOTSOCK) {
+            free(temp);
+            return -1;
+        }
     }
 
     /* We are single threaded no need for protection. */
