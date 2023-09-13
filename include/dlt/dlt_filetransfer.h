@@ -48,6 +48,8 @@
 #define DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED -501
 /* ! Error code for dlt_user_log_file_end */
 #define DLT_FILETRANSFER_ERROR_FILE_END -600
+/* ! Error code for dlt_user_log_file_end */
+#define DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED -601
 /* ! Error code for dlt_user_log_file_infoAbout */
 #define DLT_FILETRANSFER_ERROR_INFO_ABOUT -700
 /* ! Error code for dlt_user_log_file_packagesCount */
@@ -114,6 +116,17 @@ extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *f
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
 extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
+
+//* !Transfer the content data of a file. */
+/**See the Mainpages.c for more informations.
+ * @param fileContext Specific context to log the file to dlt
+ * @param filename Absolute file path
+ * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of application shutdown event outstanding file transfer should abort and return
+ * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
+ */
+extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char *filename, int packageToTransfer, int timeout, bool *const fileCancelTransferFlag);
 
 
 /* !Transfer the content data of a file. */
