@@ -30,7 +30,7 @@ endif()
 
 add_library(dlt ${dlt_LIB_SRCS})
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN|MSYS")
     set(RT_LIBRARY rt)
     set(SOCKET_LIBRARY "")
 else()
