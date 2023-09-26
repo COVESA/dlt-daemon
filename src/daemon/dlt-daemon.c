@@ -396,7 +396,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.offlineLogstorageDelimiter = '_';
     daemon_local->flags.offlineLogstorageMaxCounter = UINT_MAX;
     daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
-    daemon_local->flags.offlineLogstorageOptionalCounter = false;
     daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
     dlt_daemon_logstorage_set_logstorage_cache_size(
         daemon_local->flags.offlineLogstorageCacheSize);
@@ -663,8 +662,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     {
                         daemon_local->flags.offlineLogstorageMaxCounter = (unsigned int) atoi(value);
                         daemon_local->flags.offlineLogstorageMaxCounterIdx = (unsigned int) strlen(value);
-                    } else if (strcmp(token, "OfflineLogstorageOptionalIndex") == 0) {
-                        daemon_local->flags.offlineLogstorageOptionalCounter = atoi(value);
                     }
                     else if (strcmp(token, "OfflineLogstorageCacheSize") == 0)
                     {

@@ -1,3 +1,9 @@
+# Setup testing
+enable_testing()
+
+SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
+
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -60,23 +66,25 @@ if(WITH_DLT_SHM_ENABLE)
 endif()
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target}.cpp)
+    set(target_SRCS ${target})
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
-    target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES})
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${target}.sh)
-        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${target}.sh ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+    target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
+    if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)
+        configure_file(${PROJECT_SOURCE_DIR}/tests/${target}.sh ${PROJECT_BINARY_DIR}/tests COPYONLY)
         add_test(NAME ${target}
-            COMMAND /bin/sh -e -c "\
-                sh $<TARGET_FILE:${target}>.sh ; \
-                $<TARGET_FILE:${target}> || TESTS_FAILED=1 && TESTS_FAILED=0 \
-                sleep 0.5 ; \
-                killall -v $<TARGET_FILE:dlt-daemon> || echo 'Could not find any daemon to kill' ;
-                exit $TESTS_FAILED")
-        set_tests_properties(${target} PROPERTIES ENVIRONMENT "PATH=$<TARGET_FILE_DIR:dlt-daemon>:$ENV{PATH}")
+                 COMMAND /bin/sh -e -c "\
+                         sh $<TARGET_FILE:${target}>.sh ; \
+                         $<TARGET_FILE:${target}> || TESTS_FAILED=1 && TESTS_FAILED=0 \
+                         sleep 0.5 ; \
+                         killall -v dlt-daemon || echo 'Could not find any daemon to kill' ;
+                         exit $TESTS_FAILED")
+        set_tests_properties(${target} PROPERTIES ENVIRONMENT "PATH=$<TARGET_FILE_DIR:dlt-daemon>:$ENV{PATH}; \
+                                                               DLT_UT_DAEMON_PATH=$<TARGET_FILE:dlt-daemon>")
     else()
         add_test(NAME ${target}
                  COMMAND ${target})
     endif()
+    set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
 endforeach()
 
 #####################

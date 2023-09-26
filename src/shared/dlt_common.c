@@ -872,7 +872,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlengt
         if (textlength < (((unsigned int)datalength * 3) + 20)) {
             dlt_vlog(LOG_WARNING,
                      "String does not fit binary data (available=%d, required=%d) !\n",
-                     (int)textlength, (datalength * 3) + 20);
+                     (int) textlength, (datalength * 3) + 20);
             return DLT_RETURN_ERROR;
         }
 

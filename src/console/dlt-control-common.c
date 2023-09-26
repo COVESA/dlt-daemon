@@ -141,18 +141,6 @@ void set_ecuid(char *ecuid)
     }
 }
 
-void set_conf(char *file_path)
-{
-    if (file_path != NULL) {
-        memset(local_filename, 0, DLT_MOUNT_PATH_MAX);
-        strncpy(local_filename, file_path, DLT_MOUNT_PATH_MAX);
-        local_filename[DLT_MOUNT_PATH_MAX - 1] = '\0';
-    }
-    else {
-        pr_error("Argument is NULL\n");
-    }
-}
-
 int get_timeout(void)
 {
     return local_timeout;

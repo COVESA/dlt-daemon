@@ -1009,9 +1009,8 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
  * @param size2         message extended header size
  * @param data3         message data buffer
  * @param size3         message data size
- * @return              0 on success, -1 on error, 1 on disable network routing
  */
-int dlt_daemon_logstorage_write(DltDaemon *daemon,
+void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  DltDaemonFlags *user_config,
                                  unsigned char *data1,
                                  int size1,
@@ -1021,7 +1020,6 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  int size3)
 {
     int i = 0;
-    int ret = 0;
     DltLogStorageUserConfig file_config;
 
     if ((daemon == NULL) || (user_config == NULL) ||
@@ -1030,7 +1028,7 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
         dlt_vlog(LOG_DEBUG,
                  "%s: message type is not LOG. Skip storing.\n",
                  __func__);
-        return -1;
+        return;
         /* Log Level changed callback */
     }
 
@@ -1038,45 +1036,30 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
     file_config.logfile_timestamp = user_config->offlineLogstorageTimestamp;
     file_config.logfile_delimiter = user_config->offlineLogstorageDelimiter;
     file_config.logfile_maxcounter = user_config->offlineLogstorageMaxCounter;
-    file_config.logfile_optional_counter = user_config->offlineLogstorageOptionalCounter;
     file_config.logfile_counteridxlen =
         user_config->offlineLogstorageMaxCounterIdx;
 
-    for (i = 0; i < user_config->offlineLogstorageMaxDevices; i++) {
+    for (i = 0; i < user_config->offlineLogstorageMaxDevices; i++)
         if (daemon->storage_handle[i].config_status ==
             DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE) {
-            int disable_nw = 0;
-            if ((ret = dlt_logstorage_write(&(daemon->storage_handle[i]),
+            if (dlt_logstorage_write(&(daemon->storage_handle[i]),
                                      &file_config,
                                      data1,
                                      size1,
                                      data2,
                                      size2,
                                      data3,
-                                     size3,
-                                     &disable_nw)) < 0) {
+                                     size3) != 0) {
                 dlt_log(LOG_ERR,
                         "dlt_daemon_logstorage_write: failed. "
                         "Disable storage device\n");
-                /* DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS happened,
+                /* DLT_OFFLINE_LOGSTORAGE_MAX_WRITE_ERRORS happened,
                  * therefore remove logstorage device */
                 dlt_logstorage_device_disconnected(
                     &(daemon->storage_handle[i]),
                     DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
             }
-            if (i == 0) {
-                if (disable_nw == 1) {
-                    ret = 1;
-                }
-            } else {
-                dlt_vlog(LOG_WARNING,
-                         "%s: DisableNetwork is not supported for more than one device yet\n",
-                         __func__);
-            }
         }
-    }
-
-    return ret;
 }
 
 /**
@@ -1160,8 +1143,6 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
                                         daemon_local->flags.offlineLogstorageMaxCounter;
             (&daemon->storage_handle[i])->uconfig.logfile_timestamp =
                                         daemon_local->flags.offlineLogstorageTimestamp;
-            (&daemon->storage_handle[i])->uconfig.logfile_optional_counter =
-                daemon_local->flags.offlineLogstorageOptionalCounter;
 
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
@@ -1202,8 +1183,6 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                 daemon_local->flags.offlineLogstorageMaxCounter;
             handle->uconfig.logfile_timestamp =
                 daemon_local->flags.offlineLogstorageTimestamp;
-            handle->uconfig.logfile_optional_counter =
-                daemon_local->flags.offlineLogstorageOptionalCounter;
 
             if (dlt_logstorage_sync_caches(handle) != 0)
                 return DLT_RETURN_ERROR;
@@ -1222,8 +1201,6 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                     daemon_local->flags.offlineLogstorageMaxCounter;
                 daemon->storage_handle[i].uconfig.logfile_timestamp =
                     daemon_local->flags.offlineLogstorageTimestamp;
-                daemon->storage_handle[i].uconfig.logfile_optional_counter =
-                    daemon_local->flags.offlineLogstorageOptionalCounter;
 
                 if (dlt_logstorage_sync_caches(&daemon->storage_handle[i]) != 0)
                     return DLT_RETURN_ERROR;

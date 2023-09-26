@@ -4034,7 +4034,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             /* Get file size */
             struct stat st;
             fstat(dlt_user.dlt_log_handle, &st);
-            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%ld]\n", __func__,
+            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%jd]\n", __func__,
                      st.st_size);
 
             /* Check filesize */
@@ -4044,7 +4044,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype)
             if (msg_size > dlt_user.filesize_max) {
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
-                         "%s: File size (%ld bytes) reached to defined maximum size (%d bytes)\n",
+                         "%s: File size (%jd bytes) reached to defined maximum size (%d bytes)\n",
                          __func__, st.st_size, dlt_user.filesize_max);
                 return DLT_RETURN_FILESZERR;
             }

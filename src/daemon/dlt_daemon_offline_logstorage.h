@@ -130,9 +130,8 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
  * @param size2         message extended data size
  * @param data3         message data buffer
  * @param size3         message data size
- * @return              0 on success, -1 on error, 1 on disable network routing
  */
-int dlt_daemon_logstorage_write(DltDaemon *daemon,
+void dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  DltDaemonFlags *user_config,
                                  unsigned char *data1,
                                  int size1,

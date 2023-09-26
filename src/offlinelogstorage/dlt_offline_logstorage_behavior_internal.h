@@ -51,10 +51,8 @@
 
 void dlt_logstorage_log_file_name(char *log_file_name,
                                   DltLogStorageUserConfig *file_config,
-                                  const DltLogStorageFilterConfig *filter_config,
-                                  const char *name,
-                                  const int num_files,
-                                  const int idx);
+                                  DltLogStorageFilterConfig *filter_config,
+                                  int idx);
 
 unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
 
@@ -73,8 +71,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  DltLogStorageUserConfig *file_config,
                                  char *dev_path,
                                  int msg_size,
-                                 bool is_update_required,
-                                 bool is_sync);
+                                 bool is_update_required);
 
 DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
                                            DltLogStorageUserConfig *file_config,
