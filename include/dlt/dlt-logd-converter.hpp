@@ -62,10 +62,14 @@
 using namespace std;
 
 /* MACRO */
-#define CONFIGURATION_FILE_DIR "/vendor/etc/dlt-logd-converter.conf"
-#define JSON_FILE_DIR "/vendor/etc/dlt-logdctxt.json"
 #define MAX_LINE 1024
 #define DLT_FAIL_TO_GET_LOG_MSG 0
+#define CONFIGURATION_FILE_DIR "/vendor/etc/dlt-logd-converter.conf"
+#define JSON_FILE_DIR "/vendor/etc/dlt-logdctxt.json"
+#define T_CONFIGURATION_FILE_DIR "dlt-logd-converter.conf"
+#define T_JSON_FILE_DIR "dlt-logdctxt.json"
+#define T_ABNORMAL_CONFIGURATION_FILE_DIR "abnormal-dlt-logd-converter.conf"
+
 
 typedef struct
 {

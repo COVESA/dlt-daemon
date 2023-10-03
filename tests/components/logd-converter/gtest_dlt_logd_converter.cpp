@@ -40,13 +40,6 @@
 #include "gtest/gtest.h"
 #include "dlt-logd-converter.hpp"
 
-/* MACRO */
-#undef CONFIGURATION_FILE_DIR
-#undef JSON_FILE_DIR
-#define CONFIGURATION_FILE_DIR "dlt-logd-converter.conf"
-#define JSON_FILE_DIR "dlt-logdctxt.json"
-#define ABNORMAL_CONFIGURATION_FILE_DIR "abnormal-dlt-logd-converter.conf"
-
 extern dlt_logd_configuration *logd_conf;
 extern unordered_map<string, DltContext*> map_ctx_json;
 extern bool json_is_available;
@@ -69,7 +62,7 @@ struct log_msg t_log_msg;
 
 string t_load_json_file()
 {
-    ifstream file(JSON_FILE_DIR);
+    ifstream file(T_JSON_FILE_DIR);
     char *token;
     string pattern;
     string json_sequence;
@@ -221,10 +214,10 @@ TEST(t_load_configuration_file, normal)
 {
     logd_conf->appID = strdup("LOGD");
     logd_conf->ctxID = strdup("LOGF");
-    logd_conf->json_file_dir = strdup(JSON_FILE_DIR);
+    logd_conf->json_file_dir = strdup(T_JSON_FILE_DIR);
     logd_conf->default_ctxID = strdup("OTHE");
-    logd_conf->conf_file_dir = strdup(CONFIGURATION_FILE_DIR);
-    int ret = load_configuration_file(CONFIGURATION_FILE_DIR);
+    logd_conf->conf_file_dir = strdup(T_CONFIGURATION_FILE_DIR);
+    int ret = load_configuration_file(T_CONFIGURATION_FILE_DIR);
 
     EXPECT_EQ(DLT_RETURN_OK, ret);
     EXPECT_STREQ("LOGD", logd_conf->appID);
@@ -237,10 +230,10 @@ TEST(t_load_configuration_file, abnormal)
 {
     logd_conf->appID = strdup("LOGD");
     logd_conf->ctxID = strdup("LOGF");
-    logd_conf->json_file_dir = strdup(JSON_FILE_DIR);
+    logd_conf->json_file_dir = strdup(T_JSON_FILE_DIR);
     logd_conf->default_ctxID = strdup("OTHE");
-    logd_conf->conf_file_dir = strdup(CONFIGURATION_FILE_DIR);
-    int ret = load_configuration_file(ABNORMAL_CONFIGURATION_FILE_DIR);
+    logd_conf->conf_file_dir = strdup(T_CONFIGURATION_FILE_DIR);
+    int ret = load_configuration_file(T_ABNORMAL_CONFIGURATION_FILE_DIR);
 
     EXPECT_EQ(DLT_RETURN_OK, ret);
     EXPECT_STREQ("DLOG", logd_conf->appID);
@@ -258,7 +251,7 @@ TEST(t_clean_mem, normal)
 {
     logd_conf->appID = strdup("LOGD");
     logd_conf->ctxID = strdup("LOGF");
-    logd_conf->json_file_dir = strdup(JSON_FILE_DIR);
+    logd_conf->json_file_dir = strdup(T_JSON_FILE_DIR);
     logd_conf->default_ctxID = strdup("OTHE");
     logd_conf->conf_file_dir = strdup(CONFIGURATION_FILE_DIR);
 
@@ -300,8 +293,6 @@ TEST(t_clean_mem, normal)
 
 TEST(t_json_parser, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, system("dlt-daemon -d > /dev/null"));
-    EXPECT_EQ(DLT_RETURN_OK, system("sleep 0.2"));
     DLT_REGISTER_APP("LOGD", "logd -> dlt adapter");
     DLT_REGISTER_CONTEXT(dlt_ctx_self, "LOGF", "logd retriever");
 
@@ -322,14 +313,10 @@ TEST(t_json_parser, normal)
     map_ctx_json.clear();
 
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
-    EXPECT_LT(DLT_RETURN_OK, system("kill -9 $(pgrep -f \"dlt-daemon -d\") > /dev/null"));
 }
 
 TEST(t_find_tag_in_json, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, system("dlt-daemon -d > /dev/null"));
-    EXPECT_EQ(DLT_RETURN_OK, system("sleep 0.2"));
-
     string json_ctxID;
     string json_tag;
     string json_description;
@@ -371,8 +358,6 @@ TEST(t_find_tag_in_json, normal)
        map_malloc.second = nullptr;
     }
     map_ctx_json.clear();
-
-    EXPECT_LT(DLT_RETURN_OK, system("kill -9 $(pgrep -f \"dlt-daemon -d\") > /dev/null"));
 }
 
 TEST(t_find_tag_in_json, nullpointer)
@@ -527,9 +512,6 @@ TEST(t_signal_handler, normal)
 
 TEST(t_logd_parser_loop, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, system("dlt-daemon -d > /dev/null"));
-    EXPECT_EQ(DLT_RETURN_OK, system("sleep 0.2"));
-
     struct logger_list *t_list = nullptr;
     t_list = new logger_list;
     t_list->mode = READ_ONLY;
@@ -673,8 +655,6 @@ TEST(t_logd_parser_loop, normal)
     dlt_log_data = nullptr;
     delete t_logger_list;
     t_logger_list = nullptr;
-
-    EXPECT_LT(DLT_RETURN_OK, system("kill -9 $(pgrep -f \"dlt-daemon -d\") > /dev/null"));
 }
 
 

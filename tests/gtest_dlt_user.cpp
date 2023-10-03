@@ -5309,7 +5309,7 @@ void *dlt_free_thread(void *arg) {
     return nullptr;
 }
 
-/*TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
+TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
     const auto max_runtime = std::chrono::seconds(5);
     const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
 
@@ -5332,7 +5332,7 @@ void *dlt_free_thread(void *arg) {
     EXPECT_EQ(last_init, DLT_RETURN_OK);
     EXPECT_EQ(last_free, DLT_RETURN_OK);
 }
-*/
+
 /*/////////////////////////////////////// */
 /* main */
 int main(int argc, char **argv)
