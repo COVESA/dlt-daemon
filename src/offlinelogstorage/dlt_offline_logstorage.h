@@ -217,6 +217,12 @@ struct DltLogStorageFilterConfig
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */
     DltLogStorageFileList *records; /* File name list */
     int disable_network_routing;    /* Flag to disable routing to network client */
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+    char *apids_exclude;            /* Application IDs configured to exclude for filter */
+    char *ctids_exclude;            /* Context IDs configured to exclude for filter */
+    int num_apids_exclude;          /* Number of application IDs to exclude in the filter */
+    int num_ctids_exclude;          /* Number of context IDs to exclude in the filter */
+#endif
 };
 
 typedef struct DltLogStorageFilterList DltLogStorageFilterList;
@@ -279,6 +285,8 @@ typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE,
     DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION,
     DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK,
+    DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME_EXCLUDE,
+    DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME_EXCLUDE,
     DLT_LOGSTORAGE_FILTER_CONF_COUNT
 } DltLogstorageFilterConfType;
 

@@ -41,6 +41,10 @@
 
 #define GENERAL_BASE_NAME "General"
 
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list, int *numids);
+#endif
+
 DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
 {
     DltLogStorageFileList *n = NULL;
@@ -153,6 +157,11 @@ DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
     if (*(listdata) == NULL)
         return -1;
 
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+    char *apid_list_exclude = NULL;
+    char *ctid_list_exclude = NULL;
+#endif
+
     /* copy the data to list */
     memcpy(*listdata, data, sizeof(DltLogStorageFilterConfig));
 
@@ -167,6 +176,29 @@ DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
 
     if (data->ecuid != NULL)
         (*listdata)->ecuid = strdup(data->ecuid);
+
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+    if(data->apids_exclude != NULL)
+    {
+        if( dlt_logstorage_get_keys_list(data->apids_exclude, ",",  &apid_list_exclude, &((*listdata)->num_apids_exclude)) != 0 ) { /* calloc to apid_list_exclude */
+            dlt_vlog(LOG_ERR, "App ID to exclude tokenization failed %s\n", __func__);
+        }
+        (*listdata)->apids_exclude = (char *)calloc(DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1), sizeof(char));
+        memcpy((*listdata)->apids_exclude, apid_list_exclude, DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1));
+        free(apid_list_exclude);
+        apid_list_exclude = NULL;
+    }
+    if(data->ctids_exclude != NULL)
+    {
+        if( dlt_logstorage_get_keys_list(data->ctids_exclude, ",",  &ctid_list_exclude, &((*listdata)->num_ctids_exclude)) != 0 ) { /* calloc to ctid_list_exclude */
+            dlt_vlog(LOG_ERR, "Context ID to exclude tokenization failed %s\n", __func__);
+        }
+        (*listdata)->ctids_exclude = (char *)calloc(DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1), sizeof(char));
+        memcpy((*listdata)->ctids_exclude, ctid_list_exclude, DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1));
+        free(ctid_list_exclude);
+        ctid_list_exclude = NULL;
+    }
+#endif
 
     return 0;
 }
@@ -957,6 +989,23 @@ DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_list_of_names(&config->ctids, (const char*)value);
 }
 
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+DLT_STATIC int dlt_logstorage_check_apids_exclude(DltLogStorageFilterConfig *config,
+                                          char *value)
+{
+    if ((config == NULL) || (value == NULL))
+        return -1;
+    return dlt_logstorage_read_list_of_names(&config->apids_exclude, value);
+}
+DLT_STATIC int dlt_logstorage_check_ctids_exclude(DltLogStorageFilterConfig *config,
+                                          char *value)
+{
+    if ((config == NULL) || (value == NULL))
+        return -1;
+    return dlt_logstorage_read_list_of_names(&config->ctids_exclude, value);
+}
+#endif
+
 DLT_STATIC int dlt_logstorage_set_loglevel(int *log_level,
                                            int value)
 {
@@ -1370,6 +1419,16 @@ DLT_STATIC DltLogstorageFilterConf
         .key = "DisableNetwork",
         .func = dlt_logstorage_check_disable_network,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME_EXCLUDE] = {
+        .key = "LogAppNameExclude",
+        .func = dlt_logstorage_check_apids_exclude,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME_EXCLUDE] = {
+        .key = "ContextNameExclude",
+        .func = dlt_logstorage_check_ctids_exclude,
+        .is_opt = 1
     }
 };
 
@@ -1440,6 +1499,16 @@ DLT_STATIC DltLogstorageFilterConf
         .key = NULL,
         .func = dlt_logstorage_check_disable_network,
         .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME_EXCLUDE] = {
+        .key = "LogAppNameExclude",
+        .func = dlt_logstorage_check_apids_exclude,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME_EXCLUDE] = {
+        .key = "ContextNameExclude",
+        .func = dlt_logstorage_check_ctids_exclude,
+        .is_opt = 1
     }
 };
 
@@ -1508,6 +1577,16 @@ DLT_STATIC DltLogstorageFilterConf
     [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
         .key = NULL,
         .func = dlt_logstorage_check_disable_network,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME_EXCLUDE] = {
+        .key = "LogAppNameExclude",
+        .func = dlt_logstorage_check_apids_exclude,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME_EXCLUDE] = {
+        .key = "ContextNameExclude",
+        .func = dlt_logstorage_check_ctids_exclude,
         .is_opt = 1
     }
 };
@@ -2275,7 +2354,12 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
 {
     int i = 0;
     int num = 0;
-
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+    int j = 0;
+    int flag = 0;
+    char *curr_apid_exclude = NULL;
+    char *curr_ctid_exclude = NULL;
+#endif
     if ((handle == NULL) || (config == NULL) || (ecuid == NULL))
         return -1;
 
@@ -2298,6 +2382,39 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
                      __func__, i);
             continue;
         }
+#ifdef DLT_LOGSTORAGE_EXCLUSION
+        flag = 0;
+        if(config[i]->apids_exclude != NULL)
+        {
+            for(j = 0 ; j < config[i]->num_apids_exclude ; j++)
+            {
+                curr_apid_exclude = config[i]->apids_exclude + (j * (DLT_ID_SIZE + 1));
+                if(strncmp(apid, curr_apid_exclude, DLT_ID_SIZE) == 0)
+                {
+                    config[i] = NULL;
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag)
+                continue;
+        }
+        if(config[i]->ctids_exclude != NULL)
+        {
+            for(j = 0 ; j < config[i]->num_ctids_exclude ; j++)
+            {
+                curr_ctid_exclude = config[i]->ctids_exclude + (j * (DLT_ID_SIZE + 1));
+                if(strncmp(ctid, curr_ctid_exclude, DLT_ID_SIZE) == 0)
+                {
+                    config[i] = NULL;
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag)
+                continue;
+        }
+#endif
 
         /* filter on log level */
         if (log_level > config[i]->log_level) {
