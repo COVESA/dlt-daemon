@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <asm/prctl.h>
+#include <sys/prctl.h>
 #include <inttypes.h>
 
 #include "dlt_cdh.h"
