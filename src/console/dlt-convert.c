@@ -120,8 +120,8 @@ void usage()
     printf("  -v            Verbose mode\n");
     printf("  -c            Count number of messages\n");
     printf("  -f filename   Enable filtering of messages\n");
-    printf("  -b number     First message to be handled\n");
-    printf("  -e number     Last message to be handled\n");
+    printf("  -b number     First <number> messages to be handled\n");
+    printf("  -e number     Last <number> messages to be handled\n");
     printf("  -w            Follow dlt file while file is increasing\n");
     printf("  -t            Handling input compressed files (tar.gz)\n");
 }

@@ -50,7 +50,7 @@ DLT_STATIC void dlt_logstorage_concat_logfile_name(char *log_file_name, const ch
     size_t src_len = strlen(append);
 
     if (dst_len < DLT_MOUNT_PATH_MAX) {
-        size_t rem_len = DLT_MOUNT_PATH_MAX - dst_len - 1;
+        size_t rem_len = DLT_MOUNT_PATH_MAX - dst_len + 1;
         strncat(log_file_name, append, rem_len);
     } else {
         dlt_vlog(LOG_ERR, "Log file name reached max len: %s [%d]\n", log_file_name, DLT_MOUNT_PATH_MAX);
@@ -370,13 +370,13 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         config->records = NULL;
     }
 
-    char* suffix;
+    char* suffix = NULL;
     for (i = 0; i < cnt; i++) {
         if (config->gzip_compression) {
-            suffix = strdup(".dlt");
+            suffix = strdup(".dlt.gz");
         }
         else {
-            suffix = strdup(".dlt.gz");
+            suffix = strdup(".dlt");
         }
 
         int len = 0;
