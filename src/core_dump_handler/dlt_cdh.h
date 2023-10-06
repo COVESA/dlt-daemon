@@ -55,6 +55,8 @@ typedef struct
     uint64_t pc;
     uint64_t ip;
     uint64_t lr;
+    uint64_t sp;
+    uint64_t fp;
 
 } cdh_registers_t;
 
