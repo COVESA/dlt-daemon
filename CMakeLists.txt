@@ -125,17 +125,17 @@ set(DLT_WRITEV_TIMEOUT_USEC "0"
     CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
-set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}")
+set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}
 set(LICENSE "Mozilla Public License Version 2.0")
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
 if(WITH_DLT_LOGSTORAGE_GZIP)
-    set(ZLIB_LIBRARY "ZLIB::ZLIB")
     find_package(ZLIB 1.2.9 REQUIRED)
-elseif(WITH_DLT_COREDUMPHANDLER OR WITH_DLT_FILETRANSFER)
     set(ZLIB_LIBRARY "ZLIB::ZLIB")
+elseif(WITH_DLT_COREDUMPHANDLER OR WITH_DLT_FILETRANSFER)
     find_package(ZLIB REQUIRED)
+    set(ZLIB_LIBRARY "ZLIB::ZLIB")
 else()
     set(ZLIB_LIBRARY "")
 endif()
