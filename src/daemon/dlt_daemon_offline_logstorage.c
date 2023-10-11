@@ -1161,7 +1161,7 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
             (&daemon->storage_handle[i])->uconfig.logfile_timestamp =
                                         daemon_local->flags.offlineLogstorageTimestamp;
             (&daemon->storage_handle[i])->uconfig.logfile_optional_counter =
-                daemon_local->flags.offlineLogstorageOptionalCounter;
+                                        daemon_local->flags.offlineLogstorageOptionalCounter;
 
             dlt_logstorage_device_disconnected(
                 &daemon->storage_handle[i],
