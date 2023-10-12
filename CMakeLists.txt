@@ -98,21 +98,22 @@ set(DLT_USER "covesa"
 set(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS "100"
     CACHE STRING "Timeout in milliseconds to wait before messages are dropped when input buffer is full")
 
-option(WITH_DLT_PKGCONFIG     "Set to ON to generate pkgconfig .pc files"                                        ON)
-option(WITH_DLT_CXX11_EXT     "Set to ON to build C++11 extensions"                                              OFF)
-option(WITH_DLT_COREDUMPHANDLER "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"  OFF)
-option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control application with udev support" OFF)
-option(WITH_DLT_LOGSTORAGE_GZIP "Set to ON to build logstorage control application with gzip compression support" OFF)
-option(WITH_DLT_LOGSTORAGE_EXCLUSION    "Set to ON to exclusion feature support in logstorage" OFF)
-option(WITH_DLT_USE_IPv6      "Set to ON for IPv6 support"                                                       ON)
-option(WITH_DLT_KPI           "Set to ON to build src/kpi binaries"                                              OFF)
-option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"    OFF)
-option(WITH_UDP_CONNECTION     "Set to ON to enable dlt UDP multicast SUPPORT"                                   OFF)
-option(WITH_LIB_NO_VERSION    "Set to ON to build library without any version"                                  OFF)
-option(WITH_LIB_SHORT_VERSION "Set to ON to build library with only major number in version"                    OFF)
-option(WITH_DLT_DISABLE_MACRO "Set to ON to build code without Macro interface support"                         OFF)
-option(WITH_LEGACY_INCLUDE_PATH "Set to ON to add <prefix>/dlt to include paths for the CMake config file, in addition to only <prefix>"    ON)
-option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering. Using json filter files is only supported for Linux based system with json-c and QNX." OFF)
+option(WITH_DLT_PKGCONFIG "Set to ON to generate pkgconfig .pc files"                                                ON)
+option(WITH_DLT_CXX11_EXT "Set to ON to build C++11 extensions"                                                      OFF)
+option(WITH_DLT_COREDUMPHANDLER "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"      OFF)
+option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control with udev support"            OFF)
+option(WITH_DLT_LOGSTORAGE_GZIP "Set to ON to build logstorage control with gzip compression support"                OFF)
+option(WITH_DLT_LOGSTORAGE_EXCLUSION    "Set to ON to exclusion feature support in logstorage"                       OFF)
+option(WITH_DLT_USE_IPv6 "Set to ON for IPv6 support"                                                                ON)
+option(WITH_DLT_KPI "Set to ON to build src/kpi binaries"                                                            OFF)
+option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"        OFF)
+option(WITH_UDP_CONNECTION "Set to ON to enable dlt UDP multicast SUPPORT"                                           OFF)
+option(WITH_LIB_SHORT_VERSION "Set to ON to build library with only major number in version"                         OFF)
+option(WITH_DLT_DISABLE_MACRO "Set to ON to build code without Macro interface support"                              OFF)
+option(WITH_LEGACY_INCLUDE_PATH "Set to ON to add <prefix>/dlt to include paths
+                                 for the CMake config file, in addition to only <prefix>"                            ON)
+option(WITH_EXTENDED_FILTERING "Set to OFF to build without extended filtering.
+                                Json filter only supports Linux based system with json-c and QNX"                    OFF)
 
 option(WITH_DLT_DAEMON_VSOCK_IPC "Set to ON to enable VSOCK support in daemon"                                       OFF)
 option(WITH_DLT_LIB_VSOCK_IPC "Set to ON to enable VSOCK support in library (DLT_IPC is not used in library)"        OFF)
@@ -125,17 +126,17 @@ set(DLT_WRITEV_TIMEOUT_USEC "0"
     CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
-set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}")
+set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}
 set(LICENSE "Mozilla Public License Version 2.0")
 
 # Build, project and include settings
 find_package(Threads REQUIRED)
 if(WITH_DLT_LOGSTORAGE_GZIP)
-    set(ZLIB_LIBRARY "-lz")
     find_package(ZLIB 1.2.9 REQUIRED)
+    set(ZLIB_LIBRARY "ZLIB::ZLIB")
 elseif(WITH_DLT_COREDUMPHANDLER OR WITH_DLT_FILETRANSFER)
-    set(ZLIB_LIBRARY "-lz")
     find_package(ZLIB REQUIRED)
+    set(ZLIB_LIBRARY "ZLIB::ZLIB")
 else()
     set(ZLIB_LIBRARY "")
 endif()
@@ -359,7 +360,8 @@ if(WITH_EXTENDED_FILTERING)
     elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
         set(DLT_JSON_LIBRARY json)
     else()
-        message(FATAL_ERROR "OS does not support extended filtering. Please build without cmake option '-DWITH_EXTENDED_FILTERING=OFF'")
+        message(FATAL_ERROR "OS does not support extended filtering.
+                Please build without cmake option '-DWITH_EXTENDED_FILTERING=OFF'")
     endif()
     add_definitions(-DEXTENDED_FILTERING)
 else()
@@ -386,7 +388,8 @@ if(WITH_DLT_UNIT_TESTS)
         execute_process(COMMAND pkg-config --modversion gtest OUTPUT_VARIABLE GTEST_VERSION)
         string(REPLACE "\n" "" GTEST_VERSION ${GTEST_VERSION})
         if(${GTEST_VERSION} VERSION_LESS 1.7.0)
-            message(WARNING "Please use Gtest version greater or equal to 1.7.0, or use option 'WITH_GIT_SUBMODULE' for latest version")
+            message(WARNING "Please use Gtest version greater or equal to 1.7.0,
+                    or use option 'WITH_GIT_SUBMODULE' for latest version")
         endif()
     else()
         message(STATUS "No Gtest package found, preparing submodule ...")
@@ -401,7 +404,8 @@ if(WITH_DLT_UNIT_TESTS)
                             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                             RESULT_VARIABLE GIT_SUBMOD_RESULT)
             if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-                message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}. Please checkout submodule")
+                message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}.
+                        Please checkout submodule")
             endif()
         endif()
 

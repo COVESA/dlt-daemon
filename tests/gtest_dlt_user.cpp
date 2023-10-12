@@ -189,8 +189,6 @@ TEST(t_dlt_user_log_write_start, abnormal)
     DltContext context;
     DltContextData contextData;
 
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start abnormal"));
 
@@ -5342,4 +5340,3 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-

@@ -46,7 +46,7 @@ if(WITH_DLT_SHM_ENABLE)
         ${PROJECT_SOURCE_DIR}/src/shared/dlt_shm.c)
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN|MSYS")
     set(RT_LIBRARY rt)
     set(SOCKET_LIBRARY "")
 else()

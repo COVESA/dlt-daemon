@@ -1,0 +1,6 @@
+ControlSocketPath = ./dlt-ctrl.sock
+
+OfflineLogstorageTimestamp = 0
+OfflineLogstorageMaxDevices = 1
+OfflineLogstorageDirPath = .
+OfflineLogstorageOptionalIndex = 1

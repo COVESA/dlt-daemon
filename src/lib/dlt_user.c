@@ -1555,8 +1555,9 @@ DltReturnValue dlt_unregister_app_util(bool force_sending_messages)
     DltReturnValue ret = DLT_RETURN_OK;
 
     /* forbid dlt usage in child after fork */
-    if (g_dlt_is_child)
+    if (g_dlt_is_child) {
         return DLT_RETURN_ERROR;
+    }
 
     if (!DLT_USER_INITALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
@@ -1569,14 +1570,15 @@ DltReturnValue dlt_unregister_app_util(bool force_sending_messages)
     DLT_SEM_LOCK();
 
     int count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+
     if (!force_sending_messages ||
-        (force_sending_messages && count == 0))
-    {
+        (force_sending_messages && (count == 0))) {
         /* Clear and free local stored application information */
         dlt_set_id(dlt_user.appID, "");
 
-        if (dlt_user.application_description != NULL)
+        if (dlt_user.application_description != NULL) {
             free(dlt_user.application_description);
+        }
 
         dlt_user.application_description = NULL;
     }
@@ -1619,14 +1621,16 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
     DltReturnValue ret = DLT_RETURN_OK;
 
     /* forbid dlt usage in child after fork */
-    if (g_dlt_is_child)
+    if (g_dlt_is_child) {
         return DLT_RETURN_ERROR;
+    }
 
     log.handle = NULL;
     log.context_description = NULL;
 
-    if (dlt_user_log_init(handle, &log) <= DLT_RETURN_ERROR)
+    if (dlt_user_log_init(handle, &log) <= DLT_RETURN_ERROR) {
         return DLT_RETURN_ERROR;
+    }
 
     DLT_SEM_LOCK();
 
@@ -1640,8 +1644,9 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
         dlt_user.dlt_ll_ts[handle->log_level_pos].log_level = DLT_USER_INITIAL_LOG_LEVEL;
         dlt_user.dlt_ll_ts[handle->log_level_pos].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
-        if (dlt_user.dlt_ll_ts[handle->log_level_pos].context_description != NULL)
+        if (dlt_user.dlt_ll_ts[handle->log_level_pos].context_description != NULL) {
             free(dlt_user.dlt_ll_ts[handle->log_level_pos].context_description);
+        }
 
         if (dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_ptr != NULL) {
             free(dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_ptr);

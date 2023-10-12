@@ -72,18 +72,15 @@
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   100 /* Maximum file name length of the log file including path under mount point */
 
-#define DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN       4
 #define DLT_OFFLINE_LOGSTORAGE_GZ_FILE_EXTENSION_LEN    7
 #define DLT_OFFLINE_LOGSTORAGE_INDEX_LEN                3
 #define DLT_OFFLINE_LOGSTORAGE_MAX_INDEX              999
 #define DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN           16
 #define DLT_OFFLINE_LOGSTORAGE_INDEX_OFFSET        (DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + \
-                                                    DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_INDEX_LEN)
 #define DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN    (DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN + \
                                                     DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN + \
-                                                    DLT_OFFLINE_LOGSTORAGE_INDEX_LEN + \
-                                                    DLT_OFFLINE_LOGSTORAGE_FILE_EXTENSION_LEN + 1)
+                                                    DLT_OFFLINE_LOGSTORAGE_INDEX_LEN + 1)
 
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME    "dlt_logstorage.conf"
 

@@ -1,2 +1,0 @@
-MessageFilterConfigFile = @MESSAGE_FILTER_CONFIGURATION_FILE@/dlt_message_filter.conf
-ControlSocketPath = ./dlt-ctrl.sock
