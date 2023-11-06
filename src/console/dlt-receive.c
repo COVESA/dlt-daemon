@@ -119,6 +119,7 @@ typedef struct {
     int vflag;
     int yflag;
     int uflag;
+    int rflag;
     char *ovalue;
     char *ovaluebase; /* ovalue without ".dlt" */
     char *fvalue;       /* filename for space separated filter file (<AppID> <ContextID>) */
@@ -172,6 +173,7 @@ void usage()
     printf("  -f filename   Enable filtering of messages with space separated list (<AppID> <ContextID>)\n");
     printf("  -j filename   Enable filtering of messages with filter defined in json file\n");
     printf("  -p port       Use the given port instead the default port\n");
+    printf("  -r            Enable automatic socket reconnect on close\n");
     printf("                Cannot be used with serial devices\n");
 }
 
@@ -341,7 +343,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:")) != -1)
+    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:r:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -391,6 +393,11 @@ int main(int argc, char *argv[])
         case 'u':
         {
             dltdata.uflag = 1;
+            break;
+        }
+        case 'r':
+        {
+            dltdata.rflag = 1;
             break;
         }
         case 'i':
@@ -611,14 +618,31 @@ int main(int argc, char *argv[])
     else
         dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);
 
-    /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
+    if (dltdata.rflag)
+    {
+        while ( 1 )
+        {
+            /* Connect to TCP socket or open serial device */
+            if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
-        /* Dlt Client Main Loop */
-        dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+                /* Dlt Client Main Loop */
+                dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
 
-        /* Dlt Client Cleanup */
-        dlt_client_cleanup(&dltclient, dltdata.vflag);
+                /* Dlt Client Cleanup */
+                dlt_client_cleanup(&dltclient, dltdata.vflag);
+            }
+        }
+    }
+    else {
+        /* Connect to TCP socket or open serial device */
+        if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
+
+            /* Dlt Client Main Loop */
+            dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+
+            /* Dlt Client Cleanup */
+            dlt_client_cleanup(&dltclient, dltdata.vflag);
+        }
     }
 
     /* dlt-receive cleanup */
