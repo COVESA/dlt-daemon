@@ -492,6 +492,10 @@ DLT_STATIC void dlt_logstorage_open_log_output_file(DltLogStorageFilterConfig *c
                                                     const char *mode)
 {
     FILE *file = fopen(fpath, mode);
+    if (file == NULL) {
+        dlt_vlog(LOG_DEBUG, "%s: could not open configuration file\n", __func__);
+        return -1;
+    }
     config->fd = fileno(file);
     if (config->gzip_compression) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
@@ -683,7 +687,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
              * remove it and reopen it.
              * In this case number of log file won't be increased*/
             if (config->wrap_id && stat(absolute_file_path, &s) == 0) {
-                remove(absolute_file_path);
+                if (remove(absolute_file_path) != 0)
+                    dlt_log(LOG_ERR, "Could not remove file\n");
                 num_log_files -= 1;
                 dlt_vlog(LOG_DEBUG,
                          "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
@@ -725,7 +730,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                              "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
                              __func__, absolute_file_path, num_log_files,
                              config->num_files, config->file_name);
-                    remove(absolute_file_path);
+                    if (remove(absolute_file_path) != 0)
+                        dlt_log(LOG_ERR, "Could not remove file\n");
 
                     free((*head)->name);
                     (*head)->name = NULL;
@@ -851,8 +857,10 @@ DLT_STATIC int dlt_logstorage_write_to_log(void *ptr, size_t size, size_t nmemb,
 DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config,
                                                int ret)
 {
-    if (config == NULL)
+    if (config == NULL) {
         dlt_vlog(LOG_ERR, "%s: cannot retrieve config information\n", __func__);
+        return;
+    }
 
     if (ret <= 0) {
         if (config->gzip_compression) {
@@ -1400,11 +1408,6 @@ int dlt_logstorage_write_msg_cache(DltLogStorageFilterConfig *config,
     }
 
     footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
-    if (footer == NULL)
-    {
-        dlt_log(LOG_ERR, "Cannot retrieve cache footer. Address is NULL\n");
-        return -1;
-    }
     msg_size = size1 + size2 + size3;
     remain_cache_size = cache_size - footer->offset;
 
@@ -1540,11 +1543,6 @@ int dlt_logstorage_sync_msg_cache(DltLogStorageFilterConfig *config,
         }
 
         footer = (DltLogStorageCacheFooter *)((uint8_t*)config->cache + cache_size);
-        if (footer == NULL)
-        {
-            dlt_log(LOG_ERR, "Cannot retrieve cache information\n");
-            return -1;
-        }
 
         /* sync cache data to file */
         if (footer->wrap_around_cnt < 1)

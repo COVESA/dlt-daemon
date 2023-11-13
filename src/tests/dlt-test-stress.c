@@ -305,8 +305,11 @@ void stress2(void)
         nanosleep(&ts, NULL);
     }
 
-    for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++)
-        pthread_join(thread[index], NULL);
+    for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++) {
+        ret = pthread_join(thread[index], NULL);
+        if (ret != 0)
+            printf("Error join thread %d: %s \n", index, strerror(errno));
+    }
 
     printf("Finished stress test2 \n\n");
 }

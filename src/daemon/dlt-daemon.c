@@ -2006,7 +2006,10 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     unlink(daemon_local->flags.daemonFifoName);
 #else /* DLT_DAEMON_USE_UNIX_SOCKET_IPC */
     /* Try to delete existing pipe, ignore result of unlink() */
-    unlink(daemon_local->flags.appSockPath);
+    if (unlink(daemon_local->flags.appSockPath) != 0) {
+        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                __func__, strerror(errno));
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -2028,7 +2031,10 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     if (daemon->ECUVersionString != NULL)
         free(daemon->ECUVersionString);
 
-    unlink(daemon_local->flags.ctrlSockPath);
+    if (unlink(daemon_local->flags.ctrlSockPath) != 0) {
+        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                __func__, strerror(errno));
+    }
 
     /* free IP list */
     free(daemon_local->flags.ipNodes);
@@ -2785,8 +2791,13 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             break;
 
         /* Set new start offset */
-        if (offset > 0)
-            dlt_receiver_remove(receiver, offset);
+        if (offset > 0) {
+            if (dlt_receiver_remove(receiver, offset) == -1) {
+                dlt_log(LOG_WARNING,
+                        "Can't remove offset from receiver\n");
+                return -1;
+            }
+        }
 
         if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
             func = dlt_daemon_process_user_message_not_sup;

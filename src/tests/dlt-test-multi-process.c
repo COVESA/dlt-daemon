@@ -416,8 +416,11 @@ void run_threads(s_parameters params)
         }
     }
 
-    for (i = 0; i < params.nthreads; i++)
-        pthread_join(thread[i], NULL);
+    for (i = 0; i < params.nthreads; i++) {
+        int ret = pthread_join(thread[i], NULL);
+        if (ret != 0)
+            printf("Error join thread: %s \n", strerror(errno));
+    }
 
     if(thread_data)
         free(thread_data);

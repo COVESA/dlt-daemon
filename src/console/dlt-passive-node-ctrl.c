@@ -197,11 +197,6 @@ static int dlt_passive_node_analyze_response(char *answer,
                 DltServicePassiveNodeConnectionInfo *info =
                     (DltServicePassiveNodeConnectionInfo *)(payload);
 
-                if (info == NULL) {
-                    fprintf(stderr, "Received response is NULL\n");
-                    return -1;
-                }
-
                 dlt_print_passive_node_status(info);
             }
         }

@@ -603,9 +603,6 @@ int dlt_gateway_store_connection(DltGateway *gateway,
         i++;
     }
 
-    if (&(gateway->connections[i]) == NULL)
-        return DLT_RETURN_ERROR;
-
     /* store values */
     gateway->connections[i].ip_address = strdup(tmp->ip_address);
     gateway->connections[i].ecuid = strdup(tmp->ecuid);
@@ -974,11 +971,6 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
     for (i = 0; i < gateway->num_connections; i++) {
         DltGatewayConnection *con = &(gateway->connections[i]);
         DltPassiveControlMessage *control_msg = NULL;
-
-        if (con == NULL) {
-            dlt_log(LOG_CRIT, "Cannot retrieve gateway connection details\n");
-            return DLT_RETURN_ERROR;
-        }
 
         if ((con->status != DLT_GATEWAY_CONNECTED) &&
             (con->trigger != DLT_GATEWAY_ON_DEMAND) &&

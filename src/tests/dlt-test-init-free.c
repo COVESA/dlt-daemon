@@ -97,7 +97,10 @@ void do_example_test()
 void do_dlt_test()
 {
     for (int i = 0; i < num_repetitions; i++) {
-        dlt_init();
+        if (dlt_init() < DLT_RETURN_OK) {
+            printf("%s Failed to initialise dlt\n", __FUNCTION__);
+            return;
+        }
         dlt_free();
 
         printf("Iteration %d) - currently used memory amount: ", i);

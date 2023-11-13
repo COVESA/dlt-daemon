@@ -160,31 +160,31 @@ void write_messages(int ohandle, DltFile *file,
         if ((0 == i % 1001) || (i == message_count - 1))
             verbose(2, "Writing message %d\r", i);
 
-        if (dlt_file_message(file, timestamps[i].num, 0) < DLT_RETURN_OK)
-            continue;
-        iov[0].iov_base = file->msg.headerbuffer;
-        iov[0].iov_len = file->msg.headersize;
-        iov[1].iov_base = file->msg.databuffer;
-        iov[1].iov_len = file->msg.datasize;
+        if (timestamps != NULL) {
+            if (dlt_file_message(file, timestamps[i].num, 0) == DLT_RETURN_OK) {
+                iov[0].iov_base = file->msg.headerbuffer;
+                iov[0].iov_len = file->msg.headersize;
+                iov[1].iov_base = file->msg.databuffer;
+                iov[1].iov_len = file->msg.datasize;
 
-        bytes_written = writev(ohandle, iov, 2);
-        last_errno = errno;
+                bytes_written = writev(ohandle, iov, 2);
+                last_errno = errno;
 
-        if (0 > bytes_written) {
-            printf("%s: returned an error [%s]!\n",
-                    __func__,
-                    strerror(last_errno));
-            if (ohandle > 0) {
-                close(ohandle);
-                ohandle = -1;
+                if (0 > bytes_written) {
+                    printf("%s: returned an error [%s]!\n",
+                            __func__,
+                            strerror(last_errno));
+                    if (ohandle > 0) {
+                        close(ohandle);
+                        ohandle = -1;
+                    }
+                    free(timestamps);
+                    timestamps = NULL;
+
+                    dlt_file_free(file, 0);
+                    exit (-1);
+                }
             }
-            if (timestamps) {
-                free(timestamps);
-                timestamps = NULL;
-            }
-
-            dlt_file_free(file, 0);
-            exit (-1);
         }
     }
 
