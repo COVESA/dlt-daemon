@@ -45,10 +45,17 @@
 #define CORE_FILE_PATTERN           "%s/core.%d.%s.%d.gz"
 #define CONTEXT_FILE_PATTERN        "%s/context.%d.%s.%d.txt"
 
+#if ((__SIZEOF_POINTER) == 4)
 #define ELF_Ehdr    Elf32_Ehdr
 #define ELF_Phdr    Elf32_Phdr
 #define ELF_Shdr    Elf32_Shdr
 #define ELF_Nhdr    Elf32_Nhdr
+#else
+#define ELF_Ehdr    Elf64_Ehdr
+#define ELF_Phdr    Elf64_Phdr
+#define ELF_Shdr    Elf64_Shdr
+#define ELF_Nhdr    Elf64_Nhdr
+#endif
 
 typedef struct
 {
