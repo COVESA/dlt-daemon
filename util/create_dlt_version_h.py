@@ -20,19 +20,13 @@ import re
 
 def get_cmd(cmd, cwd):
     return subprocess.check_output(cmd, cwd=cwd, shell=True,
-                                   stderr=subprocess.STDOUT
+                                   stderr=subprocess.DEVNULL,
                                    ).decode().strip()
 
 
 def get_revision(git_dir):
     try:
-        rev = get_cmd('git describe --tags', git_dir)
-        if not rev.startswith("fatal:"):
-            return rev
-
-        rev = get_cmd('git rev-parse HEAD', git_dir)
-        if not rev.startswith("fatal:"):
-            return rev
+        return get_cmd('git describe --tags --always --dirty', git_dir)
     except subprocess.CalledProcessError:
         pass
 
