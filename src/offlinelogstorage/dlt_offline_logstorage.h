@@ -112,16 +112,22 @@
 #define DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(S, s) ((S)&(s))
 
 /* Offline Logstorage overwrite strategies */
-#define DLT_LOGSTORAGE_OVERWRITE_ERROR         -1 /* error case */
-#define DLT_LOGSTORAGE_OVERWRITE_UNSET          0 /* strategy not set */
-#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD    1 /* default, discard old */
-#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW   (1 << 1) /* discard new */
+#define DLT_LOGSTORAGE_OVERWRITE_ERROR          -1 /* error case */
+#define DLT_LOGSTORAGE_OVERWRITE_UNSET           0 /* strategy not set */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD     1 /* default, discard old */
+#define DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW    (1 << 1) /* discard new */
 
 /* Offline Logstorage disable network routing */
 #define DLT_LOGSTORAGE_DISABLE_NW_ERROR         -1 /* error case */
 #define DLT_LOGSTORAGE_DISABLE_NW_UNSET          0 /* not set */
 #define DLT_LOGSTORAGE_DISABLE_NW_OFF            1 /* default, enable network routing */
 #define DLT_LOGSTORAGE_DISABLE_NW_ON            (1 << 1) /* disable network routing */
+
+/* Offline Logstorage disable network routing */
+#define DLT_LOGSTORAGE_GZIP_ERROR               -1 /* error case */
+#define DLT_LOGSTORAGE_GZIP_UNSET                0 /* not set */
+#define DLT_LOGSTORAGE_GZIP_OFF                  1 /* default, enable network routing */
+#define DLT_LOGSTORAGE_GZIP_ON                  (1 << 1) /* disable network routing */
 
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
@@ -206,9 +212,7 @@ struct DltLogStorageFilterConfig
                                int status);
     FILE *log;                      /* current open log file */
     int fd;                         /* The file descriptor for the active log file */
-#ifdef DLT_LOGSTORAGE_USE_GZIP
-    gzFile gzlog;                   /* current open gz log file */
-#endif
+    gzFile *gzlog;                  /* current open gz log file */
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */

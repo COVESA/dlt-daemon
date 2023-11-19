@@ -479,7 +479,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
 }
 
 /**
- * dlt_logstorage_open_log_file
+ * dlt_logstorage_open_log_output_file
  *
  * Open a handle to the logfile
  *
@@ -577,7 +577,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         strcat(absolute_file_path, storage_path);
         strcat(absolute_file_path, file_name);
         config->working_file_name = strdup(file_name);
-        dlt_logstorage_open_log_output_file(config, absolute_file_path, "a+");
+        dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
 
         /* Add file to file list */
         *tmp = malloc(sizeof(DltLogStorageFileList));
@@ -620,7 +620,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         if ((ret == 0) &&
             ((is_sync && (s.st_size < (int)config->file_size)) ||
              (!is_sync && (s.st_size + msg_size <= (int)config->file_size)))) {
-            dlt_logstorage_open_log_output_file(config, absolute_file_path, "a+");
+            dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
             config->current_write_file_offset = s.st_size;
         }
         else {
@@ -1098,9 +1098,18 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 /* Sync only if on_msg */
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
-                    if (fsync(fileno(config->log)) != 0) {
-                        if (errno != ENOSYS) {
-                            dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+                    if (config->gzip_compression) {
+                        if (fsync(fileno(config->gzlog)) != 0) {
+                            if (errno != ENOSYS) {
+                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
+                            }
+                        }
+                    }
+                    else {
+                        if (fsync(fileno(config->log)) != 0) {
+                            if (errno != ENOSYS) {
+                                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
+                            }
                         }
                     }
                 }

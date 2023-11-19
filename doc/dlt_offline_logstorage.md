@@ -77,7 +77,7 @@ NOFiles=<number of files>            # Number of created files before oldest is 
 SyncBehavior=<strategy>              # Specify sync strategy. Default: Sync'ed after every message. See Logstorage Ringbuffer Implementation below.
 EcuID=<ECUid>                        # Specify ECU identifier
 SpecificSize=<spec size in bytes>    # Store logs in storage devices after specific size is reached.
-GzipCompression=<on or off>          # Write the logfiles with gzip compression.
+GzipCompression=<ON/OFF>             # Write the logfiles with gzip compression.
 OverwriteBehavior=<strategy>         # Specify overwrite strategy. Default: Delete oldest file and continue. See Logstorage Ringbuffer Implementation below.
 DisableNetwork=<ON/OFF>              # Specify if the message shall be routed to network client.
 ```

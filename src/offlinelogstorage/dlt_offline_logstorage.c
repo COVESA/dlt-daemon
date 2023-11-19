@@ -442,34 +442,6 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 }
 
 /**
- * dlt_logstorage_read_bool
- *
- * Evaluate a boolean config value. Values such as '1', 'on' or 'true' will be
- * treated as true otherwise the config value will be interpreted as false.
- *
- * @param bool     The boolean to populate
- * @param value    The string from the config file
- * @returns        0 on success, -1 on error
- */
-DLT_STATIC int dlt_logstorage_read_bool(unsigned int *boolean, char *value)
-{
-    int len = 0;
-    if (value == NULL)
-        return -1;
-
-    len = strnlen(value, 5);
-    *boolean = 0;
-    if (strncmp(value, "on", len) == 0) {
-        *boolean = 1;
-    } else if (strncmp(value, "true", len) == 0) {
-        *boolean = 1;
-    } else if (strncmp(value, "1", len) == 0) {
-        *boolean = 1;
-    }
-    return 0;
-}
-
-/**
  * dlt_logstorage_get_keys_list
  *
  * Obtain key list and number of keys for id list passed
@@ -1118,20 +1090,6 @@ DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_number(&config->num_files, value);
 }
 
-DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config,
-                                                     char *value)
-{
-    if ((config == NULL) || (value == NULL))
-        return -1;
-
-    int result = dlt_logstorage_read_bool(&config->gzip_compression, value);
-#ifndef DLT_LOGSTORAGE_USE_GZIP
-    dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
-    config->gzip_compression = 0;
-#endif
-    return result;
-}
-
 DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
                                                  char *value)
 {
@@ -1268,6 +1226,42 @@ DLT_STATIC int dlt_logstorage_check_disable_network(DltLogStorageFilterConfig *c
         return 1;
     }
 
+    return 0;
+}
+
+/**
+ * dlt_logstorage_check_gzip_compression
+ *
+ * Evaluate gzip compression. The gzip compression is an optional filter
+ * configuration parameter.
+ * If the given value cannot be associated with a flag, the default
+ * flag will be assigned.
+ *
+ * @param[in] config    DltLogStorageFilterConfig
+ * @param[in] value     string given in config file
+ * @return              0 on success, 1 on unknown value, -1 on error
+ */
+DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config,
+                                                     char *value)
+{
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+    if ((config == NULL) || (value == NULL))
+        return -1;
+
+    if (strcasestr(value, "ON") != NULL) {
+        config->gzip_compression = DLT_LOGSTORAGE_GZIP_ON;
+    } else if (strcasestr(value, "OFF") != NULL) {
+        config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
+    } else {
+        dlt_log(LOG_WARNING,
+                "Unknown gzip compression flag. Set default OFF\n");
+        config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
+        return 1;
+    }
+#else
+    dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
+    config->gzip_compression = 0;
+#endif
     return 0;
 }
 

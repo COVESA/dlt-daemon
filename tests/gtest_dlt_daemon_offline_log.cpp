@@ -177,57 +177,6 @@ TEST(t_dlt_logstorage_read_number, null)
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_number(&number, NULL));
 }
 
-TEST(t_dlt_logstorage_read_boolean, normal)
-{
-    unsigned int val;
-    {
-        char str[] = "0";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(0, val);
-    }
-    {
-        char str[] = "1";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(1, val);
-    }
-    {
-        char str[] = "off";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(0, val);
-    }
-    {
-        char str[] = "on";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(1, val);
-    }
-    {
-        char str[] = "false";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(0, val);
-    }
-    {
-        char str[] = "true";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(1, val);
-    }
-    {
-        char str[] = "invalidvalue";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(0, val);
-    }
-    {
-        char str[] = "not";
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_read_bool(&val, str));
-        EXPECT_EQ(0, val);
-    }
-}
-
-TEST(t_dlt_logstorage_read_boolean, null)
-{
-    unsigned int val;
-    EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_read_bool(&val, NULL));
-}
-
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_create_keys*/
 TEST(t_dlt_logstorage_create_keys, normal)
 {
