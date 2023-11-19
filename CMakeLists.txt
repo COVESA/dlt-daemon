@@ -190,12 +190,17 @@ endif()
 
 add_definitions(-DDLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}")
 
+if(WITH_DLT_LOGSTORAGE_GZIP)
+    add_definitions(-DDLT_LOGSTORAGE_USE_GZIP)
+endif()
+
 if(WITH_DLTTEST)
     add_definitions(-DDLT_TEST_ENABLE)
 endif()
 
 if(WITH_DLT_UNIT_TESTS)
     add_definitions(-DDLT_UNIT_TESTS)
+    set(WITH_DLT_LOGSTORAGE_GZIP ON)
 endif()
 
 if(WITH_DLT_SHM_ENABLE)
@@ -212,10 +217,6 @@ endif()
 
 if(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
     add_definitions(-DWITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK)
-endif()
-
-if(WITH_DLT_LOGSTORAGE_GZIP)
-    add_definitions(-DDLT_LOGSTORAGE_USE_GZIP)
 endif()
 
 if(WITH_GPROF)
