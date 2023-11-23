@@ -26,4 +26,4 @@ NotifyAccess=main
 LimitCORE=infinity
 
 [Install]
-WantedBy=basic.target
+WantedBy=multi-user.target
