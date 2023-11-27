@@ -16,6 +16,10 @@
 [Unit]
 Description=COVESA DLT logging daemon
 Documentation=man:dlt-daemon(1) man:dlt.conf(5)
+DefaultDependencies=no
+Before=shutdown.target
+Conflicts=shutdown.target
+After=tmp.mount
 
 [Service]
 Type=simple
@@ -26,4 +30,4 @@ NotifyAccess=main
 LimitCORE=infinity
 
 [Install]
-WantedBy=basic.target
+WantedBy=multi-user.target
