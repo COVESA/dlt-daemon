@@ -2419,7 +2419,7 @@ void dlt_daemon_control_service_logstorage(int sock,
                                            DltMessage *msg,
                                            int verbose)
 {
-        DltServiceOfflineLogstorage *req = NULL;
+    DltServiceOfflineLogstorage *req = NULL;
     int ret = 0;
     unsigned int connection_type = 0;
     DltLogStorage *device = NULL;
