@@ -130,7 +130,7 @@ char *get_filename_ext(const char *filename)
 {
     if (filename == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
-        return;
+        return "";
     }
 
     char *dot = strrchr(filename, '.');
