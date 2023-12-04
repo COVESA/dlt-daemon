@@ -56,6 +56,16 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
         data->ctids = NULL;
     }
 
+    if (data->excluded_apids) {
+        free(data->excluded_apids);
+        data->excluded_apids = NULL;
+    }
+
+    if (data->excluded_ctids) {
+        free(data->excluded_ctids);
+        data->excluded_ctids = NULL;
+    }
+
     if (data->file_name) {
         free(data->file_name);
         data->file_name = NULL;
@@ -161,6 +171,12 @@ DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
 
     if (data->ctids != NULL)
         (*listdata)->ctids = strdup(data->ctids);
+
+    if (data->excluded_apids != NULL)
+        (*listdata)->excluded_apids = strdup(data->excluded_apids);
+
+    if (data->excluded_ctids != NULL)
+        (*listdata)->excluded_ctids = strdup(data->excluded_ctids);
 
     if (data->file_name != NULL)
         (*listdata)->file_name = strdup(data->file_name);
@@ -527,6 +543,45 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
     free(ids_local);
 
     return 0;
+}
+
+DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *excluded_ids)
+{
+    char *token = NULL;
+    char *tmp_token = NULL;
+    char *ids_local = NULL;
+
+    if ((id == NULL) || (delim == NULL) || (excluded_ids == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return false;
+    }
+
+    ids_local = strdup(excluded_ids);
+
+    if (ids_local == NULL) {
+        dlt_vlog(LOG_ERR, "%s: Cannot duplicate string.\n", __func__);
+        return false;
+    }
+
+    token = strtok_r(ids_local, delim, &tmp_token);
+
+    if (token == NULL) {
+        dlt_vlog(LOG_ERR, "%s: %s could not be parsed.\n", __func__, ids_local);
+        free(ids_local);
+        return false;
+    }
+
+    while (token != NULL) {
+        if(strncmp(id, token, DLT_ID_SIZE) == 0) {
+            free(ids_local);
+            return true;
+        }
+
+        token = strtok_r(NULL, delim, &tmp_token);
+    }
+
+    free(ids_local);
+    return false;
 }
 
 /**
@@ -969,6 +1024,28 @@ DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_list_of_names(&config->ctids, (const char*)value);
 }
 
+DLT_STATIC int dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterConfig *config,
+                                          char *value)
+{
+    if ((config == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return -1;
+    }
+
+    return dlt_logstorage_read_list_of_names(&config->excluded_apids, value);
+}
+
+DLT_STATIC int dlt_logstorage_store_config_excluded_ctids(DltLogStorageFilterConfig *config,
+                                          char *value)
+{
+    if ((config == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return -1;
+    }
+
+    return dlt_logstorage_read_list_of_names(&config->excluded_ctids, (const char*)value);
+}
+
 DLT_STATIC int dlt_logstorage_set_loglevel(int *log_level,
                                            int value)
 {
@@ -1327,6 +1404,16 @@ DLT_STATIC DltLogstorageFilterConf
         .func = dlt_logstorage_check_ctids,
         .is_opt = 1
     },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
+        .key = "ExcludedLogAppName",
+        .func = dlt_logstorage_store_config_excluded_apids,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
+        .key = "ExcludedContextName",
+        .func = dlt_logstorage_store_config_excluded_ctids,
+        .is_opt = 1
+    },
     [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
         .key = "LogLevel",
         .func = dlt_logstorage_check_loglevel,
@@ -1397,6 +1484,16 @@ DLT_STATIC DltLogstorageFilterConf
         .func = dlt_logstorage_check_ctids,
         .is_opt = 0
     },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
+        .key = NULL,
+        .func = dlt_logstorage_store_config_excluded_apids,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
+        .key = NULL,
+        .func = dlt_logstorage_store_config_excluded_ctids,
+        .is_opt = 1
+    },
     [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
         .key = NULL,
         .func = dlt_logstorage_check_loglevel,
@@ -1465,6 +1562,16 @@ DLT_STATIC DltLogstorageFilterConf
         .key = "ContextName",
         .func = dlt_logstorage_check_ctids,
         .is_opt = 0
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
+        .key = NULL,
+        .func = dlt_logstorage_store_config_excluded_apids,
+        .is_opt = 1
+    },
+    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
+        .key = NULL,
+        .func = dlt_logstorage_store_config_excluded_ctids,
+        .is_opt = 1
     },
     [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
         .key = "LogLevel",
@@ -1685,6 +1792,16 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
                 tmp_data.ctids = NULL;
             }
 
+            if (tmp_data.excluded_apids != NULL) {
+                free(tmp_data.excluded_apids);
+                tmp_data.excluded_apids = NULL;
+            }
+
+            if (tmp_data.excluded_ctids != NULL) {
+                free(tmp_data.excluded_ctids);
+                tmp_data.excluded_ctids = NULL;
+            }
+
             if (tmp_data.file_name != NULL) {
                 free(tmp_data.file_name);
                 tmp_data.file_name = NULL;
@@ -1702,6 +1819,11 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
 
             return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
         }
+    }
+
+    if(dlt_logstorage_count_ids(tmp_data.excluded_apids) > 1 && dlt_logstorage_count_ids(tmp_data.excluded_ctids) > 1) {
+        dlt_vlog(LOG_WARNING, "%s: Logstorage does not support both multiple excluded applications and contexts\n", __func__);
+        return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
     }
 
     /* filter configuration is valid */
@@ -2338,6 +2460,33 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
                 dlt_vlog(LOG_DEBUG,
                          "%s: ECUID does not match (Requested=%s, config[%d]=%s). Set the config to NULL and continue the filter loop\n",
                          __func__, ecuid, i, config[i]->ecuid);
+                config[i] = NULL;
+                continue;
+            }
+        }
+
+        if(config[i]->excluded_apids != NULL && config[i]->excluded_ctids != NULL) {
+            /* Filter on excluded application and context */
+            if(apid != NULL && ctid != NULL && dlt_logstorage_check_excluded_ids(apid, ",", config[i]->excluded_apids)
+              && dlt_logstorage_check_excluded_ids(ctid, ",", config[i]->excluded_ctids)) {
+                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s] and %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
+                __func__, apid, config[i]->excluded_apids, ctid, config[i]->excluded_ctids);
+                config[i] = NULL;
+            }
+        }
+        else if(config[i]->excluded_apids == NULL) {
+            /* Only filter on excluded contexts */
+            if(ctid != NULL && config[i]->excluded_ctids != NULL && dlt_logstorage_check_excluded_ids(ctid, ",", config[i]->excluded_ctids)) {
+                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
+                __func__, ctid, config[i]->excluded_ctids);
+                config[i] = NULL;
+            }
+        }
+        else if(config[i]->excluded_ctids == NULL) {
+            /* Only filter on excluded applications */
+            if(apid != NULL && config[i]->excluded_apids != NULL && dlt_logstorage_check_excluded_ids(apid, ",", config[i]->excluded_apids)) {
+                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
+                __func__, apid, config[i]->excluded_apids);
                 config[i] = NULL;
             }
         }

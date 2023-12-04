@@ -336,3 +336,56 @@ the clients are able to update any log level to user contexts.
 
 By setting ```MaintainLogstorageLogLevel=ON``` or ```MaintainLogstorageLogLevel=1```
 or not set, the logstorage will maintain its log level as the highest priority.
+
+## Logstorage Negative Filter
+
+The DLT Logstorage also provides negative filter feature, which allows filtering
+unwanted Application or Context.
+
+The following strategies are implemented:
+- Exclude a pair of Application and Context
+
+  ```
+  [FILTER1]
+  ...
+  ExcludedLogAppName=LOG
+  ExcludedContextName=TEST
+  ```
+- Exclude single Application or list of Applications
+
+  ```
+  [FILTER1]
+  ...
+  ExcludedLogAppName=LOG
+
+  [FILTER2]
+  ...
+  ExcludedLogAppName=LOG1,LOG2,LOG3
+  ```
+- Exclude single Context or list of Contexts
+
+  ```
+  [FILTER1]
+  ...
+  ExcludedContextName=TEST
+
+  [FILTER2]
+  ...
+  ExcludedContextName=TEST1,TEST2,TEST3
+  ```
+
+Note :
+
+DLT offline logstorage does not support multiple Application and multiple Context filter.
+The following configuration is not supported and the behavior will be undefinded:
+  ```
+  [FILTER1]
+  ...
+  LogAppName=LOG1,LOG2,LOG3
+  ContextName=TEST1,TEST2,TEST3
+
+  [FILTER2]
+  ...
+  ExcludedLogAppName=LOG1,LOG2,LOG3
+  ExcludedContextName=TEST1,TEST2,TEST3
+  ```

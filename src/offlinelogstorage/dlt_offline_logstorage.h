@@ -171,6 +171,8 @@ struct DltLogStorageFilterConfig
     /* filter section */
     char *apids;                    /* Application IDs configured for filter */
     char *ctids;                    /* Context IDs configured for filter */
+    char *excluded_apids;           /* Excluded Application IDs configured for filter */
+    char *excluded_ctids;           /* Excluded Context IDs configured for filter */
     int log_level;                  /* Log level number configured for filter */
     int reset_log_level;            /* reset Log level to be sent on disconnect */
     char *file_name;                /* File name for log storage configured for filter */
@@ -265,6 +267,8 @@ typedef struct {
 typedef enum {
     DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME = 0,
     DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME,
+    DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME,
+    DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME,
     DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL,
     DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL,
     DLT_LOGSTORAGE_FILTER_CONF_FILE,
