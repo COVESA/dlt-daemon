@@ -687,10 +687,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
              * remove it and reopen it.
              * In this case number of log file won't be increased*/
             if (config->wrap_id && stat(absolute_file_path, &s) == 0) {
-                if (stat(absolute_file_path, &s) == 0) {
-                    if (remove(absolute_file_path) != 0)
-                        dlt_log(LOG_ERR, "Could not remove file\n");
-                }
+                remove(absolute_file_path);
                 num_log_files -= 1;
                 dlt_vlog(LOG_DEBUG,
                          "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
