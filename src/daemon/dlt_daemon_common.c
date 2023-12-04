@@ -931,7 +931,7 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
         return (DltDaemonContext *)NULL;
 
     if (user_list->contexts == NULL) {
-        user_list->contexts = (DltDaemonContext *)malloc(sizeof(DltDaemonContext) * DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+        user_list->contexts = (DltDaemonContext *)calloc(1, sizeof(DltDaemonContext) * DLT_DAEMON_CONTEXT_ALLOC_SIZE);
 
         if (user_list->contexts == NULL)
             return (DltDaemonContext *)NULL;
@@ -953,7 +953,7 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
             if ((user_list->num_contexts % DLT_DAEMON_CONTEXT_ALLOC_SIZE) == 0) {
                 /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
                 old = user_list->contexts;
-                user_list->contexts = (DltDaemonContext *)malloc((size_t) sizeof(DltDaemonContext) *
+                user_list->contexts = (DltDaemonContext *)calloc(1, (size_t) sizeof(DltDaemonContext) *
                                                                  ((user_list->num_contexts /
                                                                    DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) *
                                                                  DLT_DAEMON_CONTEXT_ALLOC_SIZE);
@@ -1635,7 +1635,10 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
     if (fd != NULL) {
         /* Close and delete file */
         fclose(fd);
-        unlink(filename);
+        if (unlink(filename) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                    __func__, strerror(errno));
+        }
     }
 
     fd = fopen(filename1, "r");
@@ -1643,7 +1646,10 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
     if (fd != NULL) {
         /* Close and delete file */
         fclose(fd);
-        unlink(filename1);
+        if (unlink(filename1) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                    __func__, strerror(errno));
+        }
     }
 
     daemon->default_log_level = (int8_t) InitialContextLogLevel;

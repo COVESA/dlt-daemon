@@ -2419,8 +2419,8 @@ void dlt_daemon_control_service_logstorage(int sock,
                                            DltMessage *msg,
                                            int verbose)
 {
-    DltServiceOfflineLogstorage *req;
-    int ret;
+    DltServiceOfflineLogstorage *req = NULL;
+    int ret = 0;
     unsigned int connection_type = 0;
     DltLogStorage *device = NULL;
     int device_index = -1;
@@ -2773,22 +2773,6 @@ void dlt_daemon_control_passive_node_connect_status(int sock,
         }
 
         con = &daemon_local->pGateway.connections[i];
-
-        if (con == NULL) {
-            dlt_log(LOG_CRIT, "Passive node connection structure is NULL\n");
-            dlt_daemon_control_service_response(
-                sock,
-                daemon,
-                daemon_local,
-                DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
-                DLT_SERVICE_RESPONSE_ERROR,
-                verbose);
-
-            /* free message */
-            dlt_message_free(&msg, verbose);
-
-            return;
-        }
 
         resp->connection_status[i] = con->status;
         memcpy(&resp->node_id[i * DLT_ID_SIZE], con->ecuid, DLT_ID_SIZE);

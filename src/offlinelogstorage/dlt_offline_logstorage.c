@@ -545,19 +545,22 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
     int curr_len = 0;
+    const char *delimiter = "::";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, "::", 2);
+        strncat(curr_str, delimiter, strlen(delimiter));
     }
     else {
-        strncpy(curr_str, "::", 2);
+        strncpy(curr_str, delimiter, strlen(delimiter));
     }
 
-    curr_len = strlen(ctid);
-    strncat(curr_str, ctid, curr_len);
-    curr_len = strlen(curr_str);
+    if (ctid != NULL) {
+        curr_len = strlen(ctid);
+        strncat(curr_str, ctid, curr_len);
+    }
 
+    curr_len = strlen(curr_str);
     strncpy(key, curr_str, curr_len);
 }
 
@@ -577,20 +580,23 @@ DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
     int curr_len = 0;
+    const char *colon = ":";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, ":", 1);
+        strncat(curr_str, colon, strlen(colon));
     }
     else {
-        strncpy(curr_str, ":", 1);
+        strncat(curr_str, colon, strlen(colon));
     }
 
-    curr_len = strlen(apid);
-    strncat(curr_str, apid, curr_len);
-    strncat(curr_str, ":", 1);
-    curr_len = strlen(curr_str);
+    if (apid != NULL) {
+        curr_len = strlen(apid);
+        strncat(curr_str, apid, curr_len);
+    }
 
+    strncat(curr_str, colon, strlen(colon));
+    curr_len = strlen(curr_str);
     strncpy(key, curr_str, curr_len);
 }
 
@@ -611,23 +617,29 @@ DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
     int curr_len = 0;
+    const char *colon = ":";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, ":", 1);
+        strncat(curr_str, colon, strlen(colon));
     }
     else {
-        strncpy(curr_str, ":", 1);
+        strncat(curr_str, colon, strlen(colon));
     }
 
-    curr_len = strlen(apid);
-    strncat(curr_str, apid, curr_len);
-    strncat(curr_str, ":", 1);
+    if (apid != NULL) {
+        curr_len = strlen(apid);
+        strncat(curr_str, apid, curr_len);
+    }
 
-    curr_len = strlen(ctid);
-    strncat(curr_str, ctid, curr_len);
+    strncat(curr_str, colon, strlen(colon));
+
+    if (ctid != NULL) {
+        curr_len = strlen(ctid);
+        strncat(curr_str, ctid, curr_len);
+    }
+
     curr_len = strlen(curr_str);
-
     strncpy(key, curr_str, curr_len);
 }
 
@@ -974,11 +986,10 @@ DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
 {
     int ll = -1;
 
-    if ((config == NULL) || (value == NULL))
-        return -1;
-
-    if (value == NULL) {
-        config->log_level = 0;
+    if ((config == NULL) || (value == NULL)) {
+        if (config != NULL)
+            config->log_level = 0;
+        dlt_vlog(LOG_ERR, "Invalid parameters in %s\n", __func__);
         return -1;
     }
 
@@ -2182,50 +2193,62 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
         return num_configs;
     }
 
-    apid_len = strlen(apid);
+    if (apid != NULL){
+        apid_len = strlen(apid);
 
-    if (apid_len > DLT_ID_SIZE)
-        apid_len = DLT_ID_SIZE;
+        if (apid_len > DLT_ID_SIZE)
+            apid_len = DLT_ID_SIZE;
+    }
 
-    ctid_len = strlen(ctid);
+    if (ctid != NULL){
+        ctid_len = strlen(ctid);
 
-    if (ctid_len > DLT_ID_SIZE)
-        ctid_len = DLT_ID_SIZE;
+        if (ctid_len > DLT_ID_SIZE)
+            ctid_len = DLT_ID_SIZE;
+    }
 
     /* :apid: */
     strncpy(key[0], ":", 1);
-    strncat(key[0], apid, apid_len);
+    if (apid != NULL)
+        strncat(key[0], apid, apid_len);
     strncat(key[0], ":", 1);
 
     /* ::ctid */
     strncpy(key[1], ":", 1);
     strncat(key[1], ":", 1);
-    strncat(key[1], ctid, ctid_len);
+    if (ctid != NULL)
+        strncat(key[1], ctid, ctid_len);
 
     /* :apid:ctid */
     strncpy(key[2], ":", 1);
-    strncat(key[2], apid, apid_len);
+    if (apid != NULL)
+        strncat(key[2], apid, apid_len);
     strncat(key[2], ":", 1);
-    strncat(key[2], ctid, ctid_len);
+    if (ctid != NULL)
+        strncat(key[2], ctid, ctid_len);
 
     /* ecu:apid:ctid */
     strncpy(key[3], ecuid, ecuid_len);
     strncat(key[3], ":", 1);
-    strncat(key[3], apid, apid_len);
+    if (apid != NULL)
+        strncat(key[3], apid, apid_len);
     strncat(key[3], ":", 1);
-    strncat(key[3], ctid, ctid_len);
+    if (ctid != NULL)
+        strncat(key[3], ctid, ctid_len);
 
     /* ecu:apid: */
     strncpy(key[4], ecuid, ecuid_len);
     strncat(key[4], ":", 1);
-    strncat(key[4], apid, apid_len);
+    if (apid != NULL)
+        strncat(key[4], apid, apid_len);
     strncat(key[4], ":", 1);
 
     /* ecu::ctid */
     strncpy(key[5], ecuid, ecuid_len);
     strncat(key[5], ":", 1);
     strncat(key[5], ":", 1);
-    strncat(key[5], ctid, ctid_len);
+    if (ctid != NULL)
+        strncat(key[5], ctid, ctid_len);
 
     /* ecu:: */
     strncpy(key[6], ecuid, ecuid_len);
@@ -2501,11 +2524,13 @@ int dlt_logstorage_write(DltLogStorage *handle,
             dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[%s]\n", __func__,
                      config[i]->apids, config[i]->ctids, config[i]->ecuid);
 
-        ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                uconfig,
-                                                handle->device_mount_point,
-                                                size1 + size2 + size3,
-                                                tmp);
+        if (tmp != NULL) {
+            ret = config[i]->dlt_logstorage_prepare(config[i],
+                                                    uconfig,
+                                                    handle->device_mount_point,
+                                                    size1 + size2 + size3,
+                                                    tmp);
+        }
 
         if (ret == 0 && config[i]->skip == 1) {
             continue;
