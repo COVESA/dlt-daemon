@@ -19,11 +19,21 @@ endif()
 
 configure_file(dlt_user.h.in dlt_user.h)
 
+if(CMAKE_VERSION VERSION_LESS "3.12")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/compat")
+    include(DltGenerateExportHeader) # compatibilty for pre-3.12 CMake
+else()
+    include(GenerateExportHeader)
+endif()
+
+generate_export_header(dlt)
+
 set(HEADER_LIST dlt.h dlt_user_macros.h dlt_client.h dlt_protocol.h
                 dlt_common.h dlt_types.h dlt_shm.h dlt_offline_trace.h
                 dlt_filetransfer.h dlt_common_api.h dlt_multiple_files.h
                 ${CMAKE_CURRENT_BINARY_DIR}/dlt_version.h
-                ${CMAKE_CURRENT_BINARY_DIR}/dlt_user.h)
+                ${CMAKE_CURRENT_BINARY_DIR}/dlt_user.h
+                ${CMAKE_CURRENT_BINARY_DIR}/dlt_export.h)
 
 if(WITH_DLT_DISABLE_MACRO)
     list(REMOVE_ITEM HEADER_LIST dlt_user_macros.h)

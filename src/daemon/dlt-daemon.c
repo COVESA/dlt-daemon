@@ -1119,6 +1119,9 @@ static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
 }
 #endif
 
+// Unit tests have their own main function, avoid multiple definition with -DBUILD_SHARED_LIBS=OFF.
+#ifndef DLT_UNIT_TEST_LIB
+
 /**
  * Main function of tool.
  */
@@ -1355,6 +1358,8 @@ int main(int argc, char *argv[])
     return 0;
 
 } /* main() */
+
+#endif
 
 int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {

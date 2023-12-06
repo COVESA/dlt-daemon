@@ -39,6 +39,7 @@
 #include <sys/stat.h> /* for mkdir() */
 #include <sys/wait.h>
 
+#include "dlt_export.h"
 #include "dlt_user_shared.h"
 #include "dlt_common.h"
 #include "dlt_common_cfg.h"
@@ -114,12 +115,12 @@ static char *return_type[] =
 { "ok", "not_supported", "error", "perm_denied", "warning", "", "", "", "no_matching_context_id" };
 
 /* internal function definitions */
-int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete);
-int dlt_buffer_reset(DltBuffer *buf);
-int dlt_buffer_increase_size(DltBuffer *buf);
-int dlt_buffer_minimize_size(DltBuffer *buf);
-void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size);
-void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsigned int size);
+DLT_EXPORT int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete);
+DLT_EXPORT int dlt_buffer_reset(DltBuffer *buf);
+DLT_EXPORT int dlt_buffer_increase_size(DltBuffer *buf);
+DLT_EXPORT int dlt_buffer_minimize_size(DltBuffer *buf);
+DLT_EXPORT void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size);
+DLT_EXPORT void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsigned int size);
 
 void dlt_print_hex(uint8_t *ptr, int size)
 {
@@ -1892,7 +1893,7 @@ DltReturnValue dlt_log_init_multiple_logfiles(const int logging_file_size, const
         char filename_base[NAME_MAX];
         if (!dlt_extract_base_name_without_ext(file_name, filename_base, sizeof(filename_base))) return DLT_RETURN_ERROR;
 
-        const char *filename_ext = get_filename_ext(file_name);
+        const char *filename_ext = dlt_get_filename_ext(file_name);
         if (!filename_ext) return DLT_RETURN_ERROR;
 
         DltReturnValue result = multiple_files_buffer_init(
@@ -4412,7 +4413,7 @@ int dlt_execute_command(char *filename, char *command, ...)
     return ret;
 }
 
-char *get_filename_ext(const char *filename)
+char *dlt_get_filename_ext(const char *filename)
 {
     if (filename == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);

@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
             /* Check extension of input file
              * If it is a compressed file, uncompress it
              */
-            if (strcmp(get_filename_ext(argv[index]), DLT_EXTENSION) != 0) {
+            if (strcmp(dlt_get_filename_ext(argv[index]), DLT_EXTENSION) != 0) {
                 syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", DLT_CONVERT_WS, NULL);
                 if (syserr != 0)
                     fprintf(stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n",

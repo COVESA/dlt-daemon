@@ -57,6 +57,7 @@
 
 #include <limits.h>
 
+#include "dlt_export.h"
 #include "dlt_multiple_files.h"
 #include "dlt_types.h"
 
@@ -77,7 +78,7 @@
  * @param size3 size in bytes of third data block to be written, 0 if not used.
  * @return negative value if there was an error.
  */
-extern DltReturnValue dlt_offline_trace_write(MultipleFilesRingBuffer *trace,
+DLT_EXPORT DltReturnValue dlt_offline_trace_write(MultipleFilesRingBuffer *trace,
                                               const unsigned char *data1,
                                               int size1,
                                               const unsigned char *data2,

@@ -77,7 +77,7 @@
 
 
 /* From dlt_filetransfer */
-extern uint32_t getFileSerialNumber(const char *file, int *ok);
+extern uint32_t dlt_get_file_serial_number(const char *file, int *ok);
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(filetransferContext)
@@ -105,7 +105,7 @@ char *unique_name(char *src)
             DLT_STRING("dlt-system-filetransfer, creating unique temporary file name."));
     time_t t = time(NULL);
     int ok;
-    uint32_t l = getFileSerialNumber(src, &ok) ^ t;
+    uint32_t l = dlt_get_file_serial_number(src, &ok) ^ t;
 
     if (!ok)
         return (char *)NULL;

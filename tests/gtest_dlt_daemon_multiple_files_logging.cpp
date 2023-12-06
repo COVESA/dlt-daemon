@@ -144,7 +144,7 @@ void verify_multiple_files(const char* path, const char* file_name, const int fi
     strncpy(file_name_copy, file_name, NAME_MAX);
     char filename_base[NAME_MAX];
     EXPECT_TRUE(dlt_extract_base_name_without_ext(file_name_copy, filename_base, sizeof(filename_base)));
-    const char *filename_ext = get_filename_ext(file_name);
+    const char *filename_ext = dlt_get_filename_ext(file_name);
     EXPECT_TRUE(filename_ext);
 
     DIR *dir = opendir(path);
@@ -199,7 +199,7 @@ void verify_in_one_file(const char* path, const char* file_name, const char* log
     strncpy(file_name_copy, file_name, NAME_MAX);
     char filename_base[NAME_MAX];
     EXPECT_TRUE(dlt_extract_base_name_without_ext(file_name_copy, filename_base, sizeof(filename_base)));
-    const char *filename_ext = get_filename_ext(file_name);
+    const char *filename_ext = dlt_get_filename_ext(file_name);
     EXPECT_TRUE(filename_ext);
 
     bool found = false;
