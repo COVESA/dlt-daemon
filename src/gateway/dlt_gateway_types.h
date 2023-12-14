@@ -132,6 +132,9 @@ typedef struct {
     DltPassiveControlMessage *p_control_msgs; /* passive control msgs */
     DltPassiveControlMessage *head; /* to go back to the head pointer of p_control_msgs */
     int send_serial;            /* Send serial header with control messages */
+    int keepalive_idle;         /* TCP keepalive idle time in seconds (0 = use system default) */
+    int keepalive_count;        /* TCP keepalive probe count (0 = use system default) */
+    int keepalive_interval;     /* TCP keepalive probe interval in seconds (0 = use system default) */
     DltClient client;           /* DltClient structure */
     int default_log_level;      /* Default Log Level on passive node */
 } DltGatewayConnection;
@@ -166,6 +169,9 @@ typedef enum {
     GW_CONF_SEND_CONTROL,
     GW_CONF_SEND_PERIODIC_CONTROL,
     GW_CONF_SEND_SERIAL_HEADER,
+    GW_CONF_KEEPALIVE_IDLE,
+    GW_CONF_KEEPALIVE_COUNT,
+    GW_CONF_KEEPALIVE_INTERVAL,
     GW_CONF_COUNT
 } DltGatewayConfType;
 

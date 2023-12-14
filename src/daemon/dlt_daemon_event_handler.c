@@ -230,18 +230,28 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         if (pEvent->pfd[i].revents & DLT_EV_MASK_REJECTED) {
             /* An error occurred, we need to clean-up the concerned event
              */
-            if (type == DLT_CONNECTION_CLIENT_MSG_TCP)
+            if (type == DLT_CONNECTION_CLIENT_MSG_TCP) {
                 /* To transition to BUFFER state if this is final TCP client connection,
                  * call dedicated function. this function also calls
                  * dlt_event_handler_unregister_connection() inside the function.
                  */
                 dlt_daemon_close_socket(fd, daemon, daemon_local, 0);
-            else
-                dlt_event_handler_unregister_connection(pEvent,
-                                                        daemon_local,
-                                                        fd);
-
-            continue;
+                continue;
+            }
+            else if (type == DLT_CONNECTION_GATEWAY) {
+                /* Let the callback function
+                 * dlt_gateway_process_passive_node_messages handle the
+                 * disconnect which was triggered by TCP keepalive after a
+                 * network disconnect. If we directly called
+                 * dlt_event_handler_unregister_connection() here the dlt_gateway would
+                 * not notice that the connection was closed.
+                 */
+                dlt_vlog(LOG_DEBUG, "Connection to dlt gateway broken.\n");
+            }
+            else {
+                dlt_event_handler_unregister_connection(pEvent, daemon_local, fd);
+                continue;
+            }
         }
 
         /* Get the function to be used to handle the event */

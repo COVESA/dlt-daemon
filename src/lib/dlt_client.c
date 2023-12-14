@@ -78,6 +78,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic pop
 
+#   include <netinet/tcp.h> /* for TCP keepalive: TCP_KEEPIDLE, TCP_KEEPCNT, TCP_KEEPINTVL */
 #   include <netdb.h>
 #   include <sys/stat.h>
 #   include <sys/un.h>
@@ -142,6 +143,10 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
     client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
     client->port = (uint16_t)port;
     client->socketPath = NULL;
+    client->keepalive = 0;
+    client->keepalive_idle = 0;
+    client->keepalive_count = 0;
+    client->keepalive_interval = 0;
     client->mode = DLT_CLIENT_MODE_TCP;
     client->receiver.buffer = NULL;
     client->receiver.buf = NULL;
@@ -228,6 +233,65 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
                 continue;
             }
 
+            /* Enable TCP keepalive to detect broken connections due to network disconnects.
+             * Without this in cases where no TCP FIN or RST package is received from the server,
+             * the dlt_client will never notice that it was disconnected from the server and so
+             * it will not reconnect when the server is available again.
+             */
+            if (client->keepalive || client->keepalive_idle > 0 ||
+                client->keepalive_count > 0 || client->keepalive_interval > 0) {
+                int enablekeepalive = 1;
+
+                if (setsockopt(client->sock, SOL_SOCKET, SO_KEEPALIVE,
+                               &enablekeepalive, sizeof(enablekeepalive)) < 0) {
+                    dlt_vlog(LOG_WARNING,
+                            "%s: Failed to set SO_KEEPALIVE on socket: %s\n",
+                            __func__, strerror(errno));
+                    close(client->sock);
+                    continue;
+                }
+
+#if defined(TCP_KEEPIDLE)
+                if (client->keepalive_idle > 0) {
+                    if (setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPIDLE,
+                                   &client->keepalive_idle,
+                                   sizeof(client->keepalive_idle)) < 0) {
+                        dlt_vlog(LOG_WARNING,
+                                 "%s: Failed to set TCP_KEEPIDLE on socket: %s\n",
+                                 __func__, strerror(errno));
+                        close(client->sock);
+                        continue;
+                    }
+                }
+#endif
+#if defined(TCP_KEEPCNT)
+                if (client->keepalive_count > 0) {
+                    if (setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPCNT,
+                                   &client->keepalive_count,
+                                   sizeof(client->keepalive_count)) < 0) {
+                        dlt_vlog(LOG_WARNING,
+                                 "%s: Failed to set TCP_KEEPCNT on socket: %s\n",
+                                 __func__, strerror(errno));
+                        close(client->sock);
+                        continue;
+                    }
+                }
+#endif
+#if defined(TCP_KEEPINTVL)
+                if (client->keepalive_interval > 0) {
+                    if (setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPINTVL,
+                                   &client->keepalive_interval,
+                                   sizeof(client->keepalive_interval)) < 0) {
+                        dlt_vlog(LOG_WARNING,
+                                 "%s: Failed to set TCP_KEEPINTVL on socket: %s\n",
+                                 __func__, strerror(errno));
+                        close(client->sock);
+                        continue;
+                    }
+                }
+#endif
+            }
+
             /* Set socket to Non-blocking mode */
             if(fcntl(client->sock, F_SETFL, fcntl(client->sock,F_GETFL,0) | O_NONBLOCK) < 0)
             {
@@ -289,8 +353,10 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         if (p == NULL) {
             dlt_vlog(LOG_ERR,
-                     "%s: ERROR: failed to connect! %s\n",
+                     "%s: ERROR: failed to connect to %s:%s! %s\n",
                      __func__,
+                     client->servIP,
+                     portnumbuffer,
                      strerror(connect_errno));
             return DLT_RETURN_ERROR;
         }
