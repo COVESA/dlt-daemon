@@ -985,7 +985,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
         if ((start_index >= 0) && (end_index > start_index) &&
             (count > 0) && (count <= remain_file_size))
         {
-            dlt_logstorage_write_to_log((uint8_t*)config->cache + start_offset + start_index, count, 1, config);
+            ret = dlt_logstorage_write_to_log((uint8_t*)config->cache + start_offset + start_index, count, 1, config);
             dlt_logstorage_check_write_ret(config, ret);
 
             /* Close log file */
