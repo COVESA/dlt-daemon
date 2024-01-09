@@ -86,6 +86,10 @@
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_serial.h"
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+#   include <systemd/sd-daemon.h>
+#endif
+
 char *app_recv_buffer = NULL; /* pointer to receiver buffer for application msges */
 
 static int dlt_daemon_cmp_apid(const void *m1, const void *m2)
@@ -1843,3 +1847,14 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
         break;
     }
 }
+
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+void dlt_daemon_trigger_systemd_watchdog_if_necessary(unsigned int* last_trigger_time, unsigned int watchdog_trigger_interval) {
+    unsigned int uptime = dlt_uptime();
+    if ((uptime - *last_trigger_time) / 10000 >= watchdog_trigger_interval) {
+        if (sd_notify(0, "WATCHDOG=1") < 0)
+            dlt_vlog(LOG_WARNING, "%s: Could not reset systemd watchdog\n", __func__);
+        *last_trigger_time = uptime;
+    }
+}
+#endif
