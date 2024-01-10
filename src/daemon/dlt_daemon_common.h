@@ -213,6 +213,7 @@ typedef struct
  * @param RingbufferMinSize ringbuffer size
  * @param RingbufferMaxSize ringbuffer size
  * @param RingbufferStepSize ringbuffer size
+ * @param fullStrategy ringbuffer full strategy
  * @param runtime_directory Directory of persistent configuration
  * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
  * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
@@ -224,6 +225,7 @@ int dlt_daemon_init(DltDaemon *daemon,
                     unsigned long RingbufferMinSize,
                     unsigned long RingbufferMaxSize,
                     unsigned long RingbufferStepSize,
+                    DltRingBufferFullStrategy  fullStrategy,
                     const char *runtime_directory,
                     int InitialContextLogLevel,
                     int InitialContextTraceStatus,
