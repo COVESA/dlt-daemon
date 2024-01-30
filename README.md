@@ -239,8 +239,6 @@ file in src/core\_dump\_handler/cityhash\_c.
 
 
 ## Contact
-
-Methner, Michael <mmethner@de.adit-jv.com>,
-Le Van, Khanh <Khanh.LeVan@vn.bosch.com>
+Michael Methner <Michael.Methner@de.bosch.com>; Minh Luu Quang <Minh.LuuQuang@vn.bosch.com>
 
 ![alt text](doc/images/covesa-logo.png "COVESA logo")
