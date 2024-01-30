@@ -108,7 +108,8 @@ static char dlt_user_dir[DLT_PATH_MAX];
 static char dlt_daemon_fifo[DLT_PATH_MAX];
 #endif
 
-static sem_t dlt_mutex;
+static pthread_mutex_t dlt_mutex;
+static pthread_mutexattr_t dlt_mutex_attr;
 static pthread_t dlt_housekeeperthread_handle;
 
 /* Sync housekeeper thread start */
@@ -719,7 +720,9 @@ DltReturnValue dlt_init_common(void)
     uint32_t header_size = 0;
 
     /* Binary semaphore for threads */
-    if (sem_init(&dlt_mutex, 0, 1) == -1) {
+    if ((pthread_attr_init(&dlt_mutex_attr) != 0) ||
+        (pthread_mutexattr_settype(&dlt_mutex_attr, PTHREAD_MUTEX_ERRORCHECK) != 0) ||
+        (pthread_mutex_init(&dlt_mutex, &dlt_mutex_attr) != 0)) {
         dlt_user_init_state = INIT_UNITIALIZED;
         return DLT_RETURN_ERROR;
     }
@@ -1184,7 +1187,7 @@ DltReturnValue dlt_free(void)
 
     pthread_cond_destroy(&mq_init_condition);
 #endif /* DLT_NETWORK_TRACE_ENABLE */
-    sem_destroy(&dlt_mutex);
+    pthread_mutex_destroy(&dlt_mutex);
 
     /* allow the user app to do dlt_init() again. */
     /* The flag is unset only to keep almost the same behaviour as before, on EntryNav */

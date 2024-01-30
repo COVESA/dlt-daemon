@@ -110,11 +110,13 @@ extern "C" {
 #   define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)    /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
-#define DLT_SEM_LOCK() do{\
-    while ((sem_wait(&dlt_mutex) == -1) && (errno == EINTR)) \
-        continue;       /* Restart if interrupted */ \
+#define DLT_SEM_LOCK() do{ \
+        pthread_mutex_lock(&dlt_mutex); \
     } while(false)
-#define DLT_SEM_FREE() { sem_post(&dlt_mutex); }
+
+#define DLT_SEM_FREE() do{ \
+        pthread_mutex_unlock(&dlt_mutex); \
+    } while(false)
 
 /**
  * This structure is used for every context used in an application.
