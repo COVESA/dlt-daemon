@@ -177,7 +177,13 @@ setupTest()
     fi
 
     echo "[PassiveNode1]" >>$tmpPath/dlt_gateway.conf
-    echo "IPaddress=$ipaddr">>$tmpPath/dlt_gateway.conf
+
+    if [ -n "$DLT_IPv6_LO" ]
+    then
+        echo "IPaddress=$DLT_IPv6_LO">>$tmpPath/dlt_gateway.conf
+    else
+        echo "IPaddress=$ipaddr">>$tmpPath/dlt_gateway.conf
+    fi
     echo "Port=3490" >>$tmpPath/dlt_gateway.conf
     echo "EcuID=ECU1" >>$tmpPath/dlt_gateway.conf
     echo "Connect=OnStartup" >>$tmpPath/dlt_gateway.conf
@@ -202,7 +208,7 @@ startDaemons()
 {
     DLT_PASSIVE_SHM_NAME=""
     tmpPath=/tmp
-    dlt-daemon -d
+    dlt-daemon -d -c $DLT_UT_CONFIG_PATH
     sleep 1
 
     # Check if the dlt shm file exist (DLT_SHM_ENABLE=ON)
@@ -226,7 +232,7 @@ checkDaemonStart()
         slay -p $BASE > /dev/null
         total=$?
     else
-        total=`pgrep -c $BASE`
+        total=`pgrep -cx $BASE`
     fi
 
     if [ $total -ne '2' ]; then

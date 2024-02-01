@@ -56,15 +56,19 @@
  */
 DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con, char *value)
 {
-    struct sockaddr_in sa;
-    int ret = DLT_RETURN_ERROR;
-
     if ((con == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
+    int ret = DLT_RETURN_ERROR;
+#ifdef DLT_USE_IPv6
+    struct sockaddr_in6 sa6;
+    ret = inet_pton(AF_INET6, value, &(sa6.sin6_addr));
+#else
+    struct sockaddr_in sa;
     ret = inet_pton(AF_INET, value, &(sa.sin_addr));
+#endif
 
     /* valid IP address */
     if (ret != 0) {

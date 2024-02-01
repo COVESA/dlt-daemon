@@ -208,7 +208,11 @@ TEST(t_dlt_gateway_check_ip, normal)
 {
     DltGatewayConnection tmp;
     DltGatewayConnection *con;
+#ifdef DLT_USE_IPv6
+    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "::ffff:a71:6464";
+#else
     char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "10.113.100.100";
+#endif
     con = &tmp;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_ip(con, value));
@@ -670,7 +674,11 @@ TEST(t_dlt_gateway_process_on_demand_request, nullpointer)
 /* Begin Method: dlt_gateway::t_dlt_gateway_check_param*/
 TEST(t_dlt_gateway_check_param, normal)
 {
+#ifdef DLT_USE_IPv6
+    char value_1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "::ffff:a0b:1621";
+#else
     char value_1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "10.11.22.33";
+#endif
     char value_2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "3490";
     DltGateway gateway;
     DltGatewayConnection tmp;
@@ -689,7 +697,11 @@ TEST(t_dlt_gateway_check_param, normal)
 
 TEST(t_dlt_gateway_check_param, abnormal)
 {
+#ifdef DLT_USE_IPv6
+    char value_1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "::ffff:a0b:1621";
+#else
     char value_1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = "10.11.22.33";
+#endif
     DltGateway gateway;
     DltGatewayConnection tmp;
     gateway.connections = &tmp;
