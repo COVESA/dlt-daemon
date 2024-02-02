@@ -284,14 +284,17 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
         char filename[PATH_MAX + 1];
         filename[PATH_MAX] = 0;
 
-        snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase, dltdata->part_num++);
+        snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase,
+                 dltdata->part_num);
 
         if (rename(dltdata->ovalue, filename) != 0)
             dlt_vlog(LOG_ERR, "ERROR: rename %s to %s failed with error %s\n",
                      dltdata->ovalue, filename, strerror(errno));
-        else if (dltdata->vflag)
+        else if (dltdata->vflag) {
             dlt_vlog(LOG_INFO, "Renaming existing file from %s to %s\n",
                      dltdata->ovalue, filename);
+            ++dltdata->part_num;
+        }
     } /* if (file_already_exists) */
 
     globfree(&outer);
