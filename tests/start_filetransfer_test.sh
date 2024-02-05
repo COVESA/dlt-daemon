@@ -6,10 +6,13 @@ fullpath="$(pwd)/testfile_filetransfer.txt"
 dlt-daemon &
 sleep 1
 #start dlt-test-receiver
-./../build/tests/dlt_test_receiver -f localhost &
+dlt_test_receiver -f localhost &
 sleep 1
-#send file to daemon
-dlt-example-filetransfer $fullpath &
+# send file to daemon with file info header
+dlt-example-filetransfer -i $fullpath &
+sleep 1
+# send cancelable file to daemon with file info header
+dlt-example-filetransfer -i $fullpath -p &
 sleep 1
 #create md5 sum
 md5_1=($(md5sum $file))

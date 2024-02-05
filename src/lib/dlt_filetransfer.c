@@ -578,6 +578,25 @@ int dlt_user_log_file_data(DltContext *fileContext,
                            int packageToTransfer,
                            int timeout)
 {
+    bool fileCancelTransferFlag = false;
+    return dlt_user_log_file_data_cancelable(fileContext, filename, packageToTransfer, timeout, &fileCancelTransferFlag);
+}
+
+/* !Transfer the content data of a cancelable file*/
+/**See the Mainpages.c for more informations.
+ * @param fileContext Specific context to log the file to dlt
+ * @param filename Absolute file path
+ * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of application shutdown event outstanding file transfer should abort and return
+ * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
+ */
+int dlt_user_log_file_data_cancelable(DltContext *fileContext,
+                           const char *filename,
+                           int packageToTransfer,
+                           int timeout,
+                           bool *const fileCancelTransferFlag)
+{
     FILE *file;
     int pkgNumber;
     uint32_t readBytes;
@@ -648,6 +667,13 @@ int dlt_user_log_file_data(DltContext *fileContext,
                     DLT_STRING("FLDA")
                     );
 
+            if(*fileCancelTransferFlag) {
+                    DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                            DLT_STRING("FLER"),
+                            DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED)
+                            );
+                return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
+            }
             doTimeout(timeout);
         } else {
             pkgNumber = 0;
@@ -684,7 +710,14 @@ int dlt_user_log_file_data(DltContext *fileContext,
                             DLT_RAW(buffer, readBytes),
                             DLT_STRING("FLDA")
                             );
-                } else {
+                    if(*fileCancelTransferFlag) {
+                        DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                            DLT_STRING("FLER"),
+                            DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED)
+                            );
+                        return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
+                    }
+                }  else {
                     fclose(file);
                     return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
                 }
