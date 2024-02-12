@@ -494,7 +494,7 @@ DLT_STATIC void dlt_logstorage_open_log_output_file(DltLogStorageFilterConfig *c
     FILE *file = fopen(fpath, mode);
     if (file == NULL) {
         dlt_vlog(LOG_DEBUG, "%s: could not open configuration file\n", __func__);
-        return -1;
+        return;
     }
     config->fd = fileno(file);
     if (config->gzip_compression) {
