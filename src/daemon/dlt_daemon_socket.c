@@ -48,6 +48,10 @@
 #include <linux/stat.h>
 #endif
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "dlt_types.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
@@ -224,6 +228,14 @@ int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size
         if (ret < 0) {
             dlt_vlog(LOG_WARNING,
                      "%s: socket send failed [errno: %d]!\n", __func__, errno);
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+            /* notify systemd here that we are still alive
+             * otherwise we might miss notifying the watchdog when
+             * the watchdog interval is small and multiple timeouts occur back to back
+             */
+            if (sd_notify(0, "WATCHDOG=1") < 0)
+                dlt_vlog(LOG_WARNING, "%s: Could not reset systemd watchdog\n", __func__);
+#endif
             return DLT_DAEMON_ERROR_SEND_FAILED;
         } else {
             data_sent += ret;

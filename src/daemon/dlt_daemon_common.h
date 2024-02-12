@@ -200,6 +200,9 @@ typedef struct
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     int received_message_since_last_watchdog_interval;
 #endif
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    unsigned int watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
+#endif
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     DltDaemonContextLogSettings *app_id_log_level_settings; /**< Settings for app id specific log levels */
     int num_app_id_log_level_settings;  /** < count of log level settings */
@@ -562,6 +565,10 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
  * @param newState the requested new state
  */
 void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState);
+
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+void dlt_daemon_trigger_systemd_watchdog_if_necessary(unsigned int* last_trigger_time, unsigned int watchdog_trigger_interval);
+#endif
 
 #   ifdef __cplusplus
 }

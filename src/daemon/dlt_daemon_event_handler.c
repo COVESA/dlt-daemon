@@ -42,6 +42,7 @@
 #include "dlt_daemon_connection_types.h"
 #include "dlt_daemon_event_handler.h"
 #include "dlt_daemon_event_handler_types.h"
+#include "dlt_daemon_common.h"
 
 /**
  * \def DLT_EV_TIMEOUT_MSEC
@@ -205,6 +206,10 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         return ret;
     }
 
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    unsigned int start_time = dlt_uptime();
+#endif
+
     for (i = 0; i < pEvent->nfds; i++) {
         int fd = 0;
         DltConnection *con = NULL;
@@ -248,7 +253,8 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         if (!callback) {
             dlt_vlog(LOG_CRIT, "Unable to find function for %u handle type.\n",
                      type);
-            return -1;
+            /* keep handling remaining events */
+            continue;
         }
 
         /* From now on, callback is correct */
@@ -260,6 +266,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                      type);
             return -1;
         }
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+        dlt_daemon_trigger_systemd_watchdog_if_necessary(&start_time, daemon->watchdog_trigger_interval);
+#endif
     }
 
     return 0;

@@ -95,10 +95,6 @@ static int dlt_daemon_check_numeric_setting(char *token,
                                             char *value,
                                             unsigned long *data);
 
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-static uint32_t watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
-#endif
-
 /* used in main event loop and signal handler */
 int g_exit = 0;
 
@@ -1268,7 +1264,7 @@ int main(int argc, char *argv[])
         if (watchdogUSec)
             watchdogTimeoutSeconds = atoi(watchdogUSec) / 2000000;
 
-        watchdog_trigger_interval = watchdogTimeoutSeconds;
+        daemon.watchdog_trigger_interval = watchdogTimeoutSeconds;
         create_timer_fd(&daemon_local,
                         watchdogTimeoutSeconds,
                         watchdogTimeoutSeconds,
@@ -3756,7 +3752,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
     int length;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    uint32_t curr_time;
+    uint32_t curr_time = 0U;
 #endif
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -3771,24 +3767,9 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         return DLT_DAEMON_ERROR_OK;
     }
 
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-
-    if (sd_notify(0, "WATCHDOG=1") < 0)
-        dlt_vlog(LOG_WARNING, "Could not reset systemd watchdog: %s\n", strerror(errno));
-
-    curr_time = dlt_uptime();
-#endif
-
     while ((length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data))) > 0) {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-
-        if ((dlt_uptime() - curr_time) / 10000 >= watchdog_trigger_interval) {
-            if (sd_notify(0, "WATCHDOG=1") < 0)
-                dlt_log(LOG_WARNING, "Could not reset systemd watchdog\n");
-
-            curr_time = dlt_uptime();
-        }
-
+        dlt_daemon_trigger_systemd_watchdog_if_necessary(&curr_time, daemon->watchdog_trigger_interval);
 #endif
 
         if ((ret =
