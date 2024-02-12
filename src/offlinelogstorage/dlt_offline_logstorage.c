@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <ctype.h>
-#include <sys/syslog.h>
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
