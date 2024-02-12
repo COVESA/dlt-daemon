@@ -88,6 +88,7 @@
 #include "dlt-control-common.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
+#define FSYNC_BYTE_THRESHOLD (1000 * 1000)
 
 DltClient dltclient;
 
@@ -641,6 +642,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
 {
     DltReceiveData *dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
+    static uint32_t bytes_since_last_fsync = 0;
 
     struct iovec iov[2];
     int bytes_written;
@@ -711,10 +713,19 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
             bytes_written = (int)writev(dltdata->ohandle, iov, 2);
 
             dltdata->totalbytes += bytes_written;
+            bytes_since_last_fsync += bytes_written;
 
             if (0 > bytes_written) {
                 printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");
                 return -1;
+            }
+            else if (bytes_since_last_fsync >= FSYNC_BYTE_THRESHOLD) {
+                if (fsync(dltdata->ohandle) < 0) {
+                    printf("dlt_receive_message_callback: fsync failed!");
+                }
+                else {
+                    bytes_since_last_fsync = 0;
+                }
             }
         }
     }
