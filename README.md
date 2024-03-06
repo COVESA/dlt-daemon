@@ -21,7 +21,7 @@ you can [learn more](#learn-more) about advanced concepts and features.
 
 COVESA DLT provides a log and trace interface, based on the standardised
 protocol specified in the
-[AUTOSAR standard 4 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
+[AUTOSAR Classic Platform R19-11 DLT](https://www.autosar.org/fileadmin/standards/R19-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
 It is used by other COVESA components but can serve as logging framework for
 other applications without relation to COVESA.
 
