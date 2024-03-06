@@ -293,6 +293,10 @@ cdh_status_t list_dircontent_to(const char *p_dirname, FILE *p_fout)
 
         case S_IFLNK:
             l_size = readlink(l_fullpath, l_linkpath, sizeof(l_linkpath));
+            if (l_size < 0) {
+                syslog(LOG_ERR, "ERR Cannot read link '%s' [%s]", l_fullpath, strerror(errno));
+                break;
+            }
             l_linkpath[l_size] = 0;
             fprintf(p_fout, " -> %s\n", l_linkpath);
             break;
