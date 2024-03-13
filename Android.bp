@@ -30,6 +30,8 @@ cc_defaults {
         "-DDLT_LIB_USE_UNIX_SOCKET_IPC",
         "-DCONFIGURATION_FILES_DIR=\"/vendor/etc\"",
         "-DDLT_USER_IPC_PATH=\"/dev/socket\"",
+        "-DDLT_WRITEV_TIMEOUT_SEC=1",
+        "-DDLT_WRITEV_TIMEOUT_USEC=0",
     ] + [
         "-Wno-unused-parameter",
         "-W",
@@ -241,21 +243,6 @@ cc_binary {
 
     srcs: [
         "src/tests/dlt-test-non-verbose.c",
-    ],
-
-    shared_libs: [
-        "libc",
-        "libdlt",
-    ],
-}
-
-cc_binary {
-
-    name: "dlt-test-logstorage",
-    defaults: ["dlt_defaults"],
-
-    srcs: [
-        "src/tests/dlt-test-logstorage.c",
     ],
 
     shared_libs: [
