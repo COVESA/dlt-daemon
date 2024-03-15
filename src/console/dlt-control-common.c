@@ -848,8 +848,12 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
         char app_id[DLT_ID_SIZE];
         char context_id[DLT_ID_SIZE];
+
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wstringop-truncation"
         strncpy(app_id, s_app_id, DLT_ID_SIZE);
         strncpy(context_id, s_context_id, DLT_ID_SIZE);
+        #pragma GCC diagnostic pop
 
         dlt_filter_add(filter, app_id, context_id, log_level, payload_min, payload_max, verbose);
 

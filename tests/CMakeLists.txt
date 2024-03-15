@@ -20,6 +20,8 @@ endif()
 
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN")
     set(LIBRARIES "")
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
+    set(LIBRARIES regex)
 else()
     set(LIBRARIES socket)
 endif()
