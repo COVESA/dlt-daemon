@@ -14,6 +14,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_B
 
 set(APPID "FSNC")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf)
+if(WITH_DLT_INSTALLED_TESTS)
+    install(TARGETS ${NAME} RUNTIME DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_fsync)
+    install(FILES dlt.conf.in DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_fsync RENAME dlt.conf)
+    install(FILES dlt_logstorage.conf DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_fsync)
+endif(WITH_DLT_INSTALLED_TESTS)
 
 add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
 rm -f ${CMAKE_CURRENT_BINARY_DIR}/${APPID}*.dlt

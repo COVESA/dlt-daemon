@@ -12,6 +12,11 @@ set(gtest_dlt_logd_converter_SRC ${CMAKE_CURRENT_SOURCE_DIR}/gtest_dlt_logd_conv
 add_executable(gtest_dlt_logd_converter ${dlt_logd_converter_SRC} ${gtest_dlt_logd_converter_SRC})
 target_link_libraries(gtest_dlt_logd_converter ${DLT_LIBRARIES})
 
+if(WITH_DLT_INSTALLED_TESTS)
+    install(TARGETS gtest_dlt_logd_converter RUNTIME DESTINATION ${DLT_TEST_DIR}/components/logd-converter)
+    install(FILES dlt-logd-converter.conf dlt-logdctxt.json abnormal-dlt-logd-converter.conf DESTINATION ${DLT_TEST_DIR}/components/logd-converter)
+endif(WITH_DLT_INSTALLED_TESTS)
+
 add_test(NAME gtest_dlt_logd_converter
         COMMAND /bin/sh -e -c "\
                 $<TARGET_FILE:dlt-daemon> &
