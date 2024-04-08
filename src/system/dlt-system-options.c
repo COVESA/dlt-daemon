@@ -289,6 +289,10 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             {
                 config->Journal.UseOriginalTimestamp = atoi(value);
             }
+            else if (strcmp(token, "JournalUseUptimeOnly") == 0)
+            {
+                config->Journal.UseUptimeOnly = atoi(value);
+            }
 
             /* File transfer */
             else if (strcmp(token, "FiletransferEnable") == 0)

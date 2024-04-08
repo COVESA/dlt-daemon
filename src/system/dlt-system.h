@@ -126,6 +126,7 @@ typedef struct {
     int Follow;
     int MapLogLevels;
     int UseOriginalTimestamp;
+    int UseUptimeOnly;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
     int MessageReceived;
 #endif
