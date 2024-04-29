@@ -100,7 +100,7 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
 
         if ((tmp_new != NULL) && (strlen(tmp_new) < NAME_MAX)) {
             strncpy(newest, tmp_new, NAME_MAX);
-            oldest[NAME_MAX] = '\0';
+            newest[NAME_MAX] = '\0';
         } else if ((tmp_new != NULL) && (strlen(tmp_new) >=  NAME_MAX)) {
             printf("length mismatch of file %s\n", tmp_new);
         }
