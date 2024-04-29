@@ -1922,7 +1922,7 @@ static char* file_read_everything(FILE* const file, const size_t sizeLimit)
     if (fstat(fd, &s_buf) < 0) {
         dlt_log(LOG_WARNING, "failed to stat file size\n");
         fclose(file);
-        return -1;
+        return NULL;
     }
 
     /* Size limit includes NULL terminator. */
