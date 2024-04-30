@@ -17,4 +17,4 @@ There are several CMAKE variables set for the QNX build as recommended by the dl
 * WITH_DLT_USE_IPv6=OFF
 * WITH_LIB_SHORT_VERSION=ON
 
-If you want to customize dlt-dameon features via CMAKE variables, you have to edit *qnx\build\common.mk* file and modify **CMAKE_ARGS** variable.
+If you want to customize dlt-daemon features via CMAKE variables, you have to edit *qnx\build\common.mk* file and modify **CMAKE_ARGS** variable.
