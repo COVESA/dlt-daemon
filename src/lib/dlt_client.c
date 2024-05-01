@@ -350,7 +350,7 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
 
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
-        memcpy(addr.sun_path, client->socketPath, sizeof(addr.sun_path) - 1);
+        strncpy(addr.sun_path, client->socketPath, sizeof(addr.sun_path) - 1);
 
         if (connect(client->sock,
                     (struct sockaddr *) &addr,
