@@ -6,6 +6,11 @@ target_link_libraries(${NAME} PRIVATE dlt)
 
 set(APPID "DSNW")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf)
+if(WITH_DLT_INSTALLED_TESTS)
+    install(TARGETS ${NAME} RUNTIME DESTINATION ${DLT_TEST_DIR}/components/logstorage/disable_network)
+    install(FILES dlt.conf.in DESTINATION ${DLT_TEST_DIR}/components/logstorage/disable_network RENAME dlt.conf)
+    install(FILES dlt_logstorage.conf DESTINATION ${DLT_TEST_DIR}/components/logstorage/disable_network)
+endif(WITH_DLT_INSTALLED_TESTS)
 
 add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
 if [ ${CMAKE_CURRENT_SOURCE_DIR} != ${CMAKE_CURRENT_BINARY_DIR} ];
