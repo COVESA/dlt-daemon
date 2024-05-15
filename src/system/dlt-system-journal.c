@@ -286,27 +286,39 @@ void get_journal_msg(sd_journal *j, DltSystemConfiguration *config)
         else
             snprintf(buffer_priority, DLT_SYSTEM_JOURNAL_BUFFER_SIZE, "prio_unknown:");
 
-        /* write log entry */
-        if (config->Journal.UseOriginalTimestamp == 0) {
+        if (config->Journal.UseUptimeOnly == 1) {
+            /* write log entry (uptime only, no timestamp) */
             DLT_LOG(journalContext, loglevel,
-                    DLT_STRING(timestamp.real),
-                    DLT_STRING(timestamp.monotonic),
-                    DLT_STRING(buffer_process),
-                    DLT_STRING(buffer_priority),
-                    DLT_STRING(buffer_message)
-                    );
-
-        }
-        else {
-            /* since we are talking about points in time, I'd prefer truncating over arithmetic rounding */
-            ts = (uint32_t)(atof(timestamp.monotonic) * 10000);
-            DLT_LOG_TS(journalContext, loglevel, ts,
-                        DLT_STRING(timestamp.real),
+                        DLT_STRING(timestamp.monotonic),
                         DLT_STRING(buffer_process),
                         DLT_STRING(buffer_priority),
                         DLT_STRING(buffer_message)
                         );
         }
+        else {
+            /* write log entry (including timestamp) */
+            if (config->Journal.UseOriginalTimestamp == 0) {
+                DLT_LOG(journalContext, loglevel,
+                        DLT_STRING(timestamp.real),
+                        DLT_STRING(timestamp.monotonic),
+                        DLT_STRING(buffer_process),
+                        DLT_STRING(buffer_priority),
+                        DLT_STRING(buffer_message)
+                        );
+
+            }
+            else {
+                /* since we are talking about points in time, I'd prefer truncating over arithmetic rounding */
+                ts = (uint32_t)(atof(timestamp.monotonic) * 10000);
+                DLT_LOG_TS(journalContext, loglevel, ts,
+                            DLT_STRING(timestamp.real),
+                            DLT_STRING(buffer_process),
+                            DLT_STRING(buffer_priority),
+                            DLT_STRING(buffer_message)
+                            );
+            }
+        }
+
 
         if (journal_checkUserBufferForFreeSpace() == -1) {
             /* buffer is nearly full */

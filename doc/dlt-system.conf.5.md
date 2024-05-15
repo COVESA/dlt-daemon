@@ -93,6 +93,17 @@ Map journal log levels to DLT log levels.
 
     Default: 1
 
+## JournalUseOriginalTimestamp
+
+Use the original timestamp (uptime when the event actually occured) as DLT timestamp.
+
+    Default: 1
+
+## JournalUseUptimeOnly
+
+Ignore the timestamp, show uptime (when the event actually occured) only in payload.
+
+    Default: 0
 
 # FILETRANSFER OPTIONS
 
