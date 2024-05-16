@@ -51,6 +51,7 @@ typedef struct
     char filenameBase[NAME_MAX + 1];/**< (String) Prefix of file name */
     char filenameExt[NAME_MAX + 1];/**< (String) Extension of file name */
     int ohandle;                 /**< (int) file handle to current output file */
+    bool fileNameUptimeBased;  /**< (bool) is filename uptime stamp based? false = realtime based (Default: false) */
 } MultipleFilesRingBuffer;
 
 /**
@@ -77,6 +78,33 @@ extern DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_
                                                  bool append,
                                                  const char *filename_base,
                                                  const char *filename_ext);
+
+/**
+ * Initialise the multiple files buffer with an uptime option.
+ * This function call opens the currently used log file.
+ * A check of the complete size of the files is done during startup.
+ * Old files are deleted, if there is not enough space left to create new file.
+ * This function must be called before using further multiple files functions.
+ * @param files_buffer pointer to MultipleFilesRingBuffer struct.
+ * @param directory directory where to store multiple files.
+ * @param file_size maximum size of one files.
+ * @param max_size maximum size of complete multiple files in bytes.
+ * @param filename_timestamp_based filename to be created on timestamp-based or index-based.
+ * @param append Indicates whether the current log files is used or a new file should be be created
+ * @param filename_base Base name.
+ * @param filename_ext File extension.
+ * @param use_uptime_in_filename Indicates whether filename to be created with realtime- or uptime-stamp.
+ * @return negative value if there was an error.
+ */
+extern DltReturnValue multiple_files_buffer_init_with_uptime_option(MultipleFilesRingBuffer *files_buffer,
+                                                 const char *directory,
+                                                 int file_size,
+                                                 int max_size,
+                                                 bool filename_timestamp_based,
+                                                 bool append,
+                                                 const char *filename_base,
+                                                 const char *filename_ext,
+                                                 bool use_uptime_in_filename);
 
 /**
  * Uninitialise the multiple files buffer.

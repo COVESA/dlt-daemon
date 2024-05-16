@@ -2318,9 +2318,14 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
 
 DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu)
 {
+    return dlt_set_storageheader_with_timestamp_option(storageheader, ecu, false);
+}
+
+DltReturnValue dlt_set_storageheader_with_timestamp_option(DltStorageHeader *storageheader, const char *ecu, const bool useUptime)
+{
 
 #if !defined(_MSC_VER)
-    struct timeval tv;
+    struct timespec ts;
 #endif
 
     if ((storageheader == NULL) || (ecu == NULL))
@@ -2330,7 +2335,10 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #if defined(_MSC_VER)
     time(&(storageheader->seconds));
 #else
-    gettimeofday(&tv, NULL);
+    if (useUptime)
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+    else
+        clock_gettime(CLOCK_REALTIME, &ts);
 #endif
 
     /* prepare storage header */
@@ -2345,8 +2353,8 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #if defined(_MSC_VER)
     storageheader->microseconds = 0;
 #else
-    storageheader->seconds = (uint32_t) tv.tv_sec; /* value is long */
-    storageheader->microseconds = (int32_t) tv.tv_usec; /* value is long */
+    storageheader->seconds = (uint32_t) ts.tv_sec; /* value is long */
+    storageheader->microseconds = (int32_t) (ts.tv_nsec / 1000); /* value is long */
 #endif
 
     return DLT_RETURN_OK;
