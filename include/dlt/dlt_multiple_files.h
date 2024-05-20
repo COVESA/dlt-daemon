@@ -142,7 +142,7 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
  * @param length the maximum length of the log_file_name.
  * @param idx index to be used for file name creation.
  */
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, size_t length, unsigned int idx);
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, unsigned int idx);
 
 /**
  * Generates index for log file name.

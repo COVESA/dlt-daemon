@@ -114,20 +114,28 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
     return num_log_files;
 }
 
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const size_t length, const unsigned int idx)
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
-    /* create log file name */
-    char* file_name = files_buffer->filename;
-    memset(file_name, 0, length * sizeof(char));
+    char *f_ptr = files_buffer->filename;
+    memset(f_ptr, 0, sizeof(files_buffer->filename) * sizeof(char));
 
-    const size_t size = length - strlen(file_name) - 1;
-    strncat(file_name, files_buffer->filenameBase, size);
-    strncat(file_name, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
-    strncat(file_name, file_index, size);
-    strncat(file_name, files_buffer->filenameExt, size);
+    size_t size = NAME_MAX + 1;
+    strncpy(files_buffer->filename, files_buffer->filenameBase, size);
+
+    size = size - strlen(files_buffer->filenameBase);
+    strncat(files_buffer->filename, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
+
+    size = size - strlen(MULTIPLE_FILES_FILENAME_INDEX_DELIM);
+    strncat(files_buffer->filename, file_index, size);
+
+    f_ptr = strdup(files_buffer->filenameExt);
+    size = sizeof(f_ptr);
+    strncat(files_buffer->filename, f_ptr, size);
+    free(f_ptr);
+    f_ptr = NULL;
 }
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
@@ -198,7 +206,7 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
 
         idx = multiple_files_buffer_get_idx_of_log_file(newest) + 1;
 
-        multiple_files_buffer_file_name(files_buffer, sizeof(files_buffer->filename), idx);
+        multiple_files_buffer_file_name(files_buffer, idx);
         ret = snprintf(file_path, sizeof(file_path), "%s/%s",
                        files_buffer->directory, files_buffer->filename);
 

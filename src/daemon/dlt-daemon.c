@@ -323,10 +323,19 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+    ssize_t n = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
              "%s/dltpipes", dltFifoBaseDir);
-    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+    if (n < 0 || (size_t)n > DLT_PATH_MAX) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+                __func__, n, daemon_local->flags.userPipesDir);
+    }
+
+    n = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
              "%s/dlt", dltFifoBaseDir);
+    if (n < 0 || (size_t)n > DLT_PATH_MAX) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+                __func__, n, daemon_local->flags.daemonFifoName);
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -1935,7 +1944,7 @@ static char* file_read_everything(FILE* const file, const size_t sizeLimit)
 
     /* Size limit includes NULL terminator. */
     const off_t size = s_buf.st_size;
-    if (size < 0 || size >= sizeLimit) {
+    if (size < 0 || size >= (off_t)sizeLimit) {
         dlt_log(LOG_WARNING, "file size invalid\n");
         fclose(file);
         return NULL;
@@ -1979,12 +1988,12 @@ static char* file_read_field(FILE* const file, const char* const fieldName)
     }
 
     const char* const kDelimiters = "\r\n\"\'=";
-    const size_t fieldNameLen = strlen(fieldName);
+    const ssize_t fieldNameLen = strlen(fieldName);
 
     char* result = NULL;
 
     char* buffer = NULL;
-    ssize_t bufferSize = 0;
+    size_t bufferSize = 0;
 
     while (true) {
         ssize_t lineSize = getline(&buffer, &bufferSize, file);
@@ -2125,8 +2134,7 @@ void dlt_daemon_exit_trigger()
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     char tmp[DLT_PATH_MAX] = { 0 };
 
-    ssize_t n;
-    n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    ssize_t n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     if (n < 0 || (size_t)n > DLT_PATH_MAX) {
         dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
                 __func__, n, tmp);
