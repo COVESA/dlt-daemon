@@ -141,18 +141,21 @@ static DltContext *dlt_context_from_slog2file(const char *file_name) {
 }
 
 template <class time, class period>
-static void wait_for_buffer_space(const double max_usage_threshold,
+static bool wait_for_buffer_space(const double max_usage_threshold,
                                   const std::chrono::duration<time, period> max_wait_time) {
     int total_size = 0;
     int used_size = 0;
     double used_percent = 100.0;
     bool timeout = false;
+    static bool warning_sent = false;
+
     const auto end_time = std::chrono::steady_clock::now() + max_wait_time;
 
     do {
         dlt_user_check_buffer(&total_size, &used_size);
         used_percent = static_cast<double>(used_size) / total_size;
         if (used_percent < max_usage_threshold) {
+            warning_sent=false;
             break;
         }
 
@@ -162,11 +165,12 @@ static void wait_for_buffer_space(const double max_usage_threshold,
         timeout = std::chrono::steady_clock::now() < end_time;
     } while (!timeout);
 
-    if (timeout) {
+    if (timeout && !warning_sent) {
         DLT_LOG(dltQnxSystem, DLT_LOG_ERROR,
                 DLT_STRING("failed to get enough buffer space"));
-
+        warning_sent = true;
     }
+    return timeout;
 }
 
 /**
@@ -217,7 +221,10 @@ static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *
     DltContextData log_local; /* Used in DLT_* macros, do not rename */
     DltContext *ctxt = dlt_context_from_slog2file(info->file_name);
 
-    wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS));
+    if( wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS))
+    {
+        return 0; // discard message
+    }
 
     int ret;
     ret = dlt_user_log_write_start(ctxt, &log_local, loglevel);
