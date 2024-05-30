@@ -83,9 +83,7 @@
 #   include <limits.h>
 #endif
 #include <inttypes.h>
-#include <stdbool.h>
-#include <sys/poll.h>
-
+#include <unistd.h>
 #include "dlt_client.h"
 #include "dlt-control-common.h"
 
@@ -168,7 +166,7 @@ void usage()
     printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -u            UDP multicast mode\n");
-    printf("  -r msecs      Reconnect server with milli seconds specified\n");
+    printf("  -r msecs      Reconnect to server with milli seconds specified\n");
     printf("  -i addr       Host interface address\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
@@ -623,29 +621,28 @@ int main(int argc, char *argv[])
 
     if (dltdata.evalue)
         dlt_set_id(dltdata.ecuid, dltdata.evalue);
-    else
-        dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);
+    else{
+        dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);}
 
-    do {
-        /* Connect to TCP socket or open serial device */
+    while (true) {
+        /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
             /* Dlt Client Main Loop */
             dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
 
             if (dltdata.rflag == 1 && sig_close_recv == false) {
-                // if reconnect flag is enabled, wait for mentioned milli
-                // seconds
-                poll(NULL, 0, dltdata.rvalue);
-                continue;
-            }
-            else {
+                dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
+                sleep(dltdata.rvalue / 1000);
+            } else {
                 /* Dlt Client Cleanup */
                 dlt_client_cleanup(&dltclient, dltdata.vflag);
                 break;
             }
+        } else {
+            break;
         }
-    } while (dltdata.rflag == 1 && poll(NULL, 0, dltdata.rvalue) == 0);
+    }
 
     /* dlt-receive cleanup */
     if (dltdata.ovalue)
