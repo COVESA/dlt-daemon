@@ -39,6 +39,7 @@
 
 #include "dlt_multiple_files.h"
 #include "dlt_common.h"
+#include "dlt_log.h"
 
 unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char *file_name,
                                                     char *newest, char *oldest)

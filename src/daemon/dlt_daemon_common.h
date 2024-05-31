@@ -79,6 +79,7 @@
 #   include <semaphore.h>
 #   include <stdbool.h>
 #   include "dlt_common.h"
+#   include "dlt_log.h"
 #   include "dlt_user.h"
 #   include "dlt_offline_logstorage.h"
 #   include "dlt_gateway_types.h"

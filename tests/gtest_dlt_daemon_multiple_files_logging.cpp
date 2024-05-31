@@ -30,6 +30,7 @@ int connectServer(void);
 
 extern "C"
 {
+#include "dlt_log.h"
 #include "dlt_common.h"
 #include <syslog.h>
 #include <dirent.h>

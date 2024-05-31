@@ -84,6 +84,7 @@
 #endif
 #include <inttypes.h>
 
+#include "dlt_log.h"
 #include "dlt_client.h"
 #include "dlt-control-common.h"
 

@@ -102,6 +102,7 @@
 
 #   include "dlt_types.h"
 #   include "dlt_protocol.h"
+#   include "dlt_log.h"
 
 #   define DLT_PACKED __attribute__((aligned(1), packed))
 
@@ -191,13 +192,6 @@
 #      define LOG_DAEMON  (3 << 3)
 #   endif
 
-typedef enum {
-    DLT_LOG_TO_CONSOLE = 0,
-    DLT_LOG_TO_SYSLOG = 1,
-    DLT_LOG_TO_FILE = 2,
-    DLT_LOG_TO_STDERR = 3,
-    DLT_LOG_DROPPED = 4
-} DltLoggingMode;
 
 /**
  * The standard TCP Port used for DLT daemon, can be overwritten via -p \<port\> when starting dlt-daemon
@@ -1167,11 +1161,6 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose);
  */
 DltReturnValue dlt_file_free(DltFile *file, int verbose);
 
-/**
- * Set internal logging filename if mode 2
- * @param filename the filename
- */
-void dlt_log_set_filename(const char *filename);
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * Set FIFO base direction
@@ -1179,55 +1168,12 @@ void dlt_log_set_filename(const char *filename);
  */
 void dlt_log_set_fifo_basedir(const char *pipe_dir);
 #endif
-/**
- * Set internal logging level
- * @param level the level
- */
-void dlt_log_set_level(int level);
 
 /**
  * Set whether to print "name" and "unit" attributes in console output
  * @param state  true = with attributes, false = without attributes
  */
 void dlt_print_with_attributes(bool state);
-
-/**
- * Initialize (external) logging facility
- * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
- */
-DltReturnValue dlt_log_init(int mode);
-/**
- * Print with variable arguments to specified file descriptor by DLT_LOG_MODE environment variable (like fprintf)
- * @param format format string for message
- * @return negative value if there was an error or the total number of characters written is returned on success
- */
-int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1, 2);
-/**
- * Log ASCII string with null-termination to (external) logging facility
- * @param prio priority (see syslog() call)
- * @param s Pointer to ASCII string with null-termination
- * @return negative value if there was an error
- */
-DltReturnValue dlt_log(int prio, char *s);
-/**
- * Log with variable arguments to (external) logging facility (like printf)
- * @param prio priority (see syslog() call)
- * @param format format string for log message
- * @return negative value if there was an error
- */
-DltReturnValue dlt_vlog(int prio, const char *format, ...) PRINTF_FORMAT(2, 3);
-/**
- * Log size bytes with variable arguments to (external) logging facility (similar to snprintf)
- * @param prio priority (see syslog() call)
- * @param size number of bytes to log
- * @param format format string for log message
- * @return negative value if there was an error
- */
-DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...) PRINTF_FORMAT(3, 4);
-/**
- * De-Initialize (external) logging facility
- */
-void dlt_log_free(void);
 
 /**
  * Initialising a dlt receiver structure
@@ -1685,41 +1631,6 @@ char *get_filename_ext(const char *filename);
  * @return indicating success
  */
 bool dlt_extract_base_name_without_ext(const char* const abs_file_name, char* base_name, long base_name_len);
-
-/**
- * Initialize (external) logging facility
- * @param mode DltLoggingMode, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
- * @param enable_multiple_logfiles, true if multiple logfiles (incl. size limits) should be use
- * @param logging_file_size, maximum size in bytes of one logging file
- * @param logging_files_max_size, maximum size in bytes of all logging files
- */
-DltReturnValue dlt_log_init_multiple_logfiles_support(DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size, int logging_files_max_size);
-
-/**
- * Initialize (external) logging facility for single logfile.
- */
-DltReturnValue dlt_log_init_single_logfile();
-
-/**
- * Initialize (external) logging facility for multiple files logging.
- */
-DltReturnValue dlt_log_init_multiple_logfiles(int logging_file_size, int logging_files_max_size);
-
-/**
- * Logs into log files represented by the multiple files buffer.
- * @param format First element in a specific format that will be logged.
- * @param ... Further elements in a specific format that will be logged.
- */
-void dlt_log_multiple_files_write(const char* format, ...);
-
-void dlt_log_free_single_logfile();
-
-void dlt_log_free_multiple_logfiles();
-
-/**
- * Checks whether (internal) logging in multiple files is active.
- */
-bool dlt_is_log_in_multiple_files_active();
 
 #   ifdef __cplusplus
 }

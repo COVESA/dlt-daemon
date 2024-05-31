@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <syslog.h>
 #include "dlt_common.h"
+#include "dlt_log.h"
 #include "dlt-daemon_cfg.h"
 
 /* internal defines */

@@ -44,6 +44,7 @@
 #include "dlt-daemon_cfg.h"
 #include "dlt_daemon_common.h"
 #include "dlt_common.h"
+#include "dlt_log.h"
 #include "dlt_gateway.h"
 #include "dlt_daemon_socket.h"
 

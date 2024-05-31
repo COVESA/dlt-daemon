@@ -74,6 +74,7 @@
 
 #include "dlt_user.h"
 #include "dlt_common.h"
+#include "dlt_log.h"
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
 #include "dlt_user_cfg.h"
@@ -156,10 +157,6 @@ typedef struct VarInfo
 pthread_mutex_t mq_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t mq_init_condition;
 #endif /* DLT_NETWORK_TRACE_ENABLE */
-
-/* use these variables from common.c*/
-extern int logging_mode;
-extern FILE *logging_handle;
 
 void dlt_lock_mutex(pthread_mutex_t *mutex)
 {
