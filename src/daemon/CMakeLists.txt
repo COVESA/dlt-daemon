@@ -38,6 +38,7 @@ set(dlt_daemon_SRCS
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_user_shared.c
     ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c
     ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage_behavior.c
+    dlt_buffer_dump.c
     )
 
 if(WITH_DLT_SHM_ENABLE)
