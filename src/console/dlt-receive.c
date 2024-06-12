@@ -83,13 +83,14 @@
 #   include <limits.h>
 #endif
 #include <inttypes.h>
-
+#include <unistd.h>
 #include "dlt_client.h"
 #include "dlt-control-common.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
 
 DltClient dltclient;
+static bool sig_close_recv = false;
 
 void signal_handler(int signal)
 {
@@ -99,6 +100,7 @@ void signal_handler(int signal)
     case SIGINT:
     case SIGQUIT:
         /* stop main loop */
+        sig_close_recv = true;
         shutdown(dltclient.receiver.fd, SHUT_RD);
         break;
     default:
@@ -119,12 +121,14 @@ typedef struct {
     int vflag;
     int yflag;
     int uflag;
+    int rflag;
     char *ovalue;
     char *ovaluebase; /* ovalue without ".dlt" */
     char *fvalue;       /* filename for space separated filter file (<AppID> <ContextID>) */
     char *jvalue;       /* filename for json filter file */
     char *evalue;
     int bvalue;
+    int rvalue;
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
     int64_t climit;
@@ -162,6 +166,7 @@ void usage()
     printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -u            UDP multicast mode\n");
+    printf("  -r msecs      Reconnect to server with milli seconds specified\n");
     printf("  -i addr       Host interface address\n");
     printf("  -b baudrate   Serial device baudrate (Default: 115200)\n");
     printf("  -e ecuid      Set ECU ID (Default: RECV)\n");
@@ -344,7 +349,7 @@ int main(int argc, char *argv[])
     /* Fetch command line arguments */
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:")) != -1)
+    while ((c = getopt(argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:r:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -416,6 +421,11 @@ int main(int argc, char *argv[])
                      "Extended filtering is not supported. Please build with the corresponding cmake option to use it.\n");
             return -1;
             #endif
+        }
+        case 'r': {
+            dltdata.rflag = 1;
+            dltdata.rvalue = atoi(optarg);
+            break;
         }
         case 'o':
         {
@@ -611,17 +621,27 @@ int main(int argc, char *argv[])
 
     if (dltdata.evalue)
         dlt_set_id(dltdata.ecuid, dltdata.evalue);
-    else
-        dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);
+    else{
+        dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);}
 
-    /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
+    while (true) {
+        /* Attempt to connect to TCP socket or open serial device */
+        if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
-        /* Dlt Client Main Loop */
-        dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+            /* Dlt Client Main Loop */
+            dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
 
-        /* Dlt Client Cleanup */
-        dlt_client_cleanup(&dltclient, dltdata.vflag);
+            if (dltdata.rflag == 1 && sig_close_recv == false) {
+                dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
+                sleep(dltdata.rvalue / 1000);
+            } else {
+                /* Dlt Client Cleanup */
+                dlt_client_cleanup(&dltclient, dltdata.vflag);
+                break;
+            }
+        } else {
+            break;
+        }
     }
 
     /* dlt-receive cleanup */
