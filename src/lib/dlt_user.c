@@ -1838,7 +1838,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
         return DLT_RETURN_WRONG_PARAMETER;
     } else if (ret == DLT_RETURN_LOGGING_DISABLED) {
         log->handle = NULL;
-        return DLT_RETURN_OK;
+        return ret;
     }
 
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);

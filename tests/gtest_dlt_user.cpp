@@ -173,11 +173,11 @@ TEST(t_dlt_user_log_write_start, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_INFO));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     /* To test the default behaviour and the default log level set to DLT_LOG_INFO */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_OFF));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start(&context, &contextData, DLT_LOG_OFF));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEBUG));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEBUG));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_VERBOSE));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start(&context, &contextData, DLT_LOG_VERBOSE));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -268,11 +268,11 @@ TEST(t_dlt_user_log_write_start_id, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     /* To test the default behaviour and the default log level set to DLT_LOG_INFO */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
 
     messageid = UINT32_MAX;
@@ -287,11 +287,11 @@ TEST(t_dlt_user_log_write_start_id, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_INFO, messageid));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     /* To test the default behaviour and the default log level set to DLT_LOG_INFO */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_OFF, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEBUG, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
+    EXPECT_LE(DLT_RETURN_LOGGING_DISABLED, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_VERBOSE, messageid));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
