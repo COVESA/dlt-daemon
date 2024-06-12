@@ -162,7 +162,7 @@ static bool wait_for_buffer_space(const double max_usage_threshold,
         dlt_user_log_resend_buffer();
 
         std::this_thread::sleep_for(10ms);
-        timeout = std::chrono::steady_clock::now() < end_time;
+        timeout = std::chrono::steady_clock::now() >= end_time;
     } while (!timeout);
 
     if (timeout && !warning_sent) {
