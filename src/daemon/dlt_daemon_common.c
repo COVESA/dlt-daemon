@@ -635,12 +635,15 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         if (dlt_user_handle < DLT_FD_MINIMUM) {
-            snprintf(filename,
-                     DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                     "%s/dltpipes/dlt%d",
-                     dltFifoBaseDir,
-                     pid);
-
+            ssize_t n = snprintf(filename,
+                             DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                             "%s/dltpipes/dlt%d",
+                             dltFifoBaseDir,
+                             pid);
+            if (n < 0 || (size_t)n > DLT_DAEMON_COMMON_TEXTBUFSIZE) {
+                dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+                __func__, n, filename);
+            }
             dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 
             if (dlt_user_handle < 0) {
