@@ -221,7 +221,7 @@ static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *
     DltContextData log_local; /* Used in DLT_* macros, do not rename */
     DltContext *ctxt = dlt_context_from_slog2file(info->file_name);
 
-    if( wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS))
+    if( wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS)))
     {
         return 0; // discard message
     }
