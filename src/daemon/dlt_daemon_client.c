@@ -351,8 +351,8 @@ int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
     } else {
         ecu_ptr = daemon->ecuid;
     }
-
-    if (dlt_set_storageheader(daemon_local->msg.storageheader, ecu_ptr)) {
+    
+    if (dlt_set_storageheader_with_timestamp_option(daemon_local->msg.storageheader, ecu_ptr, daemon_local->flags.offlineTraceUseUptimeOnly)) {
         dlt_vlog(LOG_WARNING,
                  "%s: failed to set storage header with header type: 0x%x\n",
                  __func__, daemon_local->msg.standardheader->htyp);
@@ -404,8 +404,7 @@ int dlt_daemon_client_send_control_message(int sock,
 
     /* prepare storage header */
     msg->storageheader = (DltStorageHeader *)msg->headerbuffer;
-
-    if (dlt_set_storageheader(msg->storageheader, daemon->ecuid) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader_with_timestamp_option(msg->storageheader, daemon->ecuid, daemon_local->flags.offlineTraceUseUptimeOnly) == DLT_RETURN_ERROR)
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     /* prepare standard header */
@@ -2205,7 +2204,7 @@ void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal
 
     /* prepare storage header */
     msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
-    dlt_set_storageheader(msg.storageheader, daemon->ecuid);
+    dlt_set_storageheader_with_timestamp_option(msg.storageheader, daemon->ecuid, daemon_local->flags.offlineTraceUseUptimeOnly);
 
     /* prepare standard header */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));

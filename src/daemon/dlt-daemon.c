@@ -622,6 +622,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                         daemon_local->flags.offlineTraceFilenameTimestampBased = (bool)atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
                     }
+                    else if (strcmp(token, "OfflineTraceUseUptimeOnly") == 0)
+                    {
+                        daemon_local->flags.offlineTraceUseUptimeOnly = (bool)atoi(value);
+                    }
                     else if (strcmp(token, "SendECUSoftwareVersion") == 0)
                     {
                         daemon_local->flags.sendECUSoftwareVersion = atoi(value);
@@ -1443,14 +1447,15 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* init offline trace */
     if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&
         daemon_local->flags.offlineTraceDirectory[0]) {
-        if (multiple_files_buffer_init(&(daemon_local->offlineTrace),
+        if (multiple_files_buffer_init_with_uptime_option(&(daemon_local->offlineTrace),
                                        daemon_local->flags.offlineTraceDirectory,
                                        daemon_local->flags.offlineTraceFileSize,
                                        daemon_local->flags.offlineTraceMaxSize,
                                        daemon_local->flags.offlineTraceFilenameTimestampBased,
                                        false,
                                        DLT_OFFLINETRACE_FILENAME_BASE,
-                                       DLT_OFFLINETRACE_FILENAME_EXT) == -1) {
+                                       DLT_OFFLINETRACE_FILENAME_EXT,
+                                       daemon_local->flags.offlineTraceUseUptimeOnly) == -1) {
             dlt_log(LOG_ERR, "Could not initialize offline trace\n");
             return -1;
         }
@@ -2273,7 +2278,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local, cha
 
     /* Set storageheader */
     msg.storageheader = (DltStorageHeader *)(msg.headerbuffer);
-    dlt_set_storageheader(msg.storageheader, daemon->ecuid);
+    dlt_set_storageheader_with_timestamp_option(msg.storageheader, daemon->ecuid, daemon_local->flags.offlineTraceUseUptimeOnly);
 
     /* Set standardheader */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));

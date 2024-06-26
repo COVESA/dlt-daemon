@@ -1413,8 +1413,8 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
             }
 
             /* prepare storage header */
-            if (dlt_set_storageheader(msg.storageheader,
-                                      msg.headerextra.ecu) == DLT_RETURN_ERROR) {
+            if (dlt_set_storageheader_with_timestamp_option(msg.storageheader,
+                                      msg.headerextra.ecu, daemon_local->flags.offlineTraceUseUptimeOnly) == DLT_RETURN_ERROR) {
                 dlt_vlog(LOG_ERR, "%s: Can't set storage header\n", __func__);
                 return DLT_RETURN_ERROR;
             }
