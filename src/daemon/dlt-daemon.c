@@ -1590,14 +1590,26 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
 
-    /* Try to delete existing pipe, ignore result of unlink */
+    /* Valid fifo means there is a daemon running, stop init phase of the new */
     const char *tmpFifo = daemon_local->flags.daemonFifoName;
-    unlink(tmpFifo);
+    if (access(tmpFifo, F_OK) == 0) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s is in use (%s)!\n",
+                 tmpFifo, strerror(errno));
+        return -1;
+    }
 
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
 
     if (ret == -1) {
         dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n",
+                 tmpFifo, strerror(errno));
+        return -1;
+    } /* if */
+
+    fd = open(tmpFifo, O_RDWR);
+
+    if (fd == -1) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
                  tmpFifo, strerror(errno));
         return -1;
     } /* if */
@@ -1608,7 +1620,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         struct group *group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
 
         if (group_dlt) {
-            ret = chown(tmpFifo, -1, group_dlt->gr_gid);
+            ret = fchown(fd, -1, group_dlt->gr_gid);
 
             if (ret == -1)
                 dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
@@ -1627,14 +1639,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                      strerror(errno));
         }
     }
-
-    fd = open(tmpFifo, O_RDWR);
-
-    if (fd == -1) {
-        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
-                 tmpFifo, strerror(errno));
-        return -1;
-    } /* if */
 
 #ifdef __linux__
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
