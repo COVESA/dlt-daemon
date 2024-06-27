@@ -380,6 +380,7 @@ if(WITH_GIT_SUBMODULE)
 endif()
 
 if(WITH_DLT_UNIT_TESTS)
+    set(DLT_IPC "UNIX_SOCKET")
     find_package(GTest)
     if(GTEST_FOUND)
         find_package(PkgConfig REQUIRED)
