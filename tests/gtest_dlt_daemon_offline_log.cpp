@@ -1567,6 +1567,7 @@ TEST(t_dlt_logstorage_update_all_contexts, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1607,6 +1608,7 @@ TEST(t_dlt_logstorage_update_context, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1652,6 +1654,7 @@ TEST(t_dlt_logstorage_update_context_loglevel, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1689,6 +1692,7 @@ TEST(t_dlt_daemon_logstorage_reset_application_loglevel, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1732,6 +1736,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1786,6 +1791,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1820,6 +1826,7 @@ TEST(t_dlt_daemon_logstorage_write, normal)
                                  DLT_DAEMON_RINGBUFFER_MIN_SIZE,
                                  DLT_DAEMON_RINGBUFFER_MAX_SIZE,
                                  DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+                                 DLT_RINGBUFFER_DISCARD_NEW_MESSAGE,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id(daemon.ecuid, ecu);
@@ -1907,6 +1914,7 @@ TEST(t_dlt_daemon_logstorage_setup_internal_storage, normal)
                                  daemon_local.RingbufferMinSize,
                                  daemon_local.RingbufferMaxSize,
                                  daemon_local.RingbufferStepSize,
+                                 daemon_local.ringbufferFullStrategy,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
 

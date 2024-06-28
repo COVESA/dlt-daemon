@@ -87,9 +87,10 @@ typedef struct
  * This function must be called before using further shm functions.
  * @param buf pointer to shm structure
  * @param name the name of the shm, must be the same for server and client
+ * @param full_strategy the strategy when ringbuffer is full
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
+extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name, DltRingBufferFullStrategy full_strategy);
 
 /**
  * Initialise the shared memory on the server side.
@@ -97,9 +98,10 @@ extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
  * @param buf pointer to shm structure
  * @param name the name of the shm, must be the same for server and client
  * @param size the requested size of the shm
+ * @param full_strategy the strategy when ringbuffer is full
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size);
+extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size, DltRingBufferFullStrategy full_strategy);
 
 /**
  * Push data from client onto the shm.

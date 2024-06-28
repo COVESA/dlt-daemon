@@ -169,6 +169,7 @@ typedef struct
     unsigned long RingbufferMinSize;
     unsigned long RingbufferMaxSize;
     unsigned long RingbufferStepSize;
+    DltRingBufferFullStrategy ringbufferFullStrategy; /**< (DltRingBufferFullStrategy) indicates what action to handle when hte ringbuffer is full*/
     unsigned long daemonFifoSize;
 #ifdef UDP_CONNECTION_SUPPORT
     int UDPConnectionSetup; /* enable/disable the UDP connection */
