@@ -1592,7 +1592,11 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 
     /* Try to delete existing pipe, ignore result of unlink */
     const char *tmpFifo = daemon_local->flags.daemonFifoName;
-    unlink(tmpFifo);
+    if (access(tmpFifo, F_OK) == 0) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s is in use (%s)!\n",
+                 tmpFifo, strerror(errno));
+        return -1;
+    }
 
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
 
@@ -1601,7 +1605,39 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                  tmpFifo, strerror(errno));
         return -1;
     } /* if */
+    /* Create a lock file (mutex) */
+    const char *lockFile = "/tmp/fifo_lock";
+    int lockFd = open(lockFile, O_CREAT | O_RDWR, 0600);
 
+    if (lockFd == -1) {
+        dlt_vlog(LOG_ERR, "Error creating lock file: %s\n", strerror(errno));
+        return -1;
+    }
+
+    /* Acquire the lock */
+    struct flock fl;
+    fl.l_type = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start = 0;
+    fl.l_len = 0;
+    if (fcntl(lockFd, F_SETLKW, &fl) == -1) {
+        dlt_vlog(LOG_ERR, "Error acquiring lock: %s\n", strerror(errno));
+        close(lockFd);
+        return -1;
+    }
+    fd = open(tmpFifo, O_RDWR);
+
+    if (fd == -1) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
+                 tmpFifo, strerror(errno));
+        close(lockFd);
+        return -1;
+    } /* if */
+
+    /* Release the lock */
+    fl.l_type = F_UNLCK;
+    fcntl(lockFd, F_SETLK, &fl);
+    close(lockFd);
     /* Set group of daemon FIFO */
     if (daemon_local->flags.daemonFifoGroup[0] != 0) {
         errno = 0;
@@ -1627,14 +1663,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                      strerror(errno));
         }
     }
-
-    fd = open(tmpFifo, O_RDWR);
-
-    if (fd == -1) {
-        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
-                 tmpFifo, strerror(errno));
-        return -1;
-    } /* if */
 
 #ifdef __linux__
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
