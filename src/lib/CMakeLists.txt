@@ -46,6 +46,10 @@ else()
 endif()
 
 target_link_libraries(dlt ${RT_LIBRARY} ${SOCKET_LIBRARY} Threads::Threads)
+set_target_properties(dlt PROPERTIES
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1
+)
 
 target_include_directories(dlt
     PUBLIC

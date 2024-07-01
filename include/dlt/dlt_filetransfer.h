@@ -31,6 +31,7 @@
 #include <signal.h>    /* Signal handling */
 #include "errno.h"
 
+#include "dlt_export.h"
 
 /* ! Error code for dlt_user_log_file_complete */
 #define DLT_FILETRANSFER_ERROR_FILE_COMPLETE -300
@@ -70,7 +71,7 @@
  * @param timeout Timeout in ms to wait between some logs. Important that the FIFO of dlt will not be flooded with to many messages in a short period of time.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout);
+DLT_EXPORT int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout);
 
 
 /* !This method gives information about the number of packages the file have */
@@ -82,7 +83,7 @@ extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filen
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename);
+DLT_EXPORT int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename);
 
 
 /* !Logs specific file inforamtions to dlt */
@@ -91,7 +92,7 @@ extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey.If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
+DLT_EXPORT int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
 
 
 /* !Transfer the head of the file as a dlt logs. */
@@ -104,7 +105,7 @@ extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *file
  * @param alias Alias for the file. An alternative name to show in the receiving end
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
+DLT_EXPORT int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
 
 /* !Transfer the head of the file as a dlt logs. */
 /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
@@ -115,7 +116,7 @@ extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *f
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
+DLT_EXPORT int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
 
 //* !Transfer the content data of a file. */
 /**See the Mainpages.c for more informations.
@@ -137,7 +138,7 @@ extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char
  * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int packageToTransfer, int timeout);
+DLT_EXPORT int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int packageToTransfer, int timeout);
 
 
 
@@ -150,6 +151,6 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
  * @param deleteFlag Flag to delete the file after the whole file is transferred (logged to dlt).1->delete,0->NotDelete
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);
+DLT_EXPORT int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);
 
 #endif /* DLT_FILETRANSFER_H */

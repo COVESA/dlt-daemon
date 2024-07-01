@@ -69,14 +69,11 @@ typedef struct
  * @param filename_ext File extension.
  * @return negative value if there was an error.
  */
-extern DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
-                                                 const char *directory,
-                                                 int file_size,
-                                                 int max_size,
-                                                 bool filename_timestamp_based,
-                                                 bool append,
-                                                 const char *filename_base,
-                                                 const char *filename_ext);
+DltReturnValue
+multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
+                           const char *directory, int file_size, int max_size,
+                           bool filename_timestamp_based, bool append,
+                           const char *filename_base, const char *filename_ext);
 
 /**
  * Uninitialise the multiple files buffer.
@@ -85,7 +82,8 @@ extern DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_
  * @param files_buffer pointer to MultipleFilesRingBuffer struct.
  * @return negative value if there was an error.
 */
-extern DltReturnValue multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer);
+DltReturnValue
+multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer);
 
 /**
  * Write data into multiple files.
@@ -97,9 +95,9 @@ extern DltReturnValue multiple_files_buffer_free(const MultipleFilesRingBuffer *
  * @param size size in bytes of first data block to be written, 0 if not used.
  * @return negative value if there was an error.
  */
-extern DltReturnValue multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
-                                                  const unsigned char *data,
-                                                  int size);
+DltReturnValue
+multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
+                            const unsigned char *data, int size);
 
 /**
  * First the limits are verified. Then the oldest file is deleted and a new file is created on demand.
@@ -115,15 +113,16 @@ void multiple_files_buffer_rotate_file(MultipleFilesRingBuffer *files_buffer,
  * @param data pointer to data block to be written, null if not used.
  * @param size size in bytes of given data block to be written, 0 if not used.
  */
-DltReturnValue multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
-                                                 const unsigned char *data,
-                                                 int size);
+DltReturnValue
+multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
+                                  const unsigned char *data, int size);
 
 /**
  * Get size of currently used multiple files buffer.
  * @return size in bytes.
  */
-extern ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *files_buffer);
+ssize_t multiple_files_buffer_get_total_size(
+    const MultipleFilesRingBuffer *files_buffer);
 
 /**
  * Provides info about the multiple files storage directory.
@@ -133,7 +132,8 @@ extern ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffe
  * @param oldest pointer to store oldest filename
  * @return num of files in the directory.
  */
-unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char *file_name,
+unsigned int multiple_files_buffer_storage_dir_info(const char *path,
+                                                    const char *file_name,
                                                     char *newest, char *oldest);
 
 /**
@@ -142,7 +142,8 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
  * @param length the maximum length of the log_file_name.
  * @param idx index to be used for file name creation.
  */
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, size_t length, unsigned int idx);
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer,
+                                     size_t length, unsigned int idx);
 
 /**
  * Generates index for log file name.

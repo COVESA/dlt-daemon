@@ -126,7 +126,7 @@ void stringHash(const char *str, uint32_t *hash)
  * @param ok *ok == 0 -> error; *ok == 1 -> ok
  * @return Returns a unique number associated with each filename
  */
-uint32_t getFileSerialNumber(const char *file, int *ok)
+DLT_EXPORT uint32_t dlt_get_file_serial_number(const char *file, int *ok)
 {
     struct stat st;
     uint32_t ret;
@@ -243,11 +243,12 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
 
     if (errno != ENOENT) {
         int ok = 0;
-        uint32_t fserial = getFileSerialNumber(filename, &ok);
+        uint32_t fserial = dlt_get_file_serial_number(filename, &ok);
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_errorMessage, error in getFileSerialNumber for: "),
+                    DLT_STRING("dlt_user_log_file_errorMessage, error in "
+                               "dlt_get_file_serial_number for: "),
                     DLT_STRING(filename));
         }
 
@@ -318,7 +319,7 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
                     DLT_STRING(filename));
         }
 
-        uint32_t fserialnumber = getFileSerialNumber(filename, &ok);
+        uint32_t fserialnumber = dlt_get_file_serial_number(filename, &ok);
 
         if (!ok) {
             DLT_LOG(*fileContext,
@@ -457,7 +458,7 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
     if (isFile(filename)) {
         int ok;
 
-        uint32_t fserialnumber = getFileSerialNumber(filename, &ok);
+        uint32_t fserialnumber = dlt_get_file_serial_number(filename, &ok);
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -519,7 +520,7 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
     if (isFile(filename)) {
         int ok;
 
-        uint32_t fserialnumber = getFileSerialNumber(filename, &ok);
+        uint32_t fserialnumber = dlt_get_file_serial_number(filename, &ok);
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -649,7 +650,7 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
             readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
             int ok;
 
-            uint32_t fserial = getFileSerialNumber(filename, &ok);
+            uint32_t fserial = dlt_get_file_serial_number(filename, &ok);
 
             if (1 != ok) {
                 DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -693,7 +694,8 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
 
                     int ok;
 
-                    uint32_t fserial = getFileSerialNumber(filename, &ok);
+                    uint32_t fserial =
+                        dlt_get_file_serial_number(filename, &ok);
 
                     if (1 != ok) {
                         DLT_LOG(*fileContext, DLT_LOG_ERROR,
@@ -748,7 +750,7 @@ int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int del
     if (isFile(filename)) {
 
         int ok;
-        uint32_t fserial = getFileSerialNumber(filename, &ok);
+        uint32_t fserial = dlt_get_file_serial_number(filename, &ok);
 
         if (1 != ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,

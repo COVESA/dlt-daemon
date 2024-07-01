@@ -86,6 +86,7 @@ if (WITH_DLT_UNIT_TESTS)
 
     add_library(dlt_daemon ${library_SRCS})
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+    target_compile_definitions(dlt_daemon PRIVATE DLT_UNIT_TEST_LIB)
 
     install(TARGETS dlt_daemon
             RUNTIME DESTINATION bin

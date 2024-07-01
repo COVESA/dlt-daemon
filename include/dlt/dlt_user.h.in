@@ -95,6 +95,7 @@
 #      include <semaphore.h>
 #   endif
 
+#   include "dlt_export.h"
 #   include "dlt_types.h"
 #   include "dlt_shm.h"
 #if !DLT_DISABLE_MACRO
@@ -287,7 +288,7 @@ typedef int (*dlt_injection_callback)(uint32_t, void *, uint32_t);
  * @param loglevel this is the current log level of the log message to be sent
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is matching
  */
-DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
+DLT_EXPORT DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
 
 /**
  * Initialize the generation of a DLT log message (intended for usage in non-verbose mode)
@@ -300,7 +301,7 @@ DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log,
  * @param messageid message id of message
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is matching
  */
-DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
                                            uint32_t messageid);
@@ -322,7 +323,7 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
  * @param args_num number of arguments in buffer
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is matching
  */
-DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
                                                        DltContextData *log,
                                                        DltLogLevelType loglevel,
                                                        char *buffer,
@@ -335,7 +336,7 @@ DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
  * @param log pointer to an object containing information about logging context data
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_finish(DltContextData *log);
+DLT_EXPORT DltReturnValue dlt_user_log_write_finish(DltContextData *log);
 
 /**
  * Finishing the generation of a DLT log message and sending it to the DLT daemon without
@@ -345,7 +346,7 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log);
  * @param log pointer to an object containing information about logging context data
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
+DLT_EXPORT DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
 
 /**
  * Write a boolean parameter into a DLT log message.
@@ -355,7 +356,7 @@ DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
  * @param data boolean parameter written into log message (mapped to uint8)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data);
 
 /**
  * Write a boolean parameter with "name" attribute into a DLT log message.
@@ -370,7 +371,7 @@ DltReturnValue dlt_user_log_write_bool(DltContextData *log, uint8_t data);
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name);
 
 /**
  * Write a float parameter into a DLT log message.
@@ -380,7 +381,7 @@ DltReturnValue dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, c
  * @param data float32_t parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data);
 
 /**
  * Write a double parameter into a DLT log message.
@@ -390,7 +391,7 @@ DltReturnValue dlt_user_log_write_float32(DltContextData *log, float32_t data);
  * @param data float64_t parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_float64(DltContextData *log, double data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_float64(DltContextData *log, double data);
 
 /**
  * Write a float parameter with attributes into a DLT log message.
@@ -406,7 +407,7 @@ DltReturnValue dlt_user_log_write_float64(DltContextData *log, double data);
  * @param unit  the "unit" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit);
 
 /**
  * Write a double parameter with attributes into a DLT log message.
@@ -422,7 +423,7 @@ DltReturnValue dlt_user_log_write_float32_attr(DltContextData *log, float32_t da
  * @param unit  the "unit" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t data, const char *name, const char *unit);
 
 /**
  * Write a uint parameter into a DLT log message.
@@ -432,11 +433,11 @@ DltReturnValue dlt_user_log_write_float64_attr(DltContextData *log, float64_t da
  * @param data unsigned int parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data);
-DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data);
-DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data);
-DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data);
-DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint8(DltContextData *log, uint8_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint16(DltContextData *log, uint16_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint32(DltContextData *log, uint32_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
 
 /**
  * Write a uint parameter with attributes into a DLT log message.
@@ -452,11 +453,11 @@ DltReturnValue dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
  * @param unit  the "unit" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit);
 
 /**
  * Write a uint parameter into a DLT log message. The output will be formatted as given by the parameter type.
@@ -467,10 +468,10 @@ DltReturnValue dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data
  * @param type The formatting type of the string output.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type);
-DltReturnValue dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type);
-DltReturnValue dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type);
-DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type);
+DLT_EXPORT DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t data, DltFormatType type);
 
 /**
  * Write a pointer value architecture independent.
@@ -480,7 +481,7 @@ DltReturnValue dlt_user_log_write_uint64_formatted(DltContextData *log, uint64_t
  * @param data void* parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data);
 
 /**
  * Write a int parameter into a DLT log message.
@@ -490,11 +491,11 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data);
  * @param data int parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_int(DltContextData *log, int data);
-DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data);
-DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data);
-DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data);
-DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int(DltContextData *log, int data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int8(DltContextData *log, int8_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int16(DltContextData *log, int16_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int32(DltContextData *log, int32_t data);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data);
 
 /**
  * Write an int parameter with attributes into a DLT log message.
@@ -510,11 +511,11 @@ DltReturnValue dlt_user_log_write_int64(DltContextData *log, int64_t data);
  * @param unit  the "unit" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_int16_attr(DltContextData *log, int16_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_int32_attr(DltContextData *log, int32_t data, const char *name, const char *unit);
-DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int8_attr(DltContextData *log, int8_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int16_attr(DltContextData *log, int16_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int32_attr(DltContextData *log, int32_t data, const char *name, const char *unit);
+DLT_EXPORT DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, const char *name, const char *unit);
 
 /**
  * Write a null terminated ASCII string into a DLT log message.
@@ -524,7 +525,7 @@ DltReturnValue dlt_user_log_write_int64_attr(DltContextData *log, int64_t data, 
  * @param text pointer to the parameter written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text);
+DLT_EXPORT DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text);
 
 /**
  * Write a potentially non-null-terminated ASCII string into a DLT log message.
@@ -535,7 +536,7 @@ DltReturnValue dlt_user_log_write_string(DltContextData *log, const char *text);
  * @param length length in bytes of @a text (without any termination character)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *text, uint16_t length);
 
 /**
  * Write a constant null terminated ASCII string into a DLT log message.
@@ -546,7 +547,7 @@ DltReturnValue dlt_user_log_write_sized_string(DltContextData *log, const char *
  * @param text pointer to the parameter written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text);
+DLT_EXPORT DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const char *text);
 
 /**
  * Write a constant, potentially non-null-terminated ASCII string into a DLT log message.
@@ -558,7 +559,7 @@ DltReturnValue dlt_user_log_write_constant_string(DltContextData *log, const cha
  * @param length length in bytes of @a text (without any termination character)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length);
 
 /**
  * Write a null terminated UTF8 string into a DLT log message.
@@ -568,7 +569,7 @@ DltReturnValue dlt_user_log_write_sized_constant_string(DltContextData *log, con
  * @param text pointer to the parameter written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
+DLT_EXPORT DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
 
 /**
  * Write a potentially non-null-terminated UTF8 string into a DLT log message.
@@ -579,7 +580,7 @@ DltReturnValue dlt_user_log_write_utf8_string(DltContextData *log, const char *t
  * @param length length in bytes of @a text (without any termination character)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length);
 
 /**
  * Write a constant null terminated UTF8 string into a DLT log message.
@@ -590,7 +591,7 @@ DltReturnValue dlt_user_log_write_sized_utf8_string(DltContextData *log, const c
  * @param text pointer to the parameter written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_constant_utf8_string(DltContextData *log, const char *text);
+DLT_EXPORT DltReturnValue dlt_user_log_write_constant_utf8_string(DltContextData *log, const char *text);
 
 /**
  * Write a constant, potentially non-null-terminated UTF8 string into a DLT log message.
@@ -602,7 +603,7 @@ DltReturnValue dlt_user_log_write_constant_utf8_string(DltContextData *log, cons
  * @param length length in bytes of @a text (without any termination character)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_constant_utf8_string(DltContextData *log, const char *text, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_constant_utf8_string(DltContextData *log, const char *text, uint16_t length);
 
 /**
  * Write a null-terminated ASCII string with "name" attribute into a DLT log message.
@@ -617,7 +618,7 @@ DltReturnValue dlt_user_log_write_sized_constant_utf8_string(DltContextData *log
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_string_attr(DltContextData *log, const char *text, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_string_attr(DltContextData *log, const char *text, const char *name);
 
 /**
  * Write a potentially non-null-terminated ASCII string with "name" attribute into a DLT log message.
@@ -633,7 +634,7 @@ DltReturnValue dlt_user_log_write_string_attr(DltContextData *log, const char *t
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
 
 /**
  * Write a constant, null-terminated ASCII string with "name" attribute into a DLT log message.
@@ -649,7 +650,7 @@ DltReturnValue dlt_user_log_write_sized_string_attr(DltContextData *log, const c
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name);
 
 /**
  * Write a constant, potentially non-null-terminated ASCII string with "name" attribute into a DLT log message.
@@ -666,7 +667,7 @@ DltReturnValue dlt_user_log_write_constant_string_attr(DltContextData *log, cons
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
 
 /**
  * Write a null-terminated UTF-8 string with "name" attribute into a DLT log message.
@@ -681,7 +682,7 @@ DltReturnValue dlt_user_log_write_sized_constant_string_attr(DltContextData *log
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name);
 
 /**
  * Write a potentially non-null-terminated UTF-8 string with "name" attribute into a DLT log message.
@@ -697,7 +698,7 @@ DltReturnValue dlt_user_log_write_utf8_string_attr(DltContextData *log, const ch
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
 
 /**
  * Write a constant, null-terminated UTF8 string with "name" attribute into a DLT log message.
@@ -713,7 +714,7 @@ DltReturnValue dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, co
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_constant_utf8_string_attr(DltContextData *log, const char *text, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_constant_utf8_string_attr(DltContextData *log, const char *text, const char *name);
 
 /**
  * Write a constant, potentially non-null-terminated UTF8 string with "name" attribute into a DLT log message.
@@ -730,7 +731,7 @@ DltReturnValue dlt_user_log_write_constant_utf8_string_attr(DltContextData *log,
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_sized_constant_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_sized_constant_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
 
 /**
  * Write a binary memory block into a DLT log message.
@@ -741,7 +742,7 @@ DltReturnValue dlt_user_log_write_sized_constant_utf8_string_attr(DltContextData
  * @param length length in bytes of the parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t length);
 
 /**
  * Write a binary memory block into a DLT log message.
@@ -753,7 +754,7 @@ DltReturnValue dlt_user_log_write_raw(DltContextData *log, void *data, uint16_t 
  * @param type the format information.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type);
+DLT_EXPORT DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data, uint16_t length, DltFormatType type);
 
 /**
  * Write a binary memory block with "name" attribute into a DLT log message.
@@ -769,7 +770,7 @@ DltReturnValue dlt_user_log_write_raw_formatted(DltContextData *log, void *data,
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data, uint16_t length, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data, uint16_t length, const char *name);
 
 /**
  * Write a binary memory block with "name" attribute into a DLT log message.
@@ -786,7 +787,7 @@ DltReturnValue dlt_user_log_write_raw_attr(DltContextData *log, const void *data
  * @param name  the "name" attribute (or NULL)
  * @return value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name);
+DLT_EXPORT DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const void *data, uint16_t length, DltFormatType type, const char *name);
 
 /**
  * Trace network message
@@ -798,7 +799,7 @@ DltReturnValue dlt_user_log_write_raw_formatted_attr(DltContextData *log, const 
  * @param payload pointer to network message payload
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_trace_network(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_user_trace_network(DltContext *handle,
                                       DltNetworkTraceType nw_trace_type,
                                       uint16_t header_len,
                                       void *header,
@@ -816,7 +817,7 @@ DltReturnValue dlt_user_trace_network(DltContext *handle,
  * @param allow_truncate Set to > 0 to allow truncating of the message if it is too large.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
                                                 DltNetworkTraceType nw_trace_type,
                                                 uint16_t header_len,
                                                 void *header,
@@ -837,7 +838,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
  * @param payload pointer to network message payload
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
                                                 DltNetworkTraceType nw_trace_type,
                                                 uint16_t header_len,
                                                 void *header,
@@ -853,7 +854,7 @@ DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
  * This function has to be called first, before using any DLT user lib functions.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_init();
+DLT_EXPORT DltReturnValue dlt_init();
 
 /**
  * Initialize the user lib writing only to file.
@@ -861,7 +862,7 @@ DltReturnValue dlt_init();
  * @param name name of an optional log file
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_init_file(const char *name);
+DLT_EXPORT DltReturnValue dlt_init_file(const char *name);
 
 /**
  * Set maximum file size if lib is configured to write only to file.
@@ -869,14 +870,14 @@ DltReturnValue dlt_init_file(const char *name);
  * @param filesize maximum file size
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_set_filesize_max(unsigned int filesize);
+DLT_EXPORT DltReturnValue dlt_set_filesize_max(unsigned int filesize);
 
 /**
  * Terminate the user lib.
  * This function has to be called when finishing using the DLT user lib.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_free();
+DLT_EXPORT DltReturnValue dlt_free();
 
 /**
  * Check the library version of DLT library.
@@ -884,7 +885,7 @@ DltReturnValue dlt_free();
  * @param user_minor_version the minor version to be compared
  * @return Value from DltReturnValue enum, DLT_RETURN_ERROR if there is a mismatch
  */
-DltReturnValue dlt_check_library_version(const char *user_major_version, const char *user_minor_version);
+DLT_EXPORT DltReturnValue dlt_check_library_version(const char *user_major_version, const char *user_minor_version);
 
 /**
  * Register an application in the daemon.
@@ -892,28 +893,28 @@ DltReturnValue dlt_check_library_version(const char *user_major_version, const c
  * @param description long name of the application
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_app(const char *apid, const char *description);
+DLT_EXPORT DltReturnValue dlt_register_app(const char *apid, const char *description);
 
 /**
  * Unregister an application in the daemon.
  * This function has to be called when finishing using an application.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_unregister_app(void);
+DLT_EXPORT DltReturnValue dlt_unregister_app(void);
 
 /**
  * Unregister an application in the daemon and also flushes the buffered logs.
  * This function has to be called when finishing using an application.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
+DLT_EXPORT DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
 
 /**
  * Get the application id
  * @param four byte long character array to store the application id
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_get_appid(char *appid);
+DLT_EXPORT DltReturnValue dlt_get_appid(char *appid);
 
 /**
  * Register a context in the daemon.
@@ -923,7 +924,7 @@ DltReturnValue dlt_get_appid(char *appid);
  * @param description long name of the context
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, const char *description);
+DLT_EXPORT DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, const char *description);
 
 /**
  * Register a context in the daemon with pre-defined log level and pre-defined trace status.
@@ -937,7 +938,7 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
  *        (DLT_TRACE_STATUS_DEFAULT is not allowed here)
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
                                           const char *contextid,
                                           const char *description,
                                           int loglevel,
@@ -952,7 +953,7 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
  * @param *dlt_log_level_changed_callback This is the fn which will be called when log level is changed
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_context_llccb(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_register_context_llccb(DltContext *handle,
                                           const char *contextid,
                                           const char *description,
                                           void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],
@@ -965,14 +966,14 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
  * @param handle pointer to an object containing information about one special logging context
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_unregister_context(DltContext *handle);
+DLT_EXPORT DltReturnValue dlt_unregister_context(DltContext *handle);
 
 
 /**
  * Set maximum timeout for re-sending at exit
  * @param timeout_in_milliseconds maximum time to wait until giving up re-sending, default 10000 (equals to 10 seconds)
  */
-int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
+DLT_EXPORT int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
 
 /**
  * Set the logging mode used by the daemon.
@@ -981,7 +982,7 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
  * @param mode the new logging mode used by the daemon: off, extern, internal, both.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
+DLT_EXPORT DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
 
 /**
  * Get the state of the connected client to the daemon.
@@ -991,7 +992,7 @@ DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
  * Until then the state is "unknown state".
  * @return -1 = unknown state, 0 = client not connected, 1 = client connected
  */
-int dlt_get_log_state();
+DLT_EXPORT int dlt_get_log_state();
 
 /**
  * Register callback function called when injection message was received
@@ -1000,7 +1001,7 @@ int dlt_get_log_state();
  * @param (*dlt_injection_callback) function pointer to callback function
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
+DLT_EXPORT DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t service_id,
                                                int (*dlt_injection_callback)(uint32_t service_id,
                                                                              void *data,
                                                                              uint32_t length));
@@ -1013,7 +1014,7 @@ DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t serv
  * @param priv private data
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
+DLT_EXPORT DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint32_t service_id,
                                                        int (*dlt_injection_callback)(uint32_t service_id,
                                                                                      void *data,
                                                                                      uint32_t length,
@@ -1025,7 +1026,7 @@ DltReturnValue dlt_register_injection_callback_with_id(DltContext *handle, uint3
  * @param (*dlt_log_level_changed_callback) function pointer to callback function
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
+DLT_EXPORT DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
                                                        void (*dlt_log_level_changed_callback)(
                                                            char context_id[DLT_ID_SIZE],
                                                            uint8_t log_level,
@@ -1035,7 +1036,7 @@ DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
  * Switch to verbose mode
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_verbose_mode(void);
+DLT_EXPORT DltReturnValue dlt_verbose_mode(void);
 
 /**
  * Check the version of dlt library with library version used of the application.
@@ -1043,7 +1044,7 @@ DltReturnValue dlt_verbose_mode(void);
  * @param user_minor_version version number of application - see dlt_version.h
  *  @return Value from DltReturnValue enum, DLT_RETURN_ERROR if there is a mismatch
  */
-DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version);
+DLT_EXPORT DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version);
 
 /**
  * Switch to non-verbose mode
@@ -1052,7 +1053,7 @@ DltReturnValue dlt_user_check_library_version(const char *user_major_version, co
  * Instead, it +allows+ the sending of both Verbose and Non-Verbose messages, depending on which APIs
  * are being called.
  */
-DltReturnValue dlt_nonverbose_mode(void);
+DLT_EXPORT DltReturnValue dlt_nonverbose_mode(void);
 
 /**
  * Use extended header in non verbose mode.
@@ -1060,7 +1061,7 @@ DltReturnValue dlt_nonverbose_mode(void);
  * @param use_extended_header_for_non_verbose Use extended header for non verbose mode if true
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_header_for_non_verbose);
+DLT_EXPORT DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_header_for_non_verbose);
 
 /**
  * Send session id configuration.
@@ -1068,7 +1069,7 @@ DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_heade
  * @param with_session_id Send session id in each message if enabled
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_with_session_id(int8_t with_session_id);
+DLT_EXPORT DltReturnValue dlt_with_session_id(int8_t with_session_id);
 
 /**
  * Send timestamp configuration.
@@ -1076,7 +1077,7 @@ DltReturnValue dlt_with_session_id(int8_t with_session_id);
  * @param with_timestamp Send timestamp id in each message if enabled
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_with_timestamp(int8_t with_timestamp);
+DLT_EXPORT DltReturnValue dlt_with_timestamp(int8_t with_timestamp);
 
 /**
  * Send ecu id configuration.
@@ -1084,7 +1085,7 @@ DltReturnValue dlt_with_timestamp(int8_t with_timestamp);
  * @param with_ecu_id Send ecu id in each message if enabled
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id);
+DLT_EXPORT DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id);
 
 /**
  * Set maximum logged log level and trace status of application
@@ -1093,7 +1094,7 @@ DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id);
  * @param tracestatus This is the trace status to be set for the whole application
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType tracestatus);
+DLT_EXPORT DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTraceStatusType tracestatus);
 
 
 /**
@@ -1115,7 +1116,7 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
  * @param ll
  * If no item matches or in case of error, the original log-level (\param ll) is returned
  */
-int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
+DLT_EXPORT int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
                                char const *const apid,
                                char const *const ctid,
                                int const ll);
@@ -1132,21 +1133,21 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
  * @return 0 on success
  * @return -1 on failure
  */
-int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set);
+DLT_EXPORT int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set);
 
-void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set);
+DLT_EXPORT void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set);
 
 /**
  * Enable local printing of messages
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_enable_local_print(void);
+DLT_EXPORT DltReturnValue dlt_enable_local_print(void);
 
 /**
  * Disable local printing of messages
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_disable_local_print(void);
+DLT_EXPORT DltReturnValue dlt_disable_local_print(void);
 
 /**
  * Write a null terminated ASCII string into a DLT log message.
@@ -1155,7 +1156,7 @@ DltReturnValue dlt_disable_local_print(void);
  * @param text pointer to the ASCII string written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text);
+DLT_EXPORT DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text);
 
 /**
  * Write a null terminated ASCII string and an integer value into a DLT log message.
@@ -1165,7 +1166,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
  * @param data integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data);
+DLT_EXPORT DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data);
 
 /**
  * Write a null terminated ASCII string and an unsigned integer value into a DLT log message.
@@ -1175,7 +1176,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
  * @param data unsigned integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data);
+DLT_EXPORT DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data);
 
 /**
  * Write an integer value into a DLT log message.
@@ -1184,7 +1185,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
  * @param data integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data);
+DLT_EXPORT DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data);
 
 /**
  * Write an unsigned integer value into a DLT log message.
@@ -1193,7 +1194,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
  * @param data unsigned integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data);
+DLT_EXPORT DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data);
 
 /**
  * Write an unsigned integer value into a DLT log message.
@@ -1203,13 +1204,13 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
  * @param length length in bytes of the parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length);
+DLT_EXPORT DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length);
 
 /**
  * Write marker message to DLT.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_marker();
+DLT_EXPORT DltReturnValue dlt_log_marker();
 
 /**
  * Get the total size and available size of the shared memory buffer between daemon and applications.
@@ -1219,7 +1220,7 @@ DltReturnValue dlt_log_marker();
  * @param used_size used size of buffer in bytes
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size);
+DLT_EXPORT DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size);
 
 /**
  * Try to resend log message in the user buffer. Stops if the dlt_uptime is bigger than
@@ -1227,13 +1228,13 @@ DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size);
  * attempts can be defined with DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP
  * @return number of messages in the user buffer
  */
-int dlt_user_atexit_blow_out_user_buffer(void);
+DLT_EXPORT int dlt_user_atexit_blow_out_user_buffer(void);
 
 /**
  * Try to resend log message in the user buffer.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_resend_buffer(void);
+DLT_EXPORT DltReturnValue dlt_user_log_resend_buffer(void);
 
 /**
  * Checks the log level passed by the log function if enabled for that context or not.
@@ -1258,8 +1259,8 @@ static inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, Dl
 }
 
 #   ifdef DLT_TEST_ENABLE
-void dlt_user_test_corrupt_user_header(int enable);
-void dlt_user_test_corrupt_message_size(int enable, int16_t size);
+DLT_EXPORT void dlt_user_test_corrupt_user_header(int enable);
+DLT_EXPORT void dlt_user_test_corrupt_message_size(int enable, int16_t size);
 #   endif /* DLT_TEST_ENABLE */
 
 #   ifdef __cplusplus

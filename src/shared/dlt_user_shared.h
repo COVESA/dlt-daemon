@@ -68,6 +68,7 @@
 #ifndef DLT_USER_SHARED_H
 #define DLT_USER_SHARED_H
 
+#include "dlt_export.h"
 #include "dlt_types.h"
 #include "dlt_user.h"
 
@@ -191,14 +192,14 @@ typedef struct
  * @param mtype user message type of internal message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
+DLT_EXPORT DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
 
 /**
  * Check if user header contains its marker
  * @param userheader pointer to the userheader
  * @return 0 no, 1 yes, negative value if there was an error
  */
-int dlt_user_check_userheader(DltUserHeader *userheader);
+DLT_EXPORT int dlt_user_check_userheader(DltUserHeader *userheader);
 
 /**
  * Atomic write to file descriptor, using vector of 2 elements
@@ -209,7 +210,7 @@ int dlt_user_check_userheader(DltUserHeader *userheader);
  * @param len2 length of second segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
+DLT_EXPORT DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
 
 /**
  * Atomic write to file descriptor, using vector of 2 elements  with a timeout of 1s
@@ -220,7 +221,7 @@ DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2
  * @param len2 length of second segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out2_with_timeout(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
+DLT_EXPORT DltReturnValue dlt_user_log_out2_with_timeout(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2);
 
 /**
  * Atomic write to file descriptor, using vector of 3 elements
@@ -233,7 +234,7 @@ DltReturnValue dlt_user_log_out2_with_timeout(int handle, void *ptr1, size_t len
  * @param len3 length of third segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
+DLT_EXPORT DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
 
 /**
  * Atomic write to file descriptor, using vector of 3 elements with a timeout of 1s
@@ -246,7 +247,7 @@ DltReturnValue dlt_user_log_out3(int handle, void *ptr1, size_t len1, void *ptr2
  * @param len3 length of third segment of data to be written
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_user_log_out3_with_timeout(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
+DLT_EXPORT DltReturnValue dlt_user_log_out3_with_timeout(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3, size_t len3);
 
 
 #endif /* DLT_USER_SHARED_H */

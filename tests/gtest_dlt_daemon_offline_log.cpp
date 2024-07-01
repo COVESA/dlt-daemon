@@ -35,7 +35,7 @@ extern "C"
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR 1
 #define DLT_CONFIG_FILE_SECTIONS 3
 
-unsigned int g_logstorage_cache_max;
+extern unsigned int g_logstorage_cache_max;
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
 TEST(t_dlt_logstorage_list_add, normal)
 {
