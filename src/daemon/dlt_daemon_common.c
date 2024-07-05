@@ -77,6 +77,7 @@
 #include <sys/socket.h> /* send() */
 
 #include "dlt_types.h"
+#include "dlt_log.h"
 #include "dlt_daemon_common.h"
 #include "dlt_daemon_common_cfg.h"
 #include "dlt_user_shared.h"
