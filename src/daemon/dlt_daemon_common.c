@@ -292,6 +292,7 @@ int dlt_daemon_init(DltDaemon *daemon,
                     unsigned long RingbufferMinSize,
                     unsigned long RingbufferMaxSize,
                     unsigned long RingbufferStepSize,
+                    DltRingBufferFullStrategy ringBufferFullStrategy,
                     const char *runtime_directory,
                     int InitialContextLogLevel,
                     int InitialContextTraceStatus,
@@ -330,7 +331,8 @@ int dlt_daemon_init(DltDaemon *daemon,
     if (dlt_buffer_init_dynamic(&(daemon->client_ringbuffer),
                                 (uint32_t) RingbufferMinSize,
                                 (uint32_t) RingbufferMaxSize,
-                                (uint32_t) RingbufferStepSize) < DLT_RETURN_OK)
+                                (uint32_t) RingbufferStepSize,
+                                ringBufferFullStrategy) < DLT_RETURN_OK)
         return -1;
 
     daemon->storage_handle = NULL;

@@ -382,6 +382,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
     daemon_local->RingbufferMaxSize = DLT_DAEMON_RINGBUFFER_MAX_SIZE;
     daemon_local->RingbufferStepSize = DLT_DAEMON_RINGBUFFER_STEP_SIZE;
+    daemon_local->ringbufferFullStrategy = DLT_RINGBUFFER_DISCARD_NEW_MESSAGE;
     daemon_local->daemonFifoSize = 0;
     daemon_local->flags.sendECUSoftwareVersion = 0;
     memset(daemon_local->flags.pathToECUSoftwareVersion, 0, sizeof(daemon_local->flags.pathToECUSoftwareVersion));
@@ -593,6 +594,10 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                             fclose (pFile);
                             return -1;
                         }
+                    }
+                    else if (strcmp(token, "RingbufferFullStrategy") == 0)
+                    {
+                        daemon_local->ringbufferFullStrategy = (DltRingBufferFullStrategy)atoi(value);
                     }
                     else if (strcmp(token, "SharedMemorySize") == 0)
                     {
@@ -1432,7 +1437,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     /* Daemon data */
     if (dlt_daemon_init(daemon, daemon_local->RingbufferMinSize, daemon_local->RingbufferMaxSize,
-                        daemon_local->RingbufferStepSize, daemon_local->flags.ivalue,
+                        daemon_local->RingbufferStepSize, daemon_local->ringbufferFullStrategy, daemon_local->flags.ivalue,
                         daemon_local->flags.contextLogLevel,
                         daemon_local->flags.contextTraceStatus, daemon_local->flags.enforceContextLLAndTS,
                         daemon_local->flags.vflag) == -1) {
@@ -1481,7 +1486,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     /* init shared memory */
     if (dlt_shm_init_server(&(daemon_local->dlt_shm), daemon_local->flags.dltShmName,
-                            daemon_local->flags.sharedMemorySize) == DLT_RETURN_ERROR) {
+                            daemon_local->flags.sharedMemorySize, daemon_local->ringbufferFullStrategy) == DLT_RETURN_ERROR) {
         dlt_log(LOG_ERR, "Could not initialize shared memory\n");
         return -1;
     }

@@ -224,6 +224,8 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
 static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
 
+static DltRingBufferFullStrategy  dlt_env_get_ringbuffer_full_strategy();
+
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
 {
     char lib_major_version[DLT_USER_MAX_LIB_VERSION_LENGTH];
@@ -499,7 +501,7 @@ DltReturnValue dlt_init(void)
     memset(&(dlt_user.dlt_shm), 0, sizeof(DltShm));
 
     /* init shared memory */
-    if (dlt_shm_init_client(&(dlt_user.dlt_shm), dltShmName) < DLT_RETURN_OK)
+    if (dlt_shm_init_client(&(dlt_user.dlt_shm), dltShmName, dlt_env_get_ringbuffer_full_strategy()) < DLT_RETURN_OK)
         dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Logging disabled,"
                   " Shared memory %s cannot be created!\n", dltShmName);
 
@@ -883,7 +885,8 @@ DltReturnValue dlt_init_common(void)
     if (dlt_buffer_init_dynamic(&(dlt_user.startup_buffer),
                                 buffer_min,
                                 buffer_max,
-                                buffer_step) == DLT_RETURN_ERROR) {
+                                buffer_step,
+                                dlt_env_get_ringbuffer_full_strategy()) == DLT_RETURN_ERROR) {
         dlt_user_init_state = INIT_UNITIALIZED;
         DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
@@ -4920,7 +4923,7 @@ void dlt_user_log_reattach_to_daemon(void)
 #ifdef DLT_SHM_ENABLE
 
         /* init shared memory */
-        if (dlt_shm_init_client(&dlt_user.dlt_shm, dltShmName) < DLT_RETURN_OK)
+        if (dlt_shm_init_client(&dlt_user.dlt_shm, dltShmName,dlt_env_get_ringbuffer_full_strategy()) < DLT_RETURN_OK)
             dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH, "Logging disabled,"
                       " Shared memory %s cannot be created!\n", dltShmName);
 
@@ -5199,4 +5202,24 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
     DLT_SEM_FREE();
 
     return ret;
+}
+
+DltRingBufferFullStrategy  dlt_env_get_ringbuffer_full_strategy()
+{
+    char *env_buffer_full_strategy = NULL;
+    DltRingBufferFullStrategy  full_strategy = DLT_RINGBUFFER_DISCARD_NEW_MESSAGE;
+
+    env_buffer_full_strategy = getenv(DLT_USER_ENV_BUFFER_FULL_STRATEGY);
+    if (env_buffer_full_strategy != NULL) {
+        full_strategy = (DltRingBufferFullStrategy)strtol(env_buffer_full_strategy, NULL, 10);
+
+        if ((errno == EINVAL) || (errno == ERANGE)) {
+            dlt_vlog(LOG_ERR,
+                     "Wrong value specified for %s. Using default\n",
+                     DLT_USER_ENV_BUFFER_FULL_STRATEGY);
+            full_strategy = DLT_RINGBUFFER_DISCARD_NEW_MESSAGE;
+        }
+    }
+
+    return full_strategy;
 }

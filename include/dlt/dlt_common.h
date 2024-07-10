@@ -407,6 +407,14 @@ typedef enum
 } DltReceiverType;
 
 /**
+ * Type to specify what action to handle when ringbuffer is full
+ */
+typedef enum {
+    DLT_RINGBUFFER_DISCARD_NEW_MESSAGE,
+    DLT_RINGBUFFER_REMOVE_OLDEST_MESSAGE
+} DltRingBufferFullStrategy;
+
+/**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
 extern const char dltSerialHeader[DLT_ID_SIZE];
@@ -789,6 +797,7 @@ typedef struct
     uint32_t min_size;     /**< Minimum size of buffer */
     uint32_t max_size;     /**< Maximum size of buffer */
     uint32_t step_size;    /**< Step size of buffer */
+    DltRingBufferFullStrategy full_strategy; /**< strategy when ringbuffer is full */
 } DltBuffer;
 
 typedef struct
@@ -1267,9 +1276,10 @@ DltReturnValue dlt_check_rcv_data_size(int received, int required);
  * @param buf Pointer to ringbuffer structure
  * @param ptr Ptr to ringbuffer memory
  * @param size Maximum size of buffer in bytes
+ * @param full_strategy the strategy when ringbuffer is full
  * @return negative value if there was an error
  */
-DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size, DltRingBufferFullStrategy full_strategy);
 
 /**
  * Initialize static ringbuffer with a size of size.
@@ -1278,9 +1288,10 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
  * @param buf Pointer to ringbuffer structure
  * @param ptr Ptr to ringbuffer memory
  * @param size Maximum size of buffer in bytes
+ * @param full_strategy the strategy when ringbuffer is full
  * @return negative value if there was an error
  */
-DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size);
+DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size, DltRingBufferFullStrategy full_strategy);
 
 /**
  * Initialize dynamic ringbuffer with a size of size.
@@ -1292,9 +1303,10 @@ DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char
  * @param min_size Minimum size of buffer in bytes
  * @param max_size Maximum size of buffer in bytes
  * @param step_size size of which ringbuffer is increased
+ * @param full_strategy the strategy when ringbuffer is full
  * @return negative value if there was an error
  */
-DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size, uint32_t step_size);
+DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size, uint32_t step_size, DltRingBufferFullStrategy full_strategy);
 
 /**
  * Deinitilaise usage of static ringbuffer

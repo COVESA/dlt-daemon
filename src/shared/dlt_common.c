@@ -103,6 +103,7 @@ int dlt_buffer_increase_size(DltBuffer *buf);
 int dlt_buffer_minimize_size(DltBuffer *buf);
 void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size);
 void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsigned int size);
+DltReturnValue dlt_buffer_skip_size(DltBuffer *buf, int skip_size);
 
 void dlt_print_hex(uint8_t *ptr, int size)
 {
@@ -2076,7 +2077,7 @@ DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader)
            ? DLT_RETURN_TRUE : DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size)
+DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char *ptr, uint32_t size, DltRingBufferFullStrategy full_strategy)
 {
     if ((buf == NULL) || (ptr == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2099,6 +2100,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
 
     /* clear memory */
     memset(buf->mem, 0, buf->size);
+    buf->full_strategy = full_strategy;
 
     dlt_vlog(LOG_DEBUG,
              "%s: Buffer: Size %u, Start address %lX\n",
@@ -2107,7 +2109,7 @@ DltReturnValue dlt_buffer_init_static_server(DltBuffer *buf, const unsigned char
     return DLT_RETURN_OK; /* OK */
 }
 
-DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size)
+DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char *ptr, uint32_t size, DltRingBufferFullStrategy full_strategy)
 {
     if ((buf == NULL) || (ptr == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2121,6 +2123,7 @@ DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char
     /* Init pointers */
     buf->mem = (unsigned char *)(buf->shm + sizeof(DltBufferHead));
     buf->size = (uint32_t)(buf->min_size - sizeof(DltBufferHead));
+    buf->full_strategy = full_strategy;
 
     dlt_vlog(LOG_DEBUG,
              "%s: Buffer: Size %u, Start address %lX\n",
@@ -2129,7 +2132,7 @@ DltReturnValue dlt_buffer_init_static_client(DltBuffer *buf, const unsigned char
     return DLT_RETURN_OK; /* OK */
 }
 
-DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size, uint32_t step_size)
+DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32_t max_size, uint32_t step_size, DltRingBufferFullStrategy full_strategy)
 {
     /*Do not DLT_SEM_LOCK inside here! */
     DltBufferHead *head;
@@ -2185,6 +2188,8 @@ DltReturnValue dlt_buffer_init_dynamic(DltBuffer *buf, uint32_t min_size, uint32
 
     /* clear memory */
     memset(buf->mem, 0, (size_t)buf->size);
+
+    buf->full_strategy = full_strategy;
 
     return DLT_RETURN_OK; /* OK */
 }
@@ -2305,12 +2310,12 @@ int dlt_buffer_increase_size(DltBuffer *buf)
     /* check size */
     if (buf->step_size == 0)
         /* cannot increase size */
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_NO_INCREASE_SIZE;
 
     /* check size */
     if ((buf->size + sizeof(DltBufferHead) + buf->step_size) > buf->max_size)
         /* max size reached, do not increase */
-        return DLT_RETURN_ERROR;
+        return DLT_RETURN_NO_INCREASE_SIZE;
 
     /* allocate new buffer */
     new_ptr = malloc(buf->size + sizeof(DltBufferHead) + buf->step_size);
@@ -2355,6 +2360,39 @@ int dlt_buffer_increase_size(DltBuffer *buf)
              (unsigned long)buf->mem);
 
     return DLT_RETURN_OK; /* OK */
+}
+
+DltReturnValue dlt_buffer_skip_size(DltBuffer *buf, int skip_size){
+    /* catch null pointer */
+    if (buf == NULL) {
+      dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
+      return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (buf->size < skip_size) {
+      dlt_vlog(LOG_WARNING, "%s: Wrong parameter: Null pointer\n", __func__);
+      return DLT_RETURN_WRONG_PARAMETER;
+      }
+
+    DltBufferHead *head = (DltBufferHead *)buf->shm;
+    int free_size = 0;
+
+    while(free_size < skip_size && head->count) {
+      DltBufferBlockHead block_head;
+      /* read header */
+      dlt_buffer_read_block(buf, &head->read, (unsigned char *)&block_head, sizeof(DltBufferBlockHead));
+
+      head->read = head->read + block_head.size;
+      if ((unsigned int) (head->read) >= buf->size) {
+        head->read = (unsigned  int)(head->read) - buf->size;
+      }
+
+      head->count = head->count -1 ;
+      free_size  = (int)sizeof(DltBufferBlockHead) + block_head.size;
+      dlt_vlog(LOG_DEBUG, "Clearing needed memory from buffer - need memory(%d) free memory(%d)\n", skip_size, free_size);
+    }
+
+    return DLT_RETURN_OK;
 }
 
 int dlt_buffer_minimize_size(DltBuffer *buf)
@@ -2479,10 +2517,18 @@ int dlt_buffer_push3(DltBuffer *buf,
     /* check size */
     while (free_size < (int) (sizeof(DltBufferBlockHead) + size1 + size2 + size3)) {
         /* try to increase size if possible */
-        if (dlt_buffer_increase_size(buf))
+        int ret = dlt_buffer_increase_size(buf);
+        if (ret <0) {
+          if( buf->full_strategy == DLT_RINGBUFFER_REMOVE_OLDEST_MESSAGE && ret ==  DLT_RETURN_NO_INCREASE_SIZE) {
+            ret = dlt_buffer_skip_size(buf, (int) (sizeof(DltBufferBlockHead) + size1 + size2 + size3));
+          }
+
+          if (ret <0) {
             /* increase size is not possible */
             /*dlt_log(LOG_ERR, "Buffer: Buffer is full\n"); */
-            return DLT_RETURN_ERROR; /* ERROR */
+            return ret; /* ERROR */
+          }
+        }
 
         /* update pointers */
         write = ((int *)(buf->shm))[0];

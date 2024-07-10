@@ -83,7 +83,7 @@ void dlt_shm_print_hex(char *ptr, int size)
     printf("\n");
 }
 
-DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
+DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size, DltRingBufferFullStrategy full_strategy)
 {
     unsigned char *ptr;
 
@@ -155,7 +155,7 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     }
 
     /* Init buffer */
-    dlt_buffer_init_static_server(&(buf->buffer), ptr, size);
+    dlt_buffer_init_static_server(&(buf->buffer), ptr, size, full_strategy);
 
     /* The 'buf->shmfd' is no longer needed */
     if (close(buf->shmfd) == -1)
@@ -168,7 +168,7 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     return DLT_RETURN_OK; /* OK */
 }
 
-DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
+DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name, DltRingBufferFullStrategy full_strategy)
 {
     struct stat shm_buf;
     unsigned char *ptr;
@@ -237,7 +237,7 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
     }
 
     /* Init buffer */
-    dlt_buffer_init_static_client(&(buf->buffer), ptr, shm_buf.st_size);
+    dlt_buffer_init_static_client(&(buf->buffer), ptr, shm_buf.st_size, full_strategy);
 
     /* The 'buf->shmfd' is no longer needed */
     if (close(buf->shmfd) == -1)

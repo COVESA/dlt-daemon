@@ -13,25 +13,25 @@ int size = 1000;
 /* Method: dlt_shm::t_dlt_shm_init_server */
 TEST(t_dlt_shm_init_server, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, dlt_shm_init_server(server_buf, dltShmNameTest, size));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_shm_init_server(server_buf, dltShmNameTest, size, DLT_RINGBUFFER_DISCARD_NEW_MESSAGE));
 }
 
 /* Method: dlt_shm::t_dlt_shm_init_server */
 TEST(t_dlt_shm_init_server, nullpointer)
 {
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_init_server(NULL, NULL, size));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_init_server(NULL, NULL, size, DLT_RINGBUFFER_DISCARD_NEW_MESSAGE));
 }
 
 /* Method: dlt_shm::t_dlt_shm_init_client */
 TEST(t_dlt_shm_init_client, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, dlt_shm_init_client(client_buf, dltShmNameTest));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_shm_init_client(client_buf, dltShmNameTesti, DLT_RINGBUFFER_DISCARD_NEW_MESSAGE));
 }
 
 /* Method: dlt_shm::t_dlt_shm_init_client */
 TEST(t_dlt_shm_init_client, nullpointer)
 {
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_init_client(NULL, NULL));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_init_client(NULL, NULL, DLT_RINGBUFFER_DISCARD_NEW_MESSAGE));
 }
 
 /* Method: dlt_shm::t_dlt_shm_free_client */
