@@ -5310,7 +5310,7 @@ void *dlt_free_thread(void *arg) {
 }
 
 TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
-    const auto max_runtime = std::chrono::seconds(5);
+    const auto max_runtime = std::chrono::seconds(15);
     const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
 
     struct ShutdownWhileInitParams args{};

@@ -1007,6 +1007,13 @@ DltReturnValue dlt_free(void)
     char filename[DLT_PATH_MAX];
 #endif
 
+    struct timespec init_wait_ts;
+    init_wait_ts.tv_sec = 0;
+    init_wait_ts.tv_nsec = 1000;
+    while (dlt_user_init_state == INIT_IN_PROGRESS) {
+        nanosleep(&init_wait_ts, NULL);
+    }
+
     /* library is freeing its resources. Avoid to allocate it in dlt_init() */
     if (!(atomic_compare_exchange_strong(&dlt_user_freeing, &expected, 1))) {
         /* resources are already being freed. Do nothing and return. */
@@ -1017,6 +1024,7 @@ DltReturnValue dlt_free(void)
         dlt_user_freeing = 0;
         return DLT_RETURN_ERROR;
     }
+
 
     dlt_stop_threads();
 
