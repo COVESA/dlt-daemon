@@ -99,10 +99,11 @@ enum InitState {
 
 static DltUser dlt_user;
 static _Atomic enum InitState dlt_user_init_state = INIT_UNITIALIZED;
-#define DLT_USER_INITALIZED (dlt_user_init_state == INIT_DONE)
 
 static _Atomic int dlt_user_freeing = 0;
 static bool dlt_user_file_reach_max = false;
+
+#define DLT_USER_INITALIZED ((dlt_user_init_state == INIT_DONE) && !dlt_user_freeing)
 
 #ifdef DLT_LIB_USE_FIFO_IPC
 static char dlt_user_dir[DLT_PATH_MAX];
@@ -457,7 +458,9 @@ DltReturnValue dlt_init(void)
 {
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0) {
+#ifndef DLT_UNIT_TESTS
         dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting\n", __func__);
+#endif
         /* return negative value, to stop the current log */
         return DLT_RETURN_LOGGING_DISABLED;
     }
@@ -4886,6 +4889,10 @@ void dlt_user_log_reattach_to_daemon(void)
     uint32_t num;
     DltContext handle;
     DltContextData log_new;
+
+    if (!DLT_USER_INITALIZED) {
+        return;
+    }
 
     if (dlt_user.dlt_log_handle < 0) {
         dlt_user.dlt_log_handle = DLT_FD_INIT;
