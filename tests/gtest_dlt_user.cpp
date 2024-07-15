@@ -2031,6 +2031,8 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+    free(expected_message);
+    expected_message = NULL;
 }
 
 /**
@@ -2430,7 +2432,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     free(message);
     message = NULL;
     free(expected_message);
-    message = NULL;
+    expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -2506,7 +2508,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     free(message);
     message = NULL;
     free(expected_message);
-    message = NULL;
+    expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -2580,6 +2582,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+    free(expected_message);
+    expected_message = NULL;
 }
 
 /**
@@ -2813,6 +2817,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    free(expected_message);
+    expected_message = NULL;
 }
 
 /**
@@ -3046,6 +3053,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    free(expected_message);
+    expected_message = NULL;
 }
 
 /**
@@ -3274,6 +3284,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     unsetenv(DLT_USER_ENV_LOG_MSG_BUF_LEN);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
+
+    free(expected_message);
+    expected_message = NULL;
 }
 
 TEST(t_dlt_user_log_write_utf8_string, nullpointer)
