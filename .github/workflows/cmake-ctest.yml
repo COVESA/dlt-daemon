@@ -9,6 +9,8 @@ on:
 env:
   BUILD_TYPE: Release
   WITH_DLT_COVERAGE: ON
+  WITH_DLT_SHM_ENABLE: ON
+  DLT_IPC: "UNIX_SOCKET"
   BUILD_GMOCK: OFF
 
 jobs:
@@ -27,6 +29,8 @@ jobs:
       run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                -DWITH_DLT_COVERAGE=${{env.WITH_DLT_COVERAGE}} \
+                                               -DWITH_DLT_SHM_ENABLE=${{env.WITH_DLT_SHM_ENABLE}} \
+                                               -DDLT_IPC=${{env.DLT_IPC}} \
                                                -DBUILD_GMOCK=${{env.BUILD_GMOCK}}
 
     - name: Build
