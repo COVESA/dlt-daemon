@@ -83,7 +83,7 @@
 #   include <limits.h>
 #endif
 #include <inttypes.h>
-#include <unistd.h>
+#include "dlt_log.h"
 #include "dlt_client.h"
 #include "dlt-control-common.h"
 

@@ -19,6 +19,7 @@ set(dlt_LIB_SRCS
     dlt_filetransfer.c
     dlt_env_ll.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
+    ${PROJECT_SOURCE_DIR}/src/shared/dlt_log.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_multiple_files.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_protocol.c
     ${PROJECT_SOURCE_DIR}/src/shared/dlt_user_shared.c

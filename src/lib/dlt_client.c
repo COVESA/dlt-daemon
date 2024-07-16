@@ -94,6 +94,7 @@
 #include <poll.h>
 
 #include "dlt_types.h"
+#include "dlt_log.h"
 #include "dlt_client.h"
 #include "dlt_client_cfg.h"
 
