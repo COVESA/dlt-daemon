@@ -915,11 +915,6 @@ DLT_STATIC void dlt_logstorage_close_file(DltLogStorageFilterConfig *config)
         gzclose(config->gzlog);
         config->gzlog = NULL;
     }
-    
-    if (config->log) {
-        fclose(config->log);
-        config->log = NULL;
-    }
 #endif
     if (config->log) {
         fclose(config->log);
