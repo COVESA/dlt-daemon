@@ -380,12 +380,6 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         }
     
     for (i = 0; i < cnt; i++) {
-        if (config->gzip_compression) {
-            suffix = strdup(".dlt.gz");
-        }
-        else {
-            suffix = strdup(".dlt");
-        }
 
         int len = 0;
         len = strlen(file_name);
