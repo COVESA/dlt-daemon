@@ -1414,6 +1414,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP, dlt_daemon_signal_handler);  /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT, dlt_daemon_signal_handler);
+    signal(SIGSEGV, dlt_daemon_signal_handler);
 #ifdef __QNX__
     signal(SIGUSR1, dlt_daemon_signal_handler); /* for timer threads */
 #endif
@@ -2161,6 +2162,7 @@ void dlt_daemon_signal_handler(int sig)
         case SIGTERM:
         case SIGINT:
         case SIGQUIT:
+        case SIGSEGV:
         {
             /* finalize the server */
             dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
