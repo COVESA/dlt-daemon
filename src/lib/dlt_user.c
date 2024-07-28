@@ -3827,12 +3827,17 @@ void dlt_user_housekeeperthread_function(void *ptr)
 
     pthread_cleanup_push(dlt_user_cleanup_handler, NULL);
 
+
+    pthread_mutex_lock(&dlt_housekeeper_running_mutex);
+
     // signal dlt thread to be running
     *dlt_housekeeper_running = true;
     signal_status = pthread_cond_signal(&dlt_housekeeper_running_cond);
     if (signal_status != 0) {
         dlt_log(LOG_CRIT, "Housekeeper thread failed to signal running state\n");
     }
+
+    pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
     while (in_loop) {
         /* Check for new messages from DLT daemon */
@@ -5052,6 +5057,10 @@ int dlt_start_threads()
     * (spurious wakeup)
     * To protect against this, a while loop with a timeout is added
     * */
+
+    // pthread_cond_timedwait has to be called on a locked mutex
+    pthread_mutex_lock(&dlt_housekeeper_running_mutex);
+
     while (!dlt_housekeeper_running
            && now.tv_sec <= time_to_wait.tv_sec) {
 
@@ -5064,19 +5073,18 @@ int dlt_start_threads()
         single_wait.tv_sec = now.tv_sec;
         single_wait.tv_nsec = now.tv_nsec + 500000000;
 
-        // pthread_cond_timedwait has to be called on a locked mutex
-        pthread_mutex_lock(&dlt_housekeeper_running_mutex);
         signal_status = pthread_cond_timedwait(
             &dlt_housekeeper_running_cond,
             &dlt_housekeeper_running_mutex,
             &single_wait);
-        pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
         /* otherwise it might be a spurious wakeup, try again until the time is over */
         if (signal_status == 0) {
             break;
         }
      }
+
+    pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
      if (signal_status != 0 && !dlt_housekeeper_running) {
          dlt_log(LOG_CRIT, "Failed to wait for house keeper thread!\n");
