@@ -45,6 +45,9 @@ typedef enum {
     DLT_TIMER_SYSTEMD,
 #endif
     DLT_TIMER_GATEWAY,
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DLT_TIMER_STAT,
+#endif
     DLT_TIMER_UNKNOWN
 } DltTimers;
 

@@ -104,6 +104,30 @@ int dlt_buffer_minimize_size(DltBuffer *buf);
 void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size);
 void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsigned int size);
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+static int32_t dlt_output_soft_limit_over_warning(
+    DltTraceLoadSettings* tl_settings,
+    DltLogInternal log_internal,
+    void *log_params);
+
+static int32_t dlt_output_hard_limit_warning(
+    DltTraceLoadSettings* tl_settings,
+    DltLogInternal log_internal,
+    void *log_params);
+
+static bool dlt_user_cleanup_window(DltTraceLoadStat *tl_stat);
+
+static int32_t dlt_switch_slot_if_needed(
+    DltTraceLoadSettings* tl_settings,
+    DltLogInternal log_internal,
+    void *log_internal_params,
+    uint32_t timestamp);
+
+static void dlt_record_trace_load(DltTraceLoadStat *const tl_stat, int32_t size);
+static inline bool dlt_is_over_trace_load_soft_limit(DltTraceLoadSettings* tl_settings);
+static inline bool dlt_is_over_trace_load_hard_limit(DltTraceLoadSettings* tl_settings, int size);
+#endif
+
 void dlt_print_hex(uint8_t *ptr, int size)
 {
     int num;
@@ -4136,3 +4160,356 @@ bool dlt_extract_base_name_without_ext(const char* const abs_file_name, char* ba
     base_name[length] = '\0';
     return true;
 }
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+static int32_t dlt_output_soft_limit_over_warning(
+    DltTraceLoadSettings* const tl_settings,
+    DltLogInternal log_internal,
+    void *const log_params)
+{
+    char local_str[255];
+
+    if (!tl_settings || !tl_settings->tl_stat.is_over_soft_limit || tl_settings->tl_stat.slot_left_soft_limit_warn)
+    {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    /* Calculate extra trace load which was over limit */
+    const uint64_t dropped_message_load
+        = (tl_settings->tl_stat.hard_limit_over_bytes * DLT_TIMESTAMP_RESOLUTION)
+          / TIMESTAMP_BASED_WINDOW_SIZE;
+    const uint64_t curr_trace_load = tl_settings->tl_stat.avg_trace_load + dropped_message_load;
+    if (curr_trace_load <= tl_settings->soft_limit) {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    /* Warning for exceeded soft limit */
+    if (tl_settings->ctid[0] == 0) {
+        snprintf(local_str, sizeof(local_str),
+                 "Trace load exceeded trace soft limit on apid %.4s "
+                 "(soft limit: %u bytes/sec, current: %lu bytes/sec)",
+                 tl_settings->apid,
+                 tl_settings->soft_limit,
+                 curr_trace_load);
+    } else {
+        snprintf(local_str, sizeof(local_str),
+                 "Trace load exceeded trace soft limit on apid %.4s, ctid %.4s "
+                 "(soft limit: %u bytes/sec, current: %lu bytes/sec)",
+                 tl_settings->apid,
+                 tl_settings->ctid,
+                 tl_settings->soft_limit,
+                 curr_trace_load);
+    }
+
+    // must be signed int for error return value
+    int32_t sent_size = log_internal(DLT_LOG_WARN, local_str, log_params);
+    if (sent_size < DLT_RETURN_OK)
+    {
+        /* Output warning message via other route for safety */
+        dlt_log(DLT_LOG_WARN, local_str);
+        sent_size = 0;
+    }
+
+    /* Turn off the flag after sending warning message */
+    tl_settings->tl_stat.is_over_soft_limit = false;
+    tl_settings->tl_stat.slot_left_soft_limit_warn = DLT_SOFT_LIMIT_WARN_FREQUENCY;
+
+    return sent_size;
+}
+
+static int32_t dlt_output_hard_limit_warning(
+    DltTraceLoadSettings* const tl_settings,
+    DltLogInternal log_internal,
+    void *const log_params)
+{
+    char local_str[255];
+    if (!tl_settings || !tl_settings->tl_stat.is_over_hard_limit || tl_settings->tl_stat.slot_left_hard_limit_warn)
+    {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    /* Calculate extra trace load which was over limit */
+    const uint64_t dropped_message_load
+        = (tl_settings->tl_stat.hard_limit_over_bytes * DLT_TIMESTAMP_RESOLUTION)
+          / TIMESTAMP_BASED_WINDOW_SIZE;
+    const uint64_t curr_trace_load = tl_settings->tl_stat.avg_trace_load + dropped_message_load;
+    if (curr_trace_load <= tl_settings->hard_limit) {
+        /* No need to output warning message */
+        return 0;
+    }
+
+    if (tl_settings->ctid[0] == 0) {
+        snprintf(local_str, sizeof(local_str),
+                 "Trace load exceeded trace hard limit on apid %.4s "
+                 "(hard limit: %u bytes/sec, current: %lu bytes/sec) %u messages discarded. ",
+                 tl_settings->apid,
+                 tl_settings->hard_limit,
+                 curr_trace_load,
+                 tl_settings->tl_stat.hard_limit_over_counter);
+    } else {
+        snprintf(local_str, sizeof(local_str),
+                 "Trace load exceeded trace hard limit on apid %.4s, ctid %.4s."
+                 "(hard limit: %u bytes/sec, current: %lu bytes/sec) %u messages discarded.",
+                 tl_settings->apid,
+                 tl_settings->ctid,
+                 tl_settings->hard_limit,
+                 curr_trace_load,
+                 tl_settings->tl_stat.hard_limit_over_counter);
+    }
+
+    // must be signed int for error return
+    int32_t sent_size = log_internal(DLT_LOG_WARN, local_str, log_params);
+    if (sent_size < DLT_RETURN_OK)
+    {
+        /* Output warning message via other route for safety */
+        dlt_log(DLT_LOG_WARN, local_str);
+        sent_size = 0;
+    }
+
+    /* Turn off the flag after sending warning message */
+    tl_settings->tl_stat.is_over_hard_limit = false;
+    tl_settings->tl_stat.hard_limit_over_counter = 0;
+    tl_settings->tl_stat.hard_limit_over_bytes = 0;
+    tl_settings->tl_stat.slot_left_hard_limit_warn = DLT_HARD_LIMIT_WARN_FREQUENCY;
+
+    return sent_size;
+}
+
+static bool dlt_user_cleanup_window(DltTraceLoadStat *const tl_stat)
+{
+    if (!tl_stat)
+    {
+        return false;
+    }
+
+    uint32_t elapsed_slots  = 0;
+    /* check if overflow of timestamp happened, after ~119 hours */
+    if (tl_stat->curr_abs_slot < tl_stat->last_abs_slot) {
+        /* calculate where the next slot starts according to the last slot
+         * This works because the value after the uint32 rollover equals is equal to the remainder that did not fit
+         * into uint32 before. Therefore, we always have slots that are DLT_TIMESTAMP_RESOLUTION long
+         * */
+        const uint32_t next_slot_start =
+            DLT_TIMESTAMP_RESOLUTION + tl_stat->last_abs_slot;
+
+        /* Check if we are already in the next slot */
+        if (next_slot_start <= tl_stat->curr_abs_slot) {
+            /* Calculate relative amount of elapsed slots */
+            elapsed_slots = (tl_stat->curr_abs_slot - next_slot_start) / DLT_TIMESTAMP_RESOLUTION + 1;
+        }
+        /* else we are not in the next slot yet */
+    } else {
+        /* no rollover, get difference between slots to get amount of elapsed slots  */
+        elapsed_slots = (tl_stat->curr_abs_slot - tl_stat->last_abs_slot);
+    }
+
+    if (!elapsed_slots)
+    {
+        /* Same slot can be still used. No need to cleanup slot */
+        return false;
+    }
+
+    /* Slot-Based Count down for next warning messages */
+    tl_stat->slot_left_soft_limit_warn = (tl_stat->slot_left_soft_limit_warn > elapsed_slots) ?
+                                                                                              (tl_stat->slot_left_soft_limit_warn - elapsed_slots) : 0;
+
+    tl_stat->slot_left_hard_limit_warn = (tl_stat->slot_left_hard_limit_warn > elapsed_slots) ?
+                                                                                              (tl_stat->slot_left_hard_limit_warn - elapsed_slots) : 0;
+
+    /* Clear whole window when time elapsed longer than window size from last message */
+    if (elapsed_slots >= DLT_TRACE_LOAD_WINDOW_SIZE)
+    {
+        tl_stat->total_bytes_of_window = 0;
+        memset(tl_stat->window, 0, sizeof(tl_stat->window));
+        return true;
+    }
+
+    /* Clear skipped no data slots */
+    uint32_t temp_slot = tl_stat->last_slot;
+    while (temp_slot != tl_stat->curr_slot)
+    {
+        temp_slot++;
+        temp_slot %= DLT_TRACE_LOAD_WINDOW_SIZE;
+        tl_stat->total_bytes_of_window -= tl_stat->window[temp_slot];
+        tl_stat->window[temp_slot] = 0;
+    }
+
+    return true;
+}
+
+static int32_t dlt_switch_slot_if_needed(
+    DltTraceLoadSettings* const tl_settings,
+    DltLogInternal log_internal,
+    void* const log_internal_params,
+    const uint32_t timestamp)
+{
+    if (!tl_settings)
+    {
+        return 0;
+    }
+
+    /* Get new window slot No. */
+    tl_settings->tl_stat.curr_abs_slot = timestamp / DLT_TRACE_LOAD_WINDOW_RESOLUTION;
+    tl_settings->tl_stat.curr_slot = tl_settings->tl_stat.curr_abs_slot % DLT_TRACE_LOAD_WINDOW_SIZE;
+
+    /* Cleanup window */
+    if (!dlt_user_cleanup_window(&tl_settings->tl_stat))
+    {
+        /* No need to switch slot because same slot can be still used */
+        return 0;
+    }
+
+    /* If slot is switched and trace load has been over soft/hard limit
+     * in previous slot, warning messages may be sent.
+     * The warning messages will be also counted as trace load.
+     */
+    const int32_t sent_warn_msg_bytes =
+        dlt_output_soft_limit_over_warning(tl_settings, log_internal, log_internal_params) +
+        dlt_output_hard_limit_warning(tl_settings, log_internal, log_internal_params);
+    return sent_warn_msg_bytes;
+}
+
+static void dlt_record_trace_load(DltTraceLoadStat *const tl_stat, const int32_t size)
+{
+    if (!tl_stat)
+    {
+        return;
+    }
+
+    /* Record trace load to current slot by message size of
+     * original message and warning message if it was sent
+     */
+    tl_stat->window[tl_stat->curr_slot] += size;
+    tl_stat->total_bytes_of_window += size;
+
+    /* Keep the latest time information */
+    tl_stat->last_abs_slot = tl_stat->curr_abs_slot;
+    tl_stat->last_slot = tl_stat->curr_slot;
+
+    /* Calculate average trace load [bytes/sec] in window
+     * The division is necessary to normalize the average to bytes per second even if
+     * the slot size is not equal to 1s
+     * */
+    tl_stat->avg_trace_load
+        = (tl_stat->total_bytes_of_window * DLT_TIMESTAMP_RESOLUTION) / TIMESTAMP_BASED_WINDOW_SIZE;
+}
+
+static inline bool dlt_is_over_trace_load_soft_limit(DltTraceLoadSettings* const tl_settings)
+{
+    if (tl_settings
+        && (tl_settings->tl_stat.avg_trace_load > tl_settings->soft_limit || tl_settings->soft_limit == 0))
+    {
+        /* Mark as soft limit over */
+        tl_settings->tl_stat.is_over_soft_limit = true;
+        return true;
+    }
+
+    return false;
+}
+
+static inline bool dlt_is_over_trace_load_hard_limit(
+    DltTraceLoadSettings* const tl_settings, const int size)
+{
+    if (tl_settings
+        && (tl_settings->tl_stat.avg_trace_load > tl_settings->hard_limit
+            || tl_settings->hard_limit == 0))
+    {
+        /* Mark as limit over */
+        tl_settings->tl_stat.is_over_hard_limit = true;
+        tl_settings->tl_stat.hard_limit_over_counter++;
+        tl_settings->tl_stat.hard_limit_over_bytes += size;
+
+        /* Delete size of limit over message from window */
+        tl_settings->tl_stat.window[tl_settings->tl_stat.curr_slot] -= size;
+        tl_settings->tl_stat.total_bytes_of_window -= size;
+        return true;
+    }
+
+    return false;
+}
+
+bool dlt_check_trace_load(
+    DltTraceLoadSettings * const tl_settings,
+    const int32_t log_level,
+    const uint32_t timestamp,
+    const int32_t size,
+    DltLogInternal internal_dlt_log,
+    void* const internal_dlt_log_params)
+{
+    /* Unconditionally allow message which has log level: Debug/Verbose to be output */
+    if (log_level == DLT_LOG_DEBUG || log_level == DLT_LOG_VERBOSE)
+    {
+        return true;
+    }
+
+    if (size < 0)
+    {
+        dlt_vlog(LOG_ERR, "Invalid size: %d", size);
+        return false;
+    }
+
+    pthread_rwlock_rdlock(&trace_load_rw_lock);
+
+    /* Switch window slot according to timestamp
+     * If warning messages for hard/soft limit over are sent,
+     * the message size will be returned.
+     */
+    const int32_t sent_warn_msg_bytes = dlt_switch_slot_if_needed(
+        tl_settings, internal_dlt_log, internal_dlt_log_params, timestamp);
+
+    /* Record trace load */
+    dlt_record_trace_load(&tl_settings->tl_stat, size + sent_warn_msg_bytes);
+
+    /* Check if trace load is over the soft limit.
+     * Even if trace load is over the soft limit, message will not be discarded.
+     * Only the warning message will be output
+     */
+    dlt_is_over_trace_load_soft_limit(tl_settings);
+
+    /* Check if trace load is over hard limit.
+     * If trace load is over the limit, message will be discarded.
+     */
+    const bool allow_output = !dlt_is_over_trace_load_hard_limit(tl_settings, size);
+
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+
+    return allow_output;
+}
+
+DltTraceLoadSettings*
+dlt_find_runtime_trace_load_settings(DltTraceLoadSettings *settings, uint32_t settings_count, const char* apid, const char* ctid) {
+    if ((apid == NULL) || (strlen(apid) == 0))
+        return NULL;
+
+    DltTraceLoadSettings* app_level = NULL;
+    size_t ctid_len = (ctid != NULL) ? strlen(ctid) : 0;
+
+    for (uint32_t i = 0; i < settings_count; ++i) {
+        if (strncmp(apid, settings->apid, DLT_ID_SIZE) != 0) {
+            if (app_level == NULL)
+                continue;
+            // settings are sorted.
+            // If we found a configuration entry which matches the app id already
+            // we can exit here because no more entries with the app id will follow anymore.
+            break;
+        }
+
+        if (settings[i].ctid[0] == '\0') {
+            app_level = &settings[i];
+            if (ctid_len == 0)
+                return &settings[i];
+            continue;
+        }
+
+        if ((ctid_len > 0) && (strncmp(ctid, settings[i].ctid, DLT_ID_SIZE) == 0)) {
+            return &settings[i];
+        }
+    }
+
+    return app_level;
+}
+
+#endif

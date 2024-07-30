@@ -212,6 +212,14 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
             dlt_receiver_init(ret, fd, DLT_RECEIVE_SOCKET, DLT_DAEMON_RCVBUFSIZESOCK);
 
         break;
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    case DLT_CONNECTION_STAT_TIMER:
+        ret = calloc(1, sizeof(DltReceiver));
+        if (ret) {
+            dlt_receiver_init(ret, fd, DLT_RECEIVE_SOCKET, DLT_DAEMON_RCVBUFSIZE);
+        }
+        break;
+#endif
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
         ret = calloc(1, sizeof(DltReceiver));
 
@@ -326,6 +334,13 @@ void *dlt_connection_get_callback(DltConnection *con)
     case DLT_CONNECTION_GATEWAY_TIMER:
         ret = dlt_gateway_process_gateway_timer;
         break;
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    case DLT_CONNECTION_STAT_TIMER:
+#if defined(DLT_LIB_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
+        ret = dlt_daemon_process_statistics_timer;
+#endif
+        break;
+#endif
     default:
         ret = NULL;
     }

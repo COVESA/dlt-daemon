@@ -83,6 +83,9 @@ typedef unsigned int speed_t;
  */
 typedef enum
 {
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DLT_RETURN_LOAD_EXCEEDED = -9,
+#endif
     DLT_RETURN_FILESZERR = -8,
     DLT_RETURN_LOGGING_DISABLED = -7,
     DLT_RETURN_USER_BUFFER_FULL = -6,

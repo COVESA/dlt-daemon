@@ -231,6 +231,74 @@ DltDaemonContextLogSettings *dlt_daemon_find_app_log_level_config(
 
 #endif
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+int dlt_daemon_compare_trace_load_settings(const void *a, const void *b) {
+    const DltTraceLoadSettings *s1 = (const DltTraceLoadSettings *)a;
+    const DltTraceLoadSettings *s2 = (const DltTraceLoadSettings *)b;
+
+    int cmp = strncmp(s1->apid, s2->apid, DLT_ID_SIZE);
+    if (cmp != 0) {
+        return cmp;
+    }
+
+    return strncmp(s1->ctid, s2->ctid, DLT_ID_SIZE);
+}
+
+DltReturnValue dlt_daemon_find_preconfigured_trace_load_settings(
+    DltDaemon *const daemon, const char *apid, const char *ctid, DltTraceLoadSettings **settings, int *num_settings, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+    int i;
+    *num_settings = 0;
+    *settings = NULL;
+
+    if ((daemon == NULL) || (apid == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Wrong parameters", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (NULL == daemon->preconfigured_trace_load_settings || daemon->preconfigured_trace_load_settings_count == 0) {
+        return DLT_RETURN_OK;
+    }
+
+    for (i = 0; i < daemon->preconfigured_trace_load_settings_count; ++i) {
+        // check if we can exit already, the trace load settings are sorted
+        // and if the apid does not match anymore, but we already have settings
+        // means we collected all settings
+        if (strncmp(apid, daemon->preconfigured_trace_load_settings[i].apid, DLT_ID_SIZE) != 0) {
+            if ((*num_settings) != 0)
+                break;
+            continue;
+        }
+
+        // If a ctid is passed, we only want to return entries where both match
+        if (ctid != NULL && strlen(ctid) > 0) {
+            if (strncmp(ctid, daemon->preconfigured_trace_load_settings[i].ctid, DLT_ID_SIZE) != 0) {
+                continue;
+            }
+        }
+
+        // Reallocate memory for the settings array with an additional slot for the new setting
+        DltTraceLoadSettings *temp = realloc(*settings, (*num_settings + 1) * sizeof(DltTraceLoadSettings));
+        if (temp == NULL) {
+            dlt_vlog(LOG_ERR, "Failed to allocate memory for trace load settings\n");
+            free(*settings); // Free any previously allocated memory
+            *settings = NULL;
+            *num_settings = 0;
+            return DLT_RETURN_ERROR;
+        }
+        *settings = temp;
+        // Copy preconfigured trace load settings into the app settings
+        (*settings)[*num_settings] = daemon->preconfigured_trace_load_settings[i];
+        (*num_settings)++;
+    }
+
+    qsort(*settings, (size_t)*num_settings, sizeof(DltTraceLoadSettings),
+          dlt_daemon_compare_trace_load_settings);
+    return DLT_RETURN_OK;
+}
+#endif
+
 int dlt_daemon_init_runtime_configuration(DltDaemon *daemon, const char *runtime_directory, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -318,6 +386,12 @@ int dlt_daemon_init(DltDaemon *daemon,
 
     daemon->state = DLT_DAEMON_STATE_INIT; /* initial logging state */
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    daemon->preconfigured_trace_load_settings = NULL;
+    daemon->bytes_sent = 0;
+    daemon->bytes_recv = 0;
+#endif
+
     daemon->sendserialheader = 0;
     daemon->timingpackets = 0;
 
@@ -367,6 +441,13 @@ int dlt_daemon_free(DltDaemon *daemon, int verbose)
     if (daemon->app_id_log_level_settings != NULL) {
       free(daemon->app_id_log_level_settings);
     }
+#endif
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    if (daemon->preconfigured_trace_load_settings != NULL) {
+        free(daemon->preconfigured_trace_load_settings);
+        daemon->preconfigured_trace_load_settings = NULL;
+    }
+    pthread_rwlock_destroy(&trace_load_rw_lock);
 #endif
 
     if (app_recv_buffer)
@@ -472,7 +553,13 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
             if (user_list->applications[i].context_log_level_settings)
                 free(user_list->applications[i].context_log_level_settings);
 #endif
-
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            if (user_list->applications[i].trace_load_settings) {
+                free(user_list->applications[i].trace_load_settings);
+                user_list->applications[i].trace_load_settings = NULL;
+                user_list->applications[i].trace_load_settings_count = 0;
+            }
+#endif
             free(user_list->applications[i].application_description);
             user_list->applications[i].application_description = NULL;
         }
@@ -586,6 +673,10 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         application->num_contexts = 0;
         application->user_handle = DLT_FD_INIT;
         application->owns_user_handle = false;
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        application->trace_load_settings = NULL;
+        application->trace_load_settings_count = 0;
+#endif
 
         new_application = 1;
 
@@ -677,6 +768,60 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
     application->num_context_log_level_settings = 0;
     application->context_log_level_settings = NULL;
 #endif
+#if DLT_TRACE_LOAD_CTRL_ENABLE
+    if (application->trace_load_settings == NULL) {
+        DltTraceLoadSettings* pre_configured_trace_load_settings = NULL;
+        int num_settings = 0;
+        DltReturnValue rv = dlt_daemon_find_preconfigured_trace_load_settings(
+            daemon,
+            application->apid,
+            NULL /*load settings for all contexts*/,
+            &pre_configured_trace_load_settings,
+            &num_settings,
+            verbose);
+
+        DltTraceLoadSettings *app_level = NULL;
+        if ((rv == DLT_RETURN_OK) &&
+            (pre_configured_trace_load_settings != NULL) &&
+            (num_settings != 0)) {
+            application->trace_load_settings = pre_configured_trace_load_settings;
+            application->trace_load_settings_count = num_settings;
+            app_level = dlt_find_runtime_trace_load_settings(
+                application->trace_load_settings,
+                application->trace_load_settings_count, application->apid,
+                NULL);
+        }
+
+        // app is not configured, set daemon defaults
+        if (app_level == NULL) {
+            DltTraceLoadSettings *temp = realloc(application->trace_load_settings,
+                                                 (application->trace_load_settings_count + 1) *
+                                                     sizeof(DltTraceLoadSettings));
+
+            if (temp != NULL) {
+                application->trace_load_settings = temp;
+                ++application->trace_load_settings_count;
+
+                app_level = &application->trace_load_settings[application->trace_load_settings_count - 1];
+                memset(app_level, 0, sizeof(DltTraceLoadSettings));
+                app_level[0].hard_limit = DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT;
+                app_level[0].soft_limit = DLT_TRACE_LOAD_DAEMON_SOFT_LIMIT_DEFAULT;
+                memcpy(&app_level[0].apid, apid, DLT_ID_SIZE);
+                memset(&app_level[0].tl_stat, 0, sizeof(DltTraceLoadStat));
+            } else {
+                dlt_vlog(DLT_LOG_FATAL, "Failed to allocate memory for trace load settings\n");
+            }
+
+            // We inserted the application id at the end, to make sure
+            // Lookups are working properly later on, we have to sort the list again.
+            qsort(application->trace_load_settings,
+                  (size_t)application->trace_load_settings_count,
+                  sizeof(DltTraceLoadSettings),
+                  dlt_daemon_compare_trace_load_settings);
+        }
+    }
+
+#endif
 
     return application;
 }
@@ -708,6 +853,13 @@ int dlt_daemon_application_del(DltDaemon *daemon,
             application->application_description = NULL;
         }
 
+#if DLT_TRACE_LOAD_CTRL_ENABLE
+        if (application->trace_load_settings != NULL) {
+            free(application->trace_load_settings);
+            application->trace_load_settings = NULL;
+            application->trace_load_settings_count = 0;
+        }
+#endif
         pos = (int) (application - (user_list->applications));
 
         /* move all applications above pos to pos */
@@ -1857,5 +2009,75 @@ void dlt_daemon_trigger_systemd_watchdog_if_necessary(unsigned int* last_trigger
             dlt_vlog(LOG_WARNING, "%s: Could not reset systemd watchdog\n", __func__);
         *last_trigger_time = uptime;
     }
+}
+#endif
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+int dlt_daemon_user_send_trace_load_config(DltDaemon *const daemon, DltDaemonApplication *app, const int verbose)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgTraceSettingMsg* trace_load_settings_user_msg;
+    uint32_t trace_load_settings_count;
+    DltReturnValue ret;
+
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (app == NULL)) return -1;
+
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_TRACE_LOAD) < DLT_RETURN_OK) return -1;
+
+    DltTraceLoadSettings* app_settings = app->trace_load_settings;
+
+    if (app_settings != NULL) {
+        trace_load_settings_count = app->trace_load_settings_count;
+        trace_load_settings_user_msg = malloc(sizeof(DltUserControlMsgTraceSettingMsg) * trace_load_settings_count);
+        for (uint32_t i = 0U; i < trace_load_settings_count; i++) {
+            // App id is not transmitted as the user library only
+            // has one application ID
+            memcpy(trace_load_settings_user_msg[i].ctid, app_settings[i].ctid, DLT_ID_SIZE);
+            trace_load_settings_user_msg[i].soft_limit = app_settings[i].soft_limit;
+            trace_load_settings_user_msg[i].hard_limit = app_settings[i].hard_limit;
+
+            if (app_settings[i].ctid[0] == '\0') {
+                dlt_vlog(LOG_NOTICE, "Sending trace load config to app %.4s, soft limit %u, hard limit %u\n",
+                         app->apid,
+                         app_settings[i].soft_limit,
+                         app_settings[i].hard_limit);
+            } else {
+                dlt_vlog(LOG_NOTICE, "Sending trace load config to app %.4s, ctid %.4s, soft limit %u, hard limit %u\n",
+                         app->apid,
+                         app_settings[i].ctid,
+                         app_settings[i].soft_limit,
+                         app_settings[i].hard_limit);
+            }
+
+        }
+    }
+    else {
+        dlt_vlog(LOG_INFO,
+                 "No trace load settings for application %s, setting daemon defaults.\n", app->apid);
+
+        trace_load_settings_count = 1;
+        trace_load_settings_user_msg = malloc(sizeof(DltUserControlMsgTraceSettingMsg));
+
+        memset(trace_load_settings_user_msg, 0, sizeof(DltTraceLoadSettings));
+        trace_load_settings_user_msg[0].soft_limit = DLT_TRACE_LOAD_DAEMON_SOFT_LIMIT_DEFAULT;
+        trace_load_settings_user_msg[0].hard_limit = DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT;
+    }
+
+    /* log to FIFO */
+    ret = dlt_user_log_out3_with_timeout(app->user_handle,
+                                         &(userheader), sizeof(DltUserHeader),
+                                         &(trace_load_settings_count), sizeof(uint32_t),
+                                         trace_load_settings_user_msg, sizeof(DltUserControlMsgTraceSettingMsg) * trace_load_settings_count);
+
+    if (ret < DLT_RETURN_OK && errno == EPIPE) {
+        dlt_daemon_application_reset_user_handle(daemon, app, verbose);
+    }
+
+    free(trace_load_settings_user_msg);
+
+    return ret;
 }
 #endif

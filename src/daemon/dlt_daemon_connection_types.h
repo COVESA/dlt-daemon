@@ -51,6 +51,9 @@ typedef enum {
     DLT_CONNECTION_CONTROL_MSG,
     DLT_CONNECTION_GATEWAY,
     DLT_CONNECTION_GATEWAY_TIMER,
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DLT_CONNECTION_STAT_TIMER,
+#endif
     DLT_CONNECTION_TYPE_MAX
 } DltConnectionType;
 
@@ -80,6 +83,9 @@ typedef struct DltConnection {
     DltConnectionStatus status; /**< Status of connection */
     struct DltConnection *next;   /**< For multiple client connection using linked list */
     int ev_mask; /**< Mask to set when registering the connection for events */
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    int remaining_size; /**< Remaining data size for sending data. This value will be set to non-zero when data could not be sent fully */
+#endif
 } DltConnection;
 
 #endif /* DLT_DAEMON_CONNECTION_TYPES_H */
