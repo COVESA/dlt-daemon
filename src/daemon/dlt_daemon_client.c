@@ -158,6 +158,14 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
             sent = 1;
     } /* for */
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    if (sent)
+    {
+        const uint32_t serial_header = daemon->sendserialheader ? sizeof(dltSerialHeader) : 0;
+        daemon->bytes_sent += size1 + size2 + serial_header;
+    }
+#endif
+
     return sent;
 }
 

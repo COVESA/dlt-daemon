@@ -181,6 +181,16 @@ typedef struct
     char apid[4];                        /**< application which lost messages */
 } DLT_PACKED DltUserControlMsgBufferOverflow;
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+typedef struct
+{
+    char ctid[DLT_ID_SIZE];
+    uint32_t soft_limit;
+    uint32_t hard_limit;
+} DLT_PACKED DltUserControlMsgTraceSettingMsg;
+
+#endif
+
 /**************************************************************************************************
 * The folowing functions are used shared between the user lib and the daemon implementation
 **************************************************************************************************/

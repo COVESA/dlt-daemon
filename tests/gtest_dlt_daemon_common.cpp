@@ -1727,6 +1727,278 @@ TEST(t_dlt_daemon_user_send_log_state, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_log_state */
 
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, nullpointer)
+{
+    int num_settings;
+    DltTraceLoadSettings *settings = NULL;
+    DltDaemon daemon;
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  NULL, "APP1", "CTID", &settings, &num_settings, 0),
+              DLT_RETURN_WRONG_PARAMETER);
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, NULL, "CTID", &settings, &num_settings, 0),
+              DLT_RETURN_WRONG_PARAMETER);
+}
+
+TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, empty_trace_settings)
+{
+    int num_settings;
+    DltTraceLoadSettings *settings = NULL;
+    DltDaemon daemon;
+    daemon.preconfigured_trace_load_settings = NULL;
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, "APP1", NULL, &settings, &num_settings, 0),
+              DLT_RETURN_OK);
+
+    // test wrong trace load settings count
+    daemon.preconfigured_trace_load_settings = (DltTraceLoadSettings *)malloc(
+        sizeof(DltTraceLoadSettings));
+    daemon.preconfigured_trace_load_settings_count = 0;
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, "APP1", "CTID", &settings, &num_settings, 0),
+              DLT_RETURN_OK);
+
+    free(daemon.preconfigured_trace_load_settings);
+}
+
+TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, app_id_not_found)
+{
+    int num_settings = 42;
+    DltTraceLoadSettings *settings = (DltTraceLoadSettings *)42;
+    DltDaemon daemon;
+
+    // test wrong trace load settings count
+    daemon.preconfigured_trace_load_settings = (DltTraceLoadSettings *)malloc(
+        sizeof(DltTraceLoadSettings));
+    memset(daemon.preconfigured_trace_load_settings, 0,
+           sizeof(DltTraceLoadSettings));
+
+    strcpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2");
+    daemon.preconfigured_trace_load_settings_count = 1;
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, "APP1", NULL, &settings, &num_settings, 0),
+              DLT_RETURN_OK);
+    EXPECT_EQ(num_settings, 0);
+    EXPECT_TRUE(settings == NULL);
+
+    free(daemon.preconfigured_trace_load_settings);
+}
+
+static void setup_trace_load_settings(DltDaemon &daemon)
+{
+    daemon.preconfigured_trace_load_settings_count = 7;
+    daemon.preconfigured_trace_load_settings = (DltTraceLoadSettings *)malloc(
+        daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
+    memset(daemon.preconfigured_trace_load_settings, 0,
+           daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
+
+    strcpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2");
+    strcpy(daemon.preconfigured_trace_load_settings[0].ctid, "CTID");
+
+    strcpy(daemon.preconfigured_trace_load_settings[1].apid, "APP1");
+    strcpy(daemon.preconfigured_trace_load_settings[1].ctid, "CTID");
+    daemon.preconfigured_trace_load_settings[1].soft_limit = 21;
+    daemon.preconfigured_trace_load_settings[1].hard_limit = 42;
+
+    strcpy(daemon.preconfigured_trace_load_settings[2].apid, "APP1");
+    strcpy(daemon.preconfigured_trace_load_settings[2].ctid, "CT02");
+    daemon.preconfigured_trace_load_settings[2].soft_limit = 11;
+    daemon.preconfigured_trace_load_settings[2].hard_limit = 22;
+
+    strcpy(daemon.preconfigured_trace_load_settings[3].apid, "APP1");
+    daemon.preconfigured_trace_load_settings[3].soft_limit = 44;
+    daemon.preconfigured_trace_load_settings[3].hard_limit = 55;
+
+    strcpy(daemon.preconfigured_trace_load_settings[4].apid, "APP3");
+    strcpy(daemon.preconfigured_trace_load_settings[4].ctid, "CT03");
+    daemon.preconfigured_trace_load_settings[4].soft_limit = 111;
+    daemon.preconfigured_trace_load_settings[4].hard_limit = 222;
+
+    strcpy(daemon.preconfigured_trace_load_settings[5].apid, "APP3");
+    strcpy(daemon.preconfigured_trace_load_settings[5].ctid, "CT01");
+    daemon.preconfigured_trace_load_settings[5].soft_limit = 333;
+    daemon.preconfigured_trace_load_settings[5].hard_limit = 444;
+
+    strcpy(daemon.preconfigured_trace_load_settings[6].apid, "APP1");
+    strcpy(daemon.preconfigured_trace_load_settings[6].ctid, "CT03");
+    daemon.preconfigured_trace_load_settings[6].soft_limit = 555;
+    daemon.preconfigured_trace_load_settings[6].hard_limit = 666;
+
+    qsort(daemon.preconfigured_trace_load_settings, daemon.preconfigured_trace_load_settings_count,
+          sizeof(DltTraceLoadSettings), dlt_daemon_compare_trace_load_settings);
+}
+
+TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, search_with_context)
+{
+    int num_settings = 42;
+    DltTraceLoadSettings *settings = NULL;
+    DltDaemon daemon;
+
+    setup_trace_load_settings(daemon);
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, "APP1", "CTID", &settings, &num_settings, 0),
+              DLT_RETURN_OK);
+    EXPECT_EQ(num_settings, 1);
+    EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[3],
+                     sizeof(DltTraceLoadSettings)),
+              0);
+
+    free(settings);
+    free(daemon.preconfigured_trace_load_settings);
+}
+
+TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, search_with_app_id)
+{
+    int num_settings = 42;
+    DltTraceLoadSettings *settings = NULL;
+    DltDaemon daemon;
+
+    setup_trace_load_settings(daemon);
+
+    EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
+                  &daemon, "APP1", NULL, &settings, &num_settings, 0),
+              DLT_RETURN_OK);
+    EXPECT_EQ(num_settings, 4);
+    for (int i = 0; i < num_settings; i++) {
+        EXPECT_EQ(memcmp(&settings[i],
+                         &daemon.preconfigured_trace_load_settings[i],
+                         sizeof(DltTraceLoadSettings)),0);
+    }
+
+    free(settings);
+    free(daemon.preconfigured_trace_load_settings);
+}
+
+TEST(t_dlt_daemon_application_add, trace_load_settings_not_found)
+{
+    DltDaemon daemon;
+    DltGateway gateway;
+    const char *apid = "TEST";
+    pid_t pid = 0;
+    const char *desc = "HELLO_TEST";
+    DltDaemonApplication *app = NULL;
+    char ecu[] = "ECU1";
+    int fd = 15;
+
+    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+                                 DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                                 DLT_TRACE_STATUS_OFF, 0, 0));
+    dlt_set_id(daemon.ecuid, ecu);
+    EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
+    EXPECT_EQ(DLT_RETURN_OK,
+              strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+                                     fd, ecu, 0);
+    EXPECT_FALSE(app->trace_load_settings == NULL);
+    EXPECT_EQ(app->trace_load_settings_count, 1);
+    EXPECT_EQ(app->trace_load_settings[0].soft_limit,
+              DLT_TRACE_LOAD_DAEMON_SOFT_LIMIT_DEFAULT);
+    EXPECT_EQ(app->trace_load_settings[0].hard_limit,
+              DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT);
+    EXPECT_STREQ(app->trace_load_settings[0].apid, apid);
+    EXPECT_TRUE(app->trace_load_settings[0].ctid == NULL ||
+                strlen(app->trace_load_settings[0].ctid) == 0);
+
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
+
+    dlt_daemon_application_del(&daemon, app, ecu, 0);
+    EXPECT_TRUE(app->trace_load_settings == NULL);
+    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+}
+
+TEST(t_dlt_daemon_application_add, trace_load_settings_configured)
+{
+    DltDaemon daemon;
+    DltGateway gateway;
+    const char *apid = "APP1";
+    pid_t pid = 0;
+    const char *desc = "HELLO_TEST";
+    DltDaemonApplication *app = NULL;
+    char ecu[] = "ECU1";
+    int fd = 15;
+
+    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+                                 DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                                 DLT_TRACE_STATUS_OFF, 0, 0));
+
+    // must be done after daemon init, else data is overwritten
+    setup_trace_load_settings(daemon);
+
+    dlt_set_id(daemon.ecuid, ecu);
+    EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
+    EXPECT_EQ(DLT_RETURN_OK,
+              strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+                                     fd, ecu, 0);
+    EXPECT_FALSE(app->trace_load_settings == NULL);
+    EXPECT_EQ(app->trace_load_settings_count, 4);
+
+    for (uint32_t i = 0; i < app->trace_load_settings_count; i++) {
+        EXPECT_EQ(memcmp(&app->trace_load_settings[i],
+                         &daemon.preconfigured_trace_load_settings[i],
+                         sizeof(DltTraceLoadSettings)), 0);
+    }
+
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
+
+    dlt_daemon_application_del(&daemon, app, ecu, 0);
+    EXPECT_TRUE(app->trace_load_settings == NULL);
+    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+}
+
+TEST(t_dlt_daemon_user_send_trace_load_config, normal)
+{
+    DltDaemon daemon;
+    DltGateway gateway;
+    const char *apid = "APP1";
+    pid_t pid = 0;
+    const char *desc = "HELLO_TEST";
+    DltDaemonApplication *app = NULL;
+    char ecu[] = "ECU1";
+    int fd = 15;
+
+    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+                                 DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                                 DLT_TRACE_STATUS_OFF, 0, 0));
+
+    dlt_set_id(daemon.ecuid, ecu);
+    EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
+    EXPECT_EQ(DLT_RETURN_OK,
+              strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+                                     fd, ecu, 0);
+    dlt_daemon_user_send_trace_load_config(&daemon, app, 0);
+    dlt_daemon_application_del(&daemon, app, ecu, 0);
+
+    setup_trace_load_settings(daemon);
+
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+                                     fd, ecu, 0);
+    dlt_daemon_user_send_trace_load_config(&daemon, app, 0);
+    dlt_daemon_application_del(&daemon, app, ecu, 0);
+    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
+}
+
+#endif
+
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/

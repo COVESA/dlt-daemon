@@ -26,7 +26,10 @@ else()
     set(LIBRARIES socket)
 endif()
 
-if (WITH_SYSTEMD OR WITH_SYSTEMD_SOCKET_ACTIVATION OR WITH_SYSTEMD_WATCHDOG)
+if (WITH_SYSTEMD
+        OR WITH_SYSTEMD_SOCKET_ACTIVATION
+        OR WITH_SYSTEMD_WATCHDOG
+        OR WITH_SYSTEMD_JOURNAL)
     set(LIBRARIES ${LIBRARIES} systemd)
 endif()
 
@@ -62,6 +65,7 @@ string(CONCAT TEST_ENV_IPv6 "${TEST_ENV};"
 ####################
 set(TARGET_LIST gtest_dlt_common
                 gtest_dlt_user
+                gtest_dlt_daemon
                 gtest_dlt_daemon_common
                 dlt_env_ll_unit_test)
 
@@ -69,6 +73,24 @@ foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
     if(${target} STREQUAL "gtest_dlt_daemon_common")
         set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
+    elseif(${target} STREQUAL "gtest_dlt_daemon")
+        set(target_SRCS ${target_SRCS}
+                ../src/daemon/dlt-daemon.c
+                ../src/daemon/dlt_daemon_client.c
+                ../src/daemon/dlt_daemon_common.c
+                ../src/daemon/dlt_daemon_connection.c
+                ../src/daemon/dlt_daemon_event_handler.c
+                ../src/daemon/dlt_daemon_offline_logstorage.c
+                ../src/daemon/dlt_daemon_serial.c
+                ../src/daemon/dlt_daemon_socket.c
+                ../src/daemon/dlt_daemon_unix_socket.c
+                ../src/gateway/dlt_gateway.c
+                ../src/offlinelogstorage/dlt_offline_logstorage_behavior.c
+                ../src/offlinelogstorage/dlt_offline_logstorage.c
+                ../src/shared/dlt_config_file_parser.c
+                ../src/shared/dlt_offline_trace.c
+        )
+        add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
     endif()
     add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} ${DLT_LIBRARIES})

@@ -104,3 +104,9 @@ if (WITH_DLT_LOG_LEVEL_APP_CONFIG)
             DESTINATION ${CONFIGURATION_FILES_DIR}
             COMPONENT base)
 endif()
+
+if (WITH_DLT_TRACE_LOAD_CTRL)
+    INSTALL(FILES dlt-trace-load.conf
+            DESTINATION ${CONFIGURATION_FILES_DIR}
+            COMPONENT base)
+endif()

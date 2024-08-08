@@ -46,6 +46,10 @@ COVESA system or more likely on a external tester device.
 :   Load an alternative configuration for app id log level defaults.
     By default, the configuration file /etc/dlt-log-levels.conf is loaded.
 
+-l
+
+:   Load an alternative trace load configuration file. By default the configuration file /etc/dlt-trace-load.conf is loaded.
+
 
 # EXAMPLES
 
