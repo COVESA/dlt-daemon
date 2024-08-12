@@ -149,9 +149,6 @@ typedef struct
     int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
     DltBindAddress_t* ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
     int injectionMode;  /**< (Boolean) Injection mode */
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    int  statInterval; /**< (int) Statistics interval of transfer speed outputs (sec) (default: 0 - not output) */
-#endif
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
@@ -295,7 +292,6 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 bool trace_load_keep_message(
     DltDaemonApplication *app, int size, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-int dlt_daemon_process_statistics_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *receiver, int verbose);
 // Functions that are only exposed for testing and should not be public
 // for normal builds
 #ifdef DLT_UNIT_TESTS

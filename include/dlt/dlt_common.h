@@ -853,7 +853,7 @@ extern "C"
 #define DLT_TRACE_LOAD_WINDOW_RESOLUTION  (10000)
 
 /* Special Context ID for output soft_limit/hard_limit over warning message (DLT LIMITS) */
-#define DLT_INTERNAL_CONTEXT_ID           ("DLTL")
+#define DLT_TRACE_LOAD_CONTEXT_ID ("DLTL")
 
 /* Frequency in which warning messages are logged in seconds when an application is over the soft limit
  * Unit of this value is Number of slot of window.
@@ -919,6 +919,21 @@ extern pthread_rwlock_t trace_load_rw_lock;
 /* Precomputation  */
 static const uint64_t TIMESTAMP_BASED_WINDOW_SIZE = DLT_TRACE_LOAD_WINDOW_SIZE * DLT_TRACE_LOAD_WINDOW_RESOLUTION;
 typedef DltReturnValue (DltLogInternal)(DltLogLevelType loglevel, const char *text, void* params);
+
+/**
+ * Check if the trace load is within the limits.
+ * This adds the current message size to the trace load and checks if it is within the limits.
+ * It's the main entry point for trace load control.
+ * The function also handles output of warning messages when the trace load is over the limits.
+ * @param tl_settings The trace load settings for the message source.
+ * @param log_level Which log level should be used to output the trace load exceeded messages.
+ * @param timestamp The timestamp of the message, used to calculate the current slot.
+ * @param size Size of the payload.
+ * @param internal_dlt_log Function to output the trace load exceeded messages.
+ * @param internal_dlt_log_params Additional parameters for the internal_dlt_log function.
+ * @return True if the trace load is within the limits, false otherwise.
+ *         False means that the message should be discarded.
+ */
 bool dlt_check_trace_load(
     DltTraceLoadSettings* tl_settings,
     int32_t log_level,

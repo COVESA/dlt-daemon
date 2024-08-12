@@ -5347,7 +5347,7 @@ static DltReturnValue dlt_user_output_internal_msg(
     if (!handle.contextID[0])
     {
         // Register Special Context ID for output DLT library internal message
-        ret = dlt_register_context(&handle, DLT_INTERNAL_CONTEXT_ID, "DLT user library internal context");
+        ret = dlt_register_context(&handle, DLT_TRACE_LOAD_CONTEXT_ID, "DLT user library internal context");
         if (ret < DLT_RETURN_OK)
         {
             return ret;

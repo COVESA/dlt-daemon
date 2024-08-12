@@ -394,11 +394,19 @@ if(WITH_DLT_TRACE_LOAD_CTRL)
 
     # Configure limits for daemon
     if(NOT TRACE_LOAD_DAEMON_SOFT_LIMIT)
-        set(TRACE_LOAD_DAEMON_SOFT_LIMIT 0)
+        if (WITH_DLT_UNIT_TESTS)
+            set(TRACE_LOAD_DAEMON_SOFT_LIMIT 83333)
+        else()
+            set(TRACE_LOAD_DAEMON_SOFT_LIMIT 0)
+        endif()
     endif()
 
     if(NOT TRACE_LOAD_DAEMON_HARD_LIMIT)
-        set(TRACE_LOAD_DAEMON_HARD_LIMIT 0)
+        if (WITH_DLT_UNIT_TESTS)
+            set(TRACE_LOAD_DAEMON_HARD_LIMIT 100000)
+        else()
+            set(TRACE_LOAD_DAEMON_HARD_LIMIT 0)
+        endif()
     endif()
 
     if (TRACE_LOAD_DAEMON_SOFT_LIMIT GREATER TRACE_LOAD_DAEMON_HARD_LIMIT)

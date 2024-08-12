@@ -103,11 +103,6 @@ static int dlt_daemon_check_numeric_setting(char *token,
                                             unsigned long *data);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-#if defined(DLT_LIB_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
-inline static DltReceiver* dlt_daemon_get_fifo_receiver(const DltDaemonLocal *daemon_local);
-inline static int dlt_daemon_start_receiving_fifo(DltDaemonLocal *daemon_local);
-inline static int dlt_daemon_stop_receiving_fifo(DltDaemonLocal *daemon_local);
-#endif
 
 struct DltTraceLoadLogParams {
     DltDaemon *daemon;
@@ -136,9 +131,6 @@ static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
     [DLT_TIMER_SYSTEMD] = DLT_CONNECTION_SYSTEMD_TIMER,
 #endif
     [DLT_TIMER_GATEWAY] = DLT_CONNECTION_GATEWAY_TIMER,
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    [DLT_TIMER_STAT]    = DLT_CONNECTION_STAT_TIMER,
-#endif
     [DLT_TIMER_UNKNOWN] = DLT_CONNECTION_TYPE_MAX
 };
 
@@ -149,9 +141,6 @@ static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
     [DLT_TIMER_SYSTEMD] = "Systemd watchdog",
 #endif
     [DLT_TIMER_GATEWAY] = "Gateway",
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    [DLT_TIMER_STAT]    = "Statistics",
-#endif
     [DLT_TIMER_UNKNOWN] = "Unknown timer"
 };
 
@@ -475,9 +464,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #endif
     daemon_local->flags.ipNodes = NULL;
     daemon_local->flags.injectionMode = 1;
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    daemon_local->flags.statInterval = 0;
-#endif
 
     /* open configuration file */
     if (daemon_local->flags.cvalue[0])
@@ -904,21 +890,6 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     else if (strcmp(token, "InjectionMode") == 0) {
                         daemon_local->flags.injectionMode = atoi(value);
                     }
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-                    else if(strcmp(token,"StatisticsInterval") == 0)
-                    {
-                        int const intval = atoi(value);
-                        if ( intval >= 0)
-                        {
-                            daemon_local->flags.statInterval = intval;
-                            dlt_vlog(LOG_WARNING, "Option: %s=%s\n",token,value);
-                        }
-                        else
-                        {
-                            dlt_vlog(LOG_WARNING, "Invalid value for StatisticsInterval: %i. Must be more >= 0\n", intval);
-                        }
-                    }
-#endif
                     else {
                         fprintf(stderr, "Unknown option: %s=%s\n", token, value);
                     }
@@ -1173,7 +1144,7 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
 
         skipped = false;
         while (pch != NULL && i < max_tokens) {
-            /* ignore empty lines and new lines */
+            /* ignore comments, empty lines and new lines */
             if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0 ||
                 strncmp(pch, "\r", 1) == 0 || strncmp(pch, " ", 1) == 0) {
                 skipped = true;
@@ -1610,11 +1581,6 @@ int main(int argc, char *argv[])
                         daemon_local.pGateway.interval,
                         DLT_TIMER_GATEWAY);
     }
-
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    /* create fd for timer statistics */
-    create_timer_fd(&daemon_local, daemon_local.flags.statInterval, daemon_local.flags.statInterval, DLT_TIMER_STAT);
-#endif
 
     /* For offline tracing we still can use the same states */
     /* as for socket sending. Using this trick we see the traces */
@@ -2615,10 +2581,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
                               DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
     msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-        ((DLT_LOG_INFO << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
     msg.extendedheader->noar = 1;
-    dlt_set_id(msg.extendedheader->apid, "DLTD");
-    dlt_set_id(msg.extendedheader->ctid, "INTM");
+    dlt_set_id(msg.extendedheader->apid, app_id);
+    dlt_set_id(msg.extendedheader->ctid, ctx_id);
 
     /* Set payload data... */
     uiType = DLT_TYPE_INFO_STRG;
@@ -4185,12 +4151,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     }
 
     if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-#if defined(DLT_DAEMON_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
-        dlt_daemon_start_receiving_fifo(daemon_local);
-        length = 0;
-#endif
-#endif
         dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
         return DLT_DAEMON_ERROR_OK;
     }
@@ -4211,33 +4171,10 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
 
         if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-#if defined(DLT_LIB_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
-            /* Restart receiving data from FIFO */
-            dlt_daemon_start_receiving_fifo(daemon_local);
-#endif
-#endif
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
             return DLT_DAEMON_ERROR_OK;
         }
     }
-
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-#if defined(DLT_LIB_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
-    /* Stop receiving data from FIFO
-     * if Transfer speed is slower than FIFO receiving speed
-     * This prevents buffer overflow during SEND BUFFER state
-     */
-    if (daemon->bytes_recv > daemon->bytes_sent)
-    {
-        dlt_daemon_stop_receiving_fifo(daemon_local);
-    }
-    else
-    {
-        dlt_daemon_start_receiving_fifo(daemon_local);
-    }
-#endif
-#endif
 
     return DLT_DAEMON_ERROR_OK;
 }
@@ -4432,134 +4369,8 @@ static DltReturnValue dlt_daemon_output_internal_msg(
     struct DltTraceLoadLogParams* log_params = (struct DltTraceLoadLogParams*)params;
     return dlt_daemon_log_internal(
         log_params->daemon, log_params->daemon_local, (char *)text, loglevel,
-        log_params->app_id, DLT_INTERNAL_CONTEXT_ID, log_params->verbose);
+        log_params->app_id, DLT_TRACE_LOAD_CONTEXT_ID, log_params->verbose);
 }
-
-#if defined(DLT_LIB_USE_FIFO_IPC) && !defined(DLT_SHM_ENABLE)
-inline static DltReceiver* dlt_daemon_get_fifo_receiver(const DltDaemonLocal *const daemon_local)
-{
-    static DltReceiver* fifo_receiver = NULL;
-    DltConnection* temp = NULL;
-
-    /* Find FIFO receiver is done only once */
-    if (fifo_receiver != NULL )
-    {
-        return fifo_receiver;
-    }
-
-    if (daemon_local == NULL)
-    {
-        dlt_log(LOG_ERR, "Failed to get FIFO receiver: Invalid parameter\n");
-    }
-    else
-    {
-        temp = daemon_local->pEvent.connections;
-        temp = dlt_connection_get_next(temp, DLT_CON_MASK_APP_MSG);
-        if (temp != NULL && temp->receiver != NULL)
-        {
-            fifo_receiver = temp->receiver;
-        }
-        else
-        {
-            dlt_log(LOG_ERR, "Failed to get FIFO receiver: Not found\n");
-        }
-    }
-
-    return fifo_receiver;
-}
-
-inline static int dlt_daemon_start_receiving_fifo(DltDaemonLocal *const daemon_local)
-{
-    DltReceiver* fifo_receiver = dlt_daemon_get_fifo_receiver(daemon_local);
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              fifo_receiver->fd,
-                              EPOLLIN,
-                              DLT_CONNECTION_APP_MSG))
-    {
-        dlt_log(LOG_ERR, "Failed to start receiving FIFO\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-inline static int dlt_daemon_stop_receiving_fifo(DltDaemonLocal *const daemon_local)
-{
-    DltReceiver* fifo_receiver = dlt_daemon_get_fifo_receiver(daemon_local);
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              fifo_receiver->fd,
-                              0,
-                              DLT_CONNECTION_APP_MSG))
-    {
-        dlt_log(LOG_ERR, "Failed to stop receiving FIFO\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-int dlt_daemon_process_statistics_timer(DltDaemon *const daemon,
-                                        DltDaemonLocal *const daemon_local,
-                                        DltReceiver *const receiver,
-                                        int verbose)
-{
-    char local_str[DLT_DAEMON_TEXTBUFSIZE];
-    static uint32_t prev_stat_time = 0;
-    static const char *stateToStr[]
-        = {"Init", "Buffer", "Buffer Full", "Send Buffer", "Send Direct", "Log Mode Off"};
-
-    PRINT_FUNCTION_VERBOSE(verbose);
-
-    if((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL))
-    {
-        dlt_vlog(LOG_ERR, "%s: invalid parameters\n", __func__);
-        return -1;
-    }
-
-    uint64_t expir;
-    const ssize_t res = read(receiver->fd, &expir, sizeof(expir));
-    if(res < 0)
-    {
-        dlt_vlog(LOG_WARNING, "%s: Fail to read timer (%s)\n", __func__, strerror(errno));
-        /* Activity received on timer_wd, but unable to read the fd:
-           let's go on sending notification */
-    }
-
-    uint32_t curr_time = dlt_uptime();
-    if (curr_time == prev_stat_time)
-    {
-        /* This case should never happen */
-        return 0;
-    }
-
-    /* Calculate transfer speed and FIFO receiving speed */
-    const uint32_t diff_time = curr_time - prev_stat_time;
-    const int32_t transfer_speed = ((int64_t)daemon->bytes_sent * DLT_UPTIME_RESOLUTION_Of_1SEC) / diff_time;
-    const int32_t fifo_speed = ((int64_t)daemon->bytes_recv * DLT_UPTIME_RESOLUTION_Of_1SEC) / diff_time;
-
-    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-             "Transfer speed: %d bytes/sec, "
-             "FIFO speed: %d bytes/sec, "
-             "Total Clients: %d, "
-             "Default LL/TS: %d/%d, "
-             "State: %s, ",
-             transfer_speed,
-             fifo_speed,
-             daemon_local->client_connections,
-             daemon->default_log_level,
-             daemon->default_trace_status,
-             stateToStr[daemon->state]);
-    dlt_daemon_log_internal(
-        daemon, daemon_local, local_str, verbose, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID);
-    daemon->bytes_sent = 0;
-    daemon->bytes_recv = 0;
-    prev_stat_time = curr_time;
-
-    return 0;
-}
-#endif
 #endif
 
 
