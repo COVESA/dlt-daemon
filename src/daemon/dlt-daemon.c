@@ -3978,9 +3978,11 @@ bool trace_load_keep_message(DltDaemonApplication *app,
             app->apid, msg->extendedheader->ctid);
 
     if (trace_load_settings != NULL) {
+        pthread_rwlock_wrlock(&trace_load_rw_lock);
         keep_message = dlt_check_trace_load(
             trace_load_settings, mtin, msg->headerextra.tmsp, size,
             dlt_daemon_output_internal_msg, (void *)(&params));
+        pthread_rwlock_unlock(&trace_load_rw_lock);
     }
     else {
         dlt_vlog(

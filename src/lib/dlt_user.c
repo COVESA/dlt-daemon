@@ -229,7 +229,7 @@ static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
 static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, const char *text, void* params);
 DltTraceLoadSettings* trace_load_settings = NULL;
 uint32_t trace_load_settings_count = 0;
-pthread_rwlock_t trace_load_rw_lock;
+pthread_rwlock_t trace_load_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
 #endif
 
 DltReturnValue dlt_user_check_library_version(const char *user_major_version, const char *user_minor_version)
@@ -513,9 +513,6 @@ DltReturnValue dlt_init(void)
 
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    /* initialize for trace load check */
-
-    pthread_rwlock_init(&trace_load_rw_lock, NULL);
     pthread_rwlock_wrlock(&trace_load_rw_lock);
 
     trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
@@ -4159,19 +4156,20 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             /* check trace load before output */
             if (!sent_size)
             {
+                pthread_rwlock_wrlock(&trace_load_rw_lock);
                 DltTraceLoadSettings* settings =
                     dlt_find_runtime_trace_load_settings(
                         trace_load_settings, trace_load_settings_count, dlt_user.appID, log->handle->contextID);
-
-                if (!dlt_check_trace_load(
+                const bool trace_load_in_limits = dlt_check_trace_load(
                         settings,
                         log->log_level, time_stamp,
                         sizeof(DltUserHeader)
                             + msg.headersize - sizeof(DltStorageHeader)
                             + log->size,
                         dlt_user_output_internal_msg,
-                        NULL))
-                {
+                        NULL);
+                pthread_rwlock_unlock(&trace_load_rw_lock);
+                if (!trace_load_in_limits){
                     return DLT_RETURN_LOAD_EXCEEDED;
                 }
             }

@@ -4451,8 +4451,6 @@ bool dlt_check_trace_load(
         return false;
     }
 
-    pthread_rwlock_rdlock(&trace_load_rw_lock);
-
     /* Switch window slot according to timestamp
      * If warning messages for hard/soft limit over are sent,
      * the message size will be returned.
@@ -4473,8 +4471,6 @@ bool dlt_check_trace_load(
      * If trace load is over the limit, message will be discarded.
      */
     const bool allow_output = !dlt_is_over_trace_load_hard_limit(tl_settings, size);
-
-    pthread_rwlock_unlock(&trace_load_rw_lock);
 
     return allow_output;
 }
