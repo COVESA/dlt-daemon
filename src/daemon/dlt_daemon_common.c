@@ -772,7 +772,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
     if (application->trace_load_settings == NULL) {
         DltTraceLoadSettings* pre_configured_trace_load_settings = NULL;
         int num_settings = 0;
-        DltReturnValue rv = dlt_daemon_find_preconfigured_trace_load_settings(
+        DltReturnValue find_trace_settings_return_value = dlt_daemon_find_preconfigured_trace_load_settings(
             daemon,
             application->apid,
             NULL /*load settings for all contexts*/,
@@ -781,7 +781,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
             verbose);
 
         DltTraceLoadSettings *app_level = NULL;
-        if ((rv == DLT_RETURN_OK) &&
+        if ((find_trace_settings_return_value == DLT_RETURN_OK) &&
             (pre_configured_trace_load_settings != NULL) &&
             (num_settings != 0)) {
             application->trace_load_settings = pre_configured_trace_load_settings;

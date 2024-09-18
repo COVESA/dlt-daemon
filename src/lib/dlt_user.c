@@ -516,6 +516,11 @@ DltReturnValue dlt_init(void)
     pthread_rwlock_wrlock(&trace_load_rw_lock);
 
     trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
+    if (trace_load_settings == NULL) {
+        dlt_vlog(LOG_ERR, "Failed to allocate memory for trace load settings\n");
+        dlt_user_init_state = INIT_UNITIALIZED;
+        return DLT_RETURN_ERROR;
+    }
     memset(trace_load_settings, 0, sizeof(DltTraceLoadSettings));
     trace_load_settings[0].soft_limit = DLT_TRACE_LOAD_CLIENT_SOFT_LIMIT_DEFAULT;
     trace_load_settings[0].hard_limit = DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;
@@ -4879,6 +4884,11 @@ DltReturnValue dlt_user_log_check_user_message(void)
                     char msg[255];
                     trace_load_settings_alloc_size = sizeof(DltTraceLoadSettings) * trace_load_settings_user_messages_count;
                     trace_load_settings = malloc(trace_load_settings_alloc_size);
+                    if (trace_load_settings == NULL) {
+                        pthread_rwlock_unlock(&trace_load_rw_lock);
+                        dlt_log(LOG_ERR, "Failed to allocate memory for trace load settings\n");
+                        return DLT_RETURN_ERROR;
+                    }
                     memset(trace_load_settings, 0, trace_load_settings_alloc_size);
                     for (i = 0; i < trace_load_settings_user_messages_count; i++) {
                         strncpy(trace_load_settings[i].apid, dlt_user.appID, DLT_ID_SIZE);
