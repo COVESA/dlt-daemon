@@ -1113,6 +1113,10 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         daemon->preconfigured_trace_load_settings_count = 0;
     }
     daemon->preconfigured_trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
+    if (daemon->preconfigured_trace_load_settings == NULL) {
+        dlt_log(LOG_CRIT, "Failed to allocate memory for trace load settings\n");
+        return DLT_RETURN_ERROR;
+    }
 
     /* open configuration file */
     filename = daemon_local->flags.lvalue[0]
@@ -1247,10 +1251,10 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
 
         DltTraceLoadSettings *settings = NULL;
         int num_settings = 0;
-        DltReturnValue rv = dlt_daemon_find_preconfigured_trace_load_settings(
+        DltReturnValue find_trace_settings_return_value = dlt_daemon_find_preconfigured_trace_load_settings(
             daemon, app_id_value, ctx_id_value, &settings, &num_settings,
             0);
-        if (rv != DLT_RETURN_OK || num_settings != 0) {
+        if (find_trace_settings_return_value != DLT_RETURN_OK || num_settings != 0) {
             dlt_vlog(LOG_WARNING,
                      "App id '%.4s' is already configured, or an error occurred, skipping entry\n",
                      app_id_value);
