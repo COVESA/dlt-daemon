@@ -3785,7 +3785,7 @@ void dlt_check_envvar()
     if (env_log_level_str != NULL) {
         int level = 0;
 
-        if (sscanf(env_log_level_str, "%d", &level))
+        if (sscanf(env_log_level_str, "%d", &level) == 1)
             dlt_log_set_level(level);
     }
 
@@ -3794,7 +3794,7 @@ void dlt_check_envvar()
     if (env_log_mode != NULL) {
         int mode = 0;
 
-        if (sscanf(env_log_mode, "%d", &mode))
+        if (sscanf(env_log_mode, "%d", &mode) == 1)
             dlt_log_init(mode);
     }
 
