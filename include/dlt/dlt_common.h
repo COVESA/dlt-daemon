@@ -834,7 +834,6 @@ extern "C"
 
 #include <pthread.h>
 /* For trace load control */
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 
 /* Number of slots in window for recording trace load (Default: 60)
  * Average trace load in this window will be used as trace load
@@ -875,8 +874,6 @@ extern "C"
  * then DLT_TIMESTAMP_RESOLUTION value also has to be updated accordingly.
  */
 #define DLT_TIMESTAMP_RESOLUTION          (10000)
-
-#endif
 
 typedef struct
 {
