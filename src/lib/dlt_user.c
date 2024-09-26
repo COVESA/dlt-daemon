@@ -958,6 +958,10 @@ void dlt_user_atexit_handler(void)
     /* Cleanup */
     /* Ignore return value */
     dlt_free();
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_destroy(&trace_load_rw_lock);
+#endif
 }
 
 int dlt_user_atexit_blow_out_user_buffer(void)
@@ -1216,7 +1220,6 @@ DltReturnValue dlt_free(void)
         trace_load_settings = NULL;
     }
     trace_load_settings_count = 0;
-    pthread_rwlock_destroy(&trace_load_rw_lock);
 #endif
 
     pthread_mutex_destroy(&dlt_mutex);
@@ -4895,7 +4898,12 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         strncpy(trace_load_settings[i].ctid, trace_load_settings_user_messages[i].ctid, DLT_ID_SIZE);
                         trace_load_settings[i].soft_limit = trace_load_settings_user_messages[i].soft_limit;
                         trace_load_settings[i].hard_limit = trace_load_settings_user_messages[i].hard_limit;
+                    }
+                    trace_load_settings_count = trace_load_settings_user_messages_count;
+                    pthread_rwlock_unlock(&trace_load_rw_lock);
 
+                    // must be sent with unlocked trace_load_rw_lock
+                    for (i = 0; i < trace_load_settings_user_messages_count; i++) {
                         if (trace_load_settings[i].ctid[0] == '\0') {
                             snprintf(
                                 msg, sizeof(msg),
@@ -4914,9 +4922,6 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         }
                         dlt_user_output_internal_msg(DLT_LOG_INFO, msg, NULL);
                     }
-                    trace_load_settings_count = trace_load_settings_user_messages_count;
-
-                    pthread_rwlock_unlock(&trace_load_rw_lock);
 
                     /* keep not read data in buffer */
                     if (dlt_receiver_remove(receiver, trace_load_settings_user_message_bytes_required)
