@@ -5333,6 +5333,51 @@ TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
     EXPECT_EQ(last_free, DLT_RETURN_OK);
 }
 
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+
+/*/////////////////////////////////////// */
+/* t_dlt_user_run_into_trace_limit */
+TEST(t_dlt_user_run_into_trace_limit, normal)
+{
+    DltContext context;
+    DltContextData contextData;
+    unsigned int data;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TLMT", "dlt_user.c tests"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint normal"));
+
+    auto loadExceededReceived = false;
+
+    for (int i = 0; i < DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;++i) {
+        /* normal values */
+        EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
+        data = 0;
+        EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
+        data = 1;
+        EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
+        data = 2;
+        EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
+        data = UINT_MAX;
+        EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_uint(&contextData, data));
+
+        loadExceededReceived = dlt_user_log_write_finish(&contextData) == DLT_RETURN_LOAD_EXCEEDED;
+        if (loadExceededReceived) {
+            // values are averaged over a minute, therefore a spike in load also triggers the limit
+            EXPECT_LE(i, DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT);
+            break;
+        }
+    }
+
+    EXPECT_TRUE(loadExceededReceived);
+
+    // unregister return values are not checked because error is returned due to full local buffers
+    dlt_unregister_context(&context);
+    dlt_unregister_app();
+}
+
+#endif
+
 /*/////////////////////////////////////// */
 /* main */
 int main(int argc, char **argv)

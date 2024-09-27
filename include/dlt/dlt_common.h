@@ -828,6 +828,128 @@ extern "C"
 {
 #   endif
 
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+/* For trace load control feature */
+
+#include <pthread.h>
+/* For trace load control */
+
+/* Number of slots in window for recording trace load (Default: 60)
+ * Average trace load in this window will be used as trace load
+ * Older time data than this size will be removed from trace load
+ */
+#define DLT_TRACE_LOAD_WINDOW_SIZE        (60)
+
+/* Window resolution in unit of timestamp (Default: 10000 x 0.1 msec = 1 sec)
+ * This value is same as size of 1 slot of window.
+ * Actual window size in sec can be calculated by
+ * DLT_TRACE_LOAD_WINDOW_SIZE x DLT_TRACE_LOAD_WINDOW_RESOLUTION / DLT_TIMESTAMP_RESOLUTION.
+ * (Default: 60 x 10000 / 10000 = 60 sec)
+ * FIXME: When timestamp resolution of dlt is changed from 0.1 msec,
+ * then DLT_TRACE_LOAD_WINDOW_RESOLUTION value also has to be updated accordingly.
+ */
+#define DLT_TRACE_LOAD_WINDOW_RESOLUTION  (10000)
+
+/* Special Context ID for output soft_limit/hard_limit over warning message (DLT LIMITS) */
+#define DLT_TRACE_LOAD_CONTEXT_ID ("DLTL")
+
+/* Frequency in which warning messages are logged in seconds when an application is over the soft limit
+ * Unit of this value is Number of slot of window.
+ * NOTE: Size of the slot depends on value of DLT_TRACE_LOAD_WINDOW_RESOLUTION
+ * (Default: 10 slots = 10000 x 0.1 msec = 10 sec)
+ */
+#define DLT_SOFT_LIMIT_WARN_FREQUENCY      (10)
+
+/* Frequency in which warning messages are logged in seconds when an application is over the hard limit
+ * Unit of this value is Number of slot of window.
+ * NOTE: Size of the slot depends on value of DLT_TRACE_LOAD_WINDOW_RESOLUTION
+ * (Default: 10 slots = 10000 x 0.1 msec = 10 sec)
+ */
+#define DLT_HARD_LIMIT_WARN_FREQUENCY       (10)
+
+/* Timestamp resolution of 1 second (Default: 10000 -> 1/10000 = 0.0001sec = 0.1msec)
+ * This value is defined as reciprocal of the resolution (1 / DLT_TIMESTAMP_RESOLUTION)
+ * FIXME: When timestamp resolution of dlt is changed from 0.1 msec,
+ * then DLT_TIMESTAMP_RESOLUTION value also has to be updated accordingly.
+ */
+#define DLT_TIMESTAMP_RESOLUTION          (10000)
+
+typedef struct
+{
+    // Window for recording total bytes for each slots [bytes]
+    uint64_t window[DLT_TRACE_LOAD_WINDOW_SIZE];
+    uint64_t total_bytes_of_window;         // Grand total bytes of whole window [bytes]
+    uint32_t curr_slot;                     // Current slot No. of window [slot No.]
+    uint32_t last_slot;                     // Last slot No. of window [slot No.]
+    uint32_t curr_abs_slot;                 // Current absolute slot No. of window [slot No.]
+    uint32_t last_abs_slot;                 // Last absolute slot No. of window [slot No.]
+    uint64_t avg_trace_load;                // Average trace load of whole window [bytes/sec]
+    uint32_t hard_limit_over_counter;       // Discarded message counter due to hard limit over [msg]
+    uint32_t hard_limit_over_bytes;         // Discarded message bytes due to hard limit over [msg]
+    uint32_t slot_left_soft_limit_warn;     // Slot left to output next warning of soft limit over [slot No.]
+    uint32_t slot_left_hard_limit_warn;     // Slot left to output next warning of hard limit over [slot No.]
+    bool is_over_soft_limit;                // Flag if trace load has been over soft limit
+    bool is_over_hard_limit;                // Flag if trace load has been over hard limit
+} DltTraceLoadStat;
+
+/*
+ * The parameter of trace load settings
+ */
+typedef struct
+{
+    char apid[DLT_ID_SIZE];  /**< Application id for which the settings are valid */
+    char ctid[DLT_ID_SIZE];  /**< Context id for which the settings are valid, this is optional */
+
+    uint32_t soft_limit;     /**< Warning threshold, if load is above soft limit a warning will be logged but message won't be discarded */
+    uint32_t hard_limit;     /**< limit threshold, if load is above hard limit a warning will be logged and message will be discarded */
+
+    DltTraceLoadStat tl_stat;
+} DltTraceLoadSettings;
+
+extern pthread_rwlock_t trace_load_rw_lock;
+
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xFFFFFFFF
+#endif
+
+/* Precomputation  */
+static const uint64_t TIMESTAMP_BASED_WINDOW_SIZE = DLT_TRACE_LOAD_WINDOW_SIZE * DLT_TRACE_LOAD_WINDOW_RESOLUTION;
+typedef DltReturnValue (DltLogInternal)(DltLogLevelType loglevel, const char *text, void* params);
+
+/**
+ * Check if the trace load is within the limits.
+ * This adds the current message size to the trace load and checks if it is within the limits.
+ * It's the main entry point for trace load control.
+ * The function also handles output of warning messages when the trace load is over the limits.
+ * @param tl_settings The trace load settings for the message source.
+ * @param log_level Which log level should be used to output the trace load exceeded messages.
+ * @param timestamp The timestamp of the message, used to calculate the current slot.
+ * @param size Size of the payload.
+ * @param internal_dlt_log Function to output the trace load exceeded messages.
+ * @param internal_dlt_log_params Additional parameters for the internal_dlt_log function.
+ * @return True if the trace load is within the limits, false otherwise.
+ *         False means that the message should be discarded.
+ */
+bool dlt_check_trace_load(
+    DltTraceLoadSettings* tl_settings,
+    int32_t log_level,
+    uint32_t timestamp,
+    int32_t size,
+    DltLogInternal internal_dlt_log,
+    void *internal_dlt_log_params);
+
+/**
+ * Find the runtime trace load settings for the given application id and context id.
+ * @param settings Array with all settings
+ * @param settings_count Size of settings
+ * @param apid The apid to search for
+ * @param ctid The context id to search for, can be NULL
+ * @return A sorted array with all settings that match the given apid and ctid
+ */
+DltTraceLoadSettings* dlt_find_runtime_trace_load_settings(DltTraceLoadSettings *settings, uint32_t settings_count, const char* apid, const char* ctid);
+#endif
+
 /**
  * Helper function to print a byte array in hex.
  * @param ptr pointer to the byte array.

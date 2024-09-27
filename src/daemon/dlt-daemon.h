@@ -102,6 +102,9 @@ typedef struct
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     char avalue[NAME_MAX + 1];    /**< (String: Directory) Filename of the app id default level config (Default: /etc/dlt-log-levels.conf) */
 #endif
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    char lvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT trace limit file (Default: /etc/dlt-trace_load.conf) */
+#endif
     int sharedMemorySize;        /**< (int) Size of shared memory (Default: 100000) */
     int sendMessageTime;        /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
     char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
@@ -285,5 +288,15 @@ void dlt_daemon_systemd_watchdog_thread(void *ptr);
 int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, DltTimers timer);
 
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+bool trace_load_keep_message(
+    DltDaemonApplication *app, int size, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+// Functions that are only exposed for testing and should not be public
+// for normal builds
+#ifdef DLT_UNIT_TESTS
+int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_local);
+#endif
+#endif
 
 #endif /* DLT_DAEMON_H */

@@ -93,6 +93,8 @@ option(WITH_DLT_QNX_SYSTEM "Set to ON to build QNX system binary dlt-qnx-system"
 option(WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK "Set to ON to enable fallback to syslog if dlt logging to file fails"   OFF)
 option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message queue is supported)"                    ON)
 option(WITH_DLT_LOG_LEVEL_APP_CONFIG "Set to ON to enable default log levels based on application ids"               OFF)
+option(WITH_DLT_TRACE_LOAD_CTRL "Set to ON to enable trace load control in libdlt and dlt-daemon"                    OFF)
+
 
 set(DLT_IPC "FIFO"
     CACHE STRING "UNIX_SOCKET,FIFO")
@@ -370,6 +372,52 @@ if(WITH_DLT_LOG_LEVEL_APP_CONFIG)
     add_definitions(-DDLT_LOG_LEVEL_APP_CONFIG)
 endif()
 
+
+if(WITH_DLT_TRACE_LOAD_CTRL)
+    add_definitions(-DDLT_TRACE_LOAD_CTRL_ENABLE)
+
+    # Configure limits for client
+    if(NOT TRACE_LOAD_USER_SOFT_LIMIT)
+        set(TRACE_LOAD_USER_SOFT_LIMIT 83333)
+    endif()
+
+    if(NOT TRACE_LOAD_USER_HARD_LIMIT)
+        set(TRACE_LOAD_USER_HARD_LIMIT 100000)
+    endif()
+
+    if (TRACE_LOAD_USER_SOFT_LIMIT GREATER TRACE_LOAD_USER_HARD_LIMIT)
+        message(FATAL_ERROR "TRACE_LOAD_USER_SOFT_LIMIT must be less or equal than TRACE_LOAD_USER_HARD_LIMIT")
+    endif()
+
+    add_definitions(-DDLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT=${TRACE_LOAD_USER_HARD_LIMIT})
+    add_definitions(-DDLT_TRACE_LOAD_CLIENT_SOFT_LIMIT_DEFAULT=${TRACE_LOAD_USER_SOFT_LIMIT})
+
+    # Configure limits for daemon
+    if(NOT TRACE_LOAD_DAEMON_SOFT_LIMIT)
+        if (WITH_DLT_UNIT_TESTS)
+            set(TRACE_LOAD_DAEMON_SOFT_LIMIT 83333)
+        else()
+            set(TRACE_LOAD_DAEMON_SOFT_LIMIT 0)
+        endif()
+    endif()
+
+    if(NOT TRACE_LOAD_DAEMON_HARD_LIMIT)
+        if (WITH_DLT_UNIT_TESTS)
+            set(TRACE_LOAD_DAEMON_HARD_LIMIT 100000)
+        else()
+            set(TRACE_LOAD_DAEMON_HARD_LIMIT 0)
+        endif()
+    endif()
+
+    if (TRACE_LOAD_DAEMON_SOFT_LIMIT GREATER TRACE_LOAD_DAEMON_HARD_LIMIT)
+        message(FATAL_ERROR "TRACE_LOAD_DAEMON_SOFT_LIMIT must be less or equal than TRACE_LOAD_DAEMON_HARD_LIMIT")
+    endif()
+
+    add_definitions(-DDLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT=${TRACE_LOAD_DAEMON_HARD_LIMIT})
+    add_definitions(-DDLT_TRACE_LOAD_DAEMON_SOFT_LIMIT_DEFAULT=${TRACE_LOAD_DAEMON_SOFT_LIMIT})
+
+endif(WITH_DLT_TRACE_LOAD_CTRL)
+
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(include)
@@ -489,6 +537,7 @@ message(STATUS "WITH_EXTENDED_FILTERING = ${WITH_EXTENDED_FILTERING}")
 message(STATUS "WITH_DLT_DISABLE_MACRO = ${WITH_DLT_DISABLE_MACRO}")
 message(STATUS "WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK = ${WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK}")
 message(STATUS "WITH_DLT_LOG_LEVEL_APP_CONFIG = ${WITH_DLT_LOG_LEVEL_APP_CONFIG}")
+message(STATUS "WITH_DLT_TRACE_LOAD_CTRL = ${WITH_DLT_TRACE_LOAD_CTRL}" )
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)
