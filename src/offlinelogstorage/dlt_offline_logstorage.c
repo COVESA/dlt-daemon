@@ -80,14 +80,16 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
         data->ecuid = NULL;
     }
 
-    if (data->log != NULL)
-        fclose(data->log);
+
 
 #ifdef DLT_LOGSTORAGE_USE_GZIP
     if (data->gzlog != NULL)
         gzclose(data->gzlog);
 #endif
 
+        if (data->log != NULL)
+        fclose(data->log);
+    
     if (data->cache != NULL) {
         free(data->cache);
         data->cache = NULL;

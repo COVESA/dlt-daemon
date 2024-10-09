@@ -371,13 +371,15 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
     }
 
     char* suffix = NULL;
-    for (i = 0; i < cnt; i++) {
-        if (config->gzip_compression) {
+        
+    if (config->gzip_compression) {
             suffix = strdup(".dlt.gz");
         }
         else {
             suffix = strdup(".dlt");
         }
+    
+    for (i = 0; i < cnt; i++) {
 
         int len = 0;
         len = strlen(file_name);
@@ -501,6 +503,7 @@ DLT_STATIC void dlt_logstorage_open_log_output_file(DltLogStorageFilterConfig *c
 #ifdef DLT_LOGSTORAGE_USE_GZIP
         dlt_vlog(LOG_DEBUG, "%s: Opening GZIP log file\n", __func__);
         config->gzlog = gzdopen(config->fd, mode);
+        config->log = file;
 #endif
     } else {
         dlt_vlog(LOG_DEBUG, "%s: Opening log file\n", __func__);
