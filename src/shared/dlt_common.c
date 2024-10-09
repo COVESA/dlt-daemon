@@ -2971,26 +2971,34 @@ speed_t dlt_convert_serial_speed(int baudrate)
         ret = B2000000;
         break;
     }
+#ifdef B2500000
     case  2500000:
     {
         ret = B2500000;
         break;
     }
+#endif
+#ifdef B3000000
     case  3000000:
     {
         ret = B3000000;
         break;
     }
+#endif
+#ifdef B3500000
     case  3500000:
     {
         ret = B3500000;
         break;
     }
+#endif
+#ifdef B4000000
     case  4000000:
     {
         ret = B4000000;
         break;
     }
+#endif
 #      endif /* __linux__ */
     default:
     {
