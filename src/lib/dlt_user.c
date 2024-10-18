@@ -5239,8 +5239,13 @@ int dlt_start_threads()
         * even if we missed the signal
          */
         clock_gettime(CLOCK_MONOTONIC, &now);
-        single_wait.tv_sec = now.tv_sec;
-        single_wait.tv_nsec = now.tv_nsec + 500000000;
+        if (now.tv_nsec >= 500000000) {
+            single_wait.tv_sec = now.tv_sec + 1;
+            single_wait.tv_nsec = now.tv_nsec - 500000000;
+        } else {
+            single_wait.tv_sec = now.tv_sec;
+            single_wait.tv_nsec = now.tv_nsec + 500000000;
+        }
 
         signal_status = pthread_cond_timedwait(
             &dlt_housekeeper_running_cond,
