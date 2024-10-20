@@ -4453,6 +4453,12 @@ bool dlt_check_trace_load(
         return true;
     }
 
+    if (tl_settings == NULL)
+    {
+        internal_dlt_log(DLT_LOG_ERROR, "tl_settings is NULL", internal_dlt_log_params);
+        return false;
+    }
+
     if (size < 0)
     {
         dlt_vlog(LOG_ERR, "Invalid size: %d", size);
