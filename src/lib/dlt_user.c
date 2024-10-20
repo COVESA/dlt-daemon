@@ -94,12 +94,15 @@
 enum InitState {
     INIT_UNITIALIZED,
     INIT_IN_PROGRESS,
+    INIT_ERROR,
     INIT_DONE
 };
 
 static DltUser dlt_user;
 static _Atomic enum InitState dlt_user_init_state = INIT_UNITIALIZED;
 #define DLT_USER_INITALIZED (dlt_user_init_state == INIT_DONE)
+#define DLT_USER_INIT_ERROR (dlt_user_init_state == INIT_ERROR)
+#define DLT_USER_INITALIZED_NOT_FREEING (DLT_USER_INITALIZED && (dlt_user_freeing == 0))
 
 static _Atomic int dlt_user_freeing = 0;
 static bool dlt_user_file_reach_max = false;
@@ -465,7 +468,9 @@ DltReturnValue dlt_init(void)
 {
     /* process is exiting. Do not allocate new resources. */
     if (dlt_user_freeing != 0) {
+#ifndef DLT_UNIT_TESTS
         dlt_vlog(LOG_INFO, "%s logging disabled, process is exiting\n", __func__);
+#endif
         /* return negative value, to stop the current log */
         return DLT_RETURN_LOGGING_DISABLED;
     }
@@ -493,7 +498,8 @@ DltReturnValue dlt_init(void)
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
     if (dlt_init_common() == DLT_RETURN_ERROR) {
-        dlt_user_init_state = INIT_UNITIALIZED;
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
     }
 
@@ -532,27 +538,37 @@ DltReturnValue dlt_init(void)
 #endif
 #ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
 
-    if (dlt_initialize_socket_connection() != DLT_RETURN_OK)
+    if (dlt_initialize_socket_connection() != DLT_RETURN_OK) {
         /* We could connect to the pipe, but not to the socket, which is normally */
         /* open before by the DLT daemon => bad failure => return error code */
         /* in case application is started before daemon, it is expected behaviour */
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
+    }
 
 #elif defined DLT_LIB_USE_VSOCK_IPC
 
-    if (dlt_initialize_vsock_connection() != DLT_RETURN_OK)
+    if (dlt_initialize_vsock_connection() != DLT_RETURN_OK) {
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
+    }
 
 #else /* DLT_LIB_USE_FIFO_IPC */
 
-    if (dlt_initialize_fifo_connection() != DLT_RETURN_OK)
+    if (dlt_initialize_fifo_connection() != DLT_RETURN_OK) {
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
+    }
 
     if (dlt_receiver_init(&(dlt_user.receiver),
                           dlt_user.dlt_user_handle,
                           DLT_RECEIVE_FD,
                           DLT_USER_RCVBUF_MAX_SIZE) == DLT_RETURN_ERROR) {
-        dlt_user_init_state = INIT_UNITIALIZED;
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
     }
 
@@ -567,17 +583,15 @@ DltReturnValue dlt_init(void)
 #endif
 
     if (dlt_start_threads() < 0) {
-        dlt_user_init_state = INIT_UNITIALIZED;
+        dlt_user_init_state = INIT_ERROR;
+        dlt_free();
         return DLT_RETURN_ERROR;
     }
 
     /* prepare for fork() call */
     pthread_atfork(NULL, NULL, &dlt_fork_child_fork_handler);
 
-    expectedInitState = INIT_IN_PROGRESS;
-    if (!(atomic_compare_exchange_strong(&dlt_user_init_state, &expectedInitState, INIT_DONE))) {
-        return DLT_RETURN_ERROR;
-    }
+    dlt_user_init_state = INIT_DONE;
 
     return DLT_RETURN_OK;
 }
@@ -740,6 +754,11 @@ DltReturnValue dlt_init_common(void)
     char *env_log_buffer_len;
     uint32_t buffer_max_configured = 0;
     uint32_t header_size = 0;
+
+    // already initialized, nothing to do
+    if (DLT_USER_INITALIZED) {
+        return DLT_RETURN_OK;
+    }
 
     /* Binary semaphore for threads */
     if ((pthread_attr_init(&dlt_mutex_attr) != 0) ||
@@ -939,7 +958,7 @@ void dlt_user_atexit_handler(void)
         return;
 
     if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         /* close file */
         dlt_log_free();
         return;
@@ -1042,10 +1061,14 @@ DltReturnValue dlt_free(void)
         return DLT_RETURN_ERROR;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    // no need to free when not initialized and no error occurred.
+    // on error some resources might have been allocated, so free them.
+    if (!DLT_USER_INITALIZED && !DLT_USER_INIT_ERROR) {
         dlt_user_freeing = 0;
         return DLT_RETURN_ERROR;
     }
+
+    DLT_SEM_LOCK();
 
     dlt_stop_threads();
 
@@ -1139,13 +1162,7 @@ DltReturnValue dlt_free(void)
         dlt_user.dlt_log_handle = -1;
     }
 
-    /* Ignore return value */
-    DLT_SEM_LOCK();
     dlt_receiver_free(&(dlt_user.receiver));
-    DLT_SEM_FREE();
-
-    /* Ignore return value */
-    DLT_SEM_LOCK();
 
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
@@ -1188,7 +1205,6 @@ DltReturnValue dlt_free(void)
     }
 
     dlt_env_free_ll_set(&dlt_user.initial_ll_set);
-    DLT_SEM_FREE();
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
     char queue_name[NAME_MAX];
@@ -1222,6 +1238,7 @@ DltReturnValue dlt_free(void)
     trace_load_settings_count = 0;
 #endif
 
+    DLT_SEM_FREE();
     pthread_mutex_destroy(&dlt_mutex);
 
     /* allow the user app to do dlt_init() again. */
@@ -1604,7 +1621,7 @@ DltReturnValue dlt_unregister_app_util(bool force_sending_messages)
     }
 
     if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -1646,7 +1663,7 @@ DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
         return DLT_RETURN_ERROR;
 
     if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -1991,7 +2008,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
     }
 
     if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2050,10 +2067,11 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
         }
     }
 
-    memcpy(log->buffer + log->size, data, length);
-    log->size += length;
-
-    log->args_num++;
+    if (data != NULL) {
+        memcpy(log->buffer + log->size, data, length);
+        log->size += length;
+        log->args_num++;
+    }
 
     return DLT_RETURN_OK;
 }
@@ -2084,8 +2102,8 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2164,7 +2182,7 @@ static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, 
     }
 
     if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2239,8 +2257,8 @@ DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2304,7 +2322,7 @@ DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int da
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -2397,7 +2415,7 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -2425,8 +2443,8 @@ DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2490,7 +2508,7 @@ DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const 
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -2660,8 +2678,8 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -3955,8 +3973,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
 
     DltReturnValue ret = DLT_RETURN_OK;
 
-    if (!DLT_USER_INITALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state != INIT_DONE\n", __FUNCTION__);
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -5060,6 +5078,11 @@ void dlt_user_log_reattach_to_daemon(void)
     uint32_t num;
     DltContext handle;
     DltContextData log_new;
+
+    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+        return;
+    }
+
 
     if (dlt_user.dlt_log_handle < 0) {
         dlt_user.dlt_log_handle = DLT_FD_INIT;
