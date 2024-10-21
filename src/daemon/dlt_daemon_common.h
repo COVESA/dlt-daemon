@@ -162,7 +162,10 @@ typedef struct
     int user_handle;    /**< connection handle for connection to user application */
     char *context_description; /**< context description */
     int8_t storage_log_level; /**< log level set for offline logstorage */
-    bool predefined; /**< set to true if this context is predefined by runtime configuration file */
+    bool predefined;
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DltTraceLoadSettings* trace_load_settings;    /**< trace load setting for the context */
+#endif
 } DltDaemonContext;
 
 /*

@@ -1778,7 +1778,7 @@ TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, app_id_not_found)
     memset(daemon.preconfigured_trace_load_settings, 0,
            sizeof(DltTraceLoadSettings));
 
-    strcpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2");
+    strncpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings_count = 1;
 
     EXPECT_EQ(dlt_daemon_find_preconfigured_trace_load_settings(
@@ -1798,35 +1798,35 @@ static void setup_trace_load_settings(DltDaemon &daemon)
     memset(daemon.preconfigured_trace_load_settings, 0,
            daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
 
-    strcpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2");
-    strcpy(daemon.preconfigured_trace_load_settings[0].ctid, "CTID");
+    strncpy(daemon.preconfigured_trace_load_settings[0].apid, "APP2", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[0].ctid, "CTID", DLT_ID_SIZE);
 
-    strcpy(daemon.preconfigured_trace_load_settings[1].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[1].ctid, "CTID");
+    strncpy(daemon.preconfigured_trace_load_settings[1].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[1].ctid, "CTID", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[1].soft_limit = 21;
     daemon.preconfigured_trace_load_settings[1].hard_limit = 42;
 
-    strcpy(daemon.preconfigured_trace_load_settings[2].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[2].ctid, "CT02");
+    strncpy(daemon.preconfigured_trace_load_settings[2].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[2].ctid, "CT02", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[2].soft_limit = 11;
     daemon.preconfigured_trace_load_settings[2].hard_limit = 22;
 
-    strcpy(daemon.preconfigured_trace_load_settings[3].apid, "APP1");
+    strncpy(daemon.preconfigured_trace_load_settings[3].apid, "APP1", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[3].soft_limit = 44;
     daemon.preconfigured_trace_load_settings[3].hard_limit = 55;
 
-    strcpy(daemon.preconfigured_trace_load_settings[4].apid, "APP3");
-    strcpy(daemon.preconfigured_trace_load_settings[4].ctid, "CT03");
+    strncpy(daemon.preconfigured_trace_load_settings[4].apid, "APP3", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[4].ctid, "CT03", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[4].soft_limit = 111;
     daemon.preconfigured_trace_load_settings[4].hard_limit = 222;
 
-    strcpy(daemon.preconfigured_trace_load_settings[5].apid, "APP3");
-    strcpy(daemon.preconfigured_trace_load_settings[5].ctid, "CT01");
+    strncpy(daemon.preconfigured_trace_load_settings[5].apid, "APP3", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[5].ctid, "CT01", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[5].soft_limit = 333;
     daemon.preconfigured_trace_load_settings[5].hard_limit = 444;
 
-    strcpy(daemon.preconfigured_trace_load_settings[6].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[6].ctid, "CT03");
+    strncpy(daemon.preconfigured_trace_load_settings[6].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[6].ctid, "CT03", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[6].soft_limit = 555;
     daemon.preconfigured_trace_load_settings[6].hard_limit = 666;
 

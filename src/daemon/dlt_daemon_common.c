@@ -1133,6 +1133,9 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
 
         dlt_set_id(context->apid, apid);
         dlt_set_id(context->ctid, ctid);
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        context->trace_load_settings = NULL;
+#endif
 
         application->num_contexts++;
         new_context = 1;
@@ -1212,6 +1215,21 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
 
     context->log_level_pos = log_level_pos;
     context->user_handle = user_handle;
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DltTraceLoadSettings* tl_settings = dlt_find_runtime_trace_load_settings(
+        application->trace_load_settings,
+        application->trace_load_settings_count,
+        application->apid,
+        context->ctid);
+    if (tl_settings == NULL) {
+        dlt_vlog(LOG_WARNING, "failed to find trace load settings for application %s context %s\n",
+                 application->apid, context->ctid);
+    } else {
+        context->trace_load_settings = tl_settings;
+    }
+#endif
+
 
     /* In case a context is loaded from runtime config file,
      * the user_handle is 0 and we mark that context as predefined.

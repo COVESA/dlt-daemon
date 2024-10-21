@@ -227,6 +227,8 @@ static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /* For trace load control feature */
 static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, const char *text, void* params);
+static void dlt_user_create_default_trace_limits(void);
+DltContext trace_load_context = {0};
 DltTraceLoadSettings* trace_load_settings = NULL;
 uint32_t trace_load_settings_count = 0;
 pthread_rwlock_t trace_load_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -513,22 +515,7 @@ DltReturnValue dlt_init(void)
 
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    pthread_rwlock_wrlock(&trace_load_rw_lock);
-
-    trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
-    if (trace_load_settings == NULL) {
-        dlt_vlog(LOG_ERR, "Failed to allocate memory for trace load settings\n");
-        dlt_user_init_state = INIT_UNITIALIZED;
-        return DLT_RETURN_ERROR;
-    }
-    memset(trace_load_settings, 0, sizeof(DltTraceLoadSettings));
-    trace_load_settings[0].soft_limit = DLT_TRACE_LOAD_CLIENT_SOFT_LIMIT_DEFAULT;
-    trace_load_settings[0].hard_limit = DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;
-    strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
-    trace_load_settings_count = 1;
-
-    pthread_rwlock_unlock(&trace_load_rw_lock);
-
+    dlt_user_create_default_trace_limits();
 #endif
 #ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
 
@@ -1308,6 +1295,15 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
+    if (!trace_load_context.contextID[0])
+    {
+        // Register Special Context ID for output DLT library internal message
+        ret = dlt_register_context(&trace_load_context, DLT_TRACE_LOAD_CONTEXT_ID, "DLT user library internal context");
+        if (ret < DLT_RETURN_OK)
+        {
+            return ret;
+        }
+    }
 #endif
 
     ret = dlt_user_log_send_register_application();
@@ -1543,8 +1539,27 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
 
     dlt_user.dlt_ll_ts_num_entries++;
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    if (trace_load_settings_count > 0) {
+        pthread_rwlock_rdlock(&trace_load_rw_lock);
+        DltTraceLoadSettings *settings = dlt_find_runtime_trace_load_settings(
+            trace_load_settings, trace_load_settings_count, dlt_user.appID,
+            ctx_entry->contextID);
+        if (settings == NULL) {
+            char msg[255];
+            sprintf(msg, "No trace load settings found for %s.%s, trace load settings count: %i",
+                    dlt_user.appID, log.handle->contextID, trace_load_settings_count);
+            dlt_user_output_internal_msg(DLT_LOG_WARN, msg, NULL);
+        }
+        // setting trace load to NULL is okay, it will be checked when using it.
+        ctx_entry->trace_load_settings = settings;
+        pthread_rwlock_unlock(&trace_load_rw_lock);
+    } else {
+        dlt_user_create_default_trace_limits();
+        ctx_entry->trace_load_settings = trace_load_settings;
+    }
+#endif
     DLT_SEM_FREE();
-
     return dlt_user_log_send_register_context(&log);
 }
 
@@ -1677,6 +1692,9 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
     }
 
     DLT_SEM_LOCK();
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
+#endif
 
     handle->log_level_ptr = NULL;
     handle->trace_status_ptr = NULL;
@@ -1712,7 +1730,9 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
         dlt_user.dlt_ll_ts[handle->log_level_pos].nrcallbacks = 0;
         dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_changed_callback = 0;
     }
-
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+#endif
     DLT_SEM_FREE();
 
     /* Inform daemon to unregister context */
@@ -4169,12 +4189,13 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             /* check trace load before output */
             if (!sent_size)
             {
+                if (trace_load_settings_count == 0) {
+                    dlt_user_create_default_trace_limits();
+                }
+
                 pthread_rwlock_wrlock(&trace_load_rw_lock);
-                DltTraceLoadSettings* settings =
-                    dlt_find_runtime_trace_load_settings(
-                        trace_load_settings, trace_load_settings_count, dlt_user.appID, log->handle->contextID);
                 const bool trace_load_in_limits = dlt_check_trace_load(
-                        settings,
+                        dlt_user.dlt_ll_ts[log->handle->log_level_pos].trace_load_settings,
                         log->log_level, time_stamp,
                         sizeof(DltUserHeader)
                             + msg.headersize - sizeof(DltStorageHeader)
@@ -4403,7 +4424,6 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
                                                usercontext.description_length);
 
     return DLT_RETURN_OK;
-
 }
 
 DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
@@ -4889,7 +4909,6 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         free(trace_load_settings);
                     }
 
-                    char msg[255];
                     trace_load_settings_alloc_size = sizeof(DltTraceLoadSettings) * trace_load_settings_user_messages_count;
                     trace_load_settings = malloc(trace_load_settings_alloc_size);
                     if (trace_load_settings == NULL) {
@@ -4904,10 +4923,19 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         trace_load_settings[i].soft_limit = trace_load_settings_user_messages[i].soft_limit;
                         trace_load_settings[i].hard_limit = trace_load_settings_user_messages[i].hard_limit;
                     }
-                    trace_load_settings_count = trace_load_settings_user_messages_count;
-                    pthread_rwlock_unlock(&trace_load_rw_lock);
 
-                    // must be sent with unlocked trace_load_rw_lock
+                    trace_load_settings_count = trace_load_settings_user_messages_count;
+
+                    for (i = 0; i < dlt_user.dlt_ll_ts_num_entries; ++i) {
+                        dlt_ll_ts_type* ctx_entry = &dlt_user.dlt_ll_ts[i];
+                        ctx_entry->trace_load_settings = dlt_find_runtime_trace_load_settings(
+                            trace_load_settings, trace_load_settings_count, dlt_user.appID, ctx_entry->contextID);
+                    }
+                    pthread_rwlock_unlock(&trace_load_rw_lock);
+                    pthread_rwlock_rdlock(&trace_load_rw_lock);
+                    // The log messages only can be produced safely when
+                    // the trace load settings are set up fully.
+                    char msg[255];
                     for (i = 0; i < trace_load_settings_user_messages_count; i++) {
                         if (trace_load_settings[i].ctid[0] == '\0') {
                             snprintf(
@@ -5365,20 +5393,9 @@ static DltReturnValue dlt_user_output_internal_msg(
     const DltLogLevelType loglevel, const char *const text, void* const params)
 {
     (void)params; // parameter is not needed
-    static DltContext handle;
     DltContextData log;
     int ret;
     int sent_size = 0;
-
-    if (!handle.contextID[0])
-    {
-        // Register Special Context ID for output DLT library internal message
-        ret = dlt_register_context(&handle, DLT_TRACE_LOAD_CONTEXT_ID, "DLT user library internal context");
-        if (ret < DLT_RETURN_OK)
-        {
-            return ret;
-        }
-    }
 
     if (dlt_user.verbose_mode == 0)
     {
@@ -5396,7 +5413,7 @@ static DltReturnValue dlt_user_output_internal_msg(
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    ret = dlt_user_log_write_start(&handle, &log, loglevel);
+    ret = dlt_user_log_write_start(&trace_load_context, &log, loglevel);
 
     // Ok means below threshold
     // see src/dlt-qnx-system/dlt-qnx-slogger2-adapter.cpp::sloggerinfo_callback for reference
@@ -5427,6 +5444,19 @@ static DltReturnValue dlt_user_output_internal_msg(
     /* Return number of bytes if message was successfully sent */
     return (ret == DLT_RETURN_OK) ? sent_size : ret;
 }
+
+void dlt_user_create_default_trace_limits(void)
+{
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
+    trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
+    memset(trace_load_settings, 0, sizeof(DltTraceLoadSettings));
+    trace_load_settings[0].soft_limit = TRACE_LOAD_CLIENT_SOFT_LIMIT_DEFAULT;
+    trace_load_settings[0].hard_limit = TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;
+    strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
+    trace_load_settings_count = 1;
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+}
+
 #endif
 
 DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *ptr2, size_t len2, void *ptr3,
