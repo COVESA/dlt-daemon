@@ -180,6 +180,9 @@ typedef struct
     /* Log Level changed callback */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DltTraceLoadSettings *trace_load_settings;    /**< trace load setting for the context */
+#endif
 } dlt_ll_ts_type;
 
 /**
