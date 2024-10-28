@@ -740,6 +740,24 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 }
             }
 
+            tmp = &config->records;
+            while ((*tmp)->next != NULL) {
+                int len = strlen((*tmp)->name);
+                const char *suffix = ".dlt";
+                if (strcmp(&(*tmp)->name[len - strlen(suffix)], suffix) == 0) {
+                    memset(absolute_file_path, 0,
+                           sizeof(absolute_file_path) / sizeof(char));
+                    strcat(absolute_file_path, storage_path);
+                    strncat(absolute_file_path, (*tmp)->name, len);
+                    dlt_vlog(LOG_INFO,
+                             "%s: Compressing '%s' (num_log_files: %d, "
+                             "file_name:%s)\n",
+                             __func__, absolute_file_path, num_log_files,
+                             (*tmp)->name);
+                    dlt_logstorage_compress_dlt_file(absolute_file_path);
+                }
+                tmp = &(*tmp)->next;
+            }
         }
     }
 
@@ -767,6 +785,106 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
     }
 
     return ret;
+}
+
+/**
+ * dlt_logstorage_compress_dlt_file
+ *
+ * Compress content of a file and remove the original file.
+ * compressed file name is the same as the original with .gz extension.
+ *
+ * @param file_path    The file to compress
+ * @return 0 on success, -1 on error
+ */
+int dlt_logstorage_compress_dlt_file(char *file_path)
+{
+    char file_path_dest[DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN + 1] = {'\0'};
+    strcat(file_path_dest, file_path);
+    strcat(file_path_dest, ".gz");
+
+    FILE *source = fopen(file_path, "rb");
+    if (source == NULL) {
+        dlt_vlog(LOG_ERR, "%s: could not open %s\n", __func__, file_path);
+        return -1;
+    }
+
+    FILE *dest = fopen(file_path_dest, "wb");
+    if (dest == NULL) {
+        dlt_vlog(LOG_ERR, "%s: could not open %s\n", __func__, file_path_dest);
+        return -1;
+    }
+
+    gzFile gzfile = gzdopen(fileno(dest), "wb");
+    if (dest == NULL) {
+        dlt_vlog(LOG_ERR, "%s: could not gz open %s\n", __func__,
+                 file_path_dest);
+        return -1;
+    }
+
+    int ret = dlt_logstorage_compress_fd(source, gzfile);
+
+    fclose(source);
+    gzclose(gzfile);
+    fclose(dest);
+
+    if (ret == 0 && remove(file_path) != 0) {
+        dlt_vlog(LOG_ERR, "%s: could not remove original file %s \n", __func__,
+                 file_path);
+        return -1;
+    }
+
+    return ret;
+}
+
+/**
+ * dlt_logstorage_compress_fd
+ *
+ * Compress content of a file descriptor into a gzFile.
+ *
+ * @param source    The file to compress
+ * @param dest      The file to write to
+ * @return 0 on success, -1 on error
+ */
+int dlt_logstorage_compress_fd(FILE *source, gzFile *dest)
+{
+    int ret, flush;
+    z_stream strm;
+    unsigned char in[COMPRESS_CHUNK];
+
+    /* allocate deflate state */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+    if (ret != Z_OK)
+        return ret;
+
+    /* compress until end of file */
+    do {
+        strm.avail_in = fread(in, 1, COMPRESS_CHUNK, source);
+        if (ferror(source)) {
+            (void)deflateEnd(&strm);
+            dlt_vlog(LOG_ERR, "%s: Can't open source\n", __func__);
+            return -1;
+        }
+
+        ret = gzwrite(dest, in, strm.avail_in);
+        if (ret == 0) {
+            dlt_vlog(LOG_ERR, "%s: failed to write to log file\n", __func__);
+            return -1;
+        }
+        if (gzflush(dest, Z_SYNC_FLUSH) != 0)
+            dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
+
+        flush = feof(source) ? Z_FINISH : Z_NO_FLUSH;
+        strm.next_in = in;
+
+        // done when last data in file processed
+    } while (flush != Z_FINISH);
+
+    // clean up and return
+    (void)deflateEnd(&strm);
+    return 0;
 }
 
 /**
