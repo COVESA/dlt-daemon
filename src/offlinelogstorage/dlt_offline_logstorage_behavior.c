@@ -864,7 +864,7 @@ DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config
     }
 
     if (ret <= 0) {
-        if (config->== DLT_LOGSTORAGE_GZIP_ON) {
+        if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
             const char *msg = gzerror(config->gzlog, &ret);
             if (msg != NULL) {
