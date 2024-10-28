@@ -126,8 +126,8 @@
 /* Offline Logstorage disable network routing */
 #define DLT_LOGSTORAGE_GZIP_ERROR               -1 /* error case */
 #define DLT_LOGSTORAGE_GZIP_UNSET                0 /* not set */
-#define DLT_LOGSTORAGE_GZIP_OFF                  1 /* default, enable network routing */
-#define DLT_LOGSTORAGE_GZIP_ON                  (1 << 1) /* disable network routing */
+#define DLT_LOGSTORAGE_GZIP_OFF 1                  /* default, no compression */
+#define DLT_LOGSTORAGE_GZIP_ON (1 << 1)            /* enable gzip compression */
 
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
