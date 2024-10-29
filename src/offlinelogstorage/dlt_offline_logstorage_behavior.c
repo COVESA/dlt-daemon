@@ -434,10 +434,21 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
             }
 
             char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = { '\0' };
+            size_t dir_len = 0;
             if (dir != NULL) {
                 /* Append directory path */
+                dir_len = strlen(dir) + 1;
+                if (dir_len > DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN) {
+                    dlt_log(LOG_ERR, "Directory name too long for buffer\n");
+                    return -1;
+                }
                 strcat(tmpfile, dir);
                 strcat(tmpfile, "/");
+            }
+            if (strlen(files[i]->d_name) >
+                DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN - dir_len) {
+                dlt_log(LOG_ERR, "File name too long for buffer\n");
+                return -1;
             }
             strcat(tmpfile, files[i]->d_name);
             (*tmp)->name = strdup(tmpfile);
@@ -578,7 +589,17 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                      1);
 
         /* concatenate path and file and open absolute path */
+        size_t storage_path_len = strlen(storage_path);
+        if (storage_path_len > DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN) {
+            dlt_log(LOG_ERR, "Storage path too long for buffer\n");
+            return -1;
+        }
         strcat(absolute_file_path, storage_path);
+        if (strlen(file_name) >
+            DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - storage_path_len) {
+            dlt_log(LOG_ERR, "File name too long for buffer\n");
+            return -1;
+        }
         strcat(absolute_file_path, file_name);
         config->working_file_name = strdup(file_name);
         dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
@@ -596,6 +617,11 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         (*tmp)->next = NULL;
     }
     else {
+        size_t storage_path_len = strlen(storage_path);
+        if (storage_path_len > DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN) {
+            dlt_log(LOG_ERR, "Storage path too long for buffer\n");
+            return -1;
+        }
         strcat(absolute_file_path, storage_path);
 
         /* newest file available
@@ -609,7 +635,12 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             }
             config->working_file_name = strdup((*newest)->name);
         }
-        strncat(absolute_file_path, config->working_file_name, strlen(config->working_file_name));
+        if (strlen(config->working_file_name) >
+            DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - storage_path_len) {
+            dlt_log(LOG_ERR, "File name too long for buffer\n");
+            return -1;
+        }
+        strcat(absolute_file_path, config->working_file_name);
 
         dlt_vlog(LOG_DEBUG,
                  "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
@@ -675,6 +706,11 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             memset(absolute_file_path,
                    0,
                    sizeof(absolute_file_path) / sizeof(char));
+            if (strlen(storage_path) + strlen(file_name) >
+                DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN) {
+                dlt_log(LOG_ERR, "Storage path too long for buffer\n");
+                return -1;
+            }
             strcat(absolute_file_path, storage_path);
             strcat(absolute_file_path, file_name);
 
@@ -723,8 +759,13 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                     memset(absolute_file_path,
                            0,
                            sizeof(absolute_file_path) / sizeof(char));
+                    if (strlen(storage_path) + strlen((*head)->name) >
+                        DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN) {
+                        dlt_log(LOG_ERR, "File name too long for buffer\n");
+                        return -1;
+                    }
                     strcat(absolute_file_path, storage_path);
-                    strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
+                    strcat(absolute_file_path, (*head)->name);
                     dlt_vlog(LOG_DEBUG,
                              "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
                              __func__, absolute_file_path, num_log_files,

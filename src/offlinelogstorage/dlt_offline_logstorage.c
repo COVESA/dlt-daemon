@@ -388,13 +388,12 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
     i = 1;
 
     while (tok != NULL) {
-        len = strlen(tok);
-        len = DLT_OFFLINE_LOGSTORAGE_MIN(len, 4);
+        len = DLT_OFFLINE_LOGSTORAGE_MIN(strlen(tok), 4);
 
         strncpy((*names + y), tok, len);
 
         if ((num > 1) && (i < num))
-            strncpy((*names + y + len), ",", 2);
+            strcpy((*names + y + len), ",");
 
         y += len + 1;
 
@@ -563,31 +562,30 @@ DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *e
  *
  * @param ecuid          ECU ID
  * @param ctid           Context ID
- * @param key            Prepared key stored here
+ * @param key            Prepared key stored here, must have space for
+ * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1 bytes
  * @return               None
  */
 DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
                                                      char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *delimiter = "::";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, delimiter, strlen(delimiter));
+        strcat(curr_str, delimiter);
     }
     else {
-        strncpy(curr_str, delimiter, strlen(delimiter));
+        strcpy(curr_str, delimiter);
     }
 
     if (ctid != NULL) {
-        curr_len = strlen(ctid);
-        strncat(curr_str, ctid, curr_len);
+        size_t avail = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - strlen(curr_str);
+        strncat(curr_str, ctid, avail);
     }
 
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    strcpy(key, curr_str);
 }
 
 /**
@@ -604,69 +602,68 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
 DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
                                                      char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *colon = ":";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, colon, strlen(colon));
+        strcat(curr_str, colon);
     }
     else {
-        strncat(curr_str, colon, strlen(colon));
+        strcat(curr_str, colon);
     }
 
     if (apid != NULL) {
-        curr_len = strlen(apid);
-        strncat(curr_str, apid, curr_len);
+        size_t avail = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - strlen(curr_str);
+        strncat(curr_str, apid, avail);
     }
 
-    strncat(curr_str, colon, strlen(colon));
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    int curr_len = strlen(curr_str);
+    strncat(curr_str, colon, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - curr_len);
+    strcpy(key, curr_str);
 }
 
 /**
  * dlt_logstorage_create_keys_multi
  *
- * Prepares keys with apid, ctid (ecuid:apid:ctid), will use ecuid if is provided
- * (ecuid:apid:ctid) or (:apid:ctid)
+ * Prepares keys with apid, ctid (ecuid:apid:ctid), will use ecuid if is
+ * provided (ecuid:apid:ctid) or (:apid:ctid)
  *
  * @param ecuid          ECU ID
  * @param apid           Application ID
  * @param ctid           Context ID
- * @param key            Prepared key stored here
+ * @param key            Prepared key stored here, must have space for
+ * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1 bytes
  * @return               None
  */
 DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
                                                  char *ctid, char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *colon = ":";
 
     if (ecuid != NULL) {
         strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, colon, strlen(colon));
+        strcat(curr_str, colon);
     }
     else {
-        strncat(curr_str, colon, strlen(colon));
+        strcat(curr_str, colon);
     }
 
     if (apid != NULL) {
-        curr_len = strlen(apid);
-        strncat(curr_str, apid, curr_len);
+        size_t avail = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - strlen(curr_str);
+        strncat(curr_str, apid, avail);
     }
 
-    strncat(curr_str, colon, strlen(colon));
+    int curr_len = strlen(curr_str);
+    strncat(curr_str, colon, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - curr_len);
 
     if (ctid != NULL) {
-        curr_len = strlen(ctid);
-        strncat(curr_str, ctid, curr_len);
+        size_t avail = DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - strlen(curr_str);
+        strncat(curr_str, ctid, avail);
     }
 
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    strcpy(key, curr_str);
 }
 
 /**
@@ -683,9 +680,9 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
 
     strncpy(curr_str, ecuid, DLT_ID_SIZE);
-    strncat(curr_str, "::", 2);
+    strcat(curr_str, "::");
 
-    strncpy(key, curr_str, strlen(curr_str));
+    strcpy(key, curr_str);
 }
 
 /**
@@ -738,13 +735,13 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
          (ctids != NULL) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
         dlt_logstorage_create_keys_only_ecu(ecuid, curr_key);
         *(num_keys) = 1;
-        *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
-                                 sizeof(char));
+        *(keys) = (char *)calloc(
+            *num_keys * (DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1), sizeof(char));
 
         if (*(keys) == NULL)
             return -1;
 
-        strncpy(*keys, curr_key, strlen(curr_key));
+        strcpy(*keys, curr_key);
         return 0;
     }
 
@@ -769,8 +766,8 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
     *(num_keys) = num_apids * num_ctids;
 
     /* allocate memory for needed number of keys */
-    *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
-                             sizeof(char));
+    *(keys) = (char *)calloc(
+        *num_keys * (DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1), sizeof(char));
 
     if (*(keys) == NULL) {
         free(apid_list);
@@ -792,8 +789,8 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
             else /* key is combination of all */
                 dlt_logstorage_create_keys_multi(ecuid, curr_apid, curr_ctid, curr_key);
 
-            strncpy((*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
-                    curr_key, strlen(curr_key));
+            strcpy((*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                   curr_key);
             num_currkey += 1;
             memset(&curr_key[0], 0, sizeof(curr_key));
         }
@@ -1140,7 +1137,7 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
 
     /* do not allow the user to change directory by adding a relative path */
     if (strstr(value, "..") == NULL) {
-        config->file_name = calloc((len + 1), sizeof(char));
+        config->file_name = malloc((len + 1) * sizeof(char));
 
         if (config->file_name == NULL) {
             dlt_log(LOG_ERR,
@@ -1148,7 +1145,7 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
             return -1;
         }
 
-        strncpy(config->file_name, value, len);
+        strcpy(config->file_name, value);
     }
     else {
         dlt_log(LOG_ERR,
@@ -1358,7 +1355,7 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
  * Evaluate if ECU idenfifier given in config file
  *
  * @param config       DltLogStorageFilterConfig
- * @param value        string given in config file
+ * @param value        null terminated string given in config file
  * @return             0 on success, -1 on error
  */
 DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
@@ -1375,12 +1372,12 @@ DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
     }
 
     len = strlen(value);
-    config->ecuid = calloc((len + 1), sizeof(char));
+    config->ecuid = malloc((len + 1) * sizeof(char));
 
     if (config->ecuid == NULL)
         return -1;
 
-    strncpy(config->ecuid, value, len);
+    strcpy(config->ecuid, value);
 
     return 0;
 }
@@ -2266,8 +2263,8 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
                               char *ecuid)
 {
     DltLogStorageFilterConfig **cur_config_ptr = NULL;
-    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] =
-    { { '\0' }, { '\0' }, { '\0' } };
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS]
+            [DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {'\0'};
     int i = 0;
     int apid_len = 0;
     int ctid_len = 0;
@@ -2292,16 +2289,12 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
      * ::ctid
      * :apid: */
 
-    ecuid_len = strlen(ecuid);
-
-    if (ecuid_len > DLT_ID_SIZE)
-        ecuid_len = DLT_ID_SIZE;
+    ecuid_len = DLT_OFFLINE_LOGSTORAGE_MIN(strlen(ecuid), DLT_ID_SIZE);
 
     if ((apid == NULL) && (ctid == NULL)) {
         /* ecu:: */
         strncpy(key[0], ecuid, ecuid_len);
-        strncat(key[0], ":", 1);
-        strncat(key[0], ":", 1);
+        strcat(key[0], "::");
 
         num_configs = dlt_logstorage_list_find(key[0], &(handle->config_list),
                                                config);
@@ -2309,66 +2302,60 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
     }
 
     if (apid != NULL){
-        apid_len = strlen(apid);
-
-        if (apid_len > DLT_ID_SIZE)
-            apid_len = DLT_ID_SIZE;
+        apid_len = DLT_OFFLINE_LOGSTORAGE_MIN(strlen(apid), DLT_ID_SIZE);
     }
 
     if (ctid != NULL){
-        ctid_len = strlen(ctid);
-
-        if (ctid_len > DLT_ID_SIZE)
-            ctid_len = DLT_ID_SIZE;
+        ctid_len = DLT_OFFLINE_LOGSTORAGE_MIN(strlen(ctid), DLT_ID_SIZE);
     }
 
     /* :apid: */
-    strncpy(key[0], ":", 1);
+    strcpy(key[0], ":");
     if (apid != NULL)
         strncat(key[0], apid, apid_len);
-    strncat(key[0], ":", 1);
+    strcat(key[0], ":");
 
     /* ::ctid */
-    strncpy(key[1], ":", 1);
-    strncat(key[1], ":", 1);
+    strcpy(key[1], ":");
+    strcat(key[1], ":");
     if (ctid != NULL)
         strncat(key[1], ctid, ctid_len);
 
     /* :apid:ctid */
-    strncpy(key[2], ":", 1);
+    strcpy(key[2], ":");
     if (apid != NULL)
         strncat(key[2], apid, apid_len);
-    strncat(key[2], ":", 1);
+    strcat(key[2], ":");
     if (ctid != NULL)
         strncat(key[2], ctid, ctid_len);
 
     /* ecu:apid:ctid */
     strncpy(key[3], ecuid, ecuid_len);
-    strncat(key[3], ":", 1);
+    strcat(key[3], ":");
     if (apid != NULL)
         strncat(key[3], apid, apid_len);
-    strncat(key[3], ":", 1);
+    strcat(key[3], ":");
     if (ctid != NULL)
         strncat(key[3], ctid, ctid_len);
 
     /* ecu:apid: */
     strncpy(key[4], ecuid, ecuid_len);
-    strncat(key[4], ":", 1);
+    strcat(key[4], ":");
     if (apid != NULL)
         strncat(key[4], apid, apid_len);
-    strncat(key[4], ":", 1);
+    strcat(key[4], ":");
 
     /* ecu::ctid */
     strncpy(key[5], ecuid, ecuid_len);
-    strncat(key[5], ":", 1);
-    strncat(key[5], ":", 1);
+    strcat(key[5], ":");
+    strcat(key[5], ":");
     if (ctid != NULL)
         strncat(key[5], ctid, ctid_len);
 
     /* ecu:: */
     strncpy(key[6], ecuid, ecuid_len);
-    strncat(key[6], ":", 1);
-    strncat(key[6], ":", 1);
+    strcat(key[6], ":");
+    strcat(key[6], ":");
 
     /* Search the list three times with keys as -apid: , :ctid and apid:ctid */
     for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS; i++)
