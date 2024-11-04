@@ -734,6 +734,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                 }
             }
 
+#ifdef DLT_LOGSTORAGE_USE_GZIP
             if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_FILE) {
                 tmp = &config->records;
                 while ((*tmp)->next != NULL) {
@@ -755,6 +756,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                     tmp = &(*tmp)->next;
                 }
             }
+#endif
         }
     }
 
@@ -784,6 +786,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
     return ret;
 }
 
+#ifdef DLT_LOGSTORAGE_USE_GZIP
 /**
  * dlt_logstorage_compress_dlt_file
  *
@@ -832,7 +835,9 @@ int dlt_logstorage_compress_dlt_file(char *file_path)
 
     return ret;
 }
+#endif
 
+#ifdef DLT_LOGSTORAGE_USE_GZIP
 /**
  * dlt_logstorage_compress_fd
  *
@@ -883,6 +888,7 @@ int dlt_logstorage_compress_fd(FILE *source, gzFile *dest)
     (void)deflateEnd(&strm);
     return 0;
 }
+#endif
 
 /**
  * dlt_logstorage_find_dlt_header
