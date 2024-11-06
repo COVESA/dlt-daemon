@@ -82,7 +82,7 @@ OverwriteBehavior=<strategy>         # Specify overwrite strategy. Default: Dele
 DisableNetwork=<ON/OFF>              # Specify if the message shall be routed to network client.
 ```
 
-The Parameter "SyncBehavior", "OverwriteBehavior", "DisableNetwork", "EcuID" and
+The Parameters "SyncBehavior", "GzipCompression", "OverwriteBehavior", "DisableNetwork", "EcuID" and
 "SpecificSize" are optional - all others are mandatory.
 
 If both of the parameter "LogAppName" and "ContextName" are set to wildcard or
