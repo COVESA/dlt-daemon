@@ -370,15 +370,9 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         config->records = NULL;
     }
 
-    char* suffix = NULL;
-    for (i = 0; i < cnt; i++) {
-        if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
-            suffix = strdup(".dlt.gz");
-        }
-        else {
-            suffix = strdup(".dlt");
-        }
+    char *suffix = config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON ? ".dlt.gz" : ".dlt";
 
+    for (i = 0; i < cnt; i++) {
         int len = 0;
         len = strlen(file_name);
 
@@ -469,11 +463,6 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         free(files[i]);
 
     free(files);
-
-    if (suffix) {
-        free(suffix);
-        suffix = NULL;
-    }
 
     return ret;
 }
