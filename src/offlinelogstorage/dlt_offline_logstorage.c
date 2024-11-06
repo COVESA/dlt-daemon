@@ -1351,7 +1351,7 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
     }
 #else
     dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
-    config->gzip_compression = DLT_LOGSTORAGE_GZIP_ERROR;
+    config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
 #endif
     return 0;
 }

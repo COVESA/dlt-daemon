@@ -78,7 +78,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
 #ifdef DLT_LOGSTORAGE_USE_GZIP
 #define COMPRESS_CHUNK 16384
 int dlt_logstorage_compress_dlt_file(char *path);
-int dlt_logstorage_compress_fd(FILE *source, gzFile *dest);
+int dlt_logstorage_compress_fd(FILE *source, gzFile dest);
 #endif
 
 DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,

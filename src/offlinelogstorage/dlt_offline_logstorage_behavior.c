@@ -811,6 +811,7 @@ int dlt_logstorage_compress_dlt_file(char *file_path)
     FILE *dest = fopen(file_path_dest, "wb");
     if (dest == NULL) {
         dlt_vlog(LOG_ERR, "%s: could not open %s\n", __func__, file_path_dest);
+        fclose(source);
         return -1;
     }
 
@@ -818,6 +819,8 @@ int dlt_logstorage_compress_dlt_file(char *file_path)
     if (dest == NULL) {
         dlt_vlog(LOG_ERR, "%s: could not gz open %s\n", __func__,
                  file_path_dest);
+        fclose(source);
+        fclose(dest);
         return -1;
     }
 
@@ -847,7 +850,7 @@ int dlt_logstorage_compress_dlt_file(char *file_path)
  * @param dest      The file to write to
  * @return 0 on success, -1 on error
  */
-int dlt_logstorage_compress_fd(FILE *source, gzFile *dest)
+int dlt_logstorage_compress_fd(FILE *source, gzFile dest)
 {
     int ret, flush;
     z_stream strm;
@@ -872,6 +875,7 @@ int dlt_logstorage_compress_fd(FILE *source, gzFile *dest)
 
         ret = gzwrite(dest, in, strm.avail_in);
         if (ret == 0) {
+            (void)deflateEnd(&strm);
             dlt_vlog(LOG_ERR, "%s: failed to write to log file\n", __func__);
             return -1;
         }
