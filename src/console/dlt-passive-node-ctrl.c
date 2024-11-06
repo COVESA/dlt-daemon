@@ -113,7 +113,7 @@ void set_node_id(char *id)
         exit(-1);
     }
     else {
-        strcpy(g_options.node_id, id);
+        strncpy(g_options.node_id, id, DLT_ID_SIZE);
     }
 }
 
