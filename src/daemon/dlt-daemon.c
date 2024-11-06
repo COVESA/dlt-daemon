@@ -2221,7 +2221,7 @@ static char* file_read_everything(FILE* const file, const size_t sizeLimit)
 
     /* Size limit includes NULL terminator. */
     const off_t size = s_buf.st_size;
-    if (size < 0 || size >= sizeLimit) {
+    if (size < 0 || (size_t)size >= sizeLimit) {
         dlt_log(LOG_WARNING, "file size invalid\n");
         fclose(file);
         return NULL;
@@ -2270,7 +2270,7 @@ static char* file_read_field(FILE* const file, const char* const fieldName)
     char* result = NULL;
 
     char* buffer = NULL;
-    ssize_t bufferSize = 0;
+    size_t bufferSize = 0;
 
     while (true) {
         ssize_t lineSize = getline(&buffer, &bufferSize, file);
@@ -2288,10 +2288,9 @@ static char* file_read_field(FILE* const file, const char* const fieldName)
         }
 
         /* check fieldName */
-        if (   strncmp(line, fieldName, fieldNameLen) == 0
-            && lineSize >= (fieldNameLen + 1)
-            && strchr(kDelimiters, line[fieldNameLen]) != NULL
-           ) {
+        if (strncmp(line, fieldName, fieldNameLen) == 0 &&
+            (size_t)lineSize >= (fieldNameLen + 1) &&
+            strchr(kDelimiters, line[fieldNameLen]) != NULL) {
             /* trim fieldName */
             line += fieldNameLen;
 
