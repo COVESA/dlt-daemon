@@ -338,7 +338,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                      __func__, dir, file);
             return -1;
         }
-        strncat(storage_path, dir, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - strlen(dir));
+        strncat(storage_path, dir, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - strlen(storage_path));
         strncpy(file_name, file, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
     } else {
         strncpy(file_name, config->file_name, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
