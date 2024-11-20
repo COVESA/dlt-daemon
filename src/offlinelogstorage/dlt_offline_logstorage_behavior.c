@@ -956,6 +956,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     }
 
     if (config->skip == 1) {
+        dlt_logstorage_close_file(config);
         return 0;
     }
 
@@ -1004,11 +1005,13 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
                                              count, true, false) != 0)
             {
                 dlt_vlog(LOG_ERR, "%s: failed to open log file\n", __func__);
+                dlt_logstorage_close_file(config);
                 return -1;
             }
 
             if (config->skip == 1)
             {
+                dlt_logstorage_close_file(config);
                 return 0;
             }
         }
@@ -1021,7 +1024,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     }
 
     footer->wrap_around_cnt = 0;
-
+    dlt_logstorage_close_file(config);
     return 0;
 }
 
