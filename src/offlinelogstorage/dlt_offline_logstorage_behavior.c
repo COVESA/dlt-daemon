@@ -338,7 +338,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                      __func__, dir, file);
             return -1;
         }
-        strncat(storage_path, dir, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - strlen(dir));
+        strncat(storage_path, dir, DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN - strlen(storage_path));
         strncpy(file_name, file, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
     } else {
         strncpy(file_name, config->file_name, DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN);
@@ -960,6 +960,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     }
 
     if (config->skip == 1) {
+        dlt_logstorage_close_file(config);
         return 0;
     }
 
@@ -1008,11 +1009,13 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
                                              count, true, false) != 0)
             {
                 dlt_vlog(LOG_ERR, "%s: failed to open log file\n", __func__);
+                dlt_logstorage_close_file(config);
                 return -1;
             }
 
             if (config->skip == 1)
             {
+                dlt_logstorage_close_file(config);
                 return 0;
             }
         }
@@ -1025,7 +1028,7 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     }
 
     footer->wrap_around_cnt = 0;
-
+    dlt_logstorage_close_file(config);
     return 0;
 }
 
