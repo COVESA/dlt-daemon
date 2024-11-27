@@ -1138,7 +1138,11 @@ DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
     if ((start_index >= 0) && (count > 0))
     {
         /* Prepare log file */
+#ifdef DLT_LOGSTORAGE_USE_GZIP
+        if (config->log == NULL && config->gzlog == NULL)
+#else
         if (config->log == NULL)
+#endif
         {
             if (dlt_logstorage_open_log_file(config, file_config, dev_path,
                                              count, true, false) != 0)
