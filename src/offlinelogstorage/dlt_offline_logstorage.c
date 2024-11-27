@@ -409,8 +409,8 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
 
 DLT_STATIC int dlt_logstorage_set_number(unsigned int *number, unsigned int value)
 {
-    if ((value == 0) || (value > UINT_MAX)) {
-        dlt_log(LOG_ERR, "Invalid, is not a number \n");
+    if (value == 0) {
+        dlt_log(LOG_ERR, "Invalid value of 0\n");
         return -1;
     }
 
