@@ -1020,6 +1020,7 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
                                  unsigned char *data3,
                                  int size3)
 {
+    static bool disable_nw_warning_sent = false;
     int i = 0;
     int ret = 0;
     DltLogStorageUserConfig file_config;
@@ -1064,14 +1065,17 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
                     &(daemon->storage_handle[i]),
                     DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
             }
-            if (i == 0) {
-                if (disable_nw == 1) {
+            if (disable_nw == 1) {
+                if (i == 0) {
                     ret = 1;
                 }
-            } else {
-                dlt_vlog(LOG_WARNING,
-                         "%s: DisableNetwork is not supported for more than one device yet\n",
-                         __func__);
+                else if (disable_nw_warning_sent == false) {
+                    disable_nw_warning_sent = true;
+                    dlt_vlog(LOG_WARNING,
+                             "%s: DisableNetwork is not supported for more "
+                             "than one device yet\n",
+                             __func__);
+                }
             }
         }
     }
