@@ -1105,18 +1105,9 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 /* Sync only if on_msg */
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
-                    if (config->gzip_compression) {
-                        if (fsync(fileno(config->gzlog)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
-                            }
-                        }
-                    }
-                    else {
-                        if (fsync(fileno(config->log)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
-                            }
+                    if (fsync(config->fd) != 0) {
+                        if (errno != ENOSYS) {
+                            dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
                         }
                     }
                 }
