@@ -134,7 +134,7 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
     int i = 0;
 
     if ((daemon == NULL) || (ecu == NULL)) {
-        dlt_vlog(LOG_ERR, "%s: Wrong parameters", __func__);
+        dlt_vlog(LOG_ERR, "%s: Wrong parameters\n", __func__);
         return (DltDaemonRegisteredUsers *)NULL;
     }
 
@@ -253,7 +253,7 @@ DltReturnValue dlt_daemon_find_preconfigured_trace_load_settings(
     *settings = NULL;
 
     if ((daemon == NULL) || (apid == NULL)) {
-        dlt_vlog(LOG_ERR, "%s: Wrong parameters", __func__);
+        dlt_vlog(LOG_ERR, "%s: Wrong parameters\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -477,7 +477,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
         daemon->user_list = calloc((size_t) nodes, sizeof(DltDaemonRegisteredUsers));
 
         if (daemon->user_list == NULL) {
-            dlt_log(LOG_ERR, "Allocating memory for user information");
+            dlt_log(LOG_ERR, "Allocating memory for user information\n");
             return DLT_RETURN_ERROR;
         }
 
@@ -491,7 +491,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
         daemon->user_list = calloc((size_t) nodes, sizeof(DltDaemonRegisteredUsers));
 
         if (daemon->user_list == NULL) {
-            dlt_log(LOG_ERR, "Allocating memory for user information");
+            dlt_log(LOG_ERR, "Allocating memory for user information\n");
             return DLT_RETURN_ERROR;
         }
 
@@ -1684,12 +1684,12 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (context == NULL)) {
-        dlt_vlog(LOG_ERR, "NULL parameter in %s", __func__);
+        dlt_vlog(LOG_ERR, "NULL parameter in %s\n", __func__);
         return -1;
     }
 
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_LEVEL) < DLT_RETURN_OK) {
-        dlt_vlog(LOG_ERR, "Failed to set userheader in %s", __func__);
+        dlt_vlog(LOG_ERR, "Failed to set userheader in %s\n", __func__);
         return -1;
     }
 
@@ -1721,7 +1721,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
                             &(usercontext), sizeof(DltUserControlMsgLogLevel));
 
     if (ret < DLT_RETURN_OK) {
-        dlt_vlog(LOG_ERR, "Failed to send data to application in %s: %s",
+        dlt_vlog(LOG_ERR, "Failed to send data to application in %s: %s\n",
                  __func__,
                  errno != 0 ? strerror(errno) : "Unknown error");
 

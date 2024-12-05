@@ -600,7 +600,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             }
             config->working_file_name = strdup((*newest)->name);
         }
-        strncat(absolute_file_path, config->working_file_name, strlen(config->working_file_name));
+        strcat(absolute_file_path, config->working_file_name);
 
         dlt_vlog(LOG_DEBUG,
                  "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
@@ -706,31 +706,33 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             num_log_files += 1;
 
             /* check if number of log files exceeds configured max value */
-            if (num_log_files > config->num_files) {
-                if (!(config->num_files == 1 && file_config->logfile_optional_counter)) {
-                    /* delete oldest */
-                    DltLogStorageFileList **head = &config->records;
-                    DltLogStorageFileList *n = *head;
-                    memset(absolute_file_path,
-                           0,
-                           sizeof(absolute_file_path) / sizeof(char));
-                    strcat(absolute_file_path, storage_path);
-                    strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
-                    dlt_vlog(LOG_DEBUG,
-                             "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
-                             __func__, absolute_file_path, num_log_files,
-                             config->num_files, config->file_name);
-                    if (remove(absolute_file_path) != 0)
-                        dlt_log(LOG_ERR, "Could not remove file\n");
-
-                    free((*head)->name);
-                    (*head)->name = NULL;
-                    *head = n->next;
-                    n->next = NULL;
-                    free(n);
+            while (num_log_files > config->num_files) {
+                if (config->num_files == 1 && file_config->logfile_optional_counter) {
+                    break;
                 }
-            }
 
+                /* delete oldest */
+                DltLogStorageFileList **head = &config->records;
+                DltLogStorageFileList *n = *head;
+                memset(absolute_file_path,
+                       0,
+                       sizeof(absolute_file_path) / sizeof(char));
+                strcat(absolute_file_path, storage_path);
+                strcat(absolute_file_path, (*head)->name);
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
+                         __func__, absolute_file_path, num_log_files,
+                         config->num_files, config->file_name);
+                if (remove(absolute_file_path) != 0)
+                    dlt_log(LOG_ERR, "Could not remove file\n");
+
+                free((*head)->name);
+                (*head)->name = NULL;
+                *head = n->next;
+                n->next = NULL;
+                free(n);
+                num_log_files--;
+            }
         }
     }
 
@@ -1103,18 +1105,9 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 /* Sync only if on_msg */
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
-                    if (config->gzip_compression) {
-                        if (fsync(fileno(config->gzlog)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
-                            }
-                        }
-                    }
-                    else {
-                        if (fsync(fileno(config->log)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
-                            }
+                    if (fsync(config->fd) != 0) {
+                        if (errno != ENOSYS) {
+                            dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
                         }
                     }
                 }
