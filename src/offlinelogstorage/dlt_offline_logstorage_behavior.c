@@ -706,31 +706,33 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             num_log_files += 1;
 
             /* check if number of log files exceeds configured max value */
-            if (num_log_files > config->num_files) {
-                if (!(config->num_files == 1 && file_config->logfile_optional_counter)) {
-                    /* delete oldest */
-                    DltLogStorageFileList **head = &config->records;
-                    DltLogStorageFileList *n = *head;
-                    memset(absolute_file_path,
-                           0,
-                           sizeof(absolute_file_path) / sizeof(char));
-                    strcat(absolute_file_path, storage_path);
-                    strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
-                    dlt_vlog(LOG_DEBUG,
-                             "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
-                             __func__, absolute_file_path, num_log_files,
-                             config->num_files, config->file_name);
-                    if (remove(absolute_file_path) != 0)
-                        dlt_log(LOG_ERR, "Could not remove file\n");
-
-                    free((*head)->name);
-                    (*head)->name = NULL;
-                    *head = n->next;
-                    n->next = NULL;
-                    free(n);
+            while (num_log_files > config->num_files) {
+                if (config->num_files == 1 && file_config->logfile_optional_counter) {
+                    break;
                 }
-            }
 
+                /* delete oldest */
+                DltLogStorageFileList **head = &config->records;
+                DltLogStorageFileList *n = *head;
+                memset(absolute_file_path,
+                       0,
+                       sizeof(absolute_file_path) / sizeof(char));
+                strcat(absolute_file_path, storage_path);
+                strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
+                         __func__, absolute_file_path, num_log_files,
+                         config->num_files, config->file_name);
+                if (remove(absolute_file_path) != 0)
+                    dlt_log(LOG_ERR, "Could not remove file\n");
+
+                free((*head)->name);
+                (*head)->name = NULL;
+                *head = n->next;
+                n->next = NULL;
+                free(n);
+                num_log_files--;
+            }
         }
     }
 
