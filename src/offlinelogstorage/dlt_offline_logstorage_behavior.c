@@ -99,7 +99,9 @@ void dlt_logstorage_log_file_name(char *log_file_name,
         index_width = 0;
     }
 
-    const char * suffix = ".dlt";
+    const char *suffix =
+        filter_config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON ? ".dlt.gz"
+                                                                  : ".dlt";
     const int smax = DLT_MOUNT_PATH_MAX - strlen(suffix) - 1;
     int spos = 0;
     log_file_name[spos] = '\0';
