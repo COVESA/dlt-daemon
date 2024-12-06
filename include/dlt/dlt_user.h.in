@@ -271,6 +271,10 @@ typedef struct
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     pthread_rwlock_t trace_load_limit_lock;
 #endif
+    // Since glibc 2.25, getpid() no longer caches the PID, instead performing a
+    // full syscall every time. This means we're performing a full syscall
+    // roundtrip for *every* *single* *log* *message* on the system.
+    pid_t local_pid;
 } DltUser;
 
 typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);
