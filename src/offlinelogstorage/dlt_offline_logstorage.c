@@ -1340,14 +1340,13 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
     } else if (strcasestr(value, "OFF") != NULL) {
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
     } else {
-        dlt_log(LOG_WARNING,
-                "Unknown gzip compression flag. Set default OFF\n");
-        config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
+        dlt_log(LOG_WARNING, "Unknown gzip compression flag\n");
+        config->gzip_compression = DLT_LOGSTORAGE_GZIP_ERROR;
         return 1;
     }
 #else
     dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
-    config->gzip_compression = 0;
+    config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
 #endif
     return 0;
 }

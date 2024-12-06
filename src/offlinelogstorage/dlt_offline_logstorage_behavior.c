@@ -154,7 +154,7 @@ void dlt_logstorage_log_file_name(char *log_file_name,
     }
 
     dlt_logstorage_concat_logfile_name(log_file_name, ".dlt");
-    if (filter_config->gzip_compression) {
+    if (filter_config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
         dlt_logstorage_concat_logfile_name(log_file_name, ".gz");
     }
 }
@@ -372,7 +372,7 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         config->records = NULL;
     }
 
-    char *suffix = config->gzip_compression ? ".dlt.gz" : ".dlt";
+    char *suffix = config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON ? ".dlt.gz" : ".dlt";
 
     for (i = 0; i < cnt; i++) {
         int len = 0;
@@ -488,12 +488,13 @@ DLT_STATIC void dlt_logstorage_open_log_output_file(DltLogStorageFilterConfig *c
         return;
     }
     config->fd = fileno(file);
-    if (config->gzip_compression) {
+    if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
         dlt_vlog(LOG_DEBUG, "%s: Opening GZIP log file\n", __func__);
         config->gzlog = gzdopen(config->fd, mode);
 #endif
-    } else {
+    }
+    else {
         dlt_vlog(LOG_DEBUG, "%s: Opening log file\n", __func__);
         config->log = file;
     }
@@ -826,9 +827,10 @@ DLT_STATIC int dlt_logstorage_write_to_log(void *ptr, size_t size, size_t nmemb,
                                            DltLogStorageFilterConfig *config)
 {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
-    if (config->gzip_compression) {
+    if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
         return gzfwrite(ptr, size, nmemb, config->gzlog);
-    } else {
+    }
+    else {
         return fwrite(ptr, size, nmemb, config->log);
     }
 #else
@@ -853,26 +855,28 @@ DLT_STATIC void dlt_logstorage_check_write_ret(DltLogStorageFilterConfig *config
     }
 
     if (ret <= 0) {
-        if (config->gzip_compression) {
+        if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
             const char *msg = gzerror(config->gzlog, &ret);
             if (msg != NULL) {
                 dlt_vlog(LOG_ERR, "%s: failed to write cache into log file: %s\n", __func__, msg);
             }
 #endif
-        } else {
+        }
+        else {
             if (ferror(config->log) != 0)
                 dlt_vlog(LOG_ERR, "%s: failed to write cache into log file\n", __func__);
         }
     }
     else {
         /* force sync */
-        if (config->gzip_compression) {
+        if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
             if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0)
                 dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
 #endif
-        } else {
+        }
+        else {
             if (fflush(config->log) != 0)
                 dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
         }
@@ -1103,7 +1107,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 /* Sync only if on_msg */
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
-                    if (config->gzip_compression) {
+                    if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
                         if (fsync(fileno(config->gzlog)) != 0) {
                             if (errno != ENOSYS) {
                                 dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
@@ -1199,10 +1203,11 @@ int dlt_logstorage_write_on_msg(DltLogStorageFilterConfig *config,
         dlt_log(LOG_WARNING, "Wrote less data than specified\n");
 
 #ifdef DLT_LOGSTORAGE_USE_GZIP
-    if (config->gzip_compression) {
+    if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
         gzerror(config->gzlog, &ret);
         return ret;
-    } else {
+    }
+    else {
         return ferror(config->log);
     }
 #else
@@ -1233,12 +1238,13 @@ int dlt_logstorage_sync_on_msg(DltLogStorageFilterConfig *config,
         return -1;
 
     if (status == DLT_LOGSTORAGE_SYNC_ON_MSG) { /* sync on every message */
-        if (config->gzip_compression) {
+        if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
             if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0)
                 dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
 #endif
-        } else {
+        }
+        else {
             if (fflush(config->log) != 0)
                 dlt_vlog(LOG_ERR, "%s: failed to flush log file\n", __func__);
         }
