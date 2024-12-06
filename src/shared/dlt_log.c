@@ -77,7 +77,7 @@ void dlt_log_set_level(int level)
     }
 }
 
-void dlt_log_init(int mode)
+DltReturnValue dlt_log_init(int mode)
 {
     dlt_log_init_multiple_logfiles_support((DltLoggingMode)mode, false, 0, 0);
 }

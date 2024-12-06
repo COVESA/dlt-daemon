@@ -71,7 +71,7 @@ void dlt_log_set_level(int level);
  * Initialize (external) logging facility
  * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
  */
-void dlt_log_init(int mode);
+DltReturnValue dlt_log_init(int mode);
 
 /**
  * Initialize (external) logging facility
