@@ -1343,8 +1343,7 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
     }
     else if (strcasestr(value, "OFF") != NULL) {
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
-    }
-    else {
+    } else {
         dlt_log(LOG_WARNING, "Unknown gzip compression flag\n");
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_ERROR;
         return 1;
