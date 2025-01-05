@@ -268,7 +268,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
             return -1;
         }
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-        dlt_daemon_trigger_systemd_watchdog_if_necessary(&start_time, daemon->watchdog_trigger_interval);
+        // no need to yield here, it will be called in a loop anyways.
+        // therefore we also do not log.
+        dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
     }
 
