@@ -55,7 +55,7 @@ cdh_status_t get_exec_name(unsigned int p_pid, char *p_exec_name, int p_exec_nam
     memset(l_exe_link, 0, sizeof(l_exe_link));
     snprintf(l_exe_link, sizeof(l_exe_link) - 1, "/proc/%d/exe", p_pid);
 
-    if (readlink(l_exe_link, g_buffer, p_exec_name_maxsize) < 0)
+    if (readlink(l_exe_link, g_buffer, sizeof(g_buffer) - 1) < 0)
         return CDH_NOK;
 
     if ((l_name_ptr = strrchr(g_buffer, '/')) == NULL)
