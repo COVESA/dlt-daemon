@@ -271,6 +271,7 @@ typedef struct
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     pthread_rwlock_t trace_load_limit_lock;
 #endif
+    pid_t local_pid;            /**< Local DltUser process identifier cache */
 } DltUser;
 
 typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);
