@@ -990,8 +990,9 @@ int dlt_gateway_establish_connections(DltGateway *gateway,
                 }
             }
             else {
-                dlt_log(LOG_DEBUG,
-                        "Passive Node is not up. Connection failed.\n");
+                dlt_vlog(LOG_WARNING,
+                         "Passive Node %s is not up. Connection failed.\n",
+                         con->ecuid);
 
                 con->timeout_cnt++;
 
