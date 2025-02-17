@@ -401,8 +401,16 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     char filename[DLT_PATH_MAX];
     int ret;
 
-    snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
-    snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    int str_ret = snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
+    str_ret = snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
     ret = mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
 
     if ((ret == -1) && (errno != EEXIST)) {
@@ -424,8 +432,11 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     }
 
     /* create and open DLT user FIFO */
-    snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
-
+    str_ret = snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
 
@@ -761,7 +772,7 @@ DltReturnValue dlt_init_common(void)
     }
 
     /* Binary semaphore for threads */
-    if ((pthread_attr_init(&dlt_mutex_attr) != 0) ||
+    if ((pthread_mutexattr_init(&dlt_mutex_attr) != 0) ||
         (pthread_mutexattr_settype(&dlt_mutex_attr, PTHREAD_MUTEX_ERRORCHECK) != 0) ||
         (pthread_mutex_init(&dlt_mutex, &dlt_mutex_attr) != 0)) {
         dlt_user_init_state = INIT_UNITIALIZED;
@@ -1079,7 +1090,11 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        int str_ret = snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+            fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+            return -1;
+        }
         unlink(filename);
     }
 

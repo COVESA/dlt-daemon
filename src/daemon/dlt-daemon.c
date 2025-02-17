@@ -362,10 +362,19 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+    int str_ret = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
              "%s/dltpipes", dltFifoBaseDir);
-    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
+
+    str_ret = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
              "%s/dlt", dltFifoBaseDir);
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE

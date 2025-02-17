@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <libgen.h>
+#include <zlib.h>
 
 #include "dlt_log.h"
 #include "dlt_offline_logstorage.h"
@@ -522,6 +523,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                                  bool is_update_required,
                                  bool is_sync)
 {
+    if (config == NULL) return -1;
+
     int ret = 0;
     char absolute_file_path[DLT_OFFLINE_LOGSTORAGE_MAX_PATH_LEN + 1] = { '\0' };
     char storage_path[DLT_MOUNT_PATH_MAX + 1] = { '\0' };
@@ -529,172 +532,111 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
     unsigned int num_log_files = 0;
     struct stat s;
     memset(&s, 0, sizeof(struct stat));
-    DltLogStorageFileList **tmp = NULL;
+    DltLogStorageFileList **tmp = &config->records;
     DltLogStorageFileList **newest = NULL;
 
-    if (config == NULL)
-        return -1;
-
+    // Check if device path is too long
     if (strlen(dev_path) > DLT_MOUNT_PATH_MAX) {
         dlt_vlog(LOG_ERR, "device path '%s' is too long to store\n", dev_path);
         return -1;
     }
 
-    snprintf(storage_path, DLT_MOUNT_PATH_MAX, "%s/", dev_path);
+    // Construct storage path
+    if (strlen(dev_path) < (DLT_MOUNT_PATH_MAX - 1)) {
+        snprintf(storage_path, DLT_MOUNT_PATH_MAX, "%s/", dev_path);
+    } else {
+        dlt_vlog(LOG_ERR, "Path too long to append trailing slash: %s\n", dev_path);
+        return -1;
+    }
 
-    /* check if there are already files stored */
+    // Check for existing files or update requirement
     if (config->records == NULL || is_update_required) {
         if (dlt_logstorage_storage_dir_info(file_config, storage_path, config) != 0)
             return -1;
     }
 
-    /* obtain locations of newest, current file names, file count */
-    tmp = &config->records;
-
-    while (*(tmp) != NULL) {
-        num_log_files += 1;
-
-        if ((*tmp)->next == NULL)
-            newest = tmp;
-
+    // Find the number of log files and the newest one
+    while (*tmp != NULL) {
+        num_log_files++;
+        if ((*tmp)->next == NULL) newest = tmp;
         tmp = &(*tmp)->next;
     }
 
-    /* need new file*/
+    // Create new log file if none exist
     if (num_log_files == 0) {
-        dlt_logstorage_log_file_name(file_name,
-                                     file_config,
-                                     config,
-                                     config->file_name,
-                                     config->num_files,
-                                     1);
-
-        /* concatenate path and file and open absolute path */
-        strcat(absolute_file_path, storage_path);
-        strcat(absolute_file_path, file_name);
+        dlt_logstorage_log_file_name(file_name, file_config, config, config->file_name, config->num_files, 1);
+        snprintf(absolute_file_path, sizeof(absolute_file_path), "%s%s", storage_path, file_name);
         config->working_file_name = strdup(file_name);
         dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
 
-        /* Add file to file list */
+        // Add new file to file list
         *tmp = malloc(sizeof(DltLogStorageFileList));
-
         if (*tmp == NULL) {
             dlt_log(LOG_ERR, "Memory allocation for file name failed\n");
             return -1;
         }
-
         (*tmp)->name = strdup(file_name);
         (*tmp)->idx = 1;
         (*tmp)->next = NULL;
     }
     else {
-        strcat(absolute_file_path, storage_path);
-
-        /* newest file available
-         * Since the working file is already updated from newest file info
-         * So if there is already wrap-up, the newest file will be the working file
-         */
-        if ((config->wrap_id == 0) || (config->working_file_name == NULL)) {
-            if (config->working_file_name != NULL) {
-                free(config->working_file_name);
-                config->working_file_name = NULL;
-            }
+        // Use the newest log file if it exists
+        snprintf(absolute_file_path, sizeof(absolute_file_path), "%s%s", storage_path, (*newest)->name);
+        if (config->wrap_id == 0 || config->working_file_name == NULL) {
+            if (config->working_file_name) free(config->working_file_name);
             config->working_file_name = strdup((*newest)->name);
         }
-        strncat(absolute_file_path, config->working_file_name, strlen(config->working_file_name));
 
-        dlt_vlog(LOG_DEBUG,
-                 "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
-                 __func__, num_log_files, config->working_file_name,
-                 config->wrap_id);
+        dlt_vlog(LOG_DEBUG, "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
+                 __func__, num_log_files, config->working_file_name, config->wrap_id);
 
         ret = stat(absolute_file_path, &s);
 
-        /* if file stats is read and, either
-         * is_sync is true and (other than ON_MSG sync behavior and current size is less than configured size) or
-         * msg_size fit into the size (ON_MSG or par of cache needs to be written into new file), open it */
+        // Check if the file should be opened based on sync condition
         if ((ret == 0) &&
-            ((is_sync && (s.st_size < (int)config->file_size)) ||
-             (!is_sync && (s.st_size + msg_size <= (int)config->file_size)))) {
+            ((is_sync && s.st_size < (int)config->file_size) ||
+             (!is_sync && s.st_size + msg_size <= (int)config->file_size))) {
             dlt_logstorage_open_log_output_file(config, absolute_file_path, "a");
             config->current_write_file_offset = s.st_size;
         }
         else {
-            /* no space in file or file stats cannot be read */
-            unsigned int idx = 0;
+            unsigned int idx = (config->num_files == 1 && file_config->logfile_optional_counter) ? 1 :
+                               dlt_logstorage_get_idx_of_log_file(file_config, config, config->working_file_name);
 
-            /* get index of newest log file */
-            if (config->num_files == 1 && file_config->logfile_optional_counter) {
-                idx = 1;
-            } else {
-                idx = dlt_logstorage_get_idx_of_log_file(file_config, config,
-                                                         config->working_file_name);
-            }
-
-            /* Check if file logging shall be stopped */
             if (config->overwrite == DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW) {
-                dlt_vlog(LOG_DEBUG,
-                         "%s: num_files=%d, current_idx=%d (filename=%s)\n",
-                         __func__, config->num_files, idx,
-                         config->file_name);
-
+                dlt_vlog(LOG_DEBUG, "%s: num_files=%d, current_idx=%d (filename=%s)\n", __func__, config->num_files, idx, config->file_name);
                 if (config->num_files == idx) {
-                    dlt_vlog(LOG_INFO,
-                             "%s: logstorage limit reached, stopping capture for filter: %s\n",
-                             __func__, config->file_name);
+                    dlt_vlog(LOG_INFO, "%s: logstorage limit reached, stopping capture for filter: %s\n", __func__, config->file_name);
                     config->skip = 1;
                     return 0;
                 }
             }
 
-            idx += 1;
-
-            /* wrap around if max index is reached or an error occurred
-             * while calculating index from file name */
+            // Handle file wraparound if max index is reached
             if ((idx > file_config->logfile_maxcounter) || (idx == 0)) {
                 idx = 1;
                 config->wrap_id += 1;
             }
 
-            dlt_logstorage_log_file_name(file_name,
-                                         file_config,
-                                         config,
-                                         config->file_name,
-                                         config->num_files,
-                                         idx);
+            dlt_logstorage_log_file_name(file_name, file_config, config, config->file_name, config->num_files, idx);
+            snprintf(absolute_file_path, sizeof(absolute_file_path), "%s%s", storage_path, file_name);
 
-            /* concatenate path and file and open absolute path */
-            memset(absolute_file_path,
-                   0,
-                   sizeof(absolute_file_path) / sizeof(char));
-            strcat(absolute_file_path, storage_path);
-            strcat(absolute_file_path, file_name);
+            if (config->working_file_name) free(config->working_file_name);
+            config->working_file_name = strdup(file_name);
 
-            if(config->working_file_name) {
-                free(config->working_file_name);
-                config->working_file_name = strdup(file_name);
-            }
-
-            /* If there is already wrap-up, check the existence of file
-             * remove it and reopen it.
-             * In this case number of log file won't be increased*/
+            // Handle existing wrap-up file
             if (config->wrap_id && stat(absolute_file_path, &s) == 0) {
                 remove(absolute_file_path);
-                num_log_files -= 1;
-                dlt_vlog(LOG_DEBUG,
-                         "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n",
-                         __func__, absolute_file_path, num_log_files, config->num_files);
+                num_log_files--;
+                dlt_vlog(LOG_DEBUG, "%s: Remove '%s' (num_log_files: %u, config->num_files:%u)\n", __func__, absolute_file_path, num_log_files, config->num_files);
             }
 
+            // Open new log file
             config->log = fopen(absolute_file_path, "w+");
+            dlt_vlog(LOG_DEBUG, "%s: Filename and Index after updating [%s]-[%u]\n", __func__, file_name, idx);
 
-            dlt_vlog(LOG_DEBUG,
-                     "%s: Filename and Index after updating [%s]-[%u]\n",
-                     __func__, file_name, idx);
-
-            /* Add file to file list */
+            // Add file to list
             *tmp = malloc(sizeof(DltLogStorageFileList));
-
             if (*tmp == NULL) {
                 dlt_log(LOG_ERR, "Memory allocation for file name failed\n");
                 return -1;
@@ -703,26 +645,16 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             (*tmp)->name = strdup(file_name);
             (*tmp)->idx = idx;
             (*tmp)->next = NULL;
+            num_log_files++;
 
-            num_log_files += 1;
-
-            /* check if number of log files exceeds configured max value */
+            // Remove oldest file if necessary
             if (num_log_files > config->num_files) {
                 if (!(config->num_files == 1 && file_config->logfile_optional_counter)) {
-                    /* delete oldest */
                     DltLogStorageFileList **head = &config->records;
                     DltLogStorageFileList *n = *head;
-                    memset(absolute_file_path,
-                           0,
-                           sizeof(absolute_file_path) / sizeof(char));
-                    strcat(absolute_file_path, storage_path);
-                    strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
-                    dlt_vlog(LOG_DEBUG,
-                             "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
-                             __func__, absolute_file_path, num_log_files,
-                             config->num_files, config->file_name);
-                    if (remove(absolute_file_path) != 0)
-                        dlt_log(LOG_ERR, "Could not remove file\n");
+                    snprintf(absolute_file_path, sizeof(absolute_file_path), "%s%s", storage_path, (*head)->name);
+                    dlt_vlog(LOG_DEBUG, "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n", __func__, absolute_file_path, num_log_files, config->num_files, config->file_name);
+                    if (remove(absolute_file_path) != 0) dlt_log(LOG_ERR, "Could not remove file\n");
 
                     free((*head)->name);
                     (*head)->name = NULL;
@@ -731,7 +663,6 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                     free(n);
                 }
             }
-
         }
     }
 
@@ -741,10 +672,8 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
     if (config->log == NULL) {
 #endif
         if (*tmp != NULL) {
-            if ((*tmp)->name != NULL) {
-                free((*tmp)->name);
-                (*tmp)->name = NULL;
-            }
+            free((*tmp)->name);
+            (*tmp)->name = NULL;
             free(*tmp);
             *tmp = NULL;
         }
@@ -1108,9 +1037,12 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
                     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
-                        if (fsync(fileno(config->gzlog)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
+                        if (config->gzlog && gzdirect(*config->gzlog)) {
+                            int fd = fileno((FILE *)*config->gzlog);
+                            if (fd != -1 && fsync(fd) != 0) {
+                                if (errno != ENOSYS) {
+                                    dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
+                                }
                             }
                         }
                     }

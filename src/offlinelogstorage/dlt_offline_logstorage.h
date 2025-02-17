@@ -264,7 +264,7 @@ typedef enum {
 
 typedef struct {
     char *key; /* Configuration key */
-    int (*func)(DltLogStorageFilterConfig *config, char *value); /* conf handler */
+    int (*func)(DltLogStorageFilterConfig *config, const char *value); /* conf handler */
     int is_opt; /* If configuration is optional or not */
 } DltLogstorageFilterConf;
 
@@ -327,9 +327,9 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle,
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
                               DltLogStorageFilterConfig **config,
-                              char *apid,
-                              char *ctid,
-                              char *ecuid);
+                              const char *apid,
+                              const char *ctid,
+                              const char *ecuid);
 
 /**
  * dlt_logstorage_get_loglevel_by_key
