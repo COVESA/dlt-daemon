@@ -66,46 +66,46 @@ DLT_STATIC int dlt_logstorage_list_find(char *key,
 
 DLT_STATIC int dlt_logstorage_count_ids(const char *str);
 
-DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value);
+DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, const char *value);
 
 DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_apids(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_apids(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_store_config_excluded_ctids(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_store_config_excluded_ctids(DltLogStorageFilterConfig *config, const char *value);
 
 DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *excluded_ids);
 
-DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_filesize(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_filesize(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config, const char *value);
 
-DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config, char *value);
+DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config, const char *value);
 
 DLT_STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
                                           DltLogstorageFilterConfType ctype,
-                                          char *value);
+                                          const char *value);
 
 DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
                                             char *config_file_name);
 
 void dlt_logstorage_free(DltLogStorage *handle, int reason);
 
-DLT_STATIC int dlt_logstorage_create_keys(char *apids,
-                                          char *ctids,
-                                          char *ecuid,
+DLT_STATIC int dlt_logstorage_create_keys(const char *apids,
+                                          const char *ctids,
+                                          const char *ecuid,
                                           char **keys,
                                           int *num_keys);
 

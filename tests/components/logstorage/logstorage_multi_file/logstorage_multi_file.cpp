@@ -34,9 +34,17 @@ int main(int argc, char *argv[])
 
     DLT_REGISTER_APP("MLTI", "CT: Logstorage multi file");
     for(i = 0; i < num_context; i++) {
-        char ctid[DLT_ID_SIZE + 1], ctdesc[255];
-        snprintf(ctid, DLT_ID_SIZE + 1, "CT%02d", i + 1);
-        snprintf(ctdesc, 255, "Test Context %02d", i + 1);
+        char ctid[DLT_ID_SIZE], ctdesc[255];
+        int str_ret = snprintf(ctid, DLT_ID_SIZE, "CT%d", i + 1);
+        if (str_ret < 0 || str_ret > DLT_ID_SIZE) {
+            fprintf(stderr, "Error: String truncated or snprintf failed.\n");
+            return -1;
+        }
+        str_ret = snprintf(ctdesc, 255, "Test Context %d", i + 1);
+        if (str_ret < 0 || str_ret > DLT_ID_SIZE) {
+            fprintf(stderr, "Error: String truncated or snprintf failed.\n");
+            return -1;
+        }
         DLT_REGISTER_CONTEXT(ctx[i], ctid, ctdesc);
     }
 
