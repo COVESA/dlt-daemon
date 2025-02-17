@@ -26,7 +26,7 @@ endif()
 
 foreach(TARGET IN LISTS TARGET_LIST)
     set(TARGET_SRCS ${TARGET})
-    add_executable(${TARGET} ${TARGET_SRCS})
+    add_executable(${TARGET} ${TARGET_SRCS}.c)
     target_link_libraries(${TARGET} dlt)
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
     install(TARGETS ${TARGET}

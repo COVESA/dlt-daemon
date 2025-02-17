@@ -727,11 +727,15 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         if (dlt_user_handle < DLT_FD_MINIMUM) {
-            snprintf(filename,
+            int str_ret = snprintf(filename,
                      DLT_DAEMON_COMMON_TEXTBUFSIZE,
                      "%s/dltpipes/dlt%d",
                      dltFifoBaseDir,
                      pid);
+            if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+                fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+                return (DltDaemonApplication *)NULL;
+            }
 
             dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 

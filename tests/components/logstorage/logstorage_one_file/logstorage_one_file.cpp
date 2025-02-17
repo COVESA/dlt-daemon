@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include <stdlib.h>
 #include <time.h>
 #include "dlt/dlt.h"
@@ -14,28 +13,35 @@ int main(int argc, char *argv[])
     while ((c = getopt(argc, argv, "c:n:")) != -1) {
         switch (c) {
             case 'c':
-            {
                 num_context = atoi(optarg);
                 break;
-            }
             case 'n':
-            {
                 max_msg = atoi(optarg);
                 break;
-            }
             default:
-            {
                 break;
-            }
         }
     }
 
     DLT_DECLARE_CONTEXT(ctx[num_context]);
 
     DLT_REGISTER_APP("LONE", "CT: Logstorage one file");
-    for(i = 0; i < num_context; i++) {
-        char ctid[DLT_ID_SIZE + 1], ctdesc[255];
-        snprintf(ctid, DLT_ID_SIZE + 1, "CT%02d", i + 1);
+    for (i = 0; i < num_context; i++) {
+        char ctid[DLT_ID_SIZE], ctdesc[255];
+
+        // Ensure DLT_ID_SIZE is enough for "CTxx" (i.e., 4 characters)
+        if (DLT_ID_SIZE >= 4) {
+            int str_ret = snprintf(ctid, DLT_ID_SIZE, "CT%d", i + 1);
+            if (str_ret < 0 || str_ret > DLT_ID_SIZE) {
+                fprintf(stderr, "Error: String truncated or snprintf failed.\n");
+                return -1;
+            }
+        } else {
+            // Handle error if DLT_ID_SIZE is too small
+            fprintf(stderr, "Error: DLT_ID_SIZE is too small to store the context ID\n");
+            return EXIT_FAILURE;
+        }
+
         snprintf(ctdesc, 255, "Test Context %02d", i + 1);
         DLT_REGISTER_CONTEXT(ctx[i], ctid, ctdesc);
     }

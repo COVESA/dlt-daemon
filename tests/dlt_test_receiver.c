@@ -367,21 +367,21 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         /* 2nd check if incomming data are filetransfer data */
         if (strncmp(text, "FLDA", 4) == 0) {
             /* truncate beginning of data stream ( FLDA, File identifier and package number) */
-            char *position = strchr(text, 32); /* search for space */
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
-            position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
-            position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            char *position = strchr(text, ' '); /* search for space */
+            if (position) snprintf(text, sizeof(text), "%s", position + 1);
+            position = strchr(text, ' ');
+            if (position) snprintf(text, sizeof(text), "%s", position + 1);
+            position = strchr(text, ' ');
+            if (position) snprintf(text, sizeof(text), "%s", position + 1);
 
             /* truncate ending of data stream ( FLDA ) */
             int len = strlen(text);
-            text[len - 4] = '\0';
+            if (len >= 4) text[len - 4] = '\0';
             /* hex to ascii and store at /tmp */
             char tmp[3];
             int i;
 
-            for (i = 0; i < (int)strlen(text); i = i + 3) {
+            for (i = 0; i < (int)strlen(text); i += 3) {
                 tmp[0] = text[i];
                 tmp[1] = text[i + 1];
                 tmp[2] = '\0';
@@ -397,7 +397,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         char *tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
 
-        if (strcmp(tmp, (const char *)"JOUR") == 0) {
+        if (strcmp(tmp, "JOUR") == 0) {
             if (strstr(text, "DLT SYSTEM JOURNAL TEST")) {
                 result++;
 
@@ -416,7 +416,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         const char *founding = "Test Systemlogger";
         int length = strlen(founding);
 
-        if (strcmp(tmp, (const char *)"PROC") == 0) {
+        if (strcmp(tmp, "PROC") == 0) {
             substring = strstr(text, founding);
 
             while (substring != NULL) {

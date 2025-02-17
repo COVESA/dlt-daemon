@@ -2012,7 +2012,7 @@ TEST(t_dlt_logstorage_find_dlt_header, normal)
     config.cache = calloc(1, sizeof(data));
 
     if (config.cache != NULL) {
-        strncpy((char *)config.cache, data, sizeof(data));
+        snprintf((char *)config.cache, sizeof(data), "%s", data);
         /* DLT header starts from index 2 */
         EXPECT_EQ(2, dlt_logstorage_find_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
@@ -2028,7 +2028,7 @@ TEST(t_dlt_logstorage_find_dlt_header, null)
 
     if (config.cache != NULL) {
         /* config.cache =(void *) "a,b,D,L,T,0x01"; */
-        strncpy((char *)config.cache, data, sizeof(data));
+        snprintf((char *)config.cache, sizeof(data), "%s", data);
         EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_find_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
     }
@@ -2043,7 +2043,7 @@ TEST(t_dlt_logstorage_find_last_dlt_header, normal)
     config.cache = calloc(1, sizeof(data));
 
     if (config.cache != NULL) {
-        strncpy((char *)config.cache, data, sizeof(data));
+        snprintf((char *)config.cache, sizeof(data), "%s", data);
 
         /* DLT header starts from index 2 */
         EXPECT_EQ(2, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
@@ -2060,7 +2060,7 @@ TEST(t_dlt_logstorage_find_last_dlt_header, null)
     if (config.cache != NULL)
     {
         /* config.cache =(void *) "a,b,D,L,T,0x01"; */
-        strncpy((char *)config.cache, data, sizeof(data));
+        snprintf((char *)config.cache, sizeof(data), "%s", data);
         EXPECT_EQ(-1, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
     }
