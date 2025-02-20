@@ -771,6 +771,9 @@ DltReturnValue dlt_init_common(void)
     /* set to unknown state of connected client */
     dlt_user.log_state = -1;
 
+    /* set pid cache to none until we need it */
+    dlt_user.local_pid = -1;
+
     dlt_user.dlt_log_handle = -1;
     dlt_user.dlt_user_handle = DLT_FD_INIT;
 
@@ -4011,7 +4014,10 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     /* send session id */
     if (dlt_user.with_session_id) {
         msg.standardheader->htyp |= DLT_HTYP_WSID;
-        msg.headerextra.seid = (uint32_t) getpid();
+        if (__builtin_expect(!!(dlt_user.local_pid == -1), false)) {
+            dlt_user.local_pid = getpid();
+        }
+        msg.headerextra.seid = (uint32_t) dlt_user.local_pid;
     }
 
     if (is_verbose_mode(dlt_user.verbose_mode, log))
@@ -5377,6 +5383,7 @@ static void dlt_fork_child_fork_handler()
     g_dlt_is_child = 1;
     dlt_user_init_state = INIT_UNITIALIZED;
     dlt_user.dlt_log_handle = -1;
+    dlt_user.local_pid = -1;
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     pthread_rwlock_unlock(&trace_load_rw_lock);
 #endif
