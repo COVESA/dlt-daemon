@@ -14,13 +14,10 @@
 #######
 
 # Set minimum Cmake version and setup policy behavior
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.10)
 
-if(${CMAKE_VERSION} VERSION_GREATER "3.20" OR ${CMAKE_VERSION} VERSION_EQUAL "3.20")
-    cmake_policy(SET CMP0115 OLD)
-endif()
+
 project(automotive-dlt VERSION 2.18.10)
-
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
@@ -190,7 +187,7 @@ if(WITH_DLT_DAEMON_VSOCK_IPC OR WITH_DLT_LIB_VSOCK_IPC)
 endif()
 
 if(NOT DLT_USER_IPC_PATH)
-    set(DLT_USER_IPC_PATH "/tmp")
+    set(DLT_USER_IPC_PATH "/tmp" CACHE STRING "IPC Path for DLT")
 endif()
 
 add_definitions(-DDLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}")
@@ -245,6 +242,7 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++14>
     -Wall
     -Wextra
+    -Werror
     # -pedantic
     -Wno-variadic-macros
     -Wno-strict-aliasing

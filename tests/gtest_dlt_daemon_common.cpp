@@ -252,11 +252,14 @@ TEST(t_dlt_daemon_application_add, normal)
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
 
     /* Apid > 4, expected truncate to 4 char or error */
-    apid = "TO_LONG";
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-    char tmp[5];
-    strncpy(tmp, apid, 4);
-    tmp[4] = '\0';
+    char apid_trunc[8] = "TO_LONG";
+    app = dlt_daemon_application_add(&daemon, (char *)apid_trunc, pid, (char *)desc, fd, ecu, 0);
+    char tmp[DLT_ID_SIZE];
+    int str_ret = snprintf(tmp, DLT_ID_SIZE, "%s", apid_trunc);
+    if (str_ret < 0 || str_ret > DLT_ID_SIZE) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+                __func__, str_ret, tmp);
+    }
     EXPECT_STREQ(tmp, app->apid);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));

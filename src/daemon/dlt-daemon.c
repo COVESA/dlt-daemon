@@ -362,10 +362,19 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+    int str_ret = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
              "%s/dltpipes", dltFifoBaseDir);
-    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
+
+    str_ret = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
              "%s/dlt", dltFifoBaseDir);
+    if (str_ret < 0 || str_ret >= DLT_PATH_MAX) {
+        fprintf(stderr, "Error: Path truncated or snprintf failed.\n");
+        return -1;
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -387,7 +396,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     char value[value_length];
     char *pch;
     const char *filename;
-    ssize_t n;
+    int str_ret;
 
     /* set default values for configuration */
     daemon_local->flags.sharedMemorySize = DLT_SHM_SIZE;
@@ -400,18 +409,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingLevel = LOG_INFO;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    n = snprintf(daemon_local->flags.loggingFilename,
+    str_ret = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
                  "%s/dlt.log", DLT_USER_IPC_PATH);
 #else /* DLT_DAEMON_USE_FIFO_IPC */
-    n = snprintf(daemon_local->flags.loggingFilename,
+    str_ret = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
                  "%s/dlt.log", dltFifoBaseDir);
 #endif
 
-    if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
-                __func__, n, daemon_local->flags.loggingFilename);
+    if (str_ret < 0 || (unsigned long)str_ret > sizeof(daemon_local->flags.loggingFilename)) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+                __func__, str_ret, daemon_local->flags.loggingFilename);
     }
     daemon_local->flags.enableLoggingFileLimit = false;
     daemon_local->flags.loggingFileSize = 250000;
@@ -1308,7 +1317,7 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
 }
 #endif
 
-static int dlt_mkdir_recursive(const char *dir)
+int dlt_mkdir_recursive(const char *dir)
 {
     int ret = 0;
     char tmp[PATH_MAX + 1];
@@ -1339,8 +1348,6 @@ static int dlt_mkdir_recursive(const char *dir)
 
             *p = '/';
         }
-
-
 
     if ((ret == 0) || ((ret == -1) && (errno == EEXIST)))
         ret = mkdir(tmp,
@@ -1464,18 +1471,15 @@ int main(int argc, char *argv[])
 
 /* Make sure the parent user directory is created */
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-
     if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
         dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
         return -1;
   }
-
 #else
     if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
         dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", daemon_local.flags.appSockPath);
         return -1;
     }
-
 #endif
 
     /* --- Daemon init phase 1 begin --- */
@@ -2410,11 +2414,10 @@ void dlt_daemon_exit_trigger()
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     char tmp[DLT_PATH_MAX] = { 0 };
 
-    ssize_t n;
-    n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
-    if (n < 0 || (size_t)n > DLT_PATH_MAX) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
-                __func__, n, tmp);
+    int str_ret = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    if (str_ret < 0 || str_ret > DLT_PATH_MAX) {
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%d) %s\n",
+                __func__, str_ret, tmp);
     }
 
     (void)unlink(tmp);

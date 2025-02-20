@@ -126,8 +126,8 @@
 /* Offline Logstorage disable network routing */
 #define DLT_LOGSTORAGE_GZIP_ERROR               -1 /* error case */
 #define DLT_LOGSTORAGE_GZIP_UNSET                0 /* not set */
-#define DLT_LOGSTORAGE_GZIP_OFF 1                  /* default, no compression */
-#define DLT_LOGSTORAGE_GZIP_ON (1 << 1)            /* enable gzip compression */
+#define DLT_LOGSTORAGE_GZIP_OFF                  1 /* default, no compression */
+#define DLT_LOGSTORAGE_GZIP_ON                   (1 << 1) /* enable gzip compression */
 
 /* logstorage max cache */
 extern unsigned int g_logstorage_cache_max;
@@ -264,7 +264,7 @@ typedef enum {
 
 typedef struct {
     char *key; /* Configuration key */
-    int (*func)(DltLogStorageFilterConfig *config, char *value); /* conf handler */
+    int (*func)(DltLogStorageFilterConfig *config, const char *value); /* conf handler */
     int is_opt; /* If configuration is optional or not */
 } DltLogstorageFilterConf;
 
@@ -327,9 +327,9 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle,
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
                               DltLogStorageFilterConfig **config,
-                              char *apid,
-                              char *ctid,
-                              char *ecuid);
+                              const char *apid,
+                              const char *ctid,
+                              const char *ecuid);
 
 /**
  * dlt_logstorage_get_loglevel_by_key
