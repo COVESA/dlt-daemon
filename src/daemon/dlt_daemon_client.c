@@ -110,7 +110,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                int verbose)
 {
     int sent = 0;
-    unsigned int i = 0;
+    nfds_t i = 0;
     int ret = 0;
     DltConnection *temp = NULL;
     int type_mask =
@@ -125,6 +125,13 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
 
     for (i = 0; i < daemon_local->pEvent.nfds; i++)
     {
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+        bool watchdog_triggered = dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+        if (watchdog_triggered) {
+            dlt_vlog(LOG_WARNING, "%s notified watchdog, processed %lu/%lu fds already.\n",
+                     __func__, i, daemon_local->pEvent.nfds);
+        }
+#endif
         temp = dlt_event_handler_find_connection(&(daemon_local->pEvent),
                                         daemon_local->pEvent.pfd[i].fd);
 
@@ -152,7 +159,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
         if (ret != DLT_DAEMON_ERROR_OK)
             dlt_vlog(LOG_WARNING, "%s: send dlt message failed\n", __func__);
         else
-            /* If sent to at  least one client,
+            /* If sent to at least one client,
              * then do not store in ring buffer
              */
             sent = 1;
@@ -2398,8 +2405,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
     daemon->received_message_since_last_watchdog_interval = 0;
 #endif
 
-    if (sd_notify(0, "WATCHDOG=1") < 0)
-        dlt_log(LOG_CRIT, "Could not reset systemd watchdog\n");
+    dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 
     dlt_log(LOG_DEBUG, "Timer watchdog\n");
 

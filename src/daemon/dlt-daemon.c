@@ -1549,14 +1549,25 @@ int main(int argc, char *argv[])
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     {
         char *watchdogUSec = getenv("WATCHDOG_USEC");
-        int watchdogTimeoutSeconds = 0;
+        // set a sensible default, in case the environment variable is not set
+        int watchdogTimeoutSeconds = 30;
 
         dlt_log(LOG_DEBUG, "Systemd watchdog initialization\n");
 
-        if (watchdogUSec)
+        if (watchdogUSec) {
+            // WATCHDOG_USEC is the timeout in micrsoseconds
+            // divide this by 2*10^6 to get the interval in seconds
+            // 2 * because we notify systemd after half the timeout
             watchdogTimeoutSeconds = atoi(watchdogUSec) / 2000000;
+        }
+
+        if (watchdogTimeoutSeconds == 0) {
+            dlt_log(LOG_WARNING, "Watchdog timeout is too small, need at least 1s, setting 30s timeout\n");
+            watchdogTimeoutSeconds = 30;
+        }
 
         daemon.watchdog_trigger_interval = watchdogTimeoutSeconds;
+        daemon.watchdog_last_trigger_time = 0U;
         create_timer_fd(&daemon_local,
                         watchdogTimeoutSeconds,
                         watchdogTimeoutSeconds,
@@ -3152,6 +3163,17 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
     /* look through buffer as long as data is in there */
     while ((receiver->bytesRcvd >= min_size) && run_loop) {
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+        /* this loop may be running long, so we have to exit it at some point to be able to
+         * to process other events, like feeding the watchdog
+         */
+        bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+        if (watchdog_triggered) {
+            dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
+            run_loop = 0; // exit loop in next iteration
+        }
+#endif
+
         dlt_daemon_process_user_message_func func = NULL;
 
         offset = 0;
@@ -3792,18 +3814,11 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         /* Not enough bytes received to remove*/
         return DLT_DAEMON_ERROR_UNKNOWN;
 
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    const unsigned int start_time = dlt_uptime();
-#endif
-
     while (1) {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-        const unsigned int uptime = dlt_uptime();
-        if ((uptime - start_time) / 10000 > daemon->watchdog_trigger_interval) {
-            dlt_vlog(LOG_WARNING,
-                     "spent already 1 watchdog trigger interval in %s, yielding to process other events.\n", __func__);
-            if (sd_notify(0, "WATCHDOG=1") < 0)
-                dlt_vlog(LOG_CRIT, "Could not reset systemd watchdog from %s\n", __func__);
+        bool watchdog_triggered = dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+        if (watchdog_triggered) {
+            dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
             break;
         }
 #endif
@@ -4162,7 +4177,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
     while ((length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data))) > 0) {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-        dlt_daemon_trigger_systemd_watchdog_if_necessary(&curr_time, daemon->watchdog_trigger_interval);
+        dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
         if ((ret =
