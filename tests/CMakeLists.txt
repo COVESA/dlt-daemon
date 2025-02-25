@@ -12,7 +12,7 @@ if(WITH_DLT_INSTALLED_TESTS)
 endif(WITH_DLT_INSTALLED_TESTS)
 
 if("${GTEST_BOTH_LIBRARIES}" STREQUAL "")
-    set(GTEST_LIBS gtest gtest_main)
+    set(GTEST_LIBS gtest gtest_main gmock gmock_main)
     set(GTEST_LIBS ${GTEST_LIBS} CACHE STRING "Gtest libraries")
 else()
     set(GTEST_LIBS ${GTEST_BOTH_LIBRARIES})
@@ -63,11 +63,11 @@ string(CONCAT TEST_ENV_IPv6 "${TEST_ENV};"
 ####################
 # DLT library tests
 ####################
-set(TARGET_LIST gtest_dlt_common
-                gtest_dlt_user
-                gtest_dlt_daemon
-                gtest_dlt_daemon_common
-                dlt_env_ll_unit_test)
+set(TARGET_LIST gtest_dlt_common.cpp
+                gtest_dlt_user.cpp
+                gtest_dlt_daemon.cpp
+                gtest_dlt_daemon_common.cpp
+                dlt_env_ll_unit_test.cpp)
 
 foreach(target IN LISTS TARGET_LIST)
     set(target_SRCS ${target})
@@ -89,10 +89,11 @@ foreach(target IN LISTS TARGET_LIST)
                 ../src/offlinelogstorage/dlt_offline_logstorage.c
                 ../src/shared/dlt_config_file_parser.c
                 ../src/shared/dlt_offline_trace.c
+                gmock_dlt_daemon.cpp
         )
         add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
     endif()
-    add_executable(${target} ${target_SRCS}.cpp)
+    add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} ${DLT_LIBRARIES})
     if(WITH_DLT_INSTALLED_TESTS)
         install(TARGETS ${target} RUNTIME DESTINATION ${DLT_TEST_DIR})

@@ -17,6 +17,7 @@
 /*!
  * \author
  * Alexander Mohr <alexander.m.mohr@mercedes-benz.com>
+ * Minh Luu Quang <minh.luuquang@vn.bosch.com>
  *
  * \copyright Copyright © 2024 Mercedes Benz Tech Innovation GmbH. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
@@ -24,7 +25,6 @@
  * \file gtest_dlt_daemon.cpp
  */
 
-#include "dlt_daemon_common_cfg.h"
 #include <gtest/gtest.h>
 #include <limits.h>
 #include <stdio.h>
@@ -32,13 +32,289 @@
 
 extern "C"
 {
-#include "dlt-daemon.h"
-#include "dlt-daemon_cfg.h"
-#include "dlt_user_cfg.h"
-#include "dlt_version.h"
-#include "dlt_client.h"
-#include "dlt_protocol.h"
+    #include "dlt_daemon_common_cfg.h"
+    #include "dlt-daemon_cfg.h"
+    #include "dlt-daemon.h"
+    #include "dlt_user_cfg.h"
+    #include "dlt_client.h"
+    #include "dlt_version.h"
+    #include "dlt_protocol.h"
 }
+
+#include "gmock_dlt_daemon.h"
+
+// Test Fixture for close_pipes
+class ClosePipesTest : public ::testing::Test {
+    protected:
+        int fds[2];
+
+        void SetUp() override {
+            // Initialize file descriptors to invalid state
+            fds[0] = DLT_FD_INIT;
+            fds[1] = DLT_FD_INIT;
+        }
+
+        void TearDown() override {
+            // Ensure no file descriptors are left open
+            if (fds[0] != DLT_FD_INIT) close(fds[0]);
+            if (fds[1] != DLT_FD_INIT) close(fds[1]);
+        }
+};
+
+// Test closing valid pipes
+TEST_F(ClosePipesTest, ClosesValidPipes) {
+    // Create a pipe
+    ASSERT_EQ(pipe(fds), 0);
+
+    // Ensure file descriptors are valid
+    ASSERT_GT(fds[0], 0);
+    ASSERT_GT(fds[1], 0);
+
+    // Close the pipes
+    close_pipes(fds);
+
+    // Verify file descriptors are reset to DLT_FD_INIT
+    EXPECT_EQ(fds[0], DLT_FD_INIT);
+    EXPECT_EQ(fds[1], DLT_FD_INIT);
+}
+
+// Test closing one invalid and one valid pipe
+TEST_F(ClosePipesTest, ClosesMixedPipes) {
+    // Create a pipe
+    ASSERT_EQ(pipe(fds), 0);
+
+    // Close one pipe manually
+    close(fds[0]);
+    fds[0] = DLT_FD_INIT;
+
+    // Close the pipes using the function
+    close_pipes(fds);
+
+    // Verify file descriptors are reset to DLT_FD_INIT
+    EXPECT_EQ(fds[0], DLT_FD_INIT);
+    EXPECT_EQ(fds[1], DLT_FD_INIT);
+}
+
+// Test closing already closed pipes
+TEST_F(ClosePipesTest, HandlesAlreadyClosedPipes) {
+    // Set file descriptors to invalid state
+    fds[0] = DLT_FD_INIT;
+    fds[1] = DLT_FD_INIT;
+
+    // Close the pipes using the function
+    close_pipes(fds);
+
+    // Verify file descriptors remain DLT_FD_INIT
+    EXPECT_EQ(fds[0], DLT_FD_INIT);
+    EXPECT_EQ(fds[1], DLT_FD_INIT);
+}
+
+// Test closing pipes with negative file descriptors
+TEST_F(ClosePipesTest, HandlesNegativeFileDescriptors) {
+    // Set file descriptors to negative values
+    fds[0] = -100;
+    fds[1] = -200;
+
+    // Close the pipes using the function
+    close_pipes(fds);
+
+    // Verify file descriptors are reset to DLT_FD_INIT
+    EXPECT_EQ(fds[0], DLT_FD_INIT);
+    EXPECT_EQ(fds[1], DLT_FD_INIT);
+}
+
+// Test closing pipes with one negative and one valid file descriptor
+TEST_F(ClosePipesTest, HandlesMixedNegativeAndValidDescriptors) {
+    // Create a pipe
+    ASSERT_EQ(pipe(fds), 0);
+
+    // Set one file descriptor to a negative value
+    fds[0] = -100;
+
+    // Close the pipes using the function
+    close_pipes(fds);
+
+    // Verify file descriptors are reset to DLT_FD_INIT
+    EXPECT_EQ(fds[0], DLT_FD_INIT);
+    EXPECT_EQ(fds[1], DLT_FD_INIT);
+}
+
+extern "C" void usage();
+
+// Test Fixture for usage()
+class UsageTest : public ::testing::Test {
+    protected:
+        std::stringstream output;
+        DltVersionMockImpl mock;  // Use the concrete implementation
+        std::streambuf* orig_cout_buffer;
+
+        void SetUp() override {
+            // Store the original buffer and redirect stdout to a stringstream
+            orig_cout_buffer = std::cout.rdbuf(output.rdbuf());
+        }
+
+        void TearDown() override {
+            // Restore the original stdout buffer
+            std::cout.rdbuf(orig_cout_buffer);
+        }
+};
+
+
+// Test Cases
+TEST_F(UsageTest, PrintsVersion) {
+    usage();  // Call the function being tested
+
+    std::string outputStr = output.str();
+    EXPECT_NE(outputStr.find("DLT Daemon Version 2.18.0"), std::string::npos);
+}
+
+TEST_F(UsageTest, PrintsUsageMessage) {
+    usage();  // Call the function being tested
+
+    std::string outputStr = output.str();
+    EXPECT_NE(outputStr.find("Usage: dlt-daemon [options]"), std::string::npos);
+}
+
+// Test if usage() prints the correct options
+TEST_F(UsageTest, PrintsOptions) {
+    usage();
+    std::string outputStr = output.str();
+
+    // Check for common options
+    EXPECT_NE(outputStr.find("  -d            Daemonize"), std::string::npos);
+    EXPECT_NE(outputStr.find("  -h            Usage"), std::string::npos);
+    EXPECT_NE(outputStr.find("  -c filename   DLT daemon configuration file"), std::string::npos);
+    EXPECT_NE(outputStr.find("  -p port       port to monitor for incoming requests"), std::string::npos);
+
+    // Check for conditional options
+#ifdef DLT_DAEMON_USE_FIFO_IPC
+    EXPECT_NE(outputStr.find("  -t directory  Directory for local fifo and user-pipes"), std::string::npos);
+#endif
+
+#ifdef DLT_SHM_ENABLE
+    EXPECT_NE(outputStr.find("  -s filename   The file name to create the share memory"), std::string::npos);
+#endif
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    EXPECT_NE(outputStr.find("  -a filename   The filename for load default app id log levels"), std::string::npos);
+#endif
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    EXPECT_NE(outputStr.find("  -l filename   The filename for load limits"), std::string::npos);
+#endif
+}
+
+extern "C" int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[]);
+
+// Test Fixture for option_handling
+class OptionHandlingTest : public ::testing::Test {
+    protected:
+        DltLogSetFifoBasedirMock dltLogSetFifoBasedirMock;
+        UsageMock usageMock;
+        FprintfMock fprintfMock;
+        std::stringstream stderrBuffer;
+
+        void SetUp() override {
+            // Redirect stderr to capture error messages
+            std::cerr.rdbuf(stderrBuffer.rdbuf());
+
+            // Set default mock behaviors
+            ON_CALL(fprintfMock, fprintf_wrapper(_, _))
+                .WillByDefault([](FILE *stream, const char *format) {
+                    (void)stream; // Mark parameter as used to suppress warning
+                    (void)format;
+                    return 0; // Simulate successful fprintf
+                });
+        }
+
+        void TearDown() override {
+            // Restore stderr
+            std::cerr.rdbuf(std::cerr.rdbuf(nullptr));
+        }
+};
+
+// Test 1: Invalid Parameter (Null daemon_local)
+TEST_F(OptionHandlingTest, InvalidParameter) {
+    EXPECT_CALL(fprintfMock, fprintf_wrapper(stderr, "Invalid parameter passed to option_handling()\n"))
+        .Times(1);
+
+    int result = option_handling(nullptr, 0, nullptr);
+    EXPECT_EQ(result, -1);
+}
+
+// Test 2: Default Values
+TEST_F(OptionHandlingTest, DefaultValues) {
+    DltDaemonLocal daemon_local;
+    char *argv[] = { (char *)"dlt-daemon" };
+    int argc = 1;
+
+    EXPECT_CALL(dltLogSetFifoBasedirMock, dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH))
+        .Times(1);
+
+    int result = option_handling(&daemon_local, argc, argv);
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(daemon_local.flags.port, DLT_DAEMON_TCP_PORT);
+}
+
+// Test 3: Valid Options
+TEST_F(OptionHandlingTest, ValidOptions) {
+    DltDaemonLocal daemon_local;
+    char *argv[] = { (char *)"dlt-daemon", (char *)"-d", (char *)"-c", (char *)"config.conf", (char *)"-p", (char *)"3491" };
+    int argc = 6;
+
+    EXPECT_CALL(dltLogSetFifoBasedirMock, dlt_log_set_fifo_basedir(DLT_USER_IPC_PATH))
+        .Times(1);
+
+    int result = option_handling(&daemon_local, argc, argv);
+    EXPECT_EQ(result, 0);
+    EXPECT_EQ(daemon_local.flags.dflag, 1);
+    EXPECT_STREQ(daemon_local.flags.cvalue, "config.conf");
+    EXPECT_EQ(daemon_local.flags.port, 3491);
+}
+
+// Test 4: Invalid Port
+TEST_F(OptionHandlingTest, InvalidPort) {
+    DltDaemonLocal daemon_local;
+    char *argv[] = { (char *)"dlt-daemon", (char *)"-p", (char *)"invalid" };
+    int argc = 3;
+
+    EXPECT_CALL(fprintfMock, fprintf_wrapper(stderr, "Invalid port `invalid' specified.\n"))
+        .Times(1);
+
+    int result = option_handling(&daemon_local, argc, argv);
+    EXPECT_EQ(result, -1);
+}
+
+// Test 5: Missing Argument
+TEST_F(OptionHandlingTest, MissingArgument) {
+    DltDaemonLocal daemon_local;
+    char *argv[] = { (char *)"dlt-daemon", (char *)"-c" };
+    int argc = 2;
+
+    EXPECT_CALL(fprintfMock, fprintf_wrapper(stderr, "Option -c requires an argument.\n"))
+        .Times(1);
+    EXPECT_CALL(usageMock, usage())
+        .Times(1);
+
+    int result = option_handling(&daemon_local, argc, argv);
+    EXPECT_EQ(result, -1);
+}
+
+// Test 6: Unknown Option
+TEST_F(OptionHandlingTest, UnknownOption) {
+    DltDaemonLocal daemon_local;
+    char *argv[] = { (char *)"dlt-daemon", (char *)"-x" };
+    int argc = 2;
+
+    EXPECT_CALL(fprintfMock, fprintf_wrapper(stderr, "Unknown option `-x'.\n"))
+        .Times(1);
+    EXPECT_CALL(usageMock, usage())
+        .Times(1);
+
+    int result = option_handling(&daemon_local, argc, argv);
+    EXPECT_EQ(result, -1);
+}
+
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 
 const int _trace_load_send_size = 100;
@@ -229,7 +505,7 @@ TEST(t_trace_load_config_file_parser, errors)
     // Test case 10: Comments Misplacement or Format
     fprintf(temp, "APP1 CTX1 100 # This is a comment 200\n");
     fprintf(temp, "APP1 CTX1 100 200 // This is a comment\n");
-    
+
     // Test case 11: empty lines
     fprintf(temp, " \n");
     fprintf(temp, "\n");

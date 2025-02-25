@@ -426,6 +426,8 @@ if(WITH_GIT_SUBMODULE)
 endif()
 
 if(WITH_DLT_UNIT_TESTS)
+    add_definitions(-D__QNX__)
+    add_definitions(-D__ANDROID_API__)
     find_package(GTest)
     if(GTEST_FOUND)
         find_package(PkgConfig REQUIRED)
