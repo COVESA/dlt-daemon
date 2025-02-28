@@ -5,6 +5,20 @@
 #include <gmock/gmock.h>
 using ::testing::_;
 
+// Mock for close_pipes
+class ClosePipeMock {
+    public:
+        virtual ~ClosePipeMock() = default;
+        MOCK_METHOD(void, close_pipes, ());
+};
+
+// Mock for usage
+class UsageMock {
+    public:
+        virtual ~UsageMock() = default;
+        MOCK_METHOD(void, usage, (), ());
+};
+
 // Mock class for dlt_get_version
 class DltVersionMock {
     public:
@@ -25,13 +39,6 @@ class DltLogSetFifoBasedirMock {
     public:
         virtual ~DltLogSetFifoBasedirMock() = default;
         MOCK_METHOD(void, dlt_log_set_fifo_basedir, (const char *dir), ());
-};
-
-// Mock for usage
-class UsageMock {
-    public:
-        virtual ~UsageMock() = default;
-        MOCK_METHOD(void, usage, (), ());
 };
 
 // Mock for fprintf

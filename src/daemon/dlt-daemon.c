@@ -2,6 +2,7 @@
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2025, Minh Luu Quang
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -18,38 +19,73 @@
  * Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  * Markus Klein <Markus.Klein@esk.fraunhofer.de>
  * Mikko Rapeli <mikko.rapeli@bmw.de>
+ * Minh Luu Quang <minh.luuquang@vn.bosch.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 BMW AG.
+ * Copyright © 2025 Minh Luu Quang.
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-daemon.c
  */
 
-#include <netdb.h>
+/* Standard Library Headers */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <sys/socket.h> /* for socket(), connect(), (), and recv() */
-#include <sys/un.h>
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() and access */
-#include <fcntl.h>
-#include <signal.h>
-#include <syslog.h>
 #include <errno.h>
+
+/* File and Process Control */
+#include <unistd.h>
+#include <fcntl.h>
+#include <syslog.h>
+#include <signal.h>
 #include <pthread.h>
 #include <grp.h>
 
-#ifdef linux
-#   include <sys/timerfd.h>
-#endif
+/* Filesystem and Time */
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <libgen.h>
 
-#if defined(linux) && defined(__NR_statx)
-#   include <linux/stat.h>
+/* Networking */
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+/* Linux-Specific Headers */
+#ifdef linux
+#   include <sys/timerfd.h>
+#   if defined(__NR_statx)
+#       include <linux/stat.h>
+#   endif
+#endif
+
+/* DLT Core Daemon */
+#include "dlt_types.h"
+#include "dlt-daemon.h"
+#include "dlt-daemon_cfg.h"
+#include "dlt_daemon_common_cfg.h"
+
+/* DLT Socket and Communication */
+#include "dlt_daemon_serial.h"
+#include "dlt_daemon_socket.h"
+#include "dlt_daemon_unix_socket.h"
+
+/* Client and Connection */
+#include "dlt_gateway.h"
+#include "dlt_daemon_client.h"
+#include "dlt_daemon_connection.h"
+#include "dlt_daemon_event_handler.h"
+#include "dlt_daemon_offline_logstorage.h"
+
+#ifdef UDP_CONNECTION_SUPPORT
+#   include "dlt_daemon_udp_socket.h"
+#endif
+
+#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
+#   include "sd-daemon.h"
 #endif
 
 #ifdef DLT_DAEMON_VSOCK_IPC_ENABLE
@@ -61,37 +97,13 @@
 #   endif
 #endif
 
-#include "dlt_types.h"
-#include "dlt-daemon.h"
-#include "dlt-daemon_cfg.h"
-#include "dlt_daemon_common_cfg.h"
-
-#include "dlt_daemon_socket.h"
-#include "dlt_daemon_unix_socket.h"
-#include "dlt_daemon_serial.h"
-
-#include "dlt_daemon_client.h"
-#include "dlt_daemon_connection.h"
-#include "dlt_daemon_event_handler.h"
-#include "dlt_daemon_offline_logstorage.h"
-#include "dlt_gateway.h"
-
-#ifdef UDP_CONNECTION_SUPPORT
-#   include "dlt_daemon_udp_socket.h"
-#endif
-#if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-#   include "sd-daemon.h"
+#ifdef __QNX__
+    #include "dlt_daemon_qnx.h"
 #endif
 
-/**
- * \defgroup daemon DLT Daemon
- * \addtogroup daemon
- \{
- */
-
+/* DLT Macros */
 #define DLT_DAEMON_APP_ID "DLTD"
 #define DLT_DAEMON_CTX_ID "INTM"
-
 
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
@@ -144,49 +156,7 @@ static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
     [DLT_TIMER_UNKNOWN] = "Unknown timer"
 };
 
-#ifdef __QNX__
-static int dlt_timer_pipes[DLT_TIMER_UNKNOWN][2] = {
-    /* [timer_id] = {read_pipe, write_pipe} */
-    [DLT_TIMER_PACKET] = {DLT_FD_INIT, DLT_FD_INIT},
-    [DLT_TIMER_ECU] = {DLT_FD_INIT, DLT_FD_INIT},
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    [DLT_TIMER_SYSTEMD] = {DLT_FD_INIT, DLT_FD_INIT},
-#endif
-    [DLT_TIMER_GATEWAY] = {DLT_FD_INIT, DLT_FD_INIT}
-};
 
-static pthread_t timer_threads[DLT_TIMER_UNKNOWN] = {
-    [DLT_TIMER_PACKET] = 0,
-    [DLT_TIMER_ECU] = 0,
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    [DLT_TIMER_SYSTEMD] = 0,
-#endif
-    [DLT_TIMER_GATEWAY] = 0
-};
-
-static DltDaemonPeriodicData *timer_data[DLT_TIMER_UNKNOWN] = {
-    [DLT_TIMER_PACKET] = NULL,
-    [DLT_TIMER_ECU] = NULL,
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    [DLT_TIMER_SYSTEMD] = NULL,
-#endif
-    [DLT_TIMER_GATEWAY] = NULL
-};
-
-void close_pipes(int fds[2])
-{
-    if (fds[0] > 0) {
-        close(fds[0]);
-        fds[0] = DLT_FD_INIT;
-    }
-
-    if (fds[1] > 0) {
-        close(fds[1]);
-        fds[1] = DLT_FD_INIT;
-    }
-}
-
-#endif // __QNX__
 
 /**
  * Print usage information of tool.
@@ -2423,10 +2393,6 @@ void dlt_daemon_exit_trigger()
     (void)unlink(tmp);
 #endif
 
-#ifdef __QNX__
-    dlt_daemon_cleanup_timers();
-#endif
-
 }
 
 void dlt_daemon_signal_handler(int sig)
@@ -2453,30 +2419,6 @@ void dlt_daemon_signal_handler(int sig)
     } /* switch */
 
 } /* dlt_daemon_signal_handler() */
-
-#ifdef __QNX__
-void dlt_daemon_cleanup_timers()
-{
-    int i = 0;
-    while (i < DLT_TIMER_UNKNOWN) {
-        /* Remove FIFO of every timer and kill timer thread */
-        if (0 != timer_threads[i]) {
-            pthread_kill(timer_threads[i], SIGUSR1);
-            pthread_join(timer_threads[i], NULL);
-            timer_threads[i] = 0;
-
-            close_pipes(dlt_timer_pipes[i]);
-
-            /* Free data of every timer */
-            if (NULL != timer_data[i]) {
-                free(timer_data[i]);
-                timer_data[i] = NULL;
-            }
-        }
-        i++;
-    }
-}
-#endif
 
 void dlt_daemon_daemonize(int verbose)
 {
@@ -4187,49 +4129,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     return DLT_DAEMON_ERROR_OK;
 }
 
-#ifdef __QNX__
-static void *timer_thread(void *data)
-{
-    int pexit = 0;
-    unsigned int sleep_ret = 0;
-
-    DltDaemonPeriodicData* timer_thread_data = (DltDaemonPeriodicData*) data;
-
-    /* Timer will start in starts_in sec*/
-    if ((sleep_ret = sleep(timer_thread_data->starts_in))) {
-        dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for starting!"
-                "Stop thread of timer [%d]\n",
-                sleep_ret, timer_thread_data->timer_id);
-         close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
-         return NULL;
-    }
-
-    while (1) {
-        if ((dlt_timer_pipes[timer_thread_data->timer_id][1] > 0) &&
-                (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1))) {
-            dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
-                    dlt_timer_names[timer_thread_data->timer_id]);
-            pexit = 1;
-        }
-
-        if (pexit || g_exit) {
-            dlt_vlog(LOG_NOTICE, "Received signal!"
-                    "Stop thread of timer [%d]\n",
-                    timer_thread_data->timer_id);
-            close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
-            return NULL;
-        }
-
-        if ((sleep_ret = sleep(timer_thread_data->period_sec))) {
-            dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for interval!"
-                    "Stop thread of timer [%d]\n",
-                    sleep_ret, timer_thread_data->timer_id);
-             close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
-             return NULL;
-        }
-    }
-}
-#endif
 
 int create_timer_fd(DltDaemonLocal *daemon_local,
                     int period_sec,

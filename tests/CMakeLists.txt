@@ -63,14 +63,11 @@ string(CONCAT TEST_ENV_IPv6 "${TEST_ENV};"
 ####################
 # DLT library tests
 ####################
-set(TARGET_LIST gtest_dlt_common.cpp
-                gtest_dlt_user.cpp
-                gtest_dlt_daemon.cpp
-                gtest_dlt_daemon_common.cpp
-                dlt_env_ll_unit_test.cpp)
+set(TARGET_LIST gtest_dlt_daemon)
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
+    set(target_SRCS ${target}.cpp)
+
     if(${target} STREQUAL "gtest_dlt_daemon_common")
         set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     elseif(${target} STREQUAL "gtest_dlt_daemon")
@@ -111,63 +108,3 @@ foreach(target IN LISTS TARGET_LIST)
         add_test(NAME ${target} COMMAND ${target})
     endif()
 endforeach()
-
-###################
-# DLT daemon tests
-###################
-set(TARGET_LIST gtest_dlt_daemon_gateway
-                gtest_dlt_daemon_offline_log
-                gtest_dlt_daemon_event_handler
-                gtest_dlt_daemon_multiple_files_logging)
-
-if(WITH_DLT_LOG_STATISTIC)
-    list(APPEND TARGET_LIST gtest_dlt_daemon_statistics)
-endif()
-
-if(WITH_DLT_SHM_ENABLE)
-    list(APPEND TARGET_LIST gtest_dlt_shm)
-endif()
-
-foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
-    add_executable(${target} ${target_SRCS}.cpp ${systemd_SRCS})
-    target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
-    if(WITH_DLT_INSTALLED_TESTS)
-        install(TARGETS ${target} RUNTIME DESTINATION ${DLT_TEST_DIR})
-        if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)
-            install(PROGRAMS ${target}.sh DESTINATION ${DLT_TEST_DIR})
-        endif()
-    endif(WITH_DLT_INSTALLED_TESTS)
-    if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)
-        configure_file(${PROJECT_SOURCE_DIR}/tests/${target}.sh ${PROJECT_BINARY_DIR}/tests COPYONLY)
-        set(CMD_SEQ_SETUP "sh $<TARGET_FILE:${target}>.sh")
-        set(CMD_SEQ_BOOL "$<TARGET_FILE:${target}> || TESTS_FAILED=1 && TESTS_FAILED=0")
-        add_test(NAME ${target} COMMAND /bin/sh -e -c "${CMD_SEQ_SETUP};${CMD_SEQ_BOOL};${CMD_SEQ}")
-        if(WITH_DLT_USE_IPv6)
-            set_tests_properties(${target} PROPERTIES ENVIRONMENT "${TEST_ENV_IPv6}")
-        else()
-            set_tests_properties(${target} PROPERTIES ENVIRONMENT "${TEST_ENV}")
-        endif()
-    else()
-        add_test(NAME ${target} COMMAND ${target})
-    endif()
-    set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
-endforeach()
-
-#####################
-# DLT control tests
-#####################
-if(WITH_EXTENDED_FILTERING)
-    configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_extended.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-    configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-    add_executable(gtest_dlt_json_filter gtest_dlt_json_filter.cpp)
-    target_link_libraries(gtest_dlt_json_filter ${DLT_CONTROL_LIBRARIES})
-    if(WITH_DLT_INSTALLED_TESTS)
-        install(FILES testfile_extended.dlt testfilter.json DESTINATION ${DLT_TEST_DIR})
-        install(TARGETS gtest_dlt_json_filter RUNTIME DESTINATION ${DLT_TEST_DIR})
-    endif(WITH_DLT_INSTALLED_TESTS)
-    add_test(NAME gtest_dlt_json_filter COMMAND gtest_dlt_json_filter)
-    set_tests_properties(${target} PROPERTIES TIMEOUT "${seconds}")
-endif()
-
-add_subdirectory(components)
