@@ -2002,14 +2002,26 @@ void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState)
 }
 
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-void dlt_daemon_trigger_systemd_watchdog_if_necessary(unsigned int* last_trigger_time, unsigned int watchdog_trigger_interval) {
-    unsigned int uptime = dlt_uptime();
-    if ((uptime - *last_trigger_time) / 10000 >= watchdog_trigger_interval) {
-        if (sd_notify(0, "WATCHDOG=1") < 0)
-            dlt_vlog(LOG_WARNING, "%s: Could not reset systemd watchdog\n", __func__);
-        *last_trigger_time = uptime;
+bool dlt_daemon_trigger_systemd_watchdog_if_necessary(DltDaemon *daemon) {
+    if (daemon->watchdog_trigger_interval == 0) {
+        return false;
     }
+
+    const unsigned int uptime_seconds = dlt_uptime() / 10000;
+    const unsigned int seconds_since_last_trigger = uptime_seconds - daemon->watchdog_last_trigger_time;
+    if (seconds_since_last_trigger < daemon->watchdog_trigger_interval) {
+        return false;
+    }
+    if (sd_notify(0, "WATCHDOG=1") < 0) {
+        dlt_vlog(LOG_WARNING, "%s: Could not reset systemd watchdog\n", __func__);
+        return false;
+    }
+    else
+        daemon->watchdog_last_trigger_time = uptime_seconds;
+
+    return true;
 }
+
 #endif
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE

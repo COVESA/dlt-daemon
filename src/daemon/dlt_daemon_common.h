@@ -207,6 +207,7 @@ typedef struct
 #endif
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     unsigned int watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
+    unsigned int watchdog_last_trigger_time; /* when the watchdog was last triggered in [s] */
 #endif
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     DltDaemonContextLogSettings *app_id_log_level_settings; /**< Settings for app id specific log levels */
@@ -606,7 +607,12 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
 void dlt_daemon_change_state(DltDaemon *daemon, DltDaemonState newState);
 
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-void dlt_daemon_trigger_systemd_watchdog_if_necessary(unsigned int* last_trigger_time, unsigned int watchdog_trigger_interval);
+/**
+ * Trigger the systemd watchdog when the timeout has been reached
+ * @param daemon pointer to dlt daemon structure
+ * @return true if the watchdog has been triggered
+ */
+bool dlt_daemon_trigger_systemd_watchdog_if_necessary(DltDaemon *daemon);
 #endif
 
 #   ifdef __cplusplus
