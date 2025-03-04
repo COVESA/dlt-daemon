@@ -67,7 +67,7 @@ if (WITH_SYSTEMD_SOCKET_ACTIVATION)
     target_link_libraries(dlt-daemon systemd)
 endif()
 if (WITH_DLT_LOGSTORAGE_GZIP)
-	target_link_libraries(dlt-daemon ${ZLIB_LIBRARY})
+	target_link_libraries(dlt-daemon ZLIB::ZLIB)
 endif()
 
 install(TARGETS dlt-daemon
@@ -86,6 +86,7 @@ if (WITH_DLT_UNIT_TESTS)
     endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
 
     add_library(dlt_daemon ${library_SRCS})
+    target_compile_definitions(dlt_daemon PRIVATE DLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}")
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
     install(TARGETS dlt_daemon

@@ -115,21 +115,40 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
     return num_log_files;
 }
 
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const size_t length, const unsigned int idx)
-{
-    char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
+#include <stdio.h>
+#include <string.h>
+
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, size_t length, unsigned int idx) {
+    char file_index[11]; // Holds "4294967295" (10 digits) + null terminator
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
-    /* create log file name */
-    char* file_name = files_buffer->filename;
-    memset(file_name, 0, length * sizeof(char));
+    // Compute required length
+    int required_size = snprintf(NULL, 0, "%s%s%s%s",
+                                 files_buffer->filenameBase,
+                                 MULTIPLE_FILES_FILENAME_INDEX_DELIM,
+                                 file_index,
+                                 files_buffer->filenameExt) + 1; // +1 for '\0'
 
-    const size_t size = length - strlen(file_name) - 1;
-    strncat(file_name, files_buffer->filenameBase, size);
-    strncat(file_name, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
-    strncat(file_name, file_index, size);
-    strncat(file_name, files_buffer->filenameExt, size);
+    // Validate buffer size
+    if (length < (size_t)required_size) {
+        fprintf(stderr, "Error: Filename buffer too small (needed: %d, provided: %zu)\n",
+                required_size, length);
+        return;
+    }
+
+    // Use snprintf to safely write to buffer
+    int written = snprintf(files_buffer->filename, length, "%s%s%s%s",
+                           files_buffer->filenameBase,
+                           MULTIPLE_FILES_FILENAME_INDEX_DELIM,
+                           file_index,
+                           files_buffer->filenameExt);
+
+    // Verify no truncation
+    if (written < 0 || (size_t)written >= length) {
+        fprintf(stderr, "Error: Filename construction failed or truncated\n");
+    }
 }
+
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
 {
