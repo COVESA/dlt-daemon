@@ -29,7 +29,7 @@ if(WITH_DLT_COREDUMPHANDLER)
     endif(WITH_CITYHASH)
 
     add_executable(dlt-cdh ${dlt_cdh_SRCS})
-    target_link_libraries(dlt-cdh ${ZLIB_LIBRARY})
+    target_link_libraries(dlt-cdh ZLIB::ZLIB)
     set_target_properties(dlt-cdh PROPERTIES LINKER_LANGUAGE C)
 
     configure_file(${PROJECT_SOURCE_DIR}/src/core_dump_handler/50-coredump.conf.cmake ${PROJECT_BINARY_DIR}/core_dump_handler/50-coredump.conf)
