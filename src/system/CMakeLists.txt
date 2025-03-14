@@ -39,7 +39,7 @@ if(WITH_SYSTEMD_JOURNAL)
 endif(WITH_SYSTEMD_JOURNAL)
 
 if(WITH_DLT_FILETRANSFER)
- target_link_libraries(dlt-system ZLIB::ZLIB)
+ target_link_libraries(dlt-system ${ZLIB_LIBRARY})
 endif(WITH_DLT_FILETRANSFER)
 
 set_target_properties(dlt-system PROPERTIES LINKER_LANGUAGE C)

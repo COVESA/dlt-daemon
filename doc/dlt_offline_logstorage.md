@@ -234,7 +234,7 @@ The following procedure can be used to test Offline Logstorage:
 
 - Create the device folder
 
-  ```$ mkdir -p /var/dltlog```
+  ```$ mkdir -p /var/dltlogs```
 
 - Create the configuration file "dlt\_logstorage.conf" in this folder
   and define filter configuration(s):
@@ -251,7 +251,7 @@ The following procedure can be used to test Offline Logstorage:
 
 - Trigger dlt-daemon to use a new device
 
-  ```$ dlt-logstorage-ctrl -c 1 -p /var/dltlog```
+  ```$ dlt-logstorage-ctrl -c 1 -p /var/dltlogs```
 
 - Start dlt-example-user
 
