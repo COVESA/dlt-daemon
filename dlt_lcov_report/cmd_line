@@ -1,0 +1,1 @@
+genhtml dlt_lcov_report/dlt_final_coverage.info --output-directory dlt_lcov_report
