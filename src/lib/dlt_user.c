@@ -761,7 +761,7 @@ DltReturnValue dlt_init_common(void)
     }
 
     /* Binary semaphore for threads */
-    if ((pthread_attr_init(&dlt_mutex_attr) != 0) ||
+    if ((pthread_mutexattr_init(&dlt_mutex_attr) != 0) ||
         (pthread_mutexattr_settype(&dlt_mutex_attr, PTHREAD_MUTEX_ERRORCHECK) != 0) ||
         (pthread_mutex_init(&dlt_mutex, &dlt_mutex_attr) != 0)) {
         dlt_user_init_state = INIT_UNITIALIZED;
