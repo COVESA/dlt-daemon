@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Prepare submodule
       run: |
@@ -44,7 +44,7 @@ jobs:
       run: bash util/dlt_coverage_report/lcov_report_generator.sh build -xe
 
     - name: Archive coverage results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dlt_coverage_report
         path: ${{github.workspace}}/dlt_lcov_report
