@@ -86,6 +86,7 @@ if (WITH_DLT_UNIT_TESTS)
     endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
 
     add_library(dlt_daemon ${library_SRCS})
+    target_compile_definitions(dlt_daemon PRIVATE DLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}")
     target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
     install(TARGETS dlt_daemon

@@ -13,33 +13,33 @@
 # For further information see http://www.covesa.org/.
 #######
 
-set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-client)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-user)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-client)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-user)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-init-free)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-client.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-user.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-client.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-user.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-init-free.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context.c)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer.c)
 install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
         DESTINATION share/dlt-filetransfer)
 
 if(WITH_DLT_CXX11_EXT)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension.cpp)
 endif()
 
 #TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage
 if (NOT WITH_DLT_DISABLE_MACRO)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose.c)
 endif()
 
 if(WITH_DLT_QNX_SYSTEM)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-qnx-slogger)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-qnx-slogger.c)
 endif()
- 
+
 foreach(TARGET IN LISTS TARGET_LIST)
     set(TARGET_SRCS ${TARGET})
     add_executable(${TARGET} ${TARGET_SRCS})
