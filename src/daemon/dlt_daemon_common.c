@@ -726,10 +726,16 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
         }
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
+        /* /dltpipes/dlt%d consists of 13 bytes "/dltpipes/dlt" and pid field (INT_MAX = 2147483647 - 32 bit)
+         * The worst case: "/dltpipes/dlt2147483647"
+         * Total: 13 + 4 + '\0' = 18 bytes
+         * DLT_DAEMON_COMMON_TEXTBUFSIZE = 255 bytes
+         * Space left: 255 - 18 = 237 bytes
+         */
         if (dlt_user_handle < DLT_FD_MINIMUM) {
             snprintf(filename,
                      DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                     "%s/dltpipes/dlt%d",
+                     "%.237s/dltpipes/dlt%d",
                      dltFifoBaseDir,
                      pid);
 
