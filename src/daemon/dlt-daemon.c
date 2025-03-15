@@ -242,6 +242,8 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     char options[255];
     memset(options, 0, sizeof options);
     const char *const default_options = "hdc:t:p:";
+    size_t base_dir_overhead;
+    size_t max_base_dir_len;
     strcpy(options, default_options);
 
     if (daemon_local == 0) {
@@ -362,10 +364,14 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
+    base_dir_overhead = strlen("/dltpipes") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
     snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
-             "%s/dltpipes", dltFifoBaseDir);
+             "%.*s/dltpipes", (int)max_base_dir_len, dltFifoBaseDir);
+    base_dir_overhead = strlen("/dlt") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
     snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
-             "%s/dlt", dltFifoBaseDir);
+             "%.*s/dlt", (int)max_base_dir_len, dltFifoBaseDir);
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -387,6 +393,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     char value[value_length];
     char *pch;
     const char *filename;
+    size_t base_dir_overhead;
+    size_t max_base_dir_len;
     ssize_t n;
 
     /* set default values for configuration */
@@ -399,14 +407,16 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingMode = DLT_LOG_TO_CONSOLE;
     daemon_local->flags.loggingLevel = LOG_INFO;
 
+    base_dir_overhead = strlen("/dlt.log") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", DLT_USER_IPC_PATH);
+                 "%*s/dlt.log", (int)base_dir_overhead, DLT_USER_IPC_PATH);
 #else /* DLT_DAEMON_USE_FIFO_IPC */
     n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", dltFifoBaseDir);
+                 "%*s/dlt.log", (int)base_dir_overhead, dltFifoBaseDir);
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
@@ -440,7 +450,12 @@ int option_file_parser(DltDaemonLocal *daemon_local)
             DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
             sizeof(daemon_local->flags.ctrlSockPath));
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+    base_dir_overhead = strlen("/dlt") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+    snprintf(daemon_local->flags.appSockPath,
+             DLT_IPC_PATH_MAX, "%*s/dlt",
+             (int)max_base_dir_len,
+             DLT_USER_IPC_PATH);
 
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
         fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
@@ -2422,7 +2437,9 @@ void dlt_daemon_exit_trigger()
     char tmp[DLT_PATH_MAX] = { 0 };
 
     ssize_t n;
-    n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    size_t base_dir_overhead = strlen("/dlt") + 1;
+    size_t max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+    n = snprintf(tmp, DLT_PATH_MAX, "%*s/dlt", (int)max_base_dir_len, dltFifoBaseDir);
     if (n < 0 || (size_t)n > DLT_PATH_MAX) {
         dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
                 __func__, n, tmp);

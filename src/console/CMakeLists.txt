@@ -13,41 +13,71 @@
 # For further information see http://www.covesa.org/.
 #######
 
-set(dlt_control_common_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/dlt-control-common.c)
-add_library(dlt_control_common_lib STATIC ${dlt_control_common_SRCS})
-target_link_libraries(dlt_control_common_lib dlt ${DLT_JSON_LIBRARY})
+# Control Common Library ======================================================
+set(CONTROL_COMMON_TARGET dlt-control-common)
+set(CONTROL_COMMON_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${CONTROL_COMMON_TARGET}.c")
 
-set(TARGET_LIST "")
-
-if (WITH_DLT_CONSOLE_RECEIVE)
-    list(APPEND TARGET_LIST dlt-receive)
+if(NOT EXISTS "${CONTROL_COMMON_SOURCE}")
+    message(FATAL_ERROR "Missing control common source: ${CONTROL_COMMON_SOURCE}")
 endif()
 
-if (WITH_DLT_CONSOLE_CONVERT)
-    list(APPEND TARGET_LIST dlt-convert)
+add_library(dlt_control_common_lib STATIC "${CONTROL_COMMON_SOURCE}")
+target_link_libraries(dlt_control_common_lib PRIVATE dlt ${DLT_JSON_LIBRARY})
+
+# Console Targets Configuration ===============================================
+set(CONSOLE_BASE_TARGETS)
+set(CONSOLE_CONDITIONAL_TARGETS)
+
+## Conditional targets
+if(WITH_DLT_CONSOLE_RECEIVE)
+    list(APPEND CONSOLE_CONDITIONAL_TARGETS dlt-receive)
+endif()
+
+if(WITH_DLT_CONSOLE_CONVERT)
+    list(APPEND CONSOLE_CONDITIONAL_TARGETS dlt-convert)
 endif()
 
 if(NOT WITH_DLT_CONSOLE_WO_CTRL)
     add_subdirectory(logstorage)
-    if (WITH_DLT_CONSOLE_CONTROL)
-        list(APPEND TARGET_LIST dlt-control)
+
+    if(WITH_DLT_CONSOLE_CONTROL)
+        list(APPEND CONSOLE_CONDITIONAL_TARGETS dlt-control)
     endif()
-    if (WITH_DLT_CONSOLE_PASSIVE_NODE_CTRL)
-        list(APPEND TARGET_LIST dlt-passive-node-ctrl)
+
+    if(WITH_DLT_CONSOLE_PASSIVE_NODE_CTRL)
+        list(APPEND CONSOLE_CONDITIONAL_TARGETS dlt-passive-node-ctrl)
     endif()
 endif()
 
 if(NOT WITH_DLT_CONSOLE_WO_SBTM)
-    list(APPEND TARGET_LIST dlt-sortbytimestamp)
+    list(APPEND CONSOLE_CONDITIONAL_TARGETS dlt-sortbytimestamp)
 endif()
 
-foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target}.c)
-    add_executable(${target} ${target_SRCS})
-    target_link_libraries(${target} dlt dlt_control_common_lib)
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
+# Combine all console targets
+set(CONSOLE_TARGETS_ALL
+    ${CONSOLE_BASE_TARGETS}
+    ${CONSOLE_CONDITIONAL_TARGETS}
+)
 
-    install(TARGETS ${target}
-            RUNTIME DESTINATION bin
-            COMPONENT base)
+# Console Target Construction =================================================
+foreach(CONSOLE_TARGET IN LISTS CONSOLE_TARGETS_ALL)
+    # Source file validation
+    set(SOURCE_FILE "${CONSOLE_TARGET}.c")
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
+        message(FATAL_ERROR "Missing console source: ${SOURCE_FILE}")
+    endif()
+
+    # Target configuration
+    add_executable(${CONSOLE_TARGET} "${SOURCE_FILE}")
+    target_link_libraries(${CONSOLE_TARGET} PRIVATE
+        dlt
+        dlt_control_common_lib
+    )
+    set_target_properties(${CONSOLE_TARGET} PROPERTIES LINKER_LANGUAGE C)
+
+    # Installation
+    install(TARGETS ${CONSOLE_TARGET}
+        RUNTIME DESTINATION bin
+        COMPONENT base
+    )
 endforeach()

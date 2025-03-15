@@ -13,23 +13,52 @@
 # For further information see http://www.covesa.org/.
 #######
 
-set(TARGET_LIST dlt-example-user-func)
-set(TARGET_LIST ${TARGET_LIST} dlt-example-filetransfer)
+# Example targets configuration ===============================================
+# Base example targets
+set(EXAMPLE_BASE_TARGETS
+    dlt-example-user-func
+    dlt-example-filetransfer
+)
+
+# Conditional example targets
+set(EXAMPLE_CONDITIONAL_TARGETS)
 if(NOT WITH_DLT_DISABLE_MACRO)
-    set(TARGET_LIST ${TARGET_LIST} dlt-example-user)
-    set(TARGET_LIST ${TARGET_LIST} dlt-example-user-common-api)
+    list(APPEND EXAMPLE_CONDITIONAL_TARGETS
+        dlt-example-user
+        dlt-example-user-common-api
+    )
 endif()
 
 if(WITH_UDP_CONNECTION)
-    set(TARGET_LIST ${TARGET_LIST} dlt-example-multicast-clientmsg-view)
+    list(APPEND EXAMPLE_CONDITIONAL_TARGETS
+        dlt-example-multicast-clientmsg-view
+    )
 endif()
 
-foreach(TARGET IN LISTS TARGET_LIST)
-    set(TARGET_SRCS ${TARGET}.c)
-    add_executable(${TARGET} ${TARGET_SRCS})
-    target_link_libraries(${TARGET} dlt)
-    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
-    install(TARGETS ${TARGET}
-            RUNTIME DESTINATION bin
-            COMPONENT base)
+# Combine all example targets
+set(EXAMPLE_TARGETS_ALL
+    ${EXAMPLE_BASE_TARGETS}
+    ${EXAMPLE_CONDITIONAL_TARGETS}
+)
+
+# Example target construction =================================================
+foreach(EXAMPLE_TARGET IN LISTS EXAMPLE_TARGETS_ALL)
+    # Source file validation
+    set(SOURCE_FILE "${EXAMPLE_TARGET}.c")
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
+        message(FATAL_ERROR "Missing C source for ${EXAMPLE_TARGET} - ${SOURCE_FILE} not found")
+    endif()
+
+    # Target creation
+    add_executable(${EXAMPLE_TARGET} ${SOURCE_FILE})
+
+    # Dependencies and properties
+    target_link_libraries(${EXAMPLE_TARGET} PRIVATE dlt)
+    set_target_properties(${EXAMPLE_TARGET} PROPERTIES LINKER_LANGUAGE C)
+
+    # Installation
+    install(TARGETS ${EXAMPLE_TARGET}
+        RUNTIME DESTINATION bin
+        COMPONENT base
+    )
 endforeach()

@@ -285,6 +285,8 @@ static DltReturnValue dlt_initialize_socket_connection(void)
 {
     struct sockaddr_un remote;
     char dltSockBaseDir[DLT_IPC_PATH_MAX];
+    size_t base_dir_overhead;
+    size_t max_base_dir_len;
 
     DLT_SEM_LOCK();
     int sockfd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
@@ -302,7 +304,13 @@ static DltReturnValue dlt_initialize_socket_connection(void)
     }
 
     remote.sun_family = AF_UNIX;
-    snprintf(dltSockBaseDir, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
+    base_dir_overhead = strlen("/dlt") + 1;
+    max_base_dir_len = DLT_IPC_PATH_MAX - base_dir_overhead;
+    snprintf(dltSockBaseDir,
+            DLT_IPC_PATH_MAX,
+            "%.*s/dlt",
+            (int)max_base_dir_len,
+            DLT_USER_IPC_PATH);
     strncpy(remote.sun_path, dltSockBaseDir, sizeof(remote.sun_path));
 
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
@@ -400,9 +408,24 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
 {
     char filename[DLT_PATH_MAX];
     int ret;
+    size_t base_dir_overhead;
+    size_t max_base_dir_len;
 
-    snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
-    snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    // Explicitly truncate long paths
+    base_dir_overhead = strlen("/dltpipes") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+    snprintf(dlt_user_dir,
+             DLT_PATH_MAX,
+             "%.*s/dltpipes",
+             (int)max_base_dir_len,
+             dltFifoBaseDir);
+    base_dir_overhead = strlen("/dlt") + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+    snprintf(dlt_daemon_fifo,
+             DLT_PATH_MAX,
+             "%.*s/dlt",
+             (int)max_base_dir_len,
+             dltFifoBaseDir);
     ret = mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
 
     if ((ret == -1) && (errno != EEXIST)) {
@@ -424,7 +447,20 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     }
 
     /* create and open DLT user FIFO */
-    snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+    /* /dlt%d consists of 4 bytes "/dlt" and pid field (INT_MAX = 2147483647 - 32 bit)
+     * The worst case: "/dlt2147483647"
+     * Total: 4 + 4 + '\0' = 9 bytes
+     * DLT_PATH_MAX = 1024 bytes
+     * Space left: 1024 - 9 = 1015 bytes
+     */
+    base_dir_overhead = strlen("/dlt") + sizeof(int) + 1;
+    max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+    snprintf(filename,
+             DLT_PATH_MAX,
+             "%.*s/dlt%d",
+             (int)max_base_dir_len,
+             dlt_user_dir,
+             getpid());
 
     /* Try to delete existing pipe, ignore result of unlink */
     unlink(filename);
@@ -1054,6 +1090,8 @@ DltReturnValue dlt_free(void)
     uint32_t i;
     int ret = 0;
     int expected = 0;
+    size_t base_dir_overhead;
+    size_t max_base_dir_len;
 #ifdef DLT_LIB_USE_FIFO_IPC
     char filename[DLT_PATH_MAX];
 #endif
@@ -1082,7 +1120,14 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        base_dir_overhead = strlen("/dlt") + sizeof(int) + 1;
+        max_base_dir_len = DLT_PATH_MAX - base_dir_overhead;
+        snprintf(filename,
+                 DLT_PATH_MAX,
+                 "%.*s/dlt%d",
+                 (int)max_base_dir_len,
+                 dlt_user_dir,
+                 getpid());
         unlink(filename);
     }
 

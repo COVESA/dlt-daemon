@@ -13,39 +13,79 @@
 # For further information see http://www.covesa.org/.
 #######
 
-set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-client.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-user.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-client.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-user.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-stress.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-init-free.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context.c)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer.c)
-install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
-        DESTINATION share/dlt-filetransfer)
+# Test target configuration ===================================================
+# Base test targets
+set(TEST_BASE_TARGETS
+    dlt-test-multi-process
+    dlt-test-multi-process-client
+    dlt-test-user
+    dlt-test-client
+    dlt-test-stress-user
+    dlt-test-stress-client
+    dlt-test-stress
+    dlt-test-fork-handler
+    dlt-test-init-free
+    dlt-test-preregister-context
+    dlt-test-filetransfer
+)
 
+# Conditional test targets
+set(TEST_CONDITIONAL_TARGETS)
 if(WITH_DLT_CXX11_EXT)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension.cpp)
+    list(APPEND TEST_CONDITIONAL_TARGETS dlt-test-cpp-extension)
 endif()
 
-#TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage
-if (NOT WITH_DLT_DISABLE_MACRO)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-non-verbose.c)
+if(NOT WITH_DLT_DISABLE_MACRO)
+    list(APPEND TEST_CONDITIONAL_TARGETS dlt-test-non-verbose)
 endif()
 
 if(WITH_DLT_QNX_SYSTEM)
-    set(TARGET_LIST ${TARGET_LIST} dlt-test-qnx-slogger.c)
+    list(APPEND TEST_CONDITIONAL_TARGETS dlt-test-qnx-slogger)
 endif()
 
-foreach(TARGET IN LISTS TARGET_LIST)
-    set(TARGET_SRCS ${TARGET})
-    add_executable(${TARGET} ${TARGET_SRCS})
-    target_link_libraries(${TARGET} dlt)
-    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
-    install(TARGETS ${TARGET}
-            RUNTIME DESTINATION bin
-            COMPONENT base)
+# Combine all test targets
+set(TEST_TARGETS_ALL
+    ${TEST_BASE_TARGETS}
+    ${TEST_CONDITIONAL_TARGETS}
+)
+
+# File installation configuration
+set(TEST_DATA_FILES
+    dlt-test-filetransfer-file
+    dlt-test-filetransfer-image.png
+)
+
+install(FILES ${TEST_DATA_FILES}
+    DESTINATION share/dlt-filetransfer
+)
+
+# Test target construction ====================================================
+foreach(TEST_TARGET IN LISTS TEST_TARGETS_ALL)
+    # Source file resolution
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_TARGET}.c")
+        set(SOURCE_FILE "${TEST_TARGET}.c")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_TARGET}.cpp")
+        set(SOURCE_FILE "${TEST_TARGET}.cpp")
+    else()
+        message(FATAL_ERROR "Missing source for ${TEST_TARGET} - checked .c and .cpp extensions")
+    endif()
+
+    # Target creation
+    add_executable(${TEST_TARGET} ${SOURCE_FILE})
+
+    # Language configuration
+    if(SOURCE_FILE MATCHES "\\.cpp$")
+        set_target_properties(${TEST_TARGET} PROPERTIES LINKER_LANGUAGE CXX)
+    else()
+        set_target_properties(${TEST_TARGET} PROPERTIES LINKER_LANGUAGE C)
+    endif()
+
+    # Dependencies
+    target_link_libraries(${TEST_TARGET} PRIVATE dlt)
+
+    # Installation
+    install(TARGETS ${TEST_TARGET}
+        RUNTIME DESTINATION bin
+        COMPONENT base
+    )
 endforeach()

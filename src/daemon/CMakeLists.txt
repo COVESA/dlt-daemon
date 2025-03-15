@@ -13,101 +13,88 @@
 # For further information see http://www.covesa.org/.
 #######
 
+# Source Configuration ========================================================
+set(BASE_SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 
-if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
-    message(STATUS "Added ${systemd_SRCS} to dlt-daemon")
-endif()
+# Target Configuration ========================================================
+## Daemon core targets
+set(DLT_DAEMON_CORE_TARGETS
+    dlt-daemon
+    dlt_daemon_client
+    dlt_daemon_common
+    dlt_daemon_connection
+    dlt_daemon_event_handler
+    dlt_daemon_offline_logstorage
+    dlt_daemon_serial
+    dlt_daemon_socket
+    dlt_daemon_unix_socket
+)
 
-set(dlt_daemon_SRCS
-    dlt-daemon.c
-    dlt_daemon_client.c
-    dlt_daemon_common.c
-    dlt_daemon_connection.c
-    dlt_daemon_event_handler.c
-    dlt_daemon_offline_logstorage.c
-    dlt_daemon_serial.c
-    dlt_daemon_socket.c
-    dlt_daemon_unix_socket.c
-    ${PROJECT_SOURCE_DIR}/src/gateway/dlt_gateway.c
-    ${PROJECT_SOURCE_DIR}/src/lib/dlt_client.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_common.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_config_file_parser.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_log.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_multiple_files.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_offline_trace.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_protocol.c
-    ${PROJECT_SOURCE_DIR}/src/shared/dlt_user_shared.c
-    ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage.c
-    ${PROJECT_SOURCE_DIR}/src/offlinelogstorage/dlt_offline_logstorage_behavior.c
-    )
+## Shared component targets
+set(DLT_SHARED_COMPONENT_TARGETS
+    gateway/dlt_gateway
+    lib/dlt_client
+    shared/dlt_common
+    shared/dlt_config_file_parser
+    shared/dlt_log
+    shared/dlt_multiple_files
+    shared/dlt_offline_trace
+    shared/dlt_protocol
+    shared/dlt_user_shared
+    offlinelogstorage/dlt_offline_logstorage
+    offlinelogstorage/dlt_offline_logstorage_behavior
+)
 
+# Source Resolution ===========================================================
+## Convert targets to source files
+foreach(TARGET_NAME IN LISTS DLT_DAEMON_CORE_TARGETS)
+    set(SRC_FILE "${TARGET_NAME}.c")
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_FILE}")
+        message(FATAL_ERROR "Missing core source: ${SRC_FILE}")
+    endif()
+    list(APPEND DLT_DAEMON_CORE_SOURCES "${SRC_FILE}")
+endforeach()
+
+foreach(COMPONENT IN LISTS DLT_SHARED_COMPONENT_TARGETS)
+    set(SRC_FILE "${BASE_SRC_DIR}/${COMPONENT}.c")
+    if(NOT EXISTS "${SRC_FILE}")
+        message(FATAL_ERROR "Missing shared component: ${SRC_FILE}")
+    endif()
+    list(APPEND DLT_SHARED_COMPONENTS "${SRC_FILE}")
+endforeach()
+
+# Main Executable Configuration ===============================================
+add_executable(dlt-daemon)
+
+## Core sources
+target_sources(dlt-daemon PRIVATE
+    ${DLT_DAEMON_CORE_SOURCES}
+    ${DLT_SHARED_COMPONENTS}
+    ${systemd_SRCS}
+)
+
+# Optional Components =========================================================
+## Shared Memory Support
 if(WITH_DLT_SHM_ENABLE)
-    set(dlt_daemon_SRCS
-        ${dlt_daemon_SRCS}
-        ${PROJECT_SOURCE_DIR}/src/shared/dlt_shm.c)
+    set(SHM_TARGET "shared/dlt_shm")
+    set(SHM_SOURCE "${BASE_SRC_DIR}/${SHM_TARGET}.c")
+    if(NOT EXISTS "${SHM_SOURCE}")
+        message(FATAL_ERROR "Missing SHM source: ${SHM_SOURCE}")
+    endif()
+    target_sources(dlt-daemon PRIVATE "${SHM_SOURCE}")
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN|MSYS")
-    set(RT_LIBRARY rt)
-    set(SOCKET_LIBRARY "")
-else()
-    set(RT_LIBRARY "")
-    set(SOCKET_LIBRARY socket)
-endif()
-
+## UDP Connection Support
 if(WITH_UDP_CONNECTION)
-    include_directories(${PROJECT_SOURCE_DIR}/src/daemon/udp_connection)
-    add_definitions(-DUDP_CONNECTION_SUPPORT)
-    set(dlt_daemon_SRCS ${dlt_daemon_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/udp_connection/dlt_daemon_udp_socket.c)
-endif(WITH_UDP_CONNECTION)
+    set(UDP_TARGET "daemon/udp_connection/dlt_daemon_udp_socket")
+    set(UDP_SOURCE "${BASE_SRC_DIR}/${UDP_TARGET}.c")
+    if(NOT EXISTS "${UDP_SOURCE}")
+        message(FATAL_ERROR "Missing UDP source: ${UDP_SOURCE}")
+    endif()
 
-add_executable(dlt-daemon ${dlt_daemon_SRCS} ${systemd_SRCS})
-target_link_libraries(dlt-daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-if (WITH_SYSTEMD_SOCKET_ACTIVATION)
-    target_link_libraries(dlt-daemon systemd)
-endif()
-if (WITH_DLT_LOGSTORAGE_GZIP)
-	target_link_libraries(dlt-daemon ${ZLIB_LIBRARY})
-endif()
-
-install(TARGETS dlt-daemon
-        RUNTIME DESTINATION bin
-        PERMISSIONS
-            OWNER_EXECUTE OWNER_WRITE OWNER_READ
-            GROUP_EXECUTE GROUP_READ
-            WORLD_EXECUTE WORLD_READ
-        COMPONENT base)
-
-if (WITH_DLT_UNIT_TESTS)
-    set(library_SRCS ${dlt_daemon_SRCS})
-
-    if (WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
-        set(library_SRCS ${library_SRCS} ${systemd_SRCS})
-    endif(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
-
-    add_library(dlt_daemon ${library_SRCS})
-    target_compile_definitions(dlt_daemon PRIVATE DLT_USER_IPC_PATH="${DLT_USER_IPC_PATH}")
-    target_link_libraries(dlt_daemon ${RT_LIBRARY} ${SOCKET_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-
-    install(TARGETS dlt_daemon
-            RUNTIME DESTINATION bin
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
-            COMPONENT base)
-endif(WITH_DLT_UNIT_TESTS)
-
-INSTALL(FILES dlt.conf
-	DESTINATION ${CONFIGURATION_FILES_DIR}
-	COMPONENT base)
-
-if (WITH_DLT_LOG_LEVEL_APP_CONFIG)
-    INSTALL(FILES dlt-log-levels.conf
-            DESTINATION ${CONFIGURATION_FILES_DIR}
-            COMPONENT base)
-endif()
-
-if (WITH_DLT_TRACE_LOAD_CTRL)
-    INSTALL(FILES dlt-trace-load.conf
-            DESTINATION ${CONFIGURATION_FILES_DIR}
-            COMPONENT base)
+    target_include_directories(dlt-daemon PRIVATE
+        ${BASE_SRC_DIR}/daemon/udp_connection
+    )
+    target_compile_definitions(dlt-daemon PRIVATE UDP_CONNECTION_SUPPORT)
+    target_sources(dlt-daemon PRIVATE "${UDP_SOURCE}")
 endif()

@@ -2304,7 +2304,7 @@ void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsig
     }
 }
 
-int dlt_buffer_check_size(DltBuffer *buf, int needed)
+DltReturnValue dlt_buffer_check_size(DltBuffer *buf, int needed)
 {
     if (buf == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
@@ -2456,7 +2456,7 @@ DltReturnValue dlt_buffer_push(DltBuffer *buf, const unsigned char *data, unsign
     return dlt_buffer_push3(buf, data, size, 0, 0, 0, 0);
 }
 
-int dlt_buffer_push3(DltBuffer *buf,
+DltReturnValue dlt_buffer_push3(DltBuffer *buf,
                      const unsigned char *data1,
                      unsigned int size1,
                      const unsigned char *data2,

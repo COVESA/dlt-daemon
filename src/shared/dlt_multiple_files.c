@@ -120,15 +120,20 @@ void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, cons
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
-    /* create log file name */
-    char* file_name = files_buffer->filename;
-    memset(file_name, 0, length * sizeof(char));
+    files_buffer->filename[0] = '\0';
 
-    const size_t size = length - strlen(file_name) - 1;
-    strncat(file_name, files_buffer->filenameBase, size);
-    strncat(file_name, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
-    strncat(file_name, file_index, size);
-    strncat(file_name, files_buffer->filenameExt, size);
+    /* Calculate available space */
+    size_t remaining = length - 1; // for '\0'
+    size_t base_length = strnlen(files_buffer->filenameBase, remaining);
+    size_t ext_length = strnlen(files_buffer->filenameExt, NAME_MAX+1);
+
+    snprintf(files_buffer->filename, length, "%.*s%s%s%s%.*s",
+        (int)base_length, files_buffer->filenameBase,   // Base name (truncated if needed)
+        MULTIPLE_FILES_FILENAME_INDEX_DELIM,           // "."
+        file_index,                                    // 10-digit padded index
+        "",                                            // Extra safety buffer
+        (int)ext_length, files_buffer->filenameExt     // Extension (truncated if needed)
+    );
 }
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
