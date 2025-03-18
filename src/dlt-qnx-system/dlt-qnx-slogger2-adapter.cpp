@@ -317,6 +317,13 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
 
     DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
             "dlt-qnx-slogger2-adapter, start syslog");
-    pthread_create(&pt, &t_attr, slogger2_thread, conf);
-    g_threads.threads[g_threads.count++] = pt;
+
+    pthread_attr_init(&t_attr);
+
+    const int ret = pthread_create(&pt, &t_attr, slogger2_thread, conf);
+    if (0 != ret) {
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_ERROR, __func__, "pthread_create failed with error, ret=", ret);
+    } else {
+        g_threads.threads[g_threads.count++] = pt;
+    }
 }
