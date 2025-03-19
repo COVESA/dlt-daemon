@@ -111,12 +111,24 @@ extern "C" {
 
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 #define DLT_SEM_LOCK() do{ \
-        pthread_mutex_lock(&dlt_mutex); \
-    } while(false)
+        int err_check = pthread_mutex_lock(&dlt_mutex); \
+        if (err_check != 0) { \
+            dlt_vlog(LOG_ERR, \
+                     "DLT sem lock error: %d - %s pid=%i\n", \
+                     err_check, \
+                     strerror(err_check), \
+                     getpid()); \
+    }} while(false)
 
 #define DLT_SEM_FREE() do{ \
-        pthread_mutex_unlock(&dlt_mutex); \
-    } while(false)
+        int err_check = pthread_mutex_unlock(&dlt_mutex); \
+        if (err_check != 0) { \
+            dlt_vlog(LOG_ERR, \
+                    "DLT sem free error: %d - %s in pid=%i\n", \
+                    err_check, \
+                    strerror(err_check), \
+                    getpid()); \
+    }} while(false)
 
 /**
  * This structure is used for every context used in an application.
