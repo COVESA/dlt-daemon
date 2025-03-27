@@ -363,9 +363,9 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
-             "%s/dltpipes", dltFifoBaseDir);
+             "%.1014s/dltpipes", dltFifoBaseDir);
     snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
-             "%s/dlt", dltFifoBaseDir);
+             "%.1019s/dlt", dltFifoBaseDir);
 #endif
 
 #ifdef DLT_SHM_ENABLE
