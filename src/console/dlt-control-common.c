@@ -664,14 +664,8 @@ int dlt_control_deinit(void)
         g_client.receiver.fd = -1;
     }
 
-        /* Stopping the listener thread */
-    if (pthread_cancel(daemon_connect_thread)) {
-        pr_error("Unable to cancel the thread with ERRNO=%s\n", strerror(errno));
-    }
-    else {
-        if (pthread_join(daemon_connect_thread, NULL)) {
-            pr_error("Unable to join the thread with ERRNO=%s\n", strerror(errno));
-        }
+    if (pthread_join(daemon_connect_thread, NULL)) {
+        pr_error("Unable to join the thread with ERRNO=%s\n", strerror(errno));
     }
 
     /* Closing the socket */
