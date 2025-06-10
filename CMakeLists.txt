@@ -124,10 +124,8 @@ option(WITH_DLT_LIB_VSOCK_IPC "Set to ON to enable VSOCK support in library (DLT
 
 set(DLT_VSOCK_PORT "13490"
     CACHE STRING "VSOCK port number for logging traffic.")
-set(DLT_WRITEV_TIMEOUT_SEC "1"
-    CACHE STRING "Set sec timeout for writev to prevent blocking indefinitely")
-set(DLT_WRITEV_TIMEOUT_USEC "0"
-    CACHE STRING "Set usec timeout for writev to prevent blocking indefinitely")
+set(DLT_WRITEV_TIMEOUT_MS "1000"
+    CACHE STRING "Set millisecond timeout for writev to prevent blocking indefinitely")
 
 # RPM settings
 set(COVESA_RPM_RELEASE "1")  # ${DLT_REVISION}
@@ -165,8 +163,7 @@ include_directories(
 )
 
 add_definitions(-D_GNU_SOURCE)
-add_definitions(-DDLT_WRITEV_TIMEOUT_SEC=${DLT_WRITEV_TIMEOUT_SEC})
-add_definitions(-DDLT_WRITEV_TIMEOUT_USEC=${DLT_WRITEV_TIMEOUT_USEC})
+add_definitions(-DDLT_WRITEV_TIMEOUT_MS=${DLT_WRITEV_TIMEOUT_MS})
 add_definitions(-DDLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS=${DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS})
 
 if(NOT DLT_IPC STREQUAL "UNIX_SOCKET" AND NOT DLT_IPC STREQUAL "FIFO")

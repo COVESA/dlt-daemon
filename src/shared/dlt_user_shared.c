@@ -69,9 +69,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <poll.h>
 
 #include <sys/uio.h> /* writev() */
-#include <sys/time.h> /* timeval */
 
 #include "dlt_user_shared.h"
 #include "dlt_user_shared_cfg.h"
@@ -132,16 +132,15 @@ DltReturnValue dlt_user_log_out2_with_timeout(int handle, void *ptr1, size_t len
         /* Invalid handle */
         return DLT_RETURN_ERROR;
 
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(handle, &fds);
+    struct pollfd pfd;
+    pfd.fd = handle;
+    pfd.events = POLLOUT;
 
-    struct timeval tv = { DLT_WRITEV_TIMEOUT_SEC, DLT_WRITEV_TIMEOUT_USEC };
-    if (select(handle+1, NULL, &fds, NULL, &tv) < 0) {
+    if (poll(&pfd, 1, DLT_WRITEV_TIMEOUT_MS) < 0) {
         return DLT_RETURN_ERROR;
     }
 
-    if (FD_ISSET(handle, &fds)) {
+    if (pfd.revents & POLLOUT) {
         return dlt_user_log_out2(handle, ptr1, len1, ptr2, len2);
     } else {
         return DLT_RETURN_ERROR;
@@ -206,16 +205,15 @@ DltReturnValue dlt_user_log_out3_with_timeout(int handle, void *ptr1, size_t len
         /* Invalid handle */
         return DLT_RETURN_ERROR;
 
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(handle, &fds);
+    struct pollfd pfd;
+    pfd.fd = handle;
+    pfd.events = POLLOUT;
 
-    struct timeval tv = { DLT_WRITEV_TIMEOUT_SEC, DLT_WRITEV_TIMEOUT_USEC };
-    if (select(handle+1, NULL, &fds, NULL, &tv) < 0) {
+    if (poll(&pfd, 1, DLT_WRITEV_TIMEOUT_MS) < 0) {
         return DLT_RETURN_ERROR;
     }
 
-    if (FD_ISSET(handle, &fds)) {
+    if (pfd.revents & POLLOUT) {
         return dlt_user_log_out3(handle, ptr1, len1, ptr2, len2, ptr3, len3);
     } else {
         return DLT_RETURN_ERROR;
