@@ -1725,7 +1725,7 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
                  __func__,
                  errno != 0 ? strerror(errno) : "Unknown error");
 
-        if (errno == EPIPE) {
+        if (errno == EPIPE || errno == EBADF) {
             app = dlt_daemon_application_find(daemon, context->apid, daemon->ecuid, verbose);
             if (app != NULL)
                 dlt_daemon_application_reset_user_handle(daemon, app, verbose);
@@ -1757,7 +1757,7 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
                             &(logstate), sizeof(DltUserControlMsgLogState));
 
     if (ret < DLT_RETURN_OK) {
-        if (errno == EPIPE)
+        if (errno == EPIPE || errno == EBADF)
             dlt_daemon_application_reset_user_handle(daemon, app, verbose);
     }
 
@@ -2084,8 +2084,9 @@ int dlt_daemon_user_send_trace_load_config(DltDaemon *const daemon, DltDaemonApp
                                          &(trace_load_settings_count), sizeof(uint32_t),
                                          trace_load_settings_user_msg, sizeof(DltUserControlMsgTraceSettingMsg) * trace_load_settings_count);
 
-    if (ret < DLT_RETURN_OK && errno == EPIPE) {
-        dlt_daemon_application_reset_user_handle(daemon, app, verbose);
+    if (ret < DLT_RETURN_OK) {
+        if (errno == EPIPE || errno == EBADF)
+            dlt_daemon_application_reset_user_handle(daemon, app, verbose);
     }
 
     free(trace_load_settings_user_msg);

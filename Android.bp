@@ -30,8 +30,7 @@ cc_defaults {
         "-DDLT_LIB_USE_UNIX_SOCKET_IPC",
         "-DCONFIGURATION_FILES_DIR=\"/vendor/etc\"",
         "-DDLT_USER_IPC_PATH=\"/dev/socket\"",
-        "-DDLT_WRITEV_TIMEOUT_SEC=1",
-        "-DDLT_WRITEV_TIMEOUT_USEC=0",
+        "-DDLT_WRITEV_TIMEOUT_MS=1000",
     ] + [
         "-Wno-unused-parameter",
         "-W",
