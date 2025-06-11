@@ -132,6 +132,8 @@ typedef struct {
     int send_serial;            /* Send serial header with control messages */
     DltClient client;           /* DltClient structure */
     int default_log_level;      /* Default Log Level on passive node */
+    int heart_beat_flag;        /* heart beat signal send flag. 0 no heart beat signal */
+    int heart_beat_wait;       /* the wait seconds to close connection without response */
 } DltGatewayConnection;
 
 /* DltGateway structure */
