@@ -1,3 +1,18 @@
+#######
+# SPDX license identifier: MPL-2.0
+#
+# Copyright (C) 2011-2015, BMW AG
+#
+# This file is part of COVESA Project DLT - Diagnostic Log and Trace.
+#
+# This Source Code Form is subject to the terms of the
+# Mozilla Public License (MPL), v. 2.0.
+# If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# For further information see http://www.covesa.org/.
+#######
+
 SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
 
@@ -70,7 +85,7 @@ set(TARGET_LIST gtest_dlt_common
                 dlt_env_ll_unit_test)
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
+    set(target_SRCS ${target}.cpp)
     if(${target} STREQUAL "gtest_dlt_daemon_common")
         set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     elseif(${target} STREQUAL "gtest_dlt_daemon")
@@ -128,7 +143,7 @@ if(WITH_DLT_SHM_ENABLE)
 endif()
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
+    set(target_SRCS ${target}.cpp)
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
     target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
     if(WITH_DLT_INSTALLED_TESTS)
