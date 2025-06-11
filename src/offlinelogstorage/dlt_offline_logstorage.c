@@ -1760,6 +1760,7 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
     tmp_data.log_level = DLT_LOG_VERBOSE;
     tmp_data.reset_log_level = DLT_LOG_OFF;
     tmp_data.disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
+    tmp_data.fd = -1;
 
     for (i = 0; i < DLT_LOGSTORAGE_FILTER_CONF_COUNT; i++) {
         ret = dlt_logstorage_get_filter_value(config_file, sec_name, i, value);
