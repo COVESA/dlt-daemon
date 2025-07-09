@@ -14,7 +14,7 @@
 #######
 
 # Set minimum Cmake version and setup policy behavior
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.5)
 
 if(${CMAKE_VERSION} VERSION_GREATER "3.20" OR ${CMAKE_VERSION} VERSION_EQUAL "3.20")
     cmake_policy(SET CMP0115 OLD)
