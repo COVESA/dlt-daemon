@@ -21,3 +21,7 @@ googletest/
 # exclude temporary files
 cscope.out
 *.swp
+
+# Bazel
+bazel-*
+MODULE.bazel.lock
