@@ -42,7 +42,7 @@ if(NOT WITH_DLT_CONSOLE_WO_SBTM)
 endif()
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
+    set(target_SRCS ${target}.c)
     add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} dlt dlt_control_common_lib)
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
