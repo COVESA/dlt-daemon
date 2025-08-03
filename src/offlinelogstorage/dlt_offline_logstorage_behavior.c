@@ -1115,7 +1115,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                         }
                     }
                     else {
-                        if (fsync(fileno(config->log)) != 0) {
+                        if (fsync(config->fd) != 0) {
                             if (errno != ENOSYS) {
                                 dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
                             }
