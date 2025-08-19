@@ -92,13 +92,13 @@ Store incoming messages in file(s) and restrict file sizes to 1 megabyte. If lim
     **dlt-receive -o log.dlt -c 1M localhost**
 
 ## Space separated filter file
-File that defines multiple filters. Can be used as argument for `-f` option. With this it's only possible to filter messages depending on their Application ID and/or Context ID. The syntax is: first AppID and optional a CtxID behind it, with a space in between. Each line defines a filter and the maximum number of filters is 30.
+File that defines multiple filters. Can be used as argument for `-f` option. With this it's only possible to filter messages depending on their Application ID and/or Context ID. The syntax is: first AppID and optional a CtxID behind it, with a space in between. Each line defines a filter and the maximum number of filters is 30. CtxID can be wildcard: "----" (compatible) or "*" (new updated).
 
 Example:
 ```
 DLTD INTM
-DLT INT
-TEST
+QSYM ----
+TEST *
 ```
 
 ## Json filter file

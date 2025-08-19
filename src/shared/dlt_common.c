@@ -453,7 +453,7 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
 
         printf(" %s", str1);
 
-        if (strcmp(str1, "----") == 0)
+        if (strcmp(str1, "----") == 0 || strcmp(str1, "*") == 0)
             dlt_set_id(apid, "");
         else
             dlt_set_id(apid, str1);
