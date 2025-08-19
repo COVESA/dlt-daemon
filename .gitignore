@@ -1,6 +1,6 @@
-Release/
-Debug/
-build/
+Release
+Debug
+build
 automotive-dlt.spec
 automotive-dlt.pc
 config.h
@@ -9,15 +9,27 @@ include/dlt/dlt_user.h
 .project
 .cproject
 .settings
-.idea/
+.idea
 *~
 *.o
 *.out
 *.swp
-cmake-build-debug/
-.vscode/
-googletest/
+cmake-build-debug
+.vscode
 
 # exclude temporary files
 cscope.out
 *.swp
+
+# Temp debian build files
+*.debhelper.log
+.debhelper
+*.substvars
+debian/debhelper-build-stamp
+debian/dlt-daemon
+debian/dlt-examples
+debian/dlt-tools
+debian/files
+debian/libdlt-dev
+debian/libdlt2
+debian/tmp

@@ -1,0 +1,11 @@
+opt/tooling/dlt/lib/$(DEB_HOST_MULTIARCH)/cmake/automotive-dlt/*
+opt/tooling/dlt/share/dlt-filetransfer/dlt-test-filetransfer-file
+opt/tooling/dlt/share/dlt-filetransfer/dlt-test-filetransfer-image.png
+opt/tooling/dlt/share/man/man1/dlt-adaptor-stdin.1.gz
+opt/tooling/dlt/share/man/man1/dlt-adaptor-udp.1.gz
+opt/tooling/dlt/share/man/man1/dlt-control.1.gz
+opt/tooling/dlt/share/man/man1/dlt-sortbytimestamp.1.gz
+opt/tooling/dlt/bin/dlt-kpi
+opt/tooling/dlt/bin/dlt-sortbytimestamp
+opt/tooling/dlt/bin/dlt-test-*
+opt/tooling/dlt/lib/systemd/system/dlt*

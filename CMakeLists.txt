@@ -298,7 +298,11 @@ if(WITH_SYSTEMD
 
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
-    string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
+    if(SYSTEMD_VERSION)
+        string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
+    else()
+        set(SYSTEMD_VERSION "")
+    endif()
 
     if(WITH_SYSTEMD)
         add_definitions(-DDLT_SYSTEMD_ENABLE)

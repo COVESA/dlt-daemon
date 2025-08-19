@@ -4,4 +4,4 @@ INSTALL_PREFIX_PATH/etc/dlt.conf
 INSTALL_PREFIX_PATH/share/man/man1/dlt-daemon.1.gz
 INSTALL_PREFIX_PATH/share/man/man5/dlt.conf.5.gz
 INSTALL_PREFIX_PATH/share/man/man5/dlt_gateway.conf.5.gz
-lib/systemd/system/dlt.service
+INSTALL_PREFIX_PATH/lib/systemd/system/dlt.service
