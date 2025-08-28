@@ -28,6 +28,7 @@
 #define EVENT_UNMOUNTING    0
 #define EVENT_MOUNTED       1
 #define EVENT_SYNC_CACHE    2
+#define EVENT_DUMP_RING_BUFFER    3
 
 typedef enum
 {
