@@ -675,7 +675,7 @@ Back to [README.md](../README.md)
   * Implemented Dlt MultiNode to connect DLT Daemons running on different operating systems
   * Daemon shutdown: fixed memory leaks and missing removal of created sockets
   * DltLogstorage: reduce writing to internal storage device as much as possible
-  * Control appliction to support offline log storage trigger implemented
+  * Control application to support offline log storage trigger implemented
   * Offline log storage to internal and external devices implemented
   * Unix socket control interface implemented
   * Parse INI files for Offline Logstorage, Multinode and potentially other DLT extensions implmented
@@ -848,9 +848,9 @@ Back to [README.md](../README.md)
 ### 2.8.0
 
    * [GDLT-115]: Encapsulate user macros
-   * Fix register app and register context was not stored in buffer when FIFO is full. Other controll messages still not saved in buffer.
+   * Fix register app and register context was not stored in buffer when FIFO is full. Other control messages still not saved in buffer.
    * Create new fifo only when same application registers with different pid.'
-   * Do not register appliction again, if already registered.
+   * Do not register application again, if already registered.
    * Fixed filetransfer not checking buffer fill level.
 
 ### 2.7.0
@@ -866,7 +866,7 @@ Back to [README.md](../README.md)
 ### 2.6.2
 
    * [GDLT-89] Fixed daemon doesn't sent the persistent log level
-   * [GDLT-88] Fixed wrong initalization order using offline trace function
+   * [GDLT-88] Fixed wrong initialization order using offline trace function
 
 ### 2.6.1
 
@@ -936,7 +936,7 @@ Back to [README.md](../README.md)
    * [GDLT-36] Prefixing of dlt_version.h fixed
    * [GDLT-31] Tracefile content stored different under Ubuntu 64 bit version compared to Ubuntu/Win 32 Bit version fixed
    * [GDLT-35] Compile warnings fixed
-   * [GSW-137] Wrong include gives error on compailing against dlt fixed
+   * [GSW-137] Wrong include gives error on compiling against dlt fixed
 
 ### 2.4.2
 
@@ -1005,17 +1005,17 @@ Back to [README.md](../README.md)
 
  * DLT Viewer (QT)
     * New dlt viewer (QT-based) implementated
-    * Moved to seperate project, see extra Release Notes for DLT Viewer (QT)
+    * Moved to separate project, see extra Release Notes for DLT Viewer (QT)
  * DLT Viewer (WX) - Deprecated
     * Old dlt viewer (WX) is removed now from package generation
-    * Moved to seperate project
+    * Moved to separate project
     * Removed filtering of messages during writing to a file
  * DLT library:
     * Functions dlt_file_read_raw() and dlt_file_read_header_raw() added
     * Added support for raw messages in nonverbose mode
     * Injection tables are now dynamically allocated
     * Contexts are now dynamically allocated
-    * Added seperate file for platform float types (dlt_float_types.h)
+    * Added separate file for platform float types (dlt_float_types.h)
       and used this types.
       Attention: This file must be adapted to each target platform.
     * Removed signal handlers from dlt_user.c; SIGPIPE signal is ignored; atexit() handler still exists
@@ -1024,7 +1024,7 @@ Back to [README.md](../README.md)
     * Small optimization in get_log_info() for one searched application with one searched context,
       which is existing in the context table of the dlt daemon
     * Optional syncing to serial header added
-    * Support for keep-alive messages, realized as seperate thread
+    * Support for keep-alive messages, realized as separate thread
  * General:
     * Combined dlt-test-user-multi and dlt-test-many to dlt-test-stress
     * Extended dlt-test-client
@@ -1097,7 +1097,7 @@ Back to [README.md](../README.md)
  * DLT daemon: dlt_daemon_process_user_message_unregister_application() also removes now
      all corresponding contexts
  * DLT daemon: Added security check to dlt_daemon_control_get_log_info() in order to avoid crash
-     which occured under special circumstances
+     which occurred under special circumstances
  * DLT daemon: Register app now opens the connection to the DLT library,
      unregister app closes the connection (was before in register context)
  * Added -lrt to package config file
@@ -1124,8 +1124,8 @@ Back to [README.md](../README.md)
 	* A client library for writing console client applications (Linux) is now available.
 	  dlt-receiver and dlt-test-client uses this new library code
  * General:
-	* Added seperate file for DltMostMessageHeader type
-	* Added seperate file for DLT protocol values
+	* Added separate file for DltMostMessageHeader type
+	* Added separate file for DLT protocol values
 	* Relaxed checks for passing trace messages to plugin handler
 	* Tested and improved MOST plugin
 	* Support for float (32 Bit) and double (64 Bit) values
