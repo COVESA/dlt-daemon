@@ -785,7 +785,7 @@ The public available include directory contains the following header files:
 | dlt_user.h | Include file for dlt_user.c, contains the "User API" functions |
 | dlt_user_macros.h | Include file for dlt_user.c, contains the "User API" macros |
 | dlt_client.h | Include file for dlt_client.c |
-| dlt_protocol.h | DLT protocol specfic definitions and macros |
+| dlt_protocol.h | DLT protocol specific definitions and macros |
 | dlt_types.h | Definition of types, must be adapted to the target architecture and compiler toolchain. |
 
 ### Description of used structures in implementation
