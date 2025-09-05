@@ -284,8 +284,7 @@ unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_co
     idx = strtol(sptr, &eptr, 10);
 
     if (idx == 0)
-        dlt_log(LOG_ERR,
-                "Unable to calculate index from log file name. Reset to 001.\n");
+        dlt_log(LOG_DEBUG, "Unable to calculate index from log file name.\n");
 
     return idx;
 }
@@ -396,6 +395,9 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                 if (files[i]->d_name[len] == file_config->logfile_delimiter) {
                     current_idx = dlt_logstorage_get_idx_of_log_file(file_config, config,
                                                                      files[i]->d_name);
+                    if (current_idx == 0) {
+                        continue;
+                    }
                 } else {
                     continue;
                 }
