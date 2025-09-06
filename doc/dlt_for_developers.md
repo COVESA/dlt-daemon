@@ -246,7 +246,7 @@ Avoid high logging at startup | Especially the system startup is always a high l
 Remove old log messages | If certain long log messages are not necessary anymore because the problem has been resolved, please remove them from your code.
 Do use constant separators | Use consistent field separators and delimiters between different variables and information in order to facilitate automatic log analysis.
 Do use proper logs | The logs should contain the information that you require to identify a problem. If you find yourself producing a new binary to identify a problem every time somebody reports an error something may be wrong.
-Avoid eye catchers | Please don't use custom highlighting for marking the messages which are important for you. The best way is to write a clear identifier in the front of your trace message. This can than (in the viewer) be easily used for filter sets or even for coloring. An example for messages informing about the frame rate could be: **Frame rate**: low: 12, high: 34, avr: 28
+Avoid eye catchers | Please don't use custom highlighting for marking the messages which are important for you. The best way is to write a clear identifier in the front of your trace message. This can then (in the viewer) be easily used for filter sets or even for coloring. An example for messages informing about the frame rate could be: **Frame rate**: low: 12, high: 34, avr: 28
 Do not log to the console | Do not use \_printf()\_ or similar statements to trace to the console. Such behavior can make it problematic to work e.g. with the serial console or even might slow down the execution of the program. In a vehicle based test system the console messages are not recorded and will not help you.
 Do NOT "macrotize" dlt macros | Don't write your own macros to capsulate DLT macros.
 
@@ -798,7 +798,7 @@ args_num++;
 /* Give the buffer to DLT library */
 if (dlt_user_is_logLevel_enabled(&ctx,DLT_LOG_INFO) == DLT_RETURN_TRUE)
 {
-  if (dlt_user_log_write_start_w_given_buffer(&ctx, &ctxdata, DLT_LOG_INFO, buffersize, args_num) > 0)
+  if (dlt_user_log_write_start_w_given_buffer(&ctx, &ctxdata, DLT_LOG_INFO, buffer, size, args_num) > 0)
   {
       dlt_user_log_write_finish_w_given_buffer(&ctxdata);
   }
