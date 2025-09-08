@@ -25,7 +25,7 @@ if(WITH_UDP_CONNECTION)
 endif()
 
 foreach(TARGET IN LISTS TARGET_LIST)
-    set(TARGET_SRCS ${TARGET})
+    set(TARGET_SRCS ${TARGET}.c)
     add_executable(${TARGET} ${TARGET_SRCS})
     target_link_libraries(${TARGET} dlt)
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
