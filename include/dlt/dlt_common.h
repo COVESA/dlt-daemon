@@ -457,6 +457,16 @@ typedef struct
 } DLT_PACKED DltStandardHeader;
 
 /**
+ * The structure of the DLT Base header for version 2. This header is used in each DLT message.
+ */
+typedef struct
+{
+    uint32_t htyp2;           /**< This parameter contains several informations, see definitions below */
+    uint8_t mcnt;           /**< The message counter is increased with each sent DLT message */
+    uint16_t len;           /**< Length of the complete message, without storage header */
+} DLT_PACKED DltBaseHeaderV2;
+
+/**
  * The structure of the DLT extra header parameters. Each parameter is sent only if enabled in htyp.
  */
 typedef struct
@@ -465,6 +475,17 @@ typedef struct
     uint32_t seid;               /**< Session number */
     uint32_t tmsp;               /**< Timestamp since system start in 0.1 milliseconds */
 } DLT_PACKED DltStandardHeaderExtra;
+
+/**
+ * The structure of the DLT extra header parameters for version 2. Each parameter is sent only if enabled in htyp.
+ */
+typedef struct
+{
+    uint8_t msin;                /**< Message info */
+    uint8_t noar;                /**< Number of arguments */
+    uint8_t tmsp2[9];            /**< 9 Bytes of timestamp, 1st four for Nanoseconds */
+    uint32_t msid;               /**< Message Id */
+} DLT_PACKED DltBaseHeaderExtraV2;
 
 /**
  * The structure of the DLT extended header. This header is only sent if enabled in htyp parameter.
