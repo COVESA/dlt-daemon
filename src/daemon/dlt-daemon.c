@@ -92,6 +92,8 @@
 #define DLT_DAEMON_APP_ID "DLTD"
 #define DLT_DAEMON_CTX_ID "INTM"
 
+// DLT Version 2 define
+#define DLT_VERSION2
 
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
@@ -2575,8 +2577,13 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     /* Set standardheader */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
+#ifdef DLT_VERSION2
+    msg.standardheader->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
+        DLT_HTYP_PROTOCOL_VERSION2;
+#elif
     msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
         DLT_HTYP_PROTOCOL_VERSION1;
+#endif
     msg.standardheader->mcnt = uiMsgCount++;
 
     uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
