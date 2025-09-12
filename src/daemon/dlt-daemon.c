@@ -2569,6 +2569,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     uint16_t uiSize;
     uint32_t uiExtraSize;
 
+    // Set the version as Version 2 for development
+    uint8_t dltVersion = DLT_PROTOCOL_VERSION2;
+    struct timespec ts;
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     /* Set storageheader */
@@ -2577,13 +2581,15 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     /* Set standardheader */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
-#ifdef DLT_VERSION2
-    msg.standardheader->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
-        DLT_HTYP_PROTOCOL_VERSION2;
-#elif
-    msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
+    // Use the version number for populating header 
+    if(dltVersion == DLT_PROTOCOL_VERSION2){
+        msg.standardheader->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
+        DLT_PROTOCOL_VERSION2;
+    }
+    else{
+        msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
         DLT_HTYP_PROTOCOL_VERSION1;
-#endif
+    }
     msg.standardheader->mcnt = uiMsgCount++;
 
     uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
@@ -2594,7 +2600,22 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     pStandardExtra =
         (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
-    pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
+    if(dltVersion == DLT_HTYP_PROTOCOL_VERSION2){
+        clock_gettime(CLOCK_REALTIME, &ts);
+        uint8_t tmsp2[9];
+        uint32_t nanoseconds = (uint32_t)ts.tv_nsec;
+        memcpy(&tmsp2[0], &nanoseconds, 4);
+
+        uint64_t seconds = (uint64_t)ts.tv_sec;
+        for (int i = 0; i < 5; i++) {
+            tmsp2[4 + i] = (seconds >> (i * 8)) & 0xFF;
+        }
+        // Assign tmsp2 to the message
+        memcpy(pStandardExtra->tmsp2, tmsp2, 9);
+    }
+    else{
+        pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
+    }
     pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
 
     /* Set extendedheader */
