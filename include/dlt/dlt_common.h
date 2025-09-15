@@ -406,6 +406,14 @@ typedef enum
     DLT_RECEIVE_FD
 } DltReceiverType;
 
+typedef enum
+{
+    DLT_FIRST_FRAME,
+    DLT_CONSECUTIVE_FRAME,
+    DLT_LAST_FRAME,
+    DLT_ABORT_FRAME,
+} DLTSegmentationFrameType;
+
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
@@ -499,6 +507,29 @@ typedef struct
 } DLT_PACKED DltExtendedHeader;
 
 /**
+ * The structure of the DLT extended header for version 2. This header is only sent if enabled in htyp parameter.
+ */
+typedef struct
+{
+    uint8_t ecidlen;              /**< Length of ecu id */
+    char *ecid;
+    uint8_t apidlen;              /**< Length of app id */
+    char *apid;
+    uint8_t ctidlen;              /**< Length of context id */
+    char *ctid;
+    uint32_t seid;                /**< Session id */
+    uint8_t finalen;              /**< Length of filename */
+    char *fina;
+    uint32_t linr;                /**< Line number */
+    uint8_t notg;                 /**< Number of tags */
+    DltTag *tag;
+    uint8_t prlv;                 /**< Privacy level */
+    uint8_t sgmtinfo;             /**< Segmentation info */
+    DLTSegmentationFrameType frametype; /**< Segmentation frame */
+    SegmentationFrame sgmtdetails; /**< Segmentation details */
+} DLT_PACKED DltExtendedHeaderV2;
+
+/**
  * The structure to organise the DLT messages.
  * This structure is used by the corresponding functions.
  */
@@ -525,7 +556,7 @@ typedef struct sDltMessage
     DltStandardHeader *standardheader;      /**< pointer to standard header of current loaded header */
     DltStandardHeaderExtra headerextra;     /**< extra parameters of current loaded header */
     DltExtendedHeader *extendedheader;      /**< pointer to extended of current loaded header */
-} DltMessage;
+} DLT_PACKED DltMessage;
 
 /**
  * The structure of the DLT Service Get Log Info.
@@ -555,6 +586,37 @@ typedef struct
     uint16_t len_context_description;
     char *context_description;
 } ContextIDsInfoType;
+
+typedef struct
+{
+    uint8_t taglen;
+    char* tagname;
+} DltTag;
+
+typedef struct
+{
+    uint64_t totallength;
+} SegmentationFirstFrame;
+
+typedef struct
+{
+    uint32_t sequencecounter;
+} SegmentationConsecutiveFrame;
+
+typedef struct
+{
+    uint8_t abortreason;
+} SegmentationAbortFrame;
+
+
+typedef struct{
+    union {
+    SegmentationFirstFrame firstframe;
+    SegmentationConsecutiveFrame consecutiveframe;
+    SegmentationAbortFrame abortframe;
+    }
+} SegmentationFrame;
+
 
 typedef struct
 {
