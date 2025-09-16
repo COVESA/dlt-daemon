@@ -155,13 +155,13 @@ the links to learn more about the respective concept.
 
 There is still lots to discover about DLT. If you turn on the generation of
 manpages with the cmake option ```-DWITH_MAN=ON``` you can learn how to
-configure DLT to exactly suit your needs, how to control the behvaiour of
+configure DLT to exactly suit your needs, how to control the behaviour of
 running instances and how to interface DLT with existing system through
 provided adaptors.
 
 The man pages are generated with *pandoc*, which also needs *asciidoc* as dependency.
 
-Build manpages (initally or because something changed) with e.g.
+Build manpages (initially or because something changed) with e.g.
 ```bash
 mkdir build
 cd build

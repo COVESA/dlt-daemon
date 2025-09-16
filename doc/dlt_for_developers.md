@@ -708,7 +708,7 @@ if (dlt_user_log_write_start_id(&ctx, &ctxdata, DLT_LOG_INFO, 42) > 0) {
 
 #### Using custom timestamps
 
-The timestamp that is transmitted in the header of a DLT message is usually generated automatically by the library itself right before the message is sent. If you wish to change this, e.g. because you want to indicate when an event occured, rather than when the according message was assembled, you can supply a custom timestamp. Compared to the example above, two macros are defined for convenience:
+The timestamp that is transmitted in the header of a DLT message is usually generated automatically by the library itself right before the message is sent. If you wish to change this, e.g. because you want to indicate when an event occurred, rather than when the according message was assembled, you can supply a custom timestamp. Compared to the example above, two macros are defined for convenience:
 
 ```
 uint32_t timestamp = 1234567; /* uptime in 0.1 milliseconds */
