@@ -284,8 +284,7 @@ unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_co
     idx = strtol(sptr, &eptr, 10);
 
     if (idx == 0)
-        dlt_log(LOG_DEBUG, "Unable to calculate index from log file name: %s\n",
-                file);
+        dlt_log(LOG_DEBUG, "Unable to calculate index from log file name.\n");
 
     return idx;
 }
