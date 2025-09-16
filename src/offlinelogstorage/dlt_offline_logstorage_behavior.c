@@ -69,7 +69,7 @@ DLT_STATIC void dlt_logstorage_concat_logfile_name(char *log_file_name, const ch
  *
  *      filename:       given in configuration file
  *      delimiter:      Punctuation characters (configured in dlt.conf)
- *      timestamp:      yyyy-mm-dd-hh-mm-ss (enabled/disabled in dlt.conf)
+ *      timestamp:      yyyymmdd-hhmmss (enabled/disabled in dlt.conf)
  *      index:          Index len depends on wrap around value in dlt.conf
  *                      ex: wrap around = 99, index will 01..99
  *                      (enabled/disabled in dlt.conf)
@@ -259,14 +259,14 @@ void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head)
  * @param file_config   User configurations for log file
  * @param config        Filter configurations for log file
  * @param file          file name to extract the index from
- * @return index on success, -1 if no index is found
+ * @return index on success, 0 if no index is found
  */
 unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
                                                 DltLogStorageFilterConfig *config,
                                                 char *file)
 {
     if (file_config == NULL || config == NULL || file == NULL)
-        return -1;
+        return 0;
 
     int idx = 0;
     int basename_len;
@@ -284,7 +284,8 @@ unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_co
     idx = strtol(sptr, &eptr, 10);
 
     if (idx == 0)
-        dlt_log(LOG_DEBUG, "Unable to calculate index from log file name.\n");
+        dlt_log(LOG_DEBUG, "Unable to calculate index from log file name: %s\n",
+                file);
 
     return idx;
 }
@@ -383,11 +384,14 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         if (strncmp(files[i]->d_name, file_name, len) == 0) {
             if (config->num_files == 1 && file_config->logfile_optional_counter) {
                 /* <filename>.dlt or <filename>_<tmsp>.dlt */
-                if ((files[i]->d_name[len] == suffix[0]) ||
+                if ((strcmp(files[i]->d_name + len, suffix) == 0) ||
                     (file_config->logfile_timestamp &&
-                     (files[i]->d_name[len] == file_config->logfile_delimiter))) {
+                     (strcmp(files[i]->d_name + len +
+                                 DLT_OFFLINE_LOGSTORAGE_TIMESTAMP_LEN,
+                             suffix) == 0))) {
                     current_idx = 1;
-                } else {
+                }
+                else {
                     continue;
                 }
             } else {
@@ -629,8 +633,7 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             if (config->num_files == 1 && file_config->logfile_optional_counter) {
                 idx = 1;
             } else {
-                idx = dlt_logstorage_get_idx_of_log_file(file_config, config,
-                                                         config->working_file_name);
+                idx = (*newest)->idx;
             }
 
             /* Check if file logging shall be stopped */
