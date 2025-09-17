@@ -93,7 +93,11 @@
 #define DLT_DAEMON_CTX_ID "INTM"
 
 // DLT Version 2 define
-#define DLT_VERSION2
+#define DLT_VERSION2 2
+#define DLT_VERSION_MASK 0xE0
+
+// Set the version as Version 2 for development
+uint8_t dlt_version = DLT_VERSION2;
 
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
@@ -2569,8 +2573,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     uint16_t uiSize;
     uint32_t uiExtraSize;
 
-    // Set the version as Version 2 for development
-    uint8_t dltVersion = DLT_PROTOCOL_VERSION2;
     struct timespec ts;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -2582,9 +2584,9 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     /* Set standardheader */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
     // Use the version number for populating header 
-    if(dltVersion == DLT_PROTOCOL_VERSION2){
+    if(dlt_version == DLT_VERSION2){
         msg.standardheader->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
-        DLT_PROTOCOL_VERSION2;
+        DLT_VERSION2;
     }
     else{
         msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
@@ -2592,15 +2594,22 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     }
     msg.standardheader->mcnt = uiMsgCount++;
 
-    uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
+    if(dlt_version == DLT_VERSION2){
+        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2) +
+        (DLT_IS_HTYP_UEH(msg.DltBaseHeaderV2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
+    }
+    else{
+        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
         (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
+    }
+    
     msg.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
 
     /* Set extraheader */
     pStandardExtra =
         (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
-    if(dltVersion == DLT_HTYP_PROTOCOL_VERSION2){
+    if(dlt_version == DLT_VERSION2){
         clock_gettime(CLOCK_REALTIME, &ts);
         uint8_t tmsp2[9];
         uint32_t nanoseconds = (uint32_t)ts.tv_nsec;
@@ -2619,14 +2628,30 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
 
     /* Set extendedheader */
-    msg.extendedheader =
-        (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
-                              DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-    msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-    msg.extendedheader->noar = 1;
-    dlt_set_id(msg.extendedheader->apid, app_id);
-    dlt_set_id(msg.extendedheader->ctid, ctx_id);
+    if(dlt_version == DLT_VERSION2){
+        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2) +
+        (DLT_IS_HTYP_UEH(msg.DltBaseHeaderV2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
+        msg.extendedheaderV2 =
+        (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltBaseHeaderV2) +
+                              DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2));
+        msg.extendedheaderV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+        msg.extendedheaderV2->noar = 1;
+        dlt_set_id(msg.extendedheaderV2->apid, app_id);
+        dlt_set_id(msg.extendedheaderV2->ctid, ctx_id);
+    }
+    else{
+        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
+        (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
+        msg.extendedheader =
+            (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+        msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+        msg.extendedheader->noar = 1;
+        dlt_set_id(msg.extendedheader->apid, app_id);
+        dlt_set_id(msg.extendedheader->ctid, ctx_id);
+    
 
     /* Set payload data... */
     uiType = DLT_TYPE_INFO_STRG;
@@ -2828,6 +2853,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                             (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.nflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+        
         /* Check for control message */
         if ((0 < receiver->fd) &&
             DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
@@ -2836,6 +2862,8 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               daemon_local,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
+        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
+        dlt_version = (header_first_byte & 0xE0) >> 5;
 
         bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
@@ -2901,6 +2929,8 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
+        dlt_version = (header_first_byte & 0xE0) >> 5;
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
             if (dlt_daemon_client_process_control(receiver->fd,
@@ -3072,6 +3102,8 @@ int dlt_daemon_process_control_messages(
                (unsigned int) receiver->bytesRcvd,
                daemon_local->flags.nflag,
                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
+        dlt_version = (header_first_byte & 0xE0) >> 5;
         /* Check for control message */
         if ((receiver->fd > 0) &&
             DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
@@ -3861,6 +3893,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
         ret = dlt_message_read(&(daemon_local->msg),
                                daemon_local->recv_buf_shm, size, 0, verbose);
+        uint8_t header_first_byte = ((uint8_t *)daemon_local->recv_buf_shm)[0];
+        dlt_version = (header_first_byte & 0xE0) >> 5;
 
         if (DLT_MESSAGE_ERROR_OK != ret) {
             dlt_shm_remove(&(daemon_local->dlt_shm));
