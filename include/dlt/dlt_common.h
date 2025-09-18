@@ -406,6 +406,14 @@ typedef enum
     DLT_RECEIVE_FD
 } DltReceiverType;
 
+typedef enum
+{
+    DLT_FIRST_FRAME,
+    DLT_CONSECUTIVE_FRAME,
+    DLT_LAST_FRAME,
+    DLT_ABORT_FRAME,
+} DLTSegmentationFrameType;
+
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.
  */
@@ -435,6 +443,36 @@ extern char dltShmName[NAME_MAX + 1];
  */
 typedef char ID4[DLT_ID_SIZE];
 
+typedef struct
+{
+    uint8_t taglen;
+    char* tagname;
+} DltTag;
+
+typedef struct
+{
+    uint64_t totallength;
+} SegmentationFirstFrame;
+
+typedef struct
+{
+    uint32_t sequencecounter;
+} SegmentationConsecutiveFrame;
+
+typedef struct
+{
+    uint8_t abortreason;
+} SegmentationAbortFrame;
+
+
+typedef struct{
+    union {
+    SegmentationFirstFrame firstframe;
+    SegmentationConsecutiveFrame consecutiveframe;
+    SegmentationAbortFrame abortframe;
+    };
+} SegmentationFrame;
+
 /**
  * The structure of the DLT file storage header. This header is used before each stored DLT message.
  */
@@ -447,6 +485,18 @@ typedef struct
 } DLT_PACKED DltStorageHeader;
 
 /**
+ * The structure of the DLT file storage header. This header is used before each stored DLT message.
+ */
+typedef struct
+{
+    char pattern[DLT_ID_SIZE]; /**< This pattern should be DLT0x02 */
+    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 */
+    int32_t nanoseconds;      /**< nanoseconds */
+    uint8_t ecidlen;              /**< Length of ecu id */
+    char *ecid;
+} DLT_PACKED DltStorageHeaderV2;
+
+/**
  * The structure of the DLT standard header. This header is used in each DLT message.
  */
 typedef struct
@@ -455,6 +505,16 @@ typedef struct
     uint8_t mcnt;           /**< The message counter is increased with each sent DLT message */
     uint16_t len;           /**< Length of the complete message, without storage header */
 } DLT_PACKED DltStandardHeader;
+
+/**
+ * The structure of the DLT Base header for version 2. This header is used in each DLT message.
+ */
+typedef struct
+{
+    uint32_t htyp2;           /**< This parameter contains several informations, see definitions below */
+    uint8_t mcnt;           /**< The message counter is increased with each sent DLT message */
+    uint16_t len;           /**< Length of the complete message, without storage header */
+} DLT_PACKED DltBaseHeaderV2;
 
 /**
  * The structure of the DLT extra header parameters. Each parameter is sent only if enabled in htyp.
@@ -467,6 +527,18 @@ typedef struct
 } DLT_PACKED DltStandardHeaderExtra;
 
 /**
+ * The structure of the DLT extra header parameters for version 2. Each parameter is sent only if enabled in htyp.
+ */
+typedef struct
+{
+    uint8_t msin;                /**< Message info */
+    uint8_t noar;                /**< Number of arguments */
+    uint32_t nanoseconds;        /**< Nanoseconds part of the tmsp2. Invalid value in nanoseconds: [0x3B9A CA00] to [0x3FFF FFFF]; Bit 30 and 31 are reserved in this case. */   
+    uint8_t seconds[5];          /**< 40 bits for seconds since 1.1.1970 */
+    uint32_t msid;               /**< Message Id */
+} DLT_PACKED DltBaseHeaderExtraV2;
+
+/**
  * The structure of the DLT extended header. This header is only sent if enabled in htyp parameter.
  */
 typedef struct
@@ -476,6 +548,29 @@ typedef struct
     char apid[DLT_ID_SIZE];    /**< application id */
     char ctid[DLT_ID_SIZE];    /**< context id */
 } DLT_PACKED DltExtendedHeader;
+
+/**
+ * The structure of the DLT extended header for version 2. This header is only sent if enabled in htyp parameter.
+ */
+typedef struct
+{
+    uint8_t ecidlen;              /**< Length of ecu id */
+    char *ecid;
+    uint8_t apidlen;              /**< Length of app id */
+    char *apid;
+    uint8_t ctidlen;              /**< Length of context id */
+    char *ctid;
+    uint32_t seid;                /**< Session id */
+    uint8_t finalen;              /**< Length of filename */
+    char *fina;
+    uint32_t linr;                /**< Line number */
+    uint8_t notg;                 /**< Number of tags */
+    DltTag *tag;
+    uint8_t prlv;                 /**< Privacy level */
+    uint8_t sgmtinfo;             /**< Segmentation info */
+    DLTSegmentationFrameType frametype; /**< Segmentation frame */
+    SegmentationFrame sgmtdetails; /**< Segmentation details */
+} DLT_PACKED DltExtendedHeaderV2;
 
 /**
  * The structure to organise the DLT messages.
@@ -504,7 +599,36 @@ typedef struct sDltMessage
     DltStandardHeader *standardheader;      /**< pointer to standard header of current loaded header */
     DltStandardHeaderExtra headerextra;     /**< extra parameters of current loaded header */
     DltExtendedHeader *extendedheader;      /**< pointer to extended of current loaded header */
-} DltMessage;
+} DLT_PACKED DltMessage;
+
+/**
+ * The structure to organise the DLT messages.
+ * This structure is used by the corresponding functions.
+ */
+typedef struct sDltMessageV2
+{
+    /* flags */
+    int8_t found_serialheader;
+
+    /* offsets */
+    int32_t resync_offset;
+
+    /* size parameters */
+    int32_t headersize;    /**< size of complete header including storage header */
+    int32_t datasize;      /**< size of complete payload */
+
+    /* buffer for current loaded message */
+    uint8_t headerbuffer[sizeof(DltStorageHeaderV2) +
+                         sizeof(DltBaseHeaderV2) + sizeof(DltBaseHeaderExtraV2) + sizeof(DltExtendedHeaderV2)]; /**< buffer for loading complete header */
+    uint8_t *databuffer;         /**< buffer for loading payload */
+    int32_t databuffersize;
+
+    /* header values of current loaded message */
+    DltStorageHeaderV2 *storageheaderv2;        /**< pointer to storage header of current loaded header */
+    DltBaseHeaderV2 *baseheaderv2;      /**< pointer to standard header of current loaded header */
+    DltBaseHeaderExtraV2 headerextrav2;     /**< extra parameters of current loaded header */
+    DltExtendedHeaderV2 *extendedheaderv2;      /**< pointer to extended of current loaded header */
+} DLT_PACKED DltMessageV2;
 
 /**
  * The structure of the DLT Service Get Log Info.
