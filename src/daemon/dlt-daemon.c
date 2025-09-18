@@ -2611,16 +2611,16 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
     if(dlt_version == DLT_VERSION2){
         clock_gettime(CLOCK_REALTIME, &ts);
-        uint8_t tmsp2[9];
-        uint32_t nanoseconds = (uint32_t)ts.tv_nsec;
-        memcpy(&tmsp2[0], &nanoseconds, 4);
+        uint8_t seconds[5];
 
-        uint64_t seconds = (uint64_t)ts.tv_sec;
+        // Assign nanoseconds part of tmsp2
+        pBaseHeaderExtraV2->nanoseconds = (uint32_t)ts.tv_nsec;
+
+        // Assign Seconds part of tmsp2 (store 64-bit seconds into 5-byte array, little-endian)
+        uint64_t seconds_val = (uint64_t)ts.tv_sec;
         for (int i = 0; i < 5; i++) {
-            tmsp2[4 + i] = (seconds >> (i * 8)) & 0xFF;
+            pBaseHeaderExtraV2->seconds[i] = (uint8_t)((seconds_val >> (i * 8)) & 0xFF);
         }
-        // Assign tmsp2 to the message
-        memcpy(pStandardExtra->tmsp2, tmsp2, 9);
     }
     else{
         pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
