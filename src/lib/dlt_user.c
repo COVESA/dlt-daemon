@@ -4292,18 +4292,20 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, int *const sent_size)
+DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType msgcontent, int *const sent_size)
 {
     DltMessageV2 msg;
     DltUserHeader userheader;
     int32_t len;
+
+/* To Update
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     uint32_t time_stamp;
 #else
     // shut up warning
     (void)sent_size;
 #endif
-
+ */
     DltReturnValue ret = DLT_RETURN_OK;
 
     if (!DLT_USER_INITALIZED_NOT_FREEING) {
@@ -4330,58 +4332,79 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, in
     if (dlt_set_storageheaderV2(msg.storageheader, dlt_user.ecuID2) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
-    msg.DltBaseHeaderV2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
-    msg.DltBaseHeaderV2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
+    msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
+    msg.baseheaderv2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
+
+    msg.baseheaderv2->htyp2 |= DLT_HTYP2_CNTI(msgcontent);
 
     /* send ecu id */
     if (dlt_user.with_ecu_id)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WEID;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WEID;
 
     /* send app and context id */
     if (dlt_user.with_app_and_context_id)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WACID;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WACID;
 
     /* send session id */
     if (dlt_user.with_session_id) {
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WSID;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSID;
         if (__builtin_expect(!!(dlt_user.local_pid == -1), false)) {
             dlt_user.local_pid = getpid();
         }
-        msg.extendedheaderv2.seid = (uint32_t) dlt_user.local_pid;
+        msg.baseheaderv2.seid = (uint32_t) dlt_user.local_pid;
     }
 
     /* send source filename and line number */
     if (dlt_user.with_filename_and_line_number)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WSFLN;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSFLN;
     
     /* send Tags */
     if (dlt_user.with_tags)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WTGS;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WTGS;
 
     /* send privacy level */
     if (dlt_user.with_privacy_level)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WPVL;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WPVL;
 
     /* send segmented message */
     if (dlt_user.with_segmentation)
-        msg.DltBaseHeaderV2->htyp2 |= DLT_HTYP2_WSGM;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSGM;
 
-    if (is_verbose_mode(dlt_user.verbose_mode, log))
-        /* In verbose mode, send extended header */
-        msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
-    else
-        /* In non-verbose, send extended header if desired */
-        if (dlt_user.use_extended_header_for_non_verbose)
-            msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
+    // if (is_verbose_mode(dlt_user.verbose_mode, log))
+    //     /* In verbose mode, send extended header */
+    //     msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
+    // else
+    //     /* In non-verbose, send extended header if desired */
+    //     if (dlt_user.use_extended_header_for_non_verbose)
+    //         msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_UEH);
 
-#if (BYTE_ORDER == BIG_ENDIAN)
-    msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
-#endif
 
-    msg.standardheader->mcnt = log->handle->mcnt++;
+    msg.baseheaderv2->mcnt = log->handle->mcnt++;
 
-    /* Set header extra parameters */
-    dlt_set_id(msg.headerextra.ecu, dlt_user.ecuID);
+    msg.headerextrav2 = (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltStandardHeader);
+    
+    /* To Update extra header conditional fields*/
+    switch(msgcontent) {
+        case DLT_VERBOSE_DATA_MSG:
+        {
+            break;
+        }
+            case DLT_NON_VERBOSE_DATA_MSG:
+        {
+            break;
+        }
+        case DLT_CONTROL_MSG:
+        {
+            break;
+        }
+        default:
+        {
+        /* This case should not occur */
+            return DLT_RETURN_ERROR;
+            break;
+        }
+    }
+
 
     /*msg.headerextra.seid = 0; */
     if (log->use_timestamp == DLT_AUTO_TIMESTAMP) {
@@ -4391,9 +4414,11 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, in
         msg.headerextra.tmsp = log->user_timestamp;
     }
 
+/* To Update
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     time_stamp = msg.headerextra.tmsp;
 #endif
+*/
 
     if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;

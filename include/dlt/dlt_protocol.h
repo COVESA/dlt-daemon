@@ -146,7 +146,6 @@
 /*
  * Definitions of the htyp2 parameter in base header.
  */
-#define DLT_HTYP2_CNTI 0x03 /**< content information */
 #define DLT_HTYP2_WEID 0x04 /**< with ECU ID */
 #define DLT_HTYP2_WACID 0x08 /**< with application and context ID */
 #define DLT_HTYP2_WSID 0x10 /**< with session ID */
@@ -164,8 +163,15 @@
 #define DLT_IS_HTYP2_WPVL(htyp2) ((htyp2) & DLT_HTYP2_WPVL)
 #define DLT_IS_HTYP2_WSGM(htyp2) ((htyp2) & DLT_HTYP2_WSGM)
 
+#define DLT_HTYP2_CNTI(cntnt) ((cntnt) << 30) /**< content information */
 #define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 29)
 
+typedef enum {
+    DLT_VERBOSE_DATA_MSG = 0x0,
+    DLT_NON_VERBOSE_DATA_MSG = 0x1,
+    DLT_CONTROL_MSG = 0x2,
+    DLT_RESERVED = 0x3
+} DltHtyp2ContentType
 /*
  * Definitions of types of arguments in payload.
  */
