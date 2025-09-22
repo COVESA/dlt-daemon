@@ -490,7 +490,7 @@ typedef struct
 typedef struct
 {
     char pattern[DLT_ID_SIZE]; /**< This pattern should be DLT0x02 */
-    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 */
+    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 in Big Endian */
     int32_t nanoseconds;      /**< nanoseconds */
     uint8_t ecidlen;              /**< Length of ecu id */
     char *ecid;

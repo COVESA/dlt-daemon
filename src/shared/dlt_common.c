@@ -668,6 +668,29 @@ DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_messageV2_init(DltMessageV2 *msg, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* initalise structure parameters */
+    msg->headersize = 0;
+    msg->datasize = 0;
+
+    msg->databuffer = NULL;
+    msg->databuffersize = 0;
+
+    msg->storageheaderv2 = NULL;
+    msg->baseheaderv2 = NULL;
+    msg->extendedheaderv2 = NULL;
+
+    msg->found_serialheader = 0;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -2072,6 +2095,51 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #else
     storageheader->seconds = (uint32_t) tv.tv_sec; /* value is long */
     storageheader->microseconds = (int32_t) tv.tv_usec; /* value is long */
+#endif
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_set_storageheaderV2(DltStorageHeaderV2 *storageheader, const char *ecu)
+{
+
+#if !defined(_MSC_VER)
+    struct timespec ts;
+#endif
+
+    if ((storageheader == NULL) || (ecu == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* get time of day */
+#if defined(_MSC_VER)
+    time_t t = time(NULL);
+    storageheader->seconds[0]=(t >> 32) & 0xFF;
+    storageheader->seconds[1]=(t >> 24) & 0xFF;
+    storageheader->seconds[2]=(t >> 16) & 0xFF;
+    storageheader->seconds[3]=(t >> 8) & 0xFF;
+    storageheader->seconds[4]= t & 0xFF;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+
+    /* prepare storage header */
+    storageheader->pattern[0] = 'D';
+    storageheader->pattern[1] = 'L';
+    storageheader->pattern[2] = 'T';
+    storageheader->pattern[3] = 0x02;
+
+    dlt_set_id(storageheader->ecu, ecu);
+
+    /* Set current time */
+#if defined(_MSC_VER)
+    storageheader->nanoseconds = 0;
+#else
+    storageheader->seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+    storageheader->seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+    storageheader->seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+    storageheader->seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+    storageheader->seconds[4]= ts.tv_sec & 0xFF;
+    storageheader->nanoseconds = (int32_t) ts.tv_nsec; /* value is long */
 #endif
 
     return DLT_RETURN_OK;
