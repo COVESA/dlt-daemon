@@ -4315,8 +4315,7 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
 
     if ((log == NULL) ||
         (log->handle == NULL) ||
-        (log->handle->contextID2 == '\0') ||
-        (mtype < DLT_TYPE_LOG) || (mtype > DLT_TYPE_CONTROL)
+        (log->handle->contextID2 == NULL)
         )
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -4327,9 +4326,9 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
     if (dlt_messageV2_init(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
-    msg.storageheader = (DltStorageHeaderV2 *)msg.headerbuffer;
+    msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbuffer;
 
-    if (dlt_set_storageheaderV2(msg.storageheader, dlt_user.ecuID2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheaderV2(msg.storageheaderv2, dlt_user.ecuID2) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
@@ -4348,10 +4347,12 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
     /* send session id */
     if (dlt_user.with_session_id) {
         msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSID;
+        /* To Update below code be in extended header part and session id should be allocated some memory
         if (__builtin_expect(!!(dlt_user.local_pid == -1), false)) {
             dlt_user.local_pid = getpid();
         }
-        msg.baseheaderv2.seid = (uint32_t) dlt_user.local_pid;
+        msg.baseheaderv2->seid = (uint32_t) dlt_user.local_pid;
+        */
     }
 
     /* send source filename and line number */
@@ -4381,7 +4382,7 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
 
     msg.baseheaderv2->mcnt = log->handle->mcnt++;
 
-    msg.headerextrav2 = (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltStandardHeader);
+    msg.headerextrav2 = (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltStandardHeader));
     
     /* To Update extra header conditional fields*/
     switch(msgcontent) {

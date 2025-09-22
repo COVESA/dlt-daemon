@@ -171,7 +171,7 @@ typedef enum {
     DLT_NON_VERBOSE_DATA_MSG = 0x1,
     DLT_CONTROL_MSG = 0x2,
     DLT_RESERVED = 0x3
-} DltHtyp2ContentType
+} DltHtyp2ContentType;
 /*
  * Definitions of types of arguments in payload.
  */
