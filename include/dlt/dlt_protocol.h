@@ -163,8 +163,7 @@
 #define DLT_IS_HTYP2_WPVL(htyp2) ((htyp2) & DLT_HTYP2_WPVL)
 #define DLT_IS_HTYP2_WSGM(htyp2) ((htyp2) & DLT_HTYP2_WSGM)
 
-#define DLT_HTYP2_CNTI(cntnt) ((cntnt) << 30) /**< content information */
-#define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 29)
+#define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 5)
 
 typedef enum {
     DLT_VERBOSE_DATA_MSG = 0x0,

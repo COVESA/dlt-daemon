@@ -136,6 +136,7 @@ extern "C" {
 typedef struct
 {
     char contextID[DLT_ID_SIZE];                  /**< context id */
+    uint8_t contextID2len;
     char *contextID2;                             /**< Variable length context ID for DLT version 2*/
     int32_t log_level_pos;                        /**< offset in user-application context field */
     int8_t *log_level_ptr;                        /**< pointer to the log level */
@@ -224,9 +225,11 @@ typedef struct
 typedef struct
 {
     char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
-    char ecuID2;                               /**< Variable length ECU ID for DLT version 2*/
+    uint8_t ecuID2len;
+    char *ecuID2;                              /**< Variable length ECU ID for DLT version 2*/
     char appID[DLT_ID_SIZE];                   /**< Application ID */
-    char appID2;                               /**< Variable length app ID for DLT version 2*/
+    uint8_t appID2len;
+    char *appID2;                              /**< Variable length app ID for DLT version 2*/
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
 #ifdef DLT_NETWORK_TRACE_ENABLE

@@ -4332,13 +4332,13 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
 
     msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbuffer;
 
-    if (dlt_set_storageheaderV2(msg.storageheaderv2, dlt_user.ecuID2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheaderV2(msg.storageheaderv2, dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
     msg.baseheaderv2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
 
-    msg.baseheaderv2->htyp2 |= DLT_HTYP2_CNTI(msgcontent);
+    msg.baseheaderv2->htyp2 |= msgcontent;
 
     /* send ecu id */
     if (dlt_user.with_ecu_id)
@@ -4415,7 +4415,7 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
     }
 
     if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_NON_VERBOSE_DATA_MSG)) {
-        msg.headerextrav2.seconds = {0, 0, 0, 0, 0};
+        memset(msg.headerextrav2.seconds, 0, 5);
         msg.headerextrav2.nanoseconds = 0;
     #if defined (__WIN32__) || defined(_MSC_VER)
         time_t t = time(NULL);
@@ -4467,14 +4467,6 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
     if (msgcontent==DLT_NON_VERBOSE_DATA_MSG) {
         msg.headerextrav2.msid = log->msid;
     }
-    /*---------------------------------------------------*/
-    /*msg.headerextra.seid = 0; */
-    if (log->use_timestamp == DLT_AUTO_TIMESTAMP) {
-        msg.headerextra.tmsp = dlt_uptime();
-    }
-    else {
-        msg.headerextra.tmsp = log->user_timestamp;
-    }
 
 /* To Update
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
@@ -4482,41 +4474,21 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
 #endif
 */
 
-    if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_set_extraparametersV2(&msg, msgcontent) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
+    msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) +
+                                  dlt_message_get_extraparametersV2_size(msgcontent));
+
     /* Fill out extended header, if extended header should be provided */
-    if (DLT_IS_HTYP_UEH(msg.standardheader->htyp)) {
-        /* with extended header */
-        msg.extendedheader =
-            (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
-                                  DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-
-        switch (mtype) {
-        case DLT_TYPE_LOG:
-        {
-            msg.extendedheader->msin = (uint8_t) (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT |
-                ((log->log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
-            break;
-        }
-        case DLT_TYPE_NW_TRACE:
-        {
-            msg.extendedheader->msin = (uint8_t) (DLT_TYPE_NW_TRACE << DLT_MSIN_MSTP_SHIFT |
-                ((log->trace_status << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
-            break;
-        }
-        default:
-        {
-            /* This case should not occur */
+    if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
+        msg.extendedheaderv2->ecidlen = dlt_user.ecuID2len;
+        msg.extendedheaderv2->ecid = (char *)malloc((msg.extendedheaderv2->ecidlen + 1) * sizeof(char));
+        if (msg.extendedheaderv2->ecid == NULL) {
             return DLT_RETURN_ERROR;
-            break;
         }
-        }
-
-        msg.extendedheader->noar = (uint8_t) log->args_num;              /* number of arguments */
-        dlt_set_id(msg.extendedheader->apid, dlt_user.appID);       /* application id */
-        dlt_set_id(msg.extendedheader->ctid, log->handle->contextID);   /* context id */
-
+        strcpy(msg.extendedheaderv2->ecid, dlt_user.ecuID2);
+    /*---------------------------------------------------*/
         msg.headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) +
             DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
     }
