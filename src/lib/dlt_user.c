@@ -1902,6 +1902,8 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
 
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
     if (ret == DLT_RETURN_TRUE) {
+        /*Store message ID for version 2 where it is part of conditional header*/
+        log->msid = messageid;
         /* initialize values */
         if ((NULL != log->buffer))
         {
@@ -4292,7 +4294,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType msgcontent, int *const sent_size)
+DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size)
 {
     DltMessageV2 msg;
     DltUserHeader userheader;
@@ -4315,7 +4317,9 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
 
     if ((log == NULL) ||
         (log->handle == NULL) ||
-        (log->handle->contextID2 == NULL)
+        (log->handle->contextID2 == NULL) ||
+        (mtype < DLT_TYPE_LOG) || (mtype > DLT_TYPE_CONTROL) ||
+        (msgcontent < DLT_VERBOSE_DATA_MSG) || (msgcontent > DLT_CONTROL_MSG)
         )
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -4382,31 +4386,88 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
 
     msg.baseheaderv2->mcnt = log->handle->mcnt++;
 
-    msg.headerextrav2 = (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltStandardHeader));
+    /* Fill base header conditional parameters */
     
-    /* To Update extra header conditional fields*/
-    switch(msgcontent) {
-        case DLT_VERBOSE_DATA_MSG:
+    if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_CONTROL_MSG)) {
+        /* To Update Handle all mtypes*/
+        switch (mtype) {
+        case DLT_TYPE_LOG:
         {
+            msg.headerextrav2.msin = (uint8_t) (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT |
+                ((log->log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
             break;
         }
-            case DLT_NON_VERBOSE_DATA_MSG:
+        case DLT_TYPE_NW_TRACE:
         {
-            break;
-        }
-        case DLT_CONTROL_MSG:
-        {
+            msg.headerextrav2.msin = (uint8_t) (DLT_TYPE_NW_TRACE << DLT_MSIN_MSTP_SHIFT |
+                ((log->trace_status << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
             break;
         }
         default:
         {
-        /* This case should not occur */
+            /* This case should not occur */
             return DLT_RETURN_ERROR;
             break;
         }
+        }
+        
+        msg.headerextrav2.noar = (uint8_t) log->args_num;              /* number of arguments */
     }
 
+    if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_NON_VERBOSE_DATA_MSG)) {
+        msg.headerextrav2.seconds = {0, 0, 0, 0, 0};
+        msg.headerextrav2.nanoseconds = 0;
+    #if defined (__WIN32__) || defined(_MSC_VER)
+        time_t t = time(NULL);
+        if (t==-1){
+            uint32_t tcnt = (uint32_t)(GetTickCount()); /* GetTickCount() in 10 ms resolution */
+            tcnt_seconds = tcnt / 100;
+            tcnt_ns = (tcnt - (tcnt*100)) * 10000;
+            msg.headerextrav2.seconds[0]=(tcnt_seconds >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(tcnt_seconds >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(tcnt_seconds >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(tcnt_seconds >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= tcnt_seconds & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = tcnt_ns;
+            }
+        }else{
+            msg.headerextrav2.seconds[0]=(t >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(t >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(t >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(t >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= t & 0xFF;
+            msg.headerextrav2.nanoseconds |= 0x8000;
+        }
+    #else
+        struct timespec ts;
+        if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+        }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+            msg.headerextrav2.nanoseconds |= 0x8000;
+        }
+    #endif
+    }
 
+    if (msgcontent==DLT_NON_VERBOSE_DATA_MSG) {
+        msg.headerextrav2.msid = log->msid;
+    }
+    /*---------------------------------------------------*/
     /*msg.headerextra.seid = 0; */
     if (log->use_timestamp == DLT_AUTO_TIMESTAMP) {
         msg.headerextra.tmsp = dlt_uptime();
@@ -4451,10 +4512,6 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, DltHtyp2ContentType
             break;
         }
         }
-
-        /* If in verbose mode, set flag in header for verbose mode */
-        if (is_verbose_mode(dlt_user.verbose_mode, log))
-            msg.extendedheader->msin |= DLT_MSIN_VERB;
 
         msg.extendedheader->noar = (uint8_t) log->args_num;              /* number of arguments */
         dlt_set_id(msg.extendedheader->apid, dlt_user.appID);       /* application id */

@@ -157,6 +157,7 @@ typedef struct
     char *context_description;                    /**< description of context */
     DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
     uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
+    uint32_t msid;                                /**< Message ID */
     int8_t verbose_mode;                          /**< verbose mode: 1 enabled, 0 disabled */
 } DltContextData;
 

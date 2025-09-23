@@ -626,7 +626,7 @@ typedef struct sDltMessageV2
     /* header values of current loaded message */
     DltStorageHeaderV2 *storageheaderv2;        /**< pointer to storage header of current loaded header */
     DltBaseHeaderV2 *baseheaderv2;      /**< pointer to standard header of current loaded header */
-    DltBaseHeaderExtraV2 *headerextrav2;     /**< extra parameters of current loaded header */
+    DltBaseHeaderExtraV2 headerextrav2;     /**< extra parameters of current loaded header */
     DltExtendedHeaderV2 *extendedheaderv2;      /**< pointer to extended of current loaded header */
 } DLT_PACKED DltMessageV2;
 
