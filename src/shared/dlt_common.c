@@ -668,6 +668,29 @@ DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_messageV2_init(DltMessageV2 *msg, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* initalise structure parameters */
+    msg->headersize = 0;
+    msg->datasize = 0;
+
+    msg->databuffer = NULL;
+    msg->databuffersize = 0;
+
+    msg->storageheaderv2 = NULL;
+    msg->baseheaderv2 = NULL;
+    msg->extendedheaderv2 = NULL;
+
+    msg->found_serialheader = 0;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -1190,6 +1213,64 @@ DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
     }
 
     return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent)
+{
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (msgcontent == DLT_VERBOSE_DATA_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               msg->headerextrav2.msin,
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               msg->headerextrav2.noar,
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 2,
+               msg->headerextrav2.nanoseconds,
+               4);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 6,
+               msg->headerextrav2.seconds,
+               5);
+    }
+
+    if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               msg->headerextrav2.nanoseconds,
+               4);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 4,
+               msg->headerextrav2.seconds,
+               5);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 9,
+               msg->headerextrav2.msid,
+               4);
+    }
+
+    if (msgcontent == DLT_CONTROL_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               msg->headerextrav2.msin,
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               msg->headerextrav2.noar,
+               1);
+    }
+    return DLT_RETURN_OK;
+}
+
+uint8_t dlt_message_get_extraparametersV2_size(DltHtyp2ContentType msgcontent)
+{
+    uint8_t size = 0;
+    if (msgcontent==DLT_VERBOSE_DATA_MSG) {
+        size = DLT_SIZE_VERBOSE_DATA_MSG;
+    }else if (msgcontent==DLT_NON_VERBOSE_DATA_MSG)
+    {
+        size = DLT_SIZE_NONVERBOSE_DATA_MSG;
+    }else if (msgcontent==DLT_CONTROL_MSG)
+    {
+        size = DLT_SIZE_CONTROL_MSG;
+    }
+    return size;
 }
 
 DltReturnValue dlt_file_init(DltFile *file, int verbose)
@@ -2072,6 +2153,56 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #else
     storageheader->seconds = (uint32_t) tv.tv_sec; /* value is long */
     storageheader->microseconds = (int32_t) tv.tv_usec; /* value is long */
+#endif
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_set_storageheaderV2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu)
+{
+
+#if !defined(_MSC_VER)
+    struct timespec ts;
+#endif
+
+    if ((storageheader == NULL) || (ecu == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* get time of day */
+#if defined(_MSC_VER)
+    time_t t = time(NULL);
+    storageheader->seconds[0]=(t >> 32) & 0xFF;
+    storageheader->seconds[1]=(t >> 24) & 0xFF;
+    storageheader->seconds[2]=(t >> 16) & 0xFF;
+    storageheader->seconds[3]=(t >> 8) & 0xFF;
+    storageheader->seconds[4]= t & 0xFF;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+
+    /* prepare storage header */
+    storageheader->pattern[0] = 'D';
+    storageheader->pattern[1] = 'L';
+    storageheader->pattern[2] = 'T';
+    storageheader->pattern[3] = 0x02;
+
+    storageheader->ecidlen = ecuIDlen;
+    storageheader->ecid = (char *)malloc((ecuIDlen + 1) * sizeof(char));
+    if (storageheader->ecid == NULL) {
+        return DLT_RETURN_ERROR;
+    }
+    strcpy(storageheader->ecid, ecu);
+
+    /* Set current time */
+#if defined(_MSC_VER)
+    storageheader->nanoseconds = 0;
+#else
+    storageheader->seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+    storageheader->seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+    storageheader->seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+    storageheader->seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+    storageheader->seconds[4]= ts.tv_sec & 0xFF;
+    storageheader->nanoseconds = (int32_t) ts.tv_nsec; /* value is long */
 #endif
 
     return DLT_RETURN_OK;

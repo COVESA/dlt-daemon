@@ -214,6 +214,10 @@
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
 #   define DLT_SIZE_WTMS (sizeof(uint32_t))
 
+#   define DLT_SIZE_VERBOSE_DATA_MSG 11
+#   define DLT_SIZE_NONVERBOSE_DATA_MSG 13
+#   define DLT_SIZE_CONTROL_MSG 2
+
 /* Size of buffer for text output */
 #define DLT_CONVERT_TEXTBUFSIZE  10024
 
@@ -230,7 +234,6 @@
 #   define DLT_STANDARD_HEADER_EXTRA_SIZE(htyp) ((DLT_IS_HTYP_WEID(htyp) ? DLT_SIZE_WEID : 0) + \
                                                  (DLT_IS_HTYP_WSID(htyp) ? DLT_SIZE_WSID : 0) + \
                                                  (DLT_IS_HTYP_WTMS(htyp) ? DLT_SIZE_WTMS : 0))
-
 
 #   if defined (__MSDOS__) || defined (_MSC_VER)
 #      define __func__ __FUNCTION__
@@ -490,7 +493,7 @@ typedef struct
 typedef struct
 {
     char pattern[DLT_ID_SIZE]; /**< This pattern should be DLT0x02 */
-    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 */
+    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 in Big Endian */
     int32_t nanoseconds;      /**< nanoseconds */
     uint8_t ecidlen;              /**< Length of ecu id */
     char *ecid;

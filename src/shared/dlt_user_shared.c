@@ -93,6 +93,23 @@ DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_set_userheader2(DltUserHeader *userheader, uint32_t mtype)
+{
+    if (userheader == 0)
+        return DLT_RETURN_ERROR;
+
+    if (mtype <= 0)
+        return DLT_RETURN_ERROR;
+
+    userheader->pattern[0] = 'D';
+    userheader->pattern[1] = 'U';
+    userheader->pattern[2] = 'H';
+    userheader->pattern[3] = 2;
+    userheader->message = mtype;
+
+    return DLT_RETURN_OK;
+}
+
 int dlt_user_check_userheader(DltUserHeader *userheader)
 {
     if (userheader == 0)
@@ -102,6 +119,17 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
            (userheader->pattern[1] == 'U') &&
            (userheader->pattern[2] == 'H') &&
            (userheader->pattern[3] == 1);
+}
+
+int dlt_user_check_userheader2(DltUserHeader *userheader)
+{
+    if (userheader == 0)
+        return -1;
+
+    return (userheader->pattern[0] == 'D') &&
+           (userheader->pattern[1] == 'U') &&
+           (userheader->pattern[2] == 'H') &&
+           (userheader->pattern[3] == 2);
 }
 
 DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2)
