@@ -92,12 +92,9 @@
 #define DLT_DAEMON_APP_ID "DLTD"
 #define DLT_DAEMON_CTX_ID "INTM"
 
-// DLT Version 2 define
+// DLTV2 - Definitions for DLT Version 2
 #define DLT_VERSION2 2
 #define DLT_VERSION_MASK 0xE0
-
-// Set the version as Version 2 for development
-uint8_t dlt_version = DLT_VERSION2;
 
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
@@ -121,6 +118,9 @@ static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, c
 
 pthread_rwlock_t trace_load_rw_lock;
 #endif
+
+// DLTV2 - Set the version as Version 2 for development
+uint8_t dlt_version = DLT_VERSION2;
 
 /* used in main event loop and signal handler */
 int g_exit = 0;
@@ -2573,8 +2573,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     uint16_t uiSize;
     uint32_t uiExtraSize;
 
-    struct timespec ts;
-
     PRINT_FUNCTION_VERBOSE(verbose);
 
     /* Set storageheader */
@@ -2583,75 +2581,137 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     /* Set standardheader */
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
-    // Use the version number for populating header 
-    if(dlt_version == DLT_VERSION2){
-        msg.standardheader->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
-        DLT_VERSION2;
-    }
-    else{
-        msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
+    msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
         DLT_HTYP_PROTOCOL_VERSION1;
-    }
     msg.standardheader->mcnt = uiMsgCount++;
 
-    if(dlt_version == DLT_VERSION2){
-        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2) +
-        (DLT_IS_HTYP_UEH(msg.DltBaseHeaderV2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
-    }
-    else{
-        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
+    uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
         (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
-    }
-    
     msg.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
 
     /* Set extraheader */
     pStandardExtra =
         (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
-    if(dlt_version == DLT_VERSION2){
-        clock_gettime(CLOCK_REALTIME, &ts);
-        uint8_t seconds[5];
-
-        // Assign nanoseconds part of tmsp2
-        pBaseHeaderExtraV2->nanoseconds = (uint32_t)ts.tv_nsec;
-
-        // Assign Seconds part of tmsp2 (store 64-bit seconds into 5-byte array, little-endian)
-        uint64_t seconds_val = (uint64_t)ts.tv_sec;
-        for (int i = 0; i < 5; i++) {
-            pBaseHeaderExtraV2->seconds[i] = (uint8_t)((seconds_val >> (i * 8)) & 0xFF);
-        }
-    }
-    else{
-        pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
-    }
+    pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
     pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
 
     /* Set extendedheader */
-    if(dlt_version == DLT_VERSION2){
-        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2) +
-        (DLT_IS_HTYP_UEH(msg.DltBaseHeaderV2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
-        msg.extendedheaderV2 =
+    msg.extendedheader =
+        (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+                              DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+    msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+    msg.extendedheader->noar = 1;
+    dlt_set_id(msg.extendedheader->apid, app_id);
+    dlt_set_id(msg.extendedheader->ctid, ctx_id);
+
+    /* Set payload data... */
+    uiType = DLT_TYPE_INFO_STRG;
+    uiSize = (uint16_t) (strlen(str) + 1);
+    msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
+
+    msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
+    msg.databuffersize = msg.datasize;
+
+    if (msg.databuffer == 0) {
+        dlt_log(LOG_WARNING, "Can't allocate buffer for get log info message\n");
+        return -1;
+    }
+
+    msg.datasize = 0;
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
+    msg.datasize += (uint32_t) sizeof(uint32_t);
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
+    msg.datasize += (uint32_t) sizeof(uint16_t);
+    memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
+    msg.datasize += uiSize;
+
+    /* Calc length */
+    msg.standardheader->len = DLT_HTOBE_16(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
+
+    dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
+                           msg.headerbuffer, sizeof(DltStorageHeader),
+                           msg.headerbuffer + sizeof(DltStorageHeader),
+                           (int) (msg.headersize - sizeof(DltStorageHeader)),
+                           msg.databuffer, (int) msg.datasize, verbose);
+
+    free(msg.databuffer);
+
+    return 0;
+}
+
+/* DLTV2 - Adaptation for DLT protocol version 2
+ * This function logs str to the configured output sink (socket, serial, offline trace).
+ * To avoid recursion this function must be called only from DLT highlevel functions.
+ * E. g. calling it to output a failure when the open of the offline trace file fails
+ * would cause an endless loop because dlt_daemonV2_log_internal() would itself again
+ * try to open the offline trace file.
+ * This is a dlt-daemon only function. The libdlt has no equivalent function available. */
+int dlt_daemonV2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
+                            char *str, DltLogLevelType level,
+                            const char *app_id, const char *ctx_id, int verbose)
+{
+    DltMessage msg = { 0 };
+    static uint8_t uiMsgCount = 0;
+    DltStandardHeaderExtra *pStandardExtra = NULL;
+    uint32_t uiType;
+    uint16_t uiSize;
+    uint32_t uiExtraSize;
+
+    struct timespec ts;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    /* Set storageheader */
+    /* TBD
+    if (msgV2.headerbuffer == NULL) {
+        dlt_vlog(LOG_ERR, "Could not allocate memory for message header\n");
+        return -1;
+    }
+    */
+    msgV2.storageheaderv2 = (DltStorageHeaderV2 *)(msgV2.headerbuffer);
+    dlt_set_storageheader(msgV2.storageheaderv2, daemon->ecuid);
+
+    /* Set standardheader */
+    msgV2.baseheaderv2 = (DltBaseHeaderV2 *)(msgV2.headerbuffer + sizeof(DltStorageHeaderV2));
+    msgV2.baseheaderv2->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
+        DLT_VERSION2;
+    msgV2.baseheaderv2->mcnt = uiMsgCount++;
+
+    uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msgV2.baseheaderv2->htyp2) +
+        (DLT_IS_HTYP_UEH(msgV2.baseheaderv2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
+    msgV2.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
+
+    /* Set extraheader */
+    pStandardExtra =
+        (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
+    dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
+
+    /* Set timestamp */
+    clock_gettime(CLOCK_REALTIME, &ts);
+    uint8_t seconds[5];
+
+    // Assign nanoseconds part of tmsp2
+    pBaseHeaderExtraV2->nanoseconds = (uint32_t)ts.tv_nsec;
+
+    // Assign Seconds part of tmsp2 (store 64-bit seconds into 5-byte array, little-endian)
+    uint64_t seconds_val = (uint64_t)ts.tv_sec;
+    for (int i = 0; i < 5; i++) {
+        pBaseHeaderExtraV2->seconds[i] = (uint8_t)((seconds_val >> (i * 8)) & 0xFF);
+    }
+
+    pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
+
+    /* Set extendedheader */
+    msg.extendedheaderV2 =
         (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltBaseHeaderV2) +
                               DLT_STANDARD_HEADER_EXTRA_SIZE(msg.DltBaseHeaderV2->htyp2));
-        msg.extendedheaderV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-        msg.extendedheaderV2->noar = 1;
-        dlt_set_id(msg.extendedheaderV2->apid, app_id);
-        dlt_set_id(msg.extendedheaderV2->ctid, ctx_id);
-    }
-    else{
-        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
-        (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
-        msg.extendedheader =
-            (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
-                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-        msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-        msg.extendedheader->noar = 1;
-        dlt_set_id(msg.extendedheader->apid, app_id);
-        dlt_set_id(msg.extendedheader->ctid, ctx_id);
-    
+    msg.extendedheaderV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+    msg.extendedheaderV2->noar = 1;
+    dlt_set_id(msg.extendedheaderV2->apid, app_id);
+    dlt_set_id(msg.extendedheaderV2->ctid, ctx_id);
 
     /* Set payload data... */
     uiType = DLT_TYPE_INFO_STRG;
@@ -2853,7 +2913,6 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                             (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.nflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-        
         /* Check for control message */
         if ((0 < receiver->fd) &&
             DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
@@ -2862,6 +2921,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               daemon_local,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
+
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
         dlt_version = (header_first_byte & 0xE0) >> 5;
 
@@ -2929,8 +2989,10 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
         dlt_version = (header_first_byte & 0xE0) >> 5;
+
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
             if (dlt_daemon_client_process_control(receiver->fd,
@@ -3102,8 +3164,10 @@ int dlt_daemon_process_control_messages(
                (unsigned int) receiver->bytesRcvd,
                daemon_local->flags.nflag,
                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
         dlt_version = (header_first_byte & 0xE0) >> 5;
+
         /* Check for control message */
         if ((receiver->fd > 0) &&
             DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
@@ -3893,6 +3957,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
         ret = dlt_message_read(&(daemon_local->msg),
                                daemon_local->recv_buf_shm, size, 0, verbose);
+
         uint8_t header_first_byte = ((uint8_t *)daemon_local->recv_buf_shm)[0];
         dlt_version = (header_first_byte & 0xE0) >> 5;
 
