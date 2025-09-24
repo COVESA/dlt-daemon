@@ -454,7 +454,7 @@ typedef struct
 
 typedef struct
 {
-    uint64_t totallength;
+    uint8_t totallength[8];
 } SegmentationFirstFrame;
 
 typedef struct

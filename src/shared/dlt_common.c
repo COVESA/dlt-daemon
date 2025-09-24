@@ -1273,6 +1273,131 @@ uint8_t dlt_message_get_extraparametersV2_size(DltHtyp2ContentType msgcontent)
     return size;
 }
 
+DltReturnValue dlt_message_set_extendedparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent, uint32_t *size)
+{
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    uint8_t extraHeaderSize = dlt_message_get_extraparametersV2_size(msgcontent);
+    uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
+
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->ecidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->ecid,
+            msg->extendedheaderv2->ecidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ecidlen + 1;
+
+    }
+
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->apidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->apid,
+            msg->extendedheaderv2->apidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->apidlen + 1;
+
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->ctidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->ctid,
+            msg->extendedheaderv2->ctidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ctidlen + 1;
+
+    }
+
+    if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->seid),
+               4);
+
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->finalen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->fina,
+            msg->extendedheaderv2->finalen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ecidlen + 1;
+
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->linr),
+               4);
+
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->notg),
+               1);
+
+        uint32_t totalTagSize = (msg->extendedheaderv2->notg) * sizeof(DltTag);
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->tag,
+            totalTagSize);
+        
+        pntroffset = pntroffset + totalTagSize + 1;
+    }
+
+    if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->prlv),
+               1);
+
+        pntroffset = pntroffset + 1;
+    }
+
+    if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
+        uint8_t sgmtLength = 0;
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->sgmtinfo),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            &(msg->extendedheaderv2->frametype),
+            1);
+        
+        if (msg->extendedheaderv2->frametype == DLT_FIRST_FRAME){
+            sgmtLength = 8;
+        }else if (msg->extendedheaderv2->frametype == DLT_CONSECUTIVE_FRAME){
+                sgmtLength = 4;
+        }else if (msg->extendedheaderv2->frametype == DLT_LAST_FRAME){
+                sgmtLength = 0;
+        }else if (msg->extendedheaderv2->frametype == DLT_ABORT_FRAME){
+                sgmtLength = 1;
+        }
+        
+        memcpy(msg->headerbuffer + pntroffset + 2,
+            &(msg->extendedheaderv2->sgmtdetails),
+            sgmtLength);
+        
+        pntroffset = pntroffset + sgmtLength + 2;
+    }
+
+    memcpy(size,
+        &pntroffset,
+        4);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_file_init(DltFile *file, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
