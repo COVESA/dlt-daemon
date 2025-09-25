@@ -2589,7 +2589,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         }
         */
         msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbuffer);
-        dlt_set_storageheader(msg.storageheaderv2, daemon->ecuid);
+        dlt_set_storageheaderV2(msg.storageheaderv2, DLT_DAEMON_ECU_ID_LEN, daemon->ecuid);
 
         /* Set standardheader */
         msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
