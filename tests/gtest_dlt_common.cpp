@@ -1724,6 +1724,28 @@ TEST(t_dlt_file_open, nullpointer)
 }
 /* End Method: dlt_common::dlt_file_open */
 
+TEST(t_dlt_file_openv2, nullpointer)
+{
+    DltFileV2 file;
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(NULL, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(NULL, NULL, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(NULL, openfile, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(NULL, openfile, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(&file, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_file_openv2(&file, NULL, 1));
+}
+/* End Method: dlt_common::dlt_file_open */
 
 
 
@@ -1750,6 +1772,28 @@ TEST(t_dlt_file_quick_parsing, normal)
     unlink(output);
 }
 
+/* Begin Method: dlt_common::dlt_file_quick_parsing */
+TEST(t_dlt_file_quick_parsingv2, normal)
+{
+    DltFileV2 file;
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+    char output[128] = "/tmp/output_testfile.txt";
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_quick_parsingv2(&file, output, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
+    unlink(output);
+}
 TEST(t_dlt_file_quick_parsing, abnormal)
 {
     DltFile file;
@@ -1777,7 +1821,32 @@ TEST(t_dlt_file_quick_parsing, abnormal)
 }
 /* End Method: dlt_common::dlt_file_quick_parsing */
 
+TEST(t_dlt_file_quick_parsingv2, abnormal)
+{
+    DltFileV2 file;
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+    char output[128] = "/tmp/output_testfile.txt";
 
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Abnormal Use-Case, expected DLT_RETURN_WRONG_PARAMETER (-5) */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+    EXPECT_GE(DLT_RETURN_WRONG_PARAMETER, dlt_file_quick_parsingv2(&file, NULL, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+    EXPECT_GE(DLT_RETURN_WRONG_PARAMETER, dlt_file_quick_parsingv2(NULL, output, DLT_OUTPUT_ASCII, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
+}
+/* End Method: dlt_common::dlt_file_quick_parsing */
 
 
 /* Begin Method: dlt_common::dlt_message_print_ascii*/
@@ -1814,6 +1883,42 @@ TEST(t_dlt_message_print_ascii, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method: dlt_common::dlt_message_print_ascii*/
+TEST(t_dlt_message_print_asciiv2, normal)
+{
+
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_asciiv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_asciiv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_ascii, abnormal)
 {
@@ -1875,6 +1980,36 @@ TEST(t_dlt_message_print_ascii, nullpointer)
 }
 /* End Method: dlt_common::dlt_message_print_ascii*/
 
+TEST(t_dlt_message_print_asciiv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_asciiv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+}
+/* End Method: dlt_common::dlt_message_print_ascii*/
 
 
 
@@ -1917,6 +2052,46 @@ TEST(t_dlt_message_print_ascii_with_filter, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_ascii with filter*/
+TEST(t_dlt_message_print_ascii_with_filterv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_asciiv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_asciiv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_ascii_with_filter, abnormal)
 {
@@ -1964,6 +2139,41 @@ TEST(t_dlt_message_print_header, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method: dlt_common::dlt_message_print_header */
+TEST(t_dlt_message_print_headerv2, normal)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_header, abnormal)
 {
@@ -2025,7 +2235,37 @@ TEST(t_dlt_message_print_header, nullpointer)
 
 }
 /* End Method: dlt_common::dlt_message_print_header */
+TEST(t_dlt_message_print_headerv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
 
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_headerv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+
+}
+/* End Method: dlt_common::dlt_message_print_header */
 
 
 
@@ -2068,6 +2308,46 @@ TEST(t_dlt_message_print_header_with_filter, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_header with filter */
+TEST(t_dlt_message_print_header_with_filterv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_header_with_filter, abnormal)
 {
@@ -2115,6 +2395,41 @@ TEST(t_dlt_message_print_hex, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method: dlt_common::dlt_message_print_hex */
+TEST(t_dlt_message_print_hexv2, normal)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_hexv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_hexv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_hex, abnormal)
 {
@@ -2175,6 +2490,36 @@ TEST(t_dlt_message_print_hex, nullpointer)
     EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hex(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
 }
 /* End Method: dlt_common::dlt_message_print_hex */
+TEST(t_dlt_message_print_hexv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_hexv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+}
+/* End Method: dlt_common::dlt_message_print_hex */
 
 
 
@@ -2219,6 +2564,46 @@ TEST(t_dlt_message_print_hex_with_filter, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_hex with filter */
+TEST(t_dlt_message_print_hex_with_filterv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_hexv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_hexv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_hex_with_filter, abnormal)
 {
@@ -2266,6 +2651,40 @@ TEST(t_dlt_message_print_mixed_plain, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_mixed_plain */
+TEST(t_dlt_message_print_mixed_plainv2, normal)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_plainv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_plainv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_mixed_plain, abnormal)
 {
@@ -2327,6 +2746,36 @@ TEST(t_dlt_message_print_mixed_plain, nullpointer)
 }
 /* End Method: dlt_common::dlt_message_print_mixed_pain */
 
+TEST(t_dlt_message_print_mixed_plainv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_plainv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+}
+/* End Method: dlt_common::dlt_message_print_mixed_pain */
 
 
 
@@ -2370,6 +2819,46 @@ TEST(t_dlt_message_print_mixed_plain_with_filter, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_mixed_plain with filter */
+TEST(t_dlt_message_print_mixed_plain_with_filterv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_plainv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_plainv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_mixed_plain_with_filter, abnormal)
 {
@@ -2416,6 +2905,40 @@ TEST(t_dlt_message_print_mixed_html, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method: dlt_common::dlt_message_print_mixed_html */
+TEST(t_dlt_message_print_mixed_htmlv2, normal)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_htmlv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_htmlv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_mixed_html, abnormal)
 {
@@ -2477,6 +3000,36 @@ TEST(t_dlt_message_print_mixed_html, nullpointer)
 }
 /* End Method: dlt_common::dlt_message_print_mixed_html */
 
+TEST(t_dlt_message_print_mixed_htmlv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_print_mixed_htmlv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+}
+/* End Method: dlt_common::dlt_message_print_mixed_html */
 
 
 
@@ -2519,6 +3072,47 @@ TEST(t_dlt_message_print_mixed_html_with_filter, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method: dlt_common::dlt_message_print_mixed_html_with filter */
+TEST(t_dlt_message_print_mixed_html_with_filterv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_htmlv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_print_mixed_htmlv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_print_mixed_html_with_filter, abnormal)
 {
@@ -2571,6 +3165,46 @@ TEST(t_dlt_message_filter_check, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method:dlt_common::dlt_message_filter_check */
+TEST(t_dlt_message_filter_checkv2, normal)
+{
+    DltFileV2 file;
+    DltFilter filter;
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected > 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_initv2(&filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_filter_loadv2(&filter, openfilter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_set_filterv2(&file, &filter, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_filter_checkv2(&file.msg, &filter, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_filter_checkv2(&file.msg, &filter, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_filter_check, abnormal)
 {
@@ -2630,6 +3264,32 @@ TEST(t_dlt_message_filter_check, nullpointer)
 }
 /* End Method:dlt_common::dlt_message_filter_check */
 
+TEST(t_dlt_message_filter_checkv2, nullpointer)
+{
+    DltFileV2 file;
+    DltFilter filter;
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    char openfilter[MAX_LINE+sizeof(FILTER_FILE_NAME)];
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfilter, "%s" FILTER_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(NULL, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(NULL, NULL, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(NULL, &filter, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(NULL, &filter, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(&file.msg, NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_filter_checkv2(&file.msg, NULL, 1));
+}
+/* End Method:dlt_common::dlt_message_filter_check */
 
 
 
@@ -2665,6 +3325,40 @@ TEST(t_dlt_message_get_extraparamters, normal)
     }
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+
+/* Begin Method:dlt_common::dlt_message _get_extraparameters */
+TEST(t_dlt_message_get_extraparamtersv2, normal)
+{
+    DltFileV2 file;
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect >0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_read(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_get_extraparametersv2(&file.msg, 0));
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_get_extraparametersv2(&file.msg, 1));
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
 }
 TEST(t_dlt_message_get_extraparamters, abnormal)
 {
@@ -2741,6 +3435,43 @@ TEST(t_dlt_message_header, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
 }
+
+/* Begin Method:dlt_common::dlt_message_header */
+TEST(t_dlt_message_headerv2, normal)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expect 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_init(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
+        printf("%s \n", text);
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_message_headerv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
+        printf("%s \n", text);
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
 TEST(t_dlt_message_header, abnormal)
 {
 /*    DltFile file; */
@@ -2804,6 +3535,38 @@ TEST(t_dlt_message_header, nullpointer)
 }
 /* End Method:dlt_common::dlt_message_header */
 
+TEST(t_dlt_message_headerv2, nullpointer)
+{
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, text, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, text, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(NULL, text, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, NULL, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, NULL, 0, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, NULL, DLT_DAEMON_TEXTSIZE, 1));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, text, 0, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_headerv2(&file.msg, text, 0, 1));
+}
+/* End Method:dlt_common::dlt_message_header */
 
 
 
@@ -2922,6 +3685,126 @@ TEST(t_dlt_message_header_flags, normal)
         printf("%s \n", text);
         EXPECT_LE(DLT_RETURN_OK,
                   dlt_message_header_flags(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_ALL, 1));
+        printf("%s \n", text);
+    }
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+}
+/* Begin Method:dlt_common::dlt_message_header_flags */
+TEST(t_dlt_message_header_flagsv2, normal)
+{
+    /* Possible Flags*/
+    /*#define DLT_HEADER_SHOW_NONE       0x0000 */
+    /*#define DLT_HEADER_SHOW_TIME       0x0001 */
+    /*#define DLT_HEADER_SHOW_TMSTP      0x0002 */
+    /*#define DLT_HEADER_SHOW_MSGCNT     0x0004 */
+    /*#define DLT_HEADER_SHOW_ECUID      0x0008 */
+    /*#define DLT_HEADER_SHOW_APID       0x0010 */
+    /*#define DLT_HEADER_SHOW_CTID       0x0020 */
+    /*#define DLT_HEADER_SHOW_MSGTYPE    0x0040 */
+    /*#define DLT_HEADER_SHOW_MSGSUBTYPE 0x0080 */
+    /*#define DLT_HEADER_SHOW_VNVSTATUS  0x0100 */
+    /*#define DLT_HEADER_SHOW_NOARG      0x0200 */
+    /*#define DLT_HEADER_SHOW_ALL        0xFFFF */
+    /*########################################*/
+
+
+    DltFileV2 file;
+    static char text[DLT_DAEMON_TEXTSIZE];
+
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+
+    while (dlt_file_readv2(&file, 0) >= 0) {}
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_NONE, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_TIME, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_TMSTP, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGCNT, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_ECUID, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_APID, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_CTID, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGTYPE, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGSUBTYPE, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_VNVSTATUS, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_NOARG, 0));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_ALL, 0));
+        printf("%s \n", text);
+    }
+
+    for (int i = 0; i < file.counter; i++) {
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_messagev2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_NONE, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_TIME, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_TMSTP, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGCNT, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_ECUID, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_APID, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_CTID, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGTYPE, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_MSGSUBTYPE, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_VNVSTATUS, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_NOARG, 1));
+        printf("%s \n", text);
+        EXPECT_LE(DLT_RETURN_OK,
+                  dlt_message_header_flagsv2(&file.msg, text, DLT_DAEMON_TEXTSIZE, DLT_HEADER_SHOW_ALL, 1));
         printf("%s \n", text);
     }
 
