@@ -95,6 +95,7 @@
 // DLTV2 - Definitions for DLT Version 2
 #define DLT_VERSION2 2
 #define DLT_VERSION_MASK 0xE0
+#define DLT_VERSION_SHIFT 5
 
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
@@ -2930,7 +2931,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               daemon_local->flags.vflag);
 
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & 0xE0) >> 5;
+        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
 
         bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
@@ -2998,7 +2999,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & 0xE0) >> 5;
+        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
 
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
@@ -3173,7 +3174,7 @@ int dlt_daemon_process_control_messages(
                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
         uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & 0xE0) >> 5;
+        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
 
         /* Check for control message */
         if ((receiver->fd > 0) &&
@@ -3966,7 +3967,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                daemon_local->recv_buf_shm, size, 0, verbose);
 
         uint8_t header_first_byte = ((uint8_t *)daemon_local->recv_buf_shm)[0];
-        dlt_version = (header_first_byte & 0xE0) >> 5;
+        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
 
         if (DLT_MESSAGE_ERROR_OK != ret) {
             dlt_shm_remove(&(daemon_local->dlt_shm));
