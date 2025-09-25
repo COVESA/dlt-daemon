@@ -1526,6 +1526,19 @@ TEST(t_dlt_message_init, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_message_init(&msg, 1));
     EXPECT_LE(DLT_RETURN_OK, dlt_message_free(&msg, 0));
 }
+
+/* Begin Method: dlt_common::dlt_message_init*/
+TEST(t_dlt_message_initv2, normal)
+{
+    DltMessagev2 msg;
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_init(&msg, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_free(&msg, 0));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_init(&msg, 1));
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_free(&msg, 0));
+}
 TEST(t_dlt_message_init, abnormal)
 {
 /*    DltMessage msg; */
@@ -1550,6 +1563,14 @@ TEST(t_dlt_message_init, nullpointer)
 /* End Method: dlt_common::dlt_message_init*/
 
 
+TEST(t_dlt_message_initv2, nullpointer)
+{
+    /*NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_initv2(NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_initv2(NULL, 1));
+}
+/* End Method: dlt_common::dlt_message_init*/
+
 
 
 /* Begin Method: dlt_common::dlt_message_free */
@@ -1563,6 +1584,19 @@ TEST(t_dlt_message_free, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_message_init(&msg, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_message_free(&msg, 1));
+}
+
+/* Begin Method: dlt_common::dlt_message_free */
+TEST(t_dlt_message_freev2, normal)
+{
+    DltMessagev2 msg;
+
+    /* Normal Use Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_initv2(&msg, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_freev2(&msg, 0));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_initv2(&msg, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_message_freev2(&msg, 1));
 }
 TEST(t_dlt_message_free, abnormal)
 {
@@ -1589,6 +1623,14 @@ TEST(t_dlt_message_free, nullpointer)
 /* End Method: dlt_common::dlt_message_free */
 
 
+TEST(t_dlt_message_freev2, nullpointer)
+{
+    /*NULL-Pointer, expected -1 */
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_freev2(NULL, 0));
+    EXPECT_GE(DLT_RETURN_ERROR, dlt_message_freev2(NULL, 1));
+}
+/* End Method: dlt_common::dlt_message_free */
+
 
 
 /* Begin Method: dlt_common::dlt_file_open */
@@ -1614,6 +1656,31 @@ TEST(t_dlt_file_open, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_file_open(&file, openfile, 1));
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
 }
+
+/* Begin Method: dlt_common::dlt_file_open */
+TEST(t_dlt_file_openv2, normal)
+{
+    DltFileV2 file;
+    /* Get PWD so file can be used*/
+    char pwd[MAX_LINE];
+    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+
+    /* ignore returned value from getcwd */
+    if (getcwd(pwd, MAX_LINE) == NULL) {}
+
+    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    /*---------------------------------------*/
+
+    /* Normal Use-Case, expected 0 */
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_initv2(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_openv2(&file, openfile, 1));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_freev2(&file, 0));
+}
+
 TEST(t_dlt_file_open, abnormal)
 {
 /*    DltFile file; */
