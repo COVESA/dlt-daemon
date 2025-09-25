@@ -101,6 +101,10 @@ static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltLogLevelType level, const char *app_id,
                                    const char *ctx_id, int verbose);
 
+static int dlt_daemon_v2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
+                            char *str, DltLogLevelType level,
+                            const char *app_id, const char *ctx_id, int verbose);
+
 static int dlt_daemon_check_numeric_setting(char *token,
                                             char *value,
                                             unsigned long *data);
@@ -2648,7 +2652,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
  * would cause an endless loop because dlt_daemonV2_log_internal() would itself again
  * try to open the offline trace file.
  * This is a dlt-daemon only function. The libdlt has no equivalent function available. */
-int dlt_daemonV2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
+int dlt_daemon_v2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
 {
