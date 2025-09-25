@@ -1183,10 +1183,54 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose)
+{
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = *(msg->headerbuffer + sizeof(DltStorageHeaderV2)) || 0x03;
+
+    if (msgcontent == DLT_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               1);
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 2,
+               4);
+        memcpy(msg->headerextrav2.seconds,
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 6,
+               5);
+    }
+
+    if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               4);
+        memcpy(msg->headerextrav2.seconds,
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 4,
+               5);
+        memcpy(&(msg->headerextrav2.msid),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 9,
+               4);
+    }
+
+    if (msgcontent == DLT_CONTROL_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               1);
+    }
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
 {
-    PRINT_FUNCTION_VERBOSE(verbose);
-
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -1215,20 +1259,26 @@ DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent)
+DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, int verbose )
 {
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = msg->baseheaderv2->htyp2 || 0x03;
 
     if (msgcontent == DLT_VERBOSE_DATA_MSG) {
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
-               msg->headerextrav2.msin,
+               &(msg->headerextrav2.msin),
                1);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
-               msg->headerextrav2.noar,
+               &(msg->headerextrav2.noar),
                1);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 2,
-               msg->headerextrav2.nanoseconds,
+               &(msg->headerextrav2.nanoseconds),
                4);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 6,
                msg->headerextrav2.seconds,
@@ -1237,22 +1287,22 @@ DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, DltHtyp2Cont
 
     if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
-               msg->headerextrav2.nanoseconds,
+               &(msg->headerextrav2.nanoseconds),
                4);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 4,
                msg->headerextrav2.seconds,
                5);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 9,
-               msg->headerextrav2.msid,
+               &(msg->headerextrav2.msid),
                4);
     }
 
     if (msgcontent == DLT_CONTROL_MSG) {
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
-               msg->headerextrav2.msin,
+               &(msg->headerextrav2.msin),
                1);
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
-               msg->headerextrav2.noar,
+               &(msg->headerextrav2.noar),
                1);
     }
     return DLT_RETURN_OK;

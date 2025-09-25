@@ -1223,6 +1223,16 @@ DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_init(DltMessage *msg, int verbose);
+
+/**
+ * Initialise the structure used to access a DLT message.
+ * This function must be called before using further dlt_message functions.
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_messageV2_init(DltMessageV2 *msg, int verbose);
+
 /**
  * Free the used memory by the organising structure of file.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1296,6 +1306,30 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose);
+
+/**
+ * Set base header extra parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param msgcontent extra parameters are set based on msgcontent.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent);
+
+/**
+ * Get size of base header extra parameters for Version 2
+ * @param msgcontent extra parameters size is based on msgcontent.
+ * @return size of base header extra parameters
+ */
+uint8_t dlt_message_get_extraparametersV2_size(DltHtyp2ContentType msgcontent);
+
+/**
+ * Set extended header parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param msgcontent extra parameters size is based on msgcontent.
+ * @param size to store total header size after setting extended parameters
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_extendedparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent, uint32_t *size);
 
 /**
  * Initialise the structure used to access a DLT file.
@@ -1494,6 +1528,16 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
  * @return negative value if there was an error
  */
 DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu);
+
+/**
+ * Fill out storage header of a dlt message Version 2
+ * @param storageheader pointer to storage header of a dlt message
+ * @param ecuIDlen Length of ecu name to be set in storage header
+ * @param ecu name of ecu to be set in storage header
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_set_storageheaderV2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu);
+
 /**
  * Check if a storage header contains its marker
  * @param storageheader pointer to storage header of a dlt message

@@ -193,6 +193,7 @@ static void dlt_user_housekeeperthread_function(void *ptr);
 static void dlt_user_atexit_handler(void);
 static DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log);
 static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype, int *sent_size);
+static DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size);
 static DltReturnValue dlt_user_log_send_register_application(void);
 static DltReturnValue dlt_user_log_send_unregister_application(void);
 static DltReturnValue dlt_user_log_send_register_context(DltContextData *log);
@@ -4474,7 +4475,7 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
 #endif
 */
 
-    if (dlt_message_set_extraparametersV2(&msg, msgcontent) != DLT_RETURN_OK)
+    if (dlt_message_set_extraparametersV2(&msg, 0) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) +
@@ -5077,6 +5078,45 @@ DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log)
     /* Act like a receiver, convert header back to host format */
     msg->standardheader->len = DLT_BETOH_16(msg->standardheader->len);
     dlt_message_get_extraparameters(msg, 0);
+
+    msg->databuffer = log->buffer;
+    msg->datasize = (uint32_t) log->size;
+    msg->databuffersize = (uint32_t) log->size;
+
+    /* Print message as ASCII */
+    if (dlt_message_print_ascii(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
+
+    /* Restore variables and set len to BE*/
+    msg->databuffer = databuffer_tmp;
+    msg->databuffersize = databuffersize_tmp;
+    msg->datasize = datasize_tmp;
+
+    msg->standardheader->len = DLT_HTOBE_16(msg->standardheader->len);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
+{
+    uint8_t *databuffer_tmp;
+    uint32_t datasize_tmp;
+    uint32_t databuffersize_tmp;
+    static char text[DLT_USER_TEXT_LENGTH];
+
+    if ((msg == NULL) || (log == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* Save variables before print */
+    databuffer_tmp = msg->databuffer;
+    datasize_tmp = msg->datasize;
+    databuffersize_tmp = msg->databuffersize;
+
+
+
+    /* Act like a receiver, convert header back to host format */
+    msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
+    dlt_message_get_extraparameters_v2(msg, 0);
 
     msg->databuffer = log->buffer;
     msg->datasize = (uint32_t) log->size;
