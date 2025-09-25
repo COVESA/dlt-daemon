@@ -2656,9 +2656,10 @@ int dlt_daemon_v2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
 {
-    DltMessage msg = { 0 };
+    /* DLTV2 - Adaptation for DLT protocol version 2 */
+    DltMessageV2 msgV2 = { 0 };
     static uint8_t uiMsgCount = 0;
-    DltStandardHeaderExtra *pStandardExtra = NULL;
+    DltBaseHeaderExtraV2 *pBaseHeaderExtraV2 = NULL;
     uint32_t uiType;
     uint16_t uiSize;
     uint32_t uiExtraSize;
@@ -2685,12 +2686,12 @@ int dlt_daemon_v2_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msgV2.baseheaderv2->htyp2) +
         (DLT_IS_HTYP_UEH(msgV2.baseheaderv2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
-    msgV2.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
+    msgV2.headersize = (uint32_t) sizeof(DltStorageHeaderV2) + (uint32_t) sizeof(DltBaseHeaderV2) + uiExtraSize;
 
     /* Set extraheader */
-    pStandardExtra =
-        (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
-    dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
+    pBaseHeaderExtraV2 =
+        (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2));
+    dlt_set_id(DltBaseHeaderExtraV2->ecu, daemon->ecuid);
 
     /* Set timestamp */
     clock_gettime(CLOCK_REALTIME, &ts);
