@@ -342,13 +342,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int dlt_client_connect_testv2()
+int dlt_client_connect_test_v2()
 {
     DltClient dltclient;
-    DltReceiveData dltdata;
+    DltReceiveDataV2 dltdata;
     int c;
     int index;
-
+    /*TODO: Need to fix ecuid*/
     if (dltdata.evalue)
         dlt_set_id_v2(dltdata.ecuid, dltdata.evalue);
     else
@@ -497,7 +497,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
 
 
-int dlt_receive_filetransfer_callback_v2(DltMessagev2 *message, void *data)
+int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
 {
     DltReceiveDataV2 *dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
@@ -511,7 +511,7 @@ int dlt_receive_filetransfer_callback_v2(DltMessagev2 *message, void *data)
     dltdata = (DltReceiveData *)data;
 
     if (dltdata->filetransfervalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
         /* 1st find starting point of tranfering data packages */
         if (strncmp(text, "FLST", 4) == 0) {
@@ -564,7 +564,7 @@ int dlt_receive_filetransfer_callback_v2(DltMessagev2 *message, void *data)
     }
 
     if (dltdata->systemjournalvalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         /* 1st find the relevant packages */
         char *tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
@@ -580,7 +580,7 @@ int dlt_receive_filetransfer_callback_v2(DltMessagev2 *message, void *data)
     }
 
     if (dltdata->systemloggervalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         /* 1st find the relevant packages */
         char *tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
