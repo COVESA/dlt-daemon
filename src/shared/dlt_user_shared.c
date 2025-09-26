@@ -93,7 +93,7 @@ DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_set_userheader2(DltUserHeader *userheader, uint32_t mtype)
+DltReturnValue dlt_user_set_userheader_v2(DltUserHeader *userheader, uint32_t mtype)
 {
     if (userheader == 0)
         return DLT_RETURN_ERROR;
