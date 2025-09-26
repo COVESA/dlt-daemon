@@ -92,11 +92,6 @@
 #define DLT_DAEMON_APP_ID "DLTD"
 #define DLT_DAEMON_CTX_ID "INTM"
 
-// DLTV2 - Definitions for DLT Version 2
-#define DLT_VERSION2 2
-#define DLT_VERSION_MASK 0xE0
-#define DLT_VERSION_SHIFT 5
-
 static int dlt_daemon_log_internal(DltDaemon *daemon,
                                    DltDaemonLocal *daemon_local, char *str,
                                    DltLogLevelType level, const char *app_id,
