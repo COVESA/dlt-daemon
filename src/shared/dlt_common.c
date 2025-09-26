@@ -668,6 +668,29 @@ DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* initalise structure parameters */
+    msg->headersize = 0;
+    msg->datasize = 0;
+
+    msg->databuffer = NULL;
+    msg->databuffersize = 0;
+
+    msg->storageheaderv2 = NULL;
+    msg->baseheaderv2 = NULL;
+    msg->extendedheaderv2 = NULL;
+
+    msg->found_serialheader = 0;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -688,6 +711,11 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
 DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose)
 {
     return dlt_message_header_flags(msg, text, textlength, DLT_HEADER_SHOW_ALL, verbose);
+}
+
+DltReturnValue dlt_message_header_v2(DltMessageV2 *msg, char *text, size_t textlength, int verbose)
+{
+    return dlt_message_header_flags_v2(msg, text, textlength, DLT_HEADER_SHOW_ALL, verbose);
 }
 
 DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose)
@@ -735,6 +763,143 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
             dlt_print_id(text + strlen(text), msg->headerextra.ecu);
         else
             dlt_print_id(text + strlen(text), msg->storageheader->ecu);
+    }
+
+    /* print app id and context id if extended header available, else '----' */ #
+
+    if ((flags & DLT_HEADER_SHOW_APID) == DLT_HEADER_SHOW_APID) {
+        snprintf(text + strlen(text), textlength - strlen(text), " ");
+
+        if ((DLT_IS_HTYP_UEH(msg->standardheader->htyp)) && (msg->extendedheader->apid[0] != 0))
+            dlt_print_id(text + strlen(text), msg->extendedheader->apid);
+        else
+            snprintf(text + strlen(text), textlength - strlen(text), "----");
+
+        snprintf(text + strlen(text), textlength - strlen(text), " ");
+    }
+
+    if ((flags & DLT_HEADER_SHOW_CTID) == DLT_HEADER_SHOW_CTID) {
+        if ((DLT_IS_HTYP_UEH(msg->standardheader->htyp)) && (msg->extendedheader->ctid[0] != 0))
+            dlt_print_id(text + strlen(text), msg->extendedheader->ctid);
+        else
+            snprintf(text + strlen(text), textlength - strlen(text), "----");
+
+        snprintf(text + strlen(text), textlength - strlen(text), " ");
+    }
+
+    /* print info about message type and length */
+    if (DLT_IS_HTYP_UEH(msg->standardheader->htyp)) {
+        if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE) {
+            snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                     message_type[DLT_GET_MSIN_MSTP(msg->extendedheader->msin)]);
+            snprintf(text + strlen(text), textlength - strlen(text), " ");
+        }
+
+        if ((flags & DLT_HEADER_SHOW_MSGSUBTYPE) == DLT_HEADER_SHOW_MSGSUBTYPE) {
+            if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin)) == DLT_TYPE_LOG)
+                snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                         log_info[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+
+            if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin)) == DLT_TYPE_APP_TRACE)
+                snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                         trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+
+            if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin)) == DLT_TYPE_NW_TRACE)
+                snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                         nw_trace_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+
+            if ((DLT_GET_MSIN_MSTP(msg->extendedheader->msin)) == DLT_TYPE_CONTROL)
+                snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                         control_type[DLT_GET_MSIN_MTIN(msg->extendedheader->msin)]);
+
+            snprintf(text + strlen(text), textlength - strlen(text), " ");
+        }
+
+        if ((flags & DLT_HEADER_SHOW_VNVSTATUS) == DLT_HEADER_SHOW_VNVSTATUS) {
+            /* print verbose status pf message */
+            if (DLT_IS_MSIN_VERB(msg->extendedheader->msin))
+                snprintf(text + strlen(text), textlength - strlen(text), "V");
+            else
+                snprintf(text + strlen(text), textlength - strlen(text), "N");
+
+            snprintf(text + strlen(text), textlength - strlen(text), " ");
+        }
+
+        if ((flags & DLT_HEADER_SHOW_NOARG) == DLT_HEADER_SHOW_NOARG)
+            /* print number of arguments */
+            snprintf(text + strlen(text), textlength - strlen(text), "%d", msg->extendedheader->noar);
+    }
+    else {
+        if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE)
+            snprintf(text + strlen(text), textlength - strlen(text), "--- ");
+
+        if ((flags & DLT_HEADER_SHOW_MSGSUBTYPE) == DLT_HEADER_SHOW_MSGSUBTYPE)
+            snprintf(text + strlen(text), textlength - strlen(text), "--- ");
+
+        if ((flags & DLT_HEADER_SHOW_VNVSTATUS) == DLT_HEADER_SHOW_VNVSTATUS)
+            snprintf(text + strlen(text), textlength - strlen(text), "N ");
+
+        if ((flags & DLT_HEADER_SHOW_NOARG) == DLT_HEADER_SHOW_NOARG)
+            snprintf(text + strlen(text), textlength - strlen(text), "-");
+    }
+
+    return DLT_RETURN_OK;
+}
+
+
+DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t textlength, int flags, int verbose)
+{
+    struct tm timeinfo;
+    char buffer [DLT_COMMON_BUFFER_LENGTH];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((msg == NULL) || (text == NULL) || (textlength <= 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2 == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((flags < DLT_HEADER_SHOW_NONE) || (flags > DLT_HEADER_SHOW_ALL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    text[0] = 0;
+
+    if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
+        /* print received time */
+        time_t tt = 0;
+        for (int i = 0; i<5; ++i){
+            tt = (tt << 8) | msg->storageheaderv2->seconds[i];
+        }
+        tzset();
+        localtime_r(&tt, &timeinfo);
+        strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
+        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2->nanoseconds);
+    }
+
+    if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
+        /* print timestamp if available */
+        if ((msg->baseheaderv2->htyp2 & 0x01)||(msg->baseheaderv2->htyp2 & 0x02)){
+            time_t tt = 0;
+            for (int i = 0; i<5; ++i){
+                tt = (tt << 8) | msg->headerextrav2.seconds[i];
+            }
+            snprintf(text + strlen(text), textlength - strlen(text), "%s.%.9d ", msg->headerextrav2.seconds, msg->headerextrav2.nanoseconds);
+        }
+        else
+            snprintf(text + strlen(text), textlength - strlen(text), "---------- ");
+    }
+
+    if ((flags & DLT_HEADER_SHOW_MSGCNT) == DLT_HEADER_SHOW_MSGCNT)
+        /* print message counter */
+        snprintf(text + strlen(text), textlength - strlen(text), "%.3d ", msg->baseheaderv2->mcnt);
+/*-----------------------------------------------------------------------------------------------------*/
+    if ((flags & DLT_HEADER_SHOW_ECUID) == DLT_HEADER_SHOW_ECUID) {
+        /* print ecu id, use header extra if available, else storage header value */
+        if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2))
+            dlt_print_id(text + strlen(text), msg->extendedheaderv2->ecid);
+        else
+            dlt_print_id(text + strlen(text), msg->storageheaderv2->ecid);
     }
 
     /* print app id and context id if extended header available, else '----' */ #
@@ -1160,10 +1325,61 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
+DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = *(msg->headerbuffer + sizeof(DltStorageHeaderV2)) || 0x03;
+
+    if (msgcontent == DLT_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               1);
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 2,
+               4);
+        msg->headerextrav2.nanoseconds = DLT_BETOH_32(msg->headerextrav2.nanoseconds);
+        memcpy(msg->headerextrav2.seconds,
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 6,
+               5);
+    }
+
+    if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               4);
+        msg->headerextrav2.nanoseconds = DLT_BETOH_32(msg->headerextrav2.nanoseconds);
+        memcpy(msg->headerextrav2.seconds,
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 4,
+               5);
+        memcpy(&(msg->headerextrav2.msid),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 9,
+               4);
+        msg->headerextrav2.msid = DLT_BETOH_32(msg->headerextrav2.msid);
+    }
+
+    if (msgcontent == DLT_CONTROL_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               1);
+    }
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+    
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -1188,6 +1404,198 @@ DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
                &(msg->headerextra.tmsp),
                DLT_SIZE_WTMS);
     }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose )
+{
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = msg->baseheaderv2->htyp2 || 0x03;
+
+    if (msgcontent == DLT_VERBOSE_DATA_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               &(msg->headerextrav2.msin),
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               &(msg->headerextrav2.noar),
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 2,
+               &(msg->headerextrav2.nanoseconds),
+               4);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 6,
+               msg->headerextrav2.seconds,
+               5);
+    }
+
+    if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               &(msg->headerextrav2.nanoseconds),
+               4);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 4,
+               msg->headerextrav2.seconds,
+               5);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 9,
+               &(msg->headerextrav2.msid),
+               4);
+    }
+
+    if (msgcontent == DLT_CONTROL_MSG) {
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
+               &(msg->headerextrav2.msin),
+               1);
+        memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + 1,
+               &(msg->headerextrav2.noar),
+               1);
+    }
+    return DLT_RETURN_OK;
+}
+
+uint8_t dlt_message_get_extraparameters_size_v2(DltHtyp2ContentType msgcontent)
+{
+    uint8_t size = 0;
+    if (msgcontent==DLT_VERBOSE_DATA_MSG) {
+        size = DLT_SIZE_VERBOSE_DATA_MSG;
+    }else if (msgcontent==DLT_NON_VERBOSE_DATA_MSG)
+    {
+        size = DLT_SIZE_NONVERBOSE_DATA_MSG;
+    }else if (msgcontent==DLT_CONTROL_MSG)
+    {
+        size = DLT_SIZE_CONTROL_MSG;
+    }
+    return size;
+}
+
+DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t *size)
+{
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = msg->baseheaderv2->htyp2 || 0x03;
+
+    uint8_t extraHeaderSize = dlt_message_get_extraparametersV2_size(msgcontent);
+    uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
+
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->ecidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->ecid,
+            msg->extendedheaderv2->ecidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ecidlen + 1;
+
+    }
+
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->apidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->apid,
+            msg->extendedheaderv2->apidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->apidlen + 1;
+
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->ctidlen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->ctid,
+            msg->extendedheaderv2->ctidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ctidlen + 1;
+
+    }
+
+    if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->seid),
+               4);
+
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->finalen),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->fina,
+            msg->extendedheaderv2->finalen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2->ecidlen + 1;
+
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->linr),
+               4);
+
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->notg),
+               1);
+
+        uint32_t totalTagSize = (msg->extendedheaderv2->notg) * sizeof(DltTag);
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            msg->extendedheaderv2->tag,
+            totalTagSize);
+        
+        pntroffset = pntroffset + totalTagSize + 1;
+    }
+
+    if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->prlv),
+               1);
+
+        pntroffset = pntroffset + 1;
+    }
+
+    if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
+        uint8_t sgmtLength = 0;
+        memcpy(msg->headerbuffer + pntroffset,
+               &(msg->extendedheaderv2->sgmtinfo),
+               1);
+
+        memcpy(msg->headerbuffer + pntroffset + 1,
+            &(msg->extendedheaderv2->frametype),
+            1);
+        
+        if (msg->extendedheaderv2->frametype == DLT_FIRST_FRAME){
+            sgmtLength = 8;
+        }else if (msg->extendedheaderv2->frametype == DLT_CONSECUTIVE_FRAME){
+                sgmtLength = 4;
+        }else if (msg->extendedheaderv2->frametype == DLT_LAST_FRAME){
+                sgmtLength = 0;
+        }else if (msg->extendedheaderv2->frametype == DLT_ABORT_FRAME){
+                sgmtLength = 1;
+        }
+        
+        memcpy(msg->headerbuffer + pntroffset + 2,
+            &(msg->extendedheaderv2->sgmtdetails),
+            sgmtLength);
+        
+        pntroffset = pntroffset + sgmtLength + 2;
+    }
+
+    memcpy(size,
+        &pntroffset,
+        4);
 
     return DLT_RETURN_OK;
 }
@@ -2072,6 +2480,56 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
 #else
     storageheader->seconds = (uint32_t) tv.tv_sec; /* value is long */
     storageheader->microseconds = (int32_t) tv.tv_usec; /* value is long */
+#endif
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu)
+{
+
+#if !defined(_MSC_VER)
+    struct timespec ts;
+#endif
+
+    if ((storageheader == NULL) || (ecu == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* get time of day */
+#if defined(_MSC_VER)
+    time_t t = time(NULL);
+    storageheader->seconds[0]=(t >> 32) & 0xFF;
+    storageheader->seconds[1]=(t >> 24) & 0xFF;
+    storageheader->seconds[2]=(t >> 16) & 0xFF;
+    storageheader->seconds[3]=(t >> 8) & 0xFF;
+    storageheader->seconds[4]= t & 0xFF;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+
+    /* prepare storage header */
+    storageheader->pattern[0] = 'D';
+    storageheader->pattern[1] = 'L';
+    storageheader->pattern[2] = 'T';
+    storageheader->pattern[3] = 0x02;
+
+    storageheader->ecidlen = ecuIDlen;
+    storageheader->ecid = (char *)malloc((ecuIDlen + 1) * sizeof(char));
+    if (storageheader->ecid == NULL) {
+        return DLT_RETURN_ERROR;
+    }
+    strcpy(storageheader->ecid, ecu);
+
+    /* Set current time */
+#if defined(_MSC_VER)
+    storageheader->nanoseconds = 0;
+#else
+    storageheader->seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+    storageheader->seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+    storageheader->seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+    storageheader->seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+    storageheader->seconds[4]= ts.tv_sec & 0xFF;
+    storageheader->nanoseconds = (int32_t) ts.tv_nsec; /* value is long */
 #endif
 
     return DLT_RETURN_OK;
@@ -3114,6 +3572,22 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s ", text);
+
+    if (dlt_message_payload(message, text, size, DLT_OUTPUT_ASCII, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("[%s]\n", text);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_print_ascii_v2(DltMessage *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
 

@@ -80,6 +80,15 @@
 
 #define DLT_DAEMON_FLAG_MAX 256
 
+// DLTV2 - Definitions for DLT Version 2
+#define DLT_VERSION1 1
+#define DLT_VERSION2 2
+#define DLT_VERSION_MASK 0xE0
+#define DLT_VERSION_SHIFT 5
+
+// DLTV2 - DLT Version number. Assign Version 2 for development
+extern uint8_t dlt_version;
+
 /**
  * The flags of a dlt daemon.
  */

@@ -136,6 +136,8 @@ extern "C" {
 typedef struct
 {
     char contextID[DLT_ID_SIZE];                  /**< context id */
+    uint8_t contextID2len;
+    char *contextID2;                             /**< Variable length context ID for DLT version 2*/
     int32_t log_level_pos;                        /**< offset in user-application context field */
     int8_t *log_level_ptr;                        /**< pointer to the log level */
     int8_t *trace_status_ptr;                     /**< pointer to the trace status */
@@ -156,6 +158,7 @@ typedef struct
     char *context_description;                    /**< description of context */
     DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
     uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
+    uint32_t msid;                                /**< Message ID */
     int8_t verbose_mode;                          /**< verbose mode: 1 enabled, 0 disabled */
 } DltContextData;
 
@@ -222,7 +225,11 @@ typedef struct
 typedef struct
 {
     char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
+    uint8_t ecuID2len;
+    char *ecuID2;                              /**< Variable length ECU ID for DLT version 2*/
     char appID[DLT_ID_SIZE];                   /**< Application ID */
+    uint8_t appID2len;
+    char *appID2;                              /**< Variable length app ID for DLT version 2*/
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
 #ifdef DLT_NETWORK_TRACE_ENABLE
@@ -232,7 +239,12 @@ typedef struct
 #endif
     int8_t dlt_is_file;                        /**< Target of logging: 1 to file, 0 to daemon */
     unsigned int filesize_max;                 /**< Maximum size of existing file in case dlt_is_file=1 */
-
+    uint8_t filenamelen;
+    char *filename;                            /**< Variable length filename for DLT version 2*/
+    uint32_t linenumber;
+    uint8_t numberoftags;                      /**< Number of tags */
+    DltTag *tag;
+    uint8_t prlv;                              /**< Privacy level */
     dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all
                                                 *  contexts */
     uint32_t dlt_ll_ts_max_num_entries;        /**< Maximum number of contexts */
@@ -251,7 +263,11 @@ typedef struct
     int8_t with_session_id;                    /**< Send always session id: 1 enabled, 0 disabled */
     int8_t with_timestamp;                     /**< Send always timestamp: 1 enabled, 0 disabled */
     int8_t with_ecu_id;                        /**< Send always ecu id: 1 enabled, 0 disabled */
-
+    int8_t with_app_and_context_id;            /**< Send always app and context id: 1 enabled, 0 disabled */
+    int8_t with_filename_and_line_number;      /**< Send always source filename and line no.: 1 enabled, 0 disabled */
+    int8_t with_tags;                          /**< Send always tags: 1 enabled, 0 disabled */
+    int8_t with_privacy_level;            /**< Send always privacy level: 1 enabled, 0 disabled */
+    int8_t with_segmentation;             /**< Message is segmented: 1 enabled, 0 disabled */
     int8_t enable_local_print;                 /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;                   /**< Local print mode, controlled by environment variable */
     int8_t disable_injection_msg;               /**< Injection msg availability: 1 disabled, 0 enabled (default) */

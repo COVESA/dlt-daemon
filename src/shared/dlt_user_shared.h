@@ -204,6 +204,14 @@ typedef struct
 DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
 
 /**
+ * Set user header marker and store message type in user header for DLT Version 2
+ * @param userheader pointer to the userheader
+ * @param mtype user message type of internal message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_set_userheader_v2(DltUserHeader *userheader, uint32_t mtype);
+
+/**
  * Check if user header contains its marker
  * @param userheader pointer to the userheader
  * @return 0 no, 1 yes, negative value if there was an error
