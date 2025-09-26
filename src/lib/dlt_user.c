@@ -193,7 +193,7 @@ static void dlt_user_housekeeperthread_function(void *ptr);
 static void dlt_user_atexit_handler(void);
 static DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log);
 static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype, int *sent_size);
-static DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size);
+static DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size);
 static DltReturnValue dlt_user_log_send_register_application(void);
 static DltReturnValue dlt_user_log_send_unregister_application(void);
 static DltReturnValue dlt_user_log_send_register_context(DltContextData *log);
@@ -4295,7 +4295,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size)
+DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size)
 {
     DltMessageV2 msg;
     DltUserHeader userheader;
@@ -4325,15 +4325,15 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* also for Trace messages */
-    if (dlt_user_set_userheader2(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK)
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
-    if (dlt_messageV2_init(&msg, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbuffer;
 
-    if (dlt_set_storageheaderV2(msg.storageheaderv2, dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader_v2(msg.storageheaderv2, dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
@@ -4475,11 +4475,11 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
 #endif
 */
 
-    if (dlt_message_set_extraparametersV2(&msg, 0) != DLT_RETURN_OK)
+    if (dlt_message_set_extraparameters_v2(&msg, 0) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) +
-                                  dlt_message_get_extraparametersV2_size(msgcontent));
+                                  dlt_message_get_extraparameters_size_v2(msgcontent));
 
     /* Fill out extended header, if extended header should be provided */
     if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
@@ -4564,7 +4564,7 @@ DltReturnValue dlt_user_log_v2_send_log(DltContextData *log, const int mtype, Dl
 
     uint32_t totalheadersize;
 
-    if (dlt_message_set_extendedparametersV2(&msg, msgcontent, &totalheadersize) != DLT_RETURN_OK)
+    if (dlt_message_set_extendedparameters_v2(&msg, &totalheadersize) != DLT_RETURN_OK)
     return DLT_RETURN_ERROR;
 
     /* To Update: Free mallocs of extended header*/

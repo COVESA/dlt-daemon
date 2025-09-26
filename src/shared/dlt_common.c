@@ -668,7 +668,7 @@ DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_messageV2_init(DltMessageV2 *msg, int verbose)
+DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1185,6 +1185,8 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose)
 
 DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose)
 {
+    PRINT_FUNCTION_VERBOSE(verbose);
+
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
     
@@ -1231,6 +1233,8 @@ DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose)
 
 DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
 {
+    PRINT_FUNCTION_VERBOSE(verbose);
+    
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -1259,7 +1263,7 @@ DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, int verbose )
+DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose )
 {
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -1308,7 +1312,7 @@ DltReturnValue dlt_message_set_extraparametersV2(DltMessageV2 *msg, int verbose 
     return DLT_RETURN_OK;
 }
 
-uint8_t dlt_message_get_extraparametersV2_size(DltHtyp2ContentType msgcontent)
+uint8_t dlt_message_get_extraparameters_size_v2(DltHtyp2ContentType msgcontent)
 {
     uint8_t size = 0;
     if (msgcontent==DLT_VERBOSE_DATA_MSG) {
@@ -1323,10 +1327,13 @@ uint8_t dlt_message_get_extraparametersV2_size(DltHtyp2ContentType msgcontent)
     return size;
 }
 
-DltReturnValue dlt_message_set_extendedparametersV2(DltMessageV2 *msg, DltHtyp2ContentType msgcontent, uint32_t *size)
+DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t *size)
 {
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent;
+    msgcontent = msg->baseheaderv2->htyp2 || 0x03;
 
     uint8_t extraHeaderSize = dlt_message_get_extraparametersV2_size(msgcontent);
     uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
@@ -2333,7 +2340,7 @@ DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_set_storageheaderV2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu)
+DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu)
 {
 
 #if !defined(_MSC_VER)
