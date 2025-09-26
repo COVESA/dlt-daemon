@@ -415,6 +415,16 @@ int dlt_daemon_client_send_control_message(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
+    /* Debug prints for verifying DLT Version
+    if(dlt_version == DLT_VERSION2) {
+        dlt_log(LOG_INFO, "DLT VERSION 2 \n"); // DLT_DEBUG
+    } else if(dlt_version == DLT_VERSION1) {
+        dlt_log(LOG_INFO, "DLT VERSION 1 \n"); // DLT_DEBUG
+    } else {
+        dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
+    }
+    */
+
     if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
