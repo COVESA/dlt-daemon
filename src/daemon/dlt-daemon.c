@@ -2588,8 +2588,15 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         /* Set standardheader */
         msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
-        msg.baseheaderv2->htyp2 = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
-            DLT_VERSION2;
+        msg.baseheaderv2->htyp2 = DLT_HTYP2_WEID | DLT_HTYP2_WSID | DLT_HTYP_WTMS | DLT_HTYP2_WACID |
+            DLT_HTYP2_VERS;
+
+        /* Flags not added
+        DLT_HTYP2_WSFLN 0x100 with source filename and line number
+        DLT_HTYP2_WTGS 0x200 with tags
+        DLT_HTYP2_WPVL 0x400 with privacy level
+        DLT_HTYP2_WSGM 0x800 with segmentation */
+
         msg.baseheaderv2->mcnt = uiMsgCount++;
 
         uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2) +
