@@ -1250,6 +1250,18 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string.
+ * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
+ * @param msg pointer to structure of organising access to DLT messages version 2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_v2(DltMessageV2 *msg, char *text, size_t textlength, int verbose);
+
 /**
  * Print Header into an ASCII string, selective.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1260,6 +1272,18 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string, selective.
+ * @param msg pointer to structure of organising access to DLT messages V2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param flags select, bit-field to select, what should be printed (DLT_HEADER_SHOW_...)
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t textlength, int flags, int verbose);
+
 /**
  * Print Payload into an ASCII string.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1802,6 +1826,16 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print payload of a DLT message as ASCII-Output for version 2
+ * @param message pointer to structure of organising access to DLT messages in version 2
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_ascii_v2(DltMessage *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output

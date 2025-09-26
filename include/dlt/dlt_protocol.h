@@ -154,6 +154,7 @@
 #define DLT_HTYP2_WTGS 0x200 /**< with tags */
 #define DLT_HTYP2_WPVL 0x400 /**< with privacy level */
 #define DLT_HTYP2_WSGM 0x800 /**< with segmentation */
+#define DLT_HTYP2_EH 0xF1C /**< Extended header flags */
 
 #define DLT_IS_HTYP2_WEID(htyp2) ((htyp2) & DLT_HTYP2_WEID)
 #define DLT_IS_HTYP2_WACID(htyp2) ((htyp2) & DLT_HTYP2_WACID)
@@ -162,6 +163,7 @@
 #define DLT_IS_HTYP2_WTGS(htyp2) ((htyp2) & DLT_HTYP2_WTGS)
 #define DLT_IS_HTYP2_WPVL(htyp2) ((htyp2) & DLT_HTYP2_WPVL)
 #define DLT_IS_HTYP2_WSGM(htyp2) ((htyp2) & DLT_HTYP2_WSGM)
+#define DLT_IS_HTYP2_EH(htyp2)  ((htyp2) & DLT_HTYP2_EH)
 
 #define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 5)
 

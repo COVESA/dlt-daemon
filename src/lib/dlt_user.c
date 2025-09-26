@@ -204,6 +204,7 @@ static DltReturnValue dlt_send_app_ll_ts_limit(const char *apid,
 static DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode);
 static DltReturnValue dlt_user_log_send_marker();
 static DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log);
+static DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log);
 static DltReturnValue dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static DltReturnValue dlt_user_log_send_overflow(void);
@@ -5123,7 +5124,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffersize = (uint32_t) log->size;
 
     /* Print message as ASCII */
-    if (dlt_message_print_ascii(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_print_ascii_v2(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     /* Restore variables and set len to BE*/
