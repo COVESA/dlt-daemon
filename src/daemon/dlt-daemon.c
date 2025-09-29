@@ -2610,15 +2610,25 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         dlt_set_id(pExtendedHeaderV2->ecid, daemon->ecuid);
 
         /* Set timestamp */
-        clock_gettime(CLOCK_REALTIME, &ts);
-
-        // Assign nanoseconds part of tmsp2
-        pBaseHeaderExtraV2->nanoseconds = (uint32_t)ts.tv_nsec;
-
-        // Assign Seconds part of tmsp2 (store 64-bit seconds into 5-byte array, little-endian)
-        uint64_t seconds_val = (uint64_t)ts.tv_sec;
-        for (int i = 0; i < 5; i++) {
-            pBaseHeaderExtraV2->seconds[i] = (uint8_t)((seconds_val >> (i * 8)) & 0xFF);
+        if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+        }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+            msg.headerextrav2.nanoseconds |= 0x8000;
         }
 
         pExtendedHeaderV2->seid = (unsigned int) DLT_HTOBE_32(getpid());
