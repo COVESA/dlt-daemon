@@ -273,6 +273,19 @@
                                              ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
                                               (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
 
+#   define DLT_MSG_IS_CONTROL_V2(MSG)       (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
+                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL))
+
+#   define DLT_MSG_IS_CONTROL_TIME_V2(MSG)   ((DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                              (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_TIME))
+
+#   define DLT_MSG_IS_CONTROL_RESPONSE_V2(MSG) (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
+                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                             (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_RESPONSE))
+
+#   define DLT_MSG_IS_NONVERBOSE_V2(MSG)     (((MSG->baseheaderv2->htyp2 & 0x03)==0x02) && \
+                                              (!(DLT_IS_MSIN_VERB((MSG)->headerextrav2.msin))))
+
 /*
  *
  * Definitions of DLT message buffer overflow
@@ -1250,6 +1263,18 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string.
+ * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
+ * @param msg pointer to structure of organising access to DLT messages version 2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_v2(DltMessageV2 *msg, char *text, size_t textlength, int verbose);
+
 /**
  * Print Header into an ASCII string, selective.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1260,6 +1285,18 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string, selective.
+ * @param msg pointer to structure of organising access to DLT messages V2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param flags select, bit-field to select, what should be printed (DLT_HEADER_SHOW_...)
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t textlength, int flags, int verbose);
+
 /**
  * Print Payload into an ASCII string.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1305,7 +1342,7 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose);
+DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose);
 
 /**
  * Set standard header extra parameters
@@ -1802,6 +1839,16 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print payload of a DLT message as ASCII-Output for version 2
+ * @param message pointer to structure of organising access to DLT messages in version 2
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_ascii_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output

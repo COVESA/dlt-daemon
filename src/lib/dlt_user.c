@@ -204,6 +204,7 @@ static DltReturnValue dlt_send_app_ll_ts_limit(const char *apid,
 static DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode);
 static DltReturnValue dlt_user_log_send_marker();
 static DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log);
+static DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log);
 static DltReturnValue dlt_user_log_check_user_message(void);
 static void dlt_user_log_reattach_to_daemon(void);
 static DltReturnValue dlt_user_log_send_overflow(void);
@@ -4583,7 +4584,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
         (dlt_user.local_print_mode != DLT_PM_AUTOMATIC)) {
         if ((dlt_user.enable_local_print) || (dlt_user.local_print_mode == DLT_PM_FORCE_ON))
-            if (dlt_user_print_msg(&msg, log) == DLT_RETURN_ERROR)
+            if (dlt_user_print_msg_v2(&msg, log) == DLT_RETURN_ERROR)
                 return DLT_RETURN_ERROR;
     }
 
@@ -4632,10 +4633,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         /* try to resent old data first */
         ret = DLT_RETURN_OK;
 
-        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID[0] != '\0'))
+        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID2 = NULL))
             ret = dlt_user_log_resend_buffer();
 
-        if ((ret == DLT_RETURN_OK) && (dlt_user.appID[0] != '\0')) {
+        if ((ret == DLT_RETURN_OK) && (dlt_user.appID2 = NULL)) {
             /* resend ok or nothing to resent */
 #ifdef DLT_SHM_ENABLE
 
@@ -4700,9 +4701,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         DltReturnValue process_error_ret = DLT_RETURN_OK;
         /* store message in ringbuffer, if an error has occurred */
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        if (((ret!=DLT_RETURN_OK) || (dlt_user.appID[0] == '\0')) && !sent_size)
+        if (((ret!=DLT_RETURN_OK) || (dlt_user.appID2 = NULL)) && !sent_size)
 #else
-        if ((ret != DLT_RETURN_OK) || (dlt_user.appID[0] == '\0'))
+        if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 = NULL))
 #endif
             process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
@@ -4741,7 +4742,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     #endif
 
             if (dlt_user.local_print_mode == DLT_PM_AUTOMATIC)
-                dlt_user_print_msg(&msg, log);
+                dlt_user_print_msg_v2(&msg, log);
 
             return DLT_RETURN_PIPE_ERROR;
         }
@@ -5123,7 +5124,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffersize = (uint32_t) log->size;
 
     /* Print message as ASCII */
-    if (dlt_message_print_ascii(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_print_ascii_v2(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
     /* Restore variables and set len to BE*/
@@ -5131,7 +5132,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffersize = databuffersize_tmp;
     msg->datasize = datasize_tmp;
 
-    msg->standardheader->len = DLT_HTOBE_16(msg->standardheader->len);
+    msg->baseheaderv2->len = DLT_HTOBE_16(msg->baseheaderv2->len);
 
     return DLT_RETURN_OK;
 }
