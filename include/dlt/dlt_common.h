@@ -273,6 +273,19 @@
                                              ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
                                               (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
 
+#   define DLT_MSG_IS_CONTROL_V2(MSG)       (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
+                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL))
+
+#   define DLT_MSG_IS_CONTROL_TIME_V2(MSG)   ((DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                              (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_TIME))
+
+#   define DLT_MSG_IS_CONTROL_RESPONSE_V2(MSG) (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
+                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                             (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_RESPONSE))
+
+#   define DLT_MSG_IS_NONVERBOSE_V2(MSG)     (((MSG->baseheaderv2->htyp2 & 0x03)==0x02) && \
+                                              (!(DLT_IS_MSIN_VERB((MSG)->headerextrav2.msin))))
+
 /*
  *
  * Definitions of DLT message buffer overflow
@@ -1329,7 +1342,7 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_get_extraparameters_v2(DltMessage *msg, int verbose);
+DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose);
 
 /**
  * Set standard header extra parameters
@@ -1835,7 +1848,7 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_print_ascii_v2(DltMessage *message, char *text, uint32_t size, int verbose);
+DltReturnValue dlt_message_print_ascii_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output
