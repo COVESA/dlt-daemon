@@ -1621,7 +1621,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t
     DltHtyp2ContentType msgcontent;
     msgcontent = msg->baseheaderv2->htyp2 || 0x03;
 
-    uint8_t extraHeaderSize = dlt_message_get_extraparametersV2_size(msgcontent);
+    uint8_t extraHeaderSize = dlt_message_get_extraparameters_size_v2(msgcontent);
     uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
 
     if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
