@@ -1474,7 +1474,7 @@ DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose
         return DLT_RETURN_WRONG_PARAMETER;
     
     DltHtyp2ContentType msgcontent;
-    msgcontent = *(msg->headerbuffer + sizeof(DltStorageHeaderV2)) & 0x03;
+    msgcontent = ((*(msg->headerbuffer + sizeof(DltStorageHeaderV2))) & 0x03);
 
     if (msgcontent == DLT_VERBOSE_DATA_MSG) {
         memcpy(&(msg->headerextrav2.msin),
@@ -1558,7 +1558,7 @@ DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose
         return DLT_RETURN_WRONG_PARAMETER;
     
     DltHtyp2ContentType msgcontent;
-    msgcontent = msg->baseheaderv2->htyp2 & 0x03;
+    msgcontent = ((msg->baseheaderv2->htyp2) & 0x03);
 
     if (msgcontent == DLT_VERBOSE_DATA_MSG) {
         memcpy(msg->headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
@@ -1619,7 +1619,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t
         return DLT_RETURN_WRONG_PARAMETER;
     
     DltHtyp2ContentType msgcontent;
-    msgcontent = msg->baseheaderv2->htyp2 || 0x03;
+    msgcontent = ((msg->baseheaderv2->htyp2) & 0x03);
 
     uint8_t extraHeaderSize = dlt_message_get_extraparameters_size_v2(msgcontent);
     uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
