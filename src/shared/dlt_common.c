@@ -384,6 +384,19 @@ void dlt_set_id(char *id, const char *text)
         return;
 }
 
+void dlt_set_id_v2(char *id, const char *text, int8_t len)
+{
+    /* check nullpointer */
+    if (text == NULL)
+        return;
+
+    id = (char *)malloc(len * sizeof(char));
+    if (id == NULL) {
+        return;
+    }
+    strncpy(id, text, len);
+}
+
 void dlt_clean_string(char *text, int length)
 {
     int num;
@@ -2654,12 +2667,8 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->pattern[2] = 'T';
     storageheader->pattern[3] = 0x02;
 
+    dlt_set_id_v2(storageheader->ecid, ecu, ecuIDlen);
     storageheader->ecidlen = ecuIDlen;
-    storageheader->ecid = (char *)malloc((ecuIDlen + 1) * sizeof(char));
-    if (storageheader->ecid == NULL) {
-        return DLT_RETURN_ERROR;
-    }
-    strcpy(storageheader->ecid, ecu);
 
     /* Set current time */
 #if defined(_MSC_VER)
@@ -2696,6 +2705,18 @@ DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader)
             (storageheader->pattern[1] == 'L') &&
             (storageheader->pattern[2] == 'T') &&
             (storageheader->pattern[3] == 1))
+           ? DLT_RETURN_TRUE : DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_check_storageheader_v2(DltStorageHeaderV2 *storageheader)
+{
+    if (storageheader == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    return ((storageheader->pattern[0] == 'D') &&
+            (storageheader->pattern[1] == 'L') &&
+            (storageheader->pattern[2] == 'T') &&
+            (storageheader->pattern[3] == 2))
            ? DLT_RETURN_TRUE : DLT_RETURN_OK;
 }
 

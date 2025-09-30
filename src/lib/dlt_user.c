@@ -195,9 +195,13 @@ static DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log)
 static DltReturnValue dlt_user_log_send_log(DltContextData *log, int mtype, int *sent_size);
 static DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, DltHtyp2ContentType msgcontent, int *const sent_size);
 static DltReturnValue dlt_user_log_send_register_application(void);
+static DltReturnValue dlt_user_log_send_register_application_v2(void);
 static DltReturnValue dlt_user_log_send_unregister_application(void);
+static DltReturnValue dlt_user_log_send_unregister_application_v2(void);
 static DltReturnValue dlt_user_log_send_register_context(DltContextData *log);
+static DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log);
 static DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log);
+static DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log);
 static DltReturnValue dlt_send_app_ll_ts_limit(const char *apid,
                                                DltLogLevelType loglevel,
                                                DltTraceStatusType tracestatus);
@@ -602,6 +606,17 @@ DltReturnValue dlt_get_appid(char *appid)
 {
     if (appid != NULL) {
         strncpy(appid, dlt_user.appID, 4);
+        return DLT_RETURN_OK;
+    } else {
+        dlt_log(LOG_ERR, "Invalid parameter.\n");
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+}
+
+DltReturnValue dlt_get_appid_v2(char *appid)
+{
+    if (appid != NULL) {
+        strncpy(appid, dlt_user.appID2, dlt_user.appID2len);
         return DLT_RETURN_OK;
     } else {
         dlt_log(LOG_ERR, "Invalid parameter.\n");
@@ -1340,6 +1355,70 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
     return ret;
 }
 
+DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
+{
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < 0) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    int8_t apidlen = strlen(apid);
+
+    if ((apid == NULL) || (apidlen == 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* check if application already registered */
+    /* if yes do not register again */
+    if (!strncmp(apid, dlt_user.appID2, apidlen)) {
+            return DLT_RETURN_OK;
+    }
+
+    DLT_SEM_LOCK();
+
+    /* Store locally application id and application description */
+    dlt_set_id_v2(dlt_user.appID2, apid, apidlen);
+    dlt_user.appID2len = apidlen;
+
+    if (dlt_user.application_description != NULL)
+        free(dlt_user.application_description);
+
+    dlt_user.application_description = NULL;
+
+    if (description != NULL) {
+        size_t desc_len = strlen(description);
+        dlt_user.application_description = malloc(desc_len + 1);
+
+        if (dlt_user.application_description) {
+            strncpy(dlt_user.application_description, description, desc_len + 1);
+        } else {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    DLT_SEM_FREE();
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    strncpy(trace_load_settings[0].apid, dlt_user.appID, apidlen);
+    trace_load_settings[0].apidlen = apidlen;
+#endif
+
+    ret = dlt_user_log_send_register_application_v2();
+
+    if ((ret == DLT_RETURN_OK) && (dlt_user.dlt_log_handle != -1))
+        ret = dlt_user_log_resend_buffer_v2();
+
+    return ret;
+}
+
 DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, const char *description)
 {
     /* check nullpointer */
@@ -1361,6 +1440,35 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
         return DLT_RETURN_WRONG_PARAMETER;
 
     return dlt_register_context_ll_ts(handle,
+                                      contextid,
+                                      description,
+                                      DLT_USER_LOG_LEVEL_NOT_SET,
+                                      DLT_USER_TRACE_STATUS_NOT_SET);
+}
+
+DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid, const char *description)
+{
+    /* check nullpointer */
+    if (handle == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < 0) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    int8_t contextidlen = strlen(contextid);
+
+    if ((contextid == NULL) || (contextidlen == 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    return dlt_register_context_ll_ts_v2(handle,
                                       contextid,
                                       description,
                                       DLT_USER_LOG_LEVEL_NOT_SET,
@@ -1612,6 +1720,257 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
                                             DLT_USER_LOG_LEVEL_NOT_SET,
                                             DLT_USER_TRACE_STATUS_NOT_SET,
                                             dlt_log_level_changed_callback);
+}
+
+DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
+                                                   const char *contextid,
+                                                   const char *description,
+                                                   int loglevel,
+                                                   int tracestatus,
+                                                   void (*dlt_log_level_changed_callback_v2)(char *context_id,
+                                                                                       uint8_t context_id_len,
+                                                                                       uint8_t log_level,
+                                                                                       uint8_t trace_status))
+{
+    DltContextData log;
+    uint32_t i;
+    int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
+
+    int8_t contextidlen = strlen(contextid);
+    /*check nullpointer */
+    if ((handle == NULL) || (contextid == NULL) || (contextidlen == 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    if ((loglevel < DLT_USER_LOG_LEVEL_NOT_SET) || (loglevel >= DLT_LOG_MAX)) {
+        dlt_vlog(LOG_ERR, "Loglevel %d is outside valid range", loglevel);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if ((tracestatus < DLT_USER_TRACE_STATUS_NOT_SET) || (tracestatus >= DLT_TRACE_STATUS_MAX)) {
+        dlt_vlog(LOG_ERR, "Tracestatus %d is outside valid range", tracestatus);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (dlt_user_log_init(handle, &log) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* Reset message counter */
+    handle->mcnt = 0;
+
+    /* Store context id in log level/trace status field */
+
+    /* Check if already registered, else register context */
+    DLT_SEM_LOCK();
+
+    /* Check of double context registration removed */
+    /* Double registration is already checked by daemon */
+
+    /* Allocate or expand context array */
+    if (dlt_user.dlt_ll_ts == NULL) {
+        dlt_user.dlt_ll_ts = (dlt_ll_ts_type *)malloc(sizeof(dlt_ll_ts_type) * DLT_USER_CONTEXT_ALLOC_SIZE);
+
+        if (dlt_user.dlt_ll_ts == NULL) {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+
+        dlt_user.dlt_ll_ts_max_num_entries = DLT_USER_CONTEXT_ALLOC_SIZE;
+
+        /* Initialize new entries */
+        for (i = 0; i < dlt_user.dlt_ll_ts_max_num_entries; i++) {
+
+            /* At startup, logging and tracing is locally enabled */
+            /* the correct log level/status is set after received from daemon */
+            dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
+            dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+
+            dlt_user.dlt_ll_ts[i].log_level_ptr = 0;
+            dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+
+            dlt_user.dlt_ll_ts[i].context_description = 0;
+
+            dlt_user.dlt_ll_ts[i].injection_table = 0;
+            dlt_user.dlt_ll_ts[i].nrcallbacks = 0;
+            dlt_user.dlt_ll_ts[i].log_level_changed_callback_v2 = 0;
+        }
+    }
+    else if ((dlt_user.dlt_ll_ts_num_entries % DLT_USER_CONTEXT_ALLOC_SIZE) == 0)
+    {
+        /* allocate memory in steps of DLT_USER_CONTEXT_ALLOC_SIZE, e.g. 500 */
+        dlt_ll_ts_type *old_ll_ts;
+        uint32_t old_max_entries;
+
+        old_ll_ts = dlt_user.dlt_ll_ts;
+        old_max_entries = dlt_user.dlt_ll_ts_max_num_entries;
+
+        dlt_user.dlt_ll_ts_max_num_entries = ((dlt_user.dlt_ll_ts_num_entries
+                                               / DLT_USER_CONTEXT_ALLOC_SIZE) + 1)
+            * DLT_USER_CONTEXT_ALLOC_SIZE;
+        dlt_user.dlt_ll_ts = (dlt_ll_ts_type *)malloc(sizeof(dlt_ll_ts_type) *
+                                                      dlt_user.dlt_ll_ts_max_num_entries);
+
+        if (dlt_user.dlt_ll_ts == NULL) {
+            dlt_user.dlt_ll_ts = old_ll_ts;
+            dlt_user.dlt_ll_ts_max_num_entries = old_max_entries;
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+
+        memcpy(dlt_user.dlt_ll_ts, old_ll_ts, sizeof(dlt_ll_ts_type) * dlt_user.dlt_ll_ts_num_entries);
+        free(old_ll_ts);
+
+        /* Initialize new entries */
+        for (i = dlt_user.dlt_ll_ts_num_entries; i < dlt_user.dlt_ll_ts_max_num_entries; i++) {
+
+            /* At startup, logging and tracing is locally enabled */
+            /* the correct log level/status is set after received from daemon */
+            dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
+            dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
+
+            dlt_user.dlt_ll_ts[i].log_level_ptr = 0;
+            dlt_user.dlt_ll_ts[i].trace_status_ptr = 0;
+
+            dlt_user.dlt_ll_ts[i].context_description = 0;
+
+            dlt_user.dlt_ll_ts[i].injection_table = 0;
+            dlt_user.dlt_ll_ts[i].nrcallbacks = 0;
+            dlt_user.dlt_ll_ts[i].log_level_changed_callback_v2 = 0;
+        }
+    }
+
+    /* New context entry to be initialized */
+    dlt_ll_ts_type *ctx_entry;
+    ctx_entry = &dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries];
+
+    /* Store locally context id and context description */
+    dlt_set_id_v2(ctx_entry->contextID2, contextid, contextidlen);
+
+    if (ctx_entry->context_description != 0)
+        free(ctx_entry->context_description);
+
+    ctx_entry->context_description = 0;
+
+    if (description != 0) {
+        size_t desc_len = strlen(description);
+        ctx_entry->context_description = malloc(desc_len + 1);
+
+        if (ctx_entry->context_description == 0) {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+
+        strncpy(ctx_entry->context_description, description, desc_len + 1);
+    }
+
+    if (ctx_entry->log_level_ptr == 0) {
+        ctx_entry->log_level_ptr = malloc(sizeof(int8_t));
+
+        if (ctx_entry->log_level_ptr == 0) {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    if (ctx_entry->trace_status_ptr == 0) {
+        ctx_entry->trace_status_ptr = malloc(sizeof(int8_t));
+
+        if (ctx_entry->trace_status_ptr == 0) {
+            DLT_SEM_FREE();
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    /* check if the log level is set in the environement */
+    envLogLevel = dlt_env_adjust_ll_from_env_v2(&dlt_user.initial_ll_set,
+                                             dlt_user.appID2,
+                                             dlt_user.appID2len,
+                                             contextid,
+                                             contextidlen,
+                                             DLT_USER_LOG_LEVEL_NOT_SET);
+
+    if (envLogLevel != DLT_USER_LOG_LEVEL_NOT_SET) {
+        ctx_entry->log_level = (int8_t) envLogLevel;
+        loglevel = envLogLevel;
+    }
+    else if (loglevel != DLT_USER_LOG_LEVEL_NOT_SET)
+    {
+        ctx_entry->log_level = (int8_t) loglevel;
+    }
+
+    if (tracestatus != DLT_USER_TRACE_STATUS_NOT_SET)
+        ctx_entry->trace_status = (int8_t) tracestatus;
+
+    /* Prepare transfer struct */
+    dlt_set_id_v2(handle->contextID2, contextid, contextidlen);
+    handle->log_level_pos = (int32_t) dlt_user.dlt_ll_ts_num_entries;
+
+    handle->log_level_ptr = ctx_entry->log_level_ptr;
+    handle->trace_status_ptr = ctx_entry->trace_status_ptr;
+
+    log.context_description = ctx_entry->context_description;
+
+    *(ctx_entry->log_level_ptr) = ctx_entry->log_level;
+    *(ctx_entry->trace_status_ptr) = ctx_entry->trace_status = (int8_t) tracestatus;
+    ctx_entry->log_level_changed_callback_v2 = dlt_log_level_changed_callback_v2;
+
+    log.log_level = loglevel;
+    log.trace_status = tracestatus;
+
+    dlt_user.dlt_ll_ts_num_entries++;
+
+    DLT_SEM_FREE();
+
+    return dlt_user_log_send_register_context_v2(&log);
+}
+
+DltReturnValue dlt_register_context_ll_ts_v2(DltContext *handle,
+                                          const char *contextid,
+                                          const char *description,
+                                          int loglevel,
+                                          int tracestatus)
+{
+    return dlt_register_context_ll_ts_llccb_v2(handle,
+                                            contextid,
+                                            description,
+                                            loglevel,
+                                            tracestatus,
+                                            NULL);
+
+}
+
+DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
+                                          const char *contextid,
+                                          const char *description,
+                                          void (*dlt_log_level_changed_callback_v2)(char *context_id,
+                                                                                    uint8_t context_id_len,
+                                                                                    uint8_t log_level,
+                                                                                    uint8_t trace_status))
+{
+    int8_t contextidlen = strlen(contextid);
+    if ((handle == NULL) || (contextid == NULL) || (contextidlen == 0))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < 0) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    return dlt_register_context_ll_ts_llccb_v2(handle,
+                                            contextid,
+                                            description,
+                                            DLT_USER_LOG_LEVEL_NOT_SET,
+                                            DLT_USER_TRACE_STATUS_NOT_SET,
+                                            dlt_log_level_changed_callback_v2);
 }
 
 /* If force_sending_messages is set to true, do not clean appIDs when there are
@@ -4809,6 +5168,50 @@ DltReturnValue dlt_user_log_send_register_application(void)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_user_log_send_register_application_v2(void)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgRegisterApplicationV2 usercontext;
+
+    DltReturnValue ret;
+
+    if (dlt_user.appID2 == NULL)
+        return DLT_RETURN_ERROR;
+
+    /* set userheader */
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_REGISTER_APPLICATION) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* set usercontext */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    usercontext.apidlen = dlt_user.appID2len;
+    usercontext.pid = getpid();
+
+    if (dlt_user.application_description != NULL)
+        usercontext.description_length = (uint32_t) strlen(dlt_user.application_description);
+    else
+        usercontext.description_length = 0;
+
+    if (dlt_user.dlt_is_file)
+        return DLT_RETURN_OK;
+
+    ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgRegisterApplicationV2),
+                            dlt_user.application_description, usercontext.description_length);
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgRegisterApplicationV2),
+                                               dlt_user.application_description,
+                                               usercontext.description_length);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_user_log_send_unregister_application(void)
 {
     DltUserHeader userheader;
@@ -4839,6 +5242,43 @@ DltReturnValue dlt_user_log_send_unregister_application(void)
                                                sizeof(DltUserHeader),
                                                &(usercontext),
                                                sizeof(DltUserControlMsgUnregisterApplication),
+                                               NULL,
+                                               0);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_send_unregister_application_v2(void)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgUnregisterApplicationV2 usercontext;
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    if (dlt_user.appID2 == NULL)
+        return DLT_RETURN_ERROR;
+
+    /* set userheader */
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_UNREGISTER_APPLICATION) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* set usercontext */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    usercontext.apidlen = dlt_user.appID2len;
+    usercontext.pid = getpid();
+
+    if (dlt_user.dlt_is_file)
+        return DLT_RETURN_OK;
+
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgUnregisterApplicationV2));
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgUnregisterApplicationV2),
                                                NULL,
                                                0);
 
@@ -4904,6 +5344,67 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
 
 }
 
+DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgRegisterContextV2 usercontext;
+    DltReturnValue ret = DLT_RETURN_ERROR;
+
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (log->handle == NULL)
+        return DLT_RETURN_ERROR;
+
+    if (log->handle->contextID2 == NULL)
+        return DLT_RETURN_ERROR;
+
+    /* set userheader */
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_REGISTER_CONTEXT) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* set usercontext */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    usercontext.apidlen = dlt_user.appID2len;
+    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    usercontext.ctidlen = log->handle->contextID2len;
+    usercontext.log_level_pos = log->handle->log_level_pos;
+    usercontext.pid = getpid();
+
+    usercontext.log_level = (int8_t) log->log_level;
+    usercontext.trace_status = (int8_t) log->trace_status;
+
+    if (log->context_description != NULL)
+        usercontext.description_length = (uint32_t) strlen(log->context_description);
+    else
+        usercontext.description_length = 0;
+
+    if (dlt_user.dlt_is_file)
+        return DLT_RETURN_OK;
+
+    if (dlt_user.appID2 != NULL)
+        ret =
+            dlt_user_log_out3(dlt_user.dlt_log_handle,
+                              &(userheader),
+                              sizeof(DltUserHeader),
+                              &(usercontext),
+                              sizeof(DltUserControlMsgRegisterContextV2),
+                              log->context_description,
+                              usercontext.description_length);
+
+    /* store message in ringbuffer, if an error has occured */
+    if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 == NULL))
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgRegisterContextV2),
+                                               log->context_description,
+                                               usercontext.description_length);
+
+    return DLT_RETURN_OK;
+
+}
+
 DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
 {
     DltUserHeader userheader;
@@ -4943,6 +5444,53 @@ DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
                                                sizeof(DltUserHeader),
                                                &(usercontext),
                                                sizeof(DltUserControlMsgUnregisterContext),
+                                               NULL,
+                                               0);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgUnregisterContextV2 usercontext;
+    DltReturnValue ret;
+
+    if (log == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (log->handle == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (log->handle->contextID2 == NULL)
+        return DLT_RETURN_ERROR;
+
+    /* set userheader */
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_UNREGISTER_CONTEXT) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* set usercontext */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    usercontext.apidlen = dlt_user.appID2len;
+    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    usercontext.ctidlen = log->handle->contextID2len;
+    usercontext.pid = getpid();
+
+    if (dlt_user.dlt_is_file)
+        return DLT_RETURN_OK;
+
+    ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
+                            &(userheader),
+                            sizeof(DltUserHeader),
+                            &(usercontext),
+                            sizeof(DltUserControlMsgUnregisterContextV2));
+
+    /* store message in ringbuffer, if an error has occured */
+    if (ret < DLT_RETURN_OK)
+        return dlt_user_log_out_error_handling(&(userheader),
+                                               sizeof(DltUserHeader),
+                                               &(usercontext),
+                                               sizeof(DltUserControlMsgUnregisterContextV2),
                                                NULL,
                                                0);
 
@@ -5545,6 +6093,100 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 
                     if (((extendedHeader) != 0) && (extendedHeader->apid[0] == '\0')) /* if application id is empty, add it */
                         dlt_set_id(extendedHeader->apid, dlt_user.appID);
+
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+                }
+            }
+
+#ifdef DLT_SHM_ENABLE
+            dlt_shm_push(&dlt_user.dlt_shm,
+                         dlt_user.resend_buffer + sizeof(DltUserHeader),
+                         size - sizeof(DltUserHeader),
+                         0,
+                         0,
+                         0,
+                         0);
+
+            ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer, sizeof(DltUserHeader), 0, 0, 0, 0);
+#else
+            ret = dlt_user_log_out3(dlt_user.dlt_log_handle, dlt_user.resend_buffer, (size_t) size, 0, 0, 0, 0);
+#endif
+
+            /* in case of error, keep message in ringbuffer */
+            if (ret == DLT_RETURN_OK) {
+                dlt_buffer_remove(&(dlt_user.startup_buffer));
+            }
+            else {
+                if (ret == DLT_RETURN_PIPE_ERROR) {
+                    /* handle not open or pipe error */
+                    close(dlt_user.dlt_log_handle);
+                    dlt_user.dlt_log_handle = -1;
+                }
+
+                /* keep message in ringbuffer */
+                DLT_SEM_FREE();
+                return ret;
+            }
+        }
+
+        DLT_SEM_FREE();
+    }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_user_log_resend_buffer_v2(void)
+{
+    int num, count;
+    int size;
+    DltReturnValue ret;
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.appID == NULL) {
+        DLT_SEM_FREE();
+        return 0;
+    }
+
+    /* Send content of ringbuffer */
+    count = dlt_buffer_get_message_count(&(dlt_user.startup_buffer));
+    DLT_SEM_FREE();
+
+    for (num = 0; num < count; num++) {
+
+        DLT_SEM_LOCK();
+        size = dlt_buffer_copy(&(dlt_user.startup_buffer), dlt_user.resend_buffer, dlt_user.log_buf_len);
+
+        if (size > 0) {
+            DltUserHeader *userheader = (DltUserHeader *)(dlt_user.resend_buffer);
+
+            /* Add application id to the messages of needed*/
+            if (dlt_user_check_userheader_v2(userheader)) {
+                switch (userheader->message) {
+                case DLT_USER_MESSAGE_REGISTER_CONTEXT:
+                {
+                    DltUserControlMsgRegisterContextV2 *usercontext =
+                        (DltUserControlMsgRegisterContextV2 *)(dlt_user.resend_buffer + sizeof(DltUserHeader));
+
+                    if ((usercontext != 0) && (usercontext->apid == NULL))
+                        dlt_set_id_v2(usercontext->apid, dlt_user.appID2, dlt_user.appID2len);
+
+                    break;
+                }
+                case DLT_USER_MESSAGE_LOG:
+                {
+                    DltExtendedHeaderV2 *extendedHeader =
+                        (DltExtendedHeaderV2 *)(dlt_user.resend_buffer + sizeof(DltUserHeader) +
+                                              sizeof(DltBaseHeaderV2) +
+                                              sizeof(DltBaseHeaderExtraV2));
+
+                    if (((extendedHeader) != 0) && (extendedHeader->apid == NULL)) /* if application id is empty, add it */
+                        dlt_set_id_v2(extendedHeader->apid, dlt_user.appID2, dlt_user.appID2len);
 
                     break;
                 }

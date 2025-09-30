@@ -1047,6 +1047,22 @@ typedef struct
     DltTraceLoadStat tl_stat;
 } DltTraceLoadSettings;
 
+/*
+ * The parameter of trace load settings for DLT Version 2
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;              /**< Application id for which the settings are valid */
+    uint8_t ctidlen;
+    char *ctid;              /**< Context id for which the settings are valid, this is optional */
+
+    uint32_t soft_limit;     /**< Warning threshold, if load is above soft limit a warning will be logged but message won't be discarded */
+    uint32_t hard_limit;     /**< limit threshold, if load is above hard limit a warning will be logged and message will be discarded */
+
+    DltTraceLoadStat tl_stat;
+} DltTraceLoadSettingsV2;
+
 extern pthread_rwlock_t trace_load_rw_lock;
 
 #ifndef UINT32_MAX
@@ -1149,6 +1165,14 @@ void dlt_print_id(char *text, const char *id);
  * @param text string to be copied into char array.
  */
 void dlt_set_id(char *id, const char *text);
+
+/**
+ * Helper function to set an ID parameter.
+ * @param id char array as used in DLT mesages as IDs.
+ * @param text string to be copied into char array.
+ * @param len length of string to be copied into ID
+ */
+void dlt_set_id_v2(char *id, const char *text, int8_t len);
 
 /**
  * Helper function to remove not nice to print characters, e.g. NULL or carage return.
@@ -1600,6 +1624,13 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
  * @return 0 no, 1 yes, negative value if there was an error
  */
 DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
+
+/**
+ * Check if a storage header contains its marker
+ * @param storageheader pointer to storage header of a dlt message
+ * @return 0 no, 1 yes, negative value if there was an error
+ */
+DltReturnValue dlt_check_storageheader_v2(DltStorageHeaderV2 *storageheader);
 
 /**
  * Checks if received size is big enough for expected data

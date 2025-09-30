@@ -93,6 +93,17 @@ typedef struct
 } DLT_PACKED DltUserControlMsgRegisterApplication;
 
 /**
+ * This is the internal message content to exchange control msg register app information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;                      /**< application id */
+    pid_t pid;                       /**< process id of user application */
+    uint32_t description_length;     /**< length of description */
+} DLT_PACKED DltUserControlMsgRegisterApplicationV2;
+
+/**
  * This is the internal message content to exchange control msg unregister app information between application and daemon.
  */
 typedef struct
@@ -100,6 +111,16 @@ typedef struct
     char apid[DLT_ID_SIZE];         /**< application id */
     pid_t pid;                      /**< process id of user application */
 } DLT_PACKED DltUserControlMsgUnregisterApplication;
+
+/**
+ * This is the internal message content to exchange control msg unregister app information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;                     /**< application id */
+    pid_t pid;                      /**< process id of user application */
+} DLT_PACKED DltUserControlMsgUnregisterApplicationV2;
 
 /**
  * This is the internal message content to exchange control msg register information between application and daemon.
@@ -116,6 +137,22 @@ typedef struct
 } DLT_PACKED DltUserControlMsgRegisterContext;
 
 /**
+ * This is the internal message content to exchange control msg register information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;                      /**< application id */
+    uint8_t ctidlen;
+    char *ctid;                      /**< context id */
+    int32_t log_level_pos;           /**< offset in management structure on user-application side */
+    int8_t log_level;                /**< log level */
+    int8_t trace_status;             /**< trace status */
+    pid_t pid;                       /**< process id of user application */
+    uint32_t description_length;     /**< length of description */
+} DLT_PACKED DltUserControlMsgRegisterContextV2;
+
+/**
  * This is the internal message content to exchange control msg unregister information between application and daemon.
  */
 typedef struct
@@ -124,6 +161,18 @@ typedef struct
     char ctid[DLT_ID_SIZE];         /**< context id */
     pid_t pid;                      /**< process id of user application */
 } DLT_PACKED DltUserControlMsgUnregisterContext;
+
+/**
+ * This is the internal message content to exchange control msg unregister information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;                      /**< application id */
+    uint8_t ctidlen;
+    char *ctid;                      /**< context id */
+    pid_t pid;                       /**< process id of user application */
+} DLT_PACKED DltUserControlMsgUnregisterContextV2;
 
 /**
  * This is the internal message content to exchange control msg log level information between application and daemon.
@@ -217,6 +266,13 @@ DltReturnValue dlt_user_set_userheader_v2(DltUserHeader *userheader, uint32_t mt
  * @return 0 no, 1 yes, negative value if there was an error
  */
 int dlt_user_check_userheader(DltUserHeader *userheader);
+
+/**
+ * Check if user header contains its marker
+ * @param userheader pointer to the userheader for version 2
+ * @return 0 no, 1 yes, negative value if there was an error
+ */
+int dlt_user_check_userheader_v2(DltUserHeader *userheader);
 
 /**
  * Atomic write to file descriptor, using vector of 2 elements
