@@ -98,6 +98,9 @@
 #include "dlt_client.h"
 #include "dlt_client_cfg.h"
 
+// DLTV2 - DLT Version flag for multiplexing V1 and V2 messages
+uint8_t dlt_client_dlt_version = DLT_VERSION1;
+
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
 static bool (*fetch_next_message_callback_function)(void *data) = NULL;
 
@@ -626,154 +629,335 @@ DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *
 
 DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size)
 {
-    DltMessage msg;
-    int ret;
+    if (dlt_client_dlt_version == DLT_VERSION2) {
+        DltMessageV2 msg;
+        int ret;
 
-    int32_t len;
-    uint32_t id_tmp;
-    uint32_t id;
+        int32_t len;
+        uint32_t id_tmp;
+        uint32_t id;
 
-    if ((client == 0) || (client->sock < 0) || (apid == 0) || (ctid == 0))
-        return DLT_RETURN_ERROR;
+        DltBaseHeaderExtraV2 *pBaseHeaderExtraV2 = NULL;
+        DltExtendedHeaderV2 *pExtendedHeaderV2 = NULL;
 
-    /* initialise new message */
-    if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
-        return DLT_RETURN_ERROR;
+        struct timespec ts;
 
-    /* prepare payload of data */
-    msg.datasize = size;
+        if ((client == 0) || (client->sock < 0) || (apid == 0) || (ctid == 0))
+            return DLT_RETURN_ERROR;
 
-    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
-        free(msg.databuffer);
-        msg.databuffer = 0;
-    }
+        /* initialise new message */
+        if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+            return DLT_RETURN_ERROR;
 
-    if (msg.databuffer == 0) {
-        msg.databuffer = (uint8_t *)malloc(msg.datasize);
-        msg.databuffersize = msg.datasize;
-    }
+        /* prepare payload of data */
+        msg.datasize = size;
 
-    if (msg.databuffer == 0) {
-        dlt_message_free(&msg, 0);
-        return DLT_RETURN_ERROR;
-    }
+        if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+            free(msg.databuffer);
+            msg.databuffer = 0;
+        }
 
-    /* copy data */
-    memcpy(msg.databuffer, payload, size);
+        if (msg.databuffer == 0) {
+            msg.databuffer = (uint8_t *)malloc(msg.datasize);
+            msg.databuffersize = msg.datasize;
+        }
 
-    /* prepare storage header */
-    msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
+        if (msg.databuffer == 0) {
+            dlt_message_free_v2(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
 
-    if (dlt_set_storageheader(msg.storageheader, "") == DLT_RETURN_ERROR) {
-        dlt_message_free(&msg, 0);
-        return DLT_RETURN_ERROR;
-    }
+        /* copy data */
+        memcpy(msg.databuffer, payload, size);
 
-    /* prepare standard header */
-    msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
-    msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
+        /* prepare storage header */
+        msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbuffer);
+        ;
 
-    #if (BYTE_ORDER == BIG_ENDIAN)
-    msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
-    #endif
+        if (dlt_set_storageheader_v2(msg.storageheaderv2, 0, "") == DLT_RETURN_ERROR) {
+            dlt_message_free_v2(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
 
-    msg.standardheader->mcnt = 0;
+        /* prepare standard header */
+        msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
+        msg.baseheaderv2->htyp2 = DLT_HTYP2_WEID | DLT_HTYP2_WSID | DLT_HTYP_WTMS | DLT_HTYP2_WACID |
+                DLT_HTYP2_VERS;
 
-    /* Set header extra parameters */
-    dlt_set_id(msg.headerextra.ecu, client->ecuid);
-    /*msg.headerextra.seid = 0; */
-    msg.headerextra.tmsp = dlt_uptime();
+        #if (BYTE_ORDER == BIG_ENDIAN)
+        msg.baseheaderv2->htyp2 = (msg.baseheaderv2->htyp2 | DLT_HTYP_MSBF);
+        #endif
 
-    /* Copy header extra parameters to headerbuffer */
-    if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR) {
-        dlt_message_free(&msg, 0);
-        return DLT_RETURN_ERROR;
-    }
+        msg.baseheaderv2->mcnt = 0;
 
-    /* prepare extended header */
-    msg.extendedheader = (DltExtendedHeader *)(msg.headerbuffer +
-                                               sizeof(DltStorageHeader) +
-                                               sizeof(DltStandardHeader) +
-                                               DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+        /* Set header extra parameters */
+        pExtendedHeaderV2->ecidlen = DLT_CLIENT_ECU_ID_LEN;
+        dlt_set_id(pExtendedHeaderV2->ecid, client->ecuid);
 
-    msg.extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
+        /*msg.headerextrav2.seid = 0; */
+        /* Set timestamp */
+        if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+        }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+            }
+            msg.headerextrav2.nanoseconds |= 0x8000;
+        }
 
-    msg.extendedheader->noar = 1; /* number of arguments */
+        /* Copy header extra parameters to headerbuffer */
+        if (dlt_message_set_extraparameters_v2(&msg, 0) == DLT_RETURN_ERROR) {
+            dlt_message_free_v2(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
 
-    dlt_set_id(msg.extendedheader->apid, (apid[0] == '\0') ? DLT_CLIENT_DUMMY_APP_ID : apid);
-    dlt_set_id(msg.extendedheader->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
+        /* prepare extended header */
+        msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbuffer +
+                                                sizeof(DltStorageHeaderV2) +
+                                                sizeof(DltBaseHeaderV2) +
+                                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
 
-    /* prepare length information */
-    msg.headersize = (uint32_t) (sizeof(DltStorageHeader) +
-        sizeof(DltStandardHeader) +
-        sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+        pBaseHeaderExtraV2->msin = DLT_MSIN_CONTROL_REQUEST;
 
-    len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
+        pBaseHeaderExtraV2->noar = 1; /* number of arguments */
 
-    if (len > UINT16_MAX) {
-        dlt_vlog(LOG_ERR,
-                 "%s: Critical: Huge injection message discarded!\n",
-                 __func__);
+        dlt_set_id(msg.extendedheaderv2->apid, (apid[0] == '\0') ? DLT_CLIENT_DUMMY_APP_ID : apid);
+        dlt_set_id(msg.extendedheaderv2->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
 
-		dlt_message_free(&msg, 0);
+        /* prepare length information */
+        msg.headersize = (uint32_t) (sizeof(DltStorageHeaderV2) +
+            sizeof(DltBaseHeaderV2) +
+            sizeof(DltExtendedHeaderV2) +
+            DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
 
-        return DLT_RETURN_ERROR;
-    }
+        len = (int32_t) (msg.headersize - sizeof(DltStorageHeaderV2) + msg.datasize);
 
-    msg.standardheader->len = DLT_HTOBE_16(len);
+        if (len > UINT16_MAX) {
+            dlt_vlog(LOG_ERR,
+                    "%s: Critical: Huge injection message discarded!\n",
+                    __func__);
 
-    /* Send data (without storage header) */
-    if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
-        /* via FileDescriptor */
-        if (client->send_serial_header)
-        {
-            ret = write(client->sock, dltSerialHeader, sizeof(dltSerialHeader));
-            if (ret < 0)
+            dlt_message_free_v2(&msg, 0);
+
+            return DLT_RETURN_ERROR;
+        }
+
+        msg.baseheaderv2->len = DLT_HTOBE_16(len);
+
+        /* Send data (without storage header) */
+        if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
+            /* via FileDescriptor */
+            if (client->send_serial_header)
             {
-                dlt_log(LOG_ERR, "Sending message failed\n");
+                ret = write(client->sock, dltSerialHeader, sizeof(dltSerialHeader));
+                if (ret < 0)
+                {
+                    dlt_log(LOG_ERR, "Sending message failed\n");
+                    dlt_message_free_v2(&msg, 0);
+                    return DLT_RETURN_ERROR;
+                }
+            }
+            ret =
+                (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeaderV2), msg.headersize - sizeof(DltStorageHeaderV2));
+
+            if (0 > ret) {
+                dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
+                dlt_message_free_v2(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+
+            ret = (int) write(client->sock, msg.databuffer, msg.datasize);
+
+            if (0 > ret) {
+                dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
+                dlt_message_free_v2(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+
+            id_tmp = *((uint32_t *)(msg.databuffer));
+            id = DLT_ENDIAN_GET_32(msg.baseheaderv2->htyp2, id_tmp);
+
+            dlt_vlog(LOG_INFO,
+                    "%s: Control message forwarded : %s\n",
+                    __func__,
+                    dlt_get_service_name(id));
+        }
+        else {
+            /* via Socket */
+            if (dlt_client_send_message_to_socket(client, &msg) == DLT_RETURN_ERROR)
+            {
+                dlt_log(LOG_ERR, "Sending message to socket failed\n");
+                dlt_message_free_v2(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+        }
+
+        /* free message */
+        if (dlt_message_free_v2(&msg, 0) == DLT_RETURN_ERROR)
+            return DLT_RETURN_ERROR;
+
+    } else {
+        DltMessage msg;
+        int ret;
+
+        int32_t len;
+        uint32_t id_tmp;
+        uint32_t id;
+
+        if ((client == 0) || (client->sock < 0) || (apid == 0) || (ctid == 0))
+            return DLT_RETURN_ERROR;
+
+        /* initialise new message */
+        if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
+            return DLT_RETURN_ERROR;
+
+        /* prepare payload of data */
+        msg.datasize = size;
+
+        if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+            free(msg.databuffer);
+            msg.databuffer = 0;
+        }
+
+        if (msg.databuffer == 0) {
+            msg.databuffer = (uint8_t *)malloc(msg.datasize);
+            msg.databuffersize = msg.datasize;
+        }
+
+        if (msg.databuffer == 0) {
+            dlt_message_free(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
+
+        /* copy data */
+        memcpy(msg.databuffer, payload, size);
+
+        /* prepare storage header */
+        msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
+
+        if (dlt_set_storageheader(msg.storageheader, "") == DLT_RETURN_ERROR) {
+            dlt_message_free(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
+
+        /* prepare standard header */
+        msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
+        msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
+
+        #if (BYTE_ORDER == BIG_ENDIAN)
+        msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
+        #endif
+
+        msg.standardheader->mcnt = 0;
+
+        /* Set header extra parameters */
+        dlt_set_id(msg.headerextra.ecu, client->ecuid);
+        /*msg.headerextra.seid = 0; */
+        msg.headerextra.tmsp = dlt_uptime();
+
+        /* Copy header extra parameters to headerbuffer */
+        if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR) {
+            dlt_message_free(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
+
+        /* prepare extended header */
+        msg.extendedheader = (DltExtendedHeader *)(msg.headerbuffer +
+                                                sizeof(DltStorageHeader) +
+                                                sizeof(DltStandardHeader) +
+                                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+
+        msg.extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
+
+        msg.extendedheader->noar = 1; /* number of arguments */
+
+        dlt_set_id(msg.extendedheader->apid, (apid[0] == '\0') ? DLT_CLIENT_DUMMY_APP_ID : apid);
+        dlt_set_id(msg.extendedheader->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
+
+        /* prepare length information */
+        msg.headersize = (uint32_t) (sizeof(DltStorageHeader) +
+            sizeof(DltStandardHeader) +
+            sizeof(DltExtendedHeader) +
+            DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+
+        len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
+
+        if (len > UINT16_MAX) {
+            dlt_vlog(LOG_ERR,
+                    "%s: Critical: Huge injection message discarded!\n",
+                    __func__);
+
+            dlt_message_free(&msg, 0);
+
+            return DLT_RETURN_ERROR;
+        }
+
+        msg.standardheader->len = DLT_HTOBE_16(len);
+
+        /* Send data (without storage header) */
+        if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
+            /* via FileDescriptor */
+            if (client->send_serial_header)
+            {
+                ret = write(client->sock, dltSerialHeader, sizeof(dltSerialHeader));
+                if (ret < 0)
+                {
+                    dlt_log(LOG_ERR, "Sending message failed\n");
+                    dlt_message_free(&msg, 0);
+                    return DLT_RETURN_ERROR;
+                }
+            }
+            ret =
+                (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
+
+            if (0 > ret) {
+                dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
+                dlt_message_free(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+
+            ret = (int) write(client->sock, msg.databuffer, msg.datasize);
+
+            if (0 > ret) {
+                dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
+                dlt_message_free(&msg, 0);
+                return DLT_RETURN_ERROR;
+            }
+
+            id_tmp = *((uint32_t *)(msg.databuffer));
+            id = DLT_ENDIAN_GET_32(msg.standardheader->htyp, id_tmp);
+
+            dlt_vlog(LOG_INFO,
+                    "%s: Control message forwarded : %s\n",
+                    __func__,
+                    dlt_get_service_name(id));
+        }
+        else {
+            /* via Socket */
+            if (dlt_client_send_message_to_socket(client, &msg) == DLT_RETURN_ERROR)
+            {
+                dlt_log(LOG_ERR, "Sending message to socket failed\n");
                 dlt_message_free(&msg, 0);
                 return DLT_RETURN_ERROR;
             }
         }
-        ret =
-            (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
 
-        if (0 > ret) {
-            dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
-            dlt_message_free(&msg, 0);
+        /* free message */
+        if (dlt_message_free(&msg, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
-        }
-
-        ret = (int) write(client->sock, msg.databuffer, msg.datasize);
-
-        if (0 > ret) {
-            dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
-            dlt_message_free(&msg, 0);
-            return DLT_RETURN_ERROR;
-        }
-
-        id_tmp = *((uint32_t *)(msg.databuffer));
-        id = DLT_ENDIAN_GET_32(msg.standardheader->htyp, id_tmp);
-
-        dlt_vlog(LOG_INFO,
-                 "%s: Control message forwarded : %s\n",
-                 __func__,
-                 dlt_get_service_name(id));
     }
-    else {
-        /* via Socket */
-        if (dlt_client_send_message_to_socket(client, &msg) == DLT_RETURN_ERROR)
-        {
-            dlt_log(LOG_ERR, "Sending message to socket failed\n");
-            dlt_message_free(&msg, 0);
-            return DLT_RETURN_ERROR;
-        }
-    }
-
-    /* free message */
-    if (dlt_message_free(&msg, 0) == DLT_RETURN_ERROR)
-        return DLT_RETURN_ERROR;
 
     return DLT_RETURN_OK;
 }
