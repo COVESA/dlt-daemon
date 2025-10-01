@@ -380,6 +380,14 @@ DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
 DltReturnValue dlt_user_log_write_finish(DltContextData *log);
 
 /**
+ * Finishing the generation of a DLT log message and sending it to the DLT daemon.
+ * This function has to be called after writing all the log attributes of a log message.
+ * @param log pointer to an object containing information about logging context data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_finish_v2(DltContextData *log);
+
+/**
  * Finishing the generation of a DLT log message and sending it to the DLT daemon without
  * freeing log buffer. This function only works with combination of
  * dlt_user_log_write_start_w_given_buffer. This function has to be called after writing all
@@ -388,6 +396,16 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
+
+/**
+ * Finishing the generation of a DLT log message and sending it to the DLT daemon without
+ * freeing log buffer. This function only works with combination of
+ * dlt_user_log_write_start_w_given_buffer. This function has to be called after writing all
+ * the log attributes of a log message.
+ * @param log pointer to an object containing information about logging context data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_finish_w_given_buffer_v2(DltContextData *log);
 
 /**
  * Write a boolean parameter into a DLT log message.
@@ -964,6 +982,13 @@ DltReturnValue dlt_unregister_app_v2(void);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
+
+/**
+ * Unregister an application in the daemon and also flushes the buffered logs.
+ * This function has to be called when finishing using an application.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_unregister_app_flush_buffered_logs_v2(void);
 
 /**
  * Get the application id
