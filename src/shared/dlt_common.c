@@ -721,6 +721,23 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* delete databuffer if exists */
+    if (msg->databuffer) {
+        free(msg->databuffer);
+        msg->databuffer = NULL;
+        msg->databuffersize = 0;
+    }
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose)
 {
     return dlt_message_header_flags(msg, text, textlength, DLT_HEADER_SHOW_ALL, verbose);

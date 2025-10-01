@@ -1277,6 +1277,15 @@ DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
+
+/**
+ * Free the used memory by the organising structure of file.
+ * @param msg pointer to structure of organising access to DLT V2 messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose);
+
 /**
  * Print Header into an ASCII string.
  * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
