@@ -1172,7 +1172,7 @@ void dlt_set_id(char *id, const char *text);
  * @param text string to be copied into char array.
  * @param len length of string to be copied into ID
  */
-void dlt_set_id_v2(char *id, const char *text, int8_t len);
+void dlt_set_id_v2(char **id, const char *text, int8_t len);
 
 /**
  * Helper function to remove not nice to print characters, e.g. NULL or carage return.

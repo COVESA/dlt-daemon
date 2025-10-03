@@ -384,17 +384,17 @@ void dlt_set_id(char *id, const char *text)
         return;
 }
 
-void dlt_set_id_v2(char *id, const char *text, int8_t len)
+void dlt_set_id_v2(char **id, const char *text, int8_t len)
 {
     /* check nullpointer */
     if (text == NULL)
         return;
 
-    id = (char *)malloc(len * sizeof(char));
-    if (id == NULL) {
+    *id = (char *)malloc(len * sizeof(char));
+    if (*id == NULL) {
         return;
     }
-    strncpy(id, text, len);
+    strncpy(*id, text, len);
 }
 
 void dlt_clean_string(char *text, int length)
@@ -2684,7 +2684,7 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->pattern[2] = 'T';
     storageheader->pattern[3] = 0x02;
 
-    dlt_set_id_v2(storageheader->ecid, ecu, ecuIDlen);
+    dlt_set_id_v2(&storageheader->ecid, ecu, ecuIDlen);
     storageheader->ecidlen = ecuIDlen;
 
     /* Set current time */

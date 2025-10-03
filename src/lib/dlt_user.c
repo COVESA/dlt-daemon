@@ -1359,7 +1359,6 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
 DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
 {
     DltReturnValue ret = DLT_RETURN_OK;
-
     /* forbid dlt usage in child after fork */
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
@@ -1376,16 +1375,17 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     if ((apid == NULL) || (apidlen == 0))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    /* check if application already registered */
-    /* if yes do not register again */
-    if (!strncmp(apid, dlt_user.appID2, apidlen)) {
+
+    if (dlt_user.appID2 != NULL) {
+        if (!strncmp(apid, dlt_user.appID2, apidlen)) {
             return DLT_RETURN_OK;
+        }
     }
 
     DLT_SEM_LOCK();
 
     /* Store locally application id and application description */
-    dlt_set_id_v2(dlt_user.appID2, apid, apidlen);
+    dlt_set_id_v2(&dlt_user.appID2, apid, apidlen);
     dlt_user.appID2len = apidlen;
 
     if (dlt_user.application_description != NULL)
@@ -1396,7 +1396,6 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     if (description != NULL) {
         size_t desc_len = strlen(description);
         dlt_user.application_description = malloc(desc_len + 1);
-
         if (dlt_user.application_description) {
             strncpy(dlt_user.application_description, description, desc_len + 1);
         } else {
@@ -1848,7 +1847,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
     ctx_entry = &dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries];
 
     /* Store locally context id and context description */
-    dlt_set_id_v2(ctx_entry->contextID2, contextid, contextidlen);
+    dlt_set_id_v2(&ctx_entry->contextID2, contextid, contextidlen);
 
     if (ctx_entry->context_description != 0)
         free(ctx_entry->context_description);
@@ -1906,7 +1905,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
         ctx_entry->trace_status = (int8_t) tracestatus;
 
     /* Prepare transfer struct */
-    dlt_set_id_v2(handle->contextID2, contextid, contextidlen);
+    dlt_set_id_v2(&handle->contextID2, contextid, contextidlen);
     handle->log_level_pos = (int32_t) dlt_user.dlt_ll_ts_num_entries;
 
     handle->log_level_ptr = ctx_entry->log_level_ptr;
@@ -5341,7 +5340,7 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    dlt_set_id_v2(&usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
     usercontext.apidlen = dlt_user.appID2len;
     usercontext.pid = getpid();
 
@@ -5420,7 +5419,7 @@ DltReturnValue dlt_user_log_send_unregister_application_v2(void)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    dlt_set_id_v2(&usercontext.apid, dlt_user.appID2, dlt_user.appID2len);       /* application id */
     usercontext.apidlen = dlt_user.appID2len;
     usercontext.pid = getpid();
 
@@ -5522,9 +5521,9 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    dlt_set_id_v2(&usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
     usercontext.apidlen = dlt_user.appID2len;
-    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    dlt_set_id_v2(&usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
     usercontext.ctidlen = log->handle->contextID2len;
     usercontext.log_level_pos = log->handle->log_level_pos;
     usercontext.pid = getpid();
@@ -5628,9 +5627,9 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    dlt_set_id_v2(&usercontext.apid, dlt_user.appID2, dlt_user.appID2len);                    /* application id */
     usercontext.apidlen = dlt_user.appID2len;
-    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    dlt_set_id_v2(&usercontext.ctid, log->handle->contextID2, log->handle->contextID2len);    /* context id */
     usercontext.ctidlen = log->handle->contextID2len;
     usercontext.pid = getpid();
 
@@ -6332,7 +6331,7 @@ DltReturnValue dlt_user_log_resend_buffer_v2(void)
                         (DltUserControlMsgRegisterContextV2 *)(dlt_user.resend_buffer + sizeof(DltUserHeader));
 
                     if ((usercontext != 0) && (usercontext->apid == NULL))
-                        dlt_set_id_v2(usercontext->apid, dlt_user.appID2, dlt_user.appID2len);
+                        dlt_set_id_v2(&usercontext->apid, dlt_user.appID2, dlt_user.appID2len);
 
                     break;
                 }
@@ -6344,7 +6343,7 @@ DltReturnValue dlt_user_log_resend_buffer_v2(void)
                                               sizeof(DltBaseHeaderExtraV2));
 
                     if (((extendedHeader) != 0) && (extendedHeader->apid == NULL)) /* if application id is empty, add it */
-                        dlt_set_id_v2(extendedHeader->apid, dlt_user.appID2, dlt_user.appID2len);
+                        dlt_set_id_v2(&extendedHeader->apid, dlt_user.appID2, dlt_user.appID2len);
 
                     break;
                 }
