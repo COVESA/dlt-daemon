@@ -1002,7 +1002,7 @@ DltReturnValue dlt_get_appid(char *appid);
  * @param Character array to store the application id
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_get_appid_v2(char *appid);
+DltReturnValue dlt_get_appid_v2(char **appid);
 
 /**
  * Register a context in the daemon.

@@ -614,10 +614,10 @@ DltReturnValue dlt_get_appid(char *appid)
     }
 }
 
-DltReturnValue dlt_get_appid_v2(char *appid)
+DltReturnValue dlt_get_appid_v2(char **appid)
 {
     if (appid != NULL) {
-        strncpy(appid, dlt_user.appID2, dlt_user.appID2len);
+        strncpy(*appid, dlt_user.appID2, dlt_user.appID2len);
         return DLT_RETURN_OK;
     } else {
         dlt_log(LOG_ERR, "Invalid parameter.\n");

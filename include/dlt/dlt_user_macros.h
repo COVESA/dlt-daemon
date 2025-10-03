@@ -160,7 +160,7 @@
  * @Param APPID character pointer
  */
 #define DLT_GET_APPID_V2(APPID) do{\
-    dlt_get_appid_v2(APPID);} while(false)
+    dlt_get_appid_v2(&APPID);} while(false)
 
 /**
  * Register context (with default log level and default trace status)
