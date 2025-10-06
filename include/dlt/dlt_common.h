@@ -396,7 +396,8 @@
 #   define DLT_LINE_LEN 1024
 
 #define STORAGE_HEADER_V2_FIXED_SIZE 14
-#define EXTENDED_HEADER_V2_FIXED_SIZE 15
+#define BASE_HEADER_V2_FIXED_SIZE 7
+#define EXTENDED_HEADER_V2_FIXED_SIZE 16
 
 /**
  * Macros for network trace
@@ -587,7 +588,7 @@ typedef struct
     DltTag *tag;
     uint8_t prlv;                 /**< Privacy level */
     uint8_t sgmtinfo;             /**< Segmentation info */
-    DLTSegmentationFrameType frametype; /**< Segmentation frame */
+    uint8_t frametype;            /**< Segmentation frame */
     SegmentationFrame sgmtdetails; /**< Segmentation details */
 } DLT_PACKED DltExtendedHeaderV2;
 
@@ -633,13 +634,17 @@ typedef struct sDltMessageV2
     int32_t resync_offset;
 
     /* size parameters */
-    int32_t headersize;    /**< size of complete header including storage header */
+    int32_t headersizev2;    /**< size of complete header including storage header */
     int32_t datasize;      /**< size of complete payload */
 
     /* buffer for current loaded message */
-    uint8_t *headerbuffer;       /**< buffer for loading complete header */
+    uint8_t *headerbufferv2;       /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
     int32_t databuffersize;
+    int32_t storageheadersizev2;
+    int32_t baseheadersizev2;
+    int32_t baseheaderextrasizev2;
+    int32_t extendedheadersizev2;
 
     /* header values of current loaded message */
     DltStorageHeaderV2 *storageheaderv2;        /**< pointer to storage header of current loaded header */
@@ -1404,10 +1409,9 @@ uint8_t dlt_message_get_extraparameters_size_v2(DltHtyp2ContentType msgcontent);
 /**
  * Set extended header parameters for Version 2
  * @param msg pointer to structure of organising access to DLT messages
- * @param size to store total header size after setting extended parameters
  * @return negative value if there was an error
  */
-DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t *size);
+DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg);
 
 /**
  * Initialise the structure used to access a DLT file.
