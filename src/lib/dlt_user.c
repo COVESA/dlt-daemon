@@ -538,6 +538,8 @@ DltReturnValue dlt_init(void)
     trace_load_settings[0].soft_limit = DLT_TRACE_LOAD_CLIENT_SOFT_LIMIT_DEFAULT;
     trace_load_settings[0].hard_limit = DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;
     strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
+    trace_load_settings[0].apid2len = dlt_user.appID2len;
+    strncpy(trace_load_settings[0].apid2, dlt_user.appID2, dlt_user.appID2len);
     trace_load_settings_count = 1;
 
     pthread_rwlock_unlock(&trace_load_rw_lock);
@@ -796,9 +798,18 @@ DltReturnValue dlt_init_common(void)
     dlt_user.dlt_user_handle = DLT_FD_INIT;
 
     dlt_set_id(dlt_user.ecuID, DLT_USER_DEFAULT_ECU_ID);
+    dlt_user.ecuID2len = strlen(DLT_USER_DEFAULT_ECU_ID);
+    dlt_set_id_v2(&dlt_user.ecuID2, DLT_USER_DEFAULT_ECU_ID, dlt_user.ecuID2len);
     dlt_set_id(dlt_user.appID, "");
-
+    dlt_user.appID2len = 0;
+    dlt_set_id_v2(&dlt_user.appID2, "", dlt_user.appID2len);
     dlt_user.application_description = NULL;
+    dlt_user.filenamelen = 0;
+    dlt_set_id_v2(&dlt_user.filename, "", dlt_user.filenamelen);
+    dlt_user.linenumber = 0;
+    dlt_user.numberoftags = 0;
+    dlt_user.tag = NULL;
+    dlt_user.prlv = 0;
 
     /* Verbose mode is enabled by default */
     dlt_user.verbose_mode = 1;
@@ -835,6 +846,21 @@ DltReturnValue dlt_init_common(void)
 
     /* With timestamp is enabled by default */
     dlt_user.with_ecu_id = DLT_USER_WITH_ECU_ID;
+
+    /* With app and context id is enabled by default */
+    dlt_user.with_app_and_context_id = DLT_USER_WITH_APP_AND_CONTEXT_ID;
+
+    /* With filename and line number is disabled by default */
+    dlt_user.with_filename_and_line_number = DLT_USER_WITH_FILENAME_AND_LINE_NUMBER;
+
+    /* With tags is disabled by default */
+    dlt_user.with_tags = DLT_USER_WITH_TAGS;
+
+    /* With privacy level is disabled by default */
+    dlt_user.with_privacy_level = DLT_USER_WITH_PRIVACY_LEVEL;
+
+    /* With segmentation is disabled by default */
+    dlt_user.with_segmentation = DLT_USER_WITH_SEGMENTATION;
 
     /* Local print is disabled by default */
     dlt_user.enable_local_print = 0;
@@ -1407,8 +1433,8 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     DLT_SEM_FREE();
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    strncpy(trace_load_settings[0].apid, dlt_user.appID, apidlen);
-    trace_load_settings[0].apidlen = apidlen;
+    strncpy(trace_load_settings[0].apid2, dlt_user.appID2, dlt_user.appID2len);
+    trace_load_settings[0].apid2len = dlt_user.appID2len;
 #endif
 
     ret = dlt_user_log_send_register_application_v2();
@@ -4817,6 +4843,8 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     DltMessageV2 msg;
     DltUserHeader userheader;
     int32_t len;
+    int32_t storageheadersize;
+    int32_t extendedheadersize;
 
 /* To Update
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
@@ -4847,6 +4875,8 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
+
+    storageheadersize = STORAGE_HEADER_V2_FIXED_SIZE + dlt_user.ecuID2len;
 
     msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbuffer;
 
@@ -5001,38 +5031,17 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     /* Fill out extended header, if extended header should be provided */
     if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2->ecidlen = dlt_user.ecuID2len;
-        if (msg.extendedheaderv2->ecidlen == 0) {
-            msg.extendedheaderv2->ecid = NULL;
-        } else {
-            msg.extendedheaderv2->ecid = (char *)malloc((msg.extendedheaderv2->ecidlen) * sizeof(char));
-            if (msg.extendedheaderv2->ecid == NULL) {
-                return DLT_RETURN_ERROR;
-            }
-            strcpy(msg.extendedheaderv2->ecid, dlt_user.ecuID2);
-        }
+        dlt_set_id_v2(&(msg.extendedheaderv2->ecid), dlt_user.ecuID2, msg.extendedheaderv2->ecidlen);
+        printf("ecid: %s\n", msg.extendedheaderv2->ecid);
+        printf("ecidlen: %d\n", msg.extendedheaderv2->ecidlen);
     }
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2->apidlen = dlt_user.appID2len;
-        if (msg.extendedheaderv2->apidlen == 0) {
-            msg.extendedheaderv2->apid = NULL;
-        } else {
-            msg.extendedheaderv2->apid = (char *)malloc((msg.extendedheaderv2->apidlen) * sizeof(char));
-            if (msg.extendedheaderv2->apid == NULL) {
-                return DLT_RETURN_ERROR;
-            }
-            strcpy(msg.extendedheaderv2->apid, dlt_user.appID2);
-        }
+        dlt_set_id_v2(&(msg.extendedheaderv2->apid), dlt_user.appID2, msg.extendedheaderv2->apidlen);
+
         msg.extendedheaderv2->ctidlen = log->handle->contextID2len;
-        if (msg.extendedheaderv2->ctidlen == 0) {
-            msg.extendedheaderv2->ctid = NULL;
-        } else {
-            msg.extendedheaderv2->ctid = (char *)malloc((msg.extendedheaderv2->ctidlen) * sizeof(char));
-            if (msg.extendedheaderv2->ctid == NULL) {
-                return DLT_RETURN_ERROR;
-            }
-            strcpy(msg.extendedheaderv2->ctid, log->handle->contextID2);
-        }
+        dlt_set_id_v2(&(msg.extendedheaderv2->ctid), log->handle->contextID2, msg.extendedheaderv2->ctidlen);
     }
 
     if (DLT_IS_HTYP2_WSID(msg.baseheaderv2->htyp2)) {
@@ -5044,15 +5053,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     if (DLT_IS_HTYP2_WSFLN(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2->finalen = dlt_user.filenamelen;
-        if (msg.extendedheaderv2->finalen == 0) {
-            msg.extendedheaderv2->fina = NULL;
-        } else {
-            msg.extendedheaderv2->fina = (char *)malloc((msg.extendedheaderv2->finalen) * sizeof(char));
-            if (msg.extendedheaderv2->fina == NULL) {
-                return DLT_RETURN_ERROR;
-            }
-            strcpy(msg.extendedheaderv2->fina, dlt_user.filename);
-        }
+        dlt_set_id_v2(&(msg.extendedheaderv2->fina), dlt_user.filename, msg.extendedheaderv2->finalen);
         msg.extendedheaderv2->linr = dlt_user.linenumber;
     }
 
@@ -5080,7 +5081,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     */
 
     uint32_t totalheadersize;
-
     if (dlt_message_set_extendedparameters_v2(&msg, &totalheadersize) != DLT_RETURN_OK)
     return DLT_RETURN_ERROR;
 
@@ -5095,7 +5095,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     }
 
     msg.baseheaderv2->len = DLT_HTOBE_16(len);
-
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
         (dlt_user.local_print_mode != DLT_PM_AUTOMATIC)) {
@@ -5809,7 +5808,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     uint32_t datasize_tmp;
     uint32_t databuffersize_tmp;
     static char text[DLT_USER_TEXT_LENGTH];
-
+    printf("printing v2 messages \n");
     if ((msg == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -5827,7 +5826,6 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffer = log->buffer;
     msg->datasize = (uint32_t) log->size;
     msg->databuffersize = (uint32_t) log->size;
-
     /* Print message as ASCII */
     if (dlt_message_print_ascii_v2(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;

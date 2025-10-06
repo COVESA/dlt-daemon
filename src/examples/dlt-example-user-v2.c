@@ -400,10 +400,8 @@ int main(int argc, char *argv[])
         else {
             if (rvalue == -1) {
                 /* Verbose mode */
-                printf("Logging here \n");
                 DLT_LOG_V2(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
             } else {
-                printf("Logging here in raw format \n");
                 DLT_LOG_V2(mycontext1, lvalue, DLT_RAW(text, rvalue));
             }
         }

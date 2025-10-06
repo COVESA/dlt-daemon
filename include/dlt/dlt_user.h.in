@@ -276,11 +276,11 @@ typedef struct
     int8_t with_app_and_context_id;            /**< Send always app and context id: 1 enabled, 0 disabled */
     int8_t with_filename_and_line_number;      /**< Send always source filename and line no.: 1 enabled, 0 disabled */
     int8_t with_tags;                          /**< Send always tags: 1 enabled, 0 disabled */
-    int8_t with_privacy_level;            /**< Send always privacy level: 1 enabled, 0 disabled */
-    int8_t with_segmentation;             /**< Message is segmented: 1 enabled, 0 disabled */
+    int8_t with_privacy_level;                 /**< Send always privacy level: 1 enabled, 0 disabled */
+    int8_t with_segmentation;                  /**< Message is segmented: 1 enabled, 0 disabled */
     int8_t enable_local_print;                 /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;                   /**< Local print mode, controlled by environment variable */
-    int8_t disable_injection_msg;               /**< Injection msg availability: 1 disabled, 0 enabled (default) */
+    int8_t disable_injection_msg;              /**< Injection msg availability: 1 disabled, 0 enabled (default) */
 
     int8_t log_state;                          /**< Log state of external connection:
                                                 * 1 client connected,

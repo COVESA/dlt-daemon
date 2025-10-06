@@ -395,6 +395,9 @@
  */
 #   define DLT_LINE_LEN 1024
 
+#define STORAGE_HEADER_V2_FIXED_SIZE 14
+#define EXTENDED_HEADER_V2_FIXED_SIZE 15
+
 /**
  * Macros for network trace
  */
@@ -634,8 +637,7 @@ typedef struct sDltMessageV2
     int32_t datasize;      /**< size of complete payload */
 
     /* buffer for current loaded message */
-    uint8_t headerbuffer[sizeof(DltStorageHeaderV2) +
-                         sizeof(DltBaseHeaderV2) + sizeof(DltBaseHeaderExtraV2) + sizeof(DltExtendedHeaderV2)]; /**< buffer for loading complete header */
+    uint8_t *headerbuffer;       /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
     int32_t databuffersize;
 
@@ -1039,29 +1041,16 @@ typedef struct
 typedef struct
 {
     char apid[DLT_ID_SIZE];  /**< Application id for which the settings are valid */
+    uint8_t apid2len;
+    char *apid2;             /**< Application id of version 2 for which the settings are valid */
     char ctid[DLT_ID_SIZE];  /**< Context id for which the settings are valid, this is optional */
-
+    uint8_t ctid2len;
+    char *ctid2;              /**< Context id of version 2 for which the settings are valid, this is optional */
     uint32_t soft_limit;     /**< Warning threshold, if load is above soft limit a warning will be logged but message won't be discarded */
     uint32_t hard_limit;     /**< limit threshold, if load is above hard limit a warning will be logged and message will be discarded */
 
     DltTraceLoadStat tl_stat;
 } DltTraceLoadSettings;
-
-/*
- * The parameter of trace load settings for DLT Version 2
- */
-typedef struct
-{
-    uint8_t apidlen;
-    char *apid;              /**< Application id for which the settings are valid */
-    uint8_t ctidlen;
-    char *ctid;              /**< Context id for which the settings are valid, this is optional */
-
-    uint32_t soft_limit;     /**< Warning threshold, if load is above soft limit a warning will be logged but message won't be discarded */
-    uint32_t hard_limit;     /**< limit threshold, if load is above hard limit a warning will be logged and message will be discarded */
-
-    DltTraceLoadStat tl_stat;
-} DltTraceLoadSettingsV2;
 
 extern pthread_rwlock_t trace_load_rw_lock;
 

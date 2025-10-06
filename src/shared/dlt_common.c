@@ -389,6 +389,15 @@ void dlt_set_id_v2(char **id, const char *text, int8_t len)
     /* check nullpointer */
     if (text == NULL)
         return;
+    
+    if (*id != NULL) {
+        free(*id);
+        *id = NULL;
+    }
+
+    if (len == 0) {
+        return;
+    }
 
     *id = (char *)malloc(len * sizeof(char));
     if (*id == NULL) {
@@ -884,6 +893,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
+    DltHtyp2ContentType msgcontent = msg->baseheaderv2->htyp2 & 0x03;
     if ((msg == NULL) || (text == NULL) || (textlength <= 0))
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -909,12 +919,12 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 
     if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
         /* print timestamp if available */
-        if ((msg->baseheaderv2->htyp2 & 0x01)||(msg->baseheaderv2->htyp2 & 0x02)){
+        if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_NON_VERBOSE_DATA_MSG)){
             time_t tt = 0;
             for (int i = 0; i<5; ++i){
                 tt = (tt << 8) | msg->headerextrav2.seconds[i];
             }
-            snprintf(text + strlen(text), textlength - strlen(text), "%s.%.9d ", msg->headerextrav2.seconds, msg->headerextrav2.nanoseconds);
+            snprintf(text + strlen(text), textlength - strlen(text), "%d.%.9d ", msg->headerextrav2.seconds, msg->headerextrav2.nanoseconds);
         }
         else
             snprintf(text + strlen(text), textlength - strlen(text), "---------- ");
@@ -923,6 +933,9 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
     if ((flags & DLT_HEADER_SHOW_MSGCNT) == DLT_HEADER_SHOW_MSGCNT)
         /* print message counter */
         snprintf(text + strlen(text), textlength - strlen(text), "%.3d ", msg->baseheaderv2->mcnt);
+
+        printf("htyp2 : 0x%08X\n", msg->baseheaderv2->htyp2);
+
 
     if ((flags & DLT_HEADER_SHOW_ECUID) == DLT_HEADER_SHOW_ECUID) {
         /* print ecu id, use header extra if available, else storage header value */
@@ -953,8 +966,6 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 
         snprintf(text + strlen(text), textlength - strlen(text), " ");
     }
-
-    DltHtyp2ContentType msgcontent = msg->baseheaderv2->htyp2 & 0x03;
 
     /* print info about message type and length */
     if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_CONTROL_MSG)) {
@@ -1650,6 +1661,10 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg, uint32_t
     
     DltHtyp2ContentType msgcontent;
     msgcontent = ((msg->baseheaderv2->htyp2) & 0x03);
+
+    printf("ecidlen: %d\n", msg->extendedheaderv2->ecidlen);
+    printf("appid: %s\n", msg->extendedheaderv2->apid);
+    printf("ecid: %s\n", msg->extendedheaderv2->ecid);
 
     uint8_t extraHeaderSize = dlt_message_get_extraparameters_size_v2(msgcontent);
     uint32_t pntroffset = (uint32_t)(sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + (uint32_t)extraHeaderSize);
