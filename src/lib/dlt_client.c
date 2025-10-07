@@ -627,11 +627,54 @@ DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_client_send_message_to_socket_v2(DltClient *client, DltMessageV2 *msg)
+{
+    int ret = 0;
+
+    if ((client == NULL) || (client->sock < 0)
+        || (msg == NULL) || (msg->databuffer == NULL))
+    {
+        dlt_log(LOG_ERR, "Invalid parameters\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if (client->send_serial_header)
+    {
+        ret = send(client->sock, (const char *)dltSerialHeader,
+                   sizeof(dltSerialHeader), 0);
+        if (ret < 0)
+        {
+            dlt_vlog(LOG_ERR, "Sending serial header failed: %s\n",
+                        strerror(errno));
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    ret = send(client->sock,
+               (const char *)(msg->headerbufferv2 + msg->storageheadersizev2),
+               msg->headersizev2 - msg->storageheadersizev2, 0);
+    if (ret < 0)
+    {
+        dlt_vlog(LOG_ERR, "Sending message header failed: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+
+    ret = send(client->sock, (const char *)msg->databuffer, msg->datasize, 0);
+    if ( ret < 0)
+    {
+        dlt_vlog(LOG_ERR, "Sending message failed: %s\n", strerror(errno));
+        return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size)
 {
     if (dlt_client_dlt_version == DLT_VERSION2) {
         DltMessageV2 msg;
         int ret;
+        DltHtyp2ContentType msgcontent = DLT_CONTROL_MSG;
 
         int32_t len;
         uint32_t id_tmp;
@@ -670,9 +713,20 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         /* copy data */
         memcpy(msg.databuffer, payload, size);
 
+        msg.storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
+        msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
+        msg.baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(msgcontent);
+        msg.extendedheadersizev2 = (strlen(apid))+1+(strlen(ctid))+1;
+
+        msg.headersizev2 = (uint32_t) (msg.storageheadersizev2 +
+            msg.baseheadersizev2 +
+            msg.baseheaderextrasizev2 +
+            msg.extendedheadersizev2);
+
+        msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
+
         /* prepare storage header */
-        msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbuffer);
-        ;
+        msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbufferv2);
 
         if (dlt_set_storageheader_v2(msg.storageheaderv2, 0, "") == DLT_RETURN_ERROR) {
             dlt_message_free_v2(&msg, 0);
@@ -680,7 +734,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         }
 
         /* prepare standard header */
-        msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
+        msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
         msg.baseheaderv2->htyp2 = DLT_HTYP2_WEID | DLT_HTYP2_WSID | DLT_HTYP_WTMS | DLT_HTYP2_WACID |
                 DLT_HTYP2_VERS;
 
@@ -692,7 +746,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
 
         /* Set header extra parameters */
         pExtendedHeaderV2->ecidlen = DLT_CLIENT_ECU_ID_LEN;
-        dlt_set_id(pExtendedHeaderV2->ecid, client->ecuid);
+        dlt_set_id_v2(&(pExtendedHeaderV2->ecid), client->ecuid, pExtendedHeaderV2->ecidlen);
 
         /*msg.headerextrav2.seid = 0; */
         /* Set timestamp */
@@ -724,25 +778,21 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         }
 
         /* prepare extended header */
-        msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbuffer +
-                                                sizeof(DltStorageHeaderV2) +
-                                                sizeof(DltBaseHeaderV2) +
-                                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
+        msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbufferv2 +
+                                                msg.storageheadersizev2 +
+                                                msg.baseheadersizev2 +
+                                                msg.baseheaderextrasizev2);
 
         pBaseHeaderExtraV2->msin = DLT_MSIN_CONTROL_REQUEST;
 
         pBaseHeaderExtraV2->noar = 1; /* number of arguments */
 
-        dlt_set_id(msg.extendedheaderv2->apid, (apid[0] == '\0') ? DLT_CLIENT_DUMMY_APP_ID : apid);
-        dlt_set_id(msg.extendedheaderv2->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
+        msg.extendedheaderv2->apidlen = strlen(apid);
+        dlt_set_id_v2(&(msg.extendedheaderv2->apid), ((apid == NULL) ? DLT_CLIENT_DUMMY_APP_ID : apid), strlen(apid));
+        msg.extendedheaderv2->ctidlen = strlen(ctid);
+        dlt_set_id_v2(&(msg.extendedheaderv2->ctid), ((ctid == NULL) ? DLT_CLIENT_DUMMY_CON_ID : ctid), strlen(ctid));
 
-        /* prepare length information */
-        msg.headersize = (uint32_t) (sizeof(DltStorageHeaderV2) +
-            sizeof(DltBaseHeaderV2) +
-            sizeof(DltExtendedHeaderV2) +
-            DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
-
-        len = (int32_t) (msg.headersize - sizeof(DltStorageHeaderV2) + msg.datasize);
+        len = (int32_t) (msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
 
         if (len > UINT16_MAX) {
             dlt_vlog(LOG_ERR,
@@ -770,7 +820,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
                 }
             }
             ret =
-                (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeaderV2), msg.headersize - sizeof(DltStorageHeaderV2));
+                (int) write(client->sock, msg.headerbufferv2 + msg.storageheadersizev2, msg.headersizev2 - msg.storageheadersizev2);
 
             if (0 > ret) {
                 dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
@@ -796,7 +846,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         }
         else {
             /* via Socket */
-            if (dlt_client_send_message_to_socket(client, &msg) == DLT_RETURN_ERROR)
+            if (dlt_client_send_message_to_socket_v2(client, &msg) == DLT_RETURN_ERROR)
             {
                 dlt_log(LOG_ERR, "Sending message to socket failed\n");
                 dlt_message_free_v2(&msg, 0);
@@ -807,6 +857,8 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         /* free message */
         if (dlt_message_free_v2(&msg, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
+        
+        free(msg.headerbufferv2);
 
     } else {
         DltMessage msg;
