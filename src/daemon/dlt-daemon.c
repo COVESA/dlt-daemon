@@ -2603,9 +2603,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             (DLT_IS_HTYP_UEH(msg.baseheaderv2->htyp2) ? sizeof(DltExtendedHeaderV2) : 0));
         msg.headersize = (uint32_t) sizeof(DltStorageHeaderV2) + (uint32_t) sizeof(DltBaseHeaderV2) + uiExtraSize;
 
-        /* Set extraheader */
-        pBaseHeaderExtraV2 =
-            (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2));
+        /* Set Extended header */
+        pExtendedHeaderV2 = (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) +
+            sizeof(DltBaseHeaderV2) + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
+
         pExtendedHeaderV2->ecidlen = DLT_DAEMON_ECU_ID_LEN;
         dlt_set_id(pExtendedHeaderV2->ecid, daemon->ecuid);
 
@@ -2633,13 +2634,18 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         pExtendedHeaderV2->seid = (unsigned int) DLT_HTOBE_32(getpid());
 
-        /* Set extendedheader */
-        msg.extendedheaderv2 =
-            (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltBaseHeaderV2) +
-                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
+        /* Set extraheader */
+        pBaseHeaderExtraV2 =
+            (DltBaseHeaderExtraV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2));
+
         pBaseHeaderExtraV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
             ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
         pBaseHeaderExtraV2->noar = 1;
+
+        /* Set extendedheader */
+        msg.extendedheaderv2 =
+            (DltExtendedHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) +
+                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.baseheaderv2->htyp2));
         dlt_set_id(msg.extendedheaderv2->apid, app_id);
         dlt_set_id(msg.extendedheaderv2->ctid, ctx_id);
 
