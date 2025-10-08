@@ -2682,6 +2682,8 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->pattern[2] = 'T';
     storageheader->pattern[3] = 0x02;
 
+    storageheader->ecid = NULL;
+
     dlt_set_id_v2(&(storageheader->ecid), ecu, ecuIDlen);
     storageheader->ecidlen = ecuIDlen;
 
@@ -3765,7 +3767,7 @@ DltReturnValue dlt_message_print_ascii_v2(DltMessageV2 *message, char *text, uin
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
-        return DLT_RETURN_ERROR;
+       return DLT_RETURN_ERROR;
     dlt_user_printf("%s ", text);
 
     if (dlt_message_payload_v2(message, text, size, DLT_OUTPUT_ASCII, verbose) < DLT_RETURN_OK)
@@ -4675,13 +4677,13 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = (uint16_t) DLT_BETOH_16(value16u_tmp);
+            length2 = (uint16_t) DLT_LETOH_16(value16u_tmp);
             DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length3 = (uint16_t) DLT_BETOH_16(value16u_tmp);
+            length3 = (uint16_t) DLT_LETOH_16(value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -4786,7 +4788,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value16i = (int16_t) DLT_BETOH_16(value16i_tmp);
+                value16i = (int16_t) DLT_LETOH_16(value16i_tmp);
                 snprintf(value_text, textlength, "%hd", value16i);
             }
             else {
@@ -4797,7 +4799,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value16u = (uint16_t) DLT_BETOH_16(value16u_tmp);
+                value16u = (uint16_t) DLT_LETOH_16(value16u_tmp);
                 snprintf(value_text, textlength, "%hu", value16u);
             }
 
@@ -4813,7 +4815,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value32i = (int32_t) DLT_BETOH_32((uint32_t)value32i_tmp);
+                value32i = (int32_t) DLT_LETOH_32((uint32_t)value32i_tmp);
                 snprintf(value_text, textlength, "%d", value32i);
             }
             else {
@@ -4824,7 +4826,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value32u = DLT_BETOH_32(value32u_tmp);
+                value32u = DLT_LETOH_32(value32u_tmp);
                 snprintf(value_text, textlength, "%u", value32u);
             }
 
@@ -4840,7 +4842,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value64i = (int64_t) DLT_BETOH_64((uint64_t)value64i_tmp);
+                value64i = (int64_t) DLT_LETOH_64((uint64_t)value64i_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
                 snprintf(value_text, textlength, "%I64d", value64i);
     #else
@@ -4855,7 +4857,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                value64u = DLT_BETOH_64(value64u_tmp);
+                value64u = DLT_LETOH_64(value64u_tmp);
     #if defined (__WIN32__) && !defined(_MSC_VER)
                 snprintf(value_text, textlength, "%I64u", value64u);
     #else

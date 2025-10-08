@@ -2510,7 +2510,6 @@ DltReturnValue dlt_user_log_write_finish_v2(DltContextData *log)
 
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
-
     ret = dlt_user_log_send_log_v2(log, DLT_TYPE_LOG, DLT_VERBOSE_DATA_MSG, NULL);
 
     dlt_user_free_buffer(&(log->buffer));
@@ -4882,9 +4881,13 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
                        msg.baseheaderextrasizev2 + msg.extendedheadersizev2;
-    
-    msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2 + 14);
 
+    if (msg.headerbufferv2 != NULL) {
+        free(msg.headerbufferv2);
+        msg.headerbufferv2 = NULL;
+    }
+
+    msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2 + 14);
     msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbufferv2;
 
     if (dlt_set_storageheader_v2(msg.storageheaderv2, dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
@@ -5019,6 +5022,8 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     time_stamp = msg.headerextra.tmsp;
 #endif
 */
+
+
     if (dlt_message_set_extraparameters_v2(&msg, 0) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
@@ -5030,7 +5035,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.apidlen = dlt_user.appID2len;
+        msg.extendedheaderv2.apid = NULL;
         dlt_set_id_v2(&(msg.extendedheaderv2.apid), dlt_user.appID2, msg.extendedheaderv2.apidlen);
+        msg.extendedheaderv2.ctid = NULL;
         msg.extendedheaderv2.ctidlen = log->handle->contextID2len;
         dlt_set_id_v2(&(msg.extendedheaderv2.ctid), log->handle->contextID2, msg.extendedheaderv2.ctidlen);
     }
@@ -5070,6 +5077,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     }
     */
+
     if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
@@ -5199,8 +5207,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                     msg.headerbufferv2 + msg.storageheadersizev2,
                                     msg.headersizev2 - msg.storageheadersizev2,
                                     log->buffer, log->size);
-            
-            printf("return value %d\n", ret);
+
 #endif
         }
 
@@ -5217,7 +5224,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                                   msg.headersizev2 - msg.storageheadersizev2,
                                                   log->buffer,
                                                   log->size);
-            printf("process return value %d\n", process_error_ret);
+
         if (process_error_ret == DLT_RETURN_OK)
             dlt_user_free_buffer(&(msg.headerbufferv2));
             return DLT_RETURN_OK;
@@ -5801,7 +5808,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     uint8_t *databuffer_tmp;
     uint32_t datasize_tmp;
     uint32_t databuffersize_tmp;
-    static char text[DLT_USER_TEXT_LENGTH];
+    static char text[DLT_USER_TEXT_LENGTH] = {0};
     if ((msg == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -5810,10 +5817,8 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     datasize_tmp = msg->datasize;
     databuffersize_tmp = msg->databuffersize;
 
-
-
     /* Act like a receiver, convert header back to host format */
-    msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
+    //msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
     dlt_message_get_extraparameters_v2(msg, 0);
 
     msg->databuffer = log->buffer;
@@ -5829,7 +5834,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffersize = databuffersize_tmp;
     msg->datasize = datasize_tmp;
 
-    msg->baseheaderv2->len = DLT_HTOBE_16(msg->baseheaderv2->len);
+    //msg->baseheaderv2->len = DLT_HTOBE_16(msg->baseheaderv2->len);
 
     return DLT_RETURN_OK;
 }
