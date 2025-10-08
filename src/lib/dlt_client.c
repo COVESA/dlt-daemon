@@ -777,20 +777,14 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
             return DLT_RETURN_ERROR;
         }
 
-        /* prepare extended header */
-        msg.extendedheaderv2 = (DltExtendedHeaderV2 *)(msg.headerbufferv2 +
-                                                msg.storageheadersizev2 +
-                                                msg.baseheadersizev2 +
-                                                msg.baseheaderextrasizev2);
-
         pBaseHeaderExtraV2->msin = DLT_MSIN_CONTROL_REQUEST;
 
         pBaseHeaderExtraV2->noar = 1; /* number of arguments */
 
-        msg.extendedheaderv2->apidlen = strlen(apid);
-        dlt_set_id_v2(&(msg.extendedheaderv2->apid), ((apid == NULL) ? DLT_CLIENT_DUMMY_APP_ID : apid), strlen(apid));
-        msg.extendedheaderv2->ctidlen = strlen(ctid);
-        dlt_set_id_v2(&(msg.extendedheaderv2->ctid), ((ctid == NULL) ? DLT_CLIENT_DUMMY_CON_ID : ctid), strlen(ctid));
+        msg.extendedheaderv2.apidlen = strlen(apid);
+        dlt_set_id_v2(&(msg.extendedheaderv2.apid), ((apid == NULL) ? DLT_CLIENT_DUMMY_APP_ID : apid), strlen(apid));
+        msg.extendedheaderv2.ctidlen = strlen(ctid);
+        dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ((ctid == NULL) ? DLT_CLIENT_DUMMY_CON_ID : ctid), strlen(ctid));
 
         len = (int32_t) (msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
 
