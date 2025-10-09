@@ -1851,6 +1851,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
             /* At startup, logging and tracing is locally enabled */
             /* the correct log level/status is set after received from daemon */
+            dlt_user.dlt_ll_ts[i].contextID2 = NULL;
             dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
             dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
@@ -2251,7 +2252,6 @@ DltReturnValue dlt_unregister_context_v2(DltContext *handle)
     }
 
     DLT_SEM_FREE();
-
     /* Inform daemon to unregister context */
     ret = dlt_user_log_send_unregister_context_v2(&log);
 
@@ -5329,7 +5329,7 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
 {
     DltUserHeader userheader;
     DltUserControlMsgRegisterApplicationV2 usercontext;
-
+    usercontext.apid = NULL;
     DltReturnValue ret;
 
     if (dlt_user.appID2 == NULL)
@@ -5410,6 +5410,7 @@ DltReturnValue dlt_user_log_send_unregister_application_v2(void)
     DltUserHeader userheader;
     DltUserControlMsgUnregisterApplicationV2 usercontext;
     DltReturnValue ret = DLT_RETURN_OK;
+    usercontext.apid = NULL;
 
     if (dlt_user.appID2 == NULL)
         return DLT_RETURN_ERROR;
@@ -5611,7 +5612,10 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
     DltUserHeader userheader;
     DltUserControlMsgUnregisterContextV2 usercontext;
     DltReturnValue ret;
-
+    
+    usercontext.apid = NULL;
+    usercontext.ctid = NULL;
+    
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -5649,7 +5653,6 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
                                                sizeof(DltUserControlMsgUnregisterContextV2),
                                                NULL,
                                                0);
-
     return DLT_RETURN_OK;
 }
 

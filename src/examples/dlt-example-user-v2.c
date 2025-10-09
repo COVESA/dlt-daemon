@@ -415,9 +415,9 @@ int main(int argc, char *argv[])
 
     sleep(1);
 
-    //DLT_UNREGISTER_CONTEXT_V2(mycontext1);
+    DLT_UNREGISTER_CONTEXT_V2(mycontext1);
 
-    //DLT_UNREGISTER_APP_V2();
+    DLT_UNREGISTER_APP_V2();
 
     return 0;
 
