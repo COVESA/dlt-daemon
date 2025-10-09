@@ -3330,7 +3330,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
         int ret_val = dlt_user_check_userheader_v2(userheader);
 
-        printf("ret_val = %d\n", ret_val);
         while (!dlt_user_check_userheader_v2(userheader) &&
                (offset + min_size <= receiver->bytesRcvd)) {
             /* resync if necessary */
@@ -3340,7 +3339,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
         /* Check for user header pattern */
         ret_val = dlt_user_check_userheader_v2(userheader);
-        printf("ret_val = %d\n", ret_val);
         if (!dlt_user_check_userheader_v2(userheader))
             break;
 
