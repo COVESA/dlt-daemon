@@ -2851,10 +2851,7 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
 
     storageheader->ecid = NULL;
 
-    printf("P3B%d\n");
-
     dlt_set_id_v2(&(storageheader->ecid), ecu, ecuIDlen);
-    printf("P3C%d\n");
     storageheader->ecidlen = ecuIDlen;
 
     /* Set current time */
@@ -2868,7 +2865,6 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->seconds[4]= ts.tv_sec & 0xFF;
     storageheader->nanoseconds = (int32_t) ts.tv_nsec; /* value is long */
 #endif
-    printf("Return %s\n", __func__);
 
     return DLT_RETURN_OK;
 }

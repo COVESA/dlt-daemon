@@ -2622,9 +2622,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         pExtendedHeaderV2->ecidlen = DLT_DAEMON_ECU_ID_LEN;
         dlt_set_id_v2(&(pExtendedHeaderV2->ecid), daemon->ecuid, pExtendedHeaderV2->ecidlen);
 
-        printf("pExtendedHeaderV2->ecid = %s\n",pExtendedHeaderV2->ecid);
-        printf("pExtendedHeaderV2->ecidlen = %d\n",pExtendedHeaderV2->ecidlen);
-
         /* Set timestamp */
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
             msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
@@ -3330,9 +3327,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
         offset = 0;
         userheader = (DltUserHeader *)(receiver->buf + offset);
-        for (int i = 0; i <= 8; i++) {
-            printf(" receiver->buf[i] = 0x%c\n", receiver->buf[i]);
-        }
 
         int ret_val = dlt_user_check_userheader_v2(userheader);
 
