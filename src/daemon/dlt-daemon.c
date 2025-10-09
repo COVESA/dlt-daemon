@@ -2604,12 +2604,9 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
         msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbufferv2);
-        // printf("[DEBUG] Before dlt_set_storageheader_v2: msg.storageheaderv2->ecuid = %d %s\n", DLT_DAEMON_ECU_ID_LEN, msg.storageheaderv2->ecid);
-        // int ret_val1 = 0;
-        // ret_val1 = dlt_set_storageheader_v2(msg.storageheaderv2, DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID);
-        // printf("[DEBUG] After dlt_set_storageheader_v2: msg.storageheaderv2->ecuid = %d %s\n", DLT_DAEMON_ECU_ID_LEN, msg.storageheaderv2->ecid);
 
-        // printf("***JP ret_val1 = %d\n", ret_val1);
+        if (dlt_set_storageheader_v2(msg.storageheaderv2, DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
         printf("***JP P4 %s V2 %d\n", __func__, __LINE__);
 
         /* Set standardheader */
