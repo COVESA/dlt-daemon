@@ -3407,6 +3407,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                  receiver,
                  daemon_local->flags.vflag) == -1)
             run_loop = 0;
+        printf("***JP P25 %s %d\n", __func__, __LINE__);
     }
 
     /* keep not read data in buffer */
@@ -3416,6 +3417,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                 "messages\n");
         return -1;
     }
+    printf("***JP P26 %s %d\n", __func__, __LINE__);
 
     return 0;
 }
@@ -4070,11 +4072,23 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
 #else
-    ret = dlt_message_read(&(daemon_local->msg),
+    printf("***JP P28 Calling dlt_message_read %s %d\n", __func__, __LINE__);
+    printf("***JP dlt_version %d\n", dlt_version);
+    if (dlt_version == DLT_VERSION2) {
+        ret = dlt_message_read_v2(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
+    }
+    else{
+        ret = dlt_message_read(&(daemon_local->msg),
+                           (unsigned char *)rec->buf + sizeof(DltUserHeader),
+                           (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
+                           0,
+                           verbose);
+    }
+    
 
     if (ret != DLT_MESSAGE_ERROR_OK) {
         if (ret != DLT_MESSAGE_ERROR_SIZE)

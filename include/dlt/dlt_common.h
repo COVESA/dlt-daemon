@@ -1350,6 +1350,18 @@ DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int 
 int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int resync, int verbose);
 
 /**
+ * Read DLT V2 message from memory buffer.
+ * Message in buffer has no storage header.
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param buffer pointer to memory buffer
+ * @param length length of message in buffer
+ * @param resync if set to true resync to serial header is enforced
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose);
+
+/**
  * Get standard header extra parameters
  * @param msg pointer to structure of organising access to DLT messages
  * @param verbose if set to true verbose information is printed out.
