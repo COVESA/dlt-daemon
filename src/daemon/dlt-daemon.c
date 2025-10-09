@@ -2562,9 +2562,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
 {
-    printf("***JP P1 %s %d\n", __func__, __LINE__);
     if (dlt_version == DLT_VERSION2) {
-        printf("***JP P2 %s V2 %d\n", __func__, __LINE__);
         /* DLTV2 - Multiplexing logic for DLT protocol version 2 */
         DltMessageV2 msg;
         if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
@@ -2594,20 +2592,16 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         /* To Update: Update to correct size for extended header */
         msg.extendedheadersizev2 = 23; // To extract the size from flags in the header
 
-        printf("***JP P3 %s V2 %d\n", __func__, __LINE__);
-
         msg.headersizev2 = (uint32_t) (msg.storageheadersizev2 +
             msg.baseheadersizev2 +
             msg.baseheaderextrasizev2 +
             msg.extendedheadersizev2 + 14);
-        printf("***JP P3A %s V2 %d\n", __func__, __LINE__);
 
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
         msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbufferv2);
 
         if (dlt_set_storageheader_v2(msg.storageheaderv2, DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
-        printf("***JP P4 %s V2 %d\n", __func__, __LINE__);
 
         /* Set standardheader */
         msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
@@ -2631,8 +2625,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         printf("pExtendedHeaderV2->ecid = %s\n",pExtendedHeaderV2->ecid);
         printf("pExtendedHeaderV2->ecidlen = %d\n",pExtendedHeaderV2->ecidlen);
 
-        printf("***JP P4 %s V2 %d\n", __func__, __LINE__);
-
         /* Set timestamp */
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
             msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
@@ -2655,11 +2647,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             msg.headerextrav2.nanoseconds |= 0x8000;
         }
 
-        printf("***JP P5 %s V2 %d\n", __func__, __LINE__);
-
         pExtendedHeaderV2->seid = (unsigned int) DLT_HTOBE_32(getpid());
-
-        printf("***JP P6 %s V2 %d\n", __func__, __LINE__);
 
         /* Set extraheader */
         pBaseHeaderExtraV2 =
@@ -2673,12 +2661,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
         pBaseHeaderExtraV2->noar = 1;
 
-        printf("***JP P7 %s V2 %d\n", __func__, __LINE__);
-
         dlt_set_id_v2(&(msg.extendedheaderv2.apid), app_id, strlen(app_id));
         dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctx_id, strlen(ctx_id));
-
-        printf("***JP P8 %s V2 %d\n", __func__, __LINE__);
 
         /* Set payload data... */
         uiType = DLT_TYPE_INFO_STRG;
@@ -2693,8 +2677,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             return -1;
         }
 
-        printf("***JP P9 %s V2 %d\n", __func__, __LINE__);
-
         msg.datasize = 0;
         memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
         msg.datasize += (uint32_t) sizeof(uint32_t);
@@ -2702,8 +2684,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.datasize += (uint32_t) sizeof(uint16_t);
         memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
         msg.datasize += uiSize;
-
-        printf("***JP P10 %s V2 %d\n", __func__, __LINE__);
 
         /* Calc length */
         msg.baseheaderv2->len = DLT_HTOBE_16(msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
@@ -2713,8 +2693,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             msg.headerbufferv2 + msg.storageheadersizev2,
                             (int) (msg.headersizev2 - msg.storageheadersizev2),
                             msg.databuffer, (int) msg.datasize, verbose);
-
-        printf("***JP P11 %s V2 %d\n", __func__, __LINE__);
 
         free(msg.headerbufferv2);
         free(msg.databuffer);
@@ -3294,8 +3272,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      DltReceiver *receiver,
                                      int verbose)
-{
-    printf("***JP P12 %s V2 %d\n", __func__, __LINE__);    
+{   
     int offset = 0;
     int run_loop = 1;
     int32_t min_size = (int32_t) sizeof(DltUserHeader);
@@ -3328,7 +3305,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
     uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
     dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
-    printf("***JP header_first_byte = 0x%X %s %d\n", header_first_byte, __func__, __LINE__);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     /* Count up number of received bytes from FIFO */
@@ -3350,17 +3326,13 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             run_loop = 0; // exit loop in next iteration
         }
 #endif
-
-        printf("***JP P15 %s %d\n", __func__, __LINE__);
         dlt_daemon_process_user_message_func func = NULL;
-        printf("***JP P16 %s %d\n", __func__, __LINE__);
 
         offset = 0;
         userheader = (DltUserHeader *)(receiver->buf + offset);
         for (int i = 0; i <= 8; i++) {
             printf(" receiver->buf[i] = 0x%c\n", receiver->buf[i]);
         }
-        printf("***JP P17 After userheader = %s %d\n", __func__, __LINE__);
 
         int ret_val = dlt_user_check_userheader_v2(userheader);
 
@@ -3372,42 +3344,31 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             userheader = (DltUserHeader *)(receiver->buf + offset);
         }
 
-        printf("***JP P18 %s %d\n", __func__, __LINE__);
-        printf("***JP dlt_version = %d\n", dlt_version);
-
         /* Check for user header pattern */
         ret_val = dlt_user_check_userheader_v2(userheader);
         printf("ret_val = %d\n", ret_val);
         if (!dlt_user_check_userheader_v2(userheader))
             break;
 
-        printf("***JP P19 After if (dlt_user_check_userheader(userheader)) offset = %d %s %d\n", offset, __func__, __LINE__);
-
         /* Set new start offset */
         if (offset > 0) {
-            printf("***JP P22A if (offset > 0) %s %d\n", __func__, __LINE__);
             if (dlt_receiver_remove(receiver, offset) == -1) {
                 dlt_log(LOG_WARNING,
                         "Can't remove offset from receiver\n");
                 return -1;
             }
-            printf("***JP P22B if (dlt_receiver_remove(receiver, offset) != -1) %s %d\n", __func__, __LINE__);
         }
-        printf("***JP P23 Set new start offset %s %d\n", __func__, __LINE__);
 
         if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
             func = dlt_daemon_process_user_message_not_sup;
         else
             func = process_user_func[userheader->message];
-        
-        printf("***JP P24 Assigned func pointer: %p for message type: %u\n", (void*)func, userheader->message);
 
         if (func(daemon,
                  daemon_local,
                  receiver,
                  daemon_local->flags.vflag) == -1)
             run_loop = 0;
-        printf("***JP P25 %s %d\n", __func__, __LINE__);
     }
 
     /* keep not read data in buffer */
@@ -3417,7 +3378,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                 "messages\n");
         return -1;
     }
-    printf("***JP P26 %s %d\n", __func__, __LINE__);
 
     return 0;
 }
@@ -3485,7 +3445,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltReceiver *rec,
                                                          int verbose)
 {
-    printf("***JP P14A %s %d\n", __func__, __LINE__);
     uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
     uint32_t to_remove = 0;
     DltDaemonApplication *application = NULL;
@@ -3600,8 +3559,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         dlt_vlog(LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n",
                  application->apid, application->pid);
 #endif
-
-    printf("***JP P14B %s %d\n", __func__, __LINE__);
 
     return 0;
 }
@@ -4072,8 +4029,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
 #else
-    printf("***JP P28 Calling dlt_message_read %s %d\n", __func__, __LINE__);
-    printf("***JP dlt_version %d\n", dlt_version);
     /* TBD
     if (dlt_version == DLT_VERSION2) {
         ret = dlt_message_read_v2(&(daemon_local->msg),
