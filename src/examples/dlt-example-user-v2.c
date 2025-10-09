@@ -296,8 +296,11 @@ int main(int argc, char *argv[])
     dlt_with_timestamp(1);
     dlt_with_ecu_id(1);
     dlt_verbose_mode();
+    printf("***JP example-user-v2: starting execution\n");
     DLT_REGISTER_APP_V2(appID, "Test Application for Logging");
+    printf("***JP example-user-v2: app registered (V2)\n");
     DLT_REGISTER_CONTEXT_V2(mycontext1, contextID, "Test Context for Logging");
+    printf("***JP example-user-v2: context registered (V2)\n");
     // DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
     // DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
@@ -353,6 +356,8 @@ int main(int argc, char *argv[])
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
+
+    printf("***JP example-user-v2: sending log message (V2)\n");
 
 #ifdef DLT_TEST_ENABLE
 

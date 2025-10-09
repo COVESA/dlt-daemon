@@ -123,8 +123,11 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
 
 int dlt_user_check_userheader_v2(DltUserHeader *userheader)
 {
+    printf("***JP P19 Enter %s %d\n", __func__, __LINE__);
     if (userheader == 0)
         return -1;
+
+    printf("***JP P21 return with proper patterns %s %d\n", __func__, __LINE__);
 
     return (userheader->pattern[0] == 'D') &&
            (userheader->pattern[1] == 'U') &&

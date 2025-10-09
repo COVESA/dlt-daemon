@@ -4878,6 +4878,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                //(((dlt_user.numberoftags)*((dlt_user.tag->taglen)+1))*(dlt_user.with_tags)) +
                                ((sizeof(dlt_user.prlv))*(dlt_user.with_privacy_level)) +
                                (((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation)); //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
+    printf("msg.extendedheadersizev2=%d\n", msg.extendedheadersizev2);
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
                        msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + 14; /* To Update: Findout why extra 14 needed*/
