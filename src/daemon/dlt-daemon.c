@@ -2566,7 +2566,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     if (dlt_version == DLT_VERSION2) {
         printf("***JP P2 %s V2 %d\n", __func__, __LINE__);
         /* DLTV2 - Multiplexing logic for DLT protocol version 2 */
-        DltMessageV2 msg = { 0 };
+        DltMessageV2 msg;
         if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
         static uint8_t uiMsgCount = 0;
@@ -4074,6 +4074,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #else
     printf("***JP P28 Calling dlt_message_read %s %d\n", __func__, __LINE__);
     printf("***JP dlt_version %d\n", dlt_version);
+    /* TBD
     if (dlt_version == DLT_VERSION2) {
         ret = dlt_message_read_v2(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
@@ -4082,12 +4083,13 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                            verbose);
     }
     else{
+    */
         ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
-    }
+    /* } */
     
 
     if (ret != DLT_MESSAGE_ERROR_OK) {

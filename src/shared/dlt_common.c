@@ -1494,8 +1494,10 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
 
 int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
+    printf("In dlt_message_read_v2\n");
     uint32_t extra_size = 0;
-    DltExtendedHeaderV2 *pExtendedHeaderV2 = NULL;
+
+    DltHtyp2ContentType msgcontent = 0x00;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1510,60 +1512,62 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
         /* dlt_log(LOG_ERR, "Length smaller than serial header!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 
-    if (memcmp(buffer, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
-        /* serial header found */
-        msg->found_serialheader = 1;
-        buffer += sizeof(dltSerialHeader);
-        length -= (unsigned int)sizeof(dltSerialHeader);
-    }
-    else {
-        /* serial header not found */
-        msg->found_serialheader = 0;
+    // if (memcmp(buffer, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
+    //     /* serial header found */
+    //     msg->found_serialheader = 1;
+    //     buffer += sizeof(dltSerialHeader);
+    //     length -= (unsigned int)sizeof(dltSerialHeader);
+    // }
+    // else {
+    //     /* serial header not found */
+    //     msg->found_serialheader = 0;
 
-        if (resync) {
-            /* resync if necessary */
-            msg->resync_offset = 0;
+    //     if (resync) {
+    //         /* resync if necessary */
+    //         msg->resync_offset = 0;
 
-            do {
-                if (memcmp(buffer + msg->resync_offset, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
-                    /* serial header found */
-                    msg->found_serialheader = 1;
-                    buffer += sizeof(dltSerialHeader);
-                    length -= (unsigned int)sizeof(dltSerialHeader);
-                    break;
-                }
+    //         do {
+    //             if (memcmp(buffer + msg->resync_offset, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
+    //                 /* serial header found */
+    //                 msg->found_serialheader = 1;
+    //                 buffer += sizeof(dltSerialHeader);
+    //                 length -= (unsigned int)sizeof(dltSerialHeader);
+    //                 break;
+    //             }
 
-                msg->resync_offset++;
-            } while ((sizeof(dltSerialHeader) + (size_t)msg->resync_offset) <= length);
+    //             msg->resync_offset++;
+    //         } while ((sizeof(dltSerialHeader) + (size_t)msg->resync_offset) <= length);
 
-            /* Set new start offset */
-            if (msg->resync_offset > 0) {
-                /* Resyncing connection */
-                buffer += msg->resync_offset;
-                length -= (unsigned int)msg->resync_offset;
-            }
-        }
-    }
+    //         /* Set new start offset */
+    //         if (msg->resync_offset > 0) {
+    //             /* Resyncing connection */
+    //             buffer += msg->resync_offset;
+    //             length -= (unsigned int)msg->resync_offset;
+    //         }
+    //     }
+    // }
 
     /* check that standard header fits buffer */
-    if (length < sizeof(DltBaseHeaderV2))
+    if (length < msg->baseheadersizev2)
         /* dlt_log(LOG_ERR, "Length smaller than standard header!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 
-    memcpy(msg->headerbufferv2 + sizeof(DltStorageHeaderV2), buffer, sizeof(DltBaseHeaderV2));
+    memcpy(msg->headerbufferv2 + msg->storageheadersizev2, buffer+4, msg->baseheadersizev2);
+
+    printf("htyp2: 0x%02X\n", msg->baseheaderv2->htyp2);
 
     /* set ptrs to structures */
     msg->storageheaderv2 = (DltStorageHeaderV2 *)msg->headerbufferv2;
-    msg->baseheaderv2 = (DltBaseHeaderV2 *)(msg->headerbufferv2 + sizeof(DltStorageHeaderV2));
+    msg->baseheaderv2 = (DltBaseHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2);
 
     /* calculate complete size of headers */
     extra_size = msg->baseheaderextrasizev2;
-    msg->headersizev2 = (uint32_t) (sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2) + extra_size);
-    msg->datasize = (uint32_t) DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2 + (uint32_t) sizeof(DltStorageHeaderV2);
+    msg->headersizev2 = (uint32_t) (msg->storageheadersizev2 + msg->baseheadersizev2 + extra_size);
+    msg->datasize = (uint32_t) DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2 + (uint32_t) msg->storageheadersizev2;
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2 + (int32_t) sizeof(DltStorageHeader);
+    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2 + (int32_t) msg->storageheadersizev2;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1584,26 +1588,27 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     /* load standard header extra parameters and Extended header if used */
     if (extra_size > 0) {
-        if (length < (msg->headersizev2 - sizeof(DltStorageHeaderV2)))
+        if (length < (msg->headersizev2 - msg->storageheadersizev2))
             return DLT_MESSAGE_ERROR_SIZE;
 
-        memcpy(msg->headerbufferv2 + sizeof(DltStorageHeaderV2) + sizeof(DltBaseHeaderV2),
-               buffer + sizeof(DltBaseHeaderV2), (size_t)extra_size);
+        memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2,
+               buffer + msg->baseheadersizev2, (size_t)extra_size);
 
-        /* set extended header ptr and get standard header extra parameters */
-        
-        if (DLT_IS_HTYP_UEH(msg->baseheaderv2->htyp2))
+        /* set extended header ptr and get standard header extra parameters
+        msgcontent = msg->baseheaderv2->htyp2 && 0x03; 
+        if (msgcontent == DLT_VERBOSE_DATA_MSG)
             pExtendedHeaderV2 =
                 (DltExtendedHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2 +
                 msg->baseheadersizev2 + msg->baseheaderextrasizev2);
         else
             pExtendedHeaderV2 = NULL;
+        */
 
         dlt_message_get_extraparameters_v2(msg, verbose);
     }
 
     /* check if payload fits length */
-    if (length < (msg->headersizev2 - sizeof(DltStorageHeaderV2) + msg->datasize))
+    if (length < (msg->headersizev2 - msg->storageheadersizev2 + msg->datasize))
         /* dlt_log(LOG_ERR,"length does not fit!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 
@@ -1629,7 +1634,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     }
 
     /* load payload data from buffer */
-    memcpy(msg->databuffer, buffer + (msg->headersizev2 - sizeof(DltStorageHeaderV2)), msg->datasize);
+    memcpy(msg->databuffer, buffer + (msg->headersizev2 - msg->storageheadersizev2), msg->datasize);
 
     return DLT_MESSAGE_ERROR_OK;
 }
