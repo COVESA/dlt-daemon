@@ -399,11 +399,11 @@ void dlt_set_id_v2(char **id, const char *text, int8_t len)
         return;
     }
 
-    *id = (char *)malloc(len * sizeof(char));
+    *id = (char *)malloc((len * sizeof(char)) + 1);
     if (*id == NULL) {
         return;
     }
-    strncpy(*id, text, len);
+    strncpy(*id, text, (len + 1));
 }
 
 void dlt_clean_string(char *text, int length)
@@ -708,7 +708,12 @@ DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose)
     msg->storageheaderv2 = NULL;
     msg->baseheaderv2 = NULL;
     msg->found_serialheader = 0;
-
+    msg->extendedheaderv2.ecid = NULL;
+    msg->extendedheaderv2.apid = NULL;
+    msg->extendedheaderv2.ctid = NULL;
+    msg->extendedheaderv2.fina = NULL;
+    msg->extendedheaderv2.tag = NULL;
+    msg->extendedheaderv2.sgmtdetails = NULL;
     return DLT_RETURN_OK;
 }
 
@@ -889,6 +894,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 {
     struct tm timeinfo;
     char buffer [DLT_COMMON_BUFFER_LENGTH];
+    int currtextlength = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -930,33 +936,47 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         /* print message counter */
         snprintf(text + strlen(text), textlength - strlen(text), "%.3d ", msg->baseheaderv2->mcnt);
 
+    currtextlength = strlen(text);
+
     if ((flags & DLT_HEADER_SHOW_ECUID) == DLT_HEADER_SHOW_ECUID) {
         /* print ecu id, use header extra if available, else storage header value */
-        if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2))
-            memcpy(text + strlen(text), msg->extendedheaderv2.ecid, msg->extendedheaderv2.ecidlen);
-        else
-            memcpy(text + strlen(text), msg->storageheaderv2->ecid, msg->storageheaderv2->ecidlen);
+        if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+            memcpy(text + currtextlength, msg->extendedheaderv2.ecid, (msg->extendedheaderv2.ecidlen)+1);
+            currtextlength = currtextlength + (msg->extendedheaderv2.ecidlen);
+        }else {
+            memcpy(text + strlen(text), msg->storageheaderv2->ecid, (msg->storageheaderv2->ecidlen)+1);
+            currtextlength = currtextlength + (msg->storageheaderv2->ecidlen);
+        }
     }
     /* print app id and context id if extended header available, else '----' */ #
 
     if ((flags & DLT_HEADER_SHOW_APID) == DLT_HEADER_SHOW_APID) {
-        snprintf(text + strlen(text), textlength - strlen(text), " ");
+        snprintf(text + currtextlength, textlength - currtextlength, " ");
+        currtextlength++;
 
-        if ((DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.apidlen != 0))
-            memcpy(text + strlen(text), msg->extendedheaderv2.apid, msg->extendedheaderv2.apidlen);
-        else
-            snprintf(text + strlen(text), textlength - strlen(text), "----");
-
-        snprintf(text + strlen(text), textlength - strlen(text), " ");
+        if ((DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.apidlen != 0)) {
+            memcpy(text + currtextlength, msg->extendedheaderv2.apid, (msg->extendedheaderv2.apidlen)+1);
+            currtextlength = currtextlength + (msg->extendedheaderv2.apidlen);
+        }
+        else {
+            snprintf(text + currtextlength, textlength - currtextlength, "----");
+            currtextlength = currtextlength + 4;
+        }
+        snprintf(text + currtextlength, textlength - currtextlength, " ");
+        currtextlength++;
     }
 
     if ((flags & DLT_HEADER_SHOW_CTID) == DLT_HEADER_SHOW_CTID) {
-        if ((DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.ctidlen != 0))
-            memcpy(text + strlen(text), msg->extendedheaderv2.ctid, msg->extendedheaderv2.ctidlen);
-        else
-            snprintf(text + strlen(text), textlength - strlen(text), "----");
-
-        snprintf(text + strlen(text), textlength - strlen(text), " ");
+        if ((DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.ctidlen != 0)) {
+            memcpy(text + currtextlength, msg->extendedheaderv2.ctid, (msg->extendedheaderv2.ctidlen)+1);
+            currtextlength = currtextlength + (msg->extendedheaderv2.ctidlen);
+        }
+        else {
+            snprintf(text + currtextlength, textlength - currtextlength, "----");
+            currtextlength = currtextlength + 4;
+        }
+        snprintf(text + currtextlength, textlength - currtextlength, " ");
+        currtextlength++;
     }
 
     /* print info about message type and length */

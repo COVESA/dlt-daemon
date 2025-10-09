@@ -468,28 +468,11 @@ typedef struct
     char* tagname;
 } DltTag;
 
-typedef struct
-{
-    uint8_t totallength[8];
-} SegmentationFirstFrame;
 
-typedef struct
-{
-    uint32_t sequencecounter;
-} SegmentationConsecutiveFrame;
-
-typedef struct
-{
-    uint8_t abortreason;
-} SegmentationAbortFrame;
-
-
-typedef struct{
-    union {
-    SegmentationFirstFrame firstframe;
-    SegmentationConsecutiveFrame consecutiveframe;
-    SegmentationAbortFrame abortframe;
-    };
+typedef union{
+    uint8_t firstframe_totallength[8];
+    uint32_t consecutiveframe_sequencecounter;
+    uint8_t abortframe_abortreason;
 } SegmentationFrame;
 
 /**
@@ -588,7 +571,7 @@ typedef struct
     uint8_t prlv;                 /**< Privacy level */
     uint8_t sgmtinfo;             /**< Segmentation info */
     uint8_t frametype;            /**< Segmentation frame */
-    SegmentationFrame sgmtdetails; /**< Segmentation details */
+    SegmentationFrame *sgmtdetails; /**< Segmentation details */
 } DLT_PACKED DltExtendedHeaderV2;
 
 /**
