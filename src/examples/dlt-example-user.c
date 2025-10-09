@@ -297,9 +297,7 @@ int main(int argc, char *argv[])
     dlt_with_ecu_id(1);
     dlt_verbose_mode();
 
-    printf("***JP example-user: starting app registration\n");
     DLT_REGISTER_APP(appID, "Test Application for Logging");
-    printf("***JP example-user: app registered successfully\n");
     DLT_REGISTER_CONTEXT(mycontext1, contextID, "Test Context for Logging");
     DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
     DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
@@ -380,8 +378,6 @@ int main(int argc, char *argv[])
 
 #endif /* DLT_TEST_ENABLE */
 
-    printf("***JP example-user: calling DLT_LOG to send message\n");
-
     for (num = 0; num < maxnum; num++) {
         printf("Send %d %s\n", num, text);
 
@@ -416,8 +412,6 @@ int main(int argc, char *argv[])
             nanosleep(&ts, NULL);
         }
     }
-
-    printf("***JP example-user: finished DLT_LOG call\n");
 
     sleep(1);
 
