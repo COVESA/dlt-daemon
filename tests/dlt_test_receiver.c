@@ -114,7 +114,7 @@ typedef struct {
     int ohandle;
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
-    DltFile file;
+    DltFileV2 file;
     DltFilter filter;
 } DltReceiveDataV2;
 
