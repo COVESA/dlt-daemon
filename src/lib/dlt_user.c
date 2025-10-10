@@ -641,11 +641,13 @@ DltReturnValue dlt_init_file(const char *name)
      * This is not handled via a simple boolean to prevent issues with shutting down while the init is still running.
      * Furthermore, this makes sure we enter some function only when dlt_init is fully done.
      * */
+
     enum InitState expectedInitState = INIT_UNITIALIZED;
     if (!(atomic_compare_exchange_strong(&dlt_user_init_state, &expectedInitState, INIT_IN_PROGRESS)))
         return DLT_RETURN_OK;
 
     /* Initialize common part of dlt_init()/dlt_init_file() */
+
     if (dlt_init_common() == DLT_RETURN_ERROR) {
         expectedInitState = INIT_UNITIALIZED;
         return DLT_RETURN_ERROR;
@@ -662,6 +664,7 @@ DltReturnValue dlt_init_file(const char *name)
         dlt_user.dlt_is_file = 0;
         return DLT_RETURN_ERROR;
     }
+    atomic_store(&dlt_user_init_state, INIT_DONE);
 
     return DLT_RETURN_OK;
 }
@@ -4878,10 +4881,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                //(((dlt_user.numberoftags)*((dlt_user.tag->taglen)+1))*(dlt_user.with_tags)) +
                                ((sizeof(dlt_user.prlv))*(dlt_user.with_privacy_level)) +
                                (((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation)); //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
-    printf("msg.extendedheadersizev2=%d\n", msg.extendedheadersizev2);
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
-                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + 14; /* To Update: Findout why extra 14 needed*/
+                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + 20; /* To Update: Findout why extra 14 needed*/
 
     if (msg.headerbufferv2 != NULL) {
         free(msg.headerbufferv2);
@@ -4910,13 +4912,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     /* send session id */
     if (dlt_user.with_session_id) {
         msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSID;
-        /* To Update below code be in extended header part and session id should be allocated some memory
-        if (__builtin_expect(!!(dlt_user.local_pid == -1), false)) {
-            dlt_user.local_pid = getpid();
-        }
-        msg.baseheaderv2->seid = (uint32_t) dlt_user.local_pid;
-        */
-    }
 
     /* send source filename and line number */
     if (dlt_user.with_filename_and_line_number)

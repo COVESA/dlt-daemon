@@ -140,7 +140,14 @@ int main(int argc, char *argv[])
     int rvalue = -1;
     int index;
     int c;
-
+    // char x[128];
+    // memset(x, 'a', 127);
+    // x[127] = '\0';
+    // char y[128];
+    // memset(y, 'b', 127);
+    // y[127] = '\0';
+    // char *appID = x;
+    // char *contextID = y;
     char *appID = "LOGGER";
     char *contextID = "TESTER";
 
