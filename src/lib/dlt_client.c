@@ -726,12 +726,13 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
 
         /* prepare storage header */
-        msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbufferv2);
-
-        if (dlt_set_storageheader_v2(msg.storageheaderv2, 0, "") == DLT_RETURN_ERROR) {
+        if (dlt_set_storageheader_v2(&(msg.storageheaderv2), 0, "") == DLT_RETURN_ERROR) {
             dlt_message_free_v2(&msg, 0);
             return DLT_RETURN_ERROR;
         }
+
+        if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
 
         /* prepare standard header */
         msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);

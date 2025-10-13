@@ -4891,9 +4891,11 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     }
 
     msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
-    msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbufferv2;
 
-    if (dlt_set_storageheader_v2(msg.storageheaderv2, dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader_v2(&(msg.storageheaderv2), dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
+
+    if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
@@ -5020,7 +5022,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 #endif
 */
 
-
     if (dlt_message_set_extraparameters_v2(&msg, 0) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
@@ -5124,7 +5125,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             else {
                 /* log to file */
                 ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
-                                        msg.headerbufferv2, msg.headersizev2,
+                                        msg.headerbufferv2, (msg.headersizev2 - 20),
                                         log->buffer, log->size);
                 return ret;
             }
@@ -5149,7 +5150,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
             if (dlt_user.dlt_log_handle != -1)
                 dlt_shm_push(&dlt_user.dlt_shm, msg.headerbufferv2 + msg.storageheadersizev2,
-                             msg.headersizev2 - msg.storageheadersizev2,
+                             msg.headersizev2 - msg.storageheadersizev2 -20,
                              log->buffer, log->size, 0, 0);
 
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
@@ -5200,7 +5201,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     msg.headerbufferv2 + msg.storageheadersizev2,
-                                    msg.headersizev2 - msg.storageheadersizev2,
+                                    msg.headersizev2 - msg.storageheadersizev2 - 20,
                                     log->buffer, log->size);
 
 #endif
@@ -5216,7 +5217,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbufferv2 + msg.storageheadersizev2,
-                                                  msg.headersizev2 - msg.storageheadersizev2,
+                                                  msg.headersizev2 - msg.storageheadersizev2 -20,
                                                   log->buffer,
                                                   log->size);
 
@@ -5818,7 +5819,8 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
 
     /* Act like a receiver, convert header back to host format */
     //msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
-    dlt_message_get_extraparameters_v2(msg, 0);
+    //dlt_message_get_storageparameters_v2(msg, 0);
+    //dlt_message_get_extraparameters_v2(msg, 0);
 
     msg->databuffer = log->buffer;
     msg->datasize = (uint32_t) log->size;

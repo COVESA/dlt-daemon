@@ -403,7 +403,8 @@ void dlt_set_id_v2(char **id, const char *text, int8_t len)
     if (*id == NULL) {
         return;
     }
-    strncpy(*id, text, (len + 1));
+    memcpy(*id, text, len);
+    memset((*id + len), '\0', 1);
 }
 
 void dlt_clean_string(char *text, int length)
@@ -705,7 +706,7 @@ DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose)
     msg->databuffer = NULL;
     msg->databuffersize = 0;
 
-    msg->storageheaderv2 = NULL;
+    msg->storageheaderv2.ecid = NULL;
     msg->baseheaderv2 = NULL;
     msg->found_serialheader = 0;
     msg->extendedheaderv2.ecid = NULL;
@@ -911,12 +912,12 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         /* print received time */
         time_t tt = 0;
         for (int i = 0; i<5; ++i){
-            tt = (tt << 8) | msg->storageheaderv2->seconds[i];
+            tt = (tt << 8) | msg->storageheaderv2.seconds[i];
         }
         tzset();
         localtime_r(&tt, &timeinfo);
         strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
-        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2->nanoseconds);
+        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2.nanoseconds);
     }
 
     if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
@@ -926,7 +927,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
             for (int i = 0; i<5; ++i){
                 tt = (tt << 8) | msg->headerextrav2.seconds[i];
             }
-            snprintf(text + strlen(text), textlength - strlen(text), "%ld.%.9u ", tt, msg->headerextrav2.nanoseconds);
+            snprintf(text + strlen(text), textlength - strlen(text), "%ld.%.9d ", tt, msg->headerextrav2.nanoseconds);
         }
         else
             snprintf(text + strlen(text), textlength - strlen(text), "---------- ");
@@ -944,8 +945,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
             memcpy(text + currtextlength, msg->extendedheaderv2.ecid, (msg->extendedheaderv2.ecidlen)+1);
             currtextlength = currtextlength + (msg->extendedheaderv2.ecidlen);
         }else {
-            memcpy(text + strlen(text), msg->storageheaderv2->ecid, (msg->storageheaderv2->ecidlen)+1);
-            currtextlength = currtextlength + (msg->storageheaderv2->ecidlen);
+            memcpy(text + strlen(text), msg->storageheaderv2.ecid, (msg->storageheaderv2.ecidlen)+1);
+            currtextlength = currtextlength + (msg->storageheaderv2.ecidlen);
         }
     }
     /* print app id and context id if extended header available, else '----' */ #
@@ -1556,8 +1557,9 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     printf("htyp2: 0x%02X\n", msg->baseheaderv2->htyp2);
 
+    /* Get storage parameters */
+    dlt_message_get_storageparameters_v2(msg, verbose);
     /* set ptrs to structures */
-    msg->storageheaderv2 = (DltStorageHeaderV2 *)msg->headerbufferv2;
     msg->baseheaderv2 = (DltBaseHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2);
 
     /* calculate complete size of headers */
@@ -1637,6 +1639,65 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     memcpy(msg->databuffer, buffer + (msg->headersizev2 - msg->storageheadersizev2), msg->datasize);
 
     return DLT_MESSAGE_ERROR_OK;
+}
+
+DltReturnValue dlt_message_get_storageparameters_v2(DltMessageV2 *msg, int verbose )
+{
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    memcpy(msg->storageheaderv2.pattern,
+            msg->headerbufferv2,
+            4);
+    memcpy(msg->storageheaderv2.seconds,
+            msg->headerbufferv2 + 4,
+            5);
+    memcpy(&(msg->storageheaderv2.nanoseconds),
+            msg->headerbufferv2 + 9,
+            4);
+    msg->storageheaderv2.nanoseconds = DLT_BETOH_32(msg->storageheaderv2.nanoseconds);
+    memcpy(&(msg->storageheaderv2.ecidlen),
+            msg->headerbufferv2 + 13,
+            1);
+    memcpy(msg->storageheaderv2.ecid,
+            msg->headerbufferv2 + 14,
+            msg->storageheaderv2.ecidlen);
+    /* Add Null pointer in the end of ECUID */
+    memset(msg->storageheaderv2.ecid + msg->storageheaderv2.ecidlen,
+            '\0',
+            1);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_set_storageparameters_v2(DltMessageV2 *msg, int verbose )
+{
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    memcpy(msg->headerbufferv2,
+            msg->storageheaderv2.pattern,
+            4);
+    memcpy(msg->headerbufferv2 + 4,
+            msg->storageheaderv2.seconds,
+            5);
+    memcpy(msg->headerbufferv2 + 9,
+            &(msg->storageheaderv2.nanoseconds),
+            4);
+    memcpy(msg->headerbufferv2 + 13,
+            &(msg->storageheaderv2.ecidlen),
+            1);
+    memcpy(msg->headerbufferv2 + 14,
+            msg->storageheaderv2.ecid,
+            msg->storageheaderv2.ecidlen);
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose)
@@ -2828,7 +2889,7 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     struct timespec ts;
 #endif
 
-    if ((storageheader == NULL) || (ecu == NULL))
+    if (ecu == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* get time of day */
@@ -2864,15 +2925,12 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->ecid = NULL;
     storageheader->ecidlen = ecuIDlen;
 
-    if (ecuIDlen == 0) {
-        return DLT_RETURN_OK;
-    }
-
-    storageheader->ecid = (char *)malloc(ecuIDlen * sizeof(char));
+    storageheader->ecid = (char *)malloc((ecuIDlen + 1) * sizeof(char));
     if (storageheader->ecid == NULL) {
         return DLT_RETURN_ERROR;
     }
-    strncpy(storageheader->ecid, ecu, storageheader->ecidlen);
+    memcpy(storageheader->ecid, ecu, storageheader->ecidlen);
+    memset((storageheader->ecid + storageheader->ecidlen), '\0', 1);
 
     return DLT_RETURN_OK;
 }

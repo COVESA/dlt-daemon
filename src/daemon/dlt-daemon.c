@@ -2598,9 +2598,11 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             msg.extendedheadersizev2 + 14);
 
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
-        msg.storageheaderv2 = (DltStorageHeaderV2 *)(msg.headerbufferv2);
 
-        if (dlt_set_storageheader_v2(msg.storageheaderv2, DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
+        if (dlt_set_storageheader_v2(&(msg.storageheaderv2), DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
+
+        if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
 
         /* Set standardheader */

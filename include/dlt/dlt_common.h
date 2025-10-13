@@ -629,7 +629,7 @@ typedef struct sDltMessageV2
     int32_t extendedheadersizev2;
 
     /* header values of current loaded message */
-    DltStorageHeaderV2 *storageheaderv2;        /**< pointer to storage header of current loaded header */
+    DltStorageHeaderV2 storageheaderv2;        /**< pointer to storage header of current loaded header */
     DltBaseHeaderV2 *baseheaderv2;      /**< pointer to standard header of current loaded header */
     DltBaseHeaderExtraV2 headerextrav2;     /**< extra parameters of current loaded header */
     DltExtendedHeaderV2 extendedheaderv2;      /**< pointer to extended of current loaded header */
@@ -1360,6 +1360,22 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
  * @return negative value if there was an error
  */
 int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose);
+
+/**
+ * Get storage header parameters for version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_get_storageparameters_v2(DltMessageV2 *msg, int verbose);
+
+/**
+ * Set storage header parameters for version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_storageparameters_v2(DltMessageV2 *msg, int verbose);
 
 /**
  * Get standard header extra parameters
