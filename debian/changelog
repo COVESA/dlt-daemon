@@ -1,3 +1,9 @@
+dlt-daemon (2.18.10) UNRELEASED; urgency=medium
+
+  * Update Debian package build to v2.18.10
+
+ -- Luu Quang Minh <minh.luuquang@vn.bosch.com>  Sun, 03 Aug 2025 12:51:56 +0700
+
 dlt-daemon (2.18.7) unstable; urgency=low
 
    * Initial release
