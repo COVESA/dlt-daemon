@@ -121,7 +121,7 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
            (userheader->pattern[3] == 1);
 }
 
-int dlt_user_check_userheader2(DltUserHeader *userheader)
+int dlt_user_check_userheader_v2(DltUserHeader *userheader)
 {
     if (userheader == 0)
         return -1;

@@ -77,6 +77,14 @@
 #   include "dlt_common.h"
 #include <stdbool.h>
 
+// DLTV2 - Definitions for DLT Version 2
+#define DLT_VERSION1 1
+#define DLT_VERSION2 2
+#define DLT_VERSION_MASK 0xE0
+#define DLT_VERSION_SHIFT 5
+
+#define DLT_CLIENT_ECU_ID_LEN 1
+
 typedef enum
 {
     DLT_CLIENT_MODE_UNDEFINED = -1,
@@ -155,6 +163,14 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose);
  * @return Value from DltReturnValue enum.
  */
 DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *msg);
+
+/**
+ * Send a message to the daemon through the socket.
+ * @param client pointer to dlt client structure.
+ * @param msg The message to be send in DLT format.
+ * @return Value from DltReturnValue enum.
+ */
+DltReturnValue dlt_client_send_message_to_socket_v2(DltClient *client, DltMessageV2 *msg);
 
 /**
  * Send ancontrol message to the dlt daemon

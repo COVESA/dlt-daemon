@@ -140,9 +140,16 @@ int main(int argc, char *argv[])
     int rvalue = -1;
     int index;
     int c;
-
-    char *appID = "LOG";
-    char *contextID = "TEST";
+    // char x[128];
+    // memset(x, 'a', 127);
+    // x[127] = '\0';
+    // char y[128];
+    // memset(y, 'b', 127);
+    // y[127] = '\0';
+    // char *appID = x;
+    // char *contextID = y;
+    char *appID = "LOGGER";
+    char *contextID = "TESTER";
 
     char *text;
     int num, maxnum;
@@ -282,7 +289,6 @@ int main(int argc, char *argv[])
     }
 
     if (fvalue) {
-
         /* DLT is initialized automatically, except another output target will be used */
         if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
@@ -297,25 +303,24 @@ int main(int argc, char *argv[])
     dlt_with_timestamp(1);
     dlt_with_ecu_id(1);
     dlt_verbose_mode();
+    DLT_REGISTER_APP_V2(appID, "Test Application for Logging");
+    DLT_REGISTER_CONTEXT_V2(mycontext1, contextID, "Test Context for Logging");
+    // DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
+    // DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
-    DLT_REGISTER_APP(appID, "Test Application for Logging");
-    DLT_REGISTER_CONTEXT(mycontext1, contextID, "Test Context for Logging");
-    DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
-    DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
-
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS1 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS2 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
+    //                                         0x1000,
+    //                                         dlt_user_injection_callback_with_specific_data,
+    //                                         (void *)"TS1 context");
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
+    //                                         0x1000,
+    //                                         dlt_user_injection_callback_with_specific_data,
+    //                                         (void *)"TS2 context");
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
+    // DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
 
     text = message;
 
@@ -381,6 +386,7 @@ int main(int argc, char *argv[])
 
     for (num = 0; num < maxnum; num++) {
         printf("Send %d %s\n", num, text);
+
         newstate = dlt_get_log_state();
 
         if (state != newstate) {
@@ -395,16 +401,15 @@ int main(int argc, char *argv[])
         }
 
         if (gflag) {
-            /* Non-verbose mode */
-            DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
+            // /* Non-verbose mode */
+            // DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
         else {
             if (rvalue == -1) {
                 /* Verbose mode */
-                DLT_LOG(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
-            }
-            else {
-                DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
+                DLT_LOG_V2(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
+            } else {
+                DLT_LOG_V2(mycontext1, lvalue, DLT_RAW(text, rvalue));
             }
         }
 
@@ -417,9 +422,9 @@ int main(int argc, char *argv[])
 
     sleep(1);
 
-    DLT_UNREGISTER_CONTEXT(mycontext1);
+    DLT_UNREGISTER_CONTEXT_V2(mycontext1);
 
-    DLT_UNREGISTER_APP();
+    DLT_UNREGISTER_APP_V2();
 
     return 0;
 
