@@ -284,7 +284,7 @@
     do { \
         DltContextData log_local; \
         int dlt_local; \
-        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL, DLT_VERSION_1); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             __VA_ARGS__; \
@@ -310,7 +310,7 @@
     do { \
         DltContextData log_local; \
         int dlt_local; \
-        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL, DLT_VERSION_2); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             __VA_ARGS__; \
@@ -337,7 +337,7 @@
     do { \
         DltContextData log_local; \
         int dlt_local; \
-        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL, DLT_VERSION_1); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             __VA_ARGS__; \
@@ -368,7 +368,7 @@
     do { \
         DltContextData log_local; \
         int dlt_local; \
-        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, DLT_VERSION_1, MSGID); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             __VA_ARGS__; \
@@ -398,7 +398,7 @@
     do { \
         DltContextData log_local; \
         int dlt_local; \
-        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, MSGID); \
+        dlt_local = dlt_user_log_write_start_id(&CONTEXT, &log_local, LOGLEVEL, DLT_VERSION_1, MSGID); \
         if (dlt_local == DLT_RETURN_TRUE) \
         { \
             __VA_ARGS__; \
@@ -784,7 +784,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT); \
+            (void)dlt_log_string(&(CONTEXT), LOGLEVEL, TEXT, DLT_VERSION_1); \
         } \
     } while(false)
 
@@ -799,7 +799,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+            (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR, DLT_VERSION_1); \
         } \
     } while(false)
 
@@ -814,7 +814,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_string_uint(&(CONTEXT), LOGLEVEL, TEXT, UINT_VAR); \
+            (void)dlt_log_string_uint(&(CONTEXT), LOGLEVEL, TEXT, UINT_VAR, DLT_VERSION_1); \
         } \
     } while(false)
 
@@ -828,7 +828,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_uint(&(CONTEXT), LOGLEVEL, UINT_VAR); \
+            (void)dlt_log_uint(&(CONTEXT), LOGLEVEL, UINT_VAR, DLT_VERSION_1); \
         } \
     } while(false)
 
@@ -842,7 +842,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_int(&(CONTEXT), LOGLEVEL, INT_VAR); \
+            (void)dlt_log_int(&(CONTEXT), LOGLEVEL, INT_VAR, DLT_VERSION_1); \
         } \
     } while(false)
 
@@ -857,7 +857,7 @@
     do { \
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
-            (void)dlt_log_raw(&(CONTEXT), LOGLEVEL, BUF, LEN); \
+            (void)dlt_log_raw(&(CONTEXT), LOGLEVEL, BUF, LEN, DLT_VERSION_1); \
         } \
     } while(false)
 

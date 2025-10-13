@@ -362,7 +362,7 @@ void do_logging(s_thread_data *data)
     }
 
     while (msgs_left-- > 0) {
-        if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_INFO) > 0) {
+        if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_INFO, DLT_VERSION_1) > 0) {
             dlt_user_log_write_string(&mycontextdata, logmsg);
             dlt_user_log_write_finish(&mycontextdata);
         }

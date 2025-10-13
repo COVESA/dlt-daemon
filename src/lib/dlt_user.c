@@ -236,7 +236,7 @@ static DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /* For trace load control feature */
-static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, const char *text, void* params);
+static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, const char *text, const char *dlt_version, void* params);
 DltTraceLoadSettings* trace_load_settings = NULL;
 uint32_t trace_load_settings_count = 0;
 pthread_rwlock_t trace_load_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -2378,25 +2378,28 @@ DltReturnValue dlt_user_log_write_start_init(DltContext *handle,
 static DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
                                                         DltContextData *log,
                                                         DltLogLevelType loglevel,
+                                                        const char *dlt_version,
                                                         uint32_t messageid,
                                                         bool is_verbose);
 
-inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel)
+inline DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, const char *dlt_version)
 {
-    return dlt_user_log_write_start_internal(handle, log, loglevel, DLT_USER_DEFAULT_MSGID, true);
+    return dlt_user_log_write_start_internal(handle, log, loglevel, dlt_version, DLT_USER_DEFAULT_MSGID, true);
 }
 
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
+                                           const char *dlt_version,
                                            uint32_t messageid)
 {
-    return dlt_user_log_write_start_internal(handle, log, loglevel, messageid, false);
+    return dlt_user_log_write_start_internal(handle, log, loglevel, dlt_version, messageid, false);
 }
 
 DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
+                                           const char *dlt_version,
                                            uint32_t messageid,
                                            bool is_verbose)
 {
@@ -2422,8 +2425,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
 
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
     if (ret == DLT_RETURN_TRUE) {
-        /*Store message ID for version 2 where it is part of conditional header*/
-        log->msid = messageid;
+
         /* initialize values */
         if ((NULL != log->buffer))
         {
@@ -2443,15 +2445,18 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
         {
             /* In non-verbose mode, insert message id */
             if (!is_verbose_mode(dlt_user.verbose_mode, log)) {
-                if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
-                    return DLT_RETURN_USER_BUFFER_FULL;
-//To Update: below should not happen in version 2
-                /* Write message id */
-                memcpy(log->buffer, &(messageid), sizeof(uint32_t));
-                log->size = sizeof(uint32_t);
-
-                /* as the message id is part of each message in non-verbose mode,
-                * it doesn't increment the argument counter in extended header (if used) */
+                if (strcmp(dlt_version, DLT_VERSION_1) == 0) {
+                    if ((sizeof(uint32_t)) > dlt_user.log_buf_len)
+                        return DLT_RETURN_USER_BUFFER_FULL;
+                    /* Write message id */
+                    memcpy(log->buffer, &(messageid), sizeof(uint32_t));
+                    log->size = sizeof(uint32_t);
+                    /* as the message id is part of each message in non-verbose mode,
+                    * it doesn't increment the argument counter in extended header (if used) */
+                } else if (strcmp(dlt_version, DLT_VERSION_2) == 0) {
+                    log->msid = messageid;
+                    log->size = 0;
+                }  
             }
         }
     }
@@ -2462,6 +2467,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
 DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
                                                        DltContextData *log,
                                                        DltLogLevelType loglevel,
+                                                       const char *dlt_version,
                                                        char *buffer,
                                                        size_t size,
                                                        int32_t args_num)
@@ -4129,7 +4135,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
-DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text)
+DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4140,7 +4146,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
@@ -4150,7 +4156,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
     return ret;
 }
 
-DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data)
+DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4161,7 +4167,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
         dlt_user_log_write_int(&log, data);
 
@@ -4172,7 +4178,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
     return ret;
 }
 
-DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data)
+DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4183,7 +4189,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
     DltReturnValue ret = DLT_RETURN_OK;
     DltContextData log;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) == DLT_RETURN_TRUE) {
         ret = dlt_user_log_write_string(&log, text);
         dlt_user_log_write_uint(&log, data);
 
@@ -4194,7 +4200,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
     return ret;
 }
 
-DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data)
+DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4204,7 +4210,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
 
     DltContextData log;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) == DLT_RETURN_TRUE) {
         dlt_user_log_write_int(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
@@ -4214,7 +4220,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data)
+DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4224,7 +4230,7 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
 
     DltContextData log;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) == DLT_RETURN_TRUE) {
         dlt_user_log_write_uint(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
@@ -4234,7 +4240,7 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length)
+DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length, const char *dlt_version)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
         return DLT_RETURN_ERROR;
@@ -4245,7 +4251,7 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
     DltContextData log;
     DltReturnValue ret = DLT_RETURN_OK;
 
-    if (dlt_user_log_write_start(handle, &log, loglevel) > 0) {
+    if (dlt_user_log_write_start(handle, &log, loglevel, dlt_version) > 0) {
         if ((ret = dlt_user_log_write_raw(&log, data, length)) < DLT_RETURN_OK) {
             dlt_user_free_buffer(&(log.buffer));
             return ret;
@@ -4883,7 +4889,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                (((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation)); //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
-                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + 20; /* To Update: Findout why extra 14 needed*/
+                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT; /* To Update: Findout why extra 14 needed*/
 
     if (msg.headerbufferv2 != NULL) {
         free(msg.headerbufferv2);
@@ -5079,14 +5085,14 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     /* To Update: Free mallocs of extended header*/
 
-    len = (int32_t) (msg.headersizev2 - msg.storageheadersizev2 + log->size);
+    len = (int32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
 
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         return DLT_RETURN_ERROR;
     }
 
-    //msg.baseheaderv2->len = DLT_HTOBE_16(len);
+    msg.baseheaderv2->len = DLT_HTOBE_16(len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
@@ -5125,7 +5131,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             else {
                 /* log to file */
                 ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
-                                        msg.headerbufferv2, (msg.headersizev2 - 20),
+                                        msg.headerbufferv2, (msg.headersizev2 - HEADER_SIZE_CONSTANT),
                                         log->buffer, log->size);
                 return ret;
             }
@@ -5141,8 +5147,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         /* try to resent old data first */
         ret = DLT_RETURN_OK;
 
-        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID2 != NULL))      
-            ret = dlt_user_log_resend_buffer();
+        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID2 != NULL)) {   
+            ret = dlt_user_log_resend_buffer_v2();
+        }
 
         if ((ret == DLT_RETURN_OK) && (dlt_user.appID2 != NULL)) {
             /* resend ok or nothing to resent */
@@ -5150,7 +5157,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
             if (dlt_user.dlt_log_handle != -1)
                 dlt_shm_push(&dlt_user.dlt_shm, msg.headerbufferv2 + msg.storageheadersizev2,
-                             msg.headersizev2 - msg.storageheadersizev2 -20,
+                             msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
                              log->buffer, log->size, 0, 0);
 
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
@@ -5183,7 +5190,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                         settings,
                         log->log_level, time_stamp,
                         sizeof(DltUserHeader)
-                            + msg.headersizev2 - msg.storageheadersizev2
+                            + msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT
                             + log->size,
                         dlt_user_output_internal_msg,
                         NULL);
@@ -5194,14 +5201,14 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             }
             else
             {
-                *sent_size = (sizeof(DltUserHeader) + msg.headersizev2 - msg.storageheadersizev2 + log->size);
+                *sent_size = (sizeof(DltUserHeader) + msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
             }
 #endif
 
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     msg.headerbufferv2 + msg.storageheadersizev2,
-                                    msg.headersizev2 - msg.storageheadersizev2 - 20,
+                                    msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
                                     log->buffer, log->size);
 
 #endif
@@ -5217,7 +5224,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbufferv2 + msg.storageheadersizev2,
-                                                  msg.headersizev2 - msg.storageheadersizev2 -20,
+                                                  msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
                                                   log->buffer,
                                                   log->size);
 
@@ -6164,7 +6171,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
                                 trace_load_settings[i].soft_limit,
                                 trace_load_settings[i].hard_limit);
                         }
-                        dlt_user_output_internal_msg(DLT_LOG_INFO, msg, NULL);
+                        dlt_user_output_internal_msg(DLT_LOG_INFO, msg, DLT_VERSION_1, NULL);
                     }
 
                     /* keep not read data in buffer */
@@ -6324,24 +6331,29 @@ DltReturnValue dlt_user_log_resend_buffer_v2(void)
                 switch (userheader->message) {
                 case DLT_USER_MESSAGE_REGISTER_CONTEXT:
                 {
-                    DltUserControlMsgRegisterContextV2 *usercontext =
-                        (DltUserControlMsgRegisterContextV2 *)(dlt_user.resend_buffer + sizeof(DltUserHeader));
-
-                    if ((usercontext != 0) && (usercontext->apid == NULL))
-                        dlt_set_id_v2(&(usercontext->apid), dlt_user.appID2, dlt_user.appID2len);
-
+                    DltUserControlMsgRegisterContextV2 usercontextv2;
+                    usercontextv2.apid = NULL;
+                    usercontextv2.apidlen = dlt_user.appID2len;
+                    dlt_set_id_v2(&(usercontextv2.apid), dlt_user.appID2, dlt_user.appID2len);
+                        
+                    memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader),
+                            usercontextv2.apid,
+                            usercontextv2.apidlen);
                     break;
                 }
                 case DLT_USER_MESSAGE_LOG:
                 {
-                    DltExtendedHeaderV2 *extendedHeader =
+                    DltExtendedHeaderV2 extendedheaderv2;
+                    extendedheaderv2.apid = NULL;
+                    extendedheaderv2.apidlen = dlt_user.appID2len;
                         (DltExtendedHeaderV2 *)(dlt_user.resend_buffer + sizeof(DltUserHeader) +
                                               sizeof(DltBaseHeaderV2) +
                                               sizeof(DltBaseHeaderExtraV2));
-
-                    if (((extendedHeader) != 0) && (extendedHeader->apid == NULL)) /* if application id is empty, add it */
-                        dlt_set_id_v2(&(extendedHeader->apid), dlt_user.appID2, dlt_user.appID2len);
-
+                    dlt_set_id_v2(&(extendedheaderv2.apid), dlt_user.appID2, dlt_user.appID2len);
+                    memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + BASE_HEADER_V2_FIXED_SIZE +
+                            dlt_message_get_extraparameters_size_v2(DLT_VERBOSE_DATA_MSG),
+                            extendedheaderv2.apid,
+                            extendedheaderv2.apidlen);
                     break;
                 }
                 default:
@@ -6701,7 +6713,7 @@ static void dlt_fork_child_fork_handler()
 
 #if defined(DLT_TRACE_LOAD_CTRL_ENABLE)
 static DltReturnValue dlt_user_output_internal_msg(
-    const DltLogLevelType loglevel, const char *const text, void* const params)
+    const DltLogLevelType loglevel, const char *const text, const char *dlt_version, void* const params)
 {
     (void)params; // parameter is not needed
     static DltContext handle;
@@ -6735,7 +6747,7 @@ static DltReturnValue dlt_user_output_internal_msg(
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    ret = dlt_user_log_write_start(&handle, &log, loglevel);
+    ret = dlt_user_log_write_start(&handle, &log, loglevel, dlt_version);
 
     // Ok means below threshold
     // see src/dlt-qnx-system/dlt-qnx-slogger2-adapter.cpp::sloggerinfo_callback for reference

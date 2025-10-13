@@ -2595,7 +2595,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.headersizev2 = (uint32_t) (msg.storageheadersizev2 +
             msg.baseheadersizev2 +
             msg.baseheaderextrasizev2 +
-            msg.extendedheadersizev2 + 14);
+            msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT);
 
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
 

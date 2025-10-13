@@ -78,8 +78,6 @@
 #include <stdbool.h>
 
 // DLTV2 - Definitions for DLT Version 2
-#define DLT_VERSION1 1
-#define DLT_VERSION2 2
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 

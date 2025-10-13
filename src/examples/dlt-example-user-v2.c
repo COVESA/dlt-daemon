@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
     // y[127] = '\0';
     // char *appID = x;
     // char *contextID = y;
-    char *appID = "LOGGER_DEMO";
-    char *contextID = "TESTER_DEMO";
+    char *appID = "LOGGER";
+    char *contextID = "TESTER";
 
     char *text;
     int num, maxnum;
