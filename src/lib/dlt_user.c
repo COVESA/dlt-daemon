@@ -4912,6 +4912,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     /* send session id */
     if (dlt_user.with_session_id) {
         msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSID;
+    }
 
     /* send source filename and line number */
     if (dlt_user.with_filename_and_line_number)

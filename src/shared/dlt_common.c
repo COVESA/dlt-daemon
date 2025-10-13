@@ -2849,11 +2849,6 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->pattern[2] = 'T';
     storageheader->pattern[3] = 0x02;
 
-    storageheader->ecid = NULL;
-
-    dlt_set_id_v2(&(storageheader->ecid), ecu, ecuIDlen);
-    storageheader->ecidlen = ecuIDlen;
-
     /* Set current time */
 #if defined(_MSC_VER)
     storageheader->nanoseconds = 0;
@@ -2865,6 +2860,19 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->seconds[4]= ts.tv_sec & 0xFF;
     storageheader->nanoseconds = (int32_t) ts.tv_nsec; /* value is long */
 #endif
+
+    storageheader->ecid = NULL;
+    storageheader->ecidlen = ecuIDlen;
+
+    if (ecuIDlen == 0) {
+        return DLT_RETURN_OK;
+    }
+
+    storageheader->ecid = (char *)malloc(ecuIDlen * sizeof(char));
+    if (storageheader->ecid == NULL) {
+        return DLT_RETURN_ERROR;
+    }
+    strncpy(storageheader->ecid, ecu, storageheader->ecidlen);
 
     return DLT_RETURN_OK;
 }
