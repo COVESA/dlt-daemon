@@ -916,7 +916,7 @@ TEST(t_dlt_logstorage_write_v2, normal)
     msg.storageheader = (DltStorageHeaderV2 *)msg.headerbuffer;
     dlt_set_storageheader_v2(msg.storageheader, ecuid);
     msg.standardheader = (DltStandardHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
-    msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1|DLT_HTYP_UEH;
+    msg.standardheader->htyp = DLT_HTYP2_PROTOCOL_VERSION2|DLT_HTYP2_EH;
     msg.standardheader->mcnt = 0;
     dlt_message_set_extraparameters_v2(&msg, 0);
     msg.extendedheader = (DltExtendedHeaderV2 *)(msg.headerbuffer +
@@ -1993,7 +1993,7 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     msg.storageheader = (DltStorageHeaderV2 *)msg.headerbuffer;
     dlt_set_storageheader_v2(msg.storageheader, ecuid);
     msg.standardheader = (DltStandardHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
-    msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1|DLT_HTYP_UEH;
+    msg.standardheader->htyp = DLT_HTYP2_PROTOCOL_VERSION2|DLT_HTYP2_EH;
     msg.standardheader->mcnt = 0;
     dlt_message_set_extraparameters_v2(&msg, 0);
     msg.extendedheader = (DltExtendedHeaderV2 *)(msg.headerbuffer +
