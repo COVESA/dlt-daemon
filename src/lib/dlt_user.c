@@ -1811,6 +1811,8 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
             /* At startup, logging and tracing is locally enabled */
             /* the correct log level/status is set after received from daemon */
+            dlt_user.dlt_ll_ts[i].contextID2 = NULL;
+            dlt_user.dlt_ll_ts[i].contextID2len = 0;
             dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
             dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
@@ -1855,6 +1857,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
             /* At startup, logging and tracing is locally enabled */
             /* the correct log level/status is set after received from daemon */
             dlt_user.dlt_ll_ts[i].contextID2 = NULL;
+            dlt_user.dlt_ll_ts[i].contextID2len = 0;
             dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
             dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
 
@@ -5584,7 +5587,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     offset = 1;
     memcpy(buffer + offset, usercontext.apid, usercontext.apidlen);
     offset = offset + usercontext.apidlen;
-    memset(buffer, usercontext.ctidlen, 1);
+    memset(buffer + offset, usercontext.ctidlen, 1);
     offset = offset + 1;
     memcpy(buffer + offset, usercontext.ctid, usercontext.ctidlen);
     offset = offset + usercontext.ctidlen;
@@ -5709,7 +5712,7 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
     offset = 1;
     memcpy(buffer + offset, usercontext.apid, usercontext.apidlen);
     offset = offset + usercontext.apidlen;
-    memset(buffer, usercontext.ctidlen, 1);
+    memset(buffer + offset, usercontext.ctidlen, 1);
     offset = offset + 1;
     memcpy(buffer + offset, usercontext.ctid, usercontext.ctidlen);
     offset = offset + usercontext.ctidlen;
@@ -6379,7 +6382,7 @@ DltReturnValue dlt_user_log_resend_buffer_v2(void)
     int num, count;
     int size;
     DltReturnValue ret;
-    int offset;
+    int offset = 0;
 
 
     DLT_SEM_LOCK();
