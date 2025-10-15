@@ -5584,7 +5584,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     offset = 1;
     memcpy(buffer + offset, usercontext.apid, usercontext.apidlen);
     offset = offset + usercontext.apidlen;
-    memset(buffer, usercontext.ctidlen, 1);
+    memset(buffer + offset, usercontext.ctidlen, 1);
     offset = offset + 1;
     memcpy(buffer + offset, usercontext.ctid, usercontext.ctidlen);
     offset = offset + usercontext.ctidlen;

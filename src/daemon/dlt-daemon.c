@@ -2910,7 +2910,6 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                        DltReceiver *receiver,
                                        int verbose)
 {
-    printf("***JP dlt_daemon_process_client_messages ***\n");
     int bytes_to_be_removed = 0;
     int must_close_socket = -1;
 
@@ -3458,10 +3457,10 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         int usercontextSize;
         uint8_t *buffer;
 
-        buffer = (uint8_t*)malloc(usercontextSize);
-
         usercontext.apidlen = (uint8_t *)rec->buf[8]; // TBD: write function to get apidlen apidlen is at offset 8
         usercontextSize = sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t);
+
+        buffer = (uint8_t*)malloc(usercontextSize);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
@@ -3469,8 +3468,19 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             return -1;
         }
 
-        // memset(&usercontext, 0, usercontextSize);
         origin = rec->buf;
+
+            printf("\nRegister Application - Received Buffer: ");
+
+            for (int j = 0; j < 64; j++){
+                if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+                    printf("%c", rec->buf[j]);
+                }
+                else {
+                    printf(" 0x%02X", rec->buf[j]);
+                }
+            }
+            printf("\n");
 
         /* Adding temp variable to check the return value */
         int temp = 0;
@@ -3481,16 +3491,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                             usercontextSize,
                                             DLT_RCV_SKIP_HEADER);
 
-        memcpy(&usercontext.apidlen, buffer, 1);
-        usercontext.apid = (char *)malloc(usercontext.apidlen);
-        if (usercontext.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(usercontext.apid, (buffer + 1), usercontext.apidlen); // TBD: usercontext.apidlen
-        memcpy(&(usercontext.pid), (buffer + 1 + usercontext.apidlen), sizeof(pid_t));
-        memcpy(&(usercontext.description_length), (buffer + 1 + usercontext.apidlen + sizeof(pid_t)), 4);
-
         if (temp < 0) {
             /* Not enough bytes received */
             return -1;
@@ -3499,19 +3499,25 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             to_remove = (uint32_t) temp;
         }
 
+        memcpy(&usercontext.apidlen, buffer, 1);
+        usercontext.apid = (char *)malloc(usercontext.apidlen);
+        if (usercontext.apid == NULL) {
+            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
+            return -1;
+        }
+        memcpy(usercontext.apid, (buffer + 1), usercontext.apidlen);
+        memcpy(&(usercontext.pid), (buffer + 1 + usercontext.apidlen), sizeof(pid_t));
+        memcpy(&(usercontext.description_length), (buffer + 1 + usercontext.apidlen + sizeof(pid_t)), 4);
+
         len = usercontext.description_length;
 
         // if (len > DLT_DAEMON_DESCSIZE) {
-        //     printf("***JP Description length exceeds limit ***\n");
         //     len = DLT_DAEMON_DESCSIZE;
         //     dlt_log(LOG_WARNING, "Application description exceeds limit\n");
         // }
 
         /* adjust buffer pointer */
         rec->buf += to_remove + sizeof(DltUserHeader);
-
-        // printf("***JP 1 to_remove = %u ***\n", to_remove);
-        printf("***JP len = %u ***\n", len);
 
         if (dlt_receiver_check_and_get(rec, description, len, DLT_RCV_NONE) < 0) {
             dlt_log(LOG_ERR, "Unable to get application description\n");
@@ -3556,7 +3562,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         dlt_daemon_user_send_log_state(daemon, application, verbose);
 
         if (application == NULL) {
-            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.4s' for PID %d\n",
+            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.6s' for PID %d\n",
                     usercontext.apid, usercontext.pid);
             return -1;
         }
@@ -3566,7 +3572,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
             snprintf(local_str,
                     DLT_DAEMON_TEXTBUFSIZE,
-                    "ApplicationID '%.4s' registered for PID %d, Description=%s",
+                    "ApplicationID '%.6s' registered for PID %d, Description=%s",
                     application->apid,
                     application->pid,
                     application->application_description);
@@ -3581,7 +3587,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             dlt_vlog(LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n",
                     application->apid, application->pid);
 #endif
-
+        free(buffer);
     }
     else if(dlt_version == 1) {
         DltUserControlMsgRegisterApplication userapp;
@@ -3703,17 +3709,29 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                                      int verbose)
 {
     uint32_t to_remove = 0;
-    uint32_t len = sizeof(DltUserControlMsgRegisterContext);
-    DltUserControlMsgRegisterContext userctxt;
+    DltUserControlMsgRegisterContextV2 usercontext;
+    usercontext.apid = NULL;
+    usercontext.ctid = NULL;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context = NULL;
+    int usercontextSize;
+    uint8_t *buffer;
     DltServiceGetLogInfoRequest *req = NULL;
     char *origin;
 
-    DltMessage msg;
+    DltMessageV2 msg;
 
     PRINT_FUNCTION_VERBOSE(verbose);
+    // uint8_t dlt_version = (uint8_t *)rec->buf[3];
+
+    usercontext.apidlen = (uint8_t *)rec->buf[8];
+    usercontext.ctidlen = (uint8_t *)rec->buf[9 + usercontext.apidlen];
+
+    usercontextSize = sizeof(uint8_t) + usercontext.apidlen + 
+                      sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
+    uint32_t len = usercontextSize;
+    buffer = (uint8_t*)malloc(usercontextSize);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
@@ -3721,15 +3739,27 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         return -1;
     }
 
-    memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
+    memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterContextV2));
     origin = rec->buf;
+
+    printf("\nRegister Context - Received Buffer: ");
+
+    for (int j = 0; j < 64; j++){
+        if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+            printf("%c", rec->buf[j]);
+        }
+        else {
+            printf(" 0x%02X", rec->buf[j]);
+        }
+    }
+    printf("\n");
 
     /* Adding temp variable to check the return value */
     int temp = 0;
 
     temp = dlt_receiver_check_and_get(rec,
-                                           &userctxt,
-                                           len,
+                                           buffer,
+                                           usercontextSize,
                                            DLT_RCV_SKIP_HEADER);
 
     if (temp < 0)
@@ -3739,12 +3769,31 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         to_remove = (uint32_t) temp;
     }
 
-    len = userctxt.description_length;
-
-    if (len > DLT_DAEMON_DESCSIZE) {
-        dlt_vlog(LOG_WARNING, "Context description exceeds limit: %u\n", len);
-        len = DLT_DAEMON_DESCSIZE;
+    memcpy(&(usercontext.apidlen), buffer, 1);
+    usercontext.apid = (char *)malloc(usercontext.apidlen);
+    if (usercontext.apid == NULL) {
+        dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
+        return -1;
     }
+    memcpy(usercontext.apid, (buffer + 1), usercontext.apidlen);
+    memcpy(&(usercontext.ctidlen), (buffer + 1 + usercontext.apidlen), 1);
+    usercontext.ctid = (char *)malloc(usercontext.ctidlen);
+    if (usercontext.ctid == NULL) {
+        dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
+        return -1;
+    }
+    memcpy(&(usercontext.log_level_pos), (buffer + 2 + usercontext.apidlen), sizeof(int32_t));
+    memcpy(&(usercontext.log_level), (buffer + 2 + usercontext.apidlen + sizeof(int32_t)), sizeof(int8_t));
+    memcpy(&(usercontext.trace_status), (buffer + 2 + usercontext.apidlen + sizeof(int32_t) + sizeof(int8_t)), sizeof(int8_t));
+    memcpy(&(usercontext.pid), (buffer + 2 + usercontext.apidlen + sizeof(int32_t) + 2*sizeof(int8_t)), sizeof(pid_t));
+    memcpy(&(usercontext.description_length), (buffer + 2 + usercontext.apidlen + usercontext.ctidlen + sizeof(pid_t) + sizeof(int32_t) + 2*sizeof(int8_t)), 4);
+
+    len = usercontext.description_length;
+
+    // if (len > DLT_DAEMON_DESCSIZE) {
+    //     dlt_vlog(LOG_WARNING, "Context description exceeds limit: %u\n", len);
+    //     len = DLT_DAEMON_DESCSIZE;
+    // }
 
     /* adjust buffer pointer */
     rec->buf += to_remove + sizeof(DltUserHeader);
@@ -3772,48 +3821,48 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     }
 
     application = dlt_daemon_application_find(daemon,
-                                              userctxt.apid,
+                                              usercontext.apid,
                                               daemon->ecuid,
                                               verbose);
 
     if (application == 0) {
         dlt_vlog(LOG_WARNING,
                  "ApID '%.4s' not found for new ContextID '%.4s' in %s\n",
-                 userctxt.apid,
-                 userctxt.ctid,
+                 usercontext.apid,
+                 usercontext.ctid,
                  __func__);
 
         return 0;
     }
 
     /* Set log level */
-    if (userctxt.log_level == DLT_USER_LOG_LEVEL_NOT_SET) {
-        userctxt.log_level = DLT_LOG_DEFAULT;
+    if (usercontext.log_level == DLT_USER_LOG_LEVEL_NOT_SET) {
+        usercontext.log_level = DLT_LOG_DEFAULT;
     } else {
         /* Plausibility check */
-        if ((userctxt.log_level < DLT_LOG_DEFAULT) ||
-                (userctxt.log_level > DLT_LOG_VERBOSE)) {
+        if ((usercontext.log_level < DLT_LOG_DEFAULT) ||
+                (usercontext.log_level > DLT_LOG_VERBOSE)) {
             return -1;
         }
     }
 
     /* Set trace status */
-    if (userctxt.trace_status == DLT_USER_TRACE_STATUS_NOT_SET) {
-        userctxt.trace_status = DLT_TRACE_STATUS_DEFAULT;
+    if (usercontext.trace_status == DLT_USER_TRACE_STATUS_NOT_SET) {
+        usercontext.trace_status = DLT_TRACE_STATUS_DEFAULT;
     } else {
         /* Plausibility check */
-        if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
-                (userctxt.trace_status > DLT_TRACE_STATUS_ON)) {
+        if ((usercontext.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
+                (usercontext.trace_status > DLT_TRACE_STATUS_ON)) {
             return -1;
         }
     }
 
     context = dlt_daemon_context_add(daemon,
-                                     userctxt.apid,
-                                     userctxt.ctid,
-                                     userctxt.log_level,
-                                     userctxt.trace_status,
-                                     userctxt.log_level_pos,
+                                     usercontext.apid,
+                                     usercontext.ctid,
+                                     usercontext.log_level,
+                                     usercontext.trace_status,
+                                     usercontext.log_level_pos,
                                      application->user_handle,
                                      description,
                                      daemon->ecuid,
@@ -3822,7 +3871,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     if (context == 0) {
         dlt_vlog(LOG_WARNING,
                  "Can't add ContextID '%.4s' for ApID '%.4s'\n in %s",
-                 userctxt.ctid, userctxt.apid, __func__);
+                 usercontext.ctid, usercontext.apid, __func__);
         return -1;
     }
     else {
@@ -3848,8 +3897,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         context->storage_log_level =
             (int8_t) dlt_daemon_logstorage_get_loglevel(daemon,
                                                (int8_t) daemon_local->flags.offlineLogstorageMaxDevices,
-                                               userctxt.apid,
-                                               userctxt.ctid);
+                                               usercontext.apid,
+                                               usercontext.ctid);
     else
         context->storage_log_level = DLT_LOG_DEFAULT;
 
@@ -3882,8 +3931,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
         req->options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
-        dlt_set_id(req->apid, userctxt.apid);
-        dlt_set_id(req->ctid, userctxt.ctid);
+        dlt_set_id(req->apid, usercontext.apid);
+        dlt_set_id(req->ctid, usercontext.ctid);
         dlt_set_id(req->com, "remo");
 
         dlt_daemon_control_get_log_info(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
@@ -3892,7 +3941,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     }
 
     if (context->user_handle >= DLT_FD_MINIMUM) {
-        if ((userctxt.log_level == DLT_LOG_DEFAULT) || (userctxt.trace_status == DLT_TRACE_STATUS_DEFAULT)) {
+        if ((usercontext.log_level == DLT_LOG_DEFAULT) || (usercontext.trace_status == DLT_TRACE_STATUS_DEFAULT)) {
             /* This call also replaces the default values with the values defined for default */
             if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1) {
                 dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n",
