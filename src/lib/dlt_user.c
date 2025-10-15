@@ -2426,7 +2426,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
         return DLT_RETURN_OK;
     }
 
-    log->version = dlt_version;
+    // log->version = dlt_version;
 
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
     if (ret == DLT_RETURN_TRUE) {

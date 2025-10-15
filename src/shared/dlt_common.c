@@ -1495,7 +1495,6 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
 
 int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
-    printf("In dlt_message_read_v2\n");
     uint32_t extra_size = 0;
 
     DltHtyp2ContentType msgcontent = 0x00;
