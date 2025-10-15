@@ -214,7 +214,7 @@
  * The size of a DLT ID
  */
 #   define DLT_ID_SIZE 4
-#   define HEADER_SIZE_CONSTANT 14
+#   define HEADER_SIZE_CONSTANT 13
 
 #   define DLT_SIZE_WEID DLT_ID_SIZE
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
@@ -502,7 +502,7 @@ typedef struct
     int32_t nanoseconds;      /**< nanoseconds */
     uint8_t ecidlen;              /**< Length of ecu id */
     char *ecid;
-} DLT_PACKED DltStorageHeaderV2;
+} DltStorageHeaderV2;
 
 /**
  * The structure of the DLT standard header. This header is used in each DLT message.
@@ -578,7 +578,7 @@ typedef struct
     uint8_t sgmtinfo;             /**< Segmentation info */
     uint8_t frametype;            /**< Segmentation frame */
     SegmentationFrame *sgmtdetails; /**< Segmentation details */
-} DLT_PACKED DltExtendedHeaderV2;
+} DltExtendedHeaderV2;
 
 /**
  * The structure to organise the DLT messages.

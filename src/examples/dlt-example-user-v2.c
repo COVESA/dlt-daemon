@@ -150,7 +150,6 @@ int main(int argc, char *argv[])
     // char *contextID = y;
     char *appID = "LOGGER";
     char *contextID = "TESTER";
-
     char *text;
     int num, maxnum;
     int delay;
@@ -302,6 +301,9 @@ int main(int argc, char *argv[])
     dlt_with_session_id(1);
     dlt_with_timestamp(1);
     dlt_with_ecu_id(1);
+    dlt_with_filename_and_line_number(__FILE__, __LINE__);
+    dlt_with_prlv(32);
+    dlt_with_tags("TAG1","TAG2","TAG3",NULL);
     dlt_verbose_mode();
     DLT_REGISTER_APP_V2(appID, "Test Application for Logging");
     DLT_REGISTER_CONTEXT_V2(mycontext1, contextID, "Test Context for Logging");
