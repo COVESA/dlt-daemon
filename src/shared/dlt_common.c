@@ -1961,7 +1961,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
                    msg->extendedheaderv2.tag[j].taglen,
                    1);
             
-            memcpy(msg->headerbufferv2 + pntroffset,
+            memcpy(msg->headerbufferv2 + pntroffset + 1,
                    msg->extendedheaderv2.tag[j].tagname,
                    msg->extendedheaderv2.tag[j].taglen);
             
