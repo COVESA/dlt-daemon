@@ -742,7 +742,14 @@ DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose)
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    /* delete databuffer if exists */
+    /* delete headerbuffer if exists */
+    if (msg->headerbufferv2) {
+        free(msg->headerbufferv2);
+        msg->headerbufferv2 = NULL;
+        msg->headersizev2 = 0;
+    }
+
+        /* delete databuffer if exists */
     if (msg->databuffer) {
         free(msg->databuffer);
         msg->databuffer = NULL;
@@ -1935,7 +1942,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
             msg->extendedheaderv2.fina,
             msg->extendedheaderv2.finalen);
         
-        pntroffset = pntroffset + msg->extendedheaderv2.ecidlen + 1;
+        pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
 
         memcpy(msg->headerbufferv2 + pntroffset,
                &(msg->extendedheaderv2.linr),
@@ -1944,20 +1951,24 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
         pntroffset = pntroffset + 4;
     }
 
-/* To Update: create array of structure with dlttag[numberoftags]*/
-
-/*     if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
         memcpy(msg->headerbufferv2 + pntroffset,
                &(msg->extendedheaderv2.notg),
                1);
+        pntroffset = pntroffset + 1;
 
-        uint32_t totalTagSize = (msg->extendedheaderv2.notg) * sizeof(DltTag);
-        memcpy(msg->headerbufferv2 + pntroffset + 1,
-            msg->extendedheaderv2.tag,
-            totalTagSize);
-        
-        pntroffset = pntroffset + totalTagSize + 1;
-    } */
+        for(int j=0; j<msg->extendedheaderv2.notg; j++){
+            memset(msg->headerbufferv2 + pntroffset,
+                   msg->extendedheaderv2.tag[j].taglen,
+                   1);
+            
+            memcpy(msg->headerbufferv2 + pntroffset,
+                   msg->extendedheaderv2.tag[j].tagname,
+                   msg->extendedheaderv2.tag[j].taglen);
+            
+            pntroffset = pntroffset + (msg->extendedheaderv2.tag[j].taglen) + 1;
+        }
+    }
 
     if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
         memcpy(msg->headerbufferv2 + pntroffset,

@@ -27,6 +27,7 @@
 
 #include <stdlib.h> /* for getenv(), free(), atexit() */
 #include <string.h> /* for strcmp(), strncmp(), strlen(), memset(), memcpy() */
+#include <stdarg.h>
 #include <signal.h> /* for signal(), SIGPIPE, SIG_IGN */
 
 #if !defined (__WIN32__)
@@ -812,6 +813,8 @@ DltReturnValue dlt_init_common(void)
     dlt_user.linenumber = 0;
     dlt_user.numberoftags = 0;
     dlt_user.prlv = 0;
+    dlt_user.tag = NULL;
+    dlt_user.tagbuffersize = 0;
 
     /* Verbose mode is enabled by default */
     dlt_user.verbose_mode = 1;
@@ -2428,8 +2431,6 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
         log->handle = NULL;
         return DLT_RETURN_OK;
     }
-
-    log->version = dlt_version;
 
     ret = dlt_user_log_write_start_init(handle, log, loglevel, is_verbose);
     if (ret == DLT_RETURN_TRUE) {
@@ -4374,6 +4375,102 @@ DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id)
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int linr)
+{
+    if (fina == NULL){
+            dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+    }
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < DLT_RETURN_OK) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    /* Set filename and line number */
+    dlt_user.with_filename_and_line_number = 1;
+    dlt_user.filenamelen = strlen(fina);
+    if (dlt_user.filename == NULL){
+        free(dlt_user.filename);
+        dlt_user.filename = NULL;
+    }
+
+    dlt_user.filename = (char*)malloc(dlt_user.filenamelen + 1);
+    if (dlt_user.filename == NULL){
+        dlt_vlog(LOG_ERR, "%s Could not allocate memory for filename", __FUNCTION__);
+        return DLT_RETURN_ERROR;
+    }
+    strcpy(dlt_user.filename, fina);
+
+    dlt_user.linenumber = linr;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_with_prlv(uint8_t prlv)
+{
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < DLT_RETURN_OK) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    /* Set privacy level */
+    dlt_user.with_privacy_level = 1;
+    dlt_user.prlv = prlv;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_with_tags(const char *firstTag, ...) {
+    if (firstTag == NULL){
+            dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+    }
+    if (!DLT_USER_INITALIZED) {
+        if (dlt_init() < DLT_RETURN_OK) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    va_list args;
+    const char *currentTag = firstTag;
+    uint8_t count = 0;
+    
+    // Initial pass: Count the number of tags to allocate memory accurately
+    va_start(args, firstTag);
+    while (currentTag != NULL) {
+        count++;
+        currentTag = va_arg(args, const char *);
+    }
+    va_end(args);
+
+    dlt_user.with_tags = 1;
+    dlt_user.numberoftags = count;
+    DltTag tag[count];
+    currentTag = firstTag;
+    int i = 0;
+    int size = 0;
+    va_start(args, firstTag);
+    while (currentTag != NULL) {
+        tag[i].taglen = strlen(currentTag);
+        tag[i].tagname = (char *)currentTag;
+        size = size + 1 + tag[i].taglen;
+        i++;
+        currentTag = va_arg(args, const char *);
+    }
+    va_end(args);
+
+    dlt_user.tag = (DltTag *)malloc(count*sizeof(DltTag));
+    memcpy(dlt_user.tag, tag, (count*sizeof(DltTag)));
+    dlt_user.tagbuffersize = size;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_enable_local_print(void)
 {
     if (!DLT_USER_INITALIZED) {
@@ -4643,8 +4740,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         if (is_verbose_mode(dlt_user.verbose_mode, log))
             msg.extendedheader->msin |= DLT_MSIN_VERB;
 
-        msg.extendedheader->noar = (uint8_t) log->args_num;              /* number of arguments */
-        dlt_set_id(msg.extendedheader->apid, dlt_user.appID);       /* application id */
+        msg.extendedheader->noar = (uint8_t) log->args_num;             /* number of arguments */
+        dlt_set_id(msg.extendedheader->apid, dlt_user.appID);           /* application id */
         dlt_set_id(msg.extendedheader->ctid, log->handle->contextID);   /* context id */
 
         msg.headersize = (uint32_t) (sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) +
@@ -4892,7 +4989,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                ((sizeof(uint32_t))*(dlt_user.with_session_id)) +
                                (((dlt_user.appID2len)+1+(log->handle->contextID2len)+1)*(dlt_user.with_app_and_context_id)) +
                                (((dlt_user.filenamelen)+1+sizeof(dlt_user.linenumber))*(dlt_user.with_filename_and_line_number)) + 
-                               //(((dlt_user.numberoftags)*((dlt_user.tag->taglen)+1))*(dlt_user.with_tags)) +
+                               (((dlt_user.tagbuffersize)+1)*(dlt_user.with_tags)) +
                                ((sizeof(dlt_user.prlv))*(dlt_user.with_privacy_level)) +
                                (((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation)); //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
 
@@ -5062,21 +5159,21 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     if (DLT_IS_HTYP2_WSFLN(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.finalen = dlt_user.filenamelen;
         dlt_set_id_v2(&(msg.extendedheaderv2.fina), dlt_user.filename, msg.extendedheaderv2.finalen);
-        msg.extendedheaderv2.linr = dlt_user.linenumber;
+        msg.extendedheaderv2.linr = DLT_HTOBE_16(dlt_user.linenumber);
     }
-/* To Update: create array of structure with dlttag[numberoftags]*/
-/*     if (DLT_IS_HTYP2_WTGS(msg.baseheaderv2->htyp2)) {
+
+    if (DLT_IS_HTYP2_WTGS(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.notg = dlt_user.numberoftags;
         if (msg.extendedheaderv2.notg == 0) {
             msg.extendedheaderv2.tag = NULL;
         } else {
             msg.extendedheaderv2.tag = (DltTag *)malloc((msg.extendedheaderv2.notg) * sizeof(DltTag));
-            if (msg.extendedheaderv2.fina == NULL) {
+            if (msg.extendedheaderv2.tag == NULL) {
                 return DLT_RETURN_ERROR;
             }
             memcpy(msg.extendedheaderv2.tag, dlt_user.tag, ((dlt_user.numberoftags) * sizeof(DltTag)));
         }
-    } */
+    }
 
     if (DLT_IS_HTYP2_WPVL(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.prlv = dlt_user.prlv;
