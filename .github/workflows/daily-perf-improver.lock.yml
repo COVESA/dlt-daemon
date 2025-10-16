@@ -185,6 +185,7 @@ jobs:
       - id: check_build_steps_file
         name: Check if action.yml exists
         run: |
+
           if [ -f ".github/actions/daily-perf-improver/build-steps/action.yml" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
