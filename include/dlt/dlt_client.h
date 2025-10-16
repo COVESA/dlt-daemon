@@ -102,6 +102,8 @@ typedef struct
     char *serialDevice;    /**< serialDevice Devicename of serial device */
     char *socketPath;      /**< socketPath Unix socket path */
     char ecuid[4];         /**< ECUiD */
+    uint8_t ecuid2len;
+    char *ecuid2;
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
     DltClientMode mode;    /**< mode DltClientMode */
     int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
@@ -180,6 +182,18 @@ DltReturnValue dlt_client_send_message_to_socket_v2(DltClient *client, DltMessag
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size);
+
+/**
+ * Send ancontrol message to the dlt daemon with version 2 format
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param payload Buffer filled with control message data
+ * @param size Size of control message data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size);
+
 /**
  * Send an injection message to the dlt daemon
  * @param client pointer to dlt client structure
