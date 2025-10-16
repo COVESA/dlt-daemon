@@ -219,12 +219,21 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client,
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
+
 /**
  * Send an request to get log info message to the dlt daemon
  * @param client pointer to dlt client structure
  * @return negative value if there was an error
  */
 int dlt_client_get_log_info(DltClient *client);
+
+/**
+ * Send an request to get log info message to the dlt daemon in version 2
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_get_log_info_v2(DltClient *client);
+
 /**
  * Send an request to get default log level to the dlt daemon
  * @param client pointer to dlt client structure

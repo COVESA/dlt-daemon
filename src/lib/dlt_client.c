@@ -1196,8 +1196,8 @@ DltReturnValue dlt_client_get_log_info_v2(DltClient *client)
 
     /* send control message to daemon*/
     ret = dlt_client_send_ctrl_msg(client,
-                                   "",
-                                   "",
+                                   NULL,
+                                   NULL,
                                    (uint8_t *)buffer,
                                    buffersize);
 
