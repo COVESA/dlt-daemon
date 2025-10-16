@@ -914,7 +914,9 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
         (apid[0] == '\0') || (ecu == NULL))
         return (DltDaemonApplication *)NULL;
 
-    user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+    uint8_t eculen = (uint8_t)strlen(ecu);
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if ((user_list == NULL) || (user_list->num_applications == 0))
         return (DltDaemonApplication *)NULL;
@@ -1896,6 +1898,67 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
     }
 
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_LEVEL) < DLT_RETURN_OK) {
+        dlt_vlog(LOG_ERR, "Failed to set userheader in %s", __func__);
+        return -1;
+    }
+
+    if ((context->storage_log_level != DLT_LOG_DEFAULT) &&
+        (daemon->maintain_logstorage_loglevel != DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF))
+            usercontext.log_level = (uint8_t) (context->log_level >
+                context->storage_log_level ? context->log_level : context->storage_log_level);
+    else /* Storage log level is not updated (is DEFAULT) then  no device is yet connected so ignore */
+        usercontext.log_level =
+            (uint8_t) ((context->log_level == DLT_LOG_DEFAULT) ? daemon->default_log_level : context->log_level);
+
+    usercontext.trace_status =
+        (uint8_t) ((context->trace_status == DLT_TRACE_STATUS_DEFAULT) ? daemon->default_trace_status : context->trace_status);
+
+    usercontext.log_level_pos = context->log_level_pos;
+
+    dlt_vlog(LOG_NOTICE, "Send log-level to context: %.4s:%.4s [%i -> %i] [%i -> %i]\n",
+             context->apid,
+             context->ctid,
+             context->log_level,
+             usercontext.log_level,
+             context->trace_status,
+             usercontext.trace_status);
+
+    /* log to FIFO */
+    errno = 0;
+    ret = dlt_user_log_out2_with_timeout(context->user_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(usercontext), sizeof(DltUserControlMsgLogLevel));
+
+    if (ret < DLT_RETURN_OK) {
+        dlt_vlog(LOG_ERR, "Failed to send data to application in %s: %s",
+                 __func__,
+                 errno != 0 ? strerror(errno) : "Unknown error");
+
+        if (errno == EPIPE || errno == EBADF) {
+            app = dlt_daemon_application_find(daemon, context->apid, daemon->ecuid, verbose);
+            if (app != NULL)
+                dlt_daemon_application_reset_user_handle(daemon, app, verbose);
+        }
+    }
+
+    return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;
+}
+
+int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *context, int verbose)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgLogLevel usercontext;
+    DltReturnValue ret;
+    DltDaemonApplication *app;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (context == NULL)) {
+        dlt_vlog(LOG_ERR, "NULL parameter in %s", __func__);
+        return -1;
+    }
+
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG_LEVEL) < DLT_RETURN_OK) {
         dlt_vlog(LOG_ERR, "Failed to set userheader in %s", __func__);
         return -1;
     }

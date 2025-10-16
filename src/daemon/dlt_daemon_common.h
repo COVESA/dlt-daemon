@@ -198,6 +198,8 @@ typedef struct
     unsigned int overflow_counter;   /**< counts the number of lost messages. */
     int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
     char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
+    uint8_t ecuid2len;       /**< Length of ECU ID of daemon for DLT V2*/
+    char *ecuid2;            /**< ECU ID of daemon for DLT V2*/
     int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
     int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
     DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
@@ -574,6 +576,16 @@ int dlt_daemon_configuration_save(DltDaemon *daemon, const char *filename, int v
  * @return negative value if there was an error
  */
 int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context, int verbose);
+
+/**
+ * Send user message DLT_USER_MESSAGE_LOG_LEVEL to user application
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param context pointer to context for response
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *context, int verbose);
 
 /**
  * Send user message DLT_USER_MESSAGE_LOG_STATE to user application

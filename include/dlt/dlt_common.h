@@ -653,6 +653,20 @@ typedef struct
     char com[DLT_ID_SIZE];          /**< communication interface */
 } DLT_PACKED DltServiceGetLogInfoRequest;
 
+/**
+ * The structure of the DLT Service Get Log Info for DLT V2
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t options;                /**< type of request */
+    uint8_t apidlen;                /**< length of application id */
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;                /**< length of context id */
+    char *ctid;                     /**< context id */
+    char com[DLT_ID_SIZE];          /**< communication interface */
+} DLT_PACKED DltServiceGetLogInfoRequestV2;
+
 typedef struct
 {
     uint32_t service_id;            /**< service ID */

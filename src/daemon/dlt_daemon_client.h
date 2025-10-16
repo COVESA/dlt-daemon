@@ -129,6 +129,21 @@ void dlt_daemon_control_get_log_info(int sock,
                                      DltDaemonLocal *daemon_local,
                                      DltMessage *msg,
                                      int verbose);
+
+/**
+ * Process and generate response to received get log info control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_log_info_v2(int sock,
+                                     DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     DltMessageV2 *msg,
+                                     int verbose);
 /**
  * Process and generate response to received get software version control message
  * @param sock connection handle used for sending response
@@ -171,6 +186,22 @@ int dlt_daemon_control_message_buffer_overflow(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_service_response(int sock,
+                                         DltDaemon *daemon,
+                                         DltDaemonLocal *daemon_local,
+                                         uint32_t service_id,
+                                         int8_t status,
+                                         int verbose);
+
+/**
+ * Generate response to control message from dlt client for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param service_id service id of control message
+ * @param status status of response (e.g. ok, not supported, error)
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_service_response_v2(int sock,
                                          DltDaemon *daemon,
                                          DltDaemonLocal *daemon_local,
                                          uint32_t service_id,

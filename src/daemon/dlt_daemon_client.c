@@ -423,8 +423,8 @@ int dlt_daemon_client_send_control_message(int sock,
     } else {
         dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
     }
-    */
-
+    
+    */ //TBD Remove
     if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
@@ -1242,6 +1242,381 @@ void dlt_daemon_control_get_log_info(int sock,
     dlt_message_free(&resp, 0);
 }
 
+void dlt_daemon_control_get_log_info_v2(int sock,
+                                     DltDaemon *daemon,
+                                     DltDaemonLocal *daemon_local,
+                                     DltMessageV2 *msg,
+                                     int verbose)
+{
+    DltServiceGetLogInfoRequestV2 *req;
+    DltMessageV2 resp;
+    DltDaemonContext *context = 0;
+    DltDaemonApplication *application = 0;
+
+    int num_applications = 0, num_contexts = 0;
+    uint16_t count_app_ids = 0, count_con_ids = 0;
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+    char buf[255];
+#endif
+
+    int32_t i, j;
+    size_t offset = 0;
+    char *apid = 0;
+    int8_t ll, ts;
+    uint16_t len;
+    int8_t value;
+    size_t sizecont = 0;
+    int offset_base;
+
+    uint32_t sid;
+
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
+        return;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    req = (DltServiceGetLogInfoRequestV2 *)malloc(sizeof(DltServiceGetLogInfoRequestV2));
+
+    if (req == NULL)
+        return DLT_RETURN_ERROR;
+
+    /* prepare pointer to message request */
+    req = (DltServiceGetLogInfoRequestV2 *)(msg->databuffer);
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&resp, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_LOG_INFO,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    /* check request */
+    if ((req->options < 3) || (req->options > 7)) {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_LOG_INFO,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    if (req->apid[0] != '\0') {
+        application = dlt_daemon_application_find(daemon,
+                                                  req->apid,
+                                                  daemon->ecuid,
+                                                  verbose);
+
+        if (application) {
+            num_applications = 1;
+
+            if (req->ctid[0] != '\0') {
+                context = dlt_daemon_context_find(daemon,
+                                                  req->apid,
+                                                  req->ctid,
+                                                  daemon->ecuid,
+                                                  verbose);
+
+                num_contexts = ((context) ? 1 : 0);
+            }
+            else {
+                num_contexts = application->num_contexts;
+            }
+        }
+        else {
+            num_applications = 0;
+            num_contexts = 0;
+        }
+    }
+    else {
+        /* Request all applications and contexts */
+        num_applications = user_list->num_applications;
+        num_contexts = user_list->num_contexts;
+    }
+
+    /* prepare payload of data */
+
+    /* Calculate maximum size for a response */
+    resp.datasize = sizeof(uint32_t) /* SID */ + sizeof(int8_t) /* status*/ + sizeof(ID4) /* DLT_DAEMON_REMO_STRING */;
+
+    sizecont = sizeof(uint32_t) /* context_id */;
+
+    /* Add additional size for response of Mode 4, 6, 7 */
+    if ((req->options == 4) || (req->options == 6) || (req->options == 7))
+        sizecont += sizeof(int8_t); /* log level */
+
+    /* Add additional size for response of Mode 5, 6, 7 */
+    if ((req->options == 5) || (req->options == 6) || (req->options == 7))
+        sizecont += sizeof(int8_t); /* trace status */
+
+    resp.datasize += (uint32_t) (((uint32_t) num_applications * (sizeof(uint32_t) /* app_id */ + sizeof(uint16_t) /* count_con_ids */)) +
+        ((size_t) num_contexts * sizecont));
+
+    resp.datasize += (uint32_t) sizeof(uint16_t) /* count_app_ids */;
+
+    /* Add additional size for response of Mode 7 */
+    if (req->options == 7) {
+        if (req->apid[0] != '\0') {
+            if (req->ctid[0] != '\0') {
+                /* One application, one context */
+                /* context = dlt_daemon_context_find(daemon, req->apid, req->ctid, verbose); */
+                if (context) {
+                    resp.datasize += (uint32_t) sizeof(uint16_t) /* len_context_description */;
+
+                    if (context->context_description != 0)
+                        resp.datasize += (uint32_t) strlen(context->context_description); /* context_description */
+                }
+            }
+            else
+            /* One application, all contexts */
+            if ((user_list->applications) && (application)) {
+                /* Calculate start offset within contexts[] */
+                offset_base = 0;
+
+                for (i = 0; i < (application - (user_list->applications)); i++)
+                    offset_base += user_list->applications[i].num_contexts;
+
+                /* Iterate over all contexts belonging to this application */
+                for (j = 0; j < application->num_contexts; j++) {
+
+                    context = &(user_list->contexts[offset_base + j]);
+
+                    if (context) {
+                        resp.datasize += (uint32_t) sizeof(uint16_t) /* len_context_description */;
+
+                        if (context->context_description != 0)
+                            resp.datasize += (uint32_t) strlen(context->context_description);   /* context_description */
+                    }
+                }
+            }
+
+            /* Space for application description */
+            if (application) {
+                resp.datasize += (uint32_t) sizeof(uint16_t) /* len_app_description */;
+
+                if (application->application_description != 0)
+                    resp.datasize += (uint32_t) strlen(application->application_description); /* app_description */
+            }
+        }
+        else {
+            /* All applications, all contexts */
+            for (i = 0; i < user_list->num_contexts; i++) {
+                resp.datasize += (uint32_t) sizeof(uint16_t) /* len_context_description */;
+
+                if (user_list->contexts[i].context_description != 0)
+                    resp.datasize +=
+                        (uint32_t) strlen(user_list->contexts[i].context_description);
+            }
+
+            for (i = 0; i < user_list->num_applications; i++) {
+                resp.datasize += (uint32_t) sizeof(uint16_t) /* len_app_description */;
+
+                if (user_list->applications[i].application_description != 0)
+                    resp.datasize += (uint32_t) strlen(user_list->applications[i].application_description); /* app_description */
+            }
+        }
+    }
+
+    if (verbose)
+        dlt_vlog(LOG_DEBUG,
+                 "Allocate %u bytes for response msg databuffer\n",
+                 resp.datasize);
+
+    /* Allocate buffer for response message */
+    resp.databuffer = (uint8_t *)malloc(resp.datasize);
+    resp.databuffersize = resp.datasize;
+
+    if (resp.databuffer == 0) {
+        dlt_daemon_control_service_response(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_LOG_INFO,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    memset(resp.databuffer, 0, resp.datasize);
+    /* Preparation finished */
+
+    /* Prepare response */
+    sid = DLT_SERVICE_ID_GET_LOG_INFO;
+    memcpy(resp.databuffer, &sid, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    value = (int8_t) (((num_applications != 0) && (num_contexts != 0)) ? req->options : 8); /* 8 = no matching context found */
+
+    memcpy(resp.databuffer + offset, &value, sizeof(int8_t));
+    offset += sizeof(int8_t);
+
+    count_app_ids = (uint16_t) num_applications;
+
+    if (count_app_ids != 0) {
+        memcpy(resp.databuffer + offset, &count_app_ids, sizeof(uint16_t));
+        offset += sizeof(uint16_t);
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+        dlt_vlog(LOG_DEBUG, "#apid: %d \n", count_app_ids);
+#endif
+
+        for (i = 0; i < count_app_ids; i++) {
+            if (req->apid[0] != '\0') {
+                apid = req->apid;
+            }
+            else {
+                if (user_list->applications)
+                    apid = user_list->applications[i].apid;
+                else
+                    /* This should never occur! */
+                    apid = 0;
+            }
+
+            application = dlt_daemon_application_find(daemon,
+                                                      apid,
+                                                      daemon->ecuid,
+                                                      verbose);
+
+            if ((user_list->applications) && (application)) {
+                /* Calculate start offset within contexts[] */
+                offset_base = 0;
+
+                for (j = 0; j < (application - (user_list->applications)); j++)
+                    offset_base += user_list->applications[j].num_contexts;
+
+                dlt_set_id((char *)(resp.databuffer + offset), apid);
+                offset += sizeof(ID4);
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                dlt_print_id(buf, apid);
+                dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
+#endif
+
+                if (req->apid[0] != '\0')
+                    count_con_ids = (uint16_t) num_contexts;
+                else
+                    count_con_ids = (uint16_t) application->num_contexts;
+
+                memcpy(resp.databuffer + offset, &count_con_ids, sizeof(uint16_t));
+                offset += sizeof(uint16_t);
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                dlt_vlog(LOG_DEBUG, "#ctid: %d \n", count_con_ids);
+#endif
+
+                for (j = 0; j < count_con_ids; j++) {
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                    dlt_vlog(LOG_DEBUG, "j: %d \n", j);
+#endif
+
+                    if (!((count_con_ids == 1) && (req->apid[0] != '\0') &&
+                          (req->ctid[0] != '\0')))
+                        context = &(user_list->contexts[offset_base + j]);
+
+                    /* else: context was already searched and found
+                     *       (one application (found) with one context (found))*/
+
+                    if ((context) &&
+                        ((req->ctid[0] == '\0') || ((req->ctid[0] != '\0') &&
+                                                    (memcmp(context->ctid, req->ctid, DLT_ID_SIZE) == 0)))
+                        ) {
+                        dlt_set_id((char *)(resp.databuffer + offset), context->ctid);
+                        offset += sizeof(ID4);
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                        dlt_print_id(buf, context->ctid);
+                        dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
+#endif
+
+                        /* Mode 4, 6, 7 */
+                        if ((req->options == 4) || (req->options == 6) || (req->options == 7)) {
+                            ll = context->log_level;
+                            memcpy(resp.databuffer + offset, &ll, sizeof(int8_t));
+                            offset += sizeof(int8_t);
+                        }
+
+                        /* Mode 5, 6, 7 */
+                        if ((req->options == 5) || (req->options == 6) || (req->options == 7)) {
+                            ts = context->trace_status;
+                            memcpy(resp.databuffer + offset, &ts, sizeof(int8_t));
+                            offset += sizeof(int8_t);
+                        }
+
+                        /* Mode 7 */
+                        if (req->options == 7) {
+                            if (context->context_description) {
+                                len = (uint16_t) strlen(context->context_description);
+                                memcpy(resp.databuffer + offset, &len, sizeof(uint16_t));
+                                offset += sizeof(uint16_t);
+                                memcpy(resp.databuffer + offset, context->context_description,
+                                       strlen(context->context_description));
+                                offset += strlen(context->context_description);
+                            }
+                            else {
+                                len = 0;
+                                memcpy(resp.databuffer + offset, &len, sizeof(uint16_t));
+                                offset += sizeof(uint16_t);
+                            }
+                        }
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                        dlt_vlog(LOG_DEBUG, "ll=%d ts=%d \n", (int32_t)ll,
+                                 (int32_t)ts);
+#endif
+                    }
+
+#if (DLT_DEBUG_GETLOGINFO == 1)
+                    dlt_log(LOG_DEBUG, "\n");
+#endif
+                }
+
+                /* Mode 7 */
+                if (req->options == 7) {
+                    if (application->application_description) {
+                        len = (uint16_t) strlen(application->application_description);
+                        memcpy(resp.databuffer + offset, &len, sizeof(uint16_t));
+                        offset += sizeof(uint16_t);
+                        memcpy(resp.databuffer + offset, application->application_description,
+                               strlen(application->application_description));
+                        offset += strlen(application->application_description);
+                    }
+                    else {
+                        len = 0;
+                        memcpy(resp.databuffer + offset, &len, sizeof(uint16_t));
+                        offset += sizeof(uint16_t);
+                    }
+                }
+            } /* if (application) */
+
+        } /* for (i=0;i<count_app_ids;i++) */
+
+    } /* if (count_app_ids!=0) */
+
+    dlt_set_id((char *)(resp.databuffer + offset), DLT_DAEMON_REMO_STRING);
+
+    /* send message */
+    dlt_daemon_client_send_control_message(sock, daemon, daemon_local, &resp, "", "", verbose);
+
+    free(req);
+
+    /* free message */
+    dlt_message_free(&resp, 0);
+}
+
 int dlt_daemon_control_message_buffer_overflow(int sock,
                                                DltDaemon *daemon,
                                                DltDaemonLocal *daemon_local,
@@ -1347,6 +1722,52 @@ void dlt_daemon_control_service_response(int sock,
 
     /* free message */
     dlt_message_free(&msg, 0);
+}
+
+void dlt_daemon_control_service_response_v2(int sock,
+                                         DltDaemon *daemon,
+                                         DltDaemonLocal *daemon_local,
+                                         uint32_t service_id,
+                                         int8_t status,
+                                         int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceResponse);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return;
+
+    resp = (DltServiceResponse *)msg.databuffer;
+    resp->service_id = service_id;
+    resp->status = (uint8_t) status;
+
+    /* send message */
+    dlt_daemon_client_send_control_message(sock, daemon, daemon_local, &msg, "", "", verbose);
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
 }
 
 int dlt_daemon_control_message_unregister_context(int sock,
