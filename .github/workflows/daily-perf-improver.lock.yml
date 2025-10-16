@@ -144,7 +144,7 @@ jobs:
           WORKFLOW_NAME="Daily Perf Improver"
           
           # Check stop-time limit
-          STOP_TIME="2025-10-16 07:44:42"
+          STOP_TIME="2025-10-17 09:44:42"
           echo "Checking stop-time limit: $STOP_TIME"
           
           # Convert stop time to epoch seconds
