@@ -5,7 +5,31 @@
 #
 # Source: githubnext/agentics/workflows/daily-perf-improver.md@fedb218f36641dcb301c812149aeb94907f777f9
 #
-# Effective stop-time: 2025-10-16 07:44:42
+# Effective stop-time: 2025-10-18 23:08:31
+#
+# Job Dependency Graph:
+# ```mermaid
+# graph LR
+#   pre_activation["pre_activation"]
+#   activation["activation"]
+#   agent["agent"]
+#   detection["detection"]
+#   create_discussion["create_discussion"]
+#   add_comment["add_comment"]
+#   create_pull_request["create_pull_request"]
+#   missing_tool["missing_tool"]
+#   pre_activation --> activation
+#   activation --> agent
+#   agent --> detection
+#   agent --> create_discussion
+#   detection --> create_discussion
+#   agent --> add_comment
+#   detection --> add_comment
+#   agent --> create_pull_request
+#   detection --> create_pull_request
+#   agent --> missing_tool
+#   detection --> missing_tool
+# ```
 
 name: "Daily Perf Improver"
 "on":
@@ -21,13 +45,10 @@ concurrency:
 run-name: "Daily Perf Improver"
 
 jobs:
-  check_membership:
+  pre_activation:
     runs-on: ubuntu-latest
     outputs:
-      error_message: ${{ steps.check_membership.outputs.error_message }}
-      is_team_member: ${{ steps.check_membership.outputs.is_team_member }}
-      result: ${{ steps.check_membership.outputs.result }}
-      user_permission: ${{ steps.check_membership.outputs.user_permission }}
+      activated: ${{ (steps.check_membership.outputs.is_team_member == 'true') && (steps.check_stop_time.outputs.stop_time_ok == 'true') }}
     steps:
       - name: Check team membership for workflow
         id: check_membership
@@ -109,10 +130,46 @@ jobs:
               }
             }
             await main();
+      - name: Check stop-time limit
+        id: check_stop_time
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_STOP_TIME: 2025-10-18 23:08:31
+          GITHUB_AW_WORKFLOW_NAME: "Daily Perf Improver"
+        with:
+          script: |
+            async function main() {
+              const stopTime = process.env.GITHUB_AW_STOP_TIME;
+              const workflowName = process.env.GITHUB_AW_WORKFLOW_NAME;
+              if (!stopTime) {
+                core.setFailed("Configuration error: GITHUB_AW_STOP_TIME not specified.");
+                return;
+              }
+              if (!workflowName) {
+                core.setFailed("Configuration error: GITHUB_AW_WORKFLOW_NAME not specified.");
+                return;
+              }
+              core.info(`Checking stop-time limit: ${stopTime}`);
+              const stopTimeDate = new Date(stopTime);
+              if (isNaN(stopTimeDate.getTime())) {
+                core.setFailed(`Invalid stop-time format: ${stopTime}. Expected format: YYYY-MM-DD HH:MM:SS`);
+                return;
+              }
+              const currentTime = new Date();
+              core.info(`Current time: ${currentTime.toISOString()}`);
+              core.info(`Stop time: ${stopTimeDate.toISOString()}`);
+              if (currentTime >= stopTimeDate) {
+                core.warning(`⏰ Stop time reached. Workflow execution will be prevented by activation job.`);
+                core.setOutput("stop_time_ok", "false");
+                return;
+              }
+              core.setOutput("stop_time_ok", "true");
+            }
+            await main();
 
   activation:
-    needs: check_membership
-    if: needs.check_membership.outputs.is_team_member == 'true'
+    needs: pre_activation
+    if: needs.pre_activation.outputs.activated == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check workflow file timestamps
@@ -131,42 +188,6 @@ jobs:
             fi
           fi
 
-  stop_time_check:
-    needs: activation
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write  # Required for gh workflow disable
-    steps:
-      - name: Safety checks
-        run: |
-          set -e
-          echo "Performing safety checks before executing agentic tools..."
-          WORKFLOW_NAME="Daily Perf Improver"
-          
-          # Check stop-time limit
-          STOP_TIME="2025-10-17 09:44:42"
-          echo "Checking stop-time limit: $STOP_TIME"
-          
-          # Convert stop time to epoch seconds
-          STOP_EPOCH=$(date -d "$STOP_TIME" +%s 2>/dev/null || echo "invalid")
-          if [ "$STOP_EPOCH" = "invalid" ]; then
-            echo "Warning: Invalid stop-time format: $STOP_TIME. Expected format: YYYY-MM-DD HH:MM:SS"
-          else
-            CURRENT_EPOCH=$(date +%s)
-            echo "Current time: $(date)"
-            echo "Stop time: $STOP_TIME"
-            
-            if [ "$CURRENT_EPOCH" -ge "$STOP_EPOCH" ]; then
-              echo "Stop time reached. Attempting to disable workflow to prevent cost overrun, then exiting."
-              gh workflow disable "$WORKFLOW_NAME"
-              echo "Workflow disabled. No future runs will be triggered."
-              exit 1
-            fi
-          fi
-          echo "All safety checks passed. Proceeding with agentic tool execution."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   agent:
     needs: activation
     runs-on: ubuntu-latest
@@ -175,7 +196,7 @@ jobs:
       group: "gh-aw-copilot"
     env:
       GITHUB_AW_SAFE_OUTPUTS: /tmp/gh-aw/safe-outputs/outputs.jsonl
-      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"create-discussion\":{\"max\":5},\"create-pull-request\":{},\"missing-tool\":{}}"
+      GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add_comment\":{\"max\":1,\"target\":\"*\"},\"create_discussion\":{\"max\":5},\"create_pull_request\":{},\"missing_tool\":{}}"
     outputs:
       output: ${{ steps.collect_output.outputs.output }}
       output_types: ${{ steps.collect_output.outputs.output_types }}
@@ -243,17 +264,34 @@ jobs:
             main().catch(error => {
               core.setFailed(error instanceof Error ? error.message : String(error));
             });
+      - name: Validate COPILOT_CLI_TOKEN secret
+        run: |
+          if [ -z "$COPILOT_CLI_TOKEN" ]; then
+            echo "Error: COPILOT_CLI_TOKEN secret is not set"
+            echo "The GitHub Copilot CLI engine requires the COPILOT_CLI_TOKEN secret to be configured."
+            echo "Please configure this secret in your repository settings."
+            echo "Documentation: https://githubnext.github.io/gh-aw/reference/engines/#github-copilot-default"
+            exit 1
+          fi
+          echo "COPILOT_CLI_TOKEN secret is configured"
+        env:
+          COPILOT_CLI_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@0.0.340
+        run: npm install -g @github/copilot@0.0.342
+      - name: Downloading container images
+        run: |
+          set -e
+          docker pull ghcr.io/github/github-mcp-server:v0.18.0
+          docker pull mcp/fetch
       - name: Setup Safe Outputs Collector MCP
         run: |
           mkdir -p /tmp/gh-aw/safe-outputs
           cat > /tmp/gh-aw/safe-outputs/config.json << 'EOF'
-          {"add-comment":{"max":1,"target":"*"},"create-discussion":{"max":5},"create-pull-request":{},"missing-tool":{}}
+          {"add_comment":{"max":1,"target":"*"},"create_discussion":{"max":5},"create_pull_request":{},"missing_tool":{}}
           EOF
           cat > /tmp/gh-aw/safe-outputs/mcp-server.cjs << 'EOF'
             const fs = require("fs");
@@ -263,6 +301,20 @@ jobs:
             const encoder = new TextEncoder();
             const SERVER_INFO = { name: "safe-outputs-mcp-server", version: "1.0.0" };
             const debug = msg => process.stderr.write(`[${SERVER_INFO.name}] ${msg}\n`);
+            function normalizeBranchName(branchName) {
+              if (!branchName || typeof branchName !== "string" || branchName.trim() === "") {
+                return branchName;
+              }
+              let normalized = branchName.replace(/[^a-zA-Z0-9\-_/.]+/g, "-");
+              normalized = normalized.replace(/-+/g, "-");
+              normalized = normalized.replace(/^-+|-+$/g, "");
+              if (normalized.length > 128) {
+                normalized = normalized.substring(0, 128);
+              }
+              normalized = normalized.replace(/-+$/, "");
+              normalized = normalized.toLowerCase();
+              return normalized;
+            }
             const configEnv = process.env.GITHUB_AW_SAFE_OUTPUTS_CONFIG;
             let safeOutputsConfigRaw;
             if (!configEnv) {
@@ -363,15 +415,12 @@ jobs:
               const res = { jsonrpc: "2.0", id, result };
               writeMessage(res);
             }
-            function replyError(id, code, message, data) {
+            function replyError(id, code, message) {
               if (id === undefined || id === null) {
                 debug(`Error for notification: ${message}`);
                 return;
               }
               const error = { code, message };
-              if (data !== undefined) {
-                error.data = data;
-              }
               const res = {
                 jsonrpc: "2.0",
                 id,
@@ -381,7 +430,7 @@ jobs:
             }
             function appendSafeOutput(entry) {
               if (!outputFile) throw new Error("No output file configured");
-              entry.type = entry.type.replace(/_/g, "-");
+              entry.type = entry.type.replace(/-/g, "_");
               const jsonLine = JSON.stringify(entry) + "\n";
               try {
                 fs.appendFileSync(outputFile, jsonLine);
@@ -396,7 +445,7 @@ jobs:
                 content: [
                   {
                     type: "text",
-                    text: `success`,
+                    text: JSON.stringify({ result: "success" }),
                   },
                 ],
               };
@@ -404,6 +453,7 @@ jobs:
             const uploadAssetHandler = args => {
               const branchName = process.env.GITHUB_AW_ASSETS_BRANCH;
               if (!branchName) throw new Error("GITHUB_AW_ASSETS_BRANCH not set");
+              const normalizedBranchName = normalizeBranchName(branchName);
               const { path: filePath } = args;
               const absolutePath = path.resolve(filePath);
               const workspaceDir = process.env.GITHUB_WORKSPACE || process.cwd();
@@ -450,7 +500,7 @@ jobs:
               const targetFileName = (sha + fileExt).toLowerCase();
               const githubServer = process.env.GITHUB_SERVER_URL || "https://github.com";
               const repo = process.env.GITHUB_REPOSITORY || "owner/repo";
-              const url = `${githubServer.replace("github.com", "raw.githubusercontent.com")}/${repo}/${branchName}/${targetFileName}`;
+              const url = `${githubServer.replace("github.com", "raw.githubusercontent.com")}/${repo}/${normalizedBranchName}/${targetFileName}`;
               const entry = {
                 type: "upload_asset",
                 path: filePath,
@@ -465,7 +515,7 @@ jobs:
                 content: [
                   {
                     type: "text",
-                    text: url,
+                    text: JSON.stringify({ result: url }),
                   },
                 ],
               };
@@ -490,7 +540,7 @@ jobs:
                 content: [
                   {
                     type: "text",
-                    text: `success`,
+                    text: JSON.stringify({ result: "success" }),
                   },
                 ],
               };
@@ -506,7 +556,7 @@ jobs:
                 content: [
                   {
                     type: "text",
-                    text: `success`,
+                    text: JSON.stringify({ result: "success" }),
                   },
                 ],
               };
@@ -789,7 +839,7 @@ jobs:
                       content: [
                         {
                           type: "text",
-                          text: outputText,
+                          text: JSON.stringify({ result: outputText }),
                         },
                       ],
                     };
@@ -912,9 +962,7 @@ jobs:
                   replyError(id, -32601, `Method not found: ${method}`);
                 }
               } catch (e) {
-                replyError(id, -32603, "Internal error", {
-                  message: e instanceof Error ? e.message : String(e),
-                });
+                replyError(id, -32603, e instanceof Error ? e.message : String(e));
               }
             }
             process.stdin.on("data", onData);
@@ -1011,7 +1059,10 @@ jobs:
                 "tools": ["*"],
                 "env": {
                   "GITHUB_AW_SAFE_OUTPUTS": "\${GITHUB_AW_SAFE_OUTPUTS}",
-                  "GITHUB_AW_SAFE_OUTPUTS_CONFIG": "\${GITHUB_AW_SAFE_OUTPUTS_CONFIG}"
+                  "GITHUB_AW_SAFE_OUTPUTS_CONFIG": "\${GITHUB_AW_SAFE_OUTPUTS_CONFIG}",
+                  "GITHUB_AW_ASSETS_BRANCH": "\${GITHUB_AW_ASSETS_BRANCH}",
+                  "GITHUB_AW_ASSETS_MAX_SIZE_KB": "\${GITHUB_AW_ASSETS_MAX_SIZE_KB}",
+                  "GITHUB_AW_ASSETS_ALLOWED_EXTS": "\${GITHUB_AW_ASSETS_ALLOWED_EXTS}"
                 }
               },
               "web-fetch": {
@@ -1208,6 +1259,25 @@ jobs:
           **IMPORTANT**: When you need to create temporary files or directories during your work, **always use the `/tmp/gh-aw/agent/` directory** that has been pre-created for you. Do NOT use the root `/tmp/` directory directly.
           
           EOF
+      - name: Append edit tool accessibility instructions to prompt
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          cat >> $GITHUB_AW_PROMPT << 'EOF'
+          
+          
+          ---
+          
+          ## File Editing Access
+          
+          **IMPORTANT**: The edit tool provides file editing capabilities. You have write access to files in the following directories:
+          
+          - **Current workspace**: `$GITHUB_WORKSPACE` - The repository you're working on
+          - **Temporary directory**: `/tmp/gh-aw/` - For temporary files and agent work
+          
+          **Do NOT** attempt to edit files outside these directories as you do not have the necessary permissions.
+          
+          EOF
       - name: Append safe outputs instructions to prompt
         env:
           GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
@@ -1238,15 +1308,87 @@ jobs:
           To report a missing tool use the missing-tool tool from the safe-outputs MCP.
           
           EOF
+      - name: Append GitHub context to prompt
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        run: |
+          cat >> $GITHUB_AW_PROMPT << 'EOF'
+          
+          ---
+          
+          ## GitHub Context
+          
+          The following GitHub context information is available for this workflow:
+          
+          {{#if ${{ github.repository }} }}
+          - **Repository**: `${{ github.repository }}`
+          {{/if}}
+          {{#if ${{ github.event.issue.number }} }}
+          - **Issue Number**: `#${{ github.event.issue.number }}`
+          {{/if}}
+          {{#if ${{ github.event.discussion.number }} }}
+          - **Discussion Number**: `#${{ github.event.discussion.number }}`
+          {{/if}}
+          {{#if ${{ github.event.pull_request.number }} }}
+          - **Pull Request Number**: `#${{ github.event.pull_request.number }}`
+          {{/if}}
+          {{#if ${{ github.event.comment.id }} }}
+          - **Comment ID**: `${{ github.event.comment.id }}`
+          {{/if}}
+          {{#if ${{ github.run_id }} }}
+          - **Workflow Run ID**: `${{ github.run_id }}`
+          {{/if}}
+          
+          Use this context information to understand the scope of your work.
+          
+          EOF
+      - name: Render template conditionals
+        uses: actions/github-script@v8
+        env:
+          GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
+        with:
+          script: |
+            const fs = require("fs");
+            function isTruthy(expr) {
+              const v = expr.trim().toLowerCase();
+              return !(v === "" || v === "false" || v === "0" || v === "null" || v === "undefined");
+            }
+            function renderMarkdownTemplate(markdown) {
+              return markdown.replace(/{{#if\s+([^}]+)}}([\s\S]*?){{\/if}}/g, (_, cond, body) => (isTruthy(cond) ? body : ""));
+            }
+            function main() {
+              try {
+                const promptPath = process.env.GITHUB_AW_PROMPT;
+                if (!promptPath) {
+                  core.setFailed("GITHUB_AW_PROMPT environment variable is not set");
+                  process.exit(1);
+                }
+                const markdown = fs.readFileSync(promptPath, "utf8");
+                const hasConditionals = /{{#if\s+[^}]+}}/.test(markdown);
+                if (!hasConditionals) {
+                  core.info("No conditional blocks found in prompt, skipping template rendering");
+                  process.exit(0);
+                }
+                const rendered = renderMarkdownTemplate(markdown);
+                fs.writeFileSync(promptPath, rendered, "utf8");
+                core.info("Template rendered successfully");
+              } catch (error) {
+                core.setFailed(error instanceof Error ? error.message : String(error));
+              }
+            }
+            main();
       - name: Print prompt to step summary
         env:
           GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
         run: |
-          echo "## Generated Prompt" >> $GITHUB_STEP_SUMMARY
+          echo "<details>" >> $GITHUB_STEP_SUMMARY
+          echo "<summary>Generated Prompt</summary>" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```markdown' >> $GITHUB_STEP_SUMMARY
           cat $GITHUB_AW_PROMPT >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
       - name: Capture agent version
         run: |
           VERSION_OUTPUT=$(copilot --version 2>&1 || echo "unknown")
@@ -1297,75 +1439,17 @@ jobs:
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         # Copilot CLI tool arguments (sorted):
-        # --allow-tool github(download_workflow_run_artifact)
-        # --allow-tool github(get_code_scanning_alert)
-        # --allow-tool github(get_commit)
-        # --allow-tool github(get_dependabot_alert)
-        # --allow-tool github(get_discussion)
-        # --allow-tool github(get_discussion_comments)
-        # --allow-tool github(get_file_contents)
-        # --allow-tool github(get_issue)
-        # --allow-tool github(get_issue_comments)
-        # --allow-tool github(get_job_logs)
-        # --allow-tool github(get_label)
-        # --allow-tool github(get_latest_release)
-        # --allow-tool github(get_me)
-        # --allow-tool github(get_notification_details)
-        # --allow-tool github(get_pull_request)
-        # --allow-tool github(get_pull_request_comments)
-        # --allow-tool github(get_pull_request_diff)
-        # --allow-tool github(get_pull_request_files)
-        # --allow-tool github(get_pull_request_review_comments)
-        # --allow-tool github(get_pull_request_reviews)
-        # --allow-tool github(get_pull_request_status)
-        # --allow-tool github(get_release_by_tag)
-        # --allow-tool github(get_secret_scanning_alert)
-        # --allow-tool github(get_tag)
-        # --allow-tool github(get_workflow_run)
-        # --allow-tool github(get_workflow_run_logs)
-        # --allow-tool github(get_workflow_run_usage)
-        # --allow-tool github(list_branches)
-        # --allow-tool github(list_code_scanning_alerts)
-        # --allow-tool github(list_commits)
-        # --allow-tool github(list_dependabot_alerts)
-        # --allow-tool github(list_discussion_categories)
-        # --allow-tool github(list_discussions)
-        # --allow-tool github(list_issue_types)
-        # --allow-tool github(list_issues)
-        # --allow-tool github(list_label)
-        # --allow-tool github(list_notifications)
-        # --allow-tool github(list_pull_requests)
-        # --allow-tool github(list_releases)
-        # --allow-tool github(list_secret_scanning_alerts)
-        # --allow-tool github(list_starred_repositories)
-        # --allow-tool github(list_sub_issues)
-        # --allow-tool github(list_tags)
-        # --allow-tool github(list_workflow_jobs)
-        # --allow-tool github(list_workflow_run_artifacts)
-        # --allow-tool github(list_workflow_runs)
-        # --allow-tool github(list_workflows)
-        # --allow-tool github(pull_request_read)
-        # --allow-tool github(search_code)
-        # --allow-tool github(search_issues)
-        # --allow-tool github(search_orgs)
-        # --allow-tool github(search_pull_requests)
-        # --allow-tool github(search_repositories)
-        # --allow-tool github(search_users)
-        # --allow-tool safe_outputs
-        # --allow-tool shell
-        # --allow-tool web-fetch
-        # --allow-tool write
         timeout-minutes: 30
         run: |
           set -o pipefail
           COPILOT_CLI_INSTRUCTION=$(cat /tmp/gh-aw/aw-prompts/prompt.txt)
-          copilot --add-dir /tmp/gh-aw/ --log-level all --log-dir /tmp/gh-aw/.copilot/logs/ --allow-tool 'github(download_workflow_run_artifact)' --allow-tool 'github(get_code_scanning_alert)' --allow-tool 'github(get_commit)' --allow-tool 'github(get_dependabot_alert)' --allow-tool 'github(get_discussion)' --allow-tool 'github(get_discussion_comments)' --allow-tool 'github(get_file_contents)' --allow-tool 'github(get_issue)' --allow-tool 'github(get_issue_comments)' --allow-tool 'github(get_job_logs)' --allow-tool 'github(get_label)' --allow-tool 'github(get_latest_release)' --allow-tool 'github(get_me)' --allow-tool 'github(get_notification_details)' --allow-tool 'github(get_pull_request)' --allow-tool 'github(get_pull_request_comments)' --allow-tool 'github(get_pull_request_diff)' --allow-tool 'github(get_pull_request_files)' --allow-tool 'github(get_pull_request_review_comments)' --allow-tool 'github(get_pull_request_reviews)' --allow-tool 'github(get_pull_request_status)' --allow-tool 'github(get_release_by_tag)' --allow-tool 'github(get_secret_scanning_alert)' --allow-tool 'github(get_tag)' --allow-tool 'github(get_workflow_run)' --allow-tool 'github(get_workflow_run_logs)' --allow-tool 'github(get_workflow_run_usage)' --allow-tool 'github(list_branches)' --allow-tool 'github(list_code_scanning_alerts)' --allow-tool 'github(list_commits)' --allow-tool 'github(list_dependabot_alerts)' --allow-tool 'github(list_discussion_categories)' --allow-tool 'github(list_discussions)' --allow-tool 'github(list_issue_types)' --allow-tool 'github(list_issues)' --allow-tool 'github(list_label)' --allow-tool 'github(list_notifications)' --allow-tool 'github(list_pull_requests)' --allow-tool 'github(list_releases)' --allow-tool 'github(list_secret_scanning_alerts)' --allow-tool 'github(list_starred_repositories)' --allow-tool 'github(list_sub_issues)' --allow-tool 'github(list_tags)' --allow-tool 'github(list_workflow_jobs)' --allow-tool 'github(list_workflow_run_artifacts)' --allow-tool 'github(list_workflow_runs)' --allow-tool 'github(list_workflows)' --allow-tool 'github(pull_request_read)' --allow-tool 'github(search_code)' --allow-tool 'github(search_issues)' --allow-tool 'github(search_orgs)' --allow-tool 'github(search_pull_requests)' --allow-tool 'github(search_repositories)' --allow-tool 'github(search_users)' --allow-tool safe_outputs --allow-tool shell --allow-tool web-fetch --allow-tool write --prompt "$COPILOT_CLI_INSTRUCTION" 2>&1 | tee /tmp/gh-aw/agent-stdio.log
+          copilot --add-dir /tmp/gh-aw/ --log-level all --log-dir /tmp/gh-aw/.copilot/logs/ --allow-all-tools --add-dir / --prompt "$COPILOT_CLI_INSTRUCTION" 2>&1 | tee /tmp/gh-aw/agent-stdio.log
         env:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           GITHUB_AW_MCP_CONFIG: /home/runner/.copilot/mcp-config.json
           GITHUB_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"create-discussion\":{\"max\":5},\"create-pull-request\":{},\"missing-tool\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add_comment\":{\"max\":1,\"target\":\"*\"},\"create_discussion\":{\"max\":5},\"create_pull_request\":{},\"missing_tool\":{}}"
           GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
           GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN  }}
@@ -1382,7 +1466,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           GITHUB_AW_SAFE_OUTPUTS: ${{ env.GITHUB_AW_SAFE_OUTPUTS }}
-          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add-comment\":{\"max\":1,\"target\":\"*\"},\"create-discussion\":{\"max\":5},\"create-pull-request\":{},\"missing-tool\":{}}"
+          GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add_comment\":{\"max\":1,\"target\":\"*\"},\"create_discussion\":{\"max\":5},\"create_pull_request\":{},\"missing_tool\":{}}"
         with:
           script: |
             async function main() {
@@ -1458,27 +1542,27 @@ jobs:
                   return itemConfig.max;
                 }
                 switch (itemType) {
-                  case "create-issue":
+                  case "create_issue":
                     return 1;
-                  case "add-comment":
+                  case "add_comment":
                     return 1;
-                  case "create-pull-request":
+                  case "create_pull_request":
                     return 1;
-                  case "create-pull-request-review-comment":
+                  case "create_pull_request_review_comment":
                     return 1;
-                  case "add-labels":
+                  case "add_labels":
                     return 5;
-                  case "update-issue":
+                  case "update_issue":
                     return 1;
-                  case "push-to-pull-request-branch":
+                  case "push_to_pull_request_branch":
                     return 1;
-                  case "create-discussion":
+                  case "create_discussion":
                     return 1;
-                  case "missing-tool":
+                  case "missing_tool":
                     return 20;
-                  case "create-code-scanning-alert":
+                  case "create_code_scanning_alert":
                     return 40;
-                  case "upload-asset":
+                  case "upload_asset":
                     return 10;
                   default:
                     return 1;
@@ -1528,16 +1612,16 @@ jobs:
               }
               function validatePositiveInteger(value, fieldName, lineNum) {
                 if (value === undefined || value === null) {
-                  if (fieldName.includes("create-code-scanning-alert 'line'")) {
+                  if (fieldName.includes("create_code_scanning_alert 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-code-scanning-alert requires a 'line' field (number or string)`,
+                      error: `Line ${lineNum}: create_code_scanning_alert requires a 'line' field (number or string)`,
                     };
                   }
-                  if (fieldName.includes("create-pull-request-review-comment 'line'")) {
+                  if (fieldName.includes("create_pull_request_review_comment 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-pull-request-review-comment requires a 'line' number`,
+                      error: `Line ${lineNum}: create_pull_request_review_comment requires a 'line' number`,
                     };
                   }
                   return {
@@ -1546,16 +1630,16 @@ jobs:
                   };
                 }
                 if (typeof value !== "number" && typeof value !== "string") {
-                  if (fieldName.includes("create-code-scanning-alert 'line'")) {
+                  if (fieldName.includes("create_code_scanning_alert 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-code-scanning-alert requires a 'line' field (number or string)`,
+                      error: `Line ${lineNum}: create_code_scanning_alert requires a 'line' field (number or string)`,
                     };
                   }
-                  if (fieldName.includes("create-pull-request-review-comment 'line'")) {
+                  if (fieldName.includes("create_pull_request_review_comment 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-pull-request-review-comment requires a 'line' number or string field`,
+                      error: `Line ${lineNum}: create_pull_request_review_comment requires a 'line' number or string field`,
                     };
                   }
                   return {
@@ -1565,16 +1649,16 @@ jobs:
                 }
                 const parsed = typeof value === "string" ? parseInt(value, 10) : value;
                 if (isNaN(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
-                  if (fieldName.includes("create-code-scanning-alert 'line'")) {
+                  if (fieldName.includes("create_code_scanning_alert 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-code-scanning-alert 'line' must be a valid positive integer (got: ${value})`,
+                      error: `Line ${lineNum}: create_code_scanning_alert 'line' must be a valid positive integer (got: ${value})`,
                     };
                   }
-                  if (fieldName.includes("create-pull-request-review-comment 'line'")) {
+                  if (fieldName.includes("create_pull_request_review_comment 'line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-pull-request-review-comment 'line' must be a positive integer`,
+                      error: `Line ${lineNum}: create_pull_request_review_comment 'line' must be a positive integer`,
                     };
                   }
                   return {
@@ -1589,16 +1673,16 @@ jobs:
                   return { isValid: true };
                 }
                 if (typeof value !== "number" && typeof value !== "string") {
-                  if (fieldName.includes("create-pull-request-review-comment 'start_line'")) {
+                  if (fieldName.includes("create_pull_request_review_comment 'start_line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-pull-request-review-comment 'start_line' must be a number or string`,
+                      error: `Line ${lineNum}: create_pull_request_review_comment 'start_line' must be a number or string`,
                     };
                   }
-                  if (fieldName.includes("create-code-scanning-alert 'column'")) {
+                  if (fieldName.includes("create_code_scanning_alert 'column'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-code-scanning-alert 'column' must be a number or string`,
+                      error: `Line ${lineNum}: create_code_scanning_alert 'column' must be a number or string`,
                     };
                   }
                   return {
@@ -1608,16 +1692,16 @@ jobs:
                 }
                 const parsed = typeof value === "string" ? parseInt(value, 10) : value;
                 if (isNaN(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
-                  if (fieldName.includes("create-pull-request-review-comment 'start_line'")) {
+                  if (fieldName.includes("create_pull_request_review_comment 'start_line'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-pull-request-review-comment 'start_line' must be a positive integer`,
+                      error: `Line ${lineNum}: create_pull_request_review_comment 'start_line' must be a positive integer`,
                     };
                   }
-                  if (fieldName.includes("create-code-scanning-alert 'column'")) {
+                  if (fieldName.includes("create_code_scanning_alert 'column'")) {
                     return {
                       isValid: false,
-                      error: `Line ${lineNum}: create-code-scanning-alert 'column' must be a valid positive integer (got: ${value})`,
+                      error: `Line ${lineNum}: create_code_scanning_alert 'column' must be a valid positive integer (got: ${value})`,
                     };
                   }
                   return {
@@ -1766,7 +1850,8 @@ jobs:
               let expectedOutputTypes = {};
               if (safeOutputsConfig) {
                 try {
-                  expectedOutputTypes = JSON.parse(safeOutputsConfig);
+                  const rawConfig = JSON.parse(safeOutputsConfig);
+                  expectedOutputTypes = Object.fromEntries(Object.entries(rawConfig).map(([key, value]) => [key.replace(/-/g, "_"), value]));
                   core.info(`Expected output types: ${JSON.stringify(Object.keys(expectedOutputTypes))}`);
                 } catch (error) {
                   const errorMsg = error instanceof Error ? error.message : String(error);
@@ -1789,7 +1874,8 @@ jobs:
                     errors.push(`Line ${i + 1}: Missing required 'type' field`);
                     continue;
                   }
-                  const itemType = item.type;
+                  const itemType = item.type.replace(/-/g, "_");
+                  item.type = itemType;
                   if (!expectedOutputTypes[itemType]) {
                     errors.push(`Line ${i + 1}: Unexpected output type '${itemType}'. Expected one of: ${Object.keys(expectedOutputTypes).join(", ")}`);
                     continue;
@@ -1802,7 +1888,7 @@ jobs:
                   }
                   core.info(`Line ${i + 1}: type '${itemType}'`);
                   switch (itemType) {
-                    case "create-issue":
+                    case "create_issue":
                       if (!item.title || typeof item.title !== "string") {
                         errors.push(`Line ${i + 1}: create_issue requires a 'title' string field`);
                         continue;
@@ -1824,7 +1910,7 @@ jobs:
                         }
                       }
                       break;
-                    case "add-comment":
+                    case "add_comment":
                       if (!item.body || typeof item.body !== "string") {
                         errors.push(`Line ${i + 1}: add_comment requires a 'body' string field`);
                         continue;
@@ -1838,7 +1924,7 @@ jobs:
                       }
                       item.body = sanitizeContent(item.body, maxBodyLength);
                       break;
-                    case "create-pull-request":
+                    case "create_pull_request":
                       if (!item.title || typeof item.title !== "string") {
                         errors.push(`Line ${i + 1}: create_pull_request requires a 'title' string field`);
                         continue;
@@ -1858,7 +1944,7 @@ jobs:
                         item.labels = item.labels.map(label => (typeof label === "string" ? sanitizeContent(label, 128) : label));
                       }
                       break;
-                    case "add-labels":
+                    case "add_labels":
                       if (!item.labels || !Array.isArray(item.labels)) {
                         errors.push(`Line ${i + 1}: add_labels requires a 'labels' array field`);
                         continue;
@@ -1867,14 +1953,14 @@ jobs:
                         errors.push(`Line ${i + 1}: add_labels labels array must contain only strings`);
                         continue;
                       }
-                      const labelsItemNumberValidation = validateIssueOrPRNumber(item.item_number, "add-labels 'item_number'", i + 1);
+                      const labelsItemNumberValidation = validateIssueOrPRNumber(item.item_number, "add_labels 'item_number'", i + 1);
                       if (!labelsItemNumberValidation.isValid) {
                         if (labelsItemNumberValidation.error) errors.push(labelsItemNumberValidation.error);
                         continue;
                       }
                       item.labels = item.labels.map(label => sanitizeContent(label, 128));
                       break;
-                    case "update-issue":
+                    case "update_issue":
                       const hasValidField = item.status !== undefined || item.title !== undefined || item.body !== undefined;
                       if (!hasValidField) {
                         errors.push(`Line ${i + 1}: update_issue requires at least one of: 'status', 'title', or 'body' fields`);
@@ -1888,25 +1974,25 @@ jobs:
                       }
                       if (item.title !== undefined) {
                         if (typeof item.title !== "string") {
-                          errors.push(`Line ${i + 1}: update-issue 'title' must be a string`);
+                          errors.push(`Line ${i + 1}: update_issue 'title' must be a string`);
                           continue;
                         }
                         item.title = sanitizeContent(item.title, 128);
                       }
                       if (item.body !== undefined) {
                         if (typeof item.body !== "string") {
-                          errors.push(`Line ${i + 1}: update-issue 'body' must be a string`);
+                          errors.push(`Line ${i + 1}: update_issue 'body' must be a string`);
                           continue;
                         }
                         item.body = sanitizeContent(item.body, maxBodyLength);
                       }
-                      const updateIssueNumValidation = validateIssueOrPRNumber(item.issue_number, "update-issue 'issue_number'", i + 1);
+                      const updateIssueNumValidation = validateIssueOrPRNumber(item.issue_number, "update_issue 'issue_number'", i + 1);
                       if (!updateIssueNumValidation.isValid) {
                         if (updateIssueNumValidation.error) errors.push(updateIssueNumValidation.error);
                         continue;
                       }
                       break;
-                    case "push-to-pull-request-branch":
+                    case "push_to_pull_request_branch":
                       if (!item.branch || typeof item.branch !== "string") {
                         errors.push(`Line ${i + 1}: push_to_pull_request_branch requires a 'branch' string field`);
                         continue;
@@ -1919,7 +2005,7 @@ jobs:
                       item.message = sanitizeContent(item.message, maxBodyLength);
                       const pushPRNumValidation = validateIssueOrPRNumber(
                         item.pull_request_number,
-                        "push-to-pull-request-branch 'pull_request_number'",
+                        "push_to_pull_request_branch 'pull_request_number'",
                         i + 1
                       );
                       if (!pushPRNumValidation.isValid) {
@@ -1927,25 +2013,25 @@ jobs:
                         continue;
                       }
                       break;
-                    case "create-pull-request-review-comment":
+                    case "create_pull_request_review_comment":
                       if (!item.path || typeof item.path !== "string") {
-                        errors.push(`Line ${i + 1}: create-pull-request-review-comment requires a 'path' string field`);
+                        errors.push(`Line ${i + 1}: create_pull_request_review_comment requires a 'path' string field`);
                         continue;
                       }
-                      const lineValidation = validatePositiveInteger(item.line, "create-pull-request-review-comment 'line'", i + 1);
+                      const lineValidation = validatePositiveInteger(item.line, "create_pull_request_review_comment 'line'", i + 1);
                       if (!lineValidation.isValid) {
                         if (lineValidation.error) errors.push(lineValidation.error);
                         continue;
                       }
                       const lineNumber = lineValidation.normalizedValue;
                       if (!item.body || typeof item.body !== "string") {
-                        errors.push(`Line ${i + 1}: create-pull-request-review-comment requires a 'body' string field`);
+                        errors.push(`Line ${i + 1}: create_pull_request_review_comment requires a 'body' string field`);
                         continue;
                       }
                       item.body = sanitizeContent(item.body, maxBodyLength);
                       const startLineValidation = validateOptionalPositiveInteger(
                         item.start_line,
-                        "create-pull-request-review-comment 'start_line'",
+                        "create_pull_request_review_comment 'start_line'",
                         i + 1
                       );
                       if (!startLineValidation.isValid) {
@@ -1957,17 +2043,17 @@ jobs:
                         lineNumber !== undefined &&
                         startLineValidation.normalizedValue > lineNumber
                       ) {
-                        errors.push(`Line ${i + 1}: create-pull-request-review-comment 'start_line' must be less than or equal to 'line'`);
+                        errors.push(`Line ${i + 1}: create_pull_request_review_comment 'start_line' must be less than or equal to 'line'`);
                         continue;
                       }
                       if (item.side !== undefined) {
                         if (typeof item.side !== "string" || (item.side !== "LEFT" && item.side !== "RIGHT")) {
-                          errors.push(`Line ${i + 1}: create-pull-request-review-comment 'side' must be 'LEFT' or 'RIGHT'`);
+                          errors.push(`Line ${i + 1}: create_pull_request_review_comment 'side' must be 'LEFT' or 'RIGHT'`);
                           continue;
                         }
                       }
                       break;
-                    case "create-discussion":
+                    case "create_discussion":
                       if (!item.title || typeof item.title !== "string") {
                         errors.push(`Line ${i + 1}: create_discussion requires a 'title' string field`);
                         continue;
@@ -1986,7 +2072,7 @@ jobs:
                       item.title = sanitizeContent(item.title, 128);
                       item.body = sanitizeContent(item.body, maxBodyLength);
                       break;
-                    case "missing-tool":
+                    case "missing_tool":
                       if (!item.tool || typeof item.tool !== "string") {
                         errors.push(`Line ${i + 1}: missing_tool requires a 'tool' string field`);
                         continue;
@@ -1999,24 +2085,24 @@ jobs:
                       item.reason = sanitizeContent(item.reason, 256);
                       if (item.alternatives !== undefined) {
                         if (typeof item.alternatives !== "string") {
-                          errors.push(`Line ${i + 1}: missing-tool 'alternatives' must be a string`);
+                          errors.push(`Line ${i + 1}: missing_tool 'alternatives' must be a string`);
                           continue;
                         }
                         item.alternatives = sanitizeContent(item.alternatives, 512);
                       }
                       break;
-                    case "upload-asset":
+                    case "upload_asset":
                       if (!item.path || typeof item.path !== "string") {
                         errors.push(`Line ${i + 1}: upload_asset requires a 'path' string field`);
                         continue;
                       }
                       break;
-                    case "create-code-scanning-alert":
+                    case "create_code_scanning_alert":
                       if (!item.file || typeof item.file !== "string") {
-                        errors.push(`Line ${i + 1}: create-code-scanning-alert requires a 'file' field (string)`);
+                        errors.push(`Line ${i + 1}: create_code_scanning_alert requires a 'file' field (string)`);
                         continue;
                       }
-                      const alertLineValidation = validatePositiveInteger(item.line, "create-code-scanning-alert 'line'", i + 1);
+                      const alertLineValidation = validatePositiveInteger(item.line, "create_code_scanning_alert 'line'", i + 1);
                       if (!alertLineValidation.isValid) {
                         if (alertLineValidation.error) {
                           errors.push(alertLineValidation.error);
@@ -2024,33 +2110,33 @@ jobs:
                         continue;
                       }
                       if (!item.severity || typeof item.severity !== "string") {
-                        errors.push(`Line ${i + 1}: create-code-scanning-alert requires a 'severity' field (string)`);
+                        errors.push(`Line ${i + 1}: create_code_scanning_alert requires a 'severity' field (string)`);
                         continue;
                       }
                       if (!item.message || typeof item.message !== "string") {
-                        errors.push(`Line ${i + 1}: create-code-scanning-alert requires a 'message' field (string)`);
+                        errors.push(`Line ${i + 1}: create_code_scanning_alert requires a 'message' field (string)`);
                         continue;
                       }
                       const allowedSeverities = ["error", "warning", "info", "note"];
                       if (!allowedSeverities.includes(item.severity.toLowerCase())) {
                         errors.push(
-                          `Line ${i + 1}: create-code-scanning-alert 'severity' must be one of: ${allowedSeverities.join(", ")}, got ${item.severity.toLowerCase()}`
+                          `Line ${i + 1}: create_code_scanning_alert 'severity' must be one of: ${allowedSeverities.join(", ")}, got ${item.severity.toLowerCase()}`
                         );
                         continue;
                       }
-                      const columnValidation = validateOptionalPositiveInteger(item.column, "create-code-scanning-alert 'column'", i + 1);
+                      const columnValidation = validateOptionalPositiveInteger(item.column, "create_code_scanning_alert 'column'", i + 1);
                       if (!columnValidation.isValid) {
                         if (columnValidation.error) errors.push(columnValidation.error);
                         continue;
                       }
                       if (item.ruleIdSuffix !== undefined) {
                         if (typeof item.ruleIdSuffix !== "string") {
-                          errors.push(`Line ${i + 1}: create-code-scanning-alert 'ruleIdSuffix' must be a string`);
+                          errors.push(`Line ${i + 1}: create_code_scanning_alert 'ruleIdSuffix' must be a string`);
                           continue;
                         }
                         if (!/^[a-zA-Z0-9_-]+$/.test(item.ruleIdSuffix.trim())) {
                           errors.push(
-                            `Line ${i + 1}: create-code-scanning-alert 'ruleIdSuffix' must contain only alphanumeric characters, hyphens, and underscores`
+                            `Line ${i + 1}: create_code_scanning_alert 'ruleIdSuffix' must contain only alphanumeric characters, hyphens, and underscores`
                           );
                           continue;
                         }
@@ -2360,6 +2446,23 @@ jobs:
                 core.setFailed(error instanceof Error ? error : String(error));
               }
             }
+            function extractPremiumRequestCount(logContent) {
+              const patterns = [
+                /premium\s+requests?\s+consumed:?\s*(\d+)/i,
+                /(\d+)\s+premium\s+requests?\s+consumed/i,
+                /consumed\s+(\d+)\s+premium\s+requests?/i,
+              ];
+              for (const pattern of patterns) {
+                const match = logContent.match(pattern);
+                if (match && match[1]) {
+                  const count = parseInt(match[1], 10);
+                  if (!isNaN(count) && count > 0) {
+                    return count;
+                  }
+                }
+              }
+              return 1;
+            }
             function parseCopilotLog(logContent) {
               try {
                 let logEntries;
@@ -2495,8 +2598,9 @@ jobs:
                   }
                   const isPremiumModel =
                     initEntry && initEntry.model_info && initEntry.model_info.billing && initEntry.model_info.billing.is_premium === true;
-                  if (isPremiumModel && lastEntry.num_turns) {
-                    markdown += `**Premium Requests Consumed:** ${lastEntry.num_turns}\n\n`;
+                  if (isPremiumModel) {
+                    const premiumRequestCount = extractPremiumRequestCount(logContent);
+                    markdown += `**Premium Requests Consumed:** ${premiumRequestCount}\n\n`;
                   }
                   if (lastEntry.usage) {
                     const usage = lastEntry.usage;
@@ -2845,6 +2949,23 @@ jobs:
               }
               return markdown;
             }
+            function estimateTokens(text) {
+              if (!text) return 0;
+              return Math.ceil(text.length / 4);
+            }
+            function formatDuration(ms) {
+              if (!ms || ms <= 0) return "";
+              const seconds = Math.round(ms / 1000);
+              if (seconds < 60) {
+                return `${seconds}s`;
+              }
+              const minutes = Math.floor(seconds / 60);
+              const remainingSeconds = seconds % 60;
+              if (remainingSeconds === 0) {
+                return `${minutes}m`;
+              }
+              return `${minutes}m ${remainingSeconds}s`;
+            }
             function formatToolUseWithDetails(toolUse, toolResult) {
               const toolName = toolUse.name;
               const input = toolUse.input || {};
@@ -2867,56 +2988,66 @@ jobs:
                   details = toolResult.content.map(c => (typeof c === "string" ? c : c.text || "")).join("\n");
                 }
               }
+              const inputText = JSON.stringify(input);
+              const outputText = details;
+              const totalTokens = estimateTokens(inputText) + estimateTokens(outputText);
+              let metadata = "";
+              if (toolResult && toolResult.duration_ms) {
+                metadata += ` <code>${formatDuration(toolResult.duration_ms)}</code>`;
+              }
+              if (totalTokens > 0) {
+                metadata += ` <code>~${totalTokens}t</code>`;
+              }
               switch (toolName) {
                 case "Bash":
                   const command = input.command || "";
                   const description = input.description || "";
                   const formattedCommand = formatBashCommand(command);
                   if (description) {
-                    summary = `${statusIcon} ${description}: <code>${formattedCommand}</code>`;
+                    summary = `${statusIcon} ${description}: <code>${formattedCommand}</code>${metadata}`;
                   } else {
-                    summary = `${statusIcon} <code>${formattedCommand}</code>`;
+                    summary = `${statusIcon} <code>${formattedCommand}</code>${metadata}`;
                   }
                   break;
                 case "Read":
                   const filePath = input.file_path || input.path || "";
                   const relativePath = filePath.replace(/^\/[^\/]*\/[^\/]*\/[^\/]*\/[^\/]*\//, "");
-                  summary = `${statusIcon} Read <code>${relativePath}</code>`;
+                  summary = `${statusIcon} Read <code>${relativePath}</code>${metadata}`;
                   break;
                 case "Write":
                 case "Edit":
                 case "MultiEdit":
                   const writeFilePath = input.file_path || input.path || "";
                   const writeRelativePath = writeFilePath.replace(/^\/[^\/]*\/[^\/]*\/[^\/]*\/[^\/]*\//, "");
-                  summary = `${statusIcon} Write <code>${writeRelativePath}</code>`;
+                  summary = `${statusIcon} Write <code>${writeRelativePath}</code>${metadata}`;
                   break;
                 case "Grep":
                 case "Glob":
                   const query = input.query || input.pattern || "";
-                  summary = `${statusIcon} Search for <code>${truncateString(query, 80)}</code>`;
+                  summary = `${statusIcon} Search for <code>${truncateString(query, 80)}</code>${metadata}`;
                   break;
                 case "LS":
                   const lsPath = input.path || "";
                   const lsRelativePath = lsPath.replace(/^\/[^\/]*\/[^\/]*\/[^\/]*\/[^\/]*\//, "");
-                  summary = `${statusIcon} LS: ${lsRelativePath || lsPath}`;
+                  summary = `${statusIcon} LS: ${lsRelativePath || lsPath}${metadata}`;
                   break;
                 default:
                   if (toolName.startsWith("mcp__")) {
                     const mcpName = formatMcpName(toolName);
                     const params = formatMcpParameters(input);
-                    summary = `${statusIcon} ${mcpName}(${params})`;
+                    summary = `${statusIcon} ${mcpName}(${params})${metadata}`;
                   } else {
                     const keys = Object.keys(input);
                     if (keys.length > 0) {
                       const mainParam = keys.find(k => ["query", "command", "path", "file_path", "content"].includes(k)) || keys[0];
                       const value = String(input[mainParam] || "");
                       if (value) {
-                        summary = `${statusIcon} ${toolName}: ${truncateString(value, 100)}`;
+                        summary = `${statusIcon} ${toolName}: ${truncateString(value, 100)}${metadata}`;
                       } else {
-                        summary = `${statusIcon} ${toolName}`;
+                        summary = `${statusIcon} ${toolName}${metadata}`;
                       }
                     } else {
-                      summary = `${statusIcon} ${toolName}`;
+                      summary = `${statusIcon} ${toolName}${metadata}`;
                     }
                   }
               }
@@ -2980,12 +3111,15 @@ jobs:
             if (typeof module !== "undefined" && module.exports) {
               module.exports = {
                 parseCopilotLog,
+                extractPremiumRequestCount,
                 formatInitializationSummary,
                 formatToolUseWithDetails,
                 formatBashCommand,
                 truncateString,
                 formatMcpName,
                 formatMcpParameters,
+                estimateTokens,
+                formatDuration,
               };
             }
             main();
@@ -3016,7 +3150,9 @@ jobs:
                 }
                 core.debug(`Log path: ${logPath}`);
                 if (!fs.existsSync(logPath)) {
-                  throw new Error(`Log path not found: ${logPath}`);
+                  core.info(`Log path not found: ${logPath}`);
+                  core.info("No logs to validate - skipping error validation");
+                  return;
                 }
                 const patterns = getErrorPatternsFromEnv();
                 if (patterns.length === 0) {
@@ -3204,21 +3340,23 @@ jobs:
             while IFS= read -r line; do
               if [ -n "$line" ]; then
                 # Extract branch from create-pull-request line using simple grep and sed
-                if echo "$line" | grep -q '"type"[[:space:]]*:[[:space:]]*"create-pull-request"'; then
-                  echo "Found create-pull-request line: $line"
+                # Note: types use underscores (normalized by safe-outputs MCP server)
+                if echo "$line" | grep -q '"type"[[:space:]]*:[[:space:]]*"create_pull_request"'; then
+                  echo "Found create_pull_request line: $line"
                   # Extract branch value using sed
                   BRANCH_NAME=$(echo "$line" | sed -n 's/.*"branch"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
                   if [ -n "$BRANCH_NAME" ]; then
-                    echo "Extracted branch name from create-pull-request: $BRANCH_NAME"
+                    echo "Extracted branch name from create_pull_request: $BRANCH_NAME"
                     break
                   fi
-                # Extract branch from push-to-pull-request-branch line using simple grep and sed
-                elif echo "$line" | grep -q '"type"[[:space:]]*:[[:space:]]*"push-to-pull-request-branch"'; then
-                  echo "Found push-to-pull-request-branch line: $line"
+                # Extract branch from push_to_pull_request_branch line using simple grep and sed
+                # Note: types use underscores (normalized by safe-outputs MCP server)
+                elif echo "$line" | grep -q '"type"[[:space:]]*:[[:space:]]*"push_to_pull_request_branch"'; then
+                  echo "Found push_to_pull_request_branch line: $line"
                   # Extract branch value using sed
                   BRANCH_NAME=$(echo "$line" | sed -n 's/.*"branch"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
                   if [ -n "$BRANCH_NAME" ]; then
-                    echo "Extracted branch name from push-to-pull-request-branch: $BRANCH_NAME"
+                    echo "Extracted branch name from push_to_pull_request_branch: $BRANCH_NAME"
                     break
                   fi
                 fi
@@ -3393,21 +3531,31 @@ jobs:
             fs.writeFileSync('/tmp/gh-aw/aw-prompts/prompt.txt', promptContent);
             core.exportVariable('GITHUB_AW_PROMPT', '/tmp/gh-aw/aw-prompts/prompt.txt');
             await core.summary
-              .addHeading('Threat Detection Prompt', 2)
-              .addRaw('\n')
-              .addCodeBlock(promptContent, 'text')
+              .addRaw('<details>\n<summary>Threat Detection Prompt</summary>\n\n' + '``````markdown\n' + promptContent + '\n' + '``````\n\n</details>\n')
               .write();
             core.info('Threat detection setup completed');
       - name: Ensure threat-detection directory and log
         run: |
           mkdir -p /tmp/gh-aw/threat-detection
           touch /tmp/gh-aw/threat-detection/detection.log
+      - name: Validate COPILOT_CLI_TOKEN secret
+        run: |
+          if [ -z "$COPILOT_CLI_TOKEN" ]; then
+            echo "Error: COPILOT_CLI_TOKEN secret is not set"
+            echo "The GitHub Copilot CLI engine requires the COPILOT_CLI_TOKEN secret to be configured."
+            echo "Please configure this secret in your repository settings."
+            echo "Documentation: https://githubnext.github.io/gh-aw/reference/engines/#github-copilot-default"
+            exit 1
+          fi
+          echo "COPILOT_CLI_TOKEN secret is configured"
+        env:
+          COPILOT_CLI_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@0.0.340
+        run: npm install -g @github/copilot@0.0.342
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         # Copilot CLI tool arguments (sorted):
@@ -3477,7 +3625,7 @@ jobs:
     needs:
       - agent
       - detection
-    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-discussion'))
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create_discussion'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3519,7 +3667,7 @@ jobs:
                 core.warning("No valid items found in agent output");
                 return;
               }
-              const createDiscussionItems = validatedOutput.items.filter(item => item.type === "create-discussion");
+              const createDiscussionItems = validatedOutput.items.filter(item => item.type === "create_discussion");
               if (createDiscussionItems.length === 0) {
                 core.warning("No create-discussion items found in agent output");
                 return;
@@ -3705,7 +3853,7 @@ jobs:
     needs:
       - agent
       - detection
-    if: (always()) && (contains(needs.agent.outputs.output_types, 'add-comment'))
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'add_comment'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -3736,8 +3884,23 @@ jobs:
           GITHUB_AW_COMMENT_DISCUSSION: "true"
         with:
           script: |
-            function generateFooter(workflowName, runUrl, workflowSource, workflowSourceURL) {
+            function generateFooter(
+              workflowName,
+              runUrl,
+              workflowSource,
+              workflowSourceURL,
+              triggeringIssueNumber,
+              triggeringPRNumber,
+              triggeringDiscussionNumber
+            ) {
               let footer = `\n\n> AI generated by [${workflowName}](${runUrl})`;
+              if (triggeringIssueNumber) {
+                footer += ` for #${triggeringIssueNumber}`;
+              } else if (triggeringPRNumber) {
+                footer += ` for #${triggeringPRNumber}`;
+              } else if (triggeringDiscussionNumber) {
+                footer += ` for discussion #${triggeringDiscussionNumber}`;
+              }
               if (workflowSource && workflowSourceURL) {
                 footer += `\n>\n> To add this workflow in your repository, run \`gh aw add ${workflowSource}\`. See [usage guide](https://githubnext.github.io/gh-aw/tools/cli/).`;
               }
@@ -3807,7 +3970,7 @@ jobs:
                 core.info("No valid items found in agent output");
                 return;
               }
-              const commentItems = validatedOutput.items.filter( item => item.type === "add-comment");
+              const commentItems = validatedOutput.items.filter( item => item.type === "add_comment");
               if (commentItems.length === 0) {
                 core.info("No add-comment items found in agent output");
                 return;
@@ -3871,6 +4034,11 @@ jobs:
                 core.info('Target is "triggering" but not running in issue, pull request, or discussion context, skipping comment creation');
                 return;
               }
+              const triggeringIssueNumber =
+                context.payload?.issue?.number && !context.payload?.issue?.pull_request ? context.payload.issue.number : undefined;
+              const triggeringPRNumber =
+                context.payload?.pull_request?.number || (context.payload?.issue?.pull_request ? context.payload.issue.number : undefined);
+              const triggeringDiscussionNumber = context.payload?.discussion?.number;
               const createdComments = [];
               for (let i = 0; i < commentItems.length; i++) {
                 const commentItem = commentItems[i];
@@ -3937,7 +4105,15 @@ jobs:
                 const runUrl = context.payload.repository
                   ? `${context.payload.repository.html_url}/actions/runs/${runId}`
                   : `${githubServer}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-                body += generateFooter(workflowName, runUrl, workflowSource, workflowSourceURL);
+                body += generateFooter(
+                  workflowName,
+                  runUrl,
+                  workflowSource,
+                  workflowSourceURL,
+                  triggeringIssueNumber,
+                  triggeringPRNumber,
+                  triggeringDiscussionNumber
+                );
                 try {
                   let comment;
                   if (isDiscussion) {
@@ -3984,7 +4160,7 @@ jobs:
     needs:
       - agent
       - detection
-    if: (always()) && (contains(needs.agent.outputs.output_types, 'create-pull-request'))
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'create_pull_request'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -4159,7 +4335,7 @@ jobs:
                 core.warning("No valid items found in agent output");
                 return;
               }
-              const pullRequestItem = validatedOutput.items.find( item => item.type === "create-pull-request");
+              const pullRequestItem = validatedOutput.items.find( item => item.type === "create_pull_request");
               if (!pullRequestItem) {
                 core.warning("No create-pull-request item found in agent output");
                 return;
@@ -4423,7 +4599,7 @@ jobs:
     needs:
       - agent
       - detection
-    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing-tool'))
+    if: (always()) && (contains(needs.agent.outputs.output_types, 'missing_tool'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -4470,7 +4646,7 @@ jobs:
               }
               core.info(`Parsed agent output with ${validatedOutput.items.length} entries`);
               for (const entry of validatedOutput.items) {
-                if (entry.type === "missing-tool") {
+                if (entry.type === "missing_tool") {
                   if (!entry.tool) {
                     core.warning(`missing-tool entry missing 'tool' field: ${JSON.stringify(entry)}`);
                     continue;
