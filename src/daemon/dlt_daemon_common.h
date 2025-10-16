@@ -134,6 +134,8 @@ typedef struct
 typedef struct
 {
     char apid[DLT_ID_SIZE];                   /**< application id */
+    uint8_t apid2len;               /**< length of application id */
+    char *apid2;                   /**< application id */
     pid_t pid;                   /**< process id of user application */
     int user_handle;    /**< connection handle for connection to user application */
     bool owns_user_handle; /**< user_handle should be closed when reset */
@@ -156,6 +158,10 @@ typedef struct
 {
     char apid[DLT_ID_SIZE];               /**< application id */
     char ctid[DLT_ID_SIZE];               /**< context id */
+    uint8_t apid2len;
+    char *apid2;               /**< application id */
+    uint8_t ctid2len;
+    char *ctid2;               /**< context id */
     int8_t log_level;        /**< the current log level of the context */
     int8_t trace_status;    /**< the current trace status of the context */
     int log_level_pos;  /**< offset of context in context field on user application */
@@ -175,6 +181,8 @@ typedef struct
     DltDaemonContext *contexts; /**< Pointer to contexts */
     int num_contexts; /**< Total number of all contexts in all applications in this list */
     char ecu[DLT_ID_SIZE];  /**< ECU ID of where contexts are registered */
+    uint8_t ecuid2len;  /**< Length of ECU ID of where contexts are registered */
+    char *ecuid2;
 } DltDaemonRegisteredUsers;
 
 /**
@@ -272,6 +280,20 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
  * @return pointer to user list, NULL otherwise
  */
 DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
+                                                     char *ecu,
+                                                     int verbose);
+
+/**
+ * Find information about application/contexts for a specific ECU
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu pointer to node name
+ * @param eculen length of ecu id
+ * @param verbose if set to true verbose information is printed out
+ * @return pointer to user list, NULL otherwise
+ */
+DltDaemonRegisteredUsers *dlt_daemon_find_users_list_v2(DltDaemon *daemon,
+                                                     uint8_t eculen,
                                                      char *ecu,
                                                      int verbose);
 
@@ -431,6 +453,37 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                                          int log_level_pos,
                                          int user_handle,
                                          char *description,
+                                         char *ecu,
+                                         int verbose);
+
+/**
+ * Add (new) context to internal context management for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param ctidlen length of context id
+ * @param ctid pointer to context id
+ * @param log_level log level of context
+ * @param trace_status trace status of context
+ * @param log_level_pos offset of context in context field on user application
+ * @param user_handle connection handle for connection to user application
+ * @param description description of context
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to add application
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to added context, null pointer on error
+ */
+DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
+                                         uint8_t apidlen,
+                                         char *apid,
+                                         uint8_t ctidlen,
+                                         char *ctid,
+                                         int8_t log_level,
+                                         int8_t trace_status,
+                                         int log_level_pos,
+                                         int user_handle,
+                                         char *description,
+                                         uint8_t eculen,
                                          char *ecu,
                                          int verbose);
 /**

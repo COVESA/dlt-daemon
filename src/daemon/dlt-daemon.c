@@ -3472,7 +3472,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
             printf("\nRegister Application - Received Buffer: ");
 
-            for (int j = 0; j < 64; j++){
+            for (int j = 0; j < 51; j++){
                 if (rec->buf[j] > 48 && rec->buf[j] < 122) {
                     printf("%c", rec->buf[j]);
                 }
@@ -3575,7 +3575,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                     "ApplicationID '%.6s' registered for PID %d, Description=%s",
                     application->apid,
                     application->pid,
-                    application->application_description);
+                    application->application_description); //TBD: %.6s to use apidlen
             dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                                     DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
                                     daemon_local->flags.vflag);
@@ -3744,7 +3744,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
     printf("\nRegister Context - Received Buffer: ");
 
-    for (int j = 0; j < 64; j++){
+    for (int j = 0; j < 60; j++){
         if (rec->buf[j] > 48 && rec->buf[j] < 122) {
             printf("%c", rec->buf[j]);
         }

@@ -146,6 +146,28 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
     return (DltDaemonRegisteredUsers *)NULL;
 }
 
+DltDaemonRegisteredUsers *dlt_daemon_find_users_list_v2(DltDaemon *daemon,
+                                                     uint8_t eculen,
+                                                     char *ecu,
+                                                     int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    int i = 0;
+
+    if ((daemon == NULL) || (ecu == NULL) || (eculen == 0)) {
+        dlt_vlog(LOG_ERR, "%s: Wrong parameters", __func__);
+        return (DltDaemonRegisteredUsers *)NULL;
+    }
+
+    for (i = 0; i < daemon->num_user_lists; i++)
+        if (strncmp(ecu, daemon->user_list[i].ecuid2, daemon->user_list[i].ecuid2len) == 0)
+            return &daemon->user_list[i];
+
+    dlt_vlog(LOG_ERR, "Cannot find user list for ECU: %s\n", ecu);
+    return (DltDaemonRegisteredUsers *)NULL;
+}
+
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
 
 static int dlt_daemon_cmp_log_settings(const void *lhs, const void *rhs) {
@@ -1083,6 +1105,191 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
         return (DltDaemonContext *)NULL;
 
     user_list = dlt_daemon_find_users_list(daemon, ecu, verbose);
+
+    if (user_list == NULL)
+        return (DltDaemonContext *)NULL;
+
+    if (user_list->contexts == NULL) {
+        user_list->contexts = (DltDaemonContext *)calloc(1, sizeof(DltDaemonContext) * DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+
+        if (user_list->contexts == NULL)
+            return (DltDaemonContext *)NULL;
+    }
+
+    /* Check if application [apid] is available */
+    application = dlt_daemon_application_find(daemon, apid, ecu, verbose);
+
+    if (application == NULL)
+        return (DltDaemonContext *)NULL;
+
+    /* Check if context [apid, ctid] is already available */
+    context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
+
+    if (context == NULL) {
+        user_list->num_contexts += 1;
+
+        if (user_list->num_contexts != 0) {
+            if ((user_list->num_contexts % DLT_DAEMON_CONTEXT_ALLOC_SIZE) == 0) {
+                /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
+                old = user_list->contexts;
+                user_list->contexts = (DltDaemonContext *)calloc(1, (size_t) sizeof(DltDaemonContext) *
+                                                                 ((user_list->num_contexts /
+                                                                   DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) *
+                                                                 DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+
+                if (user_list->contexts == NULL) {
+                    user_list->contexts = old;
+                    user_list->num_contexts -= 1;
+                    return (DltDaemonContext *)NULL;
+                }
+
+                memcpy(user_list->contexts,
+                       old,
+                       (size_t) sizeof(DltDaemonContext) * user_list->num_contexts);
+                free(old);
+            }
+        }
+
+        context = &(user_list->contexts[user_list->num_contexts - 1]);
+        memset(context, 0, sizeof(DltDaemonContext));
+
+        dlt_set_id(context->apid, apid);
+        dlt_set_id(context->ctid, ctid);
+
+        application->num_contexts++;
+        new_context = 1;
+    }
+
+    /* Set context description */
+    if (context->context_description) {
+        free(context->context_description);
+        context->context_description = NULL;
+    }
+
+    if (description != NULL) {
+        context->context_description = malloc(strlen(description) + 1);
+
+        if (context->context_description) {
+            memcpy(context->context_description, description, strlen(description) + 1);
+        }
+    }
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* configure initial log level */
+    DltDaemonContextLogSettings *settings = NULL;
+    settings = dlt_daemon_find_configured_app_id_ctx_id_settings(
+            daemon, context->apid, ctid);
+
+    if (settings != NULL) {
+        /* set log level */
+        log_level = settings->log_level;
+
+        DltDaemonContextLogSettings *ct_settings = NULL;
+        ct_settings = dlt_daemon_find_app_log_level_config(application, ctid);
+
+        /* ct_settings != null: context and app id combination already exists */
+        if (ct_settings == NULL) {
+          /* copy the configuration into the DltDaemonApplication for faster access later */
+          DltDaemonContextLogSettings *tmp =
+              realloc(application->context_log_level_settings,
+                      (++application->num_context_log_level_settings) *
+                          sizeof(DltDaemonContextLogSettings));
+          application->context_log_level_settings = tmp;
+
+          ct_settings =
+              &application->context_log_level_settings[application->num_context_log_level_settings - 1];
+          memcpy(ct_settings, settings, sizeof(DltDaemonContextLogSettings));
+          memcpy(ct_settings->ctid, ctid, DLT_ID_SIZE);
+      }
+    }
+#endif
+
+    if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) && (daemon->force_ll_ts)) {
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        if (log_level > daemon->default_log_level && settings == NULL)
+#else
+        if (log_level > daemon->default_log_level)
+#endif
+            log_level = daemon->default_log_level;
+
+        if (trace_status > daemon->default_trace_status)
+            trace_status = daemon->default_trace_status;
+
+        dlt_vlog(LOG_NOTICE,
+            "Adapting ll_ts for context: %.4s:%.4s with %i %i\n",
+            apid,
+            ctid,
+            log_level,
+            trace_status);
+    }
+
+    /* Store log level and trace status,
+     * if this is a new context, or
+     * if this is an old context and the runtime cfg was not loaded */
+    if ((new_context == 1) ||
+        ((new_context == 0) && (daemon->runtime_context_cfg_loaded == 0))) {
+        context->log_level = log_level;
+        context->trace_status = trace_status;
+    }
+
+    context->log_level_pos = log_level_pos;
+    context->user_handle = user_handle;
+
+    /* In case a context is loaded from runtime config file,
+     * the user_handle is 0 and we mark that context as predefined.
+     */
+    if (context->user_handle == 0)
+        context->predefined = true;
+    else
+        context->predefined = false;
+
+    /* Sort */
+    if (new_context) {
+        qsort(user_list->contexts,
+              (size_t) user_list->num_contexts,
+              sizeof(DltDaemonContext),
+              dlt_daemon_cmp_apid_ctid);
+
+        /* Find new position of context with apid, ctid */
+        context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
+    }
+
+    return context;
+}
+
+DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
+                                         uint8_t apidlen,
+                                         char *apid,
+                                         uint8_t ctidlen,
+                                         char *ctid,
+                                         int8_t log_level,
+                                         int8_t trace_status,
+                                         int log_level_pos,
+                                         int user_handle,
+                                         char *description,
+                                         uint8_t eculen,
+                                         char *ecu,
+                                         int verbose)
+{
+    DltDaemonApplication *application;
+    DltDaemonContext *context;
+    DltDaemonContext *old;
+    int new_context = 0;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (apid == NULL) ||
+        (ctid == NULL) || (ecu == NULL) || (apidlen == 0) || (ctidlen == 0))
+        return (DltDaemonContext *)NULL;
+
+    if ((log_level < DLT_LOG_DEFAULT) || (log_level > DLT_LOG_VERBOSE))
+        return (DltDaemonContext *)NULL;
+
+    if ((trace_status < DLT_TRACE_STATUS_DEFAULT) || (trace_status > DLT_TRACE_STATUS_ON))
+        return (DltDaemonContext *)NULL;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if (user_list == NULL)
         return (DltDaemonContext *)NULL;
