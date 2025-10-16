@@ -116,6 +116,25 @@ int dlt_daemon_client_send_control_message(int sock,
                                            char *apid,
                                            char *ctid,
                                            int verbose);
+
+/**
+ * Send out response message to dlt client for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to response message
+ * @param apid pointer to application id to be used in response message
+ * @param ctid pointer to context id to be used in response message
+ * @param verbose if set to true verbose information is printed out.
+ * @return -1 if there is an error or buffer is full
+ */
+int dlt_daemon_client_send_control_message_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           char *apid,
+                                           char *ctid,
+                                           int verbose);
 /**
  * Process and generate response to received get log info control message
  * @param sock connection handle used for sending response

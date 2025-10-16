@@ -176,6 +176,7 @@ static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
     return sent;
 }
 
+//TBD To extract the storage header v2 from buffer
 int dlt_daemon_client_send(int sock,
                            DltDaemon *daemon,
                            DltDaemonLocal *daemon_local,
@@ -423,8 +424,8 @@ int dlt_daemon_client_send_control_message(int sock,
     } else {
         dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
     }
-    
     */ //TBD Remove
+
     if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
@@ -488,6 +489,186 @@ int dlt_daemon_client_send_control_message(int sock,
              dlt_daemon_client_send(sock, daemon, daemon_local, msg->headerbuffer, sizeof(DltStorageHeader),
                                     msg->headerbuffer + sizeof(DltStorageHeader),
                                     (int) (msg->headersize - sizeof(DltStorageHeader)),
+                                    msg->databuffer, (int) msg->datasize, verbose))) {
+        dlt_log(LOG_DEBUG, "dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
+        return ret;
+    }
+
+    return DLT_DAEMON_ERROR_OK;
+}
+
+int dlt_daemon_client_send_control_message_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           char *apid,
+                                           char *ctid,
+                                           int verbose)
+{
+    int ret;
+    int32_t len;
+    uint8_t appidlen;
+    uint8_t ctxidlen;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    /* Debug prints for verifying DLT Version
+    if(dlt_version == DLT_VERSION2) {
+        dlt_log(LOG_INFO, "DLT VERSION 2 \n"); // DLT_DEBUG
+    } else if(dlt_version == DLT_VERSION1) {
+        dlt_log(LOG_INFO, "DLT VERSION 1 \n"); // DLT_DEBUG
+    } else {
+        dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
+    }
+    
+    */ //TBD Remove
+    if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
+        return DLT_DAEMON_ERROR_UNKNOWN;
+
+    /* prepare storage header */
+
+    if (apid == NULL){
+        appidlen = strlen(DLT_DAEMON_CTRL_APID);
+    }else {
+        appidlen = strlen(apid);
+    }
+
+    if (ctid == NULL){
+        ctxidlen = strlen(DLT_DAEMON_CTRL_CTID);
+    }else {
+        ctxidlen = strlen(ctid);
+    }
+
+    msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + (daemon->ecuid2len);
+    msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
+    msg->baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(DLT_CONTROL_MSG);
+    msg->extendedheadersizev2 = (daemon->ecuid2len) + 1 + appidlen + 1 + ctxidlen + 1;
+
+    msg->headersizev2 = msg->storageheadersizev2 + msg->baseheadersizev2 +
+                       msg->baseheaderextrasizev2 + msg->extendedheadersizev2;
+
+    if (msg->headerbufferv2 != NULL) {
+        free(msg->headerbufferv2);
+        msg->headerbufferv2 = NULL;
+    }
+
+    msg->headerbufferv2 = (uint8_t*)malloc(msg->headersizev2);
+
+    if (dlt_set_storageheader_v2(&(msg->storageheaderv2), daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
+        return DLT_DAEMON_ERROR_UNKNOWN;
+
+    if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK) {
+        return DLT_RETURN_ERROR;
+    }
+
+    /* prepare base header */
+    msg->baseheaderv2 = (DltBaseHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2);
+
+    msg->baseheaderv2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
+    msg->baseheaderv2->htyp2 |= DLT_CONTROL_MSG;
+    msg->baseheaderv2->htyp2 |= DLT_HTYP2_WEID;
+    msg->baseheaderv2->htyp2 |= DLT_HTYP2_WACID;
+    msg->baseheaderv2->mcnt = 0;
+
+    /* Fill base header conditional parameters */
+    msg->headerextrav2.msin = DLT_MSIN_CONTROL_REQUEST;
+    msg->headerextrav2.noar = 1; /* number of arguments */
+    memset(msg->headerextrav2.seconds, 0, 5);
+    msg->headerextrav2.nanoseconds = 0;
+    #if defined (__WIN32__) || defined(_MSC_VER)
+    time_t t = time(NULL);
+    if (t==-1){
+        uint32_t tcnt = (uint32_t)(GetTickCount()); /* GetTickCount() in 10 ms resolution */
+        tcnt_seconds = tcnt / 100;
+        tcnt_ns = (tcnt - (tcnt*100)) * 10000;
+        msg->headerextrav2.seconds[0]=(tcnt_seconds >> 32) & 0xFF;
+        msg->headerextrav2.seconds[1]=(tcnt_seconds >> 24) & 0xFF;
+        msg->headerextrav2.seconds[2]=(tcnt_seconds >> 16) & 0xFF;
+        msg->headerextrav2.seconds[3]=(tcnt_seconds >> 8) & 0xFF;
+        msg->headerextrav2.seconds[4]= tcnt_seconds & 0xFF;
+        if (ts.tv_nsec < 0x3B9ACA00) {
+            msg->headerextrav2.nanoseconds = tcnt_ns;
+        }
+    }else{
+        msg->headerextrav2.seconds[0]=(t >> 32) & 0xFF;
+        msg->headerextrav2.seconds[1]=(t >> 24) & 0xFF;
+        msg->headerextrav2.seconds[2]=(t >> 16) & 0xFF;
+        msg->headerextrav2.seconds[3]=(t >> 8) & 0xFF;
+        msg->headerextrav2.seconds[4]= t & 0xFF;
+        msg->headerextrav2.nanoseconds |= 0x8000;
+    }
+    #else
+    struct timespec ts;
+    if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+        msg->headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+        msg->headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+        msg->headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+        msg->headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+        msg->headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+        if (ts.tv_nsec < 0x3B9ACA00) {
+            msg->headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+        }
+    }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+        msg->headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+        msg->headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
+        msg->headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
+        msg->headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
+        msg->headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+        if (ts.tv_nsec < 0x3B9ACA00) {
+            msg->headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+        }
+        msg->headerextrav2.nanoseconds |= 0x8000;
+    }
+    #endif
+
+    /* Copy header extra parameters to headerbuffer */
+    if (dlt_message_set_extraparameters_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_message_free_v2(&msg, 0);
+        return DLT_RETURN_ERROR;
+    }
+
+    /* Fill out extended header */
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        msg->extendedheaderv2.ecidlen = daemon->ecuid2len;
+        dlt_set_id_v2(&(msg->extendedheaderv2.ecid), daemon->ecuid2, msg->extendedheaderv2.ecidlen);
+    }
+
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+        msg->extendedheaderv2.apidlen = appidlen;
+        if (apid == NULL){
+            dlt_set_id_v2(&(msg->extendedheaderv2.apid), DLT_DAEMON_CTRL_APID, msg->extendedheaderv2.apidlen);
+        }else {
+            dlt_set_id_v2(&(msg->extendedheaderv2.apid), apid, msg->extendedheaderv2.apidlen);
+        }
+        msg->extendedheaderv2.ctidlen = ctxidlen;
+        if (ctid == NULL){
+            dlt_set_id_v2(&(msg->extendedheaderv2.ctid), DLT_DAEMON_CTRL_CTID, msg->extendedheaderv2.ctidlen);
+        }else {
+            dlt_set_id_v2(&(msg->extendedheaderv2.ctid), ctid, msg->extendedheaderv2.ctidlen);
+        }
+    }
+
+    if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK) {
+        dlt_message_free_v2(&msg, 0);
+        return DLT_RETURN_ERROR;
+    }
+
+    len = (int32_t) (msg->headersizev2 - msg->storageheadersizev2 + msg->datasize);
+
+    if (len > UINT16_MAX) {
+        dlt_vlog(LOG_ERR,
+                "%s: Critical: Huge injection message discarded!\n",
+                __func__);
+        dlt_message_free_v2(&msg, 0);
+        return DLT_RETURN_ERROR;
+    }
+
+    msg->baseheaderv2->len = DLT_HTOBE_16(len);
+
+    if ((ret =
+             dlt_daemon_client_send(sock, daemon, daemon_local, msg->headerbufferv2, msg->storageheadersizev2,
+                                    msg->headerbufferv2 + msg->storageheadersizev2,
+                                    (int) (msg->headersizev2 - msg->storageheadersizev2),
                                     msg->databuffer, (int) msg->datasize, verbose))) {
         dlt_log(LOG_DEBUG, "dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
         return ret;
@@ -1296,7 +1477,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
     /* initialise new message */
     if (dlt_message_init_v2(&resp, 0) == DLT_RETURN_ERROR) {
-        dlt_daemon_control_service_response(sock,
+        dlt_daemon_control_service_response_v2(sock,
                                             daemon,
                                             daemon_local,
                                             DLT_SERVICE_ID_GET_LOG_INFO,
@@ -1764,7 +1945,7 @@ void dlt_daemon_control_service_response_v2(int sock,
     resp->status = (uint8_t) status;
 
     /* send message */
-    dlt_daemon_client_send_control_message(sock, daemon, daemon_local, &msg, "", "", verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
 
     /* free message */
     dlt_message_free_v2(&msg, 0);
