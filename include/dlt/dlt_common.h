@@ -630,10 +630,10 @@ typedef struct sDltMessageV2
     uint8_t *headerbufferv2;       /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
     int32_t databuffersize;
-    int32_t storageheadersizev2;
-    int32_t baseheadersizev2;
-    int32_t baseheaderextrasizev2;
-    int32_t extendedheadersizev2;
+    uint32_t storageheadersizev2;
+    uint32_t baseheadersizev2;
+    uint32_t baseheaderextrasizev2;
+    uint32_t extendedheadersizev2;
 
     /* header values of current loaded message */
     DltStorageHeaderV2 storageheaderv2;        /**< pointer to storage header of current loaded header */

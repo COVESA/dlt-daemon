@@ -102,11 +102,17 @@
 uint8_t dlt_client_dlt_version = DLT_VERSION1;
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
+static int (*message_callback_function_v2)(DltMessageV2 *message, void *data) = NULL;
 static bool (*fetch_next_message_callback_function)(void *data) = NULL;
 
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data))
 {
     message_callback_function = registerd_callback;
+}
+
+void dlt_client_register_message_callback_v2(int (*registerd_callback)(DltMessageV2 *message, void *data))
+{
+    message_callback_function_v2 = registerd_callback;
 }
 
 void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(void *data))
@@ -563,6 +569,72 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
             }
             else if (dlt_receiver_remove(&(client->receiver),
                                          (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader))) ==
+                     DLT_RETURN_ERROR) {
+                /* Return value ignored */
+                dlt_message_free(&msg, verbose);
+                return DLT_RETURN_ERROR;
+            }
+        }
+
+        if (dlt_receiver_move_to_begin(&(client->receiver)) == DLT_RETURN_ERROR) {
+            /* Return value ignored */
+            dlt_message_free(&msg, verbose);
+            return DLT_RETURN_ERROR;
+        }
+        if (fetch_next_message_callback_function)
+          fetch_next_message = (*fetch_next_message_callback_function)(data);
+    }
+
+    if (dlt_message_free(&msg, verbose) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbose)
+{
+    DltMessageV2 msg;
+    int ret;
+
+    if (client == 0)
+        return DLT_RETURN_ERROR;
+
+    if (dlt_message_init_v2(&msg, verbose) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
+
+    bool fetch_next_message = true;
+    while (fetch_next_message) {
+        /* wait for data from socket or serial connection */
+        ret = dlt_receiver_receive(&(client->receiver));
+
+        if (ret <= 0) {
+            /* No more data to be received */
+            if (dlt_message_free_v2(&msg, verbose) == DLT_RETURN_ERROR)
+                return DLT_RETURN_ERROR;
+
+            return DLT_RETURN_TRUE;
+        }
+
+        while (dlt_message_read_v2(&msg, (unsigned char *)(client->receiver.buf),
+                                client->receiver.bytesRcvd,
+                                client->resync_serial_header,
+                                verbose) == DLT_MESSAGE_ERROR_OK)
+        {
+            /* Call callback function */
+            if (message_callback_function_v2)
+                (*message_callback_function_v2)(&msg, data);
+
+            if (msg.found_serialheader) {
+                if (dlt_receiver_remove(&(client->receiver),
+                                        (int) (msg.headersizev2 + msg.datasize - msg.storageheadersizev2 +
+                                        sizeof(dltSerialHeader))) == DLT_RETURN_ERROR) {
+                    /* Return value ignored */
+                    dlt_message_free(&msg, verbose);
+                    return DLT_RETURN_ERROR;
+                }
+            }
+            else if (dlt_receiver_remove(&(client->receiver),
+                                         (int) (msg.headersizev2 + msg.datasize - msg.storageheadersizev2)) ==
                      DLT_RETURN_ERROR) {
                 /* Return value ignored */
                 dlt_message_free(&msg, verbose);
