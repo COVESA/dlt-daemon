@@ -2229,7 +2229,34 @@ DltReturnValue dlt_file_init(DltFile *file, int verbose)
     file->error_messages = 0;
 
     return dlt_message_init(&(file->msg), verbose);
+
 }
+
+DltReturnValue dlt_file_init_v2(DltFile *file, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (file == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* initalise structure parameters */
+    file->handle = NULL;
+    file->counter = 0;
+    file->counter_total = 0;
+    file->index = NULL;
+
+    file->filter = NULL;
+    file->filter_counter = 0;
+    file->file_position = 0;
+
+    file->position = 0;
+
+    file->error_messages = 0;
+
+    return dlt_message_init_v2(&(file->msg), verbose);
+
+}
+
 
 DltReturnValue dlt_file_set_filter(DltFile *file, DltFilter *filter, int verbose)
 {
