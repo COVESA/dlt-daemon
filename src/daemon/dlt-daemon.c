@@ -3789,20 +3789,23 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
 
-        usercontext.apid = (char *)malloc(usercontext.apidlen);
+        usercontext.apid = (char *)malloc(usercontext.apidlen + 1);
         if (usercontext.apid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
             return -1;
         }
         memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
+        memset((usercontext.apid + usercontext.apidlen), '\0', 1); // Null-terminate string
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        usercontext.ctid = (char *)malloc(usercontext.ctidlen);
+        usercontext.ctid = (char *)malloc(usercontext.ctidlen + 1);
         if (usercontext.ctid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
             return -1;
         }
+        memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
+        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
         memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
         offset += sizeof(int32_t);
         memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
