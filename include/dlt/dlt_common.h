@@ -403,7 +403,8 @@
 #define STORAGE_HEADER_V2_FIXED_SIZE 14
 #define BASE_HEADER_V2_FIXED_SIZE 7
 #define EXTENDED_HEADER_V2_FIXED_SIZE 16
-#define DLT_SERVICE_GET_LOG_INFO_REQUEST_V2 11 
+#define DLT_SERVICE_GET_LOG_INFO_REQUEST_FIXED_SIZE_V2 11 
+#define DLT_SERVICE_SET_LOG_LEVEL_FIXED_SIZE_V2 11
 
 /**
  * Macros for network trace
@@ -726,6 +727,21 @@ typedef struct
 } DLT_PACKED DltServiceSetLogLevel;
 
 /**
+ * The structure of the DLT Service Set Log Level.
+ */
+typedef struct
+{
+
+    uint32_t service_id;            /**< service ID */
+    uint8_t apidlen;
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;
+    char *ctid;                     /**< context id */
+    uint8_t log_level;              /**< log level to be set */
+    char com[DLT_ID_SIZE];          /**< communication interface */
+} DLT_PACKED DltServiceSetLogLevelV2;
+
+/**
  * The structure of the DLT Service Set Default Log Level.
  */
 typedef struct
@@ -880,6 +896,8 @@ typedef struct
 {
     char apid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< application id */
     char ctid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< context id */
+    char *apid2[DLT_FILTER_MAX];
+    char *ctid2[DLT_FILTER_MAX];
     int log_level[DLT_FILTER_MAX];          /**< log level */
     int32_t payload_max[DLT_FILTER_MAX];        /**< upper border for payload */
     int32_t payload_min[DLT_FILTER_MAX];        /**< lower border for payload */
@@ -912,6 +930,7 @@ typedef struct sDltFile
 
     /* current loaded message */
     DltMessage msg;     /**< pointer to message */
+    DltMessageV2 msgv2; /**< pointer to v2 message */
 
 } DltFile;
 
@@ -1456,6 +1475,16 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_file_init(DltFile *file, int verbose);
+
+/**
+ * Initialise the structure used to access a DLT file.
+ * This function must be called before using further dlt_file functions.
+ * @param file pointer to structure of organising access to DLT file
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_file_init_v2(DltFile *file, int verbose);
+
 /**
  * Set a list to filters.
  * This function should be called before loading a DLT file, if filters should be used.
