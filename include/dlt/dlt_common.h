@@ -403,6 +403,7 @@
 #define STORAGE_HEADER_V2_FIXED_SIZE 14
 #define BASE_HEADER_V2_FIXED_SIZE 7
 #define EXTENDED_HEADER_V2_FIXED_SIZE 16
+#define DLT_SERVICE_GET_LOG_INFO_REQUEST_V2 11 
 
 /**
  * Macros for network trace
@@ -629,10 +630,10 @@ typedef struct sDltMessageV2
     uint8_t *headerbufferv2;       /**< buffer for loading complete header */
     uint8_t *databuffer;         /**< buffer for loading payload */
     int32_t databuffersize;
-    int32_t storageheadersizev2;
-    int32_t baseheadersizev2;
-    int32_t baseheaderextrasizev2;
-    int32_t extendedheadersizev2;
+    uint32_t storageheadersizev2;
+    uint32_t baseheadersizev2;
+    uint32_t baseheaderextrasizev2;
+    uint32_t extendedheadersizev2;
 
     /* header values of current loaded message */
     DltStorageHeaderV2 storageheaderv2;        /**< pointer to storage header of current loaded header */
@@ -678,6 +679,8 @@ typedef struct
 typedef struct
 {
     char context_id[DLT_ID_SIZE];
+    uint8_t context_id2len;
+    char *context_id2;
     int16_t log_level;
     int16_t trace_status;
     uint16_t len_context_description;
@@ -687,6 +690,8 @@ typedef struct
 typedef struct
 {
     char app_id[DLT_ID_SIZE];
+    uint8_t app_id2len;
+    char *app_id2;
     uint16_t count_context_ids;
     ContextIDsInfoType *context_id_info; /**< holds info about a specific con id */
     uint16_t len_app_description;

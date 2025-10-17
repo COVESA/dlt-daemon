@@ -4994,7 +4994,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                                (((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation)); //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
-                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT; /* To Update: Findout why extra 14 needed*/
+                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT; /* To Update: Findout why extra constant needed*/
 
     if (msg.headerbufferv2 != NULL) {
         free(msg.headerbufferv2);
@@ -5047,7 +5047,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     /* Fill base header conditional parameters */
     
-    if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_CONTROL_MSG)) {
+    if (msgcontent==DLT_VERBOSE_DATA_MSG) {
         /* To Update Handle all mtypes*/
         switch (mtype) {
         case DLT_TYPE_LOG:
