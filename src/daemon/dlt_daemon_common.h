@@ -289,8 +289,8 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
  * Find information about application/contexts for a specific ECU
  * for DLT V2
  * @param daemon pointer to dlt daemon structure
- * @param ecu pointer to node name
  * @param eculen length of ecu id
+ * @param ecu pointer to node name
  * @param verbose if set to true verbose information is printed out
  * @return pointer to user list, NULL otherwise
  */
@@ -372,6 +372,30 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                                                  int fd,
                                                  char *ecu,
                                                  int verbose);
+
+/**
+ * Add (new) application to internal application management for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param pid process id of user application
+ * @param description description of application
+ * @param fd file descriptor of application
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to add applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to added context, null pointer on error
+ */
+DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
+                                                 uint8_t apidlen,
+                                                 char *apid,
+                                                 pid_t pid,
+                                                 char *description,
+                                                 int fd,
+                                                 uint8_t eculen,
+                                                 char *ecu,
+                                                 int verbose);
+
 /**
  * Delete application from internal application management
  * @param daemon pointer to dlt daemon structure
@@ -396,6 +420,24 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
                                                   char *apid,
                                                   char *ecu,
                                                   int verbose);
+
+/**
+ * Find application with specific application id for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to application, null pointer on error or not found
+ */
+DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
+                                                  uint8_t apidlen,
+                                                  char *apid,
+                                                  uint8_t eculen,
+                                                  char *ecu,
+                                                  int verbose);
+
 /**
  * Load applications from file to internal context management
  * @param daemon pointer to dlt daemon structure
@@ -514,6 +556,28 @@ DltDaemonContext *dlt_daemon_context_find(DltDaemon *daemon,
                                           char *ctid,
                                           char *ecu,
                                           int verbose);
+
+/**
+ * Find context with specific application id and context id
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param ctidlen length of context id
+ * @param ctid pointer to context id
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to context, null pointer on error or not found
+ */
+DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
+                                          uint8_t apidlen,
+                                          char *apid,
+                                          uint8_t ctidlen,
+                                          char *ctid,
+                                          uint8_t eculen,
+                                          char *ecu,
+                                          int verbose);
+
 /**
  * Invalidate all contexts fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
