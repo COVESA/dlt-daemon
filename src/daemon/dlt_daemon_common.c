@@ -914,7 +914,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
 #endif
 
     if ((daemon == NULL) || (apidlen == 0) || (eculen == 0) ||
-        (apid == NULL) || (apid[0] == '\0') || (ecu == NULL))
+        (apid == NULL) || (ecu == NULL))
         return (DltDaemonApplication *)NULL;
 
     user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);

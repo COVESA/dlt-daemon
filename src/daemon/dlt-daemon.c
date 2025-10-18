@@ -1768,10 +1768,16 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Set ECU id of daemon */
-    if (daemon_local->flags.evalue[0])
+    if (daemon_local->flags.evalue[0]){
         dlt_set_id(daemon->ecuid, daemon_local->flags.evalue);
-    else
+        dlt_set_id_v2(&daemon->ecuid2,daemon_local->flags.evalue, DLT_ID_SIZE);
+        daemon->ecuid2len = DLT_ID_SIZE;
+    }
+    else{
         dlt_set_id(daemon->ecuid, DLT_DAEMON_ECU_ID);
+        dlt_set_id_v2(&daemon->ecuid2, DLT_DAEMON_ECU_ID, DLT_ID_SIZE);
+        daemon->ecuid2len = DLT_ID_SIZE;
+    }
 
     /* Set flag for optional sending of serial header */
     daemon->sendserialheader = daemon_local->flags.lflag;
@@ -3473,17 +3479,18 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         origin = rec->buf;
 
-            printf("\nRegister Application - Received Buffer: ");
+        printf("\nDEBUG: Register Application - Received Buffer: ");
 
-            for (int j = 0; j < 51; j++){
-                if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-                    printf("%c", rec->buf[j]);
-                }
-                else {
-                    printf(" 0x%02X", rec->buf[j]);
-                }
+        for (int j = 0; j < 51; j++){
+            if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+                printf("%c", rec->buf[j]);
             }
-            printf("\n");
+            else {
+                printf(" 0x%02X", rec->buf[j]);
+            }
+        }
+        printf("\n");
+        /* End of DEBUG:*/
 
         /* Adding temp variable to check the return value */
         int temp = 0;
@@ -3494,6 +3501,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                             usercontextSize,
                                             DLT_RCV_SKIP_HEADER);
 
+        // printf("DEBUG: Register Application - After Check and Get 1\n");
+
         if (temp < 0) {
             /* Not enough bytes received */
             return -1;
@@ -3502,8 +3511,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             to_remove = (uint32_t) temp;
         }
 
-        offset = 0;
+        // printf("DEBUG: Register Application - Before memcpy\n");
 
+        offset = 0;
         memcpy(&usercontext.apidlen, buffer, 1);
         offset += 1;
         usercontext.apid = (char *)malloc(usercontext.apidlen);
@@ -3519,6 +3529,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         offset = 0;
 
         len = usercontext.description_length;
+
+        // printf("DEBUG: Register Application - After memcpy len= %d\n", len);
 
         // if (len > DLT_DAEMON_DESCSIZE) {
         //     len = DLT_DAEMON_DESCSIZE;
@@ -3587,6 +3599,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                     application->apid,
                     application->pid,
                     application->application_description); //TBD: %.6s to use apidlen
+            printf("DEBUG: Before calling dlt_daemon_log_internal: %s\n", local_str);
             dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                                     DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
                                     daemon_local->flags.vflag);
@@ -3761,7 +3774,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         printf("\nRegister Context - Received Buffer: ");
 
-        for (int j = 0; j < 60; j++){
+        for (int j = 0; j < ((uint8_t)(rec->bytesRcvd)); j++){
             if (rec->buf[j] > 48 && rec->buf[j] < 122) {
                 printf("%c", rec->buf[j]);
             }
@@ -3916,6 +3929,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                     context->ctid,
                     context->apid,
                     context->context_description); //TBD: %.6s to use ctidlen , apidlen
+
+            
+            printf("DEBUG: Before calling dlt_daemon_log_internal: %s\n", local_str);
 
             if (verbose)
                 dlt_daemon_log_internal(daemon, daemon_local, local_str,
@@ -4478,22 +4494,23 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
 #else
-    /* TBD
+
+    printf("DEBUG: bytesRcvd = %d\n", rec->bytesRcvd);
+
     if (dlt_version == DLT_VERSION2) {
-        ret = dlt_message_read_v2(&(daemon_local->msg),
+        ret = dlt_message_read_v2(&(daemon_local->msgv2),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
     }
     else{
-    */
         ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
-    /* } */
+    }
     
 
     if (ret != DLT_MESSAGE_ERROR_OK) {

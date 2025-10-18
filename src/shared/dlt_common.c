@@ -1442,7 +1442,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P1 Plausibility check failed. Complete message size too short (%d)!\n",
+                 "Plausibility check failed. Complete message size too short (%d)!\n",
                  temp_datasize);
         return DLT_MESSAGE_ERROR_CONTENT;
     }
@@ -1571,7 +1571,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
     msg->baseheaderextrasizev2 = dlt_message_get_extraparameters_size_v2(msgcontent);
-    
+
     /* Fill extra parameters */
     if (dlt_message_get_extraparameters_from_recievedbuffer_v2(msg, buffer, msgcontent) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
@@ -1593,7 +1593,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P2 Plausibility check failed. Complete message size too short (%d)!\n",
+                 "Plausibility check failed. Complete message size too short (%d)!\n",
                  temp_datasize);
         return DLT_MESSAGE_ERROR_CONTENT;
     }
@@ -2325,7 +2325,7 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P3 Plausibility check failed. Complete message size too short! (%d)\n",
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
                  temp_datasize);
         return DLT_RETURN_ERROR;
     } else {
@@ -2423,7 +2423,7 @@ DltReturnValue dlt_file_read_header_raw(DltFile *file, int resync, int verbose)
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P4 Plausibility check failed. Complete message size too short! (%d)\n",
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
                  temp_datasize);
         return DLT_RETURN_ERROR;
     }
