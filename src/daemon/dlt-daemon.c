@@ -3768,7 +3768,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         origin = rec->buf;
 
         //TBD: Remove DEBUG prints
-        printf("\nRegister Context - Received Buffer: ");
+        printf("\nDEBUG: Register Context - Received Buffer: ");
 
         for (int j = 0; j < ((uint8_t)(rec->bytesRcvd)); j++){
             if (rec->buf[j] > 48 && rec->buf[j] < 122) {
@@ -3778,7 +3778,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 printf(" 0x%02X", rec->buf[j]);
             }
         }
-        printf("\n");
+        printf("\n\n"); // End of DEBUG:
 
         /* Adding temp variable to check the return value */
         int temp = 0;
@@ -3815,6 +3815,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         }
         memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
         memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
+        offset += usercontext.ctidlen;
         memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
         offset += sizeof(int32_t);
         memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
@@ -3913,7 +3914,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         if (context == 0) {
             dlt_vlog(LOG_WARNING,
                     "Can't add ContextID '%.6s' for ApID '%.6s'\n in %s",
-                    usercontext.ctid, usercontext.apid, __func__);
+                    usercontext.ctid, usercontext.apid, __func__); //TBD: Update %.6s to use apidlen, ctidlen
             return -1;
         }
         else {
@@ -3922,8 +3923,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             snprintf(local_str,
                     DLT_DAEMON_TEXTBUFSIZE,
                     "ContextID '%.6s' registered for ApID '%.6s', Description=%s",
-                    context->ctid,
-                    context->apid,
+                    context->ctid2,
+                    context->apid2,
                     context->context_description); //TBD: %.6s to use ctidlen , apidlen
             //TBD: Remove DEBUG prints
             // printf("DEBUG: register_context Before calling dlt_daemon_log_internal: %s\n", local_str);

@@ -962,6 +962,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
 
         application = &(user_list->applications[user_list->num_applications - 1]);
 
+        application->apid2 = NULL;
         dlt_set_id_v2(&(application->apid2), apid, apidlen);
         //TBD: Fix apid2len assignment to application structure
         // application.apid2len = apidlen;
@@ -1243,7 +1244,6 @@ DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
 
     application.apid2 = NULL;
     dlt_set_id_v2(&(application.apid2), apid, apidlen);
-    // printf("DEBUG: After dlt_set_id_v2 application.apid2 = %.*s\n", apidlen, application.apid2);
     //TBD: Fix apid2len assignment to application structure
     // application.apid2len = apidlen;
     return (DltDaemonApplication *)bsearch(&application,
@@ -1628,7 +1628,7 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
         return (DltDaemonContext *)NULL;
 
     /* Check if context [apid, ctid] is already available */
-    context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
+    context = dlt_daemon_context_find_v2(daemon, apidlen, apid, ctidlen, ctid, eculen, ecu, verbose);
 
     if (context == NULL) {
         user_list->num_contexts += 1;
@@ -1658,8 +1658,10 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
         context = &(user_list->contexts[user_list->num_contexts - 1]);
         memset(context, 0, sizeof(DltDaemonContext));
 
+        context->apid2 = NULL;
         dlt_set_id_v2(&(context->apid2), apid, apidlen);
         context->apid2len = apidlen;
+        context->ctid2 = NULL;
         dlt_set_id_v2(&(context->ctid2), ctid, ctidlen);
         context->ctid2len = ctidlen;
 
@@ -1711,7 +1713,7 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
     }
 #endif
 
-    if ((strncmp(daemon->ecuid, ecu, DLT_ID_SIZE) == 0) && (daemon->force_ll_ts)) {
+    if ((strncmp(daemon->ecuid2, ecu, eculen) == 0) && (daemon->force_ll_ts)) {
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
         if (log_level > daemon->default_log_level && settings == NULL)
 #else
@@ -1723,11 +1725,11 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
             trace_status = daemon->default_trace_status;
 
         dlt_vlog(LOG_NOTICE,
-            "Adapting ll_ts for context: %.4s:%.4s with %i %i\n",
+            "Adapting ll_ts for context: %.6s:%.6s with %i %i\n",
             apid,
             ctid,
             log_level,
-            trace_status);
+            trace_status); //TBD: adjust length %.6s according to apidlen and ctidlen
     }
 
     /* Store log level and trace status,
@@ -1755,10 +1757,10 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
         qsort(user_list->contexts,
               (size_t) user_list->num_contexts,
               sizeof(DltDaemonContext),
-              dlt_daemon_cmp_apid_ctid);
+              dlt_daemon_cmp_apid_ctid_v2);
 
         /* Find new position of context with apid, ctid */
-        context = dlt_daemon_context_find(daemon, apid, ctid, ecu, verbose);
+        context = dlt_daemon_context_find_v2(daemon, apidlen, apid, ctidlen, ctid, eculen, ecu, verbose);
     }
 
     return context;
@@ -1905,8 +1907,8 @@ DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((daemon == NULL) || (apid == NULL) || (apid[0] == '\0') ||
-        (ctid == NULL) || (ctid[0] == '\0') || (ecu == NULL))
+    if ((daemon == NULL) || (apidlen == 0) || (apid == NULL) ||
+        (ctidlen == 0) || (ctid == NULL) || (eculen == 0) || (ecu == NULL))
         return (DltDaemonContext *)NULL;
 
     user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
@@ -1915,14 +1917,16 @@ DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
         return (DltDaemonContext *)NULL;
 
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
-    if ((memcmp(apid, user_list->contexts[0].apid, apidlen) < 0) ||
+    if ((memcmp(apid, user_list->contexts[0].apid2, apidlen) < 0) ||
         (memcmp(apid,
-                user_list->contexts[user_list->num_contexts - 1].apid,
+                user_list->contexts[user_list->num_contexts - 1].apid2,
                 apidlen) > 0))
         return (DltDaemonContext *)NULL;
 
+    context.apid2 = NULL;
     dlt_set_id_v2(&(context.apid2), apid, apidlen);
     context.apid2len = apidlen;
+    context.ctid2 = NULL;
     dlt_set_id_v2(&(context.ctid2), ctid, ctidlen);
     context.ctid2len = ctidlen;
 
