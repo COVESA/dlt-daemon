@@ -963,6 +963,8 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
         application = &(user_list->applications[user_list->num_applications - 1]);
 
         dlt_set_id_v2(&(application->apid2), apid, apidlen);
+        //TBD: Fix apid2len assignment to application structure
+        // application.apid2len = apidlen;
         application->pid = 0;
         application->application_description = NULL;
         application->num_contexts = 0;
@@ -1053,7 +1055,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
         qsort(user_list->applications,
               (size_t) user_list->num_applications,
               sizeof(DltDaemonApplication),
-              dlt_daemon_cmp_apid);
+              dlt_daemon_cmp_apid_v2);
 
         /* Find new position of application with apid*/
         application = dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose);
@@ -1220,7 +1222,7 @@ DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon->user_list == NULL) ||
-        (apidlen == 0) || (apid == NULL) || (apid[0] == '\0') ||
+        (apidlen == 0) || (apid == NULL) ||
         (eculen == 0) || (ecu == NULL))
         return (DltDaemonApplication *)NULL;
 
@@ -1239,8 +1241,11 @@ DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
                 apidlen) > 0))
         return (DltDaemonApplication *)NULL;
 
+    application.apid2 = NULL;
     dlt_set_id_v2(&(application.apid2), apid, apidlen);
-    application.apid2len = apidlen;
+    // printf("DEBUG: After dlt_set_id_v2 application.apid2 = %.*s\n", apidlen, application.apid2);
+    //TBD: Fix apid2len assignment to application structure
+    // application.apid2len = apidlen;
     return (DltDaemonApplication *)bsearch(&application,
                                            user_list->applications,
                                            (size_t) user_list->num_applications,

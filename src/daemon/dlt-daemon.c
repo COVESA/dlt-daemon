@@ -3478,7 +3478,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         }
 
         origin = rec->buf;
-
+        //TBD: Remove DEBUG prints
         printf("\nDEBUG: Register Application - Received Buffer: ");
 
         for (int j = 0; j < 51; j++){
@@ -3501,8 +3501,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                             usercontextSize,
                                             DLT_RCV_SKIP_HEADER);
 
-        // printf("DEBUG: Register Application - After Check and Get 1\n");
-
         if (temp < 0) {
             /* Not enough bytes received */
             return -1;
@@ -3510,8 +3508,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         else {
             to_remove = (uint32_t) temp;
         }
-
-        // printf("DEBUG: Register Application - Before memcpy\n");
 
         offset = 0;
         memcpy(&usercontext.apidlen, buffer, 1);
@@ -3529,8 +3525,6 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         offset = 0;
 
         len = usercontext.description_length;
-
-        // printf("DEBUG: Register Application - After memcpy len= %d\n", len);
 
         // if (len > DLT_DAEMON_DESCSIZE) {
         //     len = DLT_DAEMON_DESCSIZE;
@@ -3596,10 +3590,11 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             snprintf(local_str,
                     DLT_DAEMON_TEXTBUFSIZE,
                     "ApplicationID '%.6s' registered for PID %d, Description=%s",
-                    application->apid,
+                    application->apid2,
                     application->pid,
                     application->application_description); //TBD: %.6s to use apidlen
-            printf("DEBUG: Before calling dlt_daemon_log_internal: %s\n", local_str);
+            //TBD: Remove DEBUG prints
+            // printf("DEBUG: register_application Before calling dlt_daemon_log_internal: %s\n", local_str);
             dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                                     DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
                                     daemon_local->flags.vflag);
@@ -3772,6 +3767,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         origin = rec->buf;
 
+        //TBD: Remove DEBUG prints
         printf("\nRegister Context - Received Buffer: ");
 
         for (int j = 0; j < ((uint8_t)(rec->bytesRcvd)); j++){
@@ -3929,10 +3925,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                     context->ctid,
                     context->apid,
                     context->context_description); //TBD: %.6s to use ctidlen , apidlen
-
-            
-            printf("DEBUG: Before calling dlt_daemon_log_internal: %s\n", local_str);
-
+            //TBD: Remove DEBUG prints
+            // printf("DEBUG: register_context Before calling dlt_daemon_log_internal: %s\n", local_str);
             if (verbose)
                 dlt_daemon_log_internal(daemon, daemon_local, local_str,
                                         DLT_LOG_INFO, DLT_DAEMON_APP_ID,
