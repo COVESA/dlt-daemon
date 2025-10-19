@@ -1515,6 +1515,9 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     if ((msg == NULL) || (buffer == NULL) || (length <= 0))
         return DLT_MESSAGE_ERROR_UNKNOWN;
+    
+    if (dlt_message_init_v2(msg, 0) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
 
     /* initialize resync_offset */
     msg->resync_offset = 0;
@@ -1566,7 +1569,8 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     /* Extract Base header */
     msg->baseheaderv2 = (DltBaseHeaderV2 *)buffer;
-    msgcontent = (msg->baseheaderv2->htyp2 && 0x03);
+    msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & 0x03);
+
     /* To Update: what is size of storage header, ecuid length*/
     msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
@@ -2062,13 +2066,8 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
                buffer + pntroffset,
                1);
 
-        memcpy(msg->extendedheaderv2.ecid,
-               buffer + pntroffset + 1,
-               msg->extendedheaderv2.ecidlen);
+        dlt_set_id_v2(&(msg->extendedheaderv2.ecid), buffer + pntroffset + 1, msg->extendedheaderv2.ecidlen);
 
-        memset(msg->extendedheaderv2.ecid + msg->extendedheaderv2.ecidlen,
-               '\0',
-               1);
         
         pntroffset = pntroffset + msg->extendedheaderv2.ecidlen + 1;
 
@@ -2079,28 +2078,14 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
         memcpy(&(msg->extendedheaderv2.apidlen),
                buffer + pntroffset,
                1);
-
-        memcpy(msg->extendedheaderv2.apid,
-               buffer + pntroffset + 1,
-               msg->extendedheaderv2.apidlen);
-
-        memset(msg->extendedheaderv2.apid + msg->extendedheaderv2.apidlen,
-               '\0',
-               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.apid), buffer + pntroffset + 1, msg->extendedheaderv2.apidlen);
 
         pntroffset = pntroffset + (msg->extendedheaderv2.apidlen) + 1;
 
         memcpy(&(msg->extendedheaderv2.ctidlen),
                buffer + pntroffset,
                1);
-
-        memcpy(msg->extendedheaderv2.ctid,
-               buffer + pntroffset + 1,
-               msg->extendedheaderv2.ctidlen);
-
-        memset(msg->extendedheaderv2.ctid + msg->extendedheaderv2.ctidlen,
-               '\0',
-               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.ctid), buffer + pntroffset + 1, msg->extendedheaderv2.ctidlen);
         
         pntroffset = pntroffset + msg->extendedheaderv2.ctidlen + 1;
     }
@@ -2117,14 +2102,7 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
         memcpy(&(msg->extendedheaderv2.finalen),
                buffer + pntroffset,
                1);
-
-        memcpy(msg->extendedheaderv2.fina,
-               buffer + pntroffset + 1,
-               msg->extendedheaderv2.finalen);
-
-        memset(msg->extendedheaderv2.fina + msg->extendedheaderv2.finalen,
-               '\0',
-               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.fina), buffer + pntroffset + 1, msg->extendedheaderv2.finalen);
         
         pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
 
@@ -2253,7 +2231,7 @@ DltReturnValue dlt_file_init_v2(DltFile *file, int verbose)
 
     file->error_messages = 0;
 
-    return dlt_message_init_v2(&(file->msg), verbose);
+    return dlt_message_init_v2(&(file->msgv2), verbose);
 
 }
 

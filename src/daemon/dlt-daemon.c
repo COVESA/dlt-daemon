@@ -2703,6 +2703,9 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         free(msg.databuffer);
     } else {
         DltMessage msg = { 0 };
+        if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
+            return DLT_RETURN_ERROR;
+
         static uint8_t uiMsgCount = 0;
         DltStandardHeaderExtra *pStandardExtra = NULL;
         uint32_t uiType;
@@ -3308,7 +3311,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t *)receiver->buf[3];
+    uint8_t dlt_version = (uint8_t *)receiver->buf[3]; //TBD: Write function to get version
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     /* Count up number of received bytes from FIFO */
@@ -3479,17 +3482,20 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         origin = rec->buf;
         //TBD: Remove DEBUG prints
-        printf("\nDEBUG: Register Application - Received Buffer: ");
+        // printf("\nDEBUG: Register Application - Received Buffer: ");
 
-        for (int j = 0; j < 51; j++){
-            if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-                printf("%c", rec->buf[j]);
-            }
-            else {
-                printf(" 0x%02X", rec->buf[j]);
-            }
-        }
-        printf("\n");
+        // for (int j = 0; j < 51; j++){
+        //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+        //         printf("%c", rec->buf[j]);
+        //     }
+        //     else {
+        //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
+        //     }
+        // }
+        // printf("\nBuffer in Hex: \n");
+        // for (int k = 0; k < 51; k++){
+        //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
+        // }
         /* End of DEBUG:*/
 
         /* Adding temp variable to check the return value */
@@ -3768,17 +3774,21 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         origin = rec->buf;
 
         //TBD: Remove DEBUG prints
-        printf("\nDEBUG: Register Context - Received Buffer: ");
+        // printf("\nDEBUG: Register Context - Received Buffer: ");
 
-        for (int j = 0; j < ((uint8_t)(rec->bytesRcvd)); j++){
-            if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-                printf("%c", rec->buf[j]);
-            }
-            else {
-                printf(" 0x%02X", rec->buf[j]);
-            }
-        }
-        printf("\n\n"); // End of DEBUG:
+        // for (int j = 0; j < ((uint8_t)rec->bytesRcvd); j++){
+        //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+        //         printf("%c", rec->buf[j]);
+        //     }
+        //     else {
+        //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
+        //     }
+        // }
+        // printf("\nBuffer in Hex: \n");
+        // for (int k = 0; k < ((uint8_t)rec->bytesRcvd); k++){
+        //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
+        // }
+        // printf("\n\n"); // End of DEBUG:
 
         /* Adding temp variable to check the return value */
         int temp = 0;
@@ -4417,6 +4427,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
+    dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
+
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -4454,9 +4466,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         ret = dlt_message_read(&(daemon_local->msg),
                                daemon_local->recv_buf_shm, size, 0, verbose);
 
-        uint8_t header_first_byte = ((uint8_t *)daemon_local->recv_buf_shm)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
-
         if (DLT_MESSAGE_ERROR_OK != ret) {
             dlt_shm_remove(&(daemon_local->dlt_shm));
             dlt_log(LOG_WARNING, "failed to read messages from shm.\n");
@@ -4490,7 +4499,21 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
 #else
 
-    printf("DEBUG: bytesRcvd = %d\n", rec->bytesRcvd);
+    //TBD: Remove DEBUG prints
+    // printf("\nDEBUG: process_user_message_log - Received Buffer: \n");
+    // for (int j = 0; j < ((uint8_t)rec->bytesRcvd); j++){
+    //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
+    //         printf("%c", rec->buf[j]);
+    //     }
+    //     else {
+    //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
+    //     }
+    // }
+    // printf("\nBuffer in Hex: \n");
+    // for (int k = 0; k < ((uint8_t)rec->bytesRcvd); k++){
+    //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
+    // }
+    // printf("\n\n"); // End of DEBUG:
 
     if (dlt_version == DLT_VERSION2) {
         ret = dlt_message_read_v2(&(daemon_local->msgv2),
@@ -4506,7 +4529,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                            0,
                            verbose);
     }
-    
 
     if (ret != DLT_MESSAGE_ERROR_OK) {
         if (ret != DLT_MESSAGE_ERROR_SIZE)
