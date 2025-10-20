@@ -3302,7 +3302,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t *)receiver->buf[3];
+    uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     /* Count up number of received bytes from FIFO */
@@ -3449,7 +3449,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    uint8_t dlt_version = (uint8_t *)rec->buf[3];
+    uint8_t dlt_version = (uint8_t)rec->buf[3];
 
     if(dlt_version == 2) {
         DltUserControlMsgRegisterApplicationV2 usercontext;
@@ -3457,7 +3457,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         int usercontextSize;
         uint8_t *buffer;
 
-        usercontext.apidlen = (uint8_t *)rec->buf[8]; // TBD: write function to get apidlen apidlen is at offset 8
+        usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen apidlen is at offset 8
         usercontextSize = sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t);
 
         buffer = (uint8_t*)malloc(usercontextSize);
@@ -3725,8 +3725,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
     // uint8_t dlt_version = (uint8_t *)rec->buf[3];
 
-    usercontext.apidlen = (uint8_t *)rec->buf[8];
-    usercontext.ctidlen = (uint8_t *)rec->buf[9 + usercontext.apidlen];
+    usercontext.apidlen = (uint8_t)rec->buf[8];
+    usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen];
 
     usercontextSize = sizeof(uint8_t) + usercontext.apidlen + 
                       sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
@@ -3905,7 +3905,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     /* Create automatic get log info response for registered context */
     if (daemon_local->flags.rflag) {
         /* Prepare request for get log info with one application and one context */
-        if (dlt_message_init(&msg, verbose) == -1) {
+        if (dlt_message_init_v2(&msg, verbose) == -1) {
             dlt_log(LOG_WARNING, "Can't initialize message");
             return -1;
         }

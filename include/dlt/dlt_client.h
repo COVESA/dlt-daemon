@@ -157,6 +157,15 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose);
 DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose);
 
 /**
+ * Main Loop of dlt client application
+ * @param client pointer to dlt client structure
+ * @param data pointer to data to be provided to the main loop
+ * @param verbose if set to true verbose information is printed out.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbose);
+
+/**
  * Send a message to the daemon through the socket.
  * @param client pointer to dlt client structure.
  * @param msg The message to be send in DLT format.
@@ -467,11 +476,27 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                                                        char *resp_text);
 
 /**
+ * Parse GET_LOG_INFO response text
+ * @param resp      GET_LOG_INFO response
+ * @param resp_text response text represented by ASCII
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_parse_get_log_info_resp_text_v2(DltServiceGetLogInfoResponse *resp,
+                                                       char *resp_text);
+
+/**
  * Free memory allocated for get log info message
  * @param resp response
  * @return 0 on success, -1 otherwise
  */
 int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp);
+
+/**
+ * Free memory allocated for get log info message
+ * @param resp response
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_client_cleanup_get_log_info_v2(DltServiceGetLogInfoResponse *resp);
 #   ifdef __cplusplus
 }
 #   endif

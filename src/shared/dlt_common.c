@@ -2253,7 +2253,7 @@ DltReturnValue dlt_file_init_v2(DltFile *file, int verbose)
 
     file->error_messages = 0;
 
-    return dlt_message_init_v2(&(file->msg), verbose);
+    return dlt_message_init_v2(&(file->msgv2), verbose);
 
 }
 
@@ -5686,6 +5686,25 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
     *rp_count += 3;
 
     return (signed char)strtol(num_work, &endptr, 16);
+}
+
+uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char *rp, int *rp_count)
+{
+    char num_work[3] = { 0 };
+    char *endptr;
+
+    if ((rp == NULL) || (rp_count == NULL))
+        return -1;
+
+    /* ------------------------------------------------------
+     *  from: [89 ] -> to: ['0x'89\0] -> to num
+     *  ------------------------------------------------------ */
+    num_work[0] = *(rp + *rp_count + 0);
+    num_work[1] = *(rp + *rp_count + 1);
+    num_work[2] = 0;
+    *rp_count += 3;
+
+    return (uint8_t)strtol(num_work, &endptr, 16);
 }
 
 void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len)

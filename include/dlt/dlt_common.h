@@ -2054,6 +2054,15 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
  */
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
 
+/**
+ * Convert get log info from ASCII to uint8_t
+ *
+ * @param rp        char
+ * @param rp_count  int
+ * @return length
+ */
+uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char *rp, int *rp_count);
+
 
 /**
  * Convert get log info from ASCII to string (with '\0' termination)
