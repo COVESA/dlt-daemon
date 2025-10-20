@@ -5190,14 +5190,18 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     /* To Update: Free mallocs of extended header*/
 
-    len = (int32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
+    len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
+
+    // printf("DEBUG: len = %u\n", len);
 
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         return DLT_RETURN_ERROR;
     }
 
-    msg.baseheaderv2->len = DLT_HTOBE_16(len);
+    // msg.baseheaderv2->len = DLT_HTOBE_16(len);
+    msg.baseheaderv2->len = (uint16_t) len;
+    // printf("DEBUG: msg.baseheaderv2->len = %u\n", msg.baseheaderv2->len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
@@ -5708,6 +5712,8 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
                               usercontextSize,
                               log->context_description,
                               usercontext.description_length);
+    uint8_t temp_len = usercontextSize + (uint8_t)(usercontext.description_length);
+    // printf("DEBUG: Total Size: %d\n", temp_len);
 
     /* store message in ringbuffer, if an error has occured */
     if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 == NULL))
