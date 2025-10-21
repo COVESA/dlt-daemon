@@ -5712,8 +5712,6 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
                               usercontextSize,
                               log->context_description,
                               usercontext.description_length);
-    uint8_t temp_len = usercontextSize + (uint8_t)(usercontext.description_length);
-    // printf("DEBUG: Total Size: %d\n", temp_len);
 
     /* store message in ringbuffer, if an error has occured */
     if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 == NULL))

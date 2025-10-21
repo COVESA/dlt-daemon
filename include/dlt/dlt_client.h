@@ -477,11 +477,27 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                                                        char *resp_text);
 
 /**
+ * Parse GET_LOG_INFO response text
+ * @param resp      GET_LOG_INFO response
+ * @param resp_text response text represented by ASCII
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_parse_get_log_info_resp_text_v2(DltServiceGetLogInfoResponse *resp,
+                                                       char *resp_text);
+
+/**
  * Free memory allocated for get log info message
  * @param resp response
  * @return 0 on success, -1 otherwise
  */
 int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp);
+
+/**
+ * Free memory allocated for get log info message
+ * @param resp response
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_client_cleanup_get_log_info_v2(DltServiceGetLogInfoResponse *resp);
 #   ifdef __cplusplus
 }
 #   endif

@@ -3348,7 +3348,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t *)receiver->buf[3]; //TBD: Write function to get version
+    uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     /* Count up number of received bytes from FIFO */
@@ -3496,7 +3496,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
+    uint8_t dlt_version = (uint8_t)rec->buf[3];
 
     if(dlt_version == DLT_VERSION2) {
         DltUserControlMsgRegisterApplicationV2 usercontext;

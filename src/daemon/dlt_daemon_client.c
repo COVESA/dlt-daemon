@@ -558,6 +558,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
+    if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
         return DLT_RETURN_ERROR;
     }
 
@@ -1471,7 +1472,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     req = (DltServiceGetLogInfoRequestV2 *)malloc(sizeof(DltServiceGetLogInfoRequestV2));
 
     if (req == NULL)
-        return DLT_RETURN_ERROR;
+        return;
 
     /* prepare pointer to message request */
     req = (DltServiceGetLogInfoRequestV2 *)(msg->databuffer);
