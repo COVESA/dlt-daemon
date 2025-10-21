@@ -666,6 +666,33 @@ static void dlt_daemon_application_reset_user_handle(DltDaemon *daemon,
     application->owns_user_handle = false;
 }
 
+static void dlt_daemon_application_reset_user_handle_v2(DltDaemon *daemon,
+                                                     DltDaemonApplication *application,
+                                                     int verbose)
+{
+    DltDaemonRegisteredUsers *user_list;
+    DltDaemonContext *context;
+    int i;
+
+    if (application->user_handle == DLT_FD_INIT)
+        return;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon,  daemon->ecuid2len, daemon->ecuid2, verbose);
+    if (user_list != NULL) {
+        for (i = 0; i < user_list->num_contexts; i++) {
+            context = &user_list->contexts[i];
+            if (context->user_handle == application->user_handle)
+                context->user_handle = DLT_FD_INIT;
+        }
+    }
+
+    if (application->owns_user_handle)
+        close(application->user_handle);
+
+    application->user_handle = DLT_FD_INIT;
+    application->owns_user_handle = false;
+}
+
 DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                                                  char *apid,
                                                  pid_t pid,
@@ -1169,6 +1196,61 @@ int dlt_daemon_application_del(DltDaemon *daemon,
         memset(&(user_list->applications[user_list->num_applications - 1]),
                0,
                sizeof(DltDaemonApplication));
+
+        user_list->num_applications--;
+    }
+
+    return 0;
+}
+
+int dlt_daemon_application_del_v2(DltDaemon *daemon,
+                               DltDaemonApplication *application,
+                               uint8_t eculen,
+                               char *ecu,
+                               int verbose)
+{
+    int pos;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (application == NULL) || (ecu == NULL))
+        return -1;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
+
+    if (user_list == NULL)
+        return -1;
+
+    if (user_list->num_applications > 0) {
+        dlt_daemon_application_reset_user_handle_v2(daemon, application, verbose);
+
+        /* Free description of application to be deleted */
+        if (application->application_description) {
+            free(application->application_description);
+            application->application_description = NULL;
+        }
+
+#if DLT_TRACE_LOAD_CTRL_ENABLE
+        if (application->trace_load_settings != NULL) {
+            free(application->trace_load_settings);
+            application->trace_load_settings = NULL;
+            application->trace_load_settings_count = 0;
+        }
+#endif
+        pos = (int) (application - (user_list->applications));
+
+        /* move all applications above pos to pos */
+        memmove(&(user_list->applications[pos]),
+                &(user_list->applications[pos + 1]),
+                sizeof(DltDaemonApplication) * ((user_list->num_applications - 1) - pos)); 
+        //TBD: Check usage of sizeof(DltDaemonApplication) since added new ptr members
+
+        /* Clear last application */
+        memset(&(user_list->applications[user_list->num_applications - 1]),
+               0,
+               sizeof(DltDaemonApplication));
+        //TBD: Check usage of sizeof(DltDaemonApplication) since added new ptr members
 
         user_list->num_applications--;
     }
