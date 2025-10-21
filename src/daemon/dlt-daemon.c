@@ -3588,7 +3588,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                 verbose);
 
         /* send log state to new application */
-        dlt_daemon_user_send_log_state(daemon, application, verbose);
+        dlt_daemon_user_send_log_state_v2(daemon, application, verbose);
 
         if (application == NULL) {
             dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.6s' for PID %d\n",
