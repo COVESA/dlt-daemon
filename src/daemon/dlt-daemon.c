@@ -4056,7 +4056,6 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             //TBD
 
             dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
-
             dlt_message_free_v2(&msg, verbose);
         }
 

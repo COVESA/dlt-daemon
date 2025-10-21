@@ -568,11 +568,13 @@ DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int v
 
         printf(" %s", str1);
 
-        if (strcmp(str1, "----") == 0)
+        if (strcmp(str1, "----") == 0) {
             apidlen = 0;
-        else
+        }
+        else {
             apidlen = strlen(str1);
-            dlt_set_id_v2(apid, str1, apidlen);
+            dlt_set_id_v2(&apid, str1, apidlen);
+        }
 
         str1[0] = 0;
 
@@ -584,18 +586,20 @@ DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int v
 
         printf(" %s\r\n", str1);
 
-        if (strcmp(str1, "----") == 0)
+        if (strcmp(str1, "----") == 0) {
             ctidlen = 0;
-        else
+        }else {
             ctidlen = strlen(str1);
-            dlt_set_id_v2(ctid, str1, ctidlen);
+            dlt_set_id_v2(&ctid, str1, ctidlen);
+        }
 
-        if (filter->counter < DLT_FILTER_MAX)
+        if (filter->counter < DLT_FILTER_MAX) {
             dlt_filter_add(filter, apid, ctid, 0, 0, INT32_MAX, verbose);
-        else
+        }else {
             dlt_vlog(LOG_WARNING,
                      "Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
                      DLT_FILTER_MAX);
+        }
     }
 
     fclose(handle);

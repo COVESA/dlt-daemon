@@ -1316,7 +1316,9 @@ DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
 
     if ((user_list == NULL) || (user_list->num_applications == 0))
         return (DltDaemonApplication *)NULL;
-
+printf("apid:%s\n",apid);
+printf("apid2:%s\n",user_list->applications[0].apid2);
+printf("apidlen:%u\n",apidlen);
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
     if ((memcmp(apid, user_list->applications[0].apid2, apidlen) < 0) ||
         (memcmp(apid,

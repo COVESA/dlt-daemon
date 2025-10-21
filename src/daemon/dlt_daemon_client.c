@@ -554,10 +554,9 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 
     msg->headerbufferv2 = (uint8_t*)malloc(msg->headersizev2);
 
-    if (dlt_set_storageheader_v2(msg->storageheaderv2, daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader_v2(&(msg->storageheaderv2), daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
         return DLT_DAEMON_ERROR_UNKNOWN;
 
-    if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
     if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
         return DLT_RETURN_ERROR;
     }
@@ -1506,10 +1505,8 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                                                   daemon->ecuid2len,
                                                   daemon->ecuid2,
                                                   verbose);
-
         if (application) {
             num_applications = 1;
-
             if (req->ctidlen != 0) {
                 context = dlt_daemon_context_find_v2(daemon,
                                                   req->ctidlen,
@@ -1536,7 +1533,6 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         num_applications = user_list->num_applications;
         num_contexts = user_list->num_contexts;
     }
-
     /* prepare payload of data */
 
     /* Calculate maximum size for a response */
@@ -1804,7 +1800,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     dlt_set_id((char *)(resp.databuffer + offset), DLT_DAEMON_REMO_STRING);
 
     /* send message */
-    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &resp, "", "", verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &resp, NULL, NULL, verbose);
 
     free(req);
 
@@ -2069,7 +2065,7 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
     dlt_set_id(resp->comid, comid);
 
     /* send message */
-    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose)) {
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
         dlt_message_free_v2(&msg, 0);
         return -1;
     }
@@ -3488,4 +3484,4 @@ void dlt_daemon_control_passive_node_connect_status(int sock,
                                            verbose);
     /* free message */
     dlt_message_free(&msg, verbose);
-}
+};
