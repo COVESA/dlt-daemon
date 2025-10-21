@@ -111,7 +111,7 @@ void signal_handler(int signal)
 }
 
 /* Function prototypes */
-int dlt_receive_message_callback(DltMessage *message, void *data);
+int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data);
 
 typedef struct {
     int aflag;
@@ -132,7 +132,8 @@ typedef struct {
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
     int64_t climit;
-    char ecuid[4];
+    uint8_t ecuidlen;
+    char *ecuid;
     int ohandle;
     int64_t totalbytes; /* bytes written so far into the output file, used to check the file size limit */
     int part_num;    /* number of current output file if limit was exceeded */
@@ -213,24 +214,8 @@ int64_t convert_arg_to_byte_size(char *arg)
 
     result = factor * mult;
 
-    /* The result be at least the size of one message
-     * One message consists of its header + user data:
-     */
-    DltMessage msg;
-    int64_t min_size = sizeof(msg.headerbuffer);
-    min_size += 2048 /* DLT_USER_BUF_MAX_SIZE */;
-
-    if (min_size > result) {
-        dlt_vlog(LOG_ERR,
-                 "ERROR: Specified limit: %" PRId64 "is smaller than a the size of a single message: %" PRId64 "!\n",
-                 result,
-                 min_size);
-        result = -2;
-    }
-
     return result;
 }
-
 
 /*
  * open output file
@@ -499,7 +484,7 @@ int main(int argc, char *argv[])
     dlt_client_init(&dltclient, dltdata.vflag);
 
     /* Register callback to be called when message was received */
-    dlt_client_register_message_callback(dlt_receive_message_callback);
+    dlt_client_register_message_callback_v2(dlt_receive_message_callback_v2);
 
     /* Setup DLT Client structure */
     if(dltdata.uflag) {
@@ -574,14 +559,14 @@ int main(int argc, char *argv[])
     dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
     /* initialise structure to use DLT file */
-    dlt_file_init(&(dltdata.file), dltdata.vflag);
+    dlt_file_init_v2(&(dltdata.file), dltdata.vflag);
 
     /* first parse filter file if filter parameter is used */
     dlt_filter_init(&(dltdata.filter), dltdata.vflag);
 
     if (dltdata.fvalue) {
-        if (dlt_filter_load(&(dltdata.filter), dltdata.fvalue, dltdata.vflag) < DLT_RETURN_OK) {
-            dlt_file_free(&(dltdata.file), dltdata.vflag);
+        if (dlt_filter_load_v2(&(dltdata.filter), dltdata.fvalue, dltdata.vflag) < DLT_RETURN_OK) {
+            dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
             return -1;
         }
 
@@ -591,6 +576,7 @@ int main(int argc, char *argv[])
     #ifdef EXTENDED_FILTERING
 
     if (dltdata.jvalue) {
+        /* To Update: dlt_json_filter_load_v2 */
         if (dlt_json_filter_load(&(dltdata.filter), dltdata.jvalue, dltdata.vflag) < DLT_RETURN_OK) {
             dlt_file_free(&(dltdata.file), dltdata.vflag);
             return -1;
@@ -613,23 +599,27 @@ int main(int argc, char *argv[])
         }
 
         if (dltdata.ohandle == -1) {
-            dlt_file_free(&(dltdata.file), dltdata.vflag);
+            dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
             fprintf(stderr, "ERROR: Output file %s cannot be opened!\n", dltdata.ovalue);
             return -1;
         }
     }
 
     if (dltdata.evalue)
-        dlt_set_id(dltdata.ecuid, dltdata.evalue);
+        dltdata.ecuidlen = strlen(dltdata.evalue);
+        dltdata.ecuid = NULL;
+        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
     else{
-        dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);}
+        dltdata.ecuidlen = strlen(DLT_RECEIVE_ECU_ID);
+        dltdata.ecuid = NULL;
+        dlt_set_id_v2(&(dltdata.ecuid), DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);}
 
     while (true) {
         /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
             /* Dlt Client Main Loop */
-            dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+            dlt_client_main_loop_v2(&dltclient, &dltdata, dltdata.vflag);
 
             if (dltdata.rflag == 1 && sig_close_recv == false) {
                 dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
@@ -650,17 +640,18 @@ int main(int argc, char *argv[])
 
     free(dltdata.ovaluebase);
 
-    dlt_file_free(&(dltdata.file), dltdata.vflag);
+    dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
 
     dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 
     return 0;
 }
 
-int dlt_receive_message_callback(DltMessage *message, void *data)
+int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
 {
     DltReceiveData *dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
+    uint8_t *temp_buffer;
 
     struct iovec iov[2];
     int bytes_written;
@@ -671,49 +662,60 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
     dltdata = (DltReceiveData *)data;
 
     /* prepare storage header */
-    if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-        dlt_set_storageheader(message->storageheader, message->headerextra.ecu);
+    if (DLT_IS_HTYP2_WEID(message->baseheaderv2->htyp2))
+        dlt_set_storageheader_v2(&(message->storageheaderv2), message->extendedheaderv2.ecidlen, message->extendedheaderv2.ecid);
     else
-        dlt_set_storageheader(message->storageheader, dltdata->ecuid);
+        dlt_set_storageheader_v2(&(message->storageheaderv2), dltdata->ecuidlen, dltdata->ecuid);
+
+        message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
+
+        /* Add Storage Header to Header Buffer and update header size*/
+        uint8_t tempbuffer[message->headersizev2 + message->storageheadersizev2];
+        memcpy(temp_buffer, &(message->storageheaderv2), message->storageheadersizev2);
+        memcpy(temp_buffer + message->storageheadersizev2, message->headerbufferv2, message->headersizev2);
+        free(message->headerbufferv2);
+        message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+        message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
+        memcpy(message->headerbufferv2, temp_buffer, message->headersizev2);
 
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
-        (dlt_message_filter_check(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
+        (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag) {
-            dlt_message_print_hex(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+            dlt_message_print_hex_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         }
         else if (dltdata->aflag)
         {
 
-            dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+            dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
             printf("%s ", text);
 
-            dlt_message_payload(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
+            dlt_message_payload_v2(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
 
             printf("[%s]\n", text);
         }
         else if (dltdata->mflag)
         {
-            dlt_message_print_mixed_plain(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+            dlt_message_print_mixed_plain_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         }
         else if (dltdata->sflag)
         {
 
-            dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+            dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
             printf("%s \n", text);
         }
 
         /* if file output enabled write message */
         if (dltdata->ovalue) {
-            iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = (uint32_t)message->headersize;
+            iov[0].iov_base = message->headerbufferv2;
+            iov[0].iov_len = (uint32_t)message->headersizev2;
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = (uint32_t)message->datasize;
 
             if (dltdata->climit > -1) {
-                uint32_t bytes_to_write = message->headersize + message->datasize;
+                uint32_t bytes_to_write = message->headersizev2 + message->datasize;
 
                 if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
                     dlt_receive_close_output_file(dltdata);

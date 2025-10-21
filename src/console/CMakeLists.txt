@@ -21,6 +21,7 @@ set(TARGET_LIST "")
 
 if (WITH_DLT_CONSOLE_RECEIVE)
     list(APPEND TARGET_LIST dlt-receive)
+    list(APPEND TARGET_LIST dlt-receive-v2)
 endif()
 
 if (WITH_DLT_CONSOLE_CONVERT)

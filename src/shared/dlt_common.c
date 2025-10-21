@@ -514,6 +514,78 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int verbose)
+{
+    if ((filter == NULL) || (filename == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    FILE *handle;
+    char str1[DLT_COMMON_BUFFER_LENGTH + 1];
+    char *apid = NULL; 
+    char *ctid = NULL;
+    uint8_t apidlen, ctidlen;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    handle = fopen(filename, "r");
+
+    if (handle == NULL) {
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
+        return DLT_RETURN_ERROR;
+    }
+
+    #define FORMAT_STRING_(x) "%" #x "s"
+    #define FORMAT_STRING(x) FORMAT_STRING_(x)
+
+    /* Reset filters */
+    filter->counter = 0;
+
+    while (!feof(handle)) {
+        str1[0] = 0;
+
+        if (fscanf(handle, FORMAT_STRING(DLT_COMMON_BUFFER_LENGTH), str1) != 1)
+            break;
+
+        if (str1[0] == 0)
+            break;
+
+        printf(" %s", str1);
+
+        if (strcmp(str1, "----") == 0)
+            apidlen = 0;
+        else
+            apidlen = strlen(str1);
+            dlt_set_id_v2(apid, str1, apidlen);
+
+        str1[0] = 0;
+
+        if (fscanf(handle, FORMAT_STRING(DLT_COMMON_BUFFER_LENGTH), str1) != 1)
+            break;
+
+        if (str1[0] == 0)
+            break;
+
+        printf(" %s\r\n", str1);
+
+        if (strcmp(str1, "----") == 0)
+            ctidlen = 0;
+        else
+            ctidlen = strlen(str1);
+            dlt_set_id_v2(ctid, str1, ctidlen);
+
+        if (filter->counter < DLT_FILTER_MAX)
+            dlt_filter_add(filter, apid, ctid, 0, 0, INT32_MAX, verbose);
+        else
+            dlt_vlog(LOG_WARNING,
+                     "Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
+                     DLT_FILTER_MAX);
+    }
+
+    fclose(handle);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
@@ -546,6 +618,47 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
         }
         else {
             dlt_print_id(buf, filter->ctid[num]);
+            fprintf(handle, "%s ", buf);
+        }
+    }
+
+    fclose(handle);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int verbose)
+{
+    if ((filter == NULL) || (filename == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    FILE *handle;
+    int num;
+    char buf[DLT_COMMON_BUFFER_LENGTH];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    handle = fopen(filename, "w");
+
+    if (handle == NULL) {
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
+        return DLT_RETURN_ERROR;
+    }
+
+    for (num = 0; num < filter->counter; num++) {
+        if (filter->apid2[num] == NULL) {
+            fprintf(handle, "---- ");
+        }
+        else {
+            memcpy(buf, filter->apid2[num], filter->apid2len[num]);
+            fprintf(handle, "%s ", buf);
+        }
+
+        if (filter->ctid2[num] == NULL) {
+            fprintf(handle, "---- ");
+        }
+        else {
+            memcpy(buf, filter->ctid2[num], filter->ctid2len[num]);
             fprintf(handle, "%s ", buf);
         }
     }
@@ -591,6 +704,40 @@ int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const
     return -1; /* Not found */
 }
 
+int dlt_filter_find_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                    const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    int num;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL))
+        return -1;
+
+    for (num = 0; num < filter->counter; num++)
+        if (memcmp(filter->apid2[num], apid, filter->apid2len[num]) == 0) {
+            /* apid matches, now check for ctid */
+            if (ctid == NULL) {
+                /* check if empty ctid matches */
+
+                if (filter->ctid2[num] == NULL)
+                    if ((filter->log_level[num] == log_level) || (filter->log_level[num] == 0))
+                        if (filter->payload_min[num] <= payload_min)
+                            if (filter->payload_max[num] >= payload_max)
+                                return num;
+            }
+            else if (memcmp(filter->ctid2[num], ctid, filter->ctid2len[num]) == 0)
+            {
+                if ((filter->log_level[num] == log_level) || (filter->log_level[num] == 0))
+                    if (filter->payload_min[num] <= payload_min)
+                        if (filter->payload_max[num] >= payload_max)
+                            return num;
+            }
+        }
+
+    return -1; /* Not found */
+}
+
 DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                               const int32_t payload_min, const int32_t payload_max, int verbose)
 {
@@ -611,6 +758,42 @@ DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *c
         /* filter not found, so add it to filter array */
         dlt_set_id(filter->apid[filter->counter], apid);
         dlt_set_id(filter->ctid[filter->counter], (ctid ? ctid : ""));
+        filter->log_level[filter->counter] = log_level;
+        filter->payload_min[filter->counter] = payload_min;
+        filter->payload_max[filter->counter] = payload_max;
+
+        filter->counter++;
+
+        return DLT_RETURN_OK;
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
+DltReturnValue dlt_filter_add_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                              const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (filter->counter >= DLT_FILTER_MAX) {
+        dlt_vlog(LOG_WARNING,
+                 "Maximum number (%d) of allowed filters reached, ignoring filter!\n",
+                 DLT_FILTER_MAX);
+        return DLT_RETURN_ERROR;
+    }
+
+    /* add each filter (apid, ctid, log_level, payload_min, payload_max) only once to filter array */
+    if (dlt_filter_find(filter, apid, ctid, log_level, payload_min, payload_max, verbose) < 0) {
+        /* filter not found, so add it to filter array */
+        filter->apid2[filter->counter] = NULL;
+        filter->ctid2[filter->counter] = NULL;
+        filter->apid2len[filter->counter] = strlen(apid);
+        dlt_set_id_v2(&(filter->apid2[filter->counter]), apid, filter->apid2len[filter->counter]);
+        filter->ctid2len[filter->counter] = strlen(ctid);
+        dlt_set_id_v2(&(filter->ctid2[filter->counter]), (ctid ? ctid : NULL), filter->ctid2len[filter->counter]);
         filter->log_level[filter->counter] = log_level;
         filter->payload_min[filter->counter] = payload_min;
         filter->payload_max[filter->counter] = payload_max;
@@ -672,6 +855,70 @@ DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char
 
     return DLT_RETURN_ERROR;
 }
+
+DltReturnValue dlt_filter_delete_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                 const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    int j, k;
+    int found = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL) || (ctid == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (filter->counter > 0) {
+        /* Get first occurence of apid and ctid in filter array */
+        for (j = 0; j < filter->counter; j++)
+            if ((memcmp(filter->apid2[j], apid, filter->apid2len[j]) == 0) &&
+                (memcmp(filter->ctid2[j], ctid, filter->ctid2len[j]) == 0) &&
+                ((filter->log_level[j] == log_level) || (filter->log_level[j] == 0)) &&
+                (filter->payload_min[j] == payload_min) &&
+                (filter->payload_max[j] == payload_max)
+                ) {
+                found = 1;
+                break;
+            }
+
+        if (found) {
+            /* j is index */
+            /* Copy from j+1 til end to j til end-1 */
+            
+            filter->apid2len[j] = 0;
+            free(filter->apid2[j]);
+            filter->apid2[j] = NULL;
+            filter->ctid2len[j] = 0;
+            free(filter->ctid2[j]);
+            filter->ctid2[j] = NULL;
+            filter->log_level[j] = 0;
+            filter->payload_min[j] = 0;
+            filter->payload_max[j] = INT32_MAX;
+
+            for (k = j; k < (filter->counter - 1); k++) {
+                filter->apid2len[k] = filter->apid2len[k + 1];
+                dlt_set_id_v2(&(filter->apid2[k]), filter->apid2[k + 1], filter->apid2len[k + 1]);
+                filter->ctid2len[k] = filter->ctid2len[k + 1];
+                dlt_set_id_v2(&(filter->ctid2[k]), filter->ctid2[k + 1], filter->ctid2len[k + 1]);
+                filter->log_level[k] = filter->log_level[k + 1];
+                filter->payload_min[k] = filter->payload_min[k + 1];
+                filter->payload_max[k] = filter->payload_max[k + 1];
+            }
+
+            filter->apid2len[filter->counter] = 0;
+            free(filter->apid2[filter->counter]);
+            filter->apid2[filter->counter] = NULL;
+            filter->ctid2len[filter->counter] = 0;
+            free(filter->ctid2[filter->counter]);
+            filter->ctid2[filter->counter] = NULL;
+
+            filter->counter--;
+            return DLT_RETURN_OK;
+        }
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
 
 DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
 {
@@ -1364,6 +1611,37 @@ DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int 
     return found;
 }
 
+DltReturnValue dlt_message_filter_check_v2(DltMessageV2 *msg, DltFilter *filter, int verbose)
+{
+    /* check the filters if message is used */
+    int num;
+    DltReturnValue found = DLT_RETURN_OK;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((msg == NULL) || (filter == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((filter->counter == 0) || (!(DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2))))
+        /* no filter is set, or no extended header is available, so do as filter is matching */
+        return DLT_RETURN_TRUE;
+
+    for (num = 0; num < filter->counter; num++)
+        /* check each filter if it matches */
+        if ((DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2)) &&
+            ((filter->apid2[num] == NULL) || (memcmp(filter->apid2[num], msg->extendedheaderv2.apid, msg->extendedheaderv2.apidlen) == 0)) &&
+            ((filter->ctid2[num] == NULL) || (memcmp(filter->ctid2[num], msg->extendedheaderv2.ctid, msg->extendedheaderv2.ctidlen) == 0)) &&
+            ((filter->log_level[num] == 0) ||
+             (filter->log_level[num] == DLT_GET_MSIN_MTIN(msg->headerextrav2.msin))) &&
+            ((filter->payload_min[num] == 0) || (filter->payload_min[num] <= msg->datasize)) &&
+            ((filter->payload_max[num] == 0) || (filter->payload_max[num] >= msg->datasize))) {
+            found = DLT_RETURN_TRUE;
+            break;
+        }
+
+    return found;
+}
+
 int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
     uint32_t extra_size = 0;
@@ -1584,18 +1862,21 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     if (dlt_message_get_extendedparameters_from_recievedbuffer_v2(msg, buffer, msgcontent) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
-    /* calculate complete size of headers */
-    msg->headersizev2 = (uint32_t) (msg->storageheadersizev2 + msg->baseheadersizev2 + 
+    /* calculate complete size of headers without storage header */
+    msg->headersizev2 = (uint32_t) (msg->baseheadersizev2 + 
                                     msg->baseheaderextrasizev2 + msg->extendedheadersizev2);
+
+    msg->headerbufferv2 = (uint8_t)malloc(msg->headersizev2);
+    if(msg->headerbufferv2 == NULL){
+        return DLT_RETURN_ERROR;
+    }
+    memcpy(msg->headerbufferv2, buffer, msg->headersizev2);
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    /* To Update: in version 1 they have added storage adder in datasize, why?
-    msg->datasize = (uint32_t) DLT_BETOH_16(msg->standardheader->len) - msg->headersize + (uint32_t) sizeof(DltStorageHeader); */
-    // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
-    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2;
-    // temp_datasize = (uint8_t) (DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2);
 
+    // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
+    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1641,7 +1922,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     }
 
     /* load payload data from buffer */
-    memcpy(msg->databuffer, buffer + (msg->headersizev2 - msg->storageheadersizev2), msg->datasize);
+    memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);
 
     return DLT_MESSAGE_ERROR_OK;
 
@@ -2069,7 +2350,7 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
                buffer + pntroffset,
                1);
 
-        dlt_set_id_v2(&(msg->extendedheaderv2.ecid), buffer + pntroffset + 1, msg->extendedheaderv2.ecidlen);
+        dlt_set_id_v2(&(msg->extendedheaderv2.ecid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.ecidlen);
 
         
         pntroffset = pntroffset + msg->extendedheaderv2.ecidlen + 1;
@@ -2081,14 +2362,14 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
         memcpy(&(msg->extendedheaderv2.apidlen),
                buffer + pntroffset,
                1);
-        dlt_set_id_v2(&(msg->extendedheaderv2.apid), buffer + pntroffset + 1, msg->extendedheaderv2.apidlen);
+        dlt_set_id_v2(&(msg->extendedheaderv2.apid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.apidlen);
 
         pntroffset = pntroffset + (msg->extendedheaderv2.apidlen) + 1;
 
         memcpy(&(msg->extendedheaderv2.ctidlen),
                buffer + pntroffset,
                1);
-        dlt_set_id_v2(&(msg->extendedheaderv2.ctid), buffer + pntroffset + 1, msg->extendedheaderv2.ctidlen);
+        dlt_set_id_v2(&(msg->extendedheaderv2.ctid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.ctidlen);
         
         pntroffset = pntroffset + msg->extendedheaderv2.ctidlen + 1;
     }
@@ -2105,7 +2386,7 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
         memcpy(&(msg->extendedheaderv2.finalen),
                buffer + pntroffset,
                1);
-        dlt_set_id_v2(&(msg->extendedheaderv2.fina), buffer + pntroffset + 1, msg->extendedheaderv2.finalen);
+        dlt_set_id_v2(&(msg->extendedheaderv2.fina), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.finalen);
         
         pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
 
@@ -2812,6 +3093,28 @@ DltReturnValue dlt_file_free(DltFile *file, int verbose)
     file->handle = NULL;
 
     return dlt_message_free(&(file->msg), verbose);
+}
+
+DltReturnValue dlt_file_free_v2(DltFile *file, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (file == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* delete index lost if exists */
+    if (file->index)
+        free(file->index);
+
+    file->index = NULL;
+
+    /* close file */
+    if (file->handle)
+        fclose(file->handle);
+
+    file->handle = NULL;
+
+    return dlt_message_free_v2(&(file->msgv2), verbose);
 }
 
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
@@ -4196,6 +4499,22 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_message_print_hex_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s ", text);
+
+    if (dlt_message_payload_v2(message, text, size, DLT_OUTPUT_HEX, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("[%s]\n", text);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose)
 {
     if ((message == NULL) || (text == NULL))
@@ -4238,6 +4557,22 @@ DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, ui
     dlt_user_printf("%s \n", text);
 
     if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("[%s]\n", text);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_print_mixed_plain_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s \n", text);
+
+    if (dlt_message_payload_v2(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 

@@ -909,7 +909,9 @@ typedef struct
 {
     char apid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< application id */
     char ctid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< context id */
+    uint8_t apid2len[DLT_FILTER_MAX];
     char *apid2[DLT_FILTER_MAX];
+    uint8_t ctid2len[DLT_FILTER_MAX];
     char *ctid2[DLT_FILTER_MAX];
     int log_level[DLT_FILTER_MAX];          /**< log level */
     int32_t payload_max[DLT_FILTER_MAX];        /**< upper border for payload */
@@ -1237,6 +1239,16 @@ DltReturnValue dlt_filter_free(DltFilter *filter, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verbose);
+
+/**
+ * Load filter list from file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to load filters from
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int verbose);
+
 /**
  * Save filter in space separated list to text file.
  * @param filter pointer to structure of organising DLT filter
@@ -1245,6 +1257,16 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose);
+
+/**
+ * Save filter in space separated list to text file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to safe filters into
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int verbose);
+
 /**
  * Find index of filter in filter list
  * @param filter pointer to structure of organising DLT filter
@@ -1258,6 +1280,21 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
  */
 int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
+
+/**
+ * Find index of filter in filter list
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be found in filter list
+ * @param ctid context id to be found in filter list
+ * @param log_level log level to be found in filter list
+ * @param payload_min minimum payload lenght to be found in filter list
+ * @param payload_max maximum payload lenght to be found in filter list
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error (or not found), else return index of filter
+ */
+int dlt_filter_find_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
+
 /**
  * Add new filter to filter list.
  * @param filter pointer to structure of organising DLT filter
@@ -1271,6 +1308,21 @@ int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const
  */
 DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
+
+/**
+ * Add new filter to filter list.
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be added to filter list (must always be set).
+ * @param ctid context id to be added to filter list. empty equals don't care.
+ * @param log_level log level to be added to filter list. 0 equals don't care.
+ * @param payload_min min lenght of payload to be added to filter list. 0 equals don't care.
+ * @param payload_max max lenght of payload to be added to filter list. INT32_MAX equals don't care.
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_add_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
+
 /**
  * Delete filter from filter list
  * @param filter pointer to structure of organising DLT filter
@@ -1283,6 +1335,20 @@ DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *c
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
+                            
+/**
+ * Delete filter from filter list
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be deleted from filter list
+ * @param ctid context id to be deleted from filter list
+ * @param log_level log level to be deleted from filter list
+ * @param payload_min minimum payload lenght to be deleted from filter list
+ * @param payload_max maximum payload lenght to be deleted from filter list
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_delete_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
 
 /**
@@ -1393,6 +1459,15 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
  * @return 1 = filter matches, 0 = filter does not match, negative value if there was an error
  */
 DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int verbose);
+
+/**
+ * Check if message is filtered or not. All filters are applied (logical OR).
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param filter pointer to filter
+ * @param verbose if set to true verbose information is printed out.
+ * @return 1 = filter matches, 0 = filter does not match, negative value if there was an error
+ */
+DltReturnValue dlt_message_filter_check_v2(DltMessageV2 *msg, DltFilter *filter, int verbose);
 
 /**
  * Read message from memory buffer.
@@ -1602,6 +1677,14 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_file_free(DltFile *file, int verbose);
+
+/**
+ * Free the used memory by the organising structure of file.
+ * @param file pointer to structure of organising access to DLT file
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_file_free_v2(DltFile *file, int verbose);
 
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
@@ -1953,6 +2036,16 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
 DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t size, int verbose);
 
 /**
+ * Print payload of a DLT message as Hex-Output
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_hex_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
+
+/**
  * Print payload of a DLT message as ASCII-Output
  * @param message pointer to structure of organising access to DLT messages
  * @param text pointer to a ASCII string, in which the output is written
@@ -1981,6 +2074,16 @@ DltReturnValue dlt_message_print_ascii_v2(DltMessageV2 *message, char *text, uin
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_mixed_plain_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for HTML text output
