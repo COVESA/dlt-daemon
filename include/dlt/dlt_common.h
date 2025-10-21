@@ -834,9 +834,12 @@ typedef struct
 {
     uint32_t service_id;            /**< service ID */
     uint8_t status;                 /**< reponse status */
-    char apid[6];         /**< application id */ //TBD: Add apidlen
-    char ctid[6];         /**< context id */ //TBD: Add ctidlen
-    char comid[DLT_ID_SIZE];        /**< communication interface */
+    uint8_t apidlen;                /**< length of application id */
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;                /**< length of context id */
+    char *ctid;                     /**< context id */
+    char comid[DLT_ID_SIZE];        /**< communication interface */ //TBD: should this also be length + pointer?
+    //TBD: Is comid variable size in DLT V2?
 } DLT_PACKED DltServiceUnregisterContextV2;
 
 /**
@@ -1193,6 +1196,14 @@ PURE_FUNCTION size_t dlt_strnlen_s(const char* str, size_t maxsize);
  * @param id four byte char array as used in DLT mesages as IDs.
  */
 void dlt_print_id(char *text, const char *id);
+
+/**
+ * Helper function to print an id.
+ * @param text pointer to ASCII string where to write the id
+ * @param id char array as used in DLT mesages as IDs.
+ * @param length length of string to be printed into ID
+ */
+void dlt_print_id_v2(char *text, const char *id, uint8_t length);
 
 /**
  * Helper function to set an ID parameter.

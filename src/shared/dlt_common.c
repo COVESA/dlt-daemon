@@ -357,6 +357,23 @@ void dlt_print_id(char *text, const char *id)
     memcpy(text, id, len);
 }
 
+//TBD: REVIEW
+void dlt_print_id_v2(char *text, const char *id, uint8_t length)
+{
+    /* check nullpointer */
+    if ((text == NULL) || (id == NULL) || (length == 0))
+        return;
+
+    /* Initialize text */
+    memset(text, '-', length);
+
+    text[length] = 0;
+
+    size_t len = dlt_strnlen_s(id, length);
+
+    memcpy(text, id, len);
+}
+
 void dlt_set_id(char *id, const char *text)
 {
     /* check nullpointer */

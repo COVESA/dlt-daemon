@@ -554,9 +554,10 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 
     msg->headerbufferv2 = (uint8_t*)malloc(msg->headersizev2);
 
-    if (dlt_set_storageheader_v2(&(msg->storageheaderv2), daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader_v2(msg->storageheaderv2, daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
         return DLT_DAEMON_ERROR_UNKNOWN;
 
+    if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
     if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
         return DLT_RETURN_ERROR;
     }
@@ -1443,6 +1444,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
     int32_t i, j;
     size_t offset = 0;
+    uint8_t apidlen = 0;
     char *apid = 0;
     int8_t ll, ts;
     uint16_t len;
@@ -1488,7 +1490,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
     /* check request */
     if ((req->options < 3) || (req->options > 7)) {
-        dlt_daemon_control_service_response(sock,
+        dlt_daemon_control_service_response_v2(sock,
                                             daemon,
                                             daemon_local,
                                             DLT_SERVICE_ID_GET_LOG_INFO,
@@ -1497,20 +1499,25 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         return;
     }
 
-    if (req->apid[0] != '\0') {
-        application = dlt_daemon_application_find(daemon,
+    if (req->apidlen != 0) {
+        application = dlt_daemon_application_find_v2(daemon,
+                                                  req->apidlen,
                                                   req->apid,
-                                                  daemon->ecuid,
+                                                  daemon->ecuid2len,
+                                                  daemon->ecuid2,
                                                   verbose);
 
         if (application) {
             num_applications = 1;
 
-            if (req->ctid[0] != '\0') {
-                context = dlt_daemon_context_find(daemon,
+            if (req->ctidlen != 0) {
+                context = dlt_daemon_context_find_v2(daemon,
+                                                  req->ctidlen,
                                                   req->apid,
+                                                  req->ctidlen,
                                                   req->ctid,
-                                                  daemon->ecuid,
+                                                  daemon->ecuid2len,
+                                                  daemon->ecuid2,
                                                   verbose);
 
                 num_contexts = ((context) ? 1 : 0);
@@ -1546,16 +1553,17 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         sizecont += sizeof(int8_t); /* trace status */
 
     resp.datasize += (uint32_t) (((uint32_t) num_applications * (sizeof(uint32_t) /* app_id */ + sizeof(uint16_t) /* count_con_ids */)) +
-        ((size_t) num_contexts * sizecont));
+        ((size_t) num_contexts * sizecont)); //TBD: REVIEW sizeof(uint32_t) for app_id
 
     resp.datasize += (uint32_t) sizeof(uint16_t) /* count_app_ids */;
 
     /* Add additional size for response of Mode 7 */
     if (req->options == 7) {
-        if (req->apid[0] != '\0') {
-            if (req->ctid[0] != '\0') {
+        if (req->apidlen != 0) {
+            if (req->ctidlen != 0) {
                 /* One application, one context */
-                /* context = dlt_daemon_context_find(daemon, req->apid, req->ctid, verbose); */
+                //TBD: REVIEW Need to enable dlt_daemon_context_find_v2 below?
+                /* context = dlt_daemon_context_find_v2(daemon, req->apidlen, req->apid, req->ctidlen, req->ctid, daemon->ecuid2len, daemon->ecuid2, verbose); */
                 if (context) {
                     resp.datasize += (uint32_t) sizeof(uint16_t) /* len_context_description */;
 
@@ -1623,7 +1631,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     resp.databuffersize = resp.datasize;
 
     if (resp.databuffer == 0) {
-        dlt_daemon_control_service_response(sock,
+        dlt_daemon_control_service_response_v2(sock,
                                             daemon,
                                             daemon_local,
                                             DLT_SERVICE_ID_GET_LOG_INFO,
@@ -1656,8 +1664,9 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 #endif
 
         for (i = 0; i < count_app_ids; i++) {
-            if (req->apid[0] != '\0') {
+            if (req->apidlen != 0) {
                 apid = req->apid;
+                apidlen = req->apidlen;
             }
             else {
                 if (user_list->applications)
@@ -1665,11 +1674,14 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 else
                     /* This should never occur! */
                     apid = 0;
+                    apidlen = 0;
             }
 
-            application = dlt_daemon_application_find(daemon,
+            application = dlt_daemon_application_find_v2(daemon,
+                                                      apidlen,
                                                       apid,
-                                                      daemon->ecuid,
+                                                      daemon->ecuid2len,
+                                                      daemon->ecuid2,
                                                       verbose);
 
             if ((user_list->applications) && (application)) {
@@ -1679,15 +1691,16 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 for (j = 0; j < (application - (user_list->applications)); j++)
                     offset_base += user_list->applications[j].num_contexts;
 
-                dlt_set_id((char *)(resp.databuffer + offset), apid);
-                offset += sizeof(ID4);
+                dlt_set_id_v2((char **)(resp.databuffer + offset), apid, apidlen); //TBD: REVIEW (char **)
+                offset += apidlen;
+                //TBD: Need to set apidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                dlt_print_id(buf, apid);
+                dlt_print_id_v2(buf, apid, apidlen);
                 dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
 #endif
 
-                if (req->apid[0] != '\0')
+                if (req->apidlen != 0)
                     count_con_ids = (uint16_t) num_contexts;
                 else
                     count_con_ids = (uint16_t) application->num_contexts;
@@ -1704,22 +1717,23 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                     dlt_vlog(LOG_DEBUG, "j: %d \n", j);
 #endif
 
-                    if (!((count_con_ids == 1) && (req->apid[0] != '\0') &&
-                          (req->ctid[0] != '\0')))
+                    if (!((count_con_ids == 1) && (req->apidlen != 0) &&
+                          (req->ctidlen != 0)))
                         context = &(user_list->contexts[offset_base + j]);
 
                     /* else: context was already searched and found
                      *       (one application (found) with one context (found))*/
 
                     if ((context) &&
-                        ((req->ctid[0] == '\0') || ((req->ctid[0] != '\0') &&
-                                                    (memcmp(context->ctid, req->ctid, DLT_ID_SIZE) == 0)))
+                        ((req->ctidlen == 0) || ((req->ctidlen != 0) &&
+                                                    (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
                         ) {
-                        dlt_set_id((char *)(resp.databuffer + offset), context->ctid);
-                        offset += sizeof(ID4);
+                        dlt_set_id_v2((char **)(resp.databuffer + offset), context->ctid, context->ctid2len); //TBD: REVIEW (char **)
+                        offset += context->ctid2len;
+                        //TBD: Need to set ctidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                        dlt_print_id(buf, context->ctid);
+                        dlt_print_id_v2(buf, context->ctid, context->ctid2len);
                         dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
 #endif
 
@@ -2018,6 +2032,7 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
 {
     DltMessageV2 msg;
     DltServiceUnregisterContextV2 *resp;
+    uint8_t contextSize = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2029,7 +2044,9 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
         return -1;
 
     /* prepare payload of data */
-    msg.datasize = sizeof(DltServiceUnregisterContextV2); // TBD: Calculate size
+    contextSize = sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + apidlen + sizeof(uint8_t) + ctidlen + DLT_ID_SIZE;
+
+    msg.datasize = contextSize;
 
     if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
         free(msg.databuffer);

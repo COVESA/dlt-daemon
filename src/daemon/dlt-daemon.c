@@ -3193,41 +3193,76 @@ int dlt_daemon_process_control_messages(
         return 0;
     }
 
-    /* Process all received messages */
-    while (dlt_message_read(
-               &(daemon_local->msg),
-               (uint8_t *)receiver->buf,
-               (unsigned int) receiver->bytesRcvd,
-               daemon_local->flags.nflag,
-               daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+    uint8_t dlt_version = (uint8_t)receiver->buf[3]; //TBD: Write function to get version
+    if (dlt_version == DLT_VERSION2) {
+        /* Process all received messages */
+        while (dlt_message_read_v2(
+                &(daemon_local->msgv2),
+                (uint8_t *)receiver->buf,
+                (unsigned int) receiver->bytesRcvd,
+                daemon_local->flags.nflag,
+                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+            /* Check for control message */
+            if ((receiver->fd > 0) &&
+                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
+                dlt_daemon_client_process_control(receiver->fd,
+                                                daemon, daemon_local,
+                                                &(daemon_local->msg),
+                                                daemon_local->flags.vflag);
 
-        /* Check for control message */
-        if ((receiver->fd > 0) &&
-            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
-            dlt_daemon_client_process_control(receiver->fd,
-                                              daemon, daemon_local,
-                                              &(daemon_local->msg),
-                                              daemon_local->flags.vflag);
+            bytes_to_be_removed = (int) (daemon_local->msg.headersize +
+                daemon_local->msg.datasize -
+                sizeof(DltStorageHeader));
 
-        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-            daemon_local->msg.datasize -
-            sizeof(DltStorageHeader));
+            if (daemon_local->msg.found_serialheader)
+                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
 
-        if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+            if (daemon_local->msg.resync_offset)
+                bytes_to_be_removed += daemon_local->msg.resync_offset;
 
-        if (daemon_local->msg.resync_offset)
-            bytes_to_be_removed += daemon_local->msg.resync_offset;
+            if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
+                dlt_log(LOG_WARNING,
+                        "Can't remove bytes from receiver for sockets\n");
+                return -1;
+            }
+        } /* while */
+    } 
+    else { // DLT Version 1
 
-        if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-            dlt_log(LOG_WARNING,
-                    "Can't remove bytes from receiver for sockets\n");
-            return -1;
-        }
-    } /* while */
+        /* Process all received messages */
+        while (dlt_message_read(
+                &(daemon_local->msg),
+                (uint8_t *)receiver->buf,
+                (unsigned int) receiver->bytesRcvd,
+                daemon_local->flags.nflag,
+                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+
+            /* Check for control message */
+            if ((receiver->fd > 0) &&
+                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
+                dlt_daemon_client_process_control(receiver->fd,
+                                                daemon, daemon_local,
+                                                &(daemon_local->msg),
+                                                daemon_local->flags.vflag);
+
+            bytes_to_be_removed = (int) (daemon_local->msg.headersize +
+                daemon_local->msg.datasize -
+                sizeof(DltStorageHeader));
+
+            if (daemon_local->msg.found_serialheader)
+                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+
+            if (daemon_local->msg.resync_offset)
+                bytes_to_be_removed += daemon_local->msg.resync_offset;
+
+            if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
+                dlt_log(LOG_WARNING,
+                        "Can't remove bytes from receiver for sockets\n");
+                return -1;
+            }
+        } /* while */
+    }
 
     if (dlt_receiver_move_to_begin(receiver) == -1) {
         dlt_log(LOG_WARNING, "Can't move bytes to beginning of receiver buffer for sockets\n");
