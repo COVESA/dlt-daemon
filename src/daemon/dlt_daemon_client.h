@@ -243,6 +243,27 @@ int dlt_daemon_control_message_unregister_context(int sock,
                                                   char *ctid,
                                                   char *comid,
                                                   int verbose);
+
+/**
+ * Send control message unregister context (add on to AUTOSAR standard)
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param apid application id to be unregisteres
+ * @param ctid context id to be unregistered
+ * @param comid Communication id where apid is unregistered
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_unregister_context_v2(int sock,
+                                                  DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  uint8_t apidlen,
+                                                  char *apid,
+                                                  uint8_t ctidlen,
+                                                  char *ctid,
+                                                  char *comid,
+                                                  int verbose);
+
 /**
  * Send control message connection info (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response

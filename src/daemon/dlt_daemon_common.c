@@ -1856,6 +1856,60 @@ int dlt_daemon_context_del(DltDaemon *daemon,
     return 0;
 }
 
+int dlt_daemon_context_del_v2(DltDaemon *daemon,
+                           DltDaemonContext *context,
+                           uint8_t eculen,
+                           char *ecu,
+                           int verbose)
+{
+    int pos;
+    DltDaemonApplication *application;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (context == NULL) || (ecu == NULL))
+        return -1;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
+
+    if (user_list == NULL)
+        return -1;
+
+    if (user_list->num_contexts > 0) {
+        application = dlt_daemon_application_find_v2(daemon, context->apid2len, context->apid2, eculen, ecu, verbose);
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+        dlt_daemon_free_context_log_settings(application, context);
+#endif
+        /* Free description of context to be deleted */
+        if (context->context_description) {
+            free(context->context_description);
+            context->context_description = NULL;
+        }
+
+        pos = (int) (context - (user_list->contexts));
+
+        /* move all contexts above pos to pos */
+        memmove(&(user_list->contexts[pos]),
+                &(user_list->contexts[pos + 1]),
+                sizeof(DltDaemonContext) * ((user_list->num_contexts - 1) - pos));
+
+        /* Clear last context */
+        memset(&(user_list->contexts[user_list->num_contexts - 1]),
+               0,
+               sizeof(DltDaemonContext));
+
+        user_list->num_contexts--;
+
+        /* Check if application [apid] is available */
+        if (application != NULL)
+            application->num_contexts--;
+    }
+
+    return 0;
+}
+
 DltDaemonContext *dlt_daemon_context_find(DltDaemon *daemon,
                                           char *apid,
                                           char *ctid,
@@ -2400,6 +2454,44 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
     return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;
 }
 
+int dlt_daemon_user_send_log_state_v2(DltDaemon *daemon, DltDaemonApplication *app, int verbose)
+{
+    DltUserHeader userheader;
+    DltUserControlMsgLogState logstate;
+    DltReturnValue ret;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (app == NULL))
+        return -1;
+
+    if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG_STATE) < DLT_RETURN_OK)
+        return -1;
+
+    logstate.log_state = daemon->connectionState;
+
+    // printf("DEBUG: userheader.pattern = %4.4s\n", userheader.pattern);
+    // printf("DEBUG: userheader.message = %u\n", userheader.message);
+    // printf("DEBUG: logstate = %d\n\n", logstate.log_state);
+
+    // const char *filename = "/mnt/c/Users/A537103/projects/dlt/output.txt";
+    // int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+    /* log to FIFO */
+    ret = dlt_user_log_out2_with_timeout(app->user_handle,
+                            &(userheader), sizeof(DltUserHeader),
+                            &(logstate.log_state), sizeof(int8_t));
+    
+    // close(fd);
+
+    if (ret < DLT_RETURN_OK) {
+        if (errno == EPIPE || errno == EBADF)
+            dlt_daemon_application_reset_user_handle(daemon, app, verbose);
+    }
+
+    return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;
+}
+
 void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
                                                  const char *filename,
                                                  const char *filename1,
@@ -2607,6 +2699,42 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
             if (app->user_handle >= DLT_FD_MINIMUM)
                 if (dlt_daemon_user_send_log_state(daemon, app, verbose) == -1)
                     dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n", app->apid, app->pid);
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose)
+{
+    int32_t count;
+    DltDaemonApplication *app;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL) {
+        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+        return;
+    }
+
+    printf("DEBUG:daemon->ecuid2len = %d, daemon->ecuid2 = %.*s \n", daemon->ecuid2len, daemon->ecuid2len, daemon->ecuid2);
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    printf("DEBUG: user_list->num_applications = %d\n", user_list->num_applications);
+
+    for (count = 0; count < user_list->num_applications; count++) {
+        app = &(user_list->applications[count]);
+
+        if (app != NULL) {
+            if (app->user_handle >= DLT_FD_MINIMUM) {
+                if (dlt_daemon_user_send_log_state_v2(daemon, app, verbose) == -1) {
+                    printf("DEBUG: dlt_daemon_user_send_log_state_v2 returned -1\n");
+                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.6s, PID: %d\n", app->apid2, app->pid);
+                }
+            }
         }
     }
 }

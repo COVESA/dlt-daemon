@@ -1592,7 +1592,10 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     int32_t temp_datasize;
     /* To Update: in version 1 they have added storage adder in datasize, why?
     msg->datasize = (uint32_t) DLT_BETOH_16(msg->standardheader->len) - msg->headersize + (uint32_t) sizeof(DltStorageHeader); */
+    // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
     temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2;
+    // temp_datasize = (uint8_t) (DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2);
+
 
     /* check data size */
     if (temp_datasize < 0) {

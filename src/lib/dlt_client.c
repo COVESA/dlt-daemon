@@ -622,8 +622,9 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
                                 verbose) == DLT_MESSAGE_ERROR_OK)
         {
             /* Call callback function */
-            if (message_callback_function_v2)
+            if (message_callback_function_v2) {
                 (*message_callback_function_v2)(&msg, data);
+            }
 
             if (msg.found_serialheader) {
                 if (dlt_receiver_remove(&(client->receiver),

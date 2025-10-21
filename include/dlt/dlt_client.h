@@ -115,6 +115,7 @@ extern "C" {
 #   endif
 
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data));
+void dlt_client_register_message_callback_v2(int (*registerd_callback)(DltMessageV2 *message, void *data));
 void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(void *data));
 
 /**
@@ -155,6 +156,15 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose);
+
+/**
+ * Main Loop of dlt client application for DLT V2
+ * @param client pointer to dlt client structure
+ * @param data pointer to data to be provided to the main loop
+ * @param verbose if set to true verbose information is printed out.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbose);
 
 /**
  * Send a message to the daemon through the socket.

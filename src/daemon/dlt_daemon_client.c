@@ -2006,6 +2006,63 @@ int dlt_daemon_control_message_unregister_context(int sock,
     return 0;
 }
 
+int dlt_daemon_control_message_unregister_context_v2(int sock,
+                                                  DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  uint8_t apidlen,
+                                                  char *apid,
+                                                  uint8_t ctidlen,
+                                                  char *ctid,
+                                                  char *comid,
+                                                  int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceUnregisterContext *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return -1;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return -1;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceUnregisterContextV2); // TBD: Calculate size
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return -1;
+
+    resp = (DltServiceUnregisterContextV2 *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    dlt_set_id_v2(resp->apid, apid, apidlen);
+    dlt_set_id_v2(resp->ctid, ctid, ctidlen);
+    dlt_set_id(resp->comid, comid);
+
+    /* send message */
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose)) {
+        dlt_message_free_v2(&msg, 0);
+        return -1;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+
+    return 0;
+}
+
 int dlt_daemon_control_message_connection_info(int sock,
                                                DltDaemon *daemon,
                                                DltDaemonLocal *daemon_local,
