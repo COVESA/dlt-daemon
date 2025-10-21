@@ -68,7 +68,7 @@
 #define DLT_INVALID_TRACE_STATUS    0xF
 /* Option of GET_LOG_INFO */
 #define DLT_SERVICE_GET_LOG_INFO_OPT7    7    /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
-
+#define LOG_ERR       3
 /**
  * The structure of the DLT Service header
  */
@@ -210,13 +210,13 @@ void dlt_process_get_log_info_v2(void)
         for (i = 0; i < resp->log_info_type.count_app_ids; i++) {
             app = resp->log_info_type.app_ids[i];
             if(app.app_id2 == NULL){
-                dlt_vlog(stderr, "%s: Application id is null\n", __func__);
+                dlt_vlog(LOG_ERR, "%s: Application id is null\n", __func__);
                 dlt_client_cleanup_get_log_info_v2(resp);
                 return;
             }
             apid = (char *)malloc(app.app_id2len + 1);
             if (apid == NULL) {
-                dlt_vlog(stderr, "%s: malloc failed for application id\n", __func__);
+                dlt_vlog(LOG_ERR, "%s: malloc failed for application id\n", __func__);
                 dlt_client_cleanup_get_log_info_v2(resp);
                 return;
             }
@@ -232,35 +232,36 @@ void dlt_process_get_log_info_v2(void)
                 con = app.context_id_info[j];
 
                 if(con.context_id2 == NULL){
-                    dlt_vlog(stderr, "%s: context id is null\n", __func__);
+                    dlt_vlog(LOG_ERR, "%s: context id is null\n", __func__);
                     dlt_client_cleanup_get_log_info_v2(resp);
                     return;
                 }
                 ctid = (char *)malloc(con.context_id2len + 1);
                 if (ctid == NULL) {
-                    dlt_vlog(stderr, "%s: malloc failed for context id\n", __func__);
-                    dlt_client_cleanup_get_log_info_v2(resp, i);
+                    dlt_vlog(LOG_ERR, "%s: malloc failed for context id\n", __func__);
+                    dlt_client_cleanup_get_log_info_v2(resp);
                     return;
                 }
                 memcpy(ctid, con.context_id2, con.context_id2len);
                 memset(ctid + con.context_id2len, '\0', 1);
 
-                if (con.context_description != 0)
+                if (con.context_description != 0) {
                     printf("CTID:%s %2d %2d %s\n",
                         ctid,
                         con.log_level,
                         con.trace_status,
                         con.context_description);
-                else
+                }else {
                     printf("CTID:%s %2d %2d\n",
                         ctid,
                         con.log_level,
                         con.trace_status);
+                }
                 free(ctid);
                 ctid = NULL;
             }
             free(apid);
-            apid = NULL,
+            apid = NULL;
         }
     }
 
@@ -569,18 +570,18 @@ int main(int argc, char *argv[])
 
     if (dltdata.evalue) {
         dltdata.ecuidlen = strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
         g_dltclient.ecuid2len = dltdata.ecuidlen;
-        dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(&(g_dltclient.ecuid2), dltdata.evalue, dltdata.ecuidlen);
     }
     else {
         dltdata.evalue = NULL;
 
         if (dlt_parse_config_param("ECUId", &dltdata.evalue) == 0) {
         dltdata.ecuidlen = strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
         g_dltclient.ecuid2len = dltdata.ecuidlen;
-        dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(&(g_dltclient.ecuid2), dltdata.evalue, dltdata.ecuidlen);
         free (dltdata.evalue);
         }
         else {
@@ -805,7 +806,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     DltServiceHeader *req_header = NULL;
 
     if ((message == NULL) || (data == NULL) ||
-        !DLT_MSG_IS_CONTROL_RESPONSE(message))
+        !DLT_MSG_IS_CONTROL_V2(message))
         return -1;
 
     /* get request service id */
@@ -829,7 +830,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                 /* prepare storage header */
                 if (DLT_IS_HTYP_WEID(message->baseheaderv2->htyp2))
                     dlt_set_storageheader_v2(&(message->storageheaderv2), message->extendedheaderv2.ecidlen,
-                                          message->extendedheaderv2.ecidlen);
+                                          message->extendedheaderv2.ecid);
                 else
                     dlt_set_storageheader_v2(&(message->storageheaderv2), 4, "LCTL");
 

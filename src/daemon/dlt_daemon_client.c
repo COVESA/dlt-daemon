@@ -557,7 +557,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     if (dlt_set_storageheader_v2(&(msg->storageheaderv2), daemon->ecuid2len, daemon->ecuid2) == DLT_RETURN_ERROR)
         return DLT_DAEMON_ERROR_UNKNOWN;
 
-    if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK) {
+    if (dlt_message_set_storageparameters_v2(msg, 0) != DLT_RETURN_OK) {
         return DLT_RETURN_ERROR;
     }
 
@@ -622,8 +622,8 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     #endif
 
     /* Copy header extra parameters to headerbuffer */
-    if (dlt_message_set_extraparameters_v2(&msg, 0) == DLT_RETURN_ERROR) {
-        dlt_message_free_v2(&msg, 0);
+    if (dlt_message_set_extraparameters_v2(msg, 0) == DLT_RETURN_ERROR) {
+        dlt_message_free_v2(msg, 0);
         return DLT_RETURN_ERROR;
     }
 
@@ -648,8 +648,8 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         }
     }
 
-    if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK) {
-        dlt_message_free_v2(&msg, 0);
+    if (dlt_message_set_extendedparameters_v2(msg) != DLT_RETURN_OK) {
+        dlt_message_free_v2(msg, 0);
         return DLT_RETURN_ERROR;
     }
 
@@ -659,7 +659,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         dlt_vlog(LOG_ERR,
                 "%s: Critical: Huge injection message discarded!\n",
                 __func__);
-        dlt_message_free_v2(&msg, 0);
+        dlt_message_free_v2(msg, 0);
         return DLT_RETURN_ERROR;
     }
 
@@ -1470,7 +1470,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     req = (DltServiceGetLogInfoRequestV2 *)malloc(sizeof(DltServiceGetLogInfoRequestV2));
 
     if (req == NULL)
-        return DLT_RETURN_ERROR;
+        return;
 
     /* prepare pointer to message request */
     req = (DltServiceGetLogInfoRequestV2 *)(msg->databuffer);
@@ -1790,12 +1790,12 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     dlt_set_id((char *)(resp.databuffer + offset), DLT_DAEMON_REMO_STRING);
 
     /* send message */
-    dlt_daemon_client_send_control_message(sock, daemon, daemon_local, &resp, "", "", verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &resp, "", "", verbose);
 
     free(req);
 
     /* free message */
-    dlt_message_free(&resp, 0);
+    dlt_message_free_v2(&resp, 0);
 }
 
 int dlt_daemon_control_message_buffer_overflow(int sock,
@@ -2017,7 +2017,7 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
                                                   int verbose)
 {
     DltMessageV2 msg;
-    DltServiceUnregisterContext *resp;
+    DltServiceUnregisterContextV2 *resp;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2047,8 +2047,8 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
     resp = (DltServiceUnregisterContextV2 *)msg.databuffer;
     resp->service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
     resp->status = DLT_SERVICE_RESPONSE_OK;
-    dlt_set_id_v2(resp->apid, apid, apidlen);
-    dlt_set_id_v2(resp->ctid, ctid, ctidlen);
+    dlt_set_id_v2(&(resp->apid), apid, apidlen);
+    dlt_set_id_v2(&(resp->ctid), ctid, ctidlen);
     dlt_set_id(resp->comid, comid);
 
     /* send message */
