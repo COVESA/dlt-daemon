@@ -1866,7 +1866,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msg->headersizev2 = (uint32_t) (msg->baseheadersizev2 + 
                                     msg->baseheaderextrasizev2 + msg->extendedheadersizev2);
 
-    msg->headerbufferv2 = (uint8_t)malloc(msg->headersizev2);
+    msg->headerbufferv2 = (uint8_t *)malloc(msg->headersizev2);
     if(msg->headerbufferv2 == NULL){
         return DLT_RETURN_ERROR;
     }
@@ -1920,6 +1920,8 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
                  msg->datasize);
         return DLT_MESSAGE_ERROR_UNKNOWN;
     }
+
+    printf("DEBUG: Before memcpy paylod databuffer\n");
 
     /* load payload data from buffer */
     memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);

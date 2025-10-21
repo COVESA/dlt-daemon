@@ -605,10 +605,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (dltdata.evalue)
+    if (dltdata.evalue) {
         dltdata.ecuidlen = strlen(dltdata.evalue);
         dltdata.ecuid = NULL;
         dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
+    }
     else{
         dltdata.ecuidlen = strlen(DLT_RECEIVE_ECU_ID);
         dltdata.ecuid = NULL;
