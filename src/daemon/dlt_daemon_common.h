@@ -408,6 +408,23 @@ int dlt_daemon_application_del(DltDaemon *daemon,
                                DltDaemonApplication *application,
                                char *ecu,
                                int verbose);
+
+/**
+ * Delete application from internal application management
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param application pointer to application to be deleted
+ * @param ecu pointer to ecu id of node to delete applications
+ * @param eculen length of ecuid
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_application_del_v2(DltDaemon *daemon,
+                               DltDaemonApplication *application,
+                               uint8_t eculen,
+                               char *ecu,
+                               int verbose);
+
 /**
  * Find application with specific application id
  * @param daemon pointer to dlt daemon structure
