@@ -827,6 +827,19 @@ typedef struct
 } DLT_PACKED DltServiceUnregisterContext;
 
 /**
+ * The structure of the DLT Service Unregister Context
+ * for DLT V2
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t status;                 /**< reponse status */
+    char apid[6];         /**< application id */ //TBD: Add apidlen
+    char ctid[6];         /**< context id */ //TBD: Add ctidlen
+    char comid[DLT_ID_SIZE];        /**< communication interface */
+} DLT_PACKED DltServiceUnregisterContextV2;
+
+/**
  * The structure of the DLT Service Connection Info
  */
 typedef struct

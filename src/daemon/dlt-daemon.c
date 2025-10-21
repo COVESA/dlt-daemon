@@ -2883,6 +2883,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
              "New client connection #%d established, Total Clients : %d",
              in_sock, daemon_local->client_connections);
 
+    printf("DEBUG: %s\n", local_str);
+
     dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                             DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
                             daemon_local->flags.vflag);
@@ -2903,7 +2905,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
 
         /* send new log state to all applications */
         daemon->connectionState = 1;
-        dlt_daemon_user_send_all_log_state(daemon, verbose);
+        dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         /* Reset number of received bytes from FIFO */
@@ -3366,6 +3368,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         else
             func = process_user_func[userheader->message];
 
+        printf("DEBUG: userheader->message = %d\n", userheader->message);
+
         if (func(daemon,
                  daemon_local,
                  receiver,
@@ -3557,6 +3561,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         /* point to begin of message */
         rec->buf = origin;
 
+        //TBD: Need init_v2 ?
+
         /* We can now remove data. */
         if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
@@ -3582,7 +3588,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                 verbose);
 
         /* send log state to new application */
-        dlt_daemon_user_send_log_state(daemon, application, verbose);
+        dlt_daemon_user_send_log_state_v2(daemon, application, verbose);
 
         if (application == NULL) {
             dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.6s' for PID %d\n",
@@ -4243,6 +4249,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     return 0;
 }
 
+// TBD: Update for V2
 int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                            DltDaemonLocal *daemon_local,
                                                            DltReceiver *rec,
@@ -4345,11 +4352,11 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                        DltReceiver *rec,
                                                        int verbose)
 {
-    uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
-    DltUserControlMsgUnregisterContext userctxt;
     DltDaemonContext *context;
 
     PRINT_FUNCTION_VERBOSE(verbose);
+
+    printf("Unregister Context \n");
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR,
@@ -4359,60 +4366,174 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec,
-                                   &userctxt,
-                                   len,
-                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
-        /* Not enough bytes received */
-        return -1;
+    uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
 
-    context = dlt_daemon_context_find(daemon,
-                                      userctxt.apid,
-                                      userctxt.ctid,
-                                      daemon->ecuid,
-                                      verbose);
+    if (dlt_version == DLT_VERSION2) {
+        DltUserControlMsgRegisterContextV2 usercontext;
+        int usercontextSize;
+        uint8_t *buffer;
 
-    /* In case the daemon is loaded with predefined contexts and its context
-     * unregisters, the context information will not be deleted from daemon's
-     * table until its parent application is unregistered.
-     */
-    if (context && (context->predefined == false)) {
-        /* Delete this connection entry from internal table*/
-        if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
-            dlt_vlog(LOG_WARNING,
-                     "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
-                     userctxt.ctid,
-                     userctxt.apid,
-                     __func__);
+        usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
+        usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
+
+        usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
+                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
+        uint32_t len = usercontextSize;
+        buffer = (uint8_t*)malloc(usercontextSize);
+
+        int offset = 0;
+
+        if (dlt_receiver_check_and_get(rec,
+                                buffer,
+                                len,
+                                DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0){
+            /* Not enough bytes received */
             return -1;
         }
-        else {
-            char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
 
-            snprintf(local_str,
-                     DLT_DAEMON_TEXTBUFSIZE,
-                     "Unregistered CtID '%.4s' for ApID '%.4s'",
-                     userctxt.ctid,
-                     userctxt.apid);
+        memcpy(&(usercontext.apidlen), buffer, 1);
+        offset = 1;
 
-            if (verbose)
-                dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                        DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                        DLT_DAEMON_CTX_ID, verbose);
-
-            dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+        usercontext.apid = (char *)malloc(usercontext.apidlen + 1);
+        if (usercontext.apid == NULL) {
+            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
+            return -1;
         }
-    }
+        memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
+        memset((usercontext.apid + usercontext.apidlen), '\0', 1); // Null-terminate string
+        offset += usercontext.apidlen;
+        memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
+        offset += 1;
+        usercontext.ctid = (char *)malloc(usercontext.ctidlen + 1);
+        if (usercontext.ctid == NULL) {
+            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
+            return -1;
+        }
+        memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
+        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
+        offset += usercontext.ctidlen;
+        memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
+        offset += sizeof(int32_t);
+        memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
+        offset += sizeof(int8_t);
+        memcpy(&(usercontext.trace_status), (buffer + offset), sizeof(int8_t));
+        offset += sizeof(int8_t);
+        memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
+        offset += sizeof(pid_t);
+        memcpy(&(usercontext.description_length), (buffer + offset), 4);
+        
+        context = dlt_daemon_context_find_v2(daemon,
+                                        usercontext.apidlen,
+                                        usercontext.apid,
+                                        usercontext.ctidlen,
+                                        usercontext.ctid,
+                                        daemon->ecuid2len,
+                                        daemon->ecuid2,
+                                        verbose);
 
-    /* Create automatic unregister context response for unregistered context */
-    if (daemon_local->flags.rflag)
-        dlt_daemon_control_message_unregister_context(DLT_DAEMON_SEND_TO_ALL,
-                                                      daemon,
-                                                      daemon_local,
-                                                      userctxt.apid,
-                                                      userctxt.ctid,
-                                                      "remo",
-                                                      verbose);
+                /* In case the daemon is loaded with predefined contexts and its context
+        * unregisters, the context information will not be deleted from daemon's
+        * table until its parent application is unregistered.
+        */
+        if (context && (context->predefined == false)) {
+            /* Delete this connection entry from internal table*/
+            if (dlt_daemon_context_del_v2(daemon, context, daemon->ecuid2len, daemon->ecuid2, verbose) == -1) {
+                dlt_vlog(LOG_WARNING,
+                        "Can't delete CtID '%.6s' for ApID '%.6s' in %s\n",
+                        usercontext.ctid,
+                        usercontext.apid,
+                        __func__); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
+                return -1;
+            }
+            else {
+                char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+
+                snprintf(local_str,
+                        DLT_DAEMON_TEXTBUFSIZE,
+                        "Unregistered CtID '%.6s' for ApID '%.6s'",
+                        usercontext.ctid,
+                        usercontext.apid); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
+
+                if (verbose)
+                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                                            DLT_DAEMON_CTX_ID, verbose);
+
+                dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+            }
+        }
+
+        /* Create automatic unregister context response for unregistered context */
+        if (daemon_local->flags.rflag)
+            dlt_daemon_control_message_unregister_context_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                        daemon,
+                                                        daemon_local,
+                                                        usercontext.apidlen,
+                                                        usercontext.apid,
+                                                        usercontext.ctidlen,
+                                                        usercontext.ctid,
+                                                        "remo",
+                                                        verbose);
+    }
+    else {
+        uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
+        DltUserControlMsgUnregisterContext userctxt;
+
+        if (dlt_receiver_check_and_get(rec,
+                                    &userctxt,
+                                    len,
+                                    DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+            /* Not enough bytes received */
+            return -1;
+
+        context = dlt_daemon_context_find(daemon,
+                                        userctxt.apid,
+                                        userctxt.ctid,
+                                        daemon->ecuid,
+                                        verbose);
+
+        /* In case the daemon is loaded with predefined contexts and its context
+        * unregisters, the context information will not be deleted from daemon's
+        * table until its parent application is unregistered.
+        */
+        if (context && (context->predefined == false)) {
+            /* Delete this connection entry from internal table*/
+            if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
+                dlt_vlog(LOG_WARNING,
+                        "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
+                        userctxt.ctid,
+                        userctxt.apid,
+                        __func__);
+                return -1;
+            }
+            else {
+                char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+
+                snprintf(local_str,
+                        DLT_DAEMON_TEXTBUFSIZE,
+                        "Unregistered CtID '%.4s' for ApID '%.4s'",
+                        userctxt.ctid,
+                        userctxt.apid);
+
+                if (verbose)
+                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                                            DLT_DAEMON_CTX_ID, verbose);
+
+                dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+            }
+        }
+
+        /* Create automatic unregister context response for unregistered context */
+        if (daemon_local->flags.rflag)
+            dlt_daemon_control_message_unregister_context(DLT_DAEMON_SEND_TO_ALL,
+                                                        daemon,
+                                                        daemon_local,
+                                                        userctxt.apid,
+                                                        userctxt.ctid,
+                                                        "remo",
+                                                        verbose);
+    }
 
     return 0;
 }

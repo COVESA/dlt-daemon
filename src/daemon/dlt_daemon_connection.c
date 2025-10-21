@@ -285,6 +285,8 @@ void *dlt_connection_get_callback(DltConnection *con)
     if (con)
         type = con->type;
 
+    printf("type = %d\n", type);
+
     switch (type) {
     case DLT_CONNECTION_CLIENT_CONNECT:
         ret = dlt_daemon_process_client_connect;
@@ -318,7 +320,7 @@ void *dlt_connection_get_callback(DltConnection *con)
         ret = dlt_daemon_process_control_connect;
         break;
     case DLT_CONNECTION_CONTROL_MSG:
-        ret = dlt_daemon_process_control_messages;
+        ret = dlt_daemon_process_control_messages; //TBD: Set Log, Get LogInfo
         break;
     case DLT_CONNECTION_GATEWAY:
         ret = dlt_gateway_process_passive_node_messages;

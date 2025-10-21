@@ -88,6 +88,7 @@
 #include "dlt-control-common.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
+#define DLT_RECEIVE_ECU_ID_LEN 4
 
 DltClient dltclient;
 static bool sig_close_recv = false;
@@ -112,6 +113,8 @@ void signal_handler(int signal)
 
 /* Function prototypes */
 int dlt_receive_message_callback(DltMessage *message, void *data);
+
+int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data);
 
 typedef struct {
     int aflag;
@@ -140,6 +143,8 @@ typedef struct {
     DltFilter filter;
     int port;
     char *ifaddr;
+    uint8_t ecuid2len; /* Length of ECU ID for DLT V2 */
+    char *ecuid2; /* ECU ID for DLT V2 */
 } DltReceiveData;
 
 /**
@@ -316,7 +321,6 @@ void dlt_receive_close_output_file(DltReceiveData *dltdata)
         dltdata->ohandle = -1;
     }
 }
-
 
 /**
  * Main function of tool.
@@ -499,7 +503,10 @@ int main(int argc, char *argv[])
     dlt_client_init(&dltclient, dltdata.vflag);
 
     /* Register callback to be called when message was received */
-    dlt_client_register_message_callback(dlt_receive_message_callback);
+    // dlt_client_register_message_callback(dlt_receive_message_callback);
+
+    /* Register callback to be called when DLT V2 message was received */
+    dlt_client_register_message_callback_v2(dlt_receive_message_callback_v2);
 
     /* Setup DLT Client structure */
     if(dltdata.uflag) {
@@ -624,12 +631,20 @@ int main(int argc, char *argv[])
     else{
         dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);}
 
+    if (dltdata.evalue) {
+        dltdata.ecuid2len = DLT_RECEIVE_ECU_ID_LEN;
+        dlt_set_id_v2(&(dltdata.ecuid2), dltdata.evalue, dltdata.ecuid2len);
+    }
+    else {
+        dlt_set_id_v2(&(dltdata.ecuid2), DLT_RECEIVE_ECU_ID, DLT_RECEIVE_ECU_ID_LEN);
+    }
+
     while (true) {
         /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
             /* Dlt Client Main Loop */
-            dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
+            dlt_client_main_loop_v2(&dltclient, &dltdata, dltdata.vflag);
 
             if (dltdata.rflag == 1 && sig_close_recv == false) {
                 dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
@@ -739,5 +754,91 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
         }
     }
 
+    return 0;
+}
+
+int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
+{
+    printf("DEBUG: dlt_receive_message_callback_v2\n");
+    DltReceiveData *dltdata;
+    static char text[DLT_RECEIVE_BUFSIZE];
+
+    struct iovec iov[2];
+    int bytes_written;
+
+    if ((message == 0) || (data == 0))
+        return -1;
+
+    dltdata = (DltReceiveData *)data;
+
+    /* prepare storage header */
+    if (DLT_IS_HTYP2_WEID(message->baseheaderv2->htyp2))
+        dlt_set_storageheader_v2(&(message->storageheaderv2), message->extendedheaderv2.ecidlen, message->extendedheaderv2.ecid);
+    else
+        dlt_set_storageheader_v2(&(message->storageheaderv2), dltdata->ecuid2len, dltdata->ecuid2);
+
+    printf("DEBUG: message->storageheaderv2.ecid = %.*s\n", message->storageheaderv2.ecidlen, message->storageheaderv2.ecid);
+    if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
+        (dlt_message_filter_check(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
+        /* if no filter set or filter is matching display message */
+        if (dltdata->xflag) {
+            dlt_message_print_hex(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        }
+        else if (dltdata->aflag)
+        {
+
+            dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+
+            printf("%s ", text);
+
+            dlt_message_payload_v2(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
+
+            printf("[%s]\n", text);
+        }
+        else if (dltdata->mflag)
+        {
+            dlt_message_print_mixed_plain(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        }
+        else if (dltdata->sflag)
+        {
+
+            dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+
+            printf("%s \n", text);
+        }
+
+        /* if file output enabled write message */
+        if (dltdata->ovalue) {
+            iov[0].iov_base = message->headerbufferv2;
+            iov[0].iov_len = (uint32_t)message->headersizev2;
+            iov[1].iov_base = message->databuffer;
+            iov[1].iov_len = (uint32_t)message->datasize;
+
+            if (dltdata->climit > -1) {
+                uint32_t bytes_to_write = message->headersizev2 + message->datasize;
+
+                if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
+                    dlt_receive_close_output_file(dltdata);
+
+                    if (dlt_receive_open_output_file(dltdata) < 0) {
+                        printf(
+                            "ERROR: dlt_receive_message_callback: Unable to open log when maximum filesize was reached!\n");
+                        return -1;
+                    }
+
+                    dltdata->totalbytes = 0;
+                }
+            }
+
+            bytes_written = (int)writev(dltdata->ohandle, iov, 2);
+
+            dltdata->totalbytes += bytes_written;
+
+            if (0 > bytes_written) {
+                printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");
+                return -1;
+            }
+        }
+    }
     return 0;
 }

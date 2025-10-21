@@ -542,6 +542,21 @@ int dlt_daemon_context_del(DltDaemon *daemon,
                            DltDaemonContext *context,
                            char *ecu,
                            int verbose);
+
+/**
+ * Delete context from internal context management for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param context pointer to context to be deleted
+ * @param ecu pointer to ecu id of node to delete application
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_context_del_v2(DltDaemon *daemon,
+                           DltDaemonContext *context,
+                           uint8_t eculen,
+                           char *ecu,
+                           int verbose);
+
 /**
  * Find context with specific application id and context id
  * @param daemon pointer to dlt daemon structure
@@ -660,6 +675,15 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
  */
 int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app, int verbose);
 
+/**
+ * Send user message DLT_USER_MESSAGE_LOG_STATE to user application for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param app pointer to application for response
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_user_send_log_state_v2(DltDaemon *daemon, DltDaemonApplication *app, int verbose);
+
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /**
  * Send user message DLT_USER_MESSAGE_TRACE_LOAD to user application
@@ -709,6 +733,15 @@ void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trac
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
+
+/**
+ * Send user messages to all user applications the log status for DLT V2
+ * everytime the client is connected or disconnected.
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose);
+
 
 /**
  * Process reset to factory default control message
