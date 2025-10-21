@@ -1853,7 +1853,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
     msg->baseheaderextrasizev2 = dlt_message_get_extraparameters_size_v2(msgcontent);
-
     /* Fill extra parameters */
     if (dlt_message_get_extraparameters_from_recievedbuffer_v2(msg, buffer, msgcontent) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;

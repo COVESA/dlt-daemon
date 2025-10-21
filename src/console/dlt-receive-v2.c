@@ -609,8 +609,7 @@ int main(int argc, char *argv[])
         dltdata.ecuidlen = strlen(dltdata.evalue);
         dltdata.ecuid = NULL;
         dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
-    }
-    else{
+    }else {
         dltdata.ecuidlen = strlen(DLT_RECEIVE_ECU_ID);
         dltdata.ecuid = NULL;
         dlt_set_id_v2(&(dltdata.ecuid), DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);}
@@ -652,8 +651,6 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
 {
     DltReceiveData *dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
-    uint8_t *temp_buffer;
-
     struct iovec iov[2];
     int bytes_written;
 
@@ -668,16 +665,16 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     else
         dlt_set_storageheader_v2(&(message->storageheaderv2), dltdata->ecuidlen, dltdata->ecuid);
 
-        message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
+    message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
 
-        /* Add Storage Header to Header Buffer and update header size*/
-        uint8_t tempbuffer[message->headersizev2 + message->storageheadersizev2];
-        memcpy(temp_buffer, &(message->storageheaderv2), message->storageheadersizev2);
-        memcpy(temp_buffer + message->storageheadersizev2, message->headerbufferv2, message->headersizev2);
-        free(message->headerbufferv2);
-        message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
-        message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
-        memcpy(message->headerbufferv2, temp_buffer, message->headersizev2);
+    /* Add Storage Header to Header Buffer and update header size*/
+    uint8_t temp_buffer[message->headersizev2 + message->storageheadersizev2];
+    memcpy(temp_buffer, &(message->storageheaderv2), message->storageheadersizev2);
+    memcpy(temp_buffer + message->storageheadersizev2, message->headerbufferv2, message->headersizev2);
+    free(message->headerbufferv2);
+    message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+    message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
+    memcpy(message->headerbufferv2, temp_buffer, message->headersizev2);
 
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
         (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
