@@ -357,7 +357,7 @@ void dlt_print_id(char *text, const char *id)
     memcpy(text, id, len);
 }
 
-//TBD: REVIEW
+//TBD: Do memcpy instead
 void dlt_print_id_v2(char *text, const char *id, uint8_t length)
 {
     /* check nullpointer */

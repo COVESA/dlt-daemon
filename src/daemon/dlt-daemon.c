@@ -2905,7 +2905,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
 
         /* send new log state to all applications */
         daemon->connectionState = 1;
-        dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
+        dlt_daemon_user_send_all_log_state(daemon, verbose);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         /* Reset number of received bytes from FIFO */
@@ -3350,74 +3350,145 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
     uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
+    if (dlt_version == DLT_VERSION2) {
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    /* Count up number of received bytes from FIFO */
-    if (receiver->bytesRcvd > receiver->lastBytesRcvd)
-    {
-        daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
-    }
-#endif
-
-    /* look through buffer as long as data is in there */
-    while ((receiver->bytesRcvd >= min_size) && run_loop) {
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-        /* this loop may be running long, so we have to exit it at some point to be able to
-         * to process other events, like feeding the watchdog
-         */
-        bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
-        if (watchdog_triggered) {
-            dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
-            run_loop = 0; // exit loop in next iteration
+        /* Count up number of received bytes from FIFO */
+        if (receiver->bytesRcvd > receiver->lastBytesRcvd)
+        {
+            daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
         }
 #endif
-        dlt_daemon_process_user_message_func func = NULL;
 
-        offset = 0;
-        userheader = (DltUserHeader *)(receiver->buf + offset);
-
-        int ret_val = dlt_user_check_userheader_v2(userheader);
-
-        while (!dlt_user_check_userheader_v2(userheader) &&
-               (offset + min_size <= receiver->bytesRcvd)) {
-            /* resync if necessary */
-            offset++;
-            userheader = (DltUserHeader *)(receiver->buf + offset);
-        }
-
-        /* Check for user header pattern */
-        ret_val = dlt_user_check_userheader_v2(userheader);
-        if (!dlt_user_check_userheader_v2(userheader))
-            break;
-
-        /* Set new start offset */
-        if (offset > 0) {
-            if (dlt_receiver_remove(receiver, offset) == -1) {
-                dlt_log(LOG_WARNING,
-                        "Can't remove offset from receiver\n");
-                return -1;
+        /* look through buffer as long as data is in there */
+        while ((receiver->bytesRcvd >= min_size) && run_loop) {
+    #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+            /* this loop may be running long, so we have to exit it at some point to be able to
+            * to process other events, like feeding the watchdog
+            */
+            bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+            if (watchdog_triggered) {
+                dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
+                run_loop = 0; // exit loop in next iteration
             }
-        }
+    #endif
+            dlt_daemon_process_user_message_func func = NULL;
 
-        if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
-            func = dlt_daemon_process_user_message_not_sup;
-        else
-            func = process_user_func[userheader->message];
+            offset = 0;
+            userheader = (DltUserHeader *)(receiver->buf + offset);
+
+            int ret_val = dlt_user_check_userheader_v2(userheader);
+
+            while (!dlt_user_check_userheader_v2(userheader) &&
+                (offset + min_size <= receiver->bytesRcvd)) {
+                /* resync if necessary */
+                offset++;
+                userheader = (DltUserHeader *)(receiver->buf + offset);
+            }
+
+            /* Check for user header pattern */
+            ret_val = dlt_user_check_userheader_v2(userheader);
+            if (!dlt_user_check_userheader_v2(userheader))
+                break;
+
+            /* Set new start offset */
+            if (offset > 0) {
+                if (dlt_receiver_remove(receiver, offset) == -1) {
+                    dlt_log(LOG_WARNING,
+                            "Can't remove offset from receiver\n");
+                    return -1;
+                }
+            }
+
+            if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
+                func = dlt_daemon_process_user_message_not_sup;
+            else
+                func = process_user_func[userheader->message];
 
         printf("DEBUG: userheader->message = %d\n", userheader->message);
 
-        if (func(daemon,
-                 daemon_local,
-                 receiver,
-                 daemon_local->flags.vflag) == -1)
-            run_loop = 0;
-    }
+            if (func(daemon,
+                    daemon_local,
+                    receiver,
+                    daemon_local->flags.vflag) == -1)
+                run_loop = 0;
+        }
 
-    /* keep not read data in buffer */
-    if (dlt_receiver_move_to_begin(receiver) == -1) {
-        dlt_log(LOG_WARNING,
-                "Can't move bytes to beginning of receiver buffer for user "
-                "messages\n");
-        return -1;
+        /* keep not read data in buffer */
+        if (dlt_receiver_move_to_begin(receiver) == -1) {
+            dlt_log(LOG_WARNING,
+                    "Can't move bytes to beginning of receiver buffer for user "
+                    "messages\n");
+            return -1;
+        }
+    }
+    else { //DLT Version 1
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        /* Count up number of received bytes from FIFO */
+        if (receiver->bytesRcvd > receiver->lastBytesRcvd)
+        {
+            daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
+        }
+#endif
+
+        /* look through buffer as long as data is in there */
+        while ((receiver->bytesRcvd >= min_size) && run_loop) {
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+            /* this loop may be running long, so we have to exit it at some point to be able to
+            * to process other events, like feeding the watchdog
+            */
+            bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+            if (watchdog_triggered) {
+                dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
+                run_loop = 0; // exit loop in next iteration
+            }
+#endif
+            dlt_daemon_process_user_message_func func = NULL;
+
+            offset = 0;
+            userheader = (DltUserHeader *)(receiver->buf + offset);
+
+            int ret_val = dlt_user_check_userheader(userheader);
+
+            while (!dlt_user_check_userheader(userheader) &&
+                (offset + min_size <= receiver->bytesRcvd)) {
+                /* resync if necessary */
+                offset++;
+                userheader = (DltUserHeader *)(receiver->buf + offset);
+            }
+
+            /* Check for user header pattern */
+            ret_val = dlt_user_check_userheader(userheader);
+            if (!dlt_user_check_userheader(userheader))
+                break;
+
+            /* Set new start offset */
+            if (offset > 0) {
+                if (dlt_receiver_remove(receiver, offset) == -1) {
+                    dlt_log(LOG_WARNING,
+                            "Can't remove offset from receiver\n");
+                    return -1;
+                }
+            }
+
+            if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
+                func = dlt_daemon_process_user_message_not_sup;
+            else
+                func = process_user_func[userheader->message];
+
+            if (func(daemon,
+                    daemon_local,
+                    receiver,
+                    daemon_local->flags.vflag) == -1)
+                run_loop = 0;
+        }
+
+        /* keep not read data in buffer */
+        if (dlt_receiver_move_to_begin(receiver) == -1) {
+            dlt_log(LOG_WARNING,
+                    "Can't move bytes to beginning of receiver buffer for user "
+                    "messages\n");
+            return -1;
+        }
     }
 
     return 0;

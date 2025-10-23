@@ -2778,9 +2778,10 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
         app = &(user_list->applications[count]);
 
         if (app != NULL) {
-            if (app->user_handle >= DLT_FD_MINIMUM)
+            if (app->user_handle >= DLT_FD_MINIMUM) {
                 if (dlt_daemon_user_send_log_state(daemon, app, verbose) == -1)
                     dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n", app->apid, app->pid);
+            }
         }
     }
 }
