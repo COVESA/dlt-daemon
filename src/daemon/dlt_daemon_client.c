@@ -1690,12 +1690,23 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 for (j = 0; j < (application - (user_list->applications)); j++)
                     offset_base += user_list->applications[j].num_contexts;
 
-                dlt_set_id_v2((char **)(resp.databuffer + offset), apid, apidlen); //TBD: REVIEW (char **)
+                //TBD: Check below dlt_set_id_v2 result
+
+                uint8_t *temp_ptr = (uint8_t *)(resp.databuffer + offset);
+                dlt_set_id_v2(&temp_ptr, apid, apidlen);
                 offset += apidlen;
                 //TBD: Need to set apidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                dlt_print_id_v2(buf, apid, apidlen);
+                // dlt_print_id_v2(buf, apid, apidlen);
+                //TBD: Enable below check for NULL
+                /*
+                if ((buf == NULL) || (apid == NULL) || (apidlen == 0)) {
+                    dlt_vlog(LOG_ERR, "Failed to memcpy apid\n");
+                }
+                */
+
+                memcpy(buf, apid, apidlen);
                 dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
 #endif
 
@@ -1727,12 +1738,21 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                         ((req->ctidlen == 0) || ((req->ctidlen != 0) &&
                                                     (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
                         ) {
-                        dlt_set_id_v2((char **)(resp.databuffer + offset), context->ctid, context->ctid2len); //TBD: REVIEW (char **)
+                        uint8_t *temp_ptr = (uint8_t *)(resp.databuffer + offset);
+                        dlt_set_id_v2(&temp_ptr, context->ctid, context->ctid2len);
                         offset += context->ctid2len;
                         //TBD: Need to set ctidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                        dlt_print_id_v2(buf, context->ctid, context->ctid2len);
+                        // dlt_print_id_v2(buf, context->ctid, context->ctid2len);
+                        //TBD: Enable below check for NULL
+                        /*
+                        if ((buf == NULL) || (context->ctid == NULL) || (context->ctid2len == 0)) {
+                            dlt_vlog(LOG_ERR, "Failed to memcpy ctid\n");
+                        }
+                        */
+
+                        memcpy(buf, context->ctid, context->ctid2len);
                         dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
 #endif
 
