@@ -1717,8 +1717,6 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
         }
     }
 
-
-
     /* check that standard header fits buffer */
     if (length < sizeof(DltStandardHeader))
         /* dlt_log(LOG_ERR, "Length smaller than standard header!\n"); */
@@ -1764,7 +1762,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
 
         memcpy(msg->headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader),
                buffer + sizeof(DltStandardHeader), (size_t)extra_size);
-        
+
         /* set extended header ptr and get standard header extra parameters */
         if (DLT_IS_HTYP_UEH(msg->standardheader->htyp))
             msg->extendedheader =
@@ -1942,8 +1940,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
                  msg->datasize);
         return DLT_MESSAGE_ERROR_UNKNOWN;
     }
-
-    printf("DEBUG: Before memcpy paylod databuffer\n");
 
     /* load payload data from buffer */
     memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);

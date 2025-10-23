@@ -103,7 +103,7 @@
 #define DLT_USER_RECEIVERTHREAD_STACKSIZE 100000
 
 /* default value for storage to file, not used in daemon connection */
-#define DLT_USER_DEFAULT_ECU_ID "ECU_ABC"
+#define DLT_USER_DEFAULT_ECU_ID "ECU1"
 
 /* Initial log level */
 #define DLT_USER_INITIAL_LOG_LEVEL    DLT_LOG_INFO

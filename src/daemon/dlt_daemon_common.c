@@ -113,7 +113,7 @@ static int dlt_daemon_cmp_apid_v2(const void *m1, const void *m2)
     DltDaemonApplication *mi2 = (DltDaemonApplication *)m2;
 
     if (mi1->apid2len != mi2->apid2len){
-        return NULL;
+        return -1;
     }
 
     return memcmp(mi1->apid2, mi2->apid2, mi1->apid2len); //TBD: use strncmp
@@ -150,7 +150,7 @@ static int dlt_daemon_cmp_apid_ctid_v2(const void *m1, const void *m2)
     DltDaemonContext *mi2 = (DltDaemonContext *)m2;
 
     if (mi1->apid2len != mi2->apid2len){
-        return NULL;
+        return -1;
     }
 
     cmp = memcmp(mi1->apid2, mi2->apid2, mi1->apid2len); //TBD: use strncmp
@@ -159,7 +159,7 @@ static int dlt_daemon_cmp_apid_ctid_v2(const void *m1, const void *m2)
         ret = -1;
     else if (cmp == 0){
         if (mi1->ctid2len != mi2->ctid2len){
-            return NULL;
+            return -1;
         }
         ret = memcmp(mi1->ctid2, mi2->ctid2, mi1->ctid2len); //TBD: use strncmp
     }
@@ -2799,14 +2799,10 @@ void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose)
         return;
     }
 
-    printf("DEBUG:daemon->ecuid2len = %d, daemon->ecuid2 = %.*s \n", daemon->ecuid2len, daemon->ecuid2len, daemon->ecuid2);
-
     user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
 
     if (user_list == NULL)
         return;
-
-    printf("DEBUG: user_list->num_applications = %d\n", user_list->num_applications);
 
     for (count = 0; count < user_list->num_applications; count++) {
         app = &(user_list->applications[count]);
@@ -2814,7 +2810,6 @@ void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose)
         if (app != NULL) {
             if (app->user_handle >= DLT_FD_MINIMUM) {
                 if (dlt_daemon_user_send_log_state_v2(daemon, app, verbose) == -1) {
-                    printf("DEBUG: dlt_daemon_user_send_log_state_v2 returned -1\n");
                     dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.6s, PID: %d\n", app->apid2, app->pid);
                 }
             }

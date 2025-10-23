@@ -291,6 +291,7 @@ int dlt_daemon_client_send(int sock,
         ((daemon->state == DLT_DAEMON_STATE_BUFFER) || (daemon->state == DLT_DAEMON_STATE_SEND_BUFFER) ||
          (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))) {
         if (daemon->state != DLT_DAEMON_STATE_BUFFER_FULL) {
+            //TBD: Check client_ringbuffer
             /* Store message in history buffer */
             ret = dlt_buffer_push3(&(daemon->client_ringbuffer), data1, size1, data2, size2, 0, 0);
             if (ret < DLT_RETURN_OK) {
@@ -547,6 +548,25 @@ int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
                                      DLT_DAEMON_TEXTSIZE, verbose))
             dlt_log(LOG_WARNING, "dlt_message_print_header() failed!\n");
     }
+
+#if 0
+        //TBD: Remove DEBUG prints
+        printf("\nDEBUG: Received Buffer: ");
+
+        for (int j = 0; j < daemon_local->msg.headersize; j++){
+            if (daemon_local->msg.headerbuffer[j] > 48 && daemon_local->msg.headerbuffer[j] < 122) {
+                printf("%c", daemon_local->msg.headerbuffer[j]);
+            }
+            else {
+                printf(" %02X", (uint8_t)(daemon_local->msg.headerbuffer[j]));
+            }
+        }
+        printf("\nBuffer in Hex: \n");
+        for (int k = 0; k < 51; k++){
+            printf(" 0x%02X", (uint8_t)(daemon_local->msg.headerbuffer[k]));
+        }
+        /* End of DEBUG:*/
+#endif
 
     /* send message to client or write to log file */
     return dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,

@@ -2568,7 +2568,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
 {
-    if (dlt_version == DLT_VERSION2) {
+    if (0) {
         /* DLTV2 - Multiplexing logic for DLT protocol version 2 */
         DltMessageV2 msg;
         if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
@@ -2703,8 +2703,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         free(msg.databuffer);
     } else {
         DltMessage msg = { 0 };
-        if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
-            return DLT_RETURN_ERROR;
 
         static uint8_t uiMsgCount = 0;
         DltStandardHeaderExtra *pStandardExtra = NULL;
@@ -2803,6 +2801,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                       DltReceiver *receiver,
                                       int verbose)
 {
+    //TBD: REVIEW How to multiplex V1 and V2 clients?
     socklen_t cli_size;
     struct sockaddr_un cli;
 
@@ -2883,8 +2882,6 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
              "New client connection #%d established, Total Clients : %d",
              in_sock, daemon_local->client_connections);
 
-    printf("DEBUG: %s\n", local_str);
-
     dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                             DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
                             daemon_local->flags.vflag);
@@ -2895,7 +2892,6 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
 
         dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
-
         if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
             dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
             close(in_sock);
@@ -3403,8 +3399,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                 func = dlt_daemon_process_user_message_not_sup;
             else
                 func = process_user_func[userheader->message];
-
-        printf("DEBUG: userheader->message = %d\n", userheader->message);
 
             if (func(daemon,
                     daemon_local,
@@ -4380,7 +4374,6 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                            DltReceiver *rec,
                                                            int verbose)
 {
-    printf("DEBUG: Unregister App \n");
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context;
     int i, offset_base;
@@ -5179,6 +5172,22 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
+#if 0 // TBD: Remove DEBUG prints
+        printf("\nDEBUG: %s - Received Buffer: length = %d\n", __func__, length);
+
+        for (int j = 0; j < length; j++){
+            if (data[j] > 48 && data[j] < 122) {
+                printf("%c", data[j]);
+            }
+            else {
+                printf(" 0x%02X", (uint8_t)(data[j]));
+            }
+        }
+        printf("\nBuffer in Hex: \n");
+        for (int k = 0; k < length; k++){
+            printf(" 0x%02X", (uint8_t)(data[k]));
+        }
+#endif // End of DEBUG prints
         if ((ret =
                  dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
                                         verbose)))

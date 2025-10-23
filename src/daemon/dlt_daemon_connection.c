@@ -285,9 +285,6 @@ void *dlt_connection_get_callback(DltConnection *con)
     if (con)
         type = con->type;
 
-    if(type != DLT_CONNECTION_ONE_S_TIMER) 
-        printf("type = %d\n", type);
-
     switch (type) {
     case DLT_CONNECTION_CLIENT_CONNECT:
         ret = dlt_daemon_process_client_connect;
