@@ -329,6 +329,160 @@ int dlt_daemon_client_send(int sock,
 
 }
 
+int dlt_daemon_client_send_v2(int sock,
+                              DltDaemon *daemon,
+                              DltDaemonLocal *daemon_local,
+                              void *storage_header,
+                              int storage_header_size,
+                              void *data1,
+                              int size1,
+                              void *data2,
+                              int size2,
+                              int verbose)
+{
+    int sent, ret;
+    int ret_logstorage = 0;
+    static int sent_message_overflow_cnt = 0;
+
+    if ((daemon == NULL) || (daemon_local == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid arguments\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    if ((sock != DLT_DAEMON_SEND_TO_ALL) && (sock != DLT_DAEMON_SEND_FORCE)) {
+        /* Send message to specific socket */
+        if (isatty(sock)) {
+            if ((ret =
+                     dlt_daemon_serial_send(sock, data1, size1, data2, size2,
+                                            daemon->sendserialheader))) {
+                dlt_vlog(LOG_WARNING, "%s: serial send dlt message failed\n", __func__);
+                return ret;
+            }
+        } else {
+            if ((ret =
+                     dlt_daemon_socket_send(sock, data1, size1, data2, size2,
+                                            daemon->sendserialheader))) {
+                dlt_vlog(LOG_WARNING, "%s: socket send dlt message failed\n", __func__);
+                return ret;
+            }
+        }
+
+        return DLT_DAEMON_ERROR_OK;
+    }
+
+    /* write message to offline trace */
+    /* In the SEND_BUFFER state we must skip offline tracing because the offline traces */
+    /* are going without buffering directly to the offline trace. Thus we have to filter out */
+    /* the traces that are coming from the buffer. */
+    if ((sock != DLT_DAEMON_SEND_FORCE) && (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER)) {
+        if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+            && daemon_local->flags.offlineTraceDirectory[0]) {
+            /* To update to v2*/
+            if (dlt_offline_trace_write(&(daemon_local->offlineTrace), storage_header, storage_header_size, data1,
+                                        size1, data2, size2)) {
+                static int error_dlt_offline_trace_write_failed = 0;
+
+                if (!error_dlt_offline_trace_write_failed) {
+                    dlt_vlog(LOG_ERR, "%s: dlt_offline_trace_write failed!\n", __func__);
+                    error_dlt_offline_trace_write_failed = 1;
+                }
+
+                /*return DLT_DAEMON_ERROR_WRITE_FAILED; */
+            }
+        }
+
+        /* write messages to offline logstorage only if there is an extended header set
+         * this need to be checked because the function is dlt_daemon_client_send is called by
+         * newly introduced dlt_daemon_log_internal */
+        /* To Update to dlt_daemon_logstorage_write_v2*/
+        if (daemon_local->flags.offlineLogstorageMaxDevices > 0)
+            ret_logstorage = dlt_daemon_logstorage_write(daemon,
+                                                         &daemon_local->flags,
+                                                         storage_header,
+                                                         storage_header_size,
+                                                         data1,
+                                                         size1,
+                                                         data2,
+                                                         size2);
+    }
+
+    /* send messages to daemon socket */
+    if ((daemon->mode == DLT_USER_MODE_EXTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) {
+#ifdef UDP_CONNECTION_SUPPORT
+        if (daemon_local->UDPConnectionSetup == MULTICAST_CONNECTION_ENABLED) {
+            /* Forward message to network client if network routing is not disabled */
+            if (ret_logstorage != 1) {
+                dlt_daemon_udp_dltmsg_multicast(data1,
+                                                size1,
+                                                data2,
+                                                size2,
+                                                verbose);
+            }
+        }
+
+#endif
+
+        if ((sock == DLT_DAEMON_SEND_FORCE) || (daemon->state == DLT_DAEMON_STATE_SEND_DIRECT)) {
+            /* Forward message to network client if network routing is not disabled */
+            if (ret_logstorage != 1) {
+                sent = dlt_daemon_client_send_all_multiple(daemon,
+                                                           daemon_local,
+                                                           data1,
+                                                           size1,
+                                                           data2,
+                                                           size2,
+                                                           verbose);
+
+                if ((sock == DLT_DAEMON_SEND_FORCE) && !sent) {
+                    return DLT_DAEMON_ERROR_SEND_FAILED;
+                }
+            }
+        }
+    }
+
+    /* Message was not sent to client, so store it in client ringbuffer */
+    if ((sock != DLT_DAEMON_SEND_FORCE) &&
+        ((daemon->state == DLT_DAEMON_STATE_BUFFER) || (daemon->state == DLT_DAEMON_STATE_SEND_BUFFER) ||
+         (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL))) {
+        if (daemon->state != DLT_DAEMON_STATE_BUFFER_FULL) {
+            /* Store message in history buffer */
+            ret = dlt_buffer_push3(&(daemon->client_ringbuffer), data1, size1, data2, size2, 0, 0);
+            if (ret < DLT_RETURN_OK) {
+                dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER_FULL);
+            }
+        }
+        if (daemon->state == DLT_DAEMON_STATE_BUFFER_FULL) {
+            daemon->overflow_counter += 1;
+            if (daemon->overflow_counter == 1)
+                dlt_vlog(LOG_INFO, "%s: Buffer is full! Messages will be discarded.\n", __func__);
+
+            return DLT_DAEMON_ERROR_BUFFER_FULL;
+        }
+    } else {
+        if ((daemon->overflow_counter > 0) &&
+            (daemon_local->client_connections > 0)) {
+            sent_message_overflow_cnt++;
+            if (sent_message_overflow_cnt >= 2) {
+                sent_message_overflow_cnt--;
+            }
+            else {
+                if (dlt_daemon_send_message_overflow_v2(daemon, daemon_local,
+                                          verbose) == DLT_DAEMON_ERROR_OK) {
+                    dlt_vlog(LOG_WARNING,
+                             "%s: %u messages discarded! Now able to send messages to the client.\n",
+                             __func__,
+                             daemon->overflow_counter);
+                    daemon->overflow_counter = 0;
+                    sent_message_overflow_cnt--;
+                }
+            }
+        }
+    }
+
+    return DLT_DAEMON_ERROR_OK;
+
+}
+
 int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
                                        DltDaemonLocal *daemon_local,
                                        int verbose)
@@ -400,6 +554,104 @@ int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
                 daemon_local->msg.headerbuffer + sizeof(DltStorageHeader),
                 (int) (daemon_local->msg.headersize - sizeof(DltStorageHeader)),
                 daemon_local->msg.databuffer, (int) daemon_local->msg.datasize, verbose);
+
+}
+
+int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose)
+{
+    static char text[DLT_DAEMON_TEXTSIZE];
+    char * ecu_ptr = NULL;
+    uint8_t ecu_len = 0;
+    uint32_t temp_extended_size = 0;
+    uint8_t temp_buffer[daemon_local->msgv2.headersizev2];
+
+    /* Store headerbuffer in temp buffer*/
+    memcpy(temp_buffer, daemon_local->msgv2.headerbufferv2, daemon_local->msgv2.headersizev2);
+    free(daemon_local->msgv2.headerbufferv2);
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: invalid arguments\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* set overwrite ecu id */
+    if ((daemon_local->flags.evalue[0]) &&
+        (strncmp(daemon_local->msgv2.extendedheaderv2.ecid,
+                 DLT_DAEMON_ECU_ID, daemon_local->msgv2.extendedheaderv2.ecidlen) == 0)) {
+        daemon_local->msgv2.extendedheaderv2.ecidlen = daemon->ecuid2len;
+        dlt_set_id_v2(&(daemon_local->msgv2.extendedheaderv2.ecid), daemon->ecuid2, daemon->ecuid2len);
+
+        daemon_local->msgv2.extendedheaderv2.seid = 0;
+
+        /* Get new extended header size and header size, update header buffer*/
+        temp_extended_size = daemon_local->msgv2.extendedheadersizev2;
+        daemon_local->msgv2.extendedheadersizev2 = dlt_message_get_extendedparameters_size_v2(&(daemon_local->msgv2));
+    }
+
+    /* prepare storage header */
+    if (DLT_IS_HTYP2_WEID(daemon_local->msgv2.baseheaderv2->htyp2)) {
+        ecu_ptr = daemon_local->msgv2.extendedheaderv2.ecid;
+        ecu_len = daemon_local->msgv2.extendedheaderv2.ecidlen;
+    } else {
+        ecu_ptr = daemon->ecuid2;
+        ecu_len = daemon->ecuid2len;
+    }
+
+    daemon_local->msgv2.storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + ecu_len;
+
+    if (dlt_set_storageheader_v2(&(daemon_local->msgv2.storageheaderv2), ecu_len, ecu_ptr)) {
+        dlt_vlog(LOG_WARNING,
+                 "%s: failed to set storage header with header type: 0x%x\n",
+                 __func__, daemon_local->msg.standardheader->htyp);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    daemon_local->msgv2.headersizev2 = daemon_local->msgv2.headersizev2 - temp_extended_size + 
+                                       daemon_local->msgv2.extendedheadersizev2 + daemon_local->msgv2.storageheadersizev2;
+
+
+    daemon_local->msgv2.headerbufferv2 = (uint8_t *)malloc(daemon_local->msgv2.headersizev2);
+
+    if (dlt_message_set_storageparameters_v2(&(daemon_local->msgv2), 0) != DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    memcpy(daemon_local->msgv2.headerbufferv2 + daemon_local->msgv2.storageheadersizev2, 
+           temp_buffer, (daemon_local->msgv2.baseheadersizev2 + daemon_local->msgv2.baseheaderextrasizev2));
+
+    if (dlt_message_set_extendedparameters_v2(&(daemon_local->msgv2))) {
+        dlt_vlog(LOG_WARNING,
+                    "%s: failed to set message extended parameters.\n", __func__);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* if no filter set or filter is matching display message */
+    if (daemon_local->flags.xflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_hex_v2(&(daemon_local->msgv2), text,
+                                  DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_hex() failed!\n");
+    } else if (daemon_local->flags.aflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_ascii_v2(&(daemon_local->msgv2), text,
+                                    DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_ascii() failed!\n");
+    } else if (daemon_local->flags.sflag) {
+        if (DLT_RETURN_OK !=
+            dlt_message_print_header_v2(&(daemon_local->msgv2), text,
+                                     DLT_DAEMON_TEXTSIZE, verbose))
+            dlt_log(LOG_WARNING, "dlt_message_print_header() failed!\n");
+    }
+
+    /* send message to client or write to log file */
+    return dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
+                daemon_local->msgv2.headerbufferv2, daemon_local->msgv2.storageheadersizev2,
+                daemon_local->msgv2.headerbufferv2 + daemon_local->msgv2.storageheadersizev2,
+                (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2),
+                daemon_local->msgv2.databuffer, (int) daemon_local->msgv2.datasize, verbose);
 
 }
 
@@ -498,12 +750,12 @@ int dlt_daemon_client_send_control_message(int sock,
 }
 
 int dlt_daemon_client_send_control_message_v2(int sock,
-                                           DltDaemon *daemon,
-                                           DltDaemonLocal *daemon_local,
-                                           DltMessageV2 *msg,
-                                           char *apid,
-                                           char *ctid,
-                                           int verbose)
+                                              DltDaemon *daemon,
+                                              DltDaemonLocal *daemon_local,
+                                              DltMessageV2 *msg,
+                                              char *apid,
+                                              char *ctid,
+                                              int verbose)
 {
     int ret;
     int32_t len;
@@ -666,7 +918,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     msg->baseheaderv2->len = DLT_HTOBE_16(len);
 
     if ((ret =
-             dlt_daemon_client_send(sock, daemon, daemon_local, msg->headerbufferv2, msg->storageheadersizev2,
+             dlt_daemon_client_send_v2(sock, daemon, daemon_local, msg->headerbufferv2, msg->storageheadersizev2,
                                     msg->headerbufferv2 + msg->storageheadersizev2,
                                     (int) (msg->headersizev2 - msg->storageheadersizev2),
                                     msg->databuffer, (int) msg->datasize, verbose))) {
@@ -1669,7 +1921,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                     apid = user_list->applications[i].apid;
                 else
                     /* This should never occur! */
-                    apid = 0;
+                    apid = NULL;
                     apidlen = 0;
             }
 
@@ -1686,8 +1938,8 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
                 for (j = 0; j < (application - (user_list->applications)); j++)
                     offset_base += user_list->applications[j].num_contexts;
-
-                dlt_set_id_v2((char **)(resp.databuffer + offset), apid, apidlen); //TBD: REVIEW (char **)
+                uint8_t *temp_ptr = (uint8_t *)(resp.databuffer + offset);
+                dlt_set_id_v2(&temp_ptr, apid, apidlen); //TBD: REVIEW (char **)
                 offset += apidlen;
                 //TBD: Need to set apidlen in resp.databuffer?
 
@@ -1865,6 +2117,67 @@ int dlt_daemon_control_message_buffer_overflow(int sock,
 
     /* free message */
     dlt_message_free(&msg, 0);
+
+    return DLT_DAEMON_ERROR_OK;
+}
+
+int dlt_daemon_control_message_buffer_overflow_v2(int sock,
+                                                  DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  unsigned int overflow_counter,
+                                                  char *apid,
+                                                  int verbose)
+{
+    int ret;
+    DltMessageV2 msg;
+    DltServiceMessageBufferOverflowResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return DLT_DAEMON_ERROR_UNKNOWN;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response_v2(sock,
+                                               daemon,
+                                               daemon_local,
+                                               DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW,
+                                               DLT_SERVICE_RESPONSE_ERROR,
+                                               verbose);
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceMessageBufferOverflowResponse);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return DLT_DAEMON_ERROR_UNKNOWN;
+
+    resp = (DltServiceMessageBufferOverflowResponse *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->overflow = DLT_MESSAGE_BUFFER_OVERFLOW;
+    resp->overflow_counter = overflow_counter;
+
+    /* send message */
+    if ((ret = dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, apid, NULL, verbose))) {
+        dlt_message_free_v2(&msg, 0);
+        return ret;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
 
     return DLT_DAEMON_ERROR_OK;
 }

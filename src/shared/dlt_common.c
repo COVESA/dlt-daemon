@@ -672,6 +672,7 @@ DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int v
         }
         else {
             memcpy(buf, filter->apid2[num], filter->apid2len[num]);
+            memset(buf + (filter->ctid2len[num]), '\0', 1);
             fprintf(handle, "%s ", buf);
         }
 
@@ -680,6 +681,7 @@ DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int v
         }
         else {
             memcpy(buf, filter->ctid2[num], filter->ctid2len[num]);
+            memset(buf + (filter->ctid2len[num]), '\0', 1);
             fprintf(handle, "%s ", buf);
         }
     }
@@ -2355,6 +2357,48 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
     }
 
     return DLT_RETURN_OK;
+}
+
+uint32_t dlt_message_get_extendedparameters_size_v2(DltMessageV2 *msg)
+{
+    uint32_t size = 0;
+    uint8_t sgmtLength = 0;
+
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.ecidlen + 1;
+    };
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.apidlen + 1;
+        size = size + msg->extendedheaderv2.ctidlen + 1;
+    };
+    if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        size = size + 4;
+    };
+    if (DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.finalen + 1 + 4;
+    };
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+        size = size + 1;
+        for(int j=0; j<msg->extendedheaderv2.notg; j++){            
+            size = size + (msg->extendedheaderv2.tag[j].taglen) + 1;
+        };
+    };
+    if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+        size = size + 1;
+    };
+    if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
+        if (msg->extendedheaderv2.frametype == DLT_FIRST_FRAME){
+            sgmtLength = 8;
+        }else if (msg->extendedheaderv2.frametype == DLT_CONSECUTIVE_FRAME){
+                sgmtLength = 4;
+        }else if (msg->extendedheaderv2.frametype == DLT_LAST_FRAME){
+                sgmtLength = 0;
+        }else if (msg->extendedheaderv2.frametype == DLT_ABORT_FRAME){
+                sgmtLength = 1;
+        }
+        size = size + sgmtLength + 2;        
+    };
+    return size;
 }
 
 static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(DltMessageV2 *msg, uint8_t* buffer, DltHtyp2ContentType msgcontent)
@@ -4499,6 +4543,18 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
         return DLT_RETURN_WRONG_PARAMETER;
 
     if (dlt_message_header(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s\n", text);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_print_header_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     dlt_user_printf("%s\n", text);
 

@@ -1562,9 +1562,18 @@ uint8_t dlt_message_get_extraparameters_size_v2(DltHtyp2ContentType msgcontent);
 /**
  * Set extended header parameters for Version 2
  * @param msg pointer to structure of organising access to DLT messages
+ * @param header_offset Offset of header buffer before baseheader pointer
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg);
+
+/**
+ * Set extended header parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param header_offset Offset of header buffer before baseheader pointer
+ * @return negative value if there was an error
+ */
+uint32_t dlt_message_get_extendedparameters_size_v2(DltMessageV2 *msg);
 
 /**
  * Initialise the structure used to access a DLT file.
@@ -2035,6 +2044,16 @@ uint32_t dlt_uptime(void);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print header of a DLT message
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_header_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Hex-Output

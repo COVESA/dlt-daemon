@@ -668,13 +668,16 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
 
     /* Add Storage Header to Header Buffer and update header size*/
-    uint8_t temp_buffer[message->headersizev2 + message->storageheadersizev2];
-    memcpy(temp_buffer, &(message->storageheaderv2), message->storageheadersizev2);
-    memcpy(temp_buffer + message->storageheadersizev2, message->headerbufferv2, message->headersizev2);
+    uint8_t temp_buffer[message->headersizev2];
+    memcpy(temp_buffer, message->headerbufferv2, message->headersizev2);
     free(message->headerbufferv2);
     message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
     message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
-    memcpy(message->headerbufferv2, temp_buffer, message->headersizev2);
+
+    if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
+        return -1;
+
+    memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2);
 
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
         (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {

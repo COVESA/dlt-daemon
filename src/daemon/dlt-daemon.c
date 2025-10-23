@@ -2693,7 +2693,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         /* Calc length */
         msg.baseheaderv2->len = DLT_HTOBE_16(msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
 
-        dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
+        dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                             msg.headerbufferv2, msg.storageheadersizev2,
                             msg.headerbufferv2 + msg.storageheadersizev2,
                             (int) (msg.headersizev2 - msg.storageheadersizev2),
@@ -3481,6 +3481,26 @@ int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_l
     return DLT_DAEMON_ERROR_OK;
 }
 
+int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    int ret;
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == 0) || (daemon_local == 0)) {
+        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_process_user_message_overflow()\n");
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    /* Store in daemon, that a message buffer overflow has occured */
+    if ((ret =
+             dlt_daemon_control_message_buffer_overflow_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
+                                                           daemon->overflow_counter,
+                                                           NULL, verbose)))
+        return ret;
+
+    return DLT_DAEMON_ERROR_OK;
+}
+
 int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltDaemonLocal *daemon_local,
                                                          DltReceiver *rec,
@@ -4055,7 +4075,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
             //TBD
 
-            dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
+            //dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
             dlt_message_free_v2(&msg, verbose);
         }
 
@@ -5090,6 +5110,51 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
 
         if ((ret =
                  dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
+                                        verbose)))
+            return ret;
+
+        dlt_buffer_remove(&(daemon->client_ringbuffer));
+
+        if (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER)
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
+
+        if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
+            return DLT_DAEMON_ERROR_OK;
+        }
+    }
+
+    return DLT_DAEMON_ERROR_OK;
+}
+
+int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    int ret;
+    static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
+    int length;
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+    uint32_t curr_time = 0U;
+#endif
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == 0) || (daemon_local == 0)) {
+        dlt_log(LOG_ERR, "Invalid function parameters used for function dlt_daemon_send_ringbuffer_to_client()\n");
+        return DLT_DAEMON_ERROR_UNKNOWN;
+    }
+
+    if (dlt_buffer_get_message_count(&(daemon->client_ringbuffer)) <= 0) {
+        dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_DIRECT);
+        return DLT_DAEMON_ERROR_OK;
+    }
+
+    while ((length = dlt_buffer_copy(&(daemon->client_ringbuffer), data, sizeof(data))) > 0) {
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+        dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+#endif
+
+        if ((ret =
+                 dlt_daemon_client_send_v2(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
                                         verbose)))
             return ret;
 

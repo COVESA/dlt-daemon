@@ -1316,15 +1316,14 @@ DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
 
     if ((user_list == NULL) || (user_list->num_applications == 0))
         return (DltDaemonApplication *)NULL;
-printf("apid:%s\n",apid);
-printf("apid2:%s\n",user_list->applications[0].apid2);
-printf("apidlen:%u\n",apidlen);
+
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
     if ((memcmp(apid, user_list->applications[0].apid2, apidlen) < 0) ||
         (memcmp(apid,
                 user_list->applications[user_list->num_applications - 1].apid2,
-                apidlen) > 0))
+                apidlen) > 0)){
         return (DltDaemonApplication *)NULL;
+                }
 
     application.apid2 = NULL;
     dlt_set_id_v2(&(application.apid2), apid, apidlen);
@@ -2042,7 +2041,6 @@ DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
 {
     DltDaemonContext context;
     DltDaemonRegisteredUsers *user_list = NULL;
-
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (apidlen == 0) || (apid == NULL) ||
