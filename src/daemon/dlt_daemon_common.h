@@ -448,12 +448,13 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  * @return Pointer to application, null pointer on error or not found
  */
-DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
-                                                  uint8_t apidlen,
-                                                  char *apid,
-                                                  uint8_t eculen,
-                                                  char *ecu,
-                                                  int verbose);
+void dlt_daemon_application_find_v2(DltDaemon *daemon,
+                                    uint8_t apidlen,
+                                    char *apid,
+                                    uint8_t eculen,
+                                    char *ecu,
+                                    int verbose,
+                                    DltDaemonApplication **application);
 
 /**
  * Load applications from file to internal context management
