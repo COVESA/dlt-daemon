@@ -893,6 +893,9 @@ TEST(t_dlt_logstorage_write_v2, normal)
     DltLogStorageUserConfig uconfig;
     unsigned char data[] = "123";
     int size = 3;
+    int ecuid_len;
+    int apid_len;
+    int ctid_len;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
     handle.config_list = NULL;
@@ -901,6 +904,9 @@ TEST(t_dlt_logstorage_write_v2, normal)
     value.apids = apid;
     value.ctids = ctid;
     value.ecuid = ecuid;
+    ecuid_len = strlen(ecuid);
+    apid_len = strlen(apid);
+    ctid_len = strlen(ctid);
     value.file_name = file_name;
     char key0[] = ":1234:\000\000\000\000";
     char key1[] = "::5678\000\000\000\000";
@@ -914,7 +920,7 @@ TEST(t_dlt_logstorage_write_v2, normal)
     dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG);
     dlt_message_init_v2(&msg, 0);
     msg.storageheader = (DltStorageHeaderV2 *)msg.headerbuffer;
-    dlt_set_storageheader_v2(msg.storageheader, ecuid);
+    dlt_set_storageheader_v2(msg.storageheader, ecuid_len, ecuid);
     msg.standardheader = (DltStandardHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
     msg.standardheader->htyp = DLT_HTYP2_PROTOCOL_VERSION2|DLT_HTYP2_EH;
     msg.standardheader->mcnt = 0;
@@ -926,8 +932,8 @@ TEST(t_dlt_logstorage_write_v2, normal)
     msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
                                ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
     msg.extendedheader->noar = 1;
-    dlt_set_id_v2(msg.extendedheader->apid, apid);
-    dlt_set_id_v2(msg.extendedheader->ctid, ctid);
+    dlt_set_id_v2(msg.extendedheader->apid, apid, apid_len);
+    dlt_set_id_v2(msg.extendedheader->ctid, ctid, ctid_len);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add_v2(key0, num_keys, &value, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add_v2(key1, num_keys, &value, &(handle.config_list)));
@@ -1948,6 +1954,7 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     memset(&daemon, 0, sizeof(DltDaemon));
     memset(&gateway, 0, sizeof(DltGateway));
     char ecu[] = "ECU1";
+    int ecu_len = strlen(ecu);
     DltLogStorage storage_handle;
 
     EXPECT_EQ(0, dlt_daemon_init_v2(&daemon,
@@ -1956,7 +1963,7 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
                                  DLT_DAEMON_RINGBUFFER_STEP_SIZE,
                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
-    dlt_set_id_v2(daemon.ecuid, ecu);
+    dlt_set_id_v2(daemon.ecuid, ecu, ecu_len);
     EXPECT_EQ(0, dlt_daemon_init_user_information_v2(&daemon, &gateway, 0, 0));
     daemon.storage_handle = &storage_handle;
     char apid[] = "1234";
@@ -1980,6 +1987,10 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
+    int apid_len = sizeof(apid);
+    int ctid_len = sizeof(ctid);
+    int ecuid_len = sizeof(ecuid);
+
     char key0[] = ":1234:\000\000\000\000";
     char key1[] = "::5678\000\000\000\000";
     char key2[] = ":1234:5678";
@@ -1991,7 +2002,7 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG);
     dlt_message_init_v2(&msg, 0);
     msg.storageheader = (DltStorageHeaderV2 *)msg.headerbuffer;
-    dlt_set_storageheader_v2(msg.storageheader, ecuid);
+    dlt_set_storageheader_v2(msg.storageheader, ecuid, ecuid_len);
     msg.standardheader = (DltStandardHeaderV2 *)(msg.headerbuffer + sizeof(DltStorageHeaderV2));
     msg.standardheader->htyp = DLT_HTYP2_PROTOCOL_VERSION2|DLT_HTYP2_EH;
     msg.standardheader->mcnt = 0;
@@ -2003,8 +2014,8 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
                                ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
     msg.extendedheader->noar = 1;
-    dlt_set_id_v2(msg.extendedheader->apid, apid);
-    dlt_set_id_v2(msg.extendedheader->ctid, ctid);
+    dlt_set_id_v2(msg.extendedheader->apid, apid, apid_len);
+    dlt_set_id_v2(msg.extendedheader->ctid, ctid, ecuid_len);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add_v2(key0, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add_v2(key1, num_keys, &value, &(daemon.storage_handle->config_list)));

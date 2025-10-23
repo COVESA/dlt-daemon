@@ -610,8 +610,8 @@ TEST(t_dlt_connection_send_multiple_v2, normal_1)
 
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
 
-    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeaderV2);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeaderV2);
 
     daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
 
@@ -626,7 +626,7 @@ TEST(t_dlt_connection_send_multiple_v2, normal_1)
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple(&conn,
+    ret = dlt_connection_send_multiple_v2(&conn,
                                        data1,
                                        size1,
                                        data2,
@@ -639,7 +639,7 @@ TEST(t_dlt_connection_send_multiple_v2, normal_1)
     free(daemon_local.msg.databuffer);
 }
 
-TEST(t_dlt_connection_send_multiple, normal_2)
+TEST(t_dlt_connection_send_multiple_v2, normal_2)
 {
     int ret = 0;
     void *data1 = nullptr;
@@ -654,8 +654,8 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     memset(&receiver, 0, sizeof(DltReceiver));
     memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
-    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeaderV2);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeaderV2);
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
@@ -665,15 +665,15 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     conn.receiver = &receiver;
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
 
-    daemon_local.msg.headersize = sizeof(DltStorageHeader) +
-        sizeof(DltStandardHeader) +
-        sizeof(DltStandardHeaderExtra) +
-        sizeof(DltExtendedHeader);
+    daemon_local.msg.headersize = sizeof(DltStorageHeaderV2) +
+        sizeof(DltStandardHeaderV2) +
+        sizeof(DltStandardHeaderExtraV2) +
+        sizeof(DltExtendedHeaderV2);
 
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
 
-    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeaderV2);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeaderV2);
 
     daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
 
@@ -688,7 +688,7 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple(&conn,
+    ret = dlt_connection_send_multiple_v2(&conn,
                                        data1,
                                        size1,
                                        data2,
@@ -701,7 +701,7 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     free(daemon_local.msg.databuffer);
 }
 
-TEST(t_dlt_connection_send_multiple, nullpointer)
+TEST(t_dlt_connection_send_multiple_v2, nullpointer)
 {
     int ret = 0;
     void *data1 = nullptr;
@@ -712,12 +712,12 @@ TEST(t_dlt_connection_send_multiple, nullpointer)
 
     memset(&daemon_local, 0, sizeof(DltDaemonLocal));
 
-    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeaderV2);
+    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeaderV2);
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple(NULL,
+    ret = dlt_connection_send_multiple_v2(NULL,
                                        data1,
                                        size1,
                                        data2,
