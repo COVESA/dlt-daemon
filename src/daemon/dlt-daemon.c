@@ -2988,6 +2988,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             /* Reset number of received bytes from FIFO */
             daemon->bytes_recv = 0;
     #endif
+        }
     }
     return 0;
 }

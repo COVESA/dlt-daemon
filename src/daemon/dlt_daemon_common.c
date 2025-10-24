@@ -616,8 +616,8 @@ int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
 
     if ((daemon == NULL) || (ecu == NULL))
         return DLT_RETURN_ERROR;
-
-    user_list = dlt_daemon_find_users_list_v2(daemon, ecu, verbose);
+    uint8_t eculen = strlen(ecu);
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if (user_list != NULL) {
         for (i = 0; i < user_list->num_applications; i++)
@@ -2143,8 +2143,8 @@ int dlt_daemon_contexts_invalidate_fd_v2(DltDaemon *daemon,
 
     if ((daemon == NULL) || (ecu == NULL))
         return -1;
-
-    user_list = dlt_daemon_find_users_list_v2(daemon, ecu, verbose);
+    uint8_t eculen = strlen(ecu);
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if (user_list != NULL) {
         for (i = 0; i < user_list->num_contexts; i++)
