@@ -2626,7 +2626,7 @@ int dlt_daemon_user_send_log_state_v2(DltDaemon *daemon, DltDaemonApplication *a
 
     if (ret < DLT_RETURN_OK) {
         if (errno == EPIPE || errno == EBADF)
-            dlt_daemon_application_reset_user_handle(daemon, app, verbose);
+            dlt_daemon_application_reset_user_handle_v2(daemon, app, verbose);
     }
 
     return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;

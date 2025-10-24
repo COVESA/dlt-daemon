@@ -171,7 +171,7 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
             servPort = (unsigned short)tmp_port;
         }
     }
-printf("\nDEBUGS:INit reached\n");
+
     if (verbose)
         dlt_vlog(LOG_INFO,
                  "%s: Init dlt client struct with default port: %hu.\n",
@@ -604,7 +604,6 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
 
     if (client == 0)
         return DLT_RETURN_ERROR;
-
     if (dlt_message_init_v2(&msg, verbose) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
@@ -612,7 +611,6 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
     while (fetch_next_message) {
         /* wait for data from socket or serial connection */
         ret = dlt_receiver_receive(&(client->receiver));
-
         if (ret <= 0) {
             /* No more data to be received */
             if (dlt_message_free_v2(&msg, verbose) == DLT_RETURN_ERROR)
@@ -620,7 +618,20 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
 
             return DLT_RETURN_TRUE;
         }
-
+        printf("HEX: ");
+        for(int i = 0; i<client->receiver.bytesRcvd-10; i++){
+            printf("%x ", (uint8_t)client->receiver.buf[i]);
+        }
+        printf("\n");
+        printf("ASCII: ");
+        for (int j = 0; j < client->receiver.bytesRcvd; j++){
+            if (client->receiver.buf[j] > 48 && client->receiver.buf[j] < 122) {
+                printf("%c", client->receiver.buf[j]);
+            }
+            else {
+                printf(" 0x%02X", (uint8_t)(client->receiver.buf[j]));
+            }
+        }
         while (dlt_message_read_v2(&msg, (unsigned char *)(client->receiver.buf),
                                 client->receiver.bytesRcvd,
                                 client->resync_serial_header,

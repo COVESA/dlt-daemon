@@ -275,6 +275,12 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
 #endif
                                             );
 
+bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            ,DltDaemonApplication *app
+#endif
+                                            );
+
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   DltReceiver *rec,

@@ -1896,7 +1896,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     int32_t temp_datasize;
 
     // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
-    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2;
+    temp_datasize = msg->baseheaderv2->len - msg->headersizev2;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -1908,7 +1908,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     else {
         msg->datasize = (uint32_t) temp_datasize;
     }
-
     /* check if verbose mode is on*/
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "BufferLength=%u, HeaderSize=%u, DataSize=%u\n",
@@ -1943,7 +1942,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     /* load payload data from buffer */
     memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);
-
     return DLT_MESSAGE_ERROR_OK;
 
 }
@@ -2498,7 +2496,7 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
 
         pntroffset = pntroffset + 1;
     }
-
+  
     if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
         uint8_t sgmtLength = 0;
         memcpy(&(msg->extendedheaderv2.sgmtinfo),
@@ -2525,9 +2523,7 @@ static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
         
         pntroffset = pntroffset + sgmtLength + 2;
     }
-
-    msg->extendedheadersizev2 = pntroffset - BASE_HEADER_V2_FIXED_SIZE + headerExtraSize;
-
+    msg->extendedheadersizev2 = pntroffset - BASE_HEADER_V2_FIXED_SIZE - headerExtraSize;
     return DLT_RETURN_OK;
 }
 
@@ -3318,20 +3314,18 @@ int dlt_receiver_receive(DltReceiver *receiver)
         free(receiver->backup_buf);
         receiver->backup_buf = NULL;
     }
-
-    if (receiver->type == DLT_RECEIVE_SOCKET)
+    if (receiver->type == DLT_RECEIVE_SOCKET) {
         /* wait for data from socket */
         receiver->bytesRcvd = recv(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - (uint32_t) receiver->lastBytesRcvd,
                                    0);
-    else if (receiver->type == DLT_RECEIVE_FD)
+    }else if (receiver->type == DLT_RECEIVE_FD) {
         /* wait for data from fd */
         receiver->bytesRcvd = read(receiver->fd,
                                    receiver->buf + receiver->lastBytesRcvd,
                                    receiver->buffersize - (uint32_t) receiver->lastBytesRcvd);
-
-    else { /* receiver->type == DLT_RECEIVE_UDP_SOCKET */
+    }else { /* receiver->type == DLT_RECEIVE_UDP_SOCKET */
         /* wait for data from UDP socket */
         addrlen = sizeof(receiver->addr);
         receiver->bytesRcvd = recvfrom(receiver->fd,
