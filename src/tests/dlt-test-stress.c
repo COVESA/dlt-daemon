@@ -335,7 +335,7 @@ void thread_function(void)
 
     dlt_register_context(&context_thread1, ctid, ctid);
 
-    if (dlt_user_log_write_start(&context_thread1, &context_thread1_data, DLT_LOG_INFO) > 0) {
+    if (dlt_user_log_write_start(&context_thread1, &context_thread1_data, DLT_LOG_INFO, DLT_VERSION_1) > 0) {
         dlt_user_log_write_string(&context_thread1_data, ctid);
         dlt_user_log_write_finish(&context_thread1_data);
     }
@@ -359,7 +359,7 @@ void stress3(void)
 
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
         buffer[num] = (char) num;
-        if (dlt_user_log_write_start(&context_stress3, &context_stress3_data, DLT_LOG_INFO) > 0) {
+        if (dlt_user_log_write_start(&context_stress3, &context_stress3_data, DLT_LOG_INFO, DLT_VERSION_1) > 0) {
             dlt_user_log_write_int(&context_stress3_data, num);
             dlt_user_log_write_raw(&context_stress3_data, buffer, (uint16_t) num);
             dlt_user_log_write_finish(&context_stress3_data);

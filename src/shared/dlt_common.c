@@ -104,6 +104,11 @@ int dlt_buffer_minimize_size(DltBuffer *buf);
 void dlt_buffer_write_block(DltBuffer *buf, int *write, const unsigned char *data, unsigned int size);
 void dlt_buffer_read_block(DltBuffer *buf, int *read, unsigned char *data, unsigned int size);
 
+static DltReturnValue dlt_message_get_extraparameters_from_recievedbuffer_v2(DltMessageV2 *msg, uint8_t* buffer, 
+                                                                            DltHtyp2ContentType msgcontent);
+static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(DltMessageV2 *msg, uint8_t* buffer, 
+                                                                            DltHtyp2ContentType msgcontent);
+
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 static int32_t dlt_output_soft_limit_over_warning(
     DltTraceLoadSettings* tl_settings,
@@ -352,6 +357,23 @@ void dlt_print_id(char *text, const char *id)
     memcpy(text, id, len);
 }
 
+//TBD: Do memcpy instead
+void dlt_print_id_v2(char *text, const char *id, uint8_t length)
+{
+    /* check nullpointer */
+    if ((text == NULL) || (id == NULL) || (length == 0))
+        return;
+
+    /* Initialize text */
+    memset(text, '-', length);
+
+    text[length] = 0;
+
+    size_t len = dlt_strnlen_s(id, length);
+
+    memcpy(text, id, len);
+}
+
 void dlt_set_id(char *id, const char *text)
 {
     /* check nullpointer */
@@ -403,7 +425,8 @@ void dlt_set_id_v2(char **id, const char *text, int8_t len)
     if (*id == NULL) {
         return;
     }
-    strncpy(*id, text, (len + 1));
+    memcpy(*id, text, len);
+    memset((*id + len), '\0', 1);
 }
 
 void dlt_clean_string(char *text, int length)
@@ -508,6 +531,82 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int verbose)
+{
+    if ((filter == NULL) || (filename == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    FILE *handle;
+    char str1[DLT_COMMON_BUFFER_LENGTH + 1];
+    char *apid = NULL; 
+    char *ctid = NULL;
+    uint8_t apidlen, ctidlen;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    handle = fopen(filename, "r");
+
+    if (handle == NULL) {
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
+        return DLT_RETURN_ERROR;
+    }
+
+    #define FORMAT_STRING_(x) "%" #x "s"
+    #define FORMAT_STRING(x) FORMAT_STRING_(x)
+
+    /* Reset filters */
+    filter->counter = 0;
+
+    while (!feof(handle)) {
+        str1[0] = 0;
+
+        if (fscanf(handle, FORMAT_STRING(DLT_COMMON_BUFFER_LENGTH), str1) != 1)
+            break;
+
+        if (str1[0] == 0)
+            break;
+
+        printf(" %s", str1);
+
+        if (strcmp(str1, "----") == 0) {
+            apidlen = 0;
+        }
+        else {
+            apidlen = strlen(str1);
+            dlt_set_id_v2(&apid, str1, apidlen);
+        }
+
+        str1[0] = 0;
+
+        if (fscanf(handle, FORMAT_STRING(DLT_COMMON_BUFFER_LENGTH), str1) != 1)
+            break;
+
+        if (str1[0] == 0)
+            break;
+
+        printf(" %s\r\n", str1);
+
+        if (strcmp(str1, "----") == 0) {
+            ctidlen = 0;
+        }else {
+            ctidlen = strlen(str1);
+            dlt_set_id_v2(&ctid, str1, ctidlen);
+        }
+
+        if (filter->counter < DLT_FILTER_MAX) {
+            dlt_filter_add(filter, apid, ctid, 0, 0, INT32_MAX, verbose);
+        }else {
+            dlt_vlog(LOG_WARNING,
+                     "Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
+                     DLT_FILTER_MAX);
+        }
+    }
+
+    fclose(handle);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
@@ -540,6 +639,49 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
         }
         else {
             dlt_print_id(buf, filter->ctid[num]);
+            fprintf(handle, "%s ", buf);
+        }
+    }
+
+    fclose(handle);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int verbose)
+{
+    if ((filter == NULL) || (filename == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    FILE *handle;
+    int num;
+    char buf[DLT_COMMON_BUFFER_LENGTH];
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    handle = fopen(filename, "w");
+
+    if (handle == NULL) {
+        dlt_vlog(LOG_WARNING, "Filter file %s cannot be opened!\n", filename);
+        return DLT_RETURN_ERROR;
+    }
+
+    for (num = 0; num < filter->counter; num++) {
+        if (filter->apid2[num] == NULL) {
+            fprintf(handle, "---- ");
+        }
+        else {
+            memcpy(buf, filter->apid2[num], filter->apid2len[num]);
+            memset(buf + (filter->ctid2len[num]), '\0', 1);
+            fprintf(handle, "%s ", buf);
+        }
+
+        if (filter->ctid2[num] == NULL) {
+            fprintf(handle, "---- ");
+        }
+        else {
+            memcpy(buf, filter->ctid2[num], filter->ctid2len[num]);
+            memset(buf + (filter->ctid2len[num]), '\0', 1);
             fprintf(handle, "%s ", buf);
         }
     }
@@ -585,6 +727,40 @@ int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const
     return -1; /* Not found */
 }
 
+int dlt_filter_find_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                    const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    int num;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL))
+        return -1;
+
+    for (num = 0; num < filter->counter; num++)
+        if (memcmp(filter->apid2[num], apid, filter->apid2len[num]) == 0) {
+            /* apid matches, now check for ctid */
+            if (ctid == NULL) {
+                /* check if empty ctid matches */
+
+                if (filter->ctid2[num] == NULL)
+                    if ((filter->log_level[num] == log_level) || (filter->log_level[num] == 0))
+                        if (filter->payload_min[num] <= payload_min)
+                            if (filter->payload_max[num] >= payload_max)
+                                return num;
+            }
+            else if (memcmp(filter->ctid2[num], ctid, filter->ctid2len[num]) == 0)
+            {
+                if ((filter->log_level[num] == log_level) || (filter->log_level[num] == 0))
+                    if (filter->payload_min[num] <= payload_min)
+                        if (filter->payload_max[num] >= payload_max)
+                            return num;
+            }
+        }
+
+    return -1; /* Not found */
+}
+
 DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                               const int32_t payload_min, const int32_t payload_max, int verbose)
 {
@@ -605,6 +781,42 @@ DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *c
         /* filter not found, so add it to filter array */
         dlt_set_id(filter->apid[filter->counter], apid);
         dlt_set_id(filter->ctid[filter->counter], (ctid ? ctid : ""));
+        filter->log_level[filter->counter] = log_level;
+        filter->payload_min[filter->counter] = payload_min;
+        filter->payload_max[filter->counter] = payload_max;
+
+        filter->counter++;
+
+        return DLT_RETURN_OK;
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
+DltReturnValue dlt_filter_add_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                              const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (filter->counter >= DLT_FILTER_MAX) {
+        dlt_vlog(LOG_WARNING,
+                 "Maximum number (%d) of allowed filters reached, ignoring filter!\n",
+                 DLT_FILTER_MAX);
+        return DLT_RETURN_ERROR;
+    }
+
+    /* add each filter (apid, ctid, log_level, payload_min, payload_max) only once to filter array */
+    if (dlt_filter_find(filter, apid, ctid, log_level, payload_min, payload_max, verbose) < 0) {
+        /* filter not found, so add it to filter array */
+        filter->apid2[filter->counter] = NULL;
+        filter->ctid2[filter->counter] = NULL;
+        filter->apid2len[filter->counter] = strlen(apid);
+        dlt_set_id_v2(&(filter->apid2[filter->counter]), apid, filter->apid2len[filter->counter]);
+        filter->ctid2len[filter->counter] = strlen(ctid);
+        dlt_set_id_v2(&(filter->ctid2[filter->counter]), (ctid ? ctid : NULL), filter->ctid2len[filter->counter]);
         filter->log_level[filter->counter] = log_level;
         filter->payload_min[filter->counter] = payload_min;
         filter->payload_max[filter->counter] = payload_max;
@@ -667,6 +879,70 @@ DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char
     return DLT_RETURN_ERROR;
 }
 
+DltReturnValue dlt_filter_delete_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                 const int32_t payload_min, const int32_t payload_max, int verbose)
+{
+    int j, k;
+    int found = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((filter == NULL) || (apid == NULL) || (ctid == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (filter->counter > 0) {
+        /* Get first occurence of apid and ctid in filter array */
+        for (j = 0; j < filter->counter; j++)
+            if ((memcmp(filter->apid2[j], apid, filter->apid2len[j]) == 0) &&
+                (memcmp(filter->ctid2[j], ctid, filter->ctid2len[j]) == 0) &&
+                ((filter->log_level[j] == log_level) || (filter->log_level[j] == 0)) &&
+                (filter->payload_min[j] == payload_min) &&
+                (filter->payload_max[j] == payload_max)
+                ) {
+                found = 1;
+                break;
+            }
+
+        if (found) {
+            /* j is index */
+            /* Copy from j+1 til end to j til end-1 */
+            
+            filter->apid2len[j] = 0;
+            free(filter->apid2[j]);
+            filter->apid2[j] = NULL;
+            filter->ctid2len[j] = 0;
+            free(filter->ctid2[j]);
+            filter->ctid2[j] = NULL;
+            filter->log_level[j] = 0;
+            filter->payload_min[j] = 0;
+            filter->payload_max[j] = INT32_MAX;
+
+            for (k = j; k < (filter->counter - 1); k++) {
+                filter->apid2len[k] = filter->apid2len[k + 1];
+                dlt_set_id_v2(&(filter->apid2[k]), filter->apid2[k + 1], filter->apid2len[k + 1]);
+                filter->ctid2len[k] = filter->ctid2len[k + 1];
+                dlt_set_id_v2(&(filter->ctid2[k]), filter->ctid2[k + 1], filter->ctid2len[k + 1]);
+                filter->log_level[k] = filter->log_level[k + 1];
+                filter->payload_min[k] = filter->payload_min[k + 1];
+                filter->payload_max[k] = filter->payload_max[k + 1];
+            }
+
+            filter->apid2len[filter->counter] = 0;
+            free(filter->apid2[filter->counter]);
+            filter->apid2[filter->counter] = NULL;
+            filter->ctid2len[filter->counter] = 0;
+            free(filter->ctid2[filter->counter]);
+            filter->ctid2[filter->counter] = NULL;
+
+            filter->counter--;
+            return DLT_RETURN_OK;
+        }
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
+
 DltReturnValue dlt_message_init(DltMessage *msg, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -705,7 +981,7 @@ DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose)
     msg->databuffer = NULL;
     msg->databuffersize = 0;
 
-    msg->storageheaderv2 = NULL;
+    msg->storageheaderv2.ecid = NULL;
     msg->baseheaderv2 = NULL;
     msg->found_serialheader = 0;
     msg->extendedheaderv2.ecid = NULL;
@@ -741,7 +1017,14 @@ DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose)
     if (msg == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    /* delete databuffer if exists */
+    /* delete headerbuffer if exists */
+    if (msg->headerbufferv2) {
+        free(msg->headerbufferv2);
+        msg->headerbufferv2 = NULL;
+        msg->headersizev2 = 0;
+    }
+
+        /* delete databuffer if exists */
     if (msg->databuffer) {
         free(msg->databuffer);
         msg->databuffer = NULL;
@@ -911,12 +1194,12 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         /* print received time */
         time_t tt = 0;
         for (int i = 0; i<5; ++i){
-            tt = (tt << 8) | msg->storageheaderv2->seconds[i];
+            tt = (tt << 8) | msg->storageheaderv2.seconds[i];
         }
         tzset();
         localtime_r(&tt, &timeinfo);
         strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
-        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2->nanoseconds);
+        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2.nanoseconds);
     }
 
     if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
@@ -926,7 +1209,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
             for (int i = 0; i<5; ++i){
                 tt = (tt << 8) | msg->headerextrav2.seconds[i];
             }
-            snprintf(text + strlen(text), textlength - strlen(text), "%ld.%.9u ", tt, msg->headerextrav2.nanoseconds);
+            snprintf(text + strlen(text), textlength - strlen(text), "%ld.%.9d ", tt, msg->headerextrav2.nanoseconds);
         }
         else
             snprintf(text + strlen(text), textlength - strlen(text), "---------- ");
@@ -944,8 +1227,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
             memcpy(text + currtextlength, msg->extendedheaderv2.ecid, (msg->extendedheaderv2.ecidlen)+1);
             currtextlength = currtextlength + (msg->extendedheaderv2.ecidlen);
         }else {
-            memcpy(text + strlen(text), msg->storageheaderv2->ecid, (msg->storageheaderv2->ecidlen)+1);
-            currtextlength = currtextlength + (msg->storageheaderv2->ecidlen);
+            memcpy(text + strlen(text), msg->storageheaderv2.ecid, (msg->storageheaderv2.ecidlen)+1);
+            currtextlength = currtextlength + (msg->storageheaderv2.ecidlen);
         }
     }
     /* print app id and context id if extended header available, else '----' */ #
@@ -1351,6 +1634,37 @@ DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int 
     return found;
 }
 
+DltReturnValue dlt_message_filter_check_v2(DltMessageV2 *msg, DltFilter *filter, int verbose)
+{
+    /* check the filters if message is used */
+    int num;
+    DltReturnValue found = DLT_RETURN_OK;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((msg == NULL) || (filter == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if ((filter->counter == 0) || (!(DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2))))
+        /* no filter is set, or no extended header is available, so do as filter is matching */
+        return DLT_RETURN_TRUE;
+
+    for (num = 0; num < filter->counter; num++)
+        /* check each filter if it matches */
+        if ((DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2)) &&
+            ((filter->apid2[num] == NULL) || (memcmp(filter->apid2[num], msg->extendedheaderv2.apid, msg->extendedheaderv2.apidlen) == 0)) &&
+            ((filter->ctid2[num] == NULL) || (memcmp(filter->ctid2[num], msg->extendedheaderv2.ctid, msg->extendedheaderv2.ctidlen) == 0)) &&
+            ((filter->log_level[num] == 0) ||
+             (filter->log_level[num] == DLT_GET_MSIN_MTIN(msg->headerextrav2.msin))) &&
+            ((filter->payload_min[num] == 0) || (filter->payload_min[num] <= msg->datasize)) &&
+            ((filter->payload_max[num] == 0) || (filter->payload_max[num] >= msg->datasize))) {
+            found = DLT_RETURN_TRUE;
+            break;
+        }
+
+    return found;
+}
+
 int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
     uint32_t extra_size = 0;
@@ -1448,7 +1762,7 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
 
         memcpy(msg->headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader),
                buffer + sizeof(DltStandardHeader), (size_t)extra_size);
-        
+
         /* set extended header ptr and get standard header extra parameters */
         if (DLT_IS_HTYP_UEH(msg->standardheader->htyp))
             msg->extendedheader =
@@ -1494,15 +1808,15 @@ int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int 
 
 int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose)
 {
-    printf("In dlt_message_read_v2\n");
-    uint32_t extra_size = 0;
-
     DltHtyp2ContentType msgcontent = 0x00;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((msg == NULL) || (buffer == NULL) || (length <= 0))
         return DLT_MESSAGE_ERROR_UNKNOWN;
+    
+    if (dlt_message_init_v2(msg, 0) == DLT_RETURN_ERROR)
+        return DLT_RETURN_ERROR;
 
     /* initialize resync_offset */
     msg->resync_offset = 0;
@@ -1512,67 +1826,82 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
         /* dlt_log(LOG_ERR, "Length smaller than serial header!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 
-    // if (memcmp(buffer, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
-    //     /* serial header found */
-    //     msg->found_serialheader = 1;
-    //     buffer += sizeof(dltSerialHeader);
-    //     length -= (unsigned int)sizeof(dltSerialHeader);
-    // }
-    // else {
-    //     /* serial header not found */
-    //     msg->found_serialheader = 0;
+    if (memcmp(buffer, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
+        /* serial header found */
+        msg->found_serialheader = 1;
+        buffer += sizeof(dltSerialHeader);
+        length -= (unsigned int)sizeof(dltSerialHeader);
+    }
+    else {
+        /* serial header not found */
+        msg->found_serialheader = 0;
 
-    //     if (resync) {
-    //         /* resync if necessary */
-    //         msg->resync_offset = 0;
+        if (resync) {
+            /* resync if necessary */
+            msg->resync_offset = 0;
 
-    //         do {
-    //             if (memcmp(buffer + msg->resync_offset, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
-    //                 /* serial header found */
-    //                 msg->found_serialheader = 1;
-    //                 buffer += sizeof(dltSerialHeader);
-    //                 length -= (unsigned int)sizeof(dltSerialHeader);
-    //                 break;
-    //             }
+            do {
+                if (memcmp(buffer + msg->resync_offset, dltSerialHeader, sizeof(dltSerialHeader)) == 0) {
+                    /* serial header found */
+                    msg->found_serialheader = 1;
+                    buffer += sizeof(dltSerialHeader);
+                    length -= (unsigned int)sizeof(dltSerialHeader);
+                    break;
+                }
 
-    //             msg->resync_offset++;
-    //         } while ((sizeof(dltSerialHeader) + (size_t)msg->resync_offset) <= length);
+                msg->resync_offset++;
+            } while ((sizeof(dltSerialHeader) + (size_t)msg->resync_offset) <= length);
 
-    //         /* Set new start offset */
-    //         if (msg->resync_offset > 0) {
-    //             /* Resyncing connection */
-    //             buffer += msg->resync_offset;
-    //             length -= (unsigned int)msg->resync_offset;
-    //         }
-    //     }
-    // }
+            /* Set new start offset */
+            if (msg->resync_offset > 0) {
+                /* Resyncing connection */
+                buffer += msg->resync_offset;
+                length -= (unsigned int)msg->resync_offset;
+            }
+        }
+    }
 
     /* check that standard header fits buffer */
-    if (length < msg->baseheadersizev2)
+    if (length < BASE_HEADER_V2_FIXED_SIZE)
         /* dlt_log(LOG_ERR, "Length smaller than standard header!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 
-    memcpy(msg->headerbufferv2 + msg->storageheadersizev2, buffer+4, msg->baseheadersizev2);
+    /* Extract Base header */
+    msg->baseheaderv2 = (DltBaseHeaderV2 *)buffer;
+    msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & 0x03);
 
-    printf("htyp2: 0x%02X\n", msg->baseheaderv2->htyp2);
+    /* To Update: what is size of storage header, ecuid length*/
+    msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
+    msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
+    msg->baseheaderextrasizev2 = dlt_message_get_extraparameters_size_v2(msgcontent);
+    /* Fill extra parameters */
+    if (dlt_message_get_extraparameters_from_recievedbuffer_v2(msg, buffer, msgcontent) != DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
 
-    /* set ptrs to structures */
-    msg->storageheaderv2 = (DltStorageHeaderV2 *)msg->headerbufferv2;
-    msg->baseheaderv2 = (DltBaseHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2);
+    /* Fill extended parameters and extended parameters size */
+    if (dlt_message_get_extendedparameters_from_recievedbuffer_v2(msg, buffer, msgcontent) != DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
 
-    /* calculate complete size of headers */
-    extra_size = msg->baseheaderextrasizev2;
-    msg->headersizev2 = (uint32_t) (msg->storageheadersizev2 + msg->baseheadersizev2 + extra_size);
-    msg->datasize = (uint32_t) DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2 + (uint32_t) msg->storageheadersizev2;
+    /* calculate complete size of headers without storage header */
+    msg->headersizev2 = (uint32_t) (msg->baseheadersizev2 + 
+                                    msg->baseheaderextrasizev2 + msg->extendedheadersizev2);
+
+    msg->headerbufferv2 = (uint8_t *)malloc(msg->headersizev2);
+    if(msg->headerbufferv2 == NULL){
+        return DLT_RETURN_ERROR;
+    }
+    memcpy(msg->headerbufferv2, buffer, msg->headersizev2);
 
     /* calculate complete size of payload */
     int32_t temp_datasize;
-    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - (int32_t) msg->headersizev2 + (int32_t) msg->storageheadersizev2;
+
+    // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
+    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2;
 
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P1 Plausibility check failed. Complete message size too short (%d)!\n",
+                 "Plausibility check failed. Complete message size too short (%d)!\n",
                  temp_datasize);
         return DLT_MESSAGE_ERROR_CONTENT;
     }
@@ -1584,27 +1913,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     if (verbose) {
         dlt_vlog(LOG_DEBUG, "BufferLength=%u, HeaderSize=%u, DataSize=%u\n",
                  length, msg->headersizev2, msg->datasize);
-    }
-
-    /* load standard header extra parameters and Extended header if used */
-    if (extra_size > 0) {
-        if (length < (msg->headersizev2 - msg->storageheadersizev2))
-            return DLT_MESSAGE_ERROR_SIZE;
-
-        memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2,
-               buffer + msg->baseheadersizev2, (size_t)extra_size);
-
-        /* set extended header ptr and get standard header extra parameters
-        msgcontent = msg->baseheaderv2->htyp2 && 0x03; 
-        if (msgcontent == DLT_VERBOSE_DATA_MSG)
-            pExtendedHeaderV2 =
-                (DltExtendedHeaderV2 *)(msg->headerbufferv2 + msg->storageheadersizev2 +
-                msg->baseheadersizev2 + msg->baseheaderextrasizev2);
-        else
-            pExtendedHeaderV2 = NULL;
-        */
-
-        dlt_message_get_extraparameters_v2(msg, verbose);
     }
 
     /* check if payload fits length */
@@ -1634,9 +1942,69 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     }
 
     /* load payload data from buffer */
-    memcpy(msg->databuffer, buffer + (msg->headersizev2 - msg->storageheadersizev2), msg->datasize);
+    memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);
 
     return DLT_MESSAGE_ERROR_OK;
+
+}
+
+DltReturnValue dlt_message_get_storageparameters_v2(DltMessageV2 *msg, int verbose )
+{
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    memcpy(msg->storageheaderv2.pattern,
+            msg->headerbufferv2,
+            4);
+    memcpy(msg->storageheaderv2.seconds,
+            msg->headerbufferv2 + 4,
+            5);
+    memcpy(&(msg->storageheaderv2.nanoseconds),
+            msg->headerbufferv2 + 9,
+            4);
+    msg->storageheaderv2.nanoseconds = DLT_BETOH_32(msg->storageheaderv2.nanoseconds);
+    memcpy(&(msg->storageheaderv2.ecidlen),
+            msg->headerbufferv2 + 13,
+            1);
+    memcpy(msg->storageheaderv2.ecid,
+            msg->headerbufferv2 + 14,
+            msg->storageheaderv2.ecidlen);
+    /* Add Null pointer in the end of ECUID */
+    memset(msg->storageheaderv2.ecid + msg->storageheaderv2.ecidlen,
+            '\0',
+            1);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_set_storageparameters_v2(DltMessageV2 *msg, int verbose )
+{
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    memcpy(msg->headerbufferv2,
+            msg->storageheaderv2.pattern,
+            4);
+    memcpy(msg->headerbufferv2 + 4,
+            msg->storageheaderv2.seconds,
+            5);
+    memcpy(msg->headerbufferv2 + 9,
+            &(msg->storageheaderv2.nanoseconds),
+            4);
+    memcpy(msg->headerbufferv2 + 13,
+            &(msg->storageheaderv2.ecidlen),
+            1);
+    memcpy(msg->headerbufferv2 + 14,
+            msg->storageheaderv2.ecid,
+            msg->storageheaderv2.ecidlen);
+
+    return DLT_RETURN_OK;
 }
 
 DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose)
@@ -1713,6 +2081,53 @@ DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose
                1);
         memcpy(&(msg->headerextrav2.noar),
                msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 1,
+               1);
+    }
+    return DLT_RETURN_OK;
+}
+
+static DltReturnValue dlt_message_get_extraparameters_from_recievedbuffer_v2(DltMessageV2 *msg, uint8_t* buffer, DltHtyp2ContentType msgcontent)
+{
+    // Buffer should be starting from Baseheader
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (msgcontent == DLT_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               buffer + BASE_HEADER_V2_FIXED_SIZE,
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 1,
+               1);
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 2,
+               4);
+        msg->headerextrav2.nanoseconds = DLT_BETOH_32(msg->headerextrav2.nanoseconds);
+        memcpy(msg->headerextrav2.seconds,
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 6,
+               5);
+    }
+
+    if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        memcpy(&(msg->headerextrav2.nanoseconds),
+               buffer + BASE_HEADER_V2_FIXED_SIZE,
+               4);
+        msg->headerextrav2.nanoseconds = DLT_BETOH_32(msg->headerextrav2.nanoseconds);
+        memcpy(msg->headerextrav2.seconds,
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 4,
+               5);
+        memcpy(&(msg->headerextrav2.msid),
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 9,
+               4);
+        msg->headerextrav2.msid = DLT_BETOH_32(msg->headerextrav2.msid);
+    }
+
+    if (msgcontent == DLT_CONTROL_MSG) {
+        memcpy(&(msg->headerextrav2.msin),
+               buffer + BASE_HEADER_V2_FIXED_SIZE,
+               1);
+        memcpy(&(msg->headerextrav2.noar),
+               buffer + BASE_HEADER_V2_FIXED_SIZE + 1,
                1);
     }
     return DLT_RETURN_OK;
@@ -1874,7 +2289,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
             msg->extendedheaderv2.fina,
             msg->extendedheaderv2.finalen);
         
-        pntroffset = pntroffset + msg->extendedheaderv2.ecidlen + 1;
+        pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
 
         memcpy(msg->headerbufferv2 + pntroffset,
                &(msg->extendedheaderv2.linr),
@@ -1883,20 +2298,24 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
         pntroffset = pntroffset + 4;
     }
 
-/* To Update: create array of structure with dlttag[numberoftags]*/
-
-/*     if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
         memcpy(msg->headerbufferv2 + pntroffset,
                &(msg->extendedheaderv2.notg),
                1);
+        pntroffset = pntroffset + 1;
 
-        uint32_t totalTagSize = (msg->extendedheaderv2.notg) * sizeof(DltTag);
-        memcpy(msg->headerbufferv2 + pntroffset + 1,
-            msg->extendedheaderv2.tag,
-            totalTagSize);
-        
-        pntroffset = pntroffset + totalTagSize + 1;
-    } */
+        for(int j=0; j<msg->extendedheaderv2.notg; j++){
+            memset(msg->headerbufferv2 + pntroffset,
+                   msg->extendedheaderv2.tag[j].taglen,
+                   1);
+            
+            memcpy(msg->headerbufferv2 + pntroffset + 1,
+                   msg->extendedheaderv2.tag[j].tagname,
+                   msg->extendedheaderv2.tag[j].taglen);
+            
+            pntroffset = pntroffset + (msg->extendedheaderv2.tag[j].taglen) + 1;
+        }
+    }
 
     if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
         memcpy(msg->headerbufferv2 + pntroffset,
@@ -1936,6 +2355,182 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
     return DLT_RETURN_OK;
 }
 
+uint32_t dlt_message_get_extendedparameters_size_v2(DltMessageV2 *msg)
+{
+    uint32_t size = 0;
+    uint8_t sgmtLength = 0;
+
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.ecidlen + 1;
+    };
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.apidlen + 1;
+        size = size + msg->extendedheaderv2.ctidlen + 1;
+    };
+    if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        size = size + 4;
+    };
+    if (DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) {
+        size = size + msg->extendedheaderv2.finalen + 1 + 4;
+    };
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+        size = size + 1;
+        for(int j=0; j<msg->extendedheaderv2.notg; j++){            
+            size = size + (msg->extendedheaderv2.tag[j].taglen) + 1;
+        };
+    };
+    if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+        size = size + 1;
+    };
+    if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
+        if (msg->extendedheaderv2.frametype == DLT_FIRST_FRAME){
+            sgmtLength = 8;
+        }else if (msg->extendedheaderv2.frametype == DLT_CONSECUTIVE_FRAME){
+                sgmtLength = 4;
+        }else if (msg->extendedheaderv2.frametype == DLT_LAST_FRAME){
+                sgmtLength = 0;
+        }else if (msg->extendedheaderv2.frametype == DLT_ABORT_FRAME){
+                sgmtLength = 1;
+        }
+        size = size + sgmtLength + 2;        
+    };
+    return size;
+}
+
+static DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(DltMessageV2 *msg, uint8_t* buffer, DltHtyp2ContentType msgcontent)
+{
+    if (msg == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+    
+    uint16_t headerExtraSize = dlt_message_get_extraparameters_size_v2(msgcontent);
+    msg->baseheaderv2 = (DltBaseHeaderV2 *)buffer;
+    
+    int32_t pntroffset = BASE_HEADER_V2_FIXED_SIZE + headerExtraSize;
+
+    if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
+        memcpy(&(msg->extendedheaderv2.ecidlen),
+               buffer + pntroffset,
+               1);
+
+        dlt_set_id_v2(&(msg->extendedheaderv2.ecid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.ecidlen);
+
+        
+        pntroffset = pntroffset + msg->extendedheaderv2.ecidlen + 1;
+
+    }
+
+    if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
+
+        memcpy(&(msg->extendedheaderv2.apidlen),
+               buffer + pntroffset,
+               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.apid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.apidlen);
+
+        pntroffset = pntroffset + (msg->extendedheaderv2.apidlen) + 1;
+
+        memcpy(&(msg->extendedheaderv2.ctidlen),
+               buffer + pntroffset,
+               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.ctid), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.ctidlen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2.ctidlen + 1;
+    }
+
+    if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        memcpy(&(msg->extendedheaderv2.seid),
+               buffer + pntroffset,
+               4);
+        msg->extendedheaderv2.seid = DLT_BETOH_32(msg->extendedheaderv2.seid);
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) {
+        memcpy(&(msg->extendedheaderv2.finalen),
+               buffer + pntroffset,
+               1);
+        dlt_set_id_v2(&(msg->extendedheaderv2.fina), (const char*)(buffer + pntroffset + 1), msg->extendedheaderv2.finalen);
+        
+        pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
+
+        memcpy(&(msg->extendedheaderv2.linr),
+               buffer + pntroffset,
+               4);
+        msg->extendedheaderv2.linr = DLT_BETOH_32(msg->extendedheaderv2.linr);
+        pntroffset = pntroffset + 4;
+    }
+
+    if (DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) {
+        memcpy(&(msg->extendedheaderv2.notg),
+               buffer + pntroffset,
+               1);
+        pntroffset = pntroffset + 1;
+
+        msg->extendedheaderv2.tag = (DltTag *)malloc((msg->extendedheaderv2.notg) * sizeof(DltTag));
+        if (msg->extendedheaderv2.tag == NULL) {
+            return DLT_RETURN_ERROR;
+        }
+        for(int j=0; j<msg->extendedheaderv2.notg; j++){
+            memcpy(&(msg->extendedheaderv2.tag[j].taglen),
+                   buffer + pntroffset,
+                   1);
+            
+            msg->extendedheaderv2.tag[j].tagname = (char *)malloc(msg->extendedheaderv2.tag[j].taglen + 1);
+            if (msg->extendedheaderv2.tag[j].tagname == NULL) {
+                return DLT_RETURN_ERROR;
+            }
+
+            memcpy(msg->extendedheaderv2.tag[j].tagname,
+                   buffer + pntroffset + 1,
+                   msg->extendedheaderv2.tag[j].taglen);
+            
+            memset(msg->extendedheaderv2.tag[j].tagname + msg->extendedheaderv2.tag[j].taglen,
+                   '\0',
+                   1);
+            
+            pntroffset = pntroffset + (msg->extendedheaderv2.tag[j].taglen) + 1;
+        }
+    }
+
+    if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+        memcpy(&(msg->extendedheaderv2.prlv),
+               buffer + pntroffset,
+               1);
+
+        pntroffset = pntroffset + 1;
+    }
+
+    if (DLT_IS_HTYP2_WSGM(msg->baseheaderv2->htyp2)) {
+        uint8_t sgmtLength = 0;
+        memcpy(&(msg->extendedheaderv2.sgmtinfo),
+               buffer + pntroffset,
+               1);
+
+        memcpy(&(msg->extendedheaderv2.frametype),
+            buffer + pntroffset + 1,
+            1);
+        
+        if (msg->extendedheaderv2.frametype == DLT_FIRST_FRAME){
+            sgmtLength = 8;
+        }else if (msg->extendedheaderv2.frametype == DLT_CONSECUTIVE_FRAME){
+                sgmtLength = 4;
+        }else if (msg->extendedheaderv2.frametype == DLT_LAST_FRAME){
+                sgmtLength = 0;
+        }else if (msg->extendedheaderv2.frametype == DLT_ABORT_FRAME){
+                sgmtLength = 1;
+        }
+        
+        memcpy(&(msg->extendedheaderv2.sgmtdetails),
+            buffer + pntroffset + 2,
+            sgmtLength);
+        
+        pntroffset = pntroffset + sgmtLength + 2;
+    }
+
+    msg->extendedheadersizev2 = pntroffset - BASE_HEADER_V2_FIXED_SIZE + headerExtraSize;
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_file_init(DltFile *file, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -1958,7 +2553,34 @@ DltReturnValue dlt_file_init(DltFile *file, int verbose)
     file->error_messages = 0;
 
     return dlt_message_init(&(file->msg), verbose);
+
 }
+
+DltReturnValue dlt_file_init_v2(DltFile *file, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (file == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* initalise structure parameters */
+    file->handle = NULL;
+    file->counter = 0;
+    file->counter_total = 0;
+    file->index = NULL;
+
+    file->filter = NULL;
+    file->filter_counter = 0;
+    file->file_position = 0;
+
+    file->position = 0;
+
+    file->error_messages = 0;
+
+    return dlt_message_init_v2(&(file->msgv2), verbose);
+
+}
+
 
 DltReturnValue dlt_file_set_filter(DltFile *file, DltFilter *filter, int verbose)
 {
@@ -2027,7 +2649,7 @@ DltReturnValue dlt_file_read_header(DltFile *file, int verbose)
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P2 Plausibility check failed. Complete message size too short! (%d)\n",
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
                  temp_datasize);
         return DLT_RETURN_ERROR;
     } else {
@@ -2125,7 +2747,7 @@ DltReturnValue dlt_file_read_header_raw(DltFile *file, int resync, int verbose)
     /* check data size */
     if (temp_datasize < 0) {
         dlt_vlog(LOG_WARNING,
-                 "P3 Plausibility check failed. Complete message size too short! (%d)\n",
+                 "Plausibility check failed. Complete message size too short! (%d)\n",
                  temp_datasize);
         return DLT_RETURN_ERROR;
     }
@@ -2535,6 +3157,28 @@ DltReturnValue dlt_file_free(DltFile *file, int verbose)
     return dlt_message_free(&(file->msg), verbose);
 }
 
+DltReturnValue dlt_file_free_v2(DltFile *file, int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (file == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    /* delete index lost if exists */
+    if (file->index)
+        free(file->index);
+
+    file->index = NULL;
+
+    /* close file */
+    if (file->handle)
+        fclose(file->handle);
+
+    file->handle = NULL;
+
+    return dlt_message_free_v2(&(file->msgv2), verbose);
+}
+
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 void dlt_log_set_fifo_basedir(const char *pipe_dir)
 {
@@ -2828,7 +3472,7 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     struct timespec ts;
 #endif
 
-    if ((storageheader == NULL) || (ecu == NULL))
+    if (ecu == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* get time of day */
@@ -2864,15 +3508,12 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
     storageheader->ecid = NULL;
     storageheader->ecidlen = ecuIDlen;
 
-    if (ecuIDlen == 0) {
-        return DLT_RETURN_OK;
-    }
-
-    storageheader->ecid = (char *)malloc(ecuIDlen * sizeof(char));
+    storageheader->ecid = (char *)malloc((ecuIDlen + 1) * sizeof(char));
     if (storageheader->ecid == NULL) {
         return DLT_RETURN_ERROR;
     }
-    strncpy(storageheader->ecid, ecu, storageheader->ecidlen);
+    memcpy(storageheader->ecid, ecu, storageheader->ecidlen);
+    memset((storageheader->ecid + storageheader->ecidlen), '\0', 1);
 
     return DLT_RETURN_OK;
 }
@@ -3904,6 +4545,18 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_message_print_header_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s\n", text);
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t size, int verbose)
 {
     if ((message == NULL) || (text == NULL))
@@ -3914,6 +4567,22 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
     dlt_user_printf("%s ", text);
 
     if (dlt_message_payload(message, text, size, DLT_OUTPUT_HEX, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("[%s]\n", text);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_print_hex_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s ", text);
+
+    if (dlt_message_payload_v2(message, text, size, DLT_OUTPUT_HEX, verbose) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
@@ -3962,6 +4631,22 @@ DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, ui
     dlt_user_printf("%s \n", text);
 
     if (dlt_message_payload(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("[%s]\n", text);
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_message_print_mixed_plain_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose)
+{
+    if ((message == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    if (dlt_message_header_v2(message, text, size, verbose) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+    dlt_user_printf("%s \n", text);
+
+    if (dlt_message_payload_v2(message, text, size, DLT_OUTPUT_MIXED_FOR_PLAIN, verbose) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     dlt_user_printf("[%s]\n", text);
 
@@ -5391,6 +6076,25 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count)
     *rp_count += 3;
 
     return (signed char)strtol(num_work, &endptr, 16);
+}
+
+uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char *rp, int *rp_count)
+{
+    char num_work[3] = { 0 };
+    char *endptr;
+
+    if ((rp == NULL) || (rp_count == NULL))
+        return -1;
+
+    /* ------------------------------------------------------
+     *  from: [89 ] -> to: ['0x'89\0] -> to num
+     *  ------------------------------------------------------ */
+    num_work[0] = *(rp + *rp_count + 0);
+    num_work[1] = *(rp + *rp_count + 1);
+    num_work[2] = 0;
+    *rp_count += 3;
+
+    return (uint8_t)strtol(num_work, &endptr, 16);
 }
 
 void dlt_getloginfo_conv_ascii_to_string(char *rp, int *rp_count, char *wp, int len)

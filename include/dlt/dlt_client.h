@@ -78,8 +78,6 @@
 #include <stdbool.h>
 
 // DLTV2 - Definitions for DLT Version 2
-#define DLT_VERSION1 1
-#define DLT_VERSION2 2
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
@@ -104,6 +102,8 @@ typedef struct
     char *serialDevice;    /**< serialDevice Devicename of serial device */
     char *socketPath;      /**< socketPath Unix socket path */
     char ecuid[4];         /**< ECUiD */
+    uint8_t ecuid2len;
+    char *ecuid2;
     speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
     DltClientMode mode;    /**< mode DltClientMode */
     int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
@@ -115,6 +115,7 @@ extern "C" {
 #   endif
 
 void dlt_client_register_message_callback(int (*registerd_callback)(DltMessage *message, void *data));
+void dlt_client_register_message_callback_v2(int (*registerd_callback)(DltMessageV2 *message, void *data));
 void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(void *data));
 
 /**
@@ -157,6 +158,15 @@ DltReturnValue dlt_client_cleanup(DltClient *client, int verbose);
 DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose);
 
 /**
+ * Main Loop of dlt client application for DLT V2
+ * @param client pointer to dlt client structure
+ * @param data pointer to data to be provided to the main loop
+ * @param verbose if set to true verbose information is printed out.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbose);
+
+/**
  * Send a message to the daemon through the socket.
  * @param client pointer to dlt client structure.
  * @param msg The message to be send in DLT format.
@@ -182,6 +192,18 @@ DltReturnValue dlt_client_send_message_to_socket_v2(DltClient *client, DltMessag
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size);
+
+/**
+ * Send ancontrol message to the dlt daemon with version 2 format
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param payload Buffer filled with control message data
+ * @param size Size of control message data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *ctid, uint8_t *payload, uint32_t size);
+
 /**
  * Send an injection message to the dlt daemon
  * @param client pointer to dlt client structure
@@ -199,6 +221,22 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client,
                                           uint8_t *buffer,
                                           uint32_t size);
 /**
+ * Send an injection message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param serviceID service id
+ * @param buffer Buffer filled with injection message data
+ * @param size Size of injection data within buffer
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_inject_msg_v2(DltClient *client,
+                                             char *apid,
+                                             char *ctid,
+                                             uint32_t serviceID,
+                                             uint8_t *buffer,
+                                             uint32_t size);
+/**
  * Send an set  log level message to the dlt daemon
  * @param client pointer to dlt client structure
  * @param apid application id
@@ -207,12 +245,31 @@ DltReturnValue dlt_client_send_inject_msg(DltClient *client,
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
+
+/**
+ * Send an set  log level message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param logLevel Log Level
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_log_level_v2(DltClient *client, char *apid, char *ctid, uint8_t logLevel);
+
 /**
  * Send an request to get log info message to the dlt daemon
  * @param client pointer to dlt client structure
  * @return negative value if there was an error
  */
 int dlt_client_get_log_info(DltClient *client);
+
+/**
+ * Send an request to get log info message to the dlt daemon in version 2
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_get_log_info_v2(DltClient *client);
+
 /**
  * Send an request to get default log level to the dlt daemon
  * @param client pointer to dlt client structure
@@ -220,11 +277,25 @@ int dlt_client_get_log_info(DltClient *client);
  */
 DltReturnValue dlt_client_get_default_log_level(DltClient *client);
 /**
+ * Send an request to get default log level to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_client_get_default_log_level_v2(DltClient *client);
+/**
  * Send an request to get software version to the dlt daemon
  * @param client pointer to dlt client structure
  * @return negative value if there was an error
  */
 int dlt_client_get_software_version(DltClient *client);
+
+/**
+ * Send an request to get software version to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return negative value if there was an error
+ */
+int dlt_client_get_software_version_v2(DltClient *client);
+
 /**
  * Initialise get log info structure
  * @return void
@@ -245,12 +316,28 @@ void dlt_getloginfo_free(void);
  */
 DltReturnValue dlt_client_send_trace_status(DltClient *client, char *apid, char *ctid, uint8_t traceStatus);
 /**
+ * Send a set trace status message to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param apid application id
+ * @param ctid context id
+ * @param traceStatus Default Trace Status
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_trace_status_v2(DltClient *client, char *apid, char *ctid, uint8_t traceStatus);
+/**
  * Send the default log level to the dlt daemon
  * @param client pointer to dlt client structure
  * @param defaultLogLevel Default Log Level
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defaultLogLevel);
+/**
+ * Send the default log level to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param defaultLogLevel Default Log Level
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_default_log_level_v2(DltClient *client, uint8_t defaultLogLevel);
 /**
  * Send the log level to all contexts registered with dlt daemon
  * @param client pointer to dlt client structure
@@ -259,12 +346,26 @@ DltReturnValue dlt_client_send_default_log_level(DltClient *client, uint8_t defa
  */
 DltReturnValue dlt_client_send_all_log_level(DltClient *client, uint8_t LogLevel);
 /**
+ * Send the log level to all contexts registered with dlt daemon
+ * @param client pointer to dlt client structure
+ * @param LogLevel Log Level to be set
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_all_log_level_v2(DltClient *client, uint8_t LogLevel);
+/**
  * Send the default trace status to the dlt daemon
  * @param client pointer to dlt client structure
  * @param defaultTraceStatus Default Trace Status
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t defaultTraceStatus);
+/**
+ * Send the default trace status to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param defaultTraceStatus Default Trace Status
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_default_trace_status_v2(DltClient *client, uint8_t defaultTraceStatus);
 /**
  * Send the trace status to all contexts registered with dlt daemon
  * @param client pointer to dlt client structure
@@ -273,6 +374,13 @@ DltReturnValue dlt_client_send_default_trace_status(DltClient *client, uint8_t d
  */
 DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t traceStatus);
 /**
+ * Send the trace status to all contexts registered with dlt daemon
+ * @param client pointer to dlt client structure
+ * @param traceStatus trace status to be set
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_all_trace_status_v2(DltClient *client, uint8_t traceStatus);
+/**
  * Send the timing pakets status to the dlt daemon
  * @param client pointer to dlt client structure
  * @param timingPakets Timing pakets enabled
@@ -280,17 +388,36 @@ DltReturnValue dlt_client_send_all_trace_status(DltClient *client, uint8_t trace
  */
 DltReturnValue dlt_client_send_timing_pakets(DltClient *client, uint8_t timingPakets);
 /**
+ * Send the timing pakets status to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @param timingPakets Timing pakets enabled
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_timing_pakets_v2(DltClient *client, uint8_t timingPakets);
+/**
  * Send the store config command to the dlt daemon
  * @param client pointer to dlt client structure
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_store_config(DltClient *client);
 /**
+ * Send the store config command to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_store_config_v2(DltClient *client);
+/**
  * Send the reset to factory default command to the dlt daemon
  * @param client pointer to dlt client structure
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_client_send_reset_to_factory_default(DltClient *client);
+/**
+ * Send the reset to factory default command to the dlt daemon
+ * @param client pointer to dlt client structure
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_send_reset_to_factory_default_v2(DltClient *client);
 
 /**
  * Set baudrate within dlt client structure
@@ -350,11 +477,27 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
                                                        char *resp_text);
 
 /**
+ * Parse GET_LOG_INFO response text
+ * @param resp      GET_LOG_INFO response
+ * @param resp_text response text represented by ASCII
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_client_parse_get_log_info_resp_text_v2(DltServiceGetLogInfoResponse *resp,
+                                                       char *resp_text);
+
+/**
  * Free memory allocated for get log info message
  * @param resp response
  * @return 0 on success, -1 otherwise
  */
 int dlt_client_cleanup_get_log_info(DltServiceGetLogInfoResponse *resp);
+
+/**
+ * Free memory allocated for get log info message
+ * @param resp response
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_client_cleanup_get_log_info_v2(DltServiceGetLogInfoResponse *resp);
 #   ifdef __cplusplus
 }
 #   endif

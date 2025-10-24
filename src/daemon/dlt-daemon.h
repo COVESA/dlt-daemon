@@ -81,8 +81,6 @@
 #define DLT_DAEMON_FLAG_MAX 256
 
 // DLTV2 - Definitions for DLT Version 2
-#define DLT_VERSION1 1
-#define DLT_VERSION2 2
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
@@ -169,6 +167,7 @@ typedef struct
     DltEventHandler pEvent; /**< struct for message producer event handling */
     DltGateway pGateway; /**< struct for passive node connection handling */
     DltMessage msg;           /**< one dlt message */
+    DltMessageV2 msgv2;         /**< one dlt v2 message */
     int client_connections;    /**< counter for nr. of client connections */
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
@@ -251,6 +250,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
                                              DltReceiver *rec,
                                              int verbose);
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltDaemonLocal *daemon_local,
                                                          DltReceiver *rec,
@@ -288,6 +288,7 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
                                            int verbose);
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)

@@ -254,6 +254,7 @@ typedef struct
     uint32_t linenumber;
     uint8_t numberoftags;                      /**< Number of tags */
     DltTag *tag;
+    int tagbuffersize;
     uint8_t prlv;                              /**< Privacy level */
     dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all
                                                 *  contexts */
@@ -329,7 +330,7 @@ typedef int (*dlt_injection_callback)(uint32_t, void *, uint32_t);
  * @param loglevel this is the current log level of the log message to be sent
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is matching
  */
-DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
+DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, const char *dlt_version);
 
 /**
  * Initialize the generation of a DLT log message (intended for usage in non-verbose mode)
@@ -345,6 +346,7 @@ DltReturnValue dlt_user_log_write_start(DltContext *handle, DltContextData *log,
 DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
                                            DltContextData *log,
                                            DltLogLevelType loglevel,
+                                           const char *dlt_version,
                                            uint32_t messageid);
 
 /**
@@ -367,6 +369,7 @@ DltReturnValue dlt_user_log_write_start_id(DltContext *handle,
 DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
                                                        DltContextData *log,
                                                        DltLogLevelType loglevel,
+                                                       const char *dlt_version,
                                                        char *buffer,
                                                        size_t size,
                                                        int32_t args_num);
@@ -1229,6 +1232,31 @@ DltReturnValue dlt_with_timestamp(int8_t with_timestamp);
 DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id);
 
 /**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param fina Send filename
+ * @param linr Send linenumber
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int linr);
+
+/**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param prlv Send privacy level
+ * @return Value from DltReturnValue enum
+*/
+DltReturnValue dlt_with_prlv(uint8_t prlv);
+
+/**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param firstTag list of tags
+ * @return Value from DltReturnValue enum
+*/
+DltReturnValue dlt_with_tags(const char *firstTag, ...);
+
+/**
  * Set maximum logged log level and trace status of application
  *
  * @param loglevel This is the log level to be set for the whole application
@@ -1323,7 +1351,7 @@ DltReturnValue dlt_disable_local_print(void);
  * @param text pointer to the ASCII string written into log message containing null termination.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text);
+DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text, const char *dlt_version);
 
 /**
  * Write a null terminated ASCII string and an integer value into a DLT log message.
@@ -1333,7 +1361,7 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
  * @param data integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data);
+DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data, const char *dlt_version);
 
 /**
  * Write a null terminated ASCII string and an unsigned integer value into a DLT log message.
@@ -1343,7 +1371,7 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
  * @param data unsigned integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data);
+DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data, const char *dlt_version);
 
 /**
  * Write an integer value into a DLT log message.
@@ -1352,7 +1380,7 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
  * @param data integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data);
+DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data, const char *dlt_version);
 
 /**
  * Write an unsigned integer value into a DLT log message.
@@ -1361,7 +1389,7 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
  * @param data unsigned integer value written into the log message
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data);
+DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data, const char *dlt_version);
 
 /**
  * Write an unsigned integer value into a DLT log message.
@@ -1371,7 +1399,7 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
  * @param length length in bytes of the parameter written into log message.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length);
+DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length, const char *dlt_version);
 
 /**
  * Write marker message to DLT.

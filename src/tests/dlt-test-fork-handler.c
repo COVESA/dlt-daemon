@@ -35,7 +35,7 @@ void dlt_log_message(DltContext *context, DltLogLevelType ll, char *text, int32_
     if (text == NULL)
         return;
 
-    if (dlt_user_log_write_start(context, &contextData, ll) > 0) {
+    if (dlt_user_log_write_start(context, &contextData, ll, DLT_VERSION_1) > 0) {
         dlt_user_log_write_string(&contextData, text);
         if (num > 0) {
             dlt_user_log_write_int32(&contextData, num);
