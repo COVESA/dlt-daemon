@@ -115,9 +115,6 @@ static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, c
 pthread_rwlock_t trace_load_rw_lock;
 #endif
 
-// DLTV2 - Set the version as Version 2 for development
-uint8_t dlt_version = DLT_VERSION2;
-
 /* used in main event loop and signal handler */
 int g_exit = 0;
 
@@ -2829,86 +2826,170 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         return -1;
     }
 
-    /* check if file file descriptor was already used, and make it invalid if it
-     * is reused. */
-    /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+    if (0) { // DLT Version 1
+        /* check if file file descriptor was already used, and make it invalid if it
+        * is reused. */
+        /* This prevents sending messages to wrong file descriptor */
+        dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
-    /* Set socket timeout in reception */
-    struct timeval timeout_send;
-    timeout_send.tv_sec = daemon_local->timeoutOnSend;
-    timeout_send.tv_usec = 0;
+        /* Set socket timeout in reception */
+        struct timeval timeout_send;
+        timeout_send.tv_sec = daemon_local->timeoutOnSend;
+        timeout_send.tv_usec = 0;
 
-    if (setsockopt (in_sock,
-                    SOL_SOCKET,
-                    SO_SNDTIMEO,
-                    (char *)&timeout_send,
-                    sizeof(timeout_send)) < 0)
-        dlt_log(LOG_WARNING, "setsockopt failed\n");
+        if (setsockopt (in_sock,
+                        SOL_SOCKET,
+                        SO_SNDTIMEO,
+                        (char *)&timeout_send,
+                        sizeof(timeout_send)) < 0)
+            dlt_log(LOG_WARNING, "setsockopt failed\n");
 
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              in_sock,
-                              POLLIN,
-                              DLT_CONNECTION_CLIENT_MSG_TCP)) {
-        dlt_log(LOG_ERR, "Failed to register new client. \n");
-        close(in_sock);
-        return -1;
-    }
-
-    /* send connection info about connected */
-    dlt_daemon_control_message_connection_info(in_sock,
-                                               daemon,
-                                               daemon_local,
-                                               DLT_CONNECTION_STATUS_CONNECTED,
-                                               "",
-                                               verbose);
-
-    /* send ecu version string */
-    if (daemon_local->flags.sendECUSoftwareVersion > 0) {
-        if (daemon_local->flags.sendECUSoftwareVersion > 0)
-            dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
-                                                    daemon,
-                                                    daemon_local,
-                                                    daemon_local->flags.vflag);
-
-        if (daemon_local->flags.sendTimezone > 0)
-            dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
-                                                daemon,
-                                                daemon_local,
-                                                daemon_local->flags.vflag);
-    }
-
-    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-             "New client connection #%d established, Total Clients : %d",
-             in_sock, daemon_local->client_connections);
-
-    dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local->flags.vflag);
-    dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
-
-    if (daemon_local->client_connections == 1) {
-        if (daemon_local->flags.vflag)
-            dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
-
-        dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
-        if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
-            dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+        if (dlt_connection_create(daemon_local,
+                                &daemon_local->pEvent,
+                                in_sock,
+                                POLLIN,
+                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+            dlt_log(LOG_ERR, "Failed to register new client. \n");
             close(in_sock);
-            in_sock = -1;
             return -1;
         }
 
-        /* send new log state to all applications */
-        daemon->connectionState = 1;
-        dlt_daemon_user_send_all_log_state(daemon, verbose);
+        /* send connection info about connected */
+        dlt_daemon_control_message_connection_info(in_sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_CONNECTION_STATUS_CONNECTED,
+                                                "",
+                                                verbose);
+
+        /* send ecu version string */
+        if (daemon_local->flags.sendECUSoftwareVersion > 0) {
+            if (daemon_local->flags.sendECUSoftwareVersion > 0)
+                dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
+                                                        daemon,
+                                                        daemon_local,
+                                                        daemon_local->flags.vflag);
+
+            if (daemon_local->flags.sendTimezone > 0)
+                dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
+                                                    daemon,
+                                                    daemon_local,
+                                                    daemon_local->flags.vflag);
+        }
+
+        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+                "New client connection #%d established, Total Clients : %d",
+                in_sock, daemon_local->client_connections);
+
+        dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+                                DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                                daemon_local->flags.vflag);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+
+        if (daemon_local->client_connections == 1) {
+            if (daemon_local->flags.vflag)
+                dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
+
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
+            if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
+                dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+                close(in_sock);
+                in_sock = -1;
+                return -1;
+            }
+
+            /* send new log state to all applications */
+            daemon->connectionState = 1;
+            dlt_daemon_user_send_all_log_state(daemon, verbose);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        /* Reset number of received bytes from FIFO */
-        daemon->bytes_recv = 0;
+            /* Reset number of received bytes from FIFO */
+            daemon->bytes_recv = 0;
 #endif
+        }
+    } else { // DLT Version 2
+        /* check if file file descriptor was already used, and make it invalid if it
+        * is reused. */
+        /* This prevents sending messages to wrong file descriptor */
+        dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+
+        /* Set socket timeout in reception */
+        struct timeval timeout_send;
+        timeout_send.tv_sec = daemon_local->timeoutOnSend;
+        timeout_send.tv_usec = 0;
+
+        if (setsockopt (in_sock,
+                        SOL_SOCKET,
+                        SO_SNDTIMEO,
+                        (char *)&timeout_send,
+                        sizeof(timeout_send)) < 0)
+            dlt_log(LOG_WARNING, "setsockopt failed\n");
+
+        if (dlt_connection_create(daemon_local,
+                                &daemon_local->pEvent,
+                                in_sock,
+                                POLLIN,
+                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+            dlt_log(LOG_ERR, "Failed to register new client. \n");
+            close(in_sock);
+            return -1;
+        }
+
+        /* send connection info about connected */
+        dlt_daemon_control_message_connection_info_v2(in_sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_CONNECTION_STATUS_CONNECTED,
+                                                "",
+                                                verbose);
+
+        /* send ecu version string */
+        if (daemon_local->flags.sendECUSoftwareVersion > 0) {
+            if (daemon_local->flags.sendECUSoftwareVersion > 0)
+                dlt_daemon_control_get_software_version_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                        daemon,
+                                                        daemon_local,
+                                                        daemon_local->flags.vflag);
+
+            if (daemon_local->flags.sendTimezone > 0)
+                dlt_daemon_control_message_timezone_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                    daemon,
+                                                    daemon_local,
+                                                    daemon_local->flags.vflag);
+        }
+
+        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+                "New client connection #%d established, Total Clients : %d",
+                in_sock, daemon_local->client_connections);
+        // TBD: dlt_daemon_log_internal commented for V2
+        // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+                                // DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                                // daemon_local->flags.vflag);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+
+        if (daemon_local->client_connections == 1) {
+            if (daemon_local->flags.vflag)
+                dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
+
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
+            if (dlt_daemon_send_ringbuffer_to_client_v2(daemon, daemon_local, verbose) == -1) {
+                dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+                close(in_sock);
+                in_sock = -1;
+                return -1;
+            }
+
+            /* send new log state to all applications */
+            daemon->connectionState = 1;
+            dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            /* Reset number of received bytes from FIFO */
+            daemon->bytes_recv = 0;
+#endif
+        }
     }
 
     return 0;
@@ -2956,8 +3037,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
@@ -3024,8 +3104,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
@@ -4774,7 +4853,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
+    uint8_t dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);

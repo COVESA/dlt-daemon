@@ -1272,6 +1272,67 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
     dlt_message_free(&msg, 0);
 }
 
+void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    uint32_t len;
+    DltServiceGetSoftwareVersionResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_SOFTWARE_VERSION,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    /* prepare payload of data */
+    len = (uint32_t) strlen(daemon->ECUVersionString);
+
+    /* msg.datasize = sizeof(serviceID) + sizeof(status) + sizeof(length) + len */
+    msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t) + len);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_SOFTWARE_VERSION,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    resp = (DltServiceGetSoftwareVersionResponse *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->length = len;
+    memcpy(msg.databuffer + msg.datasize - len, daemon->ECUVersionString, len);
+
+    /* send message */
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+}
+
 void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     DltMessage msg;
@@ -2499,6 +2560,59 @@ int dlt_daemon_control_message_connection_info(int sock,
     return 0;
 }
 
+int dlt_daemon_control_message_connection_info_v2(int sock,
+                                               DltDaemon *daemon,
+                                               DltDaemonLocal *daemon_local,
+                                               uint8_t state,
+                                               char *comid,
+                                               int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceConnectionInfo *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return -1;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return -1;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceConnectionInfo);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return -1;
+
+    resp = (DltServiceConnectionInfo *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_CONNECTION_INFO;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->state = state;
+    dlt_set_id(resp->comid, comid);
+
+    /* send message */
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+        dlt_message_free_v2(&msg, 0);
+        return -1;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+
+    return 0;
+}
+
 int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     DltMessage msg;
@@ -2550,6 +2664,61 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
 
     /* free message */
     dlt_message_free(&msg, 0);
+
+    return 0;
+}
+
+int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceTimezone *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return -1;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return -1;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceTimezone);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return -1;
+
+    resp = (DltServiceTimezone *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_TIMEZONE;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+
+    time_t t = time(NULL);
+    struct tm lt;
+    tzset();
+    localtime_r(&t, &lt);
+#if !defined(__CYGWIN__)
+    resp->timezone = (int32_t)lt.tm_gmtoff;
+#endif
+    resp->isdst = (uint8_t)lt.tm_isdst;
+
+    /* send message */
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+        dlt_message_free_v2(&msg, 0);
+        return -1;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
 
     return 0;
 }
