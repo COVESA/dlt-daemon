@@ -115,9 +115,6 @@ static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, c
 pthread_rwlock_t trace_load_rw_lock;
 #endif
 
-// DLTV2 - Set the version as Version 2 for development
-uint8_t dlt_version = DLT_VERSION2;
-
 /* used in main event loop and signal handler */
 int g_exit = 0;
 
@@ -2991,6 +2988,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             /* Reset number of received bytes from FIFO */
             daemon->bytes_recv = 0;
     #endif
+        }
     }
     return 0;
 }
@@ -3037,8 +3035,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
@@ -3105,8 +3102,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
@@ -4855,7 +4851,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
+    uint8_t dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);

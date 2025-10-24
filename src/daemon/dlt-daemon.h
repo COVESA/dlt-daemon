@@ -84,9 +84,6 @@
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
-// DLTV2 - DLT Version flag for multiplexing V1 and V2 messages
-extern uint8_t dlt_version;
-
 /**
  * The flags of a dlt daemon.
  */

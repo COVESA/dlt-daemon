@@ -209,6 +209,16 @@ void dlt_daemon_control_get_log_info_v2(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Process and generate response to received get software version control message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Process and generate response to received get default log level control message
  * @param sock connection handle used for sending response
@@ -335,6 +345,23 @@ int dlt_daemon_control_message_connection_info(int sock,
                                                uint8_t state,
                                                char *comid,
                                                int verbose);
+
+/**
+ * Send control message connection info (add on to AUTOSAR standard) for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param state state of connection
+ * @param comid Communication id where connection state changed
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_connection_info_v2(int sock,
+                                               DltDaemon *daemon,
+                                               DltDaemonLocal *daemon_local,
+                                               uint8_t state,
+                                               char *comid,
+                                               int verbose);
+
 /**
  * Send control message timezone (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response
@@ -343,6 +370,16 @@ int dlt_daemon_control_message_connection_info(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Send control message timezone (add on to AUTOSAR standard) for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Send control message marker (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response
