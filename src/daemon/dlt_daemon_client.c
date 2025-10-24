@@ -1703,8 +1703,8 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 {
     DltServiceGetLogInfoRequestV2 *req;
     DltMessageV2 resp;
-    DltDaemonContext *context = 0;
-    DltDaemonApplication *application = 0;
+    DltDaemonContext *context = NULL;
+    DltDaemonApplication *application = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
 
     int num_applications = 0, num_contexts = 0;
     uint16_t count_app_ids = 0, count_con_ids = 0;
@@ -1734,7 +1734,6 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
     if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceGetLogInfoRequest)) < 0)
         return;
-
     user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
 
     if (user_list == NULL)
@@ -1746,7 +1745,23 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         return;
 
     /* prepare pointer to message request */
-    req = (DltServiceGetLogInfoRequestV2 *)(msg->databuffer);
+    int db_offset = 0;
+    memcpy(&(req->service_id), msg->databuffer + db_offset, sizeof(uint32_t));
+    db_offset = db_offset + sizeof(uint32_t);
+    memcpy(&(req->options), msg->databuffer + db_offset, sizeof(uint8_t));
+    db_offset = db_offset + sizeof(uint8_t);
+    memcpy(&(req->apidlen), msg->databuffer + db_offset, sizeof(uint8_t));
+    db_offset = db_offset + sizeof(uint8_t);
+    req->apid = NULL;
+    dlt_set_id_v2(&(req->apid), msg->databuffer + db_offset, req->apidlen);
+    db_offset = db_offset + req->apidlen;
+    memcpy(&(req->ctidlen), msg->databuffer + db_offset, sizeof(uint8_t));
+    db_offset = db_offset + sizeof(uint32_t);
+    req->ctid = NULL;
+    dlt_set_id_v2(&(req->ctid), msg->databuffer + db_offset, req->ctidlen);
+    db_offset = db_offset + req->ctidlen;
+    memcpy((req->com), msg->databuffer + db_offset, DLT_ID_SIZE);
+    
 
     /* initialise new message */
     if (dlt_message_init_v2(&resp, 0) == DLT_RETURN_ERROR) {
@@ -1771,12 +1786,15 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     }
 
     if (req->apidlen != 0) {
-        application = dlt_daemon_application_find_v2(daemon,
-                                                  req->apidlen,
-                                                  req->apid,
-                                                  daemon->ecuid2len,
-                                                  daemon->ecuid2,
-                                                  verbose);
+
+                dlt_daemon_application_find_v2(daemon,
+                                               req->apidlen,
+                                               req->apid,
+                                               daemon->ecuid2len,
+                                               daemon->ecuid2,
+                                               verbose,
+                                               &application);
+                
         if (application) {
             num_applications = 1;
             if (req->ctidlen != 0) {
@@ -1937,20 +1955,23 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 apidlen = req->apidlen;
             }
             else {
-                if (user_list->applications)
+                if (user_list->applications){
                     apid = user_list->applications[i].apid;
-                else
+                }
+                else {
                     /* This should never occur! */
                     apid = NULL;
                     apidlen = 0;
+                }
             }
 
-            application = dlt_daemon_application_find_v2(daemon,
-                                                      apidlen,
-                                                      apid,
-                                                      daemon->ecuid2len,
-                                                      daemon->ecuid2,
-                                                      verbose);
+            dlt_daemon_application_find_v2(daemon,
+                                           apidlen,
+                                           apid,
+                                           daemon->ecuid2len,
+                                           daemon->ecuid2,
+                                           verbose,
+                                           &application);
 
             if ((user_list->applications) && (application)) {
                 /* Calculate start offset within contexts[] */
@@ -1958,12 +1979,9 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
                 for (j = 0; j < (application - (user_list->applications)); j++)
                     offset_base += user_list->applications[j].num_contexts;
-
-                //TBD: Check below dlt_set_id_v2 result
-
-                uint8_t *temp_ptr = (uint8_t *)(resp.databuffer + offset);
-                dlt_set_id_v2(&temp_ptr, apid, apidlen);
+                memcpy(resp.databuffer + offset, apid, apidlen);
                 offset += apidlen;
+                /* To update based on expected structure if apid length to be copied*/
                 //TBD: Need to set apidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
@@ -1978,7 +1996,6 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 memcpy(buf, apid, apidlen);
                 dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
 #endif
-
                 if (req->apidlen != 0)
                     count_con_ids = (uint16_t) num_contexts;
                 else
@@ -2007,9 +2024,9 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                         ((req->ctidlen == 0) || ((req->ctidlen != 0) &&
                                                     (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
                         ) {
-                        uint8_t *temp_ptr = (uint8_t *)(resp.databuffer + offset);
-                        dlt_set_id_v2(&temp_ptr, context->ctid, context->ctid2len);
+                        memcpy(resp.databuffer + offset, context->ctid, context->ctid2len);
                         offset += context->ctid2len;
+                        /* To update based on expected structure if ctid length to be copied*/
                         //TBD: Need to set ctidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)

@@ -1622,10 +1622,10 @@ int main(int argc, char *argv[])
                                   daemon_local.flags.vflag) == 0))
         daemon.runtime_context_cfg_loaded = 1;
 
-    dlt_daemon_log_internal(&daemon, &daemon_local,
-                            "Daemon launched. Starting to output traces...",
-                            DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local.flags.vflag);
+    // dlt_daemon_log_internal(&daemon, &daemon_local,
+    //                         "Daemon launched. Starting to output traces...",
+    //                         DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+    //                         daemon_local.flags.vflag);
 
     /* Even handling loop. */
     while ((back >= 0) && (g_exit >= 0))
@@ -1635,9 +1635,9 @@ int main(int argc, char *argv[])
 
     snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Exiting DLT daemon... [%d]",
              g_signo);
-    dlt_daemon_log_internal(&daemon, &daemon_local, local_str, DLT_LOG_INFO,
-                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local.flags.vflag);
+    // dlt_daemon_log_internal(&daemon, &daemon_local, local_str, DLT_LOG_INFO,
+    //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+    //                         daemon_local.flags.vflag);
     dlt_vlog(LOG_NOTICE, "%s%s", local_str, "\n");
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
@@ -1770,13 +1770,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Set ECU id of daemon */
     if (daemon_local->flags.evalue[0]){
         dlt_set_id(daemon->ecuid, daemon_local->flags.evalue);
-        dlt_set_id_v2(&daemon->ecuid2,daemon_local->flags.evalue, DLT_ID_SIZE);
-        daemon->ecuid2len = DLT_ID_SIZE;
+        daemon->ecuid2len = strlen(daemon_local->flags.evalue);
+        dlt_set_id_v2(&(daemon->ecuid2),daemon_local->flags.evalue, daemon->ecuid2len);
+
     }
     else{
         dlt_set_id(daemon->ecuid, DLT_DAEMON_ECU_ID);
-        dlt_set_id_v2(&daemon->ecuid2, DLT_DAEMON_ECU_ID, DLT_ID_SIZE);
-        daemon->ecuid2len = DLT_ID_SIZE;
+        daemon->ecuid2len = strlen(DLT_DAEMON_ECU_ID);
+        dlt_set_id_v2(&(daemon->ecuid2),DLT_DAEMON_ECU_ID, daemon->ecuid2len);
     }
 
     /* Set flag for optional sending of serial header */
@@ -2564,6 +2565,7 @@ void dlt_daemon_daemonize(int verbose)
  * would cause an endless loop because dlt_daemon_log_internal() would itself again try
  * to open the offline trace file.
  * This is a dlt-daemon only function. The libdlt has no equivalent function available. */
+/* To Update: How to call when it doesn't has version info*/
 int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
@@ -3689,7 +3691,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             return -1;
         }
 
-        old_application = dlt_daemon_application_find_v2(daemon, usercontext.apidlen, usercontext.apid, daemon->ecuid2len, daemon->ecuid2, verbose);
+        dlt_daemon_application_find_v2(daemon, usercontext.apidlen, usercontext.apid, daemon->ecuid2len, daemon->ecuid2, verbose, &old_application);
 
         if (old_application != NULL)
             old_pid = old_application->pid;
@@ -3706,6 +3708,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                 daemon->ecuid2len,
                                                 daemon->ecuid2,
                                                 verbose);
+
 
         /* send log state to new application */
         dlt_daemon_user_send_log_state_v2(daemon, application, verbose);
@@ -3727,9 +3730,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                     application->application_description); //TBD: %.6s to use apidlen
             //TBD: Remove DEBUG prints
             // printf("DEBUG: register_application Before calling dlt_daemon_log_internal: %s\n", local_str);
-            dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                                    DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                                    daemon_local->flags.vflag);
+            // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+            //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+            //                         daemon_local->flags.vflag);
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
 
@@ -3862,8 +3865,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 {
     uint32_t to_remove = 0;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
-    DltDaemonApplication *application = NULL;
-    DltDaemonApplication *old_application = NULL;
+    DltDaemonApplication *application = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
     DltDaemonContext *context = NULL;
     char *origin;
 
@@ -3993,15 +3995,16 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             return -1;
         }
+        
+        dlt_daemon_application_find_v2(daemon,
+                                       usercontext.apidlen,
+                                       usercontext.apid,
+                                       daemon->ecuid2len,
+                                       daemon->ecuid2,
+                                       verbose,
+                                       &application);
 
-        application = dlt_daemon_application_find_v2(daemon,
-                                                usercontext.apidlen,
-                                                usercontext.apid,
-                                                daemon->ecuid2len,
-                                                daemon->ecuid2,
-                                                verbose);
-
-        if (application == 0) {
+        if (application == NULL) {
             dlt_vlog(LOG_WARNING,
                     "ApID '%.6s' not found for new ContextID '%.6s' in %s\n",
                     usercontext.apid,
@@ -4046,8 +4049,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                         daemon->ecuid2len,
                                         daemon->ecuid2,
                                         verbose);
-
-        if (context == 0) {
+        if (context == NULL) {
             dlt_vlog(LOG_WARNING,
                     "Can't add ContextID '%.6s' for ApID '%.6s'\n in %s",
                     usercontext.ctid, usercontext.apid, __func__); //TBD: Update %.6s to use apidlen, ctidlen
@@ -4062,16 +4064,16 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                     context->ctid2,
                     context->apid2,
                     context->context_description); //TBD: %.6s to use ctidlen , apidlen
+
             //TBD: Remove DEBUG prints
             // printf("DEBUG: register_context Before calling dlt_daemon_log_internal: %s\n", local_str);
-            if (verbose)
-                dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                        DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                        DLT_DAEMON_CTX_ID, verbose);
+            // if (verbose)
+            //     dlt_daemon_log_internal(daemon, daemon_local, local_str,
+            //                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+            //                             DLT_DAEMON_CTX_ID, verbose);
 
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
-
         if (daemon_local->flags.offlineLogstorageMaxDevices) {
             //TBD: update for DLT V2
             /* Store log level set for offline logstorage into context structure*/
@@ -4137,10 +4139,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             offset += usercontext.ctidlen;
             memcpy(msg.databuffer + offset, req.com, DLT_ID_SIZE);
             offset = 0;
-
             //TBD
 
-            //dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
+            dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
             dlt_message_free_v2(&msg, verbose);
         }
 
@@ -4432,12 +4433,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
             /* Delete this application and all corresponding contexts
             * for this application from internal table.
             */
-            application = dlt_daemon_application_find_v2(daemon,
-                                                    userapp.apidlen,
-                                                    userapp.apid,
-                                                    daemon->ecuid2len,
-                                                    daemon->ecuid2,
-                                                    verbose);
+             dlt_daemon_application_find_v2(daemon,
+                                            userapp.apidlen,
+                                            userapp.apid,
+                                            daemon->ecuid2len,
+                                            daemon->ecuid2,
+                                            verbose,
+                                            &application);
 
             if (application) {
                 /* Calculate start offset within contexts[] */

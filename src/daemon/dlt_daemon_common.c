@@ -110,12 +110,10 @@ static int dlt_daemon_cmp_apid_v2(const void *m1, const void *m2)
         return -1;
 
     DltDaemonApplication *mi1 = (DltDaemonApplication *)m1;
-    DltDaemonApplication *mi2 = (DltDaemonApplication *)m2;
-
+    DltDaemonApplication *mi2 = (DltDaemonApplication *)m2; 
     if (mi1->apid2len != mi2->apid2len){
         return -1;
     }
-
     return memcmp(mi1->apid2, mi2->apid2, mi1->apid2len); //TBD: use strncmp
 }
 
@@ -462,6 +460,8 @@ int dlt_daemon_init(DltDaemon *daemon,
     daemon->timingpackets = 0;
 
     dlt_set_id(daemon->ecuid, "");
+    daemon->ecuid2len = 0;
+    daemon->ecuid2 = NULL; 
 
     /* initialize ring buffer for client connection */
     dlt_vlog(LOG_INFO, "Ringbuffer configuration: %lu/%lu/%lu\n",
@@ -548,6 +548,8 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
         }
 
         dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
+        daemon->user_list[0].ecuid2len = daemon->ecuid2len;
+        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid, daemon->ecuid2len);
         daemon->num_user_lists = 1;
     }
     else { /* gateway is active */
@@ -562,10 +564,15 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
         }
 
         dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
+        daemon->user_list[0].ecuid2len = daemon->ecuid2len;
+        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid, daemon->ecuid2len);
         daemon->num_user_lists = nodes;
 
-        for (i = 1; i < nodes; i++)
+        for (i = 1; i < nodes; i++){
             dlt_set_id(daemon->user_list[i].ecu, gateway->connections[i - 1].ecuid);
+            daemon->user_list[i].ecuid2len = gateway->connections[i - 1].ecuid2len;
+            dlt_set_id_v2(&(daemon->user_list[0].ecuid2), gateway->connections[i - 1].ecuid2, gateway->connections[i - 1].ecuid2len);
+        }
     }
 
     return DLT_RETURN_OK;
@@ -960,7 +967,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
     new_application = 0;
 
     /* Check if application [apid] is already available */
-    application = dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose);
+    dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose, &application);
 
     if (application == NULL) {
         user_list->num_applications += 1;
@@ -990,9 +997,8 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
         application = &(user_list->applications[user_list->num_applications - 1]);
 
         application->apid2 = NULL;
+        application->apid2len = apidlen;
         dlt_set_id_v2(&(application->apid2), apid, apidlen);
-        //TBD: Fix apid2len assignment to application structure
-        // application.apid2len = apidlen;
         application->pid = 0;
         application->application_description = NULL;
         application->num_contexts = 0;
@@ -1004,7 +1010,6 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
 #endif
 
         new_application = 1;
-
     }
     else if ((pid != application->pid) && (application->pid != 0))
     {
@@ -1035,7 +1040,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
     }
 
     if (application->pid != pid) {
-        dlt_daemon_application_reset_user_handle(daemon, application, verbose);
+        dlt_daemon_application_reset_user_handle_v2(daemon, application, verbose);
         application->pid = 0;
     }
 
@@ -1084,9 +1089,8 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
               (size_t) user_list->num_applications,
               sizeof(DltDaemonApplication),
               dlt_daemon_cmp_apid_v2);
-
         /* Find new position of application with apid*/
-        application = dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose);
+        dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose, &application);
     }
 
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
@@ -1292,48 +1296,53 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
                                            dlt_daemon_cmp_apid);
 }
 
-DltDaemonApplication *dlt_daemon_application_find_v2(DltDaemon *daemon,
-                                                  uint8_t apidlen,
-                                                  char *apid,
-                                                  uint8_t eculen,
-                                                  char *ecu,
-                                                  int verbose)
+void dlt_daemon_application_find_v2(DltDaemon *daemon,
+                                    uint8_t apidlen,
+                                    char *apid,
+                                    uint8_t eculen,
+                                    char *ecu,
+                                    int verbose,
+                                    DltDaemonApplication **application)
 {
-    DltDaemonApplication application;
     DltDaemonRegisteredUsers *user_list = NULL;
-
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon->user_list == NULL) ||
         (apidlen == 0) || (apid == NULL) ||
-        (eculen == 0) || (ecu == NULL))
-        return (DltDaemonApplication *)NULL;
+        (eculen == 0) || (ecu == NULL)){
 
-    // TBD: Check if multiplexing logic is possible using
-    // uint8_t eculen = (uint8_t)strlen(ecu);
-
+        *application = NULL;
+        return;
+        }
+        // printf("Debug loc1: %d\n",daemon->user_list[0].applications[0].apid2len);
+        // printf("Debug loc1: %s\n",daemon->user_list[0].applications[0].apid2);   
     user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
-    if ((user_list == NULL) || (user_list->num_applications == 0))
-        return (DltDaemonApplication *)NULL;
-
+    if ((user_list == NULL) || (user_list->num_applications == 0)){
+        *application = NULL;
+        return;
+    }
+  
     /* Check, if apid is smaller than smallest apid or greater than greatest apid */
     if ((memcmp(apid, user_list->applications[0].apid2, apidlen) < 0) ||
         (memcmp(apid,
                 user_list->applications[user_list->num_applications - 1].apid2,
                 apidlen) > 0)){
-        return (DltDaemonApplication *)NULL;
+                    *application = NULL;
+                    return;
                 }
 
-    application.apid2 = NULL;
-    dlt_set_id_v2(&(application.apid2), apid, apidlen);
-    //TBD: Fix apid2len assignment to application structure
-    // application.apid2len = apidlen;
-    return (DltDaemonApplication *)bsearch(&application,
+    (*application)->apid2 = NULL;
+    (*application)->apid2len = apidlen;
+    dlt_set_id_v2(&((*application)->apid2), apid, apidlen);
+
+
+    *application = (DltDaemonApplication *)bsearch(*application,
                                            user_list->applications,
                                            (size_t) user_list->num_applications,
                                            sizeof(DltDaemonApplication),
                                            dlt_daemon_cmp_apid_v2);
+        return;
 }
 
 
@@ -1674,11 +1683,11 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
                                          char *ecu,
                                          int verbose)
 {
-    DltDaemonApplication *application;
     DltDaemonContext *context;
     DltDaemonContext *old;
     int new_context = 0;
     DltDaemonRegisteredUsers *user_list = NULL;
+    DltDaemonApplication *application = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1705,11 +1714,10 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
     }
 
     /* Check if application [apid] is available */
-    application = dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose);
+    dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose, &application);
 
     if (application == NULL)
         return (DltDaemonContext *)NULL;
-
     /* Check if context [apid, ctid] is already available */
     context = dlt_daemon_context_find_v2(daemon, apidlen, apid, ctidlen, ctid, eculen, ecu, verbose);
 
@@ -1737,7 +1745,6 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
                 free(old);
             }
         }
-
         context = &(user_list->contexts[user_list->num_contexts - 1]);
         memset(context, 0, sizeof(DltDaemonContext));
 
@@ -1845,7 +1852,6 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
         /* Find new position of context with apid, ctid */
         context = dlt_daemon_context_find_v2(daemon, apidlen, apid, ctidlen, ctid, eculen, ecu, verbose);
     }
-
     return context;
 }
 
@@ -1960,7 +1966,7 @@ int dlt_daemon_context_del_v2(DltDaemon *daemon,
         return -1;
 
     if (user_list->num_contexts > 0) {
-        application = dlt_daemon_application_find_v2(daemon, context->apid2len, context->apid2, eculen, ecu, verbose);
+        dlt_daemon_application_find_v2(daemon, context->apid2len, context->apid2, eculen, ecu, verbose, &application);
 
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
         dlt_daemon_free_context_log_settings(application, context);
