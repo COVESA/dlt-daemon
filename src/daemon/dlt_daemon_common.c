@@ -293,6 +293,8 @@ DltDaemonContextLogSettings *dlt_daemon_find_app_log_level_config(
     return log_settings;
 }
 
+//TBD: Add function dlt_daemon_find_app_log_level_config_v2 for DLT V2
+
 #endif
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE

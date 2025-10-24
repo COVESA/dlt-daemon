@@ -4985,7 +4985,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
     #endif
     }
-    else{
+    else{ // DLT Version 1
         ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
@@ -5025,7 +5025,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     #endif
     }
 
-    if(dlt_version == DLT_VERSION1){
+    if (dlt_version == DLT_VERSION1) {
         if (keep_message){
             dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
         }
@@ -5042,14 +5042,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
-    }else{
+    } else { // DLT Version 2
         if (keep_message){
             dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
         }
         /* keep not read data in buffer */
-        size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
-            daemon_local->msgv2.datasize +
-            sizeof(DltUserHeader));
+        // size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
+        //     daemon_local->msgv2.datasize +
+        //     sizeof(DltUserHeader));
+
+        size = (int) (daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize +
+            sizeof(DltUserHeader) - daemon_local->msgv2.extendedheadersizev2 - daemon_local->msgv2.storageheadersizev2);
 
         if (daemon_local->msgv2.found_serialheader)
             size += (int) sizeof(dltSerialHeader);
@@ -5115,6 +5118,7 @@ bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
     const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msgv2.headerextrav2.msin);
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     if (app->num_context_log_level_settings > 0) {
+        //TBD: Call dlt_daemon_find_app_log_level_config_v2 for DLT V2
         DltDaemonContextLogSettings *log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msgv2.extendedheaderv2->ctid);
 
