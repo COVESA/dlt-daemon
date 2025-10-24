@@ -300,22 +300,22 @@ int main(int argc, char *argv[])
 
     DLT_REGISTER_APP(appID, "Test Application for Logging");
     DLT_REGISTER_CONTEXT(mycontext1, contextID, "Test Context for Logging");
-    DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
-    DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
+    // DLT_REGISTER_CONTEXT_LLCCB(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback);
+    // DLT_REGISTER_CONTEXT_LLCCB(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback);
 
 
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS1 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS2 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
+    //                                         0x1000,
+    //                                         dlt_user_injection_callback_with_specific_data,
+    //                                         (void *)"TS1 context");
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
+    // DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
+    //                                         0x1000,
+    //                                         dlt_user_injection_callback_with_specific_data,
+    //                                         (void *)"TS2 context");
+    // DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
+    // DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
 
     text = message;
 

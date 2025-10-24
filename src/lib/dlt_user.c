@@ -5192,8 +5192,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
 
-    // printf("DEBUG: len = %u\n", len);
-
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         return DLT_RETURN_ERROR;
@@ -5819,7 +5817,7 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
     offset = offset + usercontext.ctidlen;
     memcpy(buffer + offset, &(usercontext.pid), sizeof(pid_t)); 
     offset = offset + sizeof(pid_t);
-
+ 
     ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader),
                             sizeof(DltUserHeader),
