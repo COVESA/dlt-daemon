@@ -2826,7 +2826,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     }
 
     /* To update multiplexer logic for V1 and V2*/    
-    if (0) {
+    if (1) {
         /* check if file file descriptor was already used, and make it invalid if it
         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
@@ -5050,9 +5050,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
             daemon_local->msgv2.datasize +
             sizeof(DltUserHeader));
-        printf("Size: %d\n", size);
-        printf("headerSize: %d\n", daemon_local->msgv2.headersizev2);
-        printf("dataSize: %d\n", daemon_local->msgv2.datasize);
+
         if (daemon_local->msgv2.found_serialheader)
             size += (int) sizeof(dltSerialHeader);
 
@@ -5061,9 +5059,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
     }
-
-
-
 
 #endif
 

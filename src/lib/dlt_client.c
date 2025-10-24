@@ -171,7 +171,7 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
             servPort = (unsigned short)tmp_port;
         }
     }
-printf("\nDEBUGS:INit reached\n");
+
     if (verbose)
         dlt_vlog(LOG_INFO,
                  "%s: Init dlt client struct with default port: %hu.\n",
@@ -619,7 +619,7 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
             return DLT_RETURN_TRUE;
         }
         printf("HEX: ");
-        for(int i = 0; i<client->receiver.bytesRcvd; i++){
+        for(int i = 0; i<client->receiver.bytesRcvd-10; i++){
             printf("%x ", (uint8_t)client->receiver.buf[i]);
         }
         printf("\n");
