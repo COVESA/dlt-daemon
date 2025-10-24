@@ -604,6 +604,32 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
     return DLT_RETURN_ERROR;
 }
 
+int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
+                                             char *ecu,
+                                             int fd,
+                                             int verbose)
+{
+    int i;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (ecu == NULL))
+        return DLT_RETURN_ERROR;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, ecu, verbose);
+
+    if (user_list != NULL) {
+        for (i = 0; i < user_list->num_applications; i++)
+            if (user_list->applications[i].user_handle == fd)
+                user_list->applications[i].user_handle = DLT_FD_INIT;
+
+        return DLT_RETURN_OK;
+    }
+
+    return DLT_RETURN_ERROR;
+}
+
 int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
 {
     int i;
@@ -2105,6 +2131,32 @@ int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,
     return -1;
 }
 
+int dlt_daemon_contexts_invalidate_fd_v2(DltDaemon *daemon,
+                                         char *ecu,
+                                         int fd,
+                                         int verbose)
+{
+    int i;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (ecu == NULL))
+        return -1;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, ecu, verbose);
+
+    if (user_list != NULL) {
+        for (i = 0; i < user_list->num_contexts; i++)
+            if (user_list->contexts[i].user_handle == fd)
+                user_list->contexts[i].user_handle = DLT_FD_INIT;
+
+        return 0;
+    }
+
+    return -1;
+}
+
 int dlt_daemon_contexts_clear(DltDaemon *daemon, char *ecu, int verbose)
 {
     int i;
@@ -2786,7 +2838,7 @@ void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose)
         if (app != NULL) {
             if (app->user_handle >= DLT_FD_MINIMUM) {
                 if (dlt_daemon_user_send_log_state(daemon, app, verbose) == -1)
-                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d\n", app->apid, app->pid);
+                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.4s, PID: %d %s\n", app->apid, app->pid, __func__);
             }
         }
     }
@@ -2816,7 +2868,7 @@ void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose)
         if (app != NULL) {
             if (app->user_handle >= DLT_FD_MINIMUM) {
                 if (dlt_daemon_user_send_log_state_v2(daemon, app, verbose) == -1) {
-                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.6s, PID: %d\n", app->apid2, app->pid);
+                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.6s, PID: %d %s\n", app->apid2, app->pid, __func__);
                 }
             }
         }

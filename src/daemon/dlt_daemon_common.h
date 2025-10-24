@@ -485,6 +485,18 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
                                           int fd,
                                           int verbose);
 /**
+ * Invalidate all applications fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these applications running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
+                                             char *ecu,
+                                             int fd,
+                                             int verbose);
+/**
  * Clear all applications in internal application management of specific ecu
  * @param daemon pointer to dlt daemon structure
  * @param ecu pointer to ecu id of node to clear applications
@@ -623,6 +635,18 @@ int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,
                                       char *ecu,
                                       int fd,
                                       int verbose);
+/**
+ * Invalidate all contexts fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these contexts running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_invalidate_fd_v2(DltDaemon *daemon,
+                                         char *ecu,
+                                         int fd,
+                                         int verbose);
 /**
  * Clear all contexts in internal context management of specific ecu
  * @param daemon pointer to dlt daemon structure
