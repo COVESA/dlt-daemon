@@ -171,7 +171,7 @@ DltReturnValue dlt_client_init(DltClient *client, int verbose)
             servPort = (unsigned short)tmp_port;
         }
     }
-
+printf("\nDEBUGS:INit reached\n");
     if (verbose)
         dlt_vlog(LOG_INFO,
                  "%s: Init dlt client struct with default port: %hu.\n",
