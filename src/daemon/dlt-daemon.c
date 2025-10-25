@@ -3479,7 +3479,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-            printf("V2 Userheader mtype: %u\nUserheader: ", userheader->message);
+            printf("V2 Userheader mtype: %u\n", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
@@ -3550,7 +3550,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                 }
             }
 
-            printf("V1 Userheader mtype: %u\nUserheader: ", userheader->message);
+            printf("V1 Userheader mtype: %u\n", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
