@@ -4987,10 +4987,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             daemon_local->msgv2.datasize +
             sizeof(DltUserHeader) -
             daemon_local->msgv2.storageheadersizev2);
-        printf("\n\nDEBUG: V2 bytesRcvd= %d, size to remove= %d\n", rec->bytesRcvd, size);
-        printf("DEBUG: Message sizes: headersize= %d, datasize= %d\n", daemon_local->msgv2.headersizev2, daemon_local->msgv2.datasize);
-        printf("DEBUG: Message sizes: Userheader size= %d\n", sizeof(DltUserHeader));
-        printf("DEBUG: Message sizes: extendedheadersizev2 = %d, Userheader size= %d, storageheadersize = %d\n\n", daemon_local->msgv2.extendedheadersizev2, sizeof(DltUserHeader), daemon_local->msgv2.storageheadersizev2);
 
         if (daemon_local->msgv2.found_serialheader)
             size += (int) sizeof(dltSerialHeader);
