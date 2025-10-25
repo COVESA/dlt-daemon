@@ -3409,9 +3409,12 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
     }
 
     recv = dlt_receiver_receive(receiver);
-    for(int i = 0; i<8; i++){
+
+    printf("Userheader: ");
+    for(int i = 0; i<sizeof(DltUserHeader); i++){
         printf("%x ", (uint8_t)receiver->buffer[i]);
     }
+    printf("\n");
 
     if (recv <= 0 && receiver->type == DLT_RECEIVE_SOCKET) {
         dlt_daemon_close_socket(receiver->fd,
@@ -3476,7 +3479,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-            printf("request type %u\n", userheader->message);
+            printf("V2 Userheader mtype: %u\nUserheader: ", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
@@ -3546,10 +3549,9 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-            printf("request type %u\n", userheader->message);
-            for(int i = 0; i<sizeof(DltUserHeader); i++){
-                printf("%x ", (uint8_t)receiver->buf[i]);
-            }
+
+            printf("V1 Userheader mtype: %u\nUserheader: ", userheader->message);
+
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
             else
@@ -4762,11 +4764,12 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                         "Unregistered CtID '%.6s' for ApID '%.6s'",
                         usercontext.ctid,
                         usercontext.apid); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
-
-                if (verbose)
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                //TBD: Remove DEBUG prints
+                // printf("DEBUG: unregister_context before calling dlt_daemon_log_internal: %s\n", local_str);
+                // if (verbose)
+                //     dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                //                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                //                             DLT_DAEMON_CTX_ID, verbose);
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
@@ -4867,6 +4870,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     daemon->received_message_since_last_watchdog_interval = 1;
 #endif
+
+//TBD: Add support for DLT V2 SHM messages
 #ifdef DLT_SHM_ENABLE
 
     /** In case of SHM, the header still received via fifo/unix_socket receiver,
@@ -4927,23 +4932,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             dlt_log(LOG_ERR, "failed to send message to client.\n");
     }
 
-#else
-
-    //TBD: Remove DEBUG prints
-    // printf("\nDEBUG: process_user_message_log - Received Buffer: \n");
-    // for (int j = 0; j < ((uint8_t)rec->bytesRcvd); j++){
-    //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-    //         printf("%c", rec->buf[j]);
-    //     }
-    //     else {
-    //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
-    //     }
-    // }
-    // printf("\nBuffer in Hex: \n");
-    // for (int k = 0; k < ((uint8_t)rec->bytesRcvd); k++){
-    //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
-    // }
-    // printf("\n\n"); // End of DEBUG:
+#else // #ifdef DLT_SHM_ENABLE
 
     if (dlt_version == DLT_VERSION2) {
         ret = dlt_message_read_v2(&(daemon_local->msgv2),
@@ -4965,27 +4954,49 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
-    #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
+#if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
         DltDaemonApplication *app = dlt_daemon_application_find_v2(
             daemon, daemon_local->msgv2.extendedheaderv2->apidlen, 
             daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose);
-    #endif
+#endif
 
         /* discard non-allowed levels if enforcement is on */
         keep_message = enforce_context_ll_and_ts_keep_message_v2(
             daemon_local
-    #ifdef DLT_LOG_LEVEL_APP_CONFIG
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
             , app
-    #endif
+#endif
         );
 
         // check trace_load
-    #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         keep_message &=
             trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
-    #endif
-    }
-    else{ // DLT Version 1
+#endif
+
+        if (keep_message){
+            dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
+        }
+        /* keep not read data in buffer */
+        // TBD: Verify calculation of size for DLT V2
+        // size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
+        //     daemon_local->msgv2.datasize +
+        //     sizeof(DltUserHeader));
+
+        size = (int) (daemon_local->msgv2.headersizev2 + 
+            daemon_local->msgv2.datasize +
+            sizeof(DltUserHeader) -
+            daemon_local->msgv2.extendedheadersizev2 -
+            daemon_local->msgv2.storageheadersizev2);
+
+        if (daemon_local->msgv2.found_serialheader)
+            size += (int) sizeof(dltSerialHeader);
+
+        if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
+            dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
+    } else { // DLT Version 1
         ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
@@ -5005,27 +5016,24 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
-    #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
+#if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
         DltDaemonApplication *app = dlt_daemon_application_find(
             daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
-    #endif
+#endif
 
         /* discard non-allowed levels if enforcement is on */
         keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
-    #ifdef DLT_LOG_LEVEL_APP_CONFIG
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
             , app
-    #endif
+#endif
         );
 
         // check trace_load
-    #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         keep_message &=
             trace_load_keep_message(app, size, daemon, daemon_local, verbose);
-    #endif
-    }
-
-    if (dlt_version == DLT_VERSION1) {
+#endif
         if (keep_message){
             dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
         }
@@ -5036,25 +5044,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             sizeof(DltUserHeader));
 
         if (daemon_local->msg.found_serialheader)
-            size += (int) sizeof(dltSerialHeader);
-
-        if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
-            dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
-            return DLT_DAEMON_ERROR_UNKNOWN;
-        }
-    } else { // DLT Version 2
-        if (keep_message){
-            dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
-        }
-        /* keep not read data in buffer */
-        // size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
-        //     daemon_local->msgv2.datasize +
-        //     sizeof(DltUserHeader));
-
-        size = (int) (daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize +
-            sizeof(DltUserHeader) - daemon_local->msgv2.extendedheadersizev2 - daemon_local->msgv2.storageheadersizev2);
-
-        if (daemon_local->msgv2.found_serialheader)
             size += (int) sizeof(dltSerialHeader);
 
         if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
