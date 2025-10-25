@@ -1189,19 +1189,27 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         return DLT_RETURN_WRONG_PARAMETER;
 
     text[0] = 0;
-
+    printf("Debug loc 1 from %d\n", __LINE__);
+    printf("message details: storage header nanoseconds: %d\n", msg->storageheaderv2.nanoseconds);
+    printf("message details: storage header ecidlen: %d\n", msg->storageheaderv2.ecidlen);
+    printf("message details: storage header ecid: %s\n", msg->storageheaderv2.ecid);
+    printf("message details: storage header seconds: %x\n", msg->storageheaderv2.seconds[0]);
+    printf("message details: storage header seconds: %x\n", msg->storageheaderv2.seconds[1]);
+    printf("message details: storage header seconds: %x\n", msg->storageheaderv2.seconds[2]);
+    printf("message details: storage header seconds: %x\n", msg->storageheaderv2.seconds[3]);
+    printf("message details: storage header seconds: %x\n", msg->storageheaderv2.seconds[4]);
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
         /* print received time */
-        time_t tt = 0;
-        for (int i = 0; i<5; ++i){
-            tt = (tt << 8) | msg->storageheaderv2.seconds[i];
-        }
-        tzset();
-        localtime_r(&tt, &timeinfo);
-        strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
-        snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2.nanoseconds);
+        // time_t tt = 0;
+        // for (int i = 0; i<5; ++i){
+        //     tt = (tt << 8) | msg->storageheaderv2.seconds[i];
+        // }
+        // //tzset();
+        // localtime_r(&tt, &timeinfo);
+        // strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
+        // snprintf(text, textlength, "%s.%.9d ", buffer, msg->storageheaderv2.nanoseconds);
     }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     if ((flags & DLT_HEADER_SHOW_TMSTP) == DLT_HEADER_SHOW_TMSTP) {
         /* print timestamp if available */
         if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_NON_VERBOSE_DATA_MSG)){
@@ -1214,13 +1222,13 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         else
             snprintf(text + strlen(text), textlength - strlen(text), "---------- ");
     }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     if ((flags & DLT_HEADER_SHOW_MSGCNT) == DLT_HEADER_SHOW_MSGCNT)
         /* print message counter */
         snprintf(text + strlen(text), textlength - strlen(text), "%.3d ", msg->baseheaderv2->mcnt);
 
     currtextlength = strlen(text);
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     if ((flags & DLT_HEADER_SHOW_ECUID) == DLT_HEADER_SHOW_ECUID) {
         /* print ecu id, use header extra if available, else storage header value */
         if (DLT_IS_HTYP2_WEID(msg->baseheaderv2->htyp2)) {
@@ -1232,7 +1240,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         }
     }
     /* print app id and context id if extended header available, else '----' */ #
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     if ((flags & DLT_HEADER_SHOW_APID) == DLT_HEADER_SHOW_APID) {
         snprintf(text + currtextlength, textlength - currtextlength, " ");
         currtextlength++;
@@ -1248,7 +1256,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         snprintf(text + currtextlength, textlength - currtextlength, " ");
         currtextlength++;
     }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     if ((flags & DLT_HEADER_SHOW_CTID) == DLT_HEADER_SHOW_CTID) {
         if ((DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.ctidlen != 0)) {
             memcpy(text + currtextlength, msg->extendedheaderv2.ctid, (msg->extendedheaderv2.ctidlen)+1);
@@ -1261,7 +1269,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         snprintf(text + currtextlength, textlength - currtextlength, " ");
         currtextlength++;
     }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     /* print info about message type and length */
     if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_CONTROL_MSG)) {
         if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE) {
@@ -1269,7 +1277,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
                      message_type[DLT_GET_MSIN_MSTP(msg->headerextrav2.msin)]);
             snprintf(text + strlen(text), textlength - strlen(text), " ");
         }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
         if ((flags & DLT_HEADER_SHOW_MSGSUBTYPE) == DLT_HEADER_SHOW_MSGSUBTYPE) {
             if ((DLT_GET_MSIN_MSTP(msg->headerextrav2.msin)) == DLT_TYPE_LOG)
                 snprintf(text + strlen(text), textlength - strlen(text), "%s",
@@ -1289,7 +1297,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 
             snprintf(text + strlen(text), textlength - strlen(text), " ");
         }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
         if ((flags & DLT_HEADER_SHOW_VNVSTATUS) == DLT_HEADER_SHOW_VNVSTATUS) {
             /* print verbose status of message */
             if (msgcontent == DLT_VERBOSE_DATA_MSG)
@@ -1317,7 +1325,7 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         if ((flags & DLT_HEADER_SHOW_NOARG) == DLT_HEADER_SHOW_NOARG)
             snprintf(text + strlen(text), textlength - strlen(text), "-");
     }
-
+    printf("Debug loc 1 from %d\n", __LINE__);
     return DLT_RETURN_OK;
 }
 
