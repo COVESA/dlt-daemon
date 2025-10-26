@@ -1371,6 +1371,12 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
                                            (size_t) user_list->num_applications,
                                            sizeof(DltDaemonApplication),
                                            dlt_daemon_cmp_apid_v2);
+
+    // Free temporary allocated memory
+    if (search_app.apid2) {
+        free(search_app.apid2);
+    }
+
     return;
 }
 
