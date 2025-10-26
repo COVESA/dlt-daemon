@@ -5817,7 +5817,7 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
     offset = offset + usercontext.ctidlen;
     memcpy(buffer + offset, &(usercontext.pid), sizeof(pid_t)); 
     offset = offset + sizeof(pid_t);
- 
+
     ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader),
                             sizeof(DltUserHeader),

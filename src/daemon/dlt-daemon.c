@@ -3410,12 +3410,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
 
     recv = dlt_receiver_receive(receiver);
 
-    printf("Userheader: ");
-    for(int i = 0; i<sizeof(DltUserHeader); i++){
-        printf("%x ", (uint8_t)receiver->buffer[i]);
-    }
-    printf("\n");
-
     if (recv <= 0 && receiver->type == DLT_RECEIVE_SOCKET) {
         dlt_daemon_close_socket(receiver->fd,
                                 daemon,
@@ -3479,8 +3473,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-            printf("V2 Userheader mtype: %u\n", userheader->message);
-
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
             else
@@ -4460,6 +4452,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                            DltReceiver *rec,
                                                            int verbose)
 {
+
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context;
     int i, offset_base;
@@ -4475,14 +4468,12 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     }
 
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
-
     if (dlt_version == DLT_VERSION2) {
         DltUserControlMsgUnregisterApplicationV2 userapp;
         int userappSize;
         uint8_t *buffer;
-
         userapp.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-
+        userapp.apid = NULL;
         userappSize = sizeof(uint8_t) + userapp.apidlen + sizeof(pid_t);
         uint32_t len = userappSize;
         buffer = (uint8_t*)malloc(userappSize);
@@ -4490,7 +4481,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
         int offset = 0;
 
         if (dlt_receiver_check_and_get(rec,
-                                    &userapp,
+                                    buffer,
                                     len,
                                     DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
@@ -4498,17 +4489,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         memcpy(&(userapp.apidlen), buffer, 1);
         offset = 1;
-
-        userapp.apid = (char *)malloc(userapp.apidlen + 1);
-        if (userapp.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(userapp.apid, (buffer + offset), userapp.apidlen); // Replace with set_id_v2
-        memset((userapp.apid + userapp.apidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(userapp.apid), buffer + offset, userapp.apidlen);
         offset += userapp.apidlen;
         memcpy(&(userapp.pid), (buffer + offset), sizeof(pid_t));
-
         user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
 
         if (user_list == NULL)
@@ -4525,17 +4508,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                             daemon->ecuid2,
                                             verbose,
                                             &application);
-
-            if (application) {
+            if (application != NULL) {
                 /* Calculate start offset within contexts[] */
                 offset_base = 0;
-
                 for (i = 0; i < (application - (user_list->applications)); i++)
                     offset_base += user_list->applications[i].num_contexts;
-
-                for (i = (application->num_contexts) - 1; i >= 0; i--) {
+                for (i = (application->num_contexts) - 1; i >= 0; i--) {              
                     context = &(user_list->contexts[offset_base + i]);
-
                     if (context) {
                         /* Delete context */
                         if (dlt_daemon_context_del_v2(daemon,
@@ -4552,7 +4531,6 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                         }
                     }
                 }
-
                 /* Delete this application entry from internal table*/
                 if (dlt_daemon_application_del_v2(daemon,
                                             application,
@@ -4567,14 +4545,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                 }
                 else {
                     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-
                     snprintf(local_str,
                             DLT_DAEMON_TEXTBUFSIZE,
                             "Unregistered ApID '%.6s'",
                             userapp.apid); //TBD: Replace %.6s with apidlen
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                    // dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                    //                         DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                    //                         DLT_DAEMON_CTX_ID, verbose);
                     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
                 }
             }
@@ -4680,15 +4657,15 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
 
     if (dlt_version == DLT_VERSION2) {
-        DltUserControlMsgRegisterContextV2 usercontext;
+        DltUserControlMsgUnregisterContextV2 usercontext;
         int usercontextSize;
         uint8_t *buffer;
-
+        usercontext.apid = NULL;
+        usercontext.ctid = NULL;
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
-
         usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
+                        sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t);
         uint32_t len = usercontextSize;
         buffer = (uint8_t*)malloc(usercontextSize);
 
@@ -4704,34 +4681,14 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
-
-        usercontext.apid = (char *)malloc(usercontext.apidlen + 1);
-        if (usercontext.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
-        memset((usercontext.apid + usercontext.apidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(usercontext.apid), buffer + offset, usercontext.apidlen);
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        usercontext.ctid = (char *)malloc(usercontext.ctidlen + 1);
-        if (usercontext.ctid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
-            return -1;
-        }
-        memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
-        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(usercontext.ctid), buffer + offset, usercontext.ctidlen);
         offset += usercontext.ctidlen;
-        memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
-        offset += sizeof(int32_t);
-        memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
-        memcpy(&(usercontext.trace_status), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
         offset += sizeof(pid_t);
-        memcpy(&(usercontext.description_length), (buffer + offset), 4);
         
         context = dlt_daemon_context_find_v2(daemon,
                                         usercontext.apidlen,
@@ -4741,6 +4698,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                         daemon->ecuid2len,
                                         daemon->ecuid2,
                                         verbose);
+        
 
         /* In case the daemon is loaded with predefined contexts and its context
         * unregisters, the context information will not be deleted from daemon's
