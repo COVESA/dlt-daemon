@@ -101,23 +101,6 @@ typedef struct {
     DltFilter filter;
 } DltReceiveData;
 
-typedef struct {
-    int vflag;
-    int yflag;
-    char *ovalue;
-    char *evalue;
-    int bvalue;
-    int filetransfervalue;
-    int systemjournalvalue;
-    int systemloggervalue;
-    char *ecuid;
-    int ohandle;
-    int sendSerialHeaderFlag;
-    int resyncSerialHeaderFlag;
-    DltFileV2 file;
-    DltFilter filter;
-} DltReceiveDataV2;
-
 FILE *fp;
 int result = 0;
 
@@ -345,23 +328,22 @@ int main(int argc, char *argv[])
 int dlt_client_connect_test_v2()
 {
     DltClient dltclient;
-    DltReceiveDataV2 dltdata;
+    DltReceiveData dltdata;
     int c;
     int index;
-    /*TODO: Need to fix ecuid*/
     if (dltdata.evalue)
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, 4);
     else
-        dlt_set_id_v2(dltdata.ecuid, DLT_RECEIVE_ECU_ID);
+        dlt_set_id_v2(dltdata.ecuid, DLT_RECEIVE_ECU_ID, 4);
 
     /* Connect to TCP socket or open serial device */
-    if (dlt_client_connect_v2(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
+    if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
 
         /* Dlt Client Main Loop */
         dlt_client_main_loop_v2(&dltclient, &dltdata, dltdata.vflag);
 
         /* Dlt Client Cleanup */
-        dlt_client_cleanup_v2(&dltclient, dltdata.vflag);
+        dlt_client_cleanup(&dltclient, dltdata.vflag);
     }
 
     /* dlt-receive cleanup */
@@ -370,7 +352,7 @@ int dlt_client_connect_test_v2()
 
     dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
 
-    dlt_filter_free_v2(&(dltdata.filter), dltdata.vflag);
+    dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 }
 
 int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
@@ -497,9 +479,9 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
 
 
-int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
+int dlt_receive_filetransfer_callback_v2(DltMessage *message, void *data)
 {
-    DltReceiveDataV2 *dltdata;
+    DltReceiveData *dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
     char filename[255];
     struct iovec iov[2];
