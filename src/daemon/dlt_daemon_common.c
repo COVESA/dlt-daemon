@@ -1334,7 +1334,7 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
 {
     DltDaemonRegisteredUsers *user_list = NULL;
     PRINT_FUNCTION_VERBOSE(verbose);
-    DltDaemonApplication search_app;
+    DltDaemonApplication search_app; // Create temporary search structure
 
     if ((daemon == NULL) || (daemon->user_list == NULL) ||
         (apidlen == 0) || (apid == NULL) ||
@@ -1365,13 +1365,19 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
     search_app.apid2len = apidlen;
     dlt_set_id_v2(&(search_app.apid2), apid, apidlen);
 
-
+    // Search using the temporary structure
     *application = (DltDaemonApplication *)bsearch(&search_app,
                                            user_list->applications,
                                            (size_t) user_list->num_applications,
                                            sizeof(DltDaemonApplication),
                                            dlt_daemon_cmp_apid_v2);
-        return;
+
+    // Free temporary allocated memory
+    if (search_app.apid2) {
+        free(search_app.apid2);
+    }
+
+    return;
 }
 
 
