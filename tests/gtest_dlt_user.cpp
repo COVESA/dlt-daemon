@@ -185,7 +185,7 @@ TEST(t_dlt_user_log_write_start, normal)
 }
 /*/////////////////////////////////////// */
 /* t_dlt_user_log_write_start */
-TEST(t_dlt_user_log_write_start, normal)
+TEST(t_dlt_user_log_write_start_v2, normal)
 {
     DltContext context;
     DltContextData contextData;

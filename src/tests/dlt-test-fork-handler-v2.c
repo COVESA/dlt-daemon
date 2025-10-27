@@ -59,7 +59,7 @@ int main()
 
     dlt_register_app_v2("PRNT", "Parent application");
     dlt_register_context_v2(&mainContext, "CTXP", "Parent context");
-    dlt_log_message_v2(&mainContext, DLT_LOG_WARN, "First message before fork", 0);
+    dlt_log_message(&mainContext, DLT_LOG_WARN, "First message before fork", 0);
     nanosleep(&timeout, &r);
 
     pid_t pid = fork();
@@ -72,7 +72,7 @@ int main()
         /* this will not register CTXC context */
         dlt_register_context_v2(&mainContext, "CTXC", "Child context");
         /* this will not log a message */
-        dlt_log_message_v2(&mainContext, DLT_LOG_WARN, "Child's second message after fork, pid: ", getpid());
+        dlt_log_message(&mainContext, DLT_LOG_WARN, "Child's second message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
         if (execlp("dlt-example-user", "dlt-example-user", "-n 1",
                    "you should see this message", NULL))
@@ -83,7 +83,7 @@ int main()
         return -1;
     }
     else { /* parent */
-        dlt_log_message_v2(&mainContext, DLT_LOG_WARN, "Parent's first message after fork, pid: ", getpid());
+        dlt_log_message(&mainContext, DLT_LOG_WARN, "Parent's first message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
     }
 

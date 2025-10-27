@@ -81,7 +81,7 @@
 #define DLT_TESTCLIENT_NUM_TESTS       7
 
 /* Function prototypes */
-int dlt_testclient_message_callback(DltMessage *message, void *data);
+int dlt_testclient_message_callback(DltMessageV2 *message, void *data);
 
 typedef struct
 {
@@ -163,6 +163,7 @@ int main(int argc, char *argv[])
     DltTestclientData dltdata;
     int c, i;
     int index;
+    int8_t len;
 
     /* Initialize dltclient */
     memset(&dltclient, 0x0, sizeof(DltClient));
@@ -372,11 +373,11 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-
+    len = strlen(dltdata.ecuid);
     if (dltdata.evalue)
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, len);
     else
-        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID);
+        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, len);
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
@@ -386,7 +387,7 @@ int main(int argc, char *argv[])
         dlt_client_main_loop_v2(&dltclient, &dltdata, dltdata.vflag);
 
         /* Dlt Client Cleanup */
-        dlt_client_cleanup_v2(&dltclient, dltdata.vflag);
+        dlt_client_cleanup(&dltclient, dltdata.vflag);
     }
 
     /* dlt-receive cleanup */
@@ -395,12 +396,12 @@ int main(int argc, char *argv[])
 
     dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
 
-    dlt_filter_free_v2(&(dltdata.filter), dltdata.vflag);
+    dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 
     return 0;
 }
 
-int dlt_testclient_message_callback(DltMessage *message, void *data)
+int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 {
     static char text[DLT_TESTCLIENT_TEXTBUFSIZE];
     DltTestclientData *dltdata;
@@ -411,6 +412,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
     int32_t datalength;
     int32_t value;
     uint32_t value_tmp = 0;
+    uint8_t len;
 
     struct iovec iov[2];
     int bytes_written;
@@ -419,12 +421,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         return -1;
 
     dltdata = (DltTestclientData *)data;
-
-    /* prepare storage header */
-    if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-        dlt_set_storageheader_v2(message->storageheader, message->headerextra.ecu);
-    else
-        dlt_set_storageheader_v2(message->storageheader, dltdata->ecuid);
+    len = strlen(dltdata->ecuid);
+    //dlt_set_storageheader_v2(message->storageheaderv2, len, dltdata->ecuid);
 
     if ((dltdata->fvalue == 0) ||
         (dltdata->fvalue &&
@@ -443,7 +441,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         /* do something here */
 
         /* Count number of received bytes */
-        dltdata->bytes_received += message->datasize + message->headersize - sizeof(DltStorageHeader);
+        dltdata->bytes_received += message->datasize + message->headersizev2 - sizeof(DltStorageHeaderV2);
 
         /* print number of received bytes */
         if ((dlt_uptime() - dltdata->time_elapsed) > 10000) {
@@ -454,13 +452,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
 
         /* Extended header */
-        if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
+        if (DLT_IS_HTYP_UEH(message->baseheaderv2->htyp2)) {
             /* Log message */
-            if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
+            if ((DLT_GET_MSIN_MSTP(message->baseheaderv2->mcnt)) == DLT_TYPE_LOG) {
                 /* Verbose */
-                if (DLT_IS_MSIN_VERB(message->extendedheader->msin)) {
-                    /* 2 arguments */
-                    if (message->extendedheader->noar == 2) {
+                if (DLT_IS_MSIN_VERB(message->baseheaderv2->mcnt)) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -472,12 +468,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_SINT) {
                             /* read value */
                             DLT_MSG_READ_VALUE(value_tmp, ptr, datalength, int32_t);
-                            value = DLT_ENDIAN_GET_32(message->standardheader->htyp, value_tmp);
+                            value = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, value_tmp);
                             /*printf("%d\n",value); */
 
                             if (value < dltdata->last_value) {
@@ -507,12 +503,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     if ((length >= 0) && (length == datalength))
                                         /*printf("Raw data found in payload, length="); */
@@ -521,7 +517,6 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 }
                             }
                         }
-                    }
                 }
             }
         }
@@ -536,8 +531,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
         /* if file output enabled write message */
         if (dltdata->ovalue) {
-            iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = message->headersize;
+            iov[0].iov_base = message->headerbufferv2;
+            iov[0].iov_len = message->headersizev2;
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = message->datasize;
 

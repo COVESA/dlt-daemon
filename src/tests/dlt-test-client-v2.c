@@ -160,6 +160,7 @@ int main(int argc, char *argv[])
     DltTestclientData dltdata;
     int c, i;
     int index;
+    int8_t len;
 
     /* Initialize dltdata */
     dltdata.aflag = 0;
@@ -361,11 +362,11 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-
+    len = strlen(DLT_TESTCLIENT_ECU_ID);
     if (dltdata.evalue)
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, len);
     else
-        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID);
+        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, len);
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&g_dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
@@ -384,7 +385,7 @@ int main(int argc, char *argv[])
 
     dlt_file_free_v2(&(dltdata.file), dltdata.vflag);
 
-    dlt_filter_free_v2(&(dltdata.filter), dltdata.vflag);
+    dlt_filter_free(&(dltdata.filter), dltdata.vflag);
 
     return g_testsFailed == 0 ? 0 : 1;
 }
@@ -415,6 +416,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
     uint32_t length_tmp32 = 0;
     uint8_t *ptr;
     int32_t datalength;
+    uint8_t len;
 
     uint32_t id, id_tmp;
     int slen;
@@ -427,12 +429,13 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         return -1;
 
     dltdata = (DltTestclientData *)data;
+    len = strlen(message->headerextra.ecu);
 
     /* prepare storage header */
     if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-        dlt_set_storageheader_v2(message->storageheader, message->headerextra.ecu);
+        dlt_set_storageheader_v2(message->storageheader, len, message->headerextra.ecu);
     else
-        dlt_set_storageheader_v2(message->storageheader, dltdata->ecuid);
+        dlt_set_storageheader_v2(message->storageheader, len, dltdata->ecuid);
 
     if ((dltdata->fvalue == 0) ||
         (dltdata->fvalue &&
