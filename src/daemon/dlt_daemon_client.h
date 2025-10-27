@@ -227,6 +227,17 @@ void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, Dlt
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Process and generate response to received get default log level control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_default_log_level_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Process and generate response to message buffer overflow control message
  * @param sock connection handle used for sending response

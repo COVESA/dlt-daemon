@@ -1388,6 +1388,61 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDa
     dlt_message_free(&msg, 0);
 }
 
+void dlt_daemon_control_get_default_log_level_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceGetDefaultLogLevelResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    msg.datasize = sizeof(DltServiceGetDefaultLogLevelResponse);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    resp = (DltServiceGetDefaultLogLevelResponse *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->log_level = (uint8_t) daemon->default_log_level;
+
+    /* send message */
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+}
+
 void dlt_daemon_control_get_log_info(int sock,
                                      DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
