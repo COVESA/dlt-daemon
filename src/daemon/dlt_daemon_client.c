@@ -3800,6 +3800,44 @@ void dlt_daemon_control_set_default_trace_status(int sock,
     }
 }
 
+void dlt_daemon_control_set_default_trace_status_v2(int sock,
+                                                 DltDaemon *daemon,
+                                                 DltDaemonLocal *daemon_local,
+                                                 DltMessageV2 *msg,
+                                                 int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    /* Payload of request message */
+    DltServiceSetDefaultLogLevel *req;
+    uint32_t id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req->log_level == DLT_TRACE_STATUS_OFF) ||
+        (req->log_level == DLT_TRACE_STATUS_ON)) {
+        if (daemon_local->flags.enforceContextLLAndTS)
+            daemon->default_trace_status = getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
+        else
+            daemon->default_trace_status = (int8_t) req->log_level; /* No endianess conversion necessary*/
+
+        /* Send Update to all contexts using the default trace status */
+        dlt_daemon_user_send_default_update_v2(daemon, verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_control_set_all_trace_status(int sock,
                                              DltDaemon *daemon,
                                              DltDaemonLocal *daemon_local,

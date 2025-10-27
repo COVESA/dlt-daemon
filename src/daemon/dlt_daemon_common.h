@@ -747,6 +747,14 @@ int dlt_daemon_user_send_trace_load_config(DltDaemon *daemon, DltDaemonApplicati
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
 
 /**
+ * Send user messages to all user applications using default context, or trace status
+ * to update those values for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_default_update_v2(DltDaemon *daemon, int verbose);
+
+/**
  * Send user messages to all user applications context to update with the new log level
  * @param daemon pointer to dlt daemon structure
  * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
