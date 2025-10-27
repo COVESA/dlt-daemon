@@ -5,7 +5,7 @@
 #
 # Source: githubnext/agentics/workflows/daily-perf-improver.md@fedb218f36641dcb301c812149aeb94907f777f9
 #
-# Effective stop-time: 2025-10-18 23:08:31
+# Effective stop-time: 2025-10-29 04:50:14
 #
 # Job Dependency Graph:
 # ```mermaid
@@ -134,7 +134,7 @@ jobs:
         id: check_stop_time
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_STOP_TIME: 2025-10-18 23:08:31
+          GITHUB_AW_STOP_TIME: 2025-10-29 04:50:14
           GITHUB_AW_WORKFLOW_NAME: "Daily Perf Improver"
         with:
           script: |
