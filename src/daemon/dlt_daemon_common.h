@@ -804,6 +804,24 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
                                                  int verbose);
 
 /**
+ * Process reset to factory default control message for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file containing the runtime defaults for applications
+ * @param filename1 name of file containing the runtime defaults for contexts
+ * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
+ * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param InitialEnforceLlTsStatus force default log-level
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_reset_to_factory_default_v2(DltDaemon *daemon,
+                                                 const char *filename,
+                                                 const char *filename1,
+                                                 int InitialContextLogLevel,
+                                                 int InitialContextTraceStatus,
+                                                 int InitialEnforceLlTsStatus,
+                                                 int verbose);
+
+/**
  * Change the logging state of dlt daemon
  * @param daemon pointer to dlt daemon structure
  * @param newState the requested new state

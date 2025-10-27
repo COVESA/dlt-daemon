@@ -2697,6 +2697,62 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
     dlt_daemon_user_send_default_update(daemon, verbose);
 }
 
+void dlt_daemon_control_reset_to_factory_default_v2(DltDaemon *daemon,
+                                                 const char *filename,
+                                                 const char *filename1,
+                                                 int InitialContextLogLevel,
+                                                 int InitialContextTraceStatus,
+                                                 int InitialEnforceLlTsStatus,
+                                                 int verbose)
+{
+    FILE *fd;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (filename == NULL) || (filename1 == NULL)) {
+        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+        return;
+    }
+
+    if ((filename[0] == '\0') || (filename1[0] == '\0')) {
+        dlt_log(LOG_WARNING, "Wrong parameter: Empty string\n");
+        return;
+    }
+
+    /* Check for runtime cfg file and delete it, if available */
+    fd = fopen(filename, "r");
+
+    if (fd != NULL) {
+        /* Close and delete file */
+        fclose(fd);
+        if (unlink(filename) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                    __func__, strerror(errno));
+        }
+    }
+
+    fd = fopen(filename1, "r");
+
+    if (fd != NULL) {
+        /* Close and delete file */
+        fclose(fd);
+        if (unlink(filename1) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
+                    __func__, strerror(errno));
+        }
+    }
+
+    daemon->default_log_level = (int8_t) InitialContextLogLevel;
+    daemon->default_trace_status = (int8_t) InitialContextTraceStatus;
+    daemon->force_ll_ts = (int8_t) InitialEnforceLlTsStatus;
+
+    /* Reset all other things (log level, trace status, etc.
+     *                         to default values             */
+
+    /* Inform user libraries about changed default log level/trace status */
+    dlt_daemon_user_send_default_update_v2(daemon, verbose);
+}
+
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
 {
     int32_t count;
@@ -2723,6 +2779,40 @@ void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose)
                 (context->trace_status == DLT_TRACE_STATUS_DEFAULT)) {
                 if (context->user_handle >= DLT_FD_MINIMUM)
                     if (dlt_daemon_user_send_log_level(daemon,
+                                                       context,
+                                                       verbose) == -1)
+                        dlt_vlog(LOG_WARNING, "Cannot update default of %.4s:%.4s\n", context->apid, context->ctid);
+            }
+        }
+    }
+}
+
+void dlt_daemon_user_send_default_update_v2(DltDaemon *daemon, int verbose)
+{
+    int32_t count;
+    DltDaemonContext *context;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL) {
+        dlt_log(LOG_WARNING, "Wrong parameter: Null pointer\n");
+        return;
+    }
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    for (count = 0; count < user_list->num_contexts; count++) {
+        context = &(user_list->contexts[count]);
+
+        if (context != NULL) {
+            if ((context->log_level == DLT_LOG_DEFAULT) ||
+                (context->trace_status == DLT_TRACE_STATUS_DEFAULT)) {
+                if (context->user_handle >= DLT_FD_MINIMUM)
+                    if (dlt_daemon_user_send_log_level_v2(daemon,
                                                        context,
                                                        verbose) == -1)
                         dlt_vlog(LOG_WARNING, "Cannot update default of %.4s:%.4s\n", context->apid, context->ctid);

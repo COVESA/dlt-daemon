@@ -3869,6 +3869,35 @@ void dlt_daemon_control_set_timing_packets(int sock,
     }
 }
 
+void dlt_daemon_control_set_timing_packets_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetVerboseMode *req;  /* request uses same struct as set verbose mode */
+    uint32_t id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
+        return;
+
+    req = (DltServiceSetVerboseMode *)(msg->databuffer);
+
+    if ((req->new_status == 0) || (req->new_status == 1)) {
+        daemon->timingpackets = req->new_status;
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_control_message_time(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     DltMessage msg;
