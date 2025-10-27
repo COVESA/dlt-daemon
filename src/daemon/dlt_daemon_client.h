@@ -401,6 +401,21 @@ int dlt_daemon_client_process_control(int sock,
                                       DltDaemonLocal *daemon_local,
                                       DltMessage *msg,
                                       int verbose);
+
+/**
+ * Process received control message from dlt client
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_client_process_control_v2(int sock,
+                                      DltDaemon *daemon,
+                                      DltDaemonLocal *daemon_local,
+                                      DltMessageV2 *msg,
+                                      int verbose);
+
 /**
  * Process and generate response to received sw injection control message
  * @param sock connection handle used for sending response
