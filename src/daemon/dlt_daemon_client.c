@@ -4455,6 +4455,147 @@ void dlt_daemon_control_passive_node_connect(int sock,
                                             verbose);
 }
 
+void dlt_daemon_control_passive_node_connect_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    //TBD: Review node_id member of DltServicePassiveNodeConnect
+    DltServicePassiveNodeConnect *req;
+    uint32_t id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+
+    if ((daemon == NULL) || (daemon_local == NULL) || (msg == NULL) ||
+        (msg->databuffer == NULL))
+        return;
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0) {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response_v2(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
+        return;
+
+    req = (DltServicePassiveNodeConnect *)msg->databuffer;
+
+    if (dlt_gateway_process_on_demand_request(&daemon_local->pGateway,
+                                              daemon_local,
+                                              req->node_id,
+                                              (int) req->connection_status,
+                                              verbose) < 0)
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+    else
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_OK,
+                                            verbose);
+}
+
+void dlt_daemon_control_passive_node_connect_status_v2(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose)
+{
+    DltMessageV2 msg;
+    DltServicePassiveNodeConnectionInfo *resp;
+    DltGatewayConnection *con = NULL;
+    unsigned int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+        return;
+
+    if (dlt_message_init_v2(&msg, verbose) == -1)
+        return;
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0) {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response_v2(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServicePassiveNodeConnectionInfo);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+        msg.databuffer = NULL;
+
+    if (msg.databuffer == NULL) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+
+        if (msg.databuffer == NULL) {
+            dlt_log(LOG_CRIT, "Cannot allocate memory for message response\n");
+            return;
+        }
+
+        msg.databuffersize = msg.datasize;
+    }
+
+    resp = (DltServicePassiveNodeConnectionInfo *)msg.databuffer;
+    memset(resp, 0, msg.datasize);
+    resp->service_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->num_connections = (uint32_t) daemon_local->pGateway.num_connections;
+
+    for (i = 0; i < resp->num_connections; i++) {
+        if ((i * DLT_ID_SIZE) > DLT_ENTRY_MAX) {
+            dlt_log(LOG_ERR,
+                    "Maximal message size reached. Skip further information\n");
+            break;
+        }
+
+        con = &daemon_local->pGateway.connections[i];
+
+        resp->connection_status[i] = con->status;
+        //TBD: Review node_id[i * con->ecuid2len]
+        memcpy(&resp->node_id[i * con->ecuid2len], con->ecuid2, con->ecuid2len);
+    }
+
+    dlt_daemon_client_send_control_message_v2(sock,
+                                           daemon,
+                                           daemon_local,
+                                           &msg,
+                                           NULL,
+                                           NULL,
+                                           verbose);
+    /* free message */
+    dlt_message_free(&msg, verbose);
+}
+
 void dlt_daemon_control_passive_node_connect_status(int sock,
                                                     DltDaemon *daemon,
                                                     DltDaemonLocal *daemon_local,
@@ -4535,4 +4676,4 @@ void dlt_daemon_control_passive_node_connect_status(int sock,
                                            verbose);
     /* free message */
     dlt_message_free(&msg, verbose);
-};
+}

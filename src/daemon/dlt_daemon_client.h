@@ -641,6 +641,22 @@ void dlt_daemon_control_passive_node_connect(int sock,
                                              DltDaemonLocal *daemon_local,
                                              DltMessage *msg,
                                              int verbose);
+
+/**
+ * Process and generate response to received passive node connect control
+ * message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose);
+
 /**
  * Process and generate response to received passive node connection status
  * control message
@@ -650,6 +666,19 @@ void dlt_daemon_control_passive_node_connect(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_passive_node_connect_status(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose);
+
+/**
+ * Process and generate response to received passive node connection status
+ * control message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect_status_v2(int sock,
                                                     DltDaemon *daemon,
                                                     DltDaemonLocal *daemon_local,
                                                     int verbose);
