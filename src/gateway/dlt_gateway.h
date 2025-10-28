@@ -207,4 +207,17 @@ DltGatewayConnection *dlt_gateway_get_connection(DltGateway *g,
                                                  char *ecu,
                                                  int verbose);
 
+/**
+ * Gets the connection handle of passive node with specified ECU
+ * for DLT version 2
+ *
+ * @param g             DltGateway
+ * @param ecu           Identifier string
+ * @param verbose       verbose flag
+ * @returns Gateway connection handle on success, NULL otherwise
+ */
+DltGatewayConnection *dlt_gateway_get_connection_v2(DltGateway *g,
+                                                 char *ecu,
+                                                 int verbose);
+
 #endif

@@ -1863,3 +1863,29 @@ DltGatewayConnection *dlt_gateway_get_connection(DltGateway *gateway,
 
     return con;
 }
+
+DltGatewayConnection *dlt_gateway_get_connection_v2(DltGateway *gateway,
+                                                 char *ecu,
+                                                 int verbose)
+{
+    DltGatewayConnection *con = NULL;
+    int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((gateway == NULL) || (ecu == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return con;
+    }
+
+    for (i = 0; i < gateway->num_connections; i++) {
+        con = &gateway->connections[i];
+        //TBD: REVIEW strlen(ecu) usage
+        if (strncmp(con->ecuid2, ecu, strlen(ecu)) == 0)
+            return con;
+    }
+
+    dlt_vlog(LOG_ERR, "%s: No connection found\n", ecu);
+
+    return con;
+}

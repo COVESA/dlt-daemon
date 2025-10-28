@@ -675,6 +675,20 @@ void dlt_daemon_control_service_logstorage(int sock,
                                            int verbose);
 
 /**
+ * Service offline logstorage command request for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message version 2
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_service_logstorage_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           int verbose);
+
+/**
  * Process and generate response to received passive node connect control
  * message
  * @param sock connection handle used for sending response
