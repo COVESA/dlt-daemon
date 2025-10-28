@@ -1559,6 +1559,52 @@ int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int ve
 
     return 0;
 }
+int dlt_daemon_applications_save_v2(DltDaemon *daemon, const char *filename, int verbose)
+{
+    FILE *fd;
+    int i;
+
+    char *apid = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (filename == NULL) || (filename[0] == '\0'))
+        return -1;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return -1;
+
+    if ((user_list->applications != NULL) && (user_list->num_applications > 0)) {
+        fd = fopen(filename, "w");
+
+        if (fd != NULL) {
+            for (i = 0; i < user_list->num_applications; i++) {
+                dlt_set_id_v2(&apid, user_list->applications[i].apid2, user_list->applications[i].apid2len);
+
+                if ((user_list->applications[i].application_description) &&
+                    (user_list->applications[i].application_description[0] != '\0'))
+                    fprintf(fd,
+                            "%s:%s:\n",
+                            apid,
+                            user_list->applications[i].application_description);
+                else
+                    fprintf(fd, "%s::\n", apid);
+            }
+
+            fclose(fd);
+        }
+        else {
+            dlt_vlog(LOG_ERR, "%s: open %s failed! No application information stored.\n",
+                     __func__,
+                     filename);
+        }
+    }
+
+    return 0;
+}
 
 DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                                          char *apid,
@@ -2402,6 +2448,58 @@ int dlt_daemon_contexts_save(DltDaemon *daemon, const char *filename, int verbos
     return 0;
 }
 
+int dlt_daemon_contexts_save_v2(DltDaemon *daemon, const char *filename, int verbose)
+{
+    FILE *fd;
+    int i;
+
+    char *apid = NULL;
+    char *ctid = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (filename == NULL) || (filename[0] == '\0'))
+        return -1;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return -1;
+
+    if ((user_list->contexts) && (user_list->num_contexts > 0)) {
+        fd = fopen(filename, "w");
+
+        if (fd != NULL) {
+            for (i = 0; i < user_list->num_contexts; i++) {
+                dlt_set_id_v2(&apid, user_list->contexts[i].apid2, user_list->contexts[i].apid2len);
+                dlt_set_id_v2(&ctid, user_list->contexts[i].ctid2, user_list->contexts[i].ctid2len);
+
+                if ((user_list->contexts[i].context_description) &&
+                    (user_list->contexts[i].context_description[0] != '\0'))
+                    fprintf(fd, "%s:%s:%d:%d:%s:\n", apid, ctid,
+                            (int)(user_list->contexts[i].log_level),
+                            (int)(user_list->contexts[i].trace_status),
+                            user_list->contexts[i].context_description);
+                else
+                    fprintf(fd, "%s:%s:%d:%d::\n", apid, ctid,
+                            (int)(user_list->contexts[i].log_level),
+                            (int)(user_list->contexts[i].trace_status));
+            }
+
+            fclose(fd);
+        }
+        else {
+            dlt_vlog(LOG_ERR,
+                     "%s: Cannot open %s. No context information stored\n",
+                     __func__,
+                     filename);
+        }
+    }
+
+    return 0;
+}
+
 int dlt_daemon_configuration_save(DltDaemon *daemon, const char *filename, int verbose)
 {
     FILE *fd;
@@ -3002,6 +3100,44 @@ void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trac
                              "Cannot send trace status %.4s:%.4s -> %i\n",
                              context->apid,
                              context->ctid,
+                             context->trace_status);
+            }
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_trace_status_update_v2(DltDaemon *daemon, int8_t trace_status, int verbose)
+{
+    int32_t count = 0;
+    DltDaemonContext *context = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL)
+        return;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    dlt_vlog(LOG_NOTICE, "All trace status is updated -> %i\n", trace_status);
+
+    for (count = 0; count < user_list->num_contexts; count++) {
+        context = &(user_list->contexts[count]);
+
+        if (context) {
+            if (context->user_handle >= DLT_FD_MINIMUM) {
+                context->trace_status = trace_status;
+
+                if (dlt_daemon_user_send_log_level_v2(daemon, context, verbose) == -1)
+                    dlt_vlog(LOG_WARNING,
+                             "Cannot send trace status %.*s:%.*s -> %i\n",
+                             context->apid2len,
+                             context->apid2,
+                             context->ctid2len,
+                             context->ctid2,
                              context->trace_status);
             }
         }

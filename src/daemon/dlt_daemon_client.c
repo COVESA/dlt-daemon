@@ -3918,6 +3918,46 @@ void dlt_daemon_control_set_all_trace_status(int sock,
     }
 }
 
+void dlt_daemon_control_set_all_trace_status_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetDefaultLogLevel *req = NULL;
+    uint32_t id = DLT_SERVICE_ID_SET_ALL_TRACE_STATUS;
+    int8_t tracestatus = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req != NULL) &&
+        ((req->log_level <= DLT_TRACE_STATUS_ON) || (req->log_level == (uint8_t)DLT_TRACE_STATUS_DEFAULT))) {
+        if (daemon_local->flags.enforceContextLLAndTS)
+            tracestatus = getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
+        else
+            tracestatus = (int8_t) req->log_level; /* No endianess conversion necessary */
+
+        /* Send Update to all contexts using the new log level */
+        dlt_daemon_user_send_all_trace_status_update_v2(daemon, tracestatus, verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_control_set_timing_packets(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,

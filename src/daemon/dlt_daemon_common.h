@@ -494,6 +494,17 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
  * @return negative value if there was an error
  */
 int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * Save applications from internal context management to file
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Invalidate all applications fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
@@ -693,6 +704,16 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
  * @return negative value if there was an error
  */
 int dlt_daemon_contexts_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * Save contexts from internal context management to file for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Load persistant configuration
  * @param daemon pointer to dlt daemon structure
@@ -812,6 +833,15 @@ void dlt_daemon_user_send_all_log_level_update_v2(DltDaemon *daemon,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose);
+
+/**
+ * Send user messages to all user applications context to update with the new trace status
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param trace_status new trace status to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_trace_status_update_v2(DltDaemon *daemon, int8_t trace_status, int verbose);
 
 /**
  * Send user messages to all user applications the log status
