@@ -279,15 +279,19 @@
                                              ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
                                               (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
 
-#   define DLT_MSG_IS_CONTROL_V2(MSG)       (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
+#   define DLT_MSG_IS_CONTROL_V2(MSG)       (((MSG->baseheaderv2->htyp2 & 0x03)==0x02) && \
                                              (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL))
+
+#   define DLT_MSG_IS_CONTROL_REQUEST_V2(MSG)  ((((MSG)->baseheaderv2->htyp2 & 0x03)==0x02) && \
+                                                (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                                (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_REQUEST))
 
 #   define DLT_MSG_IS_CONTROL_TIME_V2(MSG)   ((DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
                                               (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_TIME))
 
-#   define DLT_MSG_IS_CONTROL_RESPONSE_V2(MSG) (((MSG->baseheaderv2->htyp2 & 0x03)==0x03) && \
-                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
-                                             (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_RESPONSE))
+#   define DLT_MSG_IS_CONTROL_RESPONSE_V2(MSG)  ((((MSG)->baseheaderv2->htyp2 & 0x03) == 0x02) && \
+                                                (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                                (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_RESPONSE))
 
 #   define DLT_MSG_IS_NONVERBOSE_V2(MSG)     ((MSG->baseheaderv2->htyp2 & 0x03)==0x01)
 

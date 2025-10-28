@@ -1915,7 +1915,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     }
 
     /* check if payload fits length */
-    if (length < (msg->headersizev2 - msg->storageheadersizev2 + msg->datasize))
+    if (length < (msg->headersizev2 + msg->datasize))
         /* dlt_log(LOG_ERR,"length does not fit!\n"); */
         return DLT_MESSAGE_ERROR_SIZE;
 

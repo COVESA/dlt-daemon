@@ -972,13 +972,13 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
     /* copy data */
     memcpy(msg.databuffer, payload, size);
 
-    if (apid == NULL){
+    if (strcmp(apid, "") == 0){
         appidlen = strlen(DLT_CLIENT_DUMMY_APP_ID);
     }else {
         appidlen = strlen(apid);
     }
 
-    if (ctid == NULL){
+    if (strcmp(ctid, "") == 0){
         ctxidlen = strlen(DLT_CLIENT_DUMMY_CON_ID);
     }else {
         ctxidlen = strlen(ctid);
@@ -1083,13 +1083,13 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.apidlen = appidlen;
-        if (apid == NULL){
+        if (strcmp(apid, "") == 0){
             dlt_set_id_v2(&(msg.extendedheaderv2.apid), DLT_CLIENT_DUMMY_APP_ID, msg.extendedheaderv2.apidlen);
         }else {
             dlt_set_id_v2(&(msg.extendedheaderv2.apid), apid, msg.extendedheaderv2.apidlen);
         }
         msg.extendedheaderv2.ctidlen = ctxidlen;
-        if (ctid == NULL){
+        if (strcmp(ctid, "") == 0){
             dlt_set_id_v2(&(msg.extendedheaderv2.ctid), DLT_CLIENT_DUMMY_CON_ID, msg.extendedheaderv2.ctidlen);
         }else {
             dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctid, msg.extendedheaderv2.ctidlen);
@@ -1110,8 +1110,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         dlt_message_free_v2(&msg, 0);
         return DLT_RETURN_ERROR;
     }
-
-    msg.baseheaderv2->len = DLT_HTOBE_16(len);
+    msg.baseheaderv2->len = (uint16_t)len;
 
     /* Send data (without storage header) */
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
@@ -1378,22 +1377,22 @@ DltReturnValue dlt_client_get_log_info_v2(DltClient *client)
     if (buffer == NULL)
         return ret;
 
-    memcpy(buffer, &(req.service_id), 4);
+    memcpy(buffer + offset, &(req.service_id), 4);
     offset = offset + 4;
-    memcpy(buffer, &(req.options), 1);
+    memcpy(buffer + offset, &(req.options), 1);
     offset = offset + 1;
-    memcpy(buffer, &(req.apidlen), 1);
+    memcpy(buffer + offset, &(req.apidlen), 1);
     offset = offset + 1;
     // Since App Id is null, not copying it into buffer
-    memcpy(buffer, &(req.ctidlen), 1);
+    memcpy(buffer + offset, &(req.ctidlen), 1);
     offset = offset + 1;
     // Since Context Id is null, not copying it into buffer
-    memcpy(buffer, req.com, 4);
+    memcpy(buffer + offset, req.com, 4);
 
     /* send control message to daemon*/
-    ret = dlt_client_send_ctrl_msg(client,
-                                   NULL,
-                                   NULL,
+    ret = dlt_client_send_ctrl_msg_v2(client,
+                                   "",
+                                   "",
                                    (uint8_t *)buffer,
                                    buffersize);
 
