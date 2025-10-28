@@ -5346,24 +5346,6 @@ TEST(t_dlt_register_injection_callback, normal)
 
 }
 
-TEST(t_dlt_register_injection_callback_v2, normal)
-{
-    DltContext context;
-    /* TODO: uint32_t service_id; */
-
-
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback_v2 normal"));
-
-    /* TODO: service_id = 0x123; */
-    /* TODO: EXPECT_LE(DLT_RETURN_OK,dlt_register_injection_callback(&context, service_id, dlt_user_injection_callback)); */
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
-
-}
 /*/////////////////////////////////////// */
 /* t_dlt_register_log_level_changed_callback */
 void dlt_user_log_level_changed_callback(char /*context_id*/[DLT_ID_SIZE], uint8_t /*log_level*/,
@@ -5387,22 +5369,6 @@ TEST(t_dlt_register_log_level_changed_callback, normal)
 
 }
 
-TEST(t_dlt_register_log_level_changed_callback_v2, normal)
-{
-    DltContext context;
-
-
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback_v2 normal"));
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_log_level_changed_callback_v2(&context, dlt_user_log_level_changed_callback_v2));
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
-
-}
 #ifdef DLT_NETWORK_TRACE_ENABLE
 /*/////////////////////////////////////// */
 /* t_dlt_user_trace_network */
@@ -5433,36 +5399,8 @@ TEST(t_dlt_user_trace_network, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
-/*/////////////////////////////////////// */
-/* t_dlt_user_trace_network */
-TEST(t_dlt_user_trace_network, normal)
-{
-    DltContext context;
 
-
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network normal"));
-
-    char header[16];
-
-    for (char i = 0; i < 16; ++i)
-        header[(int)i] = i;
-
-    char payload[32];
-
-    for (char i = 0; i < 32; ++i)
-        payload[(int)i] = i;
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
-}
-TEST(t_dlt_user_trace_network_v2, abnormal)
+TEST(t_dlt_user_trace_network, abnormal)
 {
     DltContext context;
 
@@ -5483,15 +5421,15 @@ TEST(t_dlt_user_trace_network_v2, abnormal)
     /* TODO: } */
 
     /* data length = 0. Does this make sense? */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload)); */
 
     /* invalid DltNetworkTraceType value */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, (DltNetworkTraceType)-100, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, (DltNetworkTraceType)-10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, (DltNetworkTraceType)10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_v2(&context, (DltNetworkTraceType)100, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-100, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-10, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)10, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)100, 16, header, 32, payload)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
@@ -5532,7 +5470,7 @@ TEST(t_dlt_user_trace_network_v2, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_v2 nullpointer"));
+    EXPECT_LE(DLT_RETURN_OK, dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network nullpointer"));
 
     char header[16];
 
@@ -5545,9 +5483,9 @@ TEST(t_dlt_user_trace_network_v2, nullpointer)
         payload[(int)i] = i;
 
     /* what to expect when giving in NULL pointer? */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_v2(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_trace_network_v2(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_trace_network_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
@@ -5594,7 +5532,7 @@ TEST(t_dlt_user_trace_network_truncated_v2, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated_v2 normal"));
+              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
 
     char header[16];
 
@@ -5606,12 +5544,12 @@ TEST(t_dlt_user_trace_network_truncated_v2, normal)
     for (char i = 0; i < 32; ++i)
         payload[(int)i] = i;
 
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload, 0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload, 1));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload, 1));
     EXPECT_LE(DLT_RETURN_OK,
-              dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
+              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
     EXPECT_LE(DLT_RETURN_OK,
-              dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
+              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
@@ -5661,7 +5599,7 @@ TEST(t_dlt_user_trace_network_truncated_v2, abnormal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated_v2 abnormal"));
+              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
 
     /* TODO: char header[16]; */
     /* TODO: for(char i = 0; i < 16; ++i) */
@@ -5675,15 +5613,15 @@ TEST(t_dlt_user_trace_network_truncated_v2, abnormal)
     /* TODO: } */
 
     /* data length = 0. Does this make sense? */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload, 0)); */
 
     /* invalid DltNetworkTraceType value */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, (DltNetworkTraceType)-100, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, (DltNetworkTraceType)-10, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, (DltNetworkTraceType)10, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated_v2(&context, (DltNetworkTraceType)100, 16, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-100, 16, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-10, 16, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)10, 16, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)100, 16, header, 32, payload, 0)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
@@ -5740,11 +5678,11 @@ TEST(t_dlt_user_trace_network_truncated_v2, nullpointer)
         payload[(int)i] = i;
 
     /* what to expect when giving in NULL pointer? */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
+              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_truncated_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
+              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
@@ -5779,36 +5717,7 @@ TEST(t_dlt_user_trace_network_segmented, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
-/*/////////////////////////////////////// */
-/* t_dlt_user_trace_network_segmented_v2 */
-TEST(t_dlt_user_trace_network_segmented_v2, normal)
-{
-    DltContext context;
 
-
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_app_v2("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_v2(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented_v2 normal"));
-
-    char header[16];
-
-    for (char i = 0; i < 16; ++i)
-        header[(int)i] = i;
-
-    char payload[32];
-
-    for (char i = 0; i < 32; ++i)
-        payload[(int)i] = i;
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload));
-
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
-    EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
-}
 TEST(t_dlt_user_trace_network_segmented, abnormal)
 {
     DltContext context;
@@ -5931,11 +5840,11 @@ TEST(t_dlt_user_trace_network_segmented_v2, nullpointer)
         payload[(int)i] = i;
 
     /* what to expect when giving in NULL pointer? */
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
+    EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+              dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_segmented_v2(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+              dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context_v2(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app_v2());
