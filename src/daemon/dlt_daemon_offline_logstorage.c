@@ -406,7 +406,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context_v2(
 
     req.log_level = loglevel;
     //TBD: REVIEW modify to dlt_gateway_send_control_message_v2
-    if (dlt_gateway_send_control_message(con, &ctrl, (void *)&req, verbose) != 0) {
+    if (dlt_gateway_send_control_message_v2(con, &ctrl, (void *)&req, verbose) != 0) {
         dlt_vlog(LOG_ERR,
                  "Failed to forward SET_LOG_LEVEL message to passive node %s\n",
                  ecuid);

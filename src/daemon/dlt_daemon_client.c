@@ -1234,9 +1234,10 @@ int dlt_daemon_client_process_control_v2(int sock,
     /* check if the message needs to be forwarded */
     if (daemon_local->flags.gatewayMode == 1) {
         if (strncmp(daemon_local->flags.evalue, extended.ecid, extended.ecidlen) != 0)
-            return dlt_gateway_forward_control_message(&daemon_local->pGateway,
+            return dlt_gateway_forward_control_message_v2(&daemon_local->pGateway,
                                                        daemon_local,
                                                        msg,
+                                                       extended.ecidlen,
                                                        extended.ecid,
                                                        verbose);
     }
@@ -1247,213 +1248,213 @@ int dlt_daemon_client_process_control_v2(int sock,
     if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_CALLSW_CINJECTION)) {
         /* Control message handling */
         switch (id) {
-        // case DLT_SERVICE_ID_SET_LOG_LEVEL:
-        // {
-        //     dlt_daemon_control_set_log_level(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_TRACE_STATUS:
-        // {
-        //     dlt_daemon_control_set_trace_status(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
+        case DLT_SERVICE_ID_SET_LOG_LEVEL:
+        {
+            dlt_daemon_control_set_log_level_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_TRACE_STATUS:
+        {
+            dlt_daemon_control_set_trace_status_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
         case DLT_SERVICE_ID_GET_LOG_INFO:
         {
             dlt_daemon_control_get_log_info_v2(sock, daemon, daemon_local, msg, verbose);
             break;
         }
-        // case DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL:
-        // {
-        //     dlt_daemon_control_get_default_log_level(sock, daemon, daemon_local, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_STORE_CONFIG:
-        // {
-        //     if (dlt_daemon_applications_save(daemon, daemon->runtime_application_cfg, verbose) == 0) {
-        //         if (dlt_daemon_contexts_save(daemon, daemon->runtime_context_cfg, verbose) == 0) {
-        //             dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK,
-        //                                                 verbose);
-        //         }
-        //         else {
-        //             /* Delete saved files */
-        //             dlt_daemon_control_reset_to_factory_default(daemon,
-        //                                                         daemon->runtime_application_cfg,
-        //                                                         daemon->runtime_context_cfg,
-        //                                                         daemon_local->flags.contextLogLevel,
-        //                                                         daemon_local->flags.contextTraceStatus,
-        //                                                         daemon_local->flags.enforceContextLLAndTS,
-        //                                                         verbose);
-        //             dlt_daemon_control_service_response(sock,
-        //                                                 daemon,
-        //                                                 daemon_local,
-        //                                                 id,
-        //                                                 DLT_SERVICE_RESPONSE_ERROR,
-        //                                                 verbose);
-        //         }
-        //     }
-        //     else {
-        //         dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,
-        //                                             verbose);
-        //     }
+        case DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL:
+        {
+            dlt_daemon_control_get_default_log_level_v2(sock, daemon, daemon_local, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_STORE_CONFIG:
+        {
+            if (dlt_daemon_applications_save_v2(daemon, daemon->runtime_application_cfg, verbose) == 0) {
+                if (dlt_daemon_contexts_save_v2(daemon, daemon->runtime_context_cfg, verbose) == 0) {
+                    dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK,
+                                                        verbose);
+                }
+                else {
+                    /* Delete saved files */
+                    dlt_daemon_control_reset_to_factory_default_v2(daemon,
+                                                                daemon->runtime_application_cfg,
+                                                                daemon->runtime_context_cfg,
+                                                                daemon_local->flags.contextLogLevel,
+                                                                daemon_local->flags.contextTraceStatus,
+                                                                daemon_local->flags.enforceContextLLAndTS,
+                                                                verbose);
+                    dlt_daemon_control_service_response_v2(sock,
+                                                        daemon,
+                                                        daemon_local,
+                                                        id,
+                                                        DLT_SERVICE_RESPONSE_ERROR,
+                                                        verbose);
+                }
+            }
+            else {
+                dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR,
+                                                    verbose);
+            }
 
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT:
-        // {
-        //     dlt_daemon_control_reset_to_factory_default(daemon,
-        //                                                 daemon->runtime_application_cfg,
-        //                                                 daemon->runtime_context_cfg,
-        //                                                 daemon_local->flags.contextLogLevel,
-        //                                                 daemon_local->flags.contextTraceStatus,
-        //                                                 daemon_local->flags.enforceContextLLAndTS,
-        //                                                 verbose);
-        //     dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_COM_INTERFACE_MAX_BANDWIDTH:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_VERBOSE_MODE:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_MESSAGE_FILTERING:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_TIMING_PACKETS:
-        // {
-        //     dlt_daemon_control_set_timing_packets(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_GET_LOCAL_TIME:
-        // {
-        //     /* Send response with valid timestamp (TMSP) field */
-        //     dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_USE_ECU_ID:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_USE_SESSION_ID:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_USE_TIMESTAMP:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_USE_EXTENDED_HEADER:
-        // {
-        //     dlt_daemon_control_service_response(sock,
-        //                                         daemon,
-        //                                         daemon_local,
-        //                                         id,
-        //                                         DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
-        //                                         verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL:
-        // {
-        //     dlt_daemon_control_set_default_log_level(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS:
-        // {
-        //     dlt_daemon_control_set_default_trace_status(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
-        // {
-        //     dlt_daemon_control_get_software_version(sock, daemon, daemon_local, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW:
-        // {
-        //     dlt_daemon_control_message_buffer_overflow(sock, daemon, daemon_local, daemon->overflow_counter, "",
-        //                                                verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_OFFLINE_LOGSTORAGE:
-        // {
-        //     dlt_daemon_control_service_logstorage(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_PASSIVE_NODE_CONNECT:
-        // {
-        //     dlt_daemon_control_passive_node_connect(sock,
-        //                                             daemon,
-        //                                             daemon_local,
-        //                                             msg,
-        //                                             verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS:
-        // {
-        //     dlt_daemon_control_passive_node_connect_status(sock,
-        //                                                    daemon,
-        //                                                    daemon_local,
-        //                                                    verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_ALL_LOG_LEVEL:
-        // {
-        //     dlt_daemon_control_set_all_log_level(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
-        // case DLT_SERVICE_ID_SET_ALL_TRACE_STATUS:
-        // {
-        //     dlt_daemon_control_set_all_trace_status(sock, daemon, daemon_local, msg, verbose);
-        //     break;
-        // }
+            break;
+        }
+        case DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT:
+        {
+            dlt_daemon_control_reset_to_factory_default_v2(daemon,
+                                                        daemon->runtime_application_cfg,
+                                                        daemon->runtime_context_cfg,
+                                                        daemon_local->flags.contextLogLevel,
+                                                        daemon_local->flags.contextTraceStatus,
+                                                        daemon_local->flags.enforceContextLLAndTS,
+                                                        verbose);
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_COM_INTERFACE_MAX_BANDWIDTH:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_VERBOSE_MODE:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_MESSAGE_FILTERING:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_TIMING_PACKETS:
+        {
+            dlt_daemon_control_set_timing_packets_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_GET_LOCAL_TIME:
+        {
+            /* Send response with valid timestamp (TMSP) field */
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_USE_ECU_ID:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_USE_SESSION_ID:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_USE_TIMESTAMP:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_USE_EXTENDED_HEADER:
+        {
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                id,
+                                                DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                                verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL:
+        {
+            dlt_daemon_control_set_default_log_level_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS:
+        {
+            dlt_daemon_control_set_default_trace_status_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
+        {
+            dlt_daemon_control_get_software_version_v2(sock, daemon, daemon_local, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW:
+        {
+            dlt_daemon_control_message_buffer_overflow_v2(sock, daemon, daemon_local, daemon->overflow_counter, "",
+                                                       verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_OFFLINE_LOGSTORAGE:
+        {
+            dlt_daemon_control_service_logstorage_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_PASSIVE_NODE_CONNECT:
+        {
+            dlt_daemon_control_passive_node_connect_v2(sock,
+                                                    daemon,
+                                                    daemon_local,
+                                                    msg,
+                                                    verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS:
+        {
+            dlt_daemon_control_passive_node_connect_status_v2(sock,
+                                                           daemon,
+                                                           daemon_local,
+                                                           verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_ALL_LOG_LEVEL:
+        {
+            dlt_daemon_control_set_all_log_level_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
+        case DLT_SERVICE_ID_SET_ALL_TRACE_STATUS:
+        {
+            dlt_daemon_control_set_all_trace_status_v2(sock, daemon, daemon_local, msg, verbose);
+            break;
+        }
         default:
         {
             dlt_daemon_control_service_response_v2(sock,
@@ -1466,10 +1467,10 @@ int dlt_daemon_client_process_control_v2(int sock,
         }
         }
     }
-    // else {
-    //     /* Injection handling */
-    //     dlt_daemon_control_callsw_cinjection(sock, daemon, daemon_local, msg, verbose);
-    // }
+    else {
+        /* Injection handling */
+        dlt_daemon_control_callsw_cinjection_v2(sock, daemon, daemon_local, msg, verbose);
+    }
 
     return 0;
 }
