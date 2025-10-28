@@ -203,7 +203,7 @@ void dlt_process_get_log_info_v2(void)
 
     if (dlt_client_main_loop_v2(&g_dltclient, (void *)resp, 0) == DLT_RETURN_TRUE)
         fprintf(stdout, "DLT-daemon's response is invalid.\n");
-    printf("calling dlt_client_main_loop_v2\n");
+
     if (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO &&
         resp->status >= GET_LOG_INFO_STATUS_MIN &&
         resp->status <= GET_LOG_INFO_STATUS_MAX) {
@@ -817,7 +817,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     datalength =(int32_t) message->datasize;
 
     DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
-    id = DLT_BETOH_32(uint32_tmp);
+    id = uint32_tmp;   
 
     if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY) &&
         (id == req_header->service_id)) {

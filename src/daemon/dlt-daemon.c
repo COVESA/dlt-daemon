@@ -3021,15 +3021,8 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
         return -1;
     }
 
-    printf("\n");
-    for(int i=0;i<receiver->bytesRcvd;i++){
-        printf("%x ",receiver->buffer[i]);
-    }
-    printf("\n");
-
     uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
     dlt_version = (firstByteWithVersion >> 5) & (0x07);
-    printf("version: %d\n", dlt_version);
 
     if(dlt_version == DLT_VERSION2) {
         /* Process all received messages */
@@ -3042,7 +3035,6 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
             /* Check for control message */
             if ((0 < receiver->fd) &&
                 DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
-                printf("Debug loc reached here**\n");
                 dlt_daemon_client_process_control_v2(receiver->fd,
                                                      daemon,
                                                      daemon_local,
@@ -3585,8 +3577,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-
-            printf("V1 Userheader mtype: %u\n", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
@@ -4263,7 +4253,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             offset = 0;
             //TBD
 
-            dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
+            //dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
             dlt_message_free_v2(&msg, verbose);
         }
 

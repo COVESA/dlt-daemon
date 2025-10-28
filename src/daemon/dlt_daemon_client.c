@@ -794,18 +794,18 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     }
     
     */ //TBD Remove
-    if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
+    if ((daemon == 0) || (msg == 0) || (apid == NULL) || (ctid == NULL))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     /* prepare storage header */
 
-    if (apid == NULL){
+    if (apid == ""){
         appidlen = strlen(DLT_DAEMON_CTRL_APID);
     }else {
         appidlen = strlen(apid);
     }
 
-    if (ctid == NULL){
+    if (ctid == ""){
         ctxidlen = strlen(DLT_DAEMON_CTRL_CTID);
     }else {
         ctxidlen = strlen(ctid);
@@ -843,7 +843,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     msg->baseheaderv2->mcnt = 0;
 
     /* Fill base header conditional parameters */
-    msg->headerextrav2.msin = DLT_MSIN_CONTROL_REQUEST;
+    msg->headerextrav2.msin = DLT_MSIN_CONTROL_RESPONSE;
     msg->headerextrav2.noar = 1; /* number of arguments */
     memset(msg->headerextrav2.seconds, 0, 5);
     msg->headerextrav2.nanoseconds = 0;
@@ -907,13 +907,13 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 
     if (DLT_IS_HTYP2_WACID(msg->baseheaderv2->htyp2)) {
         msg->extendedheaderv2.apidlen = appidlen;
-        if (apid == NULL){
+        if (apid == ""){
             dlt_set_id_v2(&(msg->extendedheaderv2.apid), DLT_DAEMON_CTRL_APID, msg->extendedheaderv2.apidlen);
         }else {
             dlt_set_id_v2(&(msg->extendedheaderv2.apid), apid, msg->extendedheaderv2.apidlen);
         }
         msg->extendedheaderv2.ctidlen = ctxidlen;
-        if (ctid == NULL){
+        if (ctid == ""){
             dlt_set_id_v2(&(msg->extendedheaderv2.ctid), DLT_DAEMON_CTRL_CTID, msg->extendedheaderv2.ctidlen);
         }else {
             dlt_set_id_v2(&(msg->extendedheaderv2.ctid), ctid, msg->extendedheaderv2.ctidlen);
@@ -935,8 +935,8 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         return DLT_RETURN_ERROR;
     }
 
-    msg->baseheaderv2->len = DLT_HTOBE_16(len);
-
+    msg->baseheaderv2->len = (uint16_t)len;
+ 
     if ((ret =
              dlt_daemon_client_send_v2(sock, daemon, daemon_local, msg->headerbufferv2, msg->storageheadersizev2,
                                     msg->headerbufferv2 + msg->storageheadersizev2,
@@ -2152,7 +2152,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     /* Calculate maximum size for a response */
     resp.datasize = sizeof(uint32_t) /* SID */ + sizeof(int8_t) /* status*/ + sizeof(ID4) /* DLT_DAEMON_REMO_STRING */;
 
-    sizecont = sizeof(uint32_t) /* context_id */;
+    sizecont = sizeof(uint8_t) /* context_id length */;
 
     /* Add additional size for response of Mode 4, 6, 7 */
     if ((req->options == 4) || (req->options == 6) || (req->options == 7))
@@ -2162,15 +2162,18 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     if ((req->options == 5) || (req->options == 6) || (req->options == 7))
         sizecont += sizeof(int8_t); /* trace status */
 
-    resp.datasize += (uint32_t) (((uint32_t) num_applications * (sizeof(uint32_t) /* app_id */ + sizeof(uint16_t) /* count_con_ids */)) +
-        ((size_t) num_contexts * sizecont)); //TBD: REVIEW sizeof(uint32_t) for app_id
+    for(int i = 0; i<num_applications; i++){
+        resp.datasize += (uint32_t) ((uint32_t)(sizeof(uint8_t) /* app_id length */ + user_list->applications[i].apid2len /* app_id */ + sizeof(uint16_t) /* count_con_ids */));
+    }
+
+    for(int j = 0; j<num_contexts; j++){
+                resp.datasize += (sizecont + user_list->contexts[j].ctid2len);
+    }
 
     resp.datasize += (uint32_t) sizeof(uint16_t) /* count_app_ids */;
 
     /* Add additional size for response of Mode 7 */
     if (req->options == 7) {
-        printf("Reached option 7\n");
-        printf("apidlen, ctidlen: %d, %d", req->apidlen, req->ctidlen);
         if (req->apidlen != 0) {
             if (req->ctidlen != 0) {
                 /* One application, one context */
@@ -2283,7 +2286,8 @@ void dlt_daemon_control_get_log_info_v2(int sock,
             }
             else {
                 if (user_list->applications){
-                    apid = user_list->applications[i].apid;
+                    apid = user_list->applications[i].apid2;
+                    apidlen = user_list->applications[i].apid2len;
                 }
                 else {
                     /* This should never occur! */
@@ -2306,6 +2310,8 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
                 for (j = 0; j < (application - (user_list->applications)); j++)
                     offset_base += user_list->applications[j].num_contexts;
+                memcpy(resp.databuffer + offset, &apidlen, 1);
+                offset += 1;
                 memcpy(resp.databuffer + offset, apid, apidlen);
                 offset += apidlen;
                 /* To update based on expected structure if apid length to be copied*/
@@ -2349,10 +2355,12 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
                     if ((context) &&
                         ((req->ctidlen == 0) || ((req->ctidlen != 0) &&
-                                                    (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
+                        (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
                         ) {
-                        memcpy(resp.databuffer + offset, context->ctid, context->ctid2len);
-                        offset += context->ctid2len;
+                            memcpy(resp.databuffer + offset, &(context->ctid2len), 1);
+                            offset += 1;
+                            memcpy(resp.databuffer + offset, context->ctid2, context->ctid2len);
+                            offset += context->ctid2len;
                         /* To update based on expected structure if ctid length to be copied*/
                         //TBD: Need to set ctidlen in resp.databuffer?
 
@@ -2365,7 +2373,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                         }
                         */
 
-                        memcpy(buf, context->ctid, context->ctid2len);
+                        memcpy(buf, context->ctid2, context->ctid2len);
                         dlt_vlog(LOG_DEBUG, "ctid: %s \n", buf);
 #endif
 
@@ -2436,7 +2444,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     dlt_set_id((char *)(resp.databuffer + offset), DLT_DAEMON_REMO_STRING);
 
     /* send message */
-    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &resp, NULL, NULL, verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &resp, "", "", verbose);
 
     free(req);
 
