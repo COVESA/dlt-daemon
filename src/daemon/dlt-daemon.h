@@ -84,9 +84,6 @@
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
-// DLTV2 - DLT Version flag for multiplexing V1 and V2 messages
-extern uint8_t dlt_version;
-
 /**
  * The flags of a dlt daemon.
  */
@@ -273,6 +270,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                         int verbose);
 
 bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            ,DltDaemonApplication *app
+#endif
+                                            );
+
+bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
                                             ,DltDaemonApplication *app
 #endif

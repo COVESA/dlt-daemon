@@ -5192,8 +5192,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
 
-    // printf("DEBUG: len = %u\n", len);
-
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         return DLT_RETURN_ERROR;

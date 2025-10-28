@@ -672,28 +672,26 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     memcpy(temp_buffer, message->headerbufferv2, message->headersizev2);
     free(message->headerbufferv2);
     message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+
     message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
 
     if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
         return -1;
 
     memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2);
-
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
         (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
+
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag) {
             dlt_message_print_hex_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         }
         else if (dltdata->aflag)
         {
-
             dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
-
             printf("%s ", text);
 
             dlt_message_payload_v2(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
-
             printf("[%s]\n", text);
         }
         else if (dltdata->mflag)
@@ -707,7 +705,6 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
 
             printf("%s \n", text);
         }
-
         /* if file output enabled write message */
         if (dltdata->ovalue) {
             iov[0].iov_base = message->headerbufferv2;
@@ -730,7 +727,6 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                     dltdata->totalbytes = 0;
                 }
             }
-
             bytes_written = (int)writev(dltdata->ohandle, iov, 2);
 
             dltdata->totalbytes += bytes_written;

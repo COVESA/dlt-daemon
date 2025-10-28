@@ -1272,6 +1272,67 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
     dlt_message_free(&msg, 0);
 }
 
+void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    uint32_t len;
+    DltServiceGetSoftwareVersionResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_SOFTWARE_VERSION,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    /* prepare payload of data */
+    len = (uint32_t) strlen(daemon->ECUVersionString);
+
+    /* msg.datasize = sizeof(serviceID) + sizeof(status) + sizeof(length) + len */
+    msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t) + len);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_SOFTWARE_VERSION,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    resp = (DltServiceGetSoftwareVersionResponse *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_GET_SOFTWARE_VERSION;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->length = len;
+    memcpy(msg.databuffer + msg.datasize - len, daemon->ECUVersionString, len);
+
+    /* send message */
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+}
+
 void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     DltMessage msg;
@@ -1325,6 +1386,61 @@ void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDa
 
     /* free message */
     dlt_message_free(&msg, 0);
+}
+
+void dlt_daemon_control_get_default_log_level_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceGetDefaultLogLevelResponse *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    msg.datasize = sizeof(DltServiceGetDefaultLogLevelResponse);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0) {
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+        return;
+    }
+
+    resp = (DltServiceGetDefaultLogLevelResponse *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->log_level = (uint8_t) daemon->default_log_level;
+
+    /* send message */
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
 }
 
 void dlt_daemon_control_get_log_info(int sock,
@@ -2499,6 +2615,59 @@ int dlt_daemon_control_message_connection_info(int sock,
     return 0;
 }
 
+int dlt_daemon_control_message_connection_info_v2(int sock,
+                                               DltDaemon *daemon,
+                                               DltDaemonLocal *daemon_local,
+                                               uint8_t state,
+                                               char *comid,
+                                               int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceConnectionInfo *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return -1;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return -1;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceConnectionInfo);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return -1;
+
+    resp = (DltServiceConnectionInfo *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_CONNECTION_INFO;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->state = state;
+    dlt_set_id(resp->comid, comid);
+
+    /* send message */
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+        dlt_message_free_v2(&msg, 0);
+        return -1;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
+
+    return 0;
+}
+
 int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
 {
     DltMessage msg;
@@ -2550,6 +2719,61 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
 
     /* free message */
     dlt_message_free(&msg, 0);
+
+    return 0;
+}
+
+int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+{
+    DltMessageV2 msg;
+    DltServiceTimezone *resp;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == 0)
+        return -1;
+
+    /* initialise new message */
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+        return -1;
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServiceTimezone);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
+        free(msg.databuffer);
+        msg.databuffer = 0;
+    }
+
+    if (msg.databuffer == 0) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffersize = msg.datasize;
+    }
+
+    if (msg.databuffer == 0)
+        return -1;
+
+    resp = (DltServiceTimezone *)msg.databuffer;
+    resp->service_id = DLT_SERVICE_ID_TIMEZONE;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+
+    time_t t = time(NULL);
+    struct tm lt;
+    tzset();
+    localtime_r(&t, &lt);
+#if !defined(__CYGWIN__)
+    resp->timezone = (int32_t)lt.tm_gmtoff;
+#endif
+    resp->isdst = (uint8_t)lt.tm_isdst;
+
+    /* send message */
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+        dlt_message_free_v2(&msg, 0);
+        return -1;
+    }
+
+    /* free message */
+    dlt_message_free_v2(&msg, 0);
 
     return 0;
 }
@@ -2751,6 +2975,32 @@ void dlt_daemon_send_log_level(int sock,
     }
 }
 
+void dlt_daemon_send_log_level_v2(int sock,
+                               DltDaemon *daemon,
+                               DltDaemonLocal *daemon_local,
+                               DltDaemonContext *context,
+                               int8_t loglevel,
+                               int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    int32_t id = DLT_SERVICE_ID_SET_LOG_LEVEL;
+    int8_t old_log_level = 0;
+
+    old_log_level = context->log_level;
+    context->log_level = loglevel; /* No endianess conversion necessary*/
+
+    if ((context->user_handle >= DLT_FD_MINIMUM) &&
+        (dlt_daemon_user_send_log_level_v2(daemon, context, verbose) == 0)) {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, (uint32_t) id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_log(LOG_ERR, "Log level could not be sent!\n");
+        context->log_level = old_log_level;
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, (uint32_t) id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_find_multiple_context_and_send_log_level(int sock,
                                                          DltDaemon *daemon,
                                                          DltDaemonLocal *daemon_local,
@@ -2798,6 +3048,55 @@ void dlt_daemon_find_multiple_context_and_send_log_level(int sock,
         }
     }
 }
+
+void dlt_daemon_find_multiple_context_and_send_log_level_v2(int sock,
+                                                         DltDaemon *daemon,
+                                                         DltDaemonLocal *daemon_local,
+                                                         int8_t app_flag,
+                                                         char *str,
+                                                         int8_t len,
+                                                         int8_t loglevel,
+                                                         int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    int count = 0;
+    DltDaemonContext *context = NULL;
+    char src_str[DLT_ID_SIZE + 1] = { 0 };
+    int ret = 0;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    if (daemon == 0) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    for (count = 0; count < user_list->num_contexts; count++) {
+        context = &(user_list->contexts[count]);
+
+        if (context) {
+            if (app_flag == 1)
+                strncpy(src_str, context->apid2, context->apid2len);
+            else
+                strncpy(src_str, context->ctid2, context->ctid2len);
+
+            ret = strncmp(src_str, str, len);
+
+            if (ret == 0)
+                dlt_daemon_send_log_level_v2(sock, daemon, daemon_local, context, loglevel, verbose);
+            else if ((ret > 0) && (app_flag == 1))
+                break;
+            else
+                continue;
+        }
+    }
+}
+
 
 void dlt_daemon_control_set_log_level(int sock,
                                       DltDaemon *daemon,
@@ -2897,6 +3196,109 @@ void dlt_daemon_control_set_log_level(int sock,
     }
 }
 
+void dlt_daemon_control_set_log_level_v2(int sock,
+                                      DltDaemon *daemon,
+                                      DltDaemonLocal *daemon_local,
+                                      DltMessageV2 *msg,
+                                      int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    //TBD: Review init of ptr
+    char *apid =NULL;
+    char *ctid =NULL;
+    DltServiceSetLogLevelV2 *req = NULL;
+    DltDaemonContext *context = NULL;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    //TBD: Review sizeof(DltServiceSetLogLevelV2)) or fixed size
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevelV2)) < 0)
+        return;
+
+    req = (DltServiceSetLogLevelV2 *)(msg->databuffer);
+
+    if (daemon_local->flags.enforceContextLLAndTS)
+        req->log_level = (uint8_t) getStatus(req->log_level, daemon_local->flags.contextLogLevel);
+
+    apid_length = (int8_t) req->apidlen;
+    dlt_set_id_v2(&apid, req->apid, req->apidlen);
+    ctid_length = (int8_t) req->ctidlen;
+    dlt_set_id_v2(&ctid, req->ctid, req->ctidlen);
+
+    //TBD: Review apid[apid_length - 1] == '*'
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
+        dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
+                                                            daemon,
+                                                            daemon_local,
+                                                            1,
+                                                            apid,
+                                                            (int8_t) (apid_length - 1),
+                                                            (int8_t) req->log_level,
+                                                            verbose);
+    }
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid == NULL)) /*ctid provided is having '*' in it and apid is null*/
+    {
+        dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
+                                                            daemon,
+                                                            daemon_local,
+                                                            0,
+                                                            ctid,
+                                                            (int8_t) (ctid_length - 1),
+                                                            (int8_t) req->log_level,
+                                                            verbose);
+    }
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid == NULL)) /*only app id case*/
+    {
+        dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
+                                                            daemon,
+                                                            daemon_local,
+                                                            1,
+                                                            apid,
+                                                            apid_length,
+                                                            (int8_t) req->log_level,
+                                                            verbose);
+    }
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid == NULL)) /*only context id case*/
+    {
+        dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
+                                                            daemon,
+                                                            daemon_local,
+                                                            0,
+                                                            ctid,
+                                                            ctid_length,
+                                                            (int8_t) req->log_level,
+                                                            verbose);
+    }
+    else {
+        context = dlt_daemon_context_find_v2(daemon,
+                                          apid_length,
+                                          apid,
+                                          ctid_length,
+                                          ctid,
+                                          daemon->ecuid2len,
+                                          daemon->ecuid2,
+                                          verbose);
+
+        /* Set log level */
+        if (context != 0) {
+            dlt_daemon_send_log_level_v2(sock, daemon, daemon_local, context, (int8_t) req->log_level, verbose);
+        }
+        else {
+            dlt_vlog(LOG_ERR, "Could not set log level: %d. Context [%.4s:%.4s] not found:", req->log_level, apid,
+                     ctid);
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_SERVICE_ID_SET_LOG_LEVEL,
+                                                DLT_SERVICE_RESPONSE_ERROR,
+                                                verbose);
+        }
+    }
+}
 
 void dlt_daemon_send_trace_status(int sock,
                                   DltDaemon *daemon,
@@ -2921,6 +3323,32 @@ void dlt_daemon_send_trace_status(int sock,
         dlt_log(LOG_ERR, "Trace status could not be sent!\n");
         context->trace_status = old_trace_status;
         dlt_daemon_control_service_response(sock, daemon, daemon_local, (uint32_t) id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
+void dlt_daemon_send_trace_status_v2(int sock,
+                                  DltDaemon *daemon,
+                                  DltDaemonLocal *daemon_local,
+                                  DltDaemonContext *context,
+                                  int8_t tracestatus,
+                                  int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    int32_t id = DLT_SERVICE_ID_SET_TRACE_STATUS;
+    int8_t old_trace_status = 0;
+
+    old_trace_status = context->trace_status;
+    context->trace_status = tracestatus; /* No endianess conversion necessary*/
+
+    if ((context->user_handle >= DLT_FD_MINIMUM) &&
+        (dlt_daemon_user_send_log_level_v2(daemon, context, verbose) == 0)) {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, (uint32_t) id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_log(LOG_ERR, "Trace status could not be sent!\n");
+        context->trace_status = old_trace_status;
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, (uint32_t) id, DLT_SERVICE_RESPONSE_ERROR, verbose);
     }
 }
 
@@ -2964,6 +3392,54 @@ void dlt_daemon_find_multiple_context_and_send_trace_status(int sock,
 
             if (ret == 0)
                 dlt_daemon_send_trace_status(sock, daemon, daemon_local, context, tracestatus, verbose);
+            else if ((ret > 0) && (app_flag == 1))
+                break;
+            else
+                continue;
+        }
+    }
+}
+
+void dlt_daemon_find_multiple_context_and_send_trace_status_v2(int sock,
+                                                            DltDaemon *daemon,
+                                                            DltDaemonLocal *daemon_local,
+                                                            int8_t app_flag,
+                                                            char *str,
+                                                            int8_t len,
+                                                            int8_t tracestatus,
+                                                            int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    int count = 0;
+    DltDaemonContext *context = NULL;
+    char *src_str = NULL;
+    int ret = 0;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    if (daemon == 0) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    for (count = 0; count < user_list->num_contexts; count++) {
+        context = &(user_list->contexts[count]);
+
+        if (context) {
+            if (app_flag == 1)
+                strncpy(src_str, context->apid2, context->apid2len);
+            else
+                strncpy(src_str, context->ctid2, context->ctid2len);
+            //TBD: Review src_str warning: argument 1 null where non-null expected
+            ret = strncmp(src_str, str, len);
+
+            if (ret == 0)
+                dlt_daemon_send_trace_status_v2(sock, daemon, daemon_local, context, tracestatus, verbose);
             else if ((ret > 0) && (app_flag == 1))
                 break;
             else
@@ -3070,10 +3546,147 @@ void dlt_daemon_control_set_trace_status(int sock,
     }
 }
 
+void dlt_daemon_control_set_trace_status_v2(int sock,
+                                         DltDaemon *daemon,
+                                         DltDaemonLocal *daemon_local,
+                                         DltMessageV2 *msg,
+                                         int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    char *apid = NULL;
+    char *ctid = NULL;
+    DltServiceSetLogLevelV2 *req = NULL;
+    DltDaemonContext *context = NULL;
+    int8_t apid_length = 0;
+    int8_t ctid_length = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    //TBD: Review sizeof(DltServiceSetLogLevelV2)) or fixed size
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevelV2)) < 0)
+        return;
+
+    req = (DltServiceSetLogLevelV2 *)(msg->databuffer);
+
+    if (daemon_local->flags.enforceContextLLAndTS)
+        req->log_level = (uint8_t) getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
+
+    apid_length = (int8_t) req->apidlen;
+    dlt_set_id_v2(&apid, req->apid, req->apidlen);
+    ctid_length = (int8_t) req->ctidlen;
+    dlt_set_id_v2(&ctid, req->ctid, req->ctidlen);
+
+    //TBD: Review apid[apid_length - 1] == '*'
+    if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
+        dlt_daemon_find_multiple_context_and_send_trace_status_v2(sock,
+                                                               daemon,
+                                                               daemon_local,
+                                                               1,
+                                                               apid,
+                                                               (int8_t) (apid_length - 1),
+                                                               (int8_t) req->log_level,
+                                                               verbose);
+    }
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid == NULL)) /*ctid provided is having '*' in it and apid is null*/
+
+    {
+        dlt_daemon_find_multiple_context_and_send_trace_status_v2(sock,
+                                                               daemon,
+                                                               daemon_local,
+                                                               0,
+                                                               ctid,
+                                                               (int8_t) (ctid_length - 1),
+                                                               (int8_t) req->log_level,
+                                                               verbose);
+    }
+    else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid == NULL)) /*only app id case*/
+    {
+        dlt_daemon_find_multiple_context_and_send_trace_status_v2(sock,
+                                                               daemon,
+                                                               daemon_local,
+                                                               1,
+                                                               apid,
+                                                               apid_length,
+                                                               (int8_t) req->log_level,
+                                                               verbose);
+    }
+    else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid == NULL)) /*only context id case*/
+    {
+        dlt_daemon_find_multiple_context_and_send_trace_status_v2(sock,
+                                                               daemon,
+                                                               daemon_local,
+                                                               0,
+                                                               ctid,
+                                                               ctid_length,
+                                                               (int8_t) req->log_level,
+                                                               verbose);
+    }
+    else {
+        context = dlt_daemon_context_find_v2(daemon, apid_length, apid, ctid_length, ctid, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+        /* Set trace status */
+        if (context != 0) {
+            dlt_daemon_send_trace_status_v2(sock, daemon, daemon_local, context, (int8_t) req->log_level, verbose);
+        }
+        else {
+            dlt_vlog(LOG_ERR,
+                     "Could not set trace status: %d. Context [%.4s:%.4s] not found:",
+                     req->log_level,
+                     apid,
+                     ctid);
+            dlt_daemon_control_service_response_v2(sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_SERVICE_ID_SET_LOG_LEVEL,
+                                                DLT_SERVICE_RESPONSE_ERROR,
+                                                verbose);
+        }
+    }
+}
+
 void dlt_daemon_control_set_default_log_level(int sock,
                                               DltDaemon *daemon,
                                               DltDaemonLocal *daemon_local,
                                               DltMessage *msg,
+                                              int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetDefaultLogLevel *req;
+    uint32_t id = DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if (/*(req->log_level>=0) &&*/
+        (req->log_level <= DLT_LOG_VERBOSE)) {
+        if (daemon_local->flags.enforceContextLLAndTS)
+            daemon->default_log_level = getStatus(req->log_level, daemon_local->flags.contextLogLevel);
+        else
+            daemon->default_log_level = (int8_t) req->log_level; /* No endianess conversion necessary */
+
+        /* Send Update to all contexts using the default log level */
+        dlt_daemon_user_send_default_update(daemon, verbose);
+
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
+void dlt_daemon_control_set_default_log_level_v2(int sock,
+                                              DltDaemon *daemon,
+                                              DltDaemonLocal *daemon_local,
+                                              DltMessageV2 *msg,
                                               int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -3148,6 +3761,47 @@ void dlt_daemon_control_set_all_log_level(int sock,
     }
 }
 
+void dlt_daemon_control_set_all_log_level_v2(int sock,
+                                          DltDaemon *daemon,
+                                          DltDaemonLocal *daemon_local,
+                                          DltMessageV2 *msg,
+                                          int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetDefaultLogLevel *req = NULL;
+    uint32_t id = DLT_SERVICE_ID_SET_ALL_LOG_LEVEL;
+    int8_t loglevel = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req != NULL) && ((req->log_level <= DLT_LOG_VERBOSE) || (req->log_level == (uint8_t)DLT_LOG_DEFAULT))) {
+        loglevel = (int8_t) req->log_level;
+
+        /* Send Update to all contexts using the new log level */
+        dlt_daemon_user_send_all_log_level_update_v2(
+            daemon,
+            daemon_local->flags.enforceContextLLAndTS,
+            (int8_t)daemon_local->flags.contextLogLevel,
+            loglevel,
+            verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_control_set_default_trace_status(int sock,
                                                  DltDaemon *daemon,
                                                  DltDaemonLocal *daemon_local,
@@ -3183,6 +3837,44 @@ void dlt_daemon_control_set_default_trace_status(int sock,
     }
     else {
         dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
+void dlt_daemon_control_set_default_trace_status_v2(int sock,
+                                                 DltDaemon *daemon,
+                                                 DltDaemonLocal *daemon_local,
+                                                 DltMessageV2 *msg,
+                                                 int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    /* Payload of request message */
+    DltServiceSetDefaultLogLevel *req;
+    uint32_t id = DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req->log_level == DLT_TRACE_STATUS_OFF) ||
+        (req->log_level == DLT_TRACE_STATUS_ON)) {
+        if (daemon_local->flags.enforceContextLLAndTS)
+            daemon->default_trace_status = getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
+        else
+            daemon->default_trace_status = (int8_t) req->log_level; /* No endianess conversion necessary*/
+
+        /* Send Update to all contexts using the default trace status */
+        dlt_daemon_user_send_default_update_v2(daemon, verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
     }
 }
 
@@ -3226,6 +3918,46 @@ void dlt_daemon_control_set_all_trace_status(int sock,
     }
 }
 
+void dlt_daemon_control_set_all_trace_status_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetDefaultLogLevel *req = NULL;
+    uint32_t id = DLT_SERVICE_ID_SET_ALL_TRACE_STATUS;
+    int8_t tracestatus = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req != NULL) &&
+        ((req->log_level <= DLT_TRACE_STATUS_ON) || (req->log_level == (uint8_t)DLT_TRACE_STATUS_DEFAULT))) {
+        if (daemon_local->flags.enforceContextLLAndTS)
+            tracestatus = getStatus(req->log_level, daemon_local->flags.contextTraceStatus);
+        else
+            tracestatus = (int8_t) req->log_level; /* No endianess conversion necessary */
+
+        /* Send Update to all contexts using the new log level */
+        dlt_daemon_user_send_all_trace_status_update_v2(daemon, tracestatus, verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
 void dlt_daemon_control_set_timing_packets(int sock,
                                            DltDaemon *daemon,
                                            DltDaemonLocal *daemon_local,
@@ -3252,6 +3984,35 @@ void dlt_daemon_control_set_timing_packets(int sock,
     }
     else {
         dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
+void dlt_daemon_control_set_timing_packets_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetVerboseMode *req;  /* request uses same struct as set verbose mode */
+    uint32_t id = DLT_SERVICE_ID_SET_TIMING_PACKETS;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetVerboseMode)) < 0)
+        return;
+
+    req = (DltServiceSetVerboseMode *)(msg->databuffer);
+
+    if ((req->new_status == 0) || (req->new_status == 1)) {
+        daemon->timingpackets = req->new_status;
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
     }
 }
 
@@ -3774,6 +4535,147 @@ void dlt_daemon_control_passive_node_connect(int sock,
                                             verbose);
 }
 
+void dlt_daemon_control_passive_node_connect_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    //TBD: Review node_id member of DltServicePassiveNodeConnect
+    DltServicePassiveNodeConnect *req;
+    uint32_t id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
+
+    if ((daemon == NULL) || (daemon_local == NULL) || (msg == NULL) ||
+        (msg->databuffer == NULL))
+        return;
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0) {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response_v2(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServicePassiveNodeConnect)) < 0)
+        return;
+
+    req = (DltServicePassiveNodeConnect *)msg->databuffer;
+
+    if (dlt_gateway_process_on_demand_request(&daemon_local->pGateway,
+                                              daemon_local,
+                                              req->node_id,
+                                              (int) req->connection_status,
+                                              verbose) < 0)
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_ERROR,
+                                            verbose);
+    else
+        dlt_daemon_control_service_response_v2(sock,
+                                            daemon,
+                                            daemon_local,
+                                            id,
+                                            DLT_SERVICE_RESPONSE_OK,
+                                            verbose);
+}
+
+void dlt_daemon_control_passive_node_connect_status_v2(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose)
+{
+    DltMessageV2 msg;
+    DltServicePassiveNodeConnectionInfo *resp;
+    DltGatewayConnection *con = NULL;
+    unsigned int i = 0;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL))
+        return;
+
+    if (dlt_message_init_v2(&msg, verbose) == -1)
+        return;
+
+    /* return error, if gateway mode not enabled*/
+    if (daemon_local->flags.gatewayMode == 0) {
+        dlt_log(LOG_WARNING,
+                "Received passive node connection status request, "
+                "but GatewayMode is disabled\n");
+
+        dlt_daemon_control_service_response_v2(
+            sock,
+            daemon,
+            daemon_local,
+            DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS,
+            DLT_SERVICE_RESPONSE_ERROR,
+            verbose);
+
+        return;
+    }
+
+    /* prepare payload of data */
+    msg.datasize = sizeof(DltServicePassiveNodeConnectionInfo);
+
+    if (msg.databuffer && (msg.databuffersize < msg.datasize))
+        msg.databuffer = NULL;
+
+    if (msg.databuffer == NULL) {
+        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+
+        if (msg.databuffer == NULL) {
+            dlt_log(LOG_CRIT, "Cannot allocate memory for message response\n");
+            return;
+        }
+
+        msg.databuffersize = msg.datasize;
+    }
+
+    resp = (DltServicePassiveNodeConnectionInfo *)msg.databuffer;
+    memset(resp, 0, msg.datasize);
+    resp->service_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS;
+    resp->status = DLT_SERVICE_RESPONSE_OK;
+    resp->num_connections = (uint32_t) daemon_local->pGateway.num_connections;
+
+    for (i = 0; i < resp->num_connections; i++) {
+        if ((i * DLT_ID_SIZE) > DLT_ENTRY_MAX) {
+            dlt_log(LOG_ERR,
+                    "Maximal message size reached. Skip further information\n");
+            break;
+        }
+
+        con = &daemon_local->pGateway.connections[i];
+
+        resp->connection_status[i] = con->status;
+        //TBD: Review node_id[i * con->ecuid2len]
+        memcpy(&resp->node_id[i * con->ecuid2len], con->ecuid2, con->ecuid2len);
+    }
+
+    dlt_daemon_client_send_control_message_v2(sock,
+                                           daemon,
+                                           daemon_local,
+                                           &msg,
+                                           NULL,
+                                           NULL,
+                                           verbose);
+    /* free message */
+    dlt_message_free(&msg, verbose);
+}
+
 void dlt_daemon_control_passive_node_connect_status(int sock,
                                                     DltDaemon *daemon,
                                                     DltDaemonLocal *daemon_local,
@@ -3854,4 +4756,4 @@ void dlt_daemon_control_passive_node_connect_status(int sock,
                                            verbose);
     /* free message */
     dlt_message_free(&msg, verbose);
-};
+}

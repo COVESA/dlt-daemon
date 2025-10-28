@@ -115,9 +115,6 @@ static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, c
 pthread_rwlock_t trace_load_rw_lock;
 #endif
 
-// DLTV2 - Set the version as Version 2 for development
-uint8_t dlt_version = DLT_VERSION2;
-
 /* used in main event loop and signal handler */
 int g_exit = 0;
 
@@ -2803,7 +2800,6 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                                       DltReceiver *receiver,
                                       int verbose)
 {
-    //TBD: REVIEW How to multiplex V1 and V2 clients?
     socklen_t cli_size;
     struct sockaddr_un cli;
 
@@ -2829,88 +2825,171 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         return -1;
     }
 
-    /* check if file file descriptor was already used, and make it invalid if it
-     * is reused. */
-    /* This prevents sending messages to wrong file descriptor */
-    dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
-    dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+    /* To update multiplexer logic for V1 and V2 */
+    if (1) {
+        /* check if file file descriptor was already used, and make it invalid if it
+        * is reused. */
+        /* This prevents sending messages to wrong file descriptor */
+        dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
 
-    /* Set socket timeout in reception */
-    struct timeval timeout_send;
-    timeout_send.tv_sec = daemon_local->timeoutOnSend;
-    timeout_send.tv_usec = 0;
+        /* Set socket timeout in reception */
+        struct timeval timeout_send;
+        timeout_send.tv_sec = daemon_local->timeoutOnSend;
+        timeout_send.tv_usec = 0;
 
-    if (setsockopt (in_sock,
-                    SOL_SOCKET,
-                    SO_SNDTIMEO,
-                    (char *)&timeout_send,
-                    sizeof(timeout_send)) < 0)
-        dlt_log(LOG_WARNING, "setsockopt failed\n");
+        if (setsockopt (in_sock,
+                        SOL_SOCKET,
+                        SO_SNDTIMEO,
+                        (char *)&timeout_send,
+                        sizeof(timeout_send)) < 0)
+            dlt_log(LOG_WARNING, "setsockopt failed\n");
 
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              in_sock,
-                              POLLIN,
-                              DLT_CONNECTION_CLIENT_MSG_TCP)) {
-        dlt_log(LOG_ERR, "Failed to register new client. \n");
-        close(in_sock);
-        return -1;
-    }
-
-    /* send connection info about connected */
-    dlt_daemon_control_message_connection_info(in_sock,
-                                               daemon,
-                                               daemon_local,
-                                               DLT_CONNECTION_STATUS_CONNECTED,
-                                               "",
-                                               verbose);
-
-    /* send ecu version string */
-    if (daemon_local->flags.sendECUSoftwareVersion > 0) {
-        if (daemon_local->flags.sendECUSoftwareVersion > 0)
-            dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
-                                                    daemon,
-                                                    daemon_local,
-                                                    daemon_local->flags.vflag);
-
-        if (daemon_local->flags.sendTimezone > 0)
-            dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
-                                                daemon,
-                                                daemon_local,
-                                                daemon_local->flags.vflag);
-    }
-
-    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-             "New client connection #%d established, Total Clients : %d",
-             in_sock, daemon_local->client_connections);
-
-    dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local->flags.vflag);
-    dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
-
-    if (daemon_local->client_connections == 1) {
-        if (daemon_local->flags.vflag)
-            dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
-
-        dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
-        if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
-            dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+        if (dlt_connection_create(daemon_local,
+                                &daemon_local->pEvent,
+                                in_sock,
+                                POLLIN,
+                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+            dlt_log(LOG_ERR, "Failed to register new client. \n");
             close(in_sock);
-            in_sock = -1;
             return -1;
         }
 
-        /* send new log state to all applications */
-        daemon->connectionState = 1;
-        dlt_daemon_user_send_all_log_state(daemon, verbose);
+        /* send connection info about connected */
+        dlt_daemon_control_message_connection_info_v2(in_sock,
+                                                      daemon,
+                                                      daemon_local,
+                                                      DLT_CONNECTION_STATUS_CONNECTED,
+                                                      "",
+                                                      verbose);
 
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        /* Reset number of received bytes from FIFO */
-        daemon->bytes_recv = 0;
-#endif
+        /* send ecu version string */
+        if (daemon_local->flags.sendECUSoftwareVersion > 0) {
+            if (daemon_local->flags.sendECUSoftwareVersion > 0)
+                dlt_daemon_control_get_software_version_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                           daemon,
+                                                           daemon_local,
+                                                           daemon_local->flags.vflag);
+
+            if (daemon_local->flags.sendTimezone > 0)
+                dlt_daemon_control_message_timezone_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                       daemon,
+                                                       daemon_local,
+                                                       daemon_local->flags.vflag);
+        }
+
+        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+                "New client connection #%d established, Total Clients : %d",
+                in_sock, daemon_local->client_connections);
+
+        // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+        //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+        //                         daemon_local->flags.vflag);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+
+        if (daemon_local->client_connections == 1) {
+            if (daemon_local->flags.vflag)
+                dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
+
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
+            if (dlt_daemon_send_ringbuffer_to_client_v2(daemon, daemon_local, verbose) == -1) {
+                dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+                close(in_sock);
+                in_sock = -1;
+                return -1;
+            }
+
+            /* send new log state to all applications */
+            daemon->connectionState = 1;
+
+            dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
+    #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            /* Reset number of received bytes from FIFO */
+            daemon->bytes_recv = 0;
+    #endif
+        }
+    } else {
+        /* check if file file descriptor was already used, and make it invalid if it
+        * is reused. */
+        /* This prevents sending messages to wrong file descriptor */
+        dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+
+        /* Set socket timeout in reception */
+        struct timeval timeout_send;
+        timeout_send.tv_sec = daemon_local->timeoutOnSend;
+        timeout_send.tv_usec = 0;
+
+        if (setsockopt (in_sock,
+                        SOL_SOCKET,
+                        SO_SNDTIMEO,
+                        (char *)&timeout_send,
+                        sizeof(timeout_send)) < 0)
+            dlt_log(LOG_WARNING, "setsockopt failed\n");
+
+        if (dlt_connection_create(daemon_local,
+                                &daemon_local->pEvent,
+                                in_sock,
+                                POLLIN,
+                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+            dlt_log(LOG_ERR, "Failed to register new client. \n");
+            close(in_sock);
+            return -1;
+        }
+
+        /* send connection info about connected */
+        dlt_daemon_control_message_connection_info(in_sock,
+                                                daemon,
+                                                daemon_local,
+                                                DLT_CONNECTION_STATUS_CONNECTED,
+                                                "",
+                                                verbose);
+
+        /* send ecu version string */
+        if (daemon_local->flags.sendECUSoftwareVersion > 0) {
+            if (daemon_local->flags.sendECUSoftwareVersion > 0)
+                dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
+                                                        daemon,
+                                                        daemon_local,
+                                                        daemon_local->flags.vflag);
+
+            if (daemon_local->flags.sendTimezone > 0)
+                dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
+                                                    daemon,
+                                                    daemon_local,
+                                                    daemon_local->flags.vflag);
+        }
+
+        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
+                "New client connection #%d established, Total Clients : %d",
+                in_sock, daemon_local->client_connections);
+
+        // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+        //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+        //                         daemon_local->flags.vflag);
+        dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
+
+        if (daemon_local->client_connections == 1) {
+            if (daemon_local->flags.vflag)
+                dlt_log(LOG_DEBUG, "Send ring-buffer to client\n");
+
+            dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_SEND_BUFFER);
+            if (dlt_daemon_send_ringbuffer_to_client(daemon, daemon_local, verbose) == -1) {
+                dlt_log(LOG_WARNING, "Can't send contents of ringbuffer to clients\n");
+                close(in_sock);
+                in_sock = -1;
+                return -1;
+            }
+            /* send new log state to all applications */
+            daemon->connectionState = 1;
+            dlt_daemon_user_send_all_log_state(daemon, verbose);
+
+    #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            /* Reset number of received bytes from FIFO */
+            daemon->bytes_recv = 0;
+    #endif
+        }
     }
-
     return 0;
 }
 
@@ -2956,8 +3035,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         bytes_to_be_removed = (int) (daemon_local->msg.headersize +
             daemon_local->msg.datasize -
@@ -3024,8 +3102,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
-        uint8_t header_first_byte = ((uint8_t *)receiver->buf)[0];
-        dlt_version = (header_first_byte & DLT_VERSION_MASK) >> DLT_VERSION_SHIFT;
+        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
@@ -3396,7 +3473,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
             else
@@ -3465,6 +3541,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
+
+            printf("V1 Userheader mtype: %u\n", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
@@ -4369,12 +4447,12 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     return 0;
 }
 
-// TBD: Update for V2
 int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                            DltDaemonLocal *daemon_local,
                                                            DltReceiver *rec,
                                                            int verbose)
 {
+
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context;
     int i, offset_base;
@@ -4390,14 +4468,12 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     }
 
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
-
     if (dlt_version == DLT_VERSION2) {
         DltUserControlMsgUnregisterApplicationV2 userapp;
         int userappSize;
         uint8_t *buffer;
-
         userapp.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-
+        userapp.apid = NULL;
         userappSize = sizeof(uint8_t) + userapp.apidlen + sizeof(pid_t);
         uint32_t len = userappSize;
         buffer = (uint8_t*)malloc(userappSize);
@@ -4405,7 +4481,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
         int offset = 0;
 
         if (dlt_receiver_check_and_get(rec,
-                                    &userapp,
+                                    buffer,
                                     len,
                                     DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
@@ -4413,17 +4489,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         memcpy(&(userapp.apidlen), buffer, 1);
         offset = 1;
-
-        userapp.apid = (char *)malloc(userapp.apidlen + 1);
-        if (userapp.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(userapp.apid, (buffer + offset), userapp.apidlen); // Replace with set_id_v2
-        memset((userapp.apid + userapp.apidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(userapp.apid), buffer + offset, userapp.apidlen);
         offset += userapp.apidlen;
         memcpy(&(userapp.pid), (buffer + offset), sizeof(pid_t));
-
         user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
 
         if (user_list == NULL)
@@ -4440,17 +4508,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                             daemon->ecuid2,
                                             verbose,
                                             &application);
-
-            if (application) {
+            if (application != NULL) {
                 /* Calculate start offset within contexts[] */
                 offset_base = 0;
-
                 for (i = 0; i < (application - (user_list->applications)); i++)
                     offset_base += user_list->applications[i].num_contexts;
-
-                for (i = (application->num_contexts) - 1; i >= 0; i--) {
+                for (i = (application->num_contexts) - 1; i >= 0; i--) {              
                     context = &(user_list->contexts[offset_base + i]);
-
                     if (context) {
                         /* Delete context */
                         if (dlt_daemon_context_del_v2(daemon,
@@ -4467,7 +4531,6 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                         }
                     }
                 }
-
                 /* Delete this application entry from internal table*/
                 if (dlt_daemon_application_del_v2(daemon,
                                             application,
@@ -4482,14 +4545,13 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                 }
                 else {
                     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-
                     snprintf(local_str,
                             DLT_DAEMON_TEXTBUFSIZE,
                             "Unregistered ApID '%.6s'",
                             userapp.apid); //TBD: Replace %.6s with apidlen
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                    // dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                    //                         DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                    //                         DLT_DAEMON_CTX_ID, verbose);
                     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
                 }
             }
@@ -4595,15 +4657,15 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
 
     if (dlt_version == DLT_VERSION2) {
-        DltUserControlMsgRegisterContextV2 usercontext;
+        DltUserControlMsgUnregisterContextV2 usercontext;
         int usercontextSize;
         uint8_t *buffer;
-
+        usercontext.apid = NULL;
+        usercontext.ctid = NULL;
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
-
         usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
+                        sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t);
         uint32_t len = usercontextSize;
         buffer = (uint8_t*)malloc(usercontextSize);
 
@@ -4619,34 +4681,14 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
-
-        usercontext.apid = (char *)malloc(usercontext.apidlen + 1);
-        if (usercontext.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
-        memset((usercontext.apid + usercontext.apidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(usercontext.apid), buffer + offset, usercontext.apidlen);
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        usercontext.ctid = (char *)malloc(usercontext.ctidlen + 1);
-        if (usercontext.ctid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
-            return -1;
-        }
-        memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
-        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
+        dlt_set_id_v2(&(usercontext.ctid), buffer + offset, usercontext.ctidlen);
         offset += usercontext.ctidlen;
-        memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
-        offset += sizeof(int32_t);
-        memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
-        memcpy(&(usercontext.trace_status), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
         offset += sizeof(pid_t);
-        memcpy(&(usercontext.description_length), (buffer + offset), 4);
         
         context = dlt_daemon_context_find_v2(daemon,
                                         usercontext.apidlen,
@@ -4656,6 +4698,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                         daemon->ecuid2len,
                                         daemon->ecuid2,
                                         verbose);
+        
 
         /* In case the daemon is loaded with predefined contexts and its context
         * unregisters, the context information will not be deleted from daemon's
@@ -4679,11 +4722,12 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                         "Unregistered CtID '%.6s' for ApID '%.6s'",
                         usercontext.ctid,
                         usercontext.apid); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
-
-                if (verbose)
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                //TBD: Remove DEBUG prints
+                // printf("DEBUG: unregister_context before calling dlt_daemon_log_internal: %s\n", local_str);
+                // if (verbose)
+                //     dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                //                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                //                             DLT_DAEMON_CTX_ID, verbose);
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
@@ -4771,10 +4815,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 {
     int ret = 0;
     int size = 0;
-
+    bool keep_message = true;
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    dlt_version = rec->buf[3]; //TBD: Write function to get dlt_version
+    uint8_t dlt_version = rec->buf[3];
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);
@@ -4784,6 +4828,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     daemon->received_message_since_last_watchdog_interval = 1;
 #endif
+
+//TBD: Add support for DLT V2 SHM messages
 #ifdef DLT_SHM_ENABLE
 
     /** In case of SHM, the header still received via fifo/unix_socket receiver,
@@ -4825,7 +4871,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #endif
 
         /* discard non-allowed levels if enforcement is on */
-        bool keep_message = enforce_context_ll_and_ts_keep_message(
+        keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
             , app
@@ -4844,23 +4890,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             dlt_log(LOG_ERR, "failed to send message to client.\n");
     }
 
-#else
-
-    //TBD: Remove DEBUG prints
-    // printf("\nDEBUG: process_user_message_log - Received Buffer: \n");
-    // for (int j = 0; j < ((uint8_t)rec->bytesRcvd); j++){
-    //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-    //         printf("%c", rec->buf[j]);
-    //     }
-    //     else {
-    //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
-    //     }
-    // }
-    // printf("\nBuffer in Hex: \n");
-    // for (int k = 0; k < ((uint8_t)rec->bytesRcvd); k++){
-    //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
-    // }
-    // printf("\n\n"); // End of DEBUG:
+#else // #ifdef DLT_SHM_ENABLE
 
     if (dlt_version == DLT_VERSION2) {
         ret = dlt_message_read_v2(&(daemon_local->msgv2),
@@ -4868,62 +4898,115 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
-    }
-    else{
+        if (ret != DLT_MESSAGE_ERROR_OK) {
+            if (ret != DLT_MESSAGE_ERROR_SIZE)
+                /* This is a normal usecase: The daemon reads the data in 10kb chunks.
+                * Thus the last trace in this chunk is probably not complete and will be completed
+                * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
+                * the daemon is able to read from the FIFO.
+                * Thus the loglevel of this message is set to DEBUG.
+                * A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
+                * or the headers are corrupted (error case). */
+                dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
+
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
+
+#if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
+        DltDaemonApplication *app = dlt_daemon_application_find_v2(
+            daemon, daemon_local->msgv2.extendedheaderv2->apidlen, 
+            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose);
+#endif
+
+        /* discard non-allowed levels if enforcement is on */
+        keep_message = enforce_context_ll_and_ts_keep_message_v2(
+            daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+            , app
+#endif
+        );
+
+        // check trace_load
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        keep_message &=
+            trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
+#endif
+
+        if (keep_message){
+            dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
+        }
+        /* keep not read data in buffer */
+        // TBD: Verify calculation of size for DLT V2
+        // size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
+        //     daemon_local->msgv2.datasize +
+        //     sizeof(DltUserHeader));
+
+        size = (int) (daemon_local->msgv2.headersizev2 + 
+            daemon_local->msgv2.datasize +
+            sizeof(DltUserHeader) -
+            daemon_local->msgv2.storageheadersizev2);
+
+        if (daemon_local->msgv2.found_serialheader)
+            size += (int) sizeof(dltSerialHeader);
+
+        if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
+            dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
+    } else { // DLT Version 1
         ret = dlt_message_read(&(daemon_local->msg),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
                            0,
                            verbose);
-    }
+        if (ret != DLT_MESSAGE_ERROR_OK) {
+            if (ret != DLT_MESSAGE_ERROR_SIZE)
+                /* This is a normal usecase: The daemon reads the data in 10kb chunks.
+                * Thus the last trace in this chunk is probably not complete and will be completed
+                * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
+                * the daemon is able to read from the FIFO.
+                * Thus the loglevel of this message is set to DEBUG.
+                * A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
+                * or the headers are corrupted (error case). */
+                dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
 
-    if (ret != DLT_MESSAGE_ERROR_OK) {
-        if (ret != DLT_MESSAGE_ERROR_SIZE)
-            /* This is a normal usecase: The daemon reads the data in 10kb chunks.
-             * Thus the last trace in this chunk is probably not complete and will be completed
-             * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
-             * the daemon is able to read from the FIFO.
-             * Thus the loglevel of this message is set to DEBUG.
-             * A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
-             * or the headers are corrupted (error case). */
-            dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
-
-        return DLT_DAEMON_ERROR_UNKNOWN;
-    }
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-    DltDaemonApplication *app = dlt_daemon_application_find(
-        daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
+        DltDaemonApplication *app = dlt_daemon_application_find(
+            daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
-    /* discard non-allowed levels if enforcement is on */
-    bool keep_message = enforce_context_ll_and_ts_keep_message(
-        daemon_local
+        /* discard non-allowed levels if enforcement is on */
+        keep_message = enforce_context_ll_and_ts_keep_message(
+            daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-        , app
+            , app
 #endif
-    );
+        );
 
-    // check trace_load
+        // check trace_load
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    keep_message &=
-        trace_load_keep_message(app, size, daemon, daemon_local, verbose);
+        keep_message &=
+            trace_load_keep_message(app, size, daemon, daemon_local, verbose);
 #endif
+        if (keep_message){
+            dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
+        }
 
-    if (keep_message)
-      dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
+        /* keep not read data in buffer */
+        size = (int) (daemon_local->msg.headersize +
+            daemon_local->msg.datasize - sizeof(DltStorageHeader) +
+            sizeof(DltUserHeader));
 
-    /* keep not read data in buffer */
-    size = (int) (daemon_local->msg.headersize +
-        daemon_local->msg.datasize - sizeof(DltStorageHeader) +
-        sizeof(DltUserHeader));
+        if (daemon_local->msg.found_serialheader)
+            size += (int) sizeof(dltSerialHeader);
 
-    if (daemon_local->msg.found_serialheader)
-        size += (int) sizeof(dltSerialHeader);
-
-    if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
-        dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
-        return DLT_DAEMON_ERROR_UNKNOWN;
+        if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
+            dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
     }
 
 #endif
@@ -4953,6 +5036,37 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
     if (app->num_context_log_level_settings > 0) {
         DltDaemonContextLogSettings *log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msg.extendedheader->ctid);
+
+        if (log_settings != NULL) {
+            return mtin <= log_settings->log_level;
+        }
+    }
+#endif
+    return mtin <= daemon_local->flags.contextLogLevel;
+}
+
+bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            , DltDaemonApplication *app
+#endif
+)
+{
+    if (!daemon_local->flags.enforceContextLLAndTS) {
+        return true;
+    }
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    if (app == NULL) {
+        return true;
+    }
+#endif
+
+    const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msgv2.headerextrav2.msin);
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+    if (app->num_context_log_level_settings > 0) {
+        //TBD: Call dlt_daemon_find_app_log_level_config_v2 for DLT V2
+        DltDaemonContextLogSettings *log_settings =
+            dlt_daemon_find_app_log_level_config(app, daemon_local->msgv2.extendedheaderv2->ctid);
 
         if (log_settings != NULL) {
             return mtin <= log_settings->log_level;

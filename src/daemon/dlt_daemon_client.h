@@ -209,6 +209,25 @@ void dlt_daemon_control_get_log_info_v2(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Process and generate response to received get software version control message
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Process and generate response to received get software version control message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Process and generate response to received get default log level control message
  * @param sock connection handle used for sending response
@@ -217,6 +236,17 @@ void dlt_daemon_control_get_software_version(int sock, DltDaemon *daemon, DltDae
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_get_default_log_level(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Process and generate response to received get default log level control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_get_default_log_level_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Process and generate response to message buffer overflow control message
  * @param sock connection handle used for sending response
@@ -335,6 +365,23 @@ int dlt_daemon_control_message_connection_info(int sock,
                                                uint8_t state,
                                                char *comid,
                                                int verbose);
+
+/**
+ * Send control message connection info (add on to AUTOSAR standard) for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param state state of connection
+ * @param comid Communication id where connection state changed
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_connection_info_v2(int sock,
+                                               DltDaemon *daemon,
+                                               DltDaemonLocal *daemon_local,
+                                               uint8_t state,
+                                               char *comid,
+                                               int verbose);
+
 /**
  * Send control message timezone (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response
@@ -343,6 +390,16 @@ int dlt_daemon_control_message_connection_info(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
+/**
+ * Send control message timezone (add on to AUTOSAR standard) for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+
 /**
  * Send control message marker (add on to AUTOSAR standard)
  * @param sock connection handle used for sending response
@@ -390,6 +447,22 @@ void dlt_daemon_control_set_log_level(int sock,
                                       DltDaemonLocal *daemon_local,
                                       DltMessage *msg,
                                       int verbose);
+
+/**
+ * Process and generate response to received set log level control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_log_level_v2(int sock,
+                                      DltDaemon *daemon,
+                                      DltDaemonLocal *daemon_local,
+                                      DltMessageV2 *msg,
+                                      int verbose);
+
 /**
  * Process and generate response to received set trace status control message
  * @param sock connection handle used for sending response
@@ -403,6 +476,21 @@ void dlt_daemon_control_set_trace_status(int sock,
                                          DltDaemonLocal *daemon_local,
                                          DltMessage *msg,
                                          int verbose);
+
+/**
+ * Process and generate response to received set trace status control message
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_trace_status_v2(int sock,
+                                         DltDaemon *daemon,
+                                         DltDaemonLocal *daemon_local,
+                                         DltMessageV2 *msg,
+                                         int verbose);
+
 /**
  * Process and generate response to received set default log level control message
  * @param sock connection handle used for sending response
@@ -416,6 +504,22 @@ void dlt_daemon_control_set_default_log_level(int sock,
                                               DltDaemonLocal *daemon_local,
                                               DltMessage *msg,
                                               int verbose);
+
+/**
+ * Process and generate response to received set default log level control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_default_log_level_v2(int sock,
+                                              DltDaemon *daemon,
+                                              DltDaemonLocal *daemon_local,
+                                              DltMessageV2 *msg,
+                                              int verbose);
+
 /**
  * Process and generate response to received set all log level control message
  * @param sock connection handle used for sending response
@@ -431,6 +535,21 @@ void dlt_daemon_control_set_all_log_level(int sock,
                                           int verbose);
 
 /**
+ * Process and generate response to received set all log level control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_all_log_level_v2(int sock,
+                                          DltDaemon *daemon,
+                                          DltDaemonLocal *daemon_local,
+                                          DltMessageV2 *msg,
+                                          int verbose);
+
+/**
  * Process and generate response to received set default trace status control message
  * @param sock connection handle used for sending response
  * @param daemon pointer to dlt daemon structure
@@ -443,6 +562,22 @@ void dlt_daemon_control_set_default_trace_status(int sock,
                                                  DltDaemonLocal *daemon_local,
                                                  DltMessage *msg,
                                                  int verbose);
+
+/**
+ * Process and generate response to received set default trace status control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_default_trace_status_v2(int sock,
+                                                 DltDaemon *daemon,
+                                                 DltDaemonLocal *daemon_local,
+                                                 DltMessageV2 *msg,
+                                                 int verbose);
+
 /**
  * Process and generate response to received set all trace status control message
  * @param sock connection handle used for sending response
@@ -456,6 +591,22 @@ void dlt_daemon_control_set_all_trace_status(int sock,
                                              DltDaemonLocal *daemon_local,
                                              DltMessage *msg,
                                              int verbose);
+
+/**
+ * Process and generate response to received set all trace status control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message DLT version 2
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_all_trace_status_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose);
+
 /**
  * Process and generate response to set timing packets control message
  * @param sock connection handle used for sending response
@@ -469,6 +620,22 @@ void dlt_daemon_control_set_timing_packets(int sock,
                                            DltDaemonLocal *daemon_local,
                                            DltMessage *msg,
                                            int verbose);
+
+/**
+ * Process and generate response to set timing packets control message
+ * for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_set_timing_packets_v2(int sock,
+                                           DltDaemon *daemon,
+                                           DltDaemonLocal *daemon_local,
+                                           DltMessageV2 *msg,
+                                           int verbose);
+
 /**
  * Send time control message
  * @param sock connection handle used for sending response
@@ -505,6 +672,22 @@ void dlt_daemon_control_passive_node_connect(int sock,
                                              DltDaemonLocal *daemon_local,
                                              DltMessage *msg,
                                              int verbose);
+
+/**
+ * Process and generate response to received passive node connect control
+ * message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param msg pointer to received control message
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect_v2(int sock,
+                                             DltDaemon *daemon,
+                                             DltDaemonLocal *daemon_local,
+                                             DltMessageV2 *msg,
+                                             int verbose);
+
 /**
  * Process and generate response to received passive node connection status
  * control message
@@ -514,6 +697,19 @@ void dlt_daemon_control_passive_node_connect(int sock,
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_passive_node_connect_status(int sock,
+                                                    DltDaemon *daemon,
+                                                    DltDaemonLocal *daemon_local,
+                                                    int verbose);
+
+/**
+ * Process and generate response to received passive node connection status
+ * control message for DLT V2
+ * @param sock connection handle used for sending response
+ * @param daemon pointer to dlt daemon structure
+ * @param daemon_local pointer to dlt daemon local structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_passive_node_connect_status_v2(int sock,
                                                     DltDaemon *daemon,
                                                     DltDaemonLocal *daemon_local,
                                                     int verbose);

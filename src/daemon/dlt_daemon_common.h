@@ -126,6 +126,18 @@ typedef struct
     char ctid[DLT_ID_SIZE];    /**< Context id for which the settings are valid, empty if valid for all ap ids  */
     DltLogLevelType log_level; /**< Log level to use */
 } DltDaemonContextLogSettings;
+
+/*
+ * The parameter of level per app and context id settings for DLT Daemon V2
+ */
+typedef struct
+{
+    uint8_t apid2len;               /**< length of application id */
+    char *apid;                     /**< Application id for which the settings are valid */
+    uint8_t ctid2len;               /**< length of context id */
+    char *ctid;                     /**< Context id for which the settings are valid, empty if valid for all ap ids  */
+    DltLogLevelType log_level;      /**< Log level to use */
+} DltDaemonContextLogSettingsV2;
 #endif
 
 /**
@@ -311,6 +323,16 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list_v2(DltDaemon *daemon,
 DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
     const DltDaemon *daemon, const char *apid, const char *ctid);
 
+/**
+ * Find configuration for app/ctx id specific log settings configuration
+ * for DLT V2
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings_v2(
+    const DltDaemon *daemon, const char *apid, const char *ctid);
 
 /**
  * Find configured log levels in a given DltDaemonApplication for the passed context id.
@@ -472,6 +494,17 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
  * @return negative value if there was an error
  */
 int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * Save applications from internal context management to file
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Invalidate all applications fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
@@ -484,6 +517,18 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
                                           char *ecu,
                                           int fd,
                                           int verbose);
+/**
+ * Invalidate all applications fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these applications running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
+                                             char *ecu,
+                                             int fd,
+                                             int verbose);
 /**
  * Clear all applications in internal application management of specific ecu
  * @param daemon pointer to dlt daemon structure
@@ -624,6 +669,18 @@ int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,
                                       int fd,
                                       int verbose);
 /**
+ * Invalidate all contexts fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these contexts running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_invalidate_fd_v2(DltDaemon *daemon,
+                                         char *ecu,
+                                         int fd,
+                                         int verbose);
+/**
  * Clear all contexts in internal context management of specific ecu
  * @param daemon pointer to dlt daemon structure
  * @param ecu pointer to ecu id of node to clear contexts
@@ -647,6 +704,16 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
  * @return negative value if there was an error
  */
 int dlt_daemon_contexts_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * Save contexts from internal context management to file for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Load persistant configuration
  * @param daemon pointer to dlt daemon structure
@@ -723,6 +790,14 @@ int dlt_daemon_user_send_trace_load_config(DltDaemon *daemon, DltDaemonApplicati
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
 
 /**
+ * Send user messages to all user applications using default context, or trace status
+ * to update those values for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_default_update_v2(DltDaemon *daemon, int verbose);
+
+/**
  * Send user messages to all user applications context to update with the new log level
  * @param daemon pointer to dlt daemon structure
  * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
@@ -737,12 +812,36 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
                                                int verbose);
 
 /**
+ * Send user messages to all user applications context to update with the new log level
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
+ * @param context_log_level the log level of the context
+ * @param log_level new log level to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_level_update_v2(DltDaemon *daemon,
+                                               int enforce_context_ll_and_ts,
+                                               int8_t context_log_level,
+                                               int8_t log_level,
+                                               int verbose);
+
+/**
  * Send user messages to all user applications context to update with the new trace status
  * @param daemon pointer to dlt daemon structure
  * @param trace_status new trace status to be set
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose);
+
+/**
+ * Send user messages to all user applications context to update with the new trace status
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param trace_status new trace status to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_trace_status_update_v2(DltDaemon *daemon, int8_t trace_status, int verbose);
 
 /**
  * Send user messages to all user applications the log status
@@ -772,6 +871,24 @@ void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose);
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
+                                                 const char *filename,
+                                                 const char *filename1,
+                                                 int InitialContextLogLevel,
+                                                 int InitialContextTraceStatus,
+                                                 int InitialEnforceLlTsStatus,
+                                                 int verbose);
+
+/**
+ * Process reset to factory default control message for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file containing the runtime defaults for applications
+ * @param filename1 name of file containing the runtime defaults for contexts
+ * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
+ * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param InitialEnforceLlTsStatus force default log-level
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_reset_to_factory_default_v2(DltDaemon *daemon,
                                                  const char *filename,
                                                  const char *filename1,
                                                  int InitialContextLogLevel,
