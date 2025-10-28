@@ -148,6 +148,24 @@ int dlt_gateway_forward_control_message(DltGateway *g,
                                         int verbose);
 
 /**
+ * Forward control messages to the specified passive node DLT Daemon.
+ *
+ * @param g            DltGateway
+ * @param daemon_local DltDaemonLocal
+ * @param msg          DltMessage version 2
+ * @param eculen       Length of the passive node identifier
+ * @param ecu          Identifier of the passive node
+ * @param verbose      verbose flag
+ * @return 0 on success, -1 otherwise
+ */
+int dlt_gateway_forward_control_message_v2(DltGateway *g,
+                                        DltDaemonLocal *daemon_local,
+                                        DltMessageV2 *msg,
+                                        uint8_t eculen,
+                                        char *ecu,
+                                        int verbose);
+
+/**
  * Process on demand connect/disconnect of passive nodes
  *
  * @param g                 DltGateway

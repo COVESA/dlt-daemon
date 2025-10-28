@@ -2949,6 +2949,142 @@ void dlt_daemon_control_callsw_cinjection(int sock,
     }
 }
 
+void dlt_daemon_control_callsw_cinjection_v2(int sock,
+                                          DltDaemon *daemon,
+                                          DltDaemonLocal *daemon_local,
+                                          DltMessageV2 *msg,
+                                          int verbose)
+{
+    uint8_t apidlen = 0, ctidlen = 0;
+    char *apid = NULL;
+    char *ctid = NULL;
+    uint32_t id = 0, id_tmp = 0;
+    uint8_t *ptr;
+    DltDaemonContext *context;
+    uint32_t data_length_inject = 0;
+    uint32_t data_length_inject_tmp = 0;
+
+    int32_t datalength;
+
+    DltUserHeader userheader;
+    DltUserControlMsgInjection usercontext;
+    uint8_t *userbuffer;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon_local == NULL) || (msg == NULL) || (msg->databuffer == NULL))
+        return;
+
+    datalength = (int32_t) msg->datasize;
+    ptr = msg->databuffer;
+
+    DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t); /* Get service id */
+    // id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
+    //TBD: Review endianness for V2, id extraction
+    id = DLT_ENDIAN_GET_32(msg->baseheaderv2->htyp2, id_tmp);
+
+    /* injectionMode is disabled */
+    if (daemon_local->flags.injectionMode == 0) {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_PERM_DENIED, verbose);
+        return;
+    }
+
+    /* id is always less than DLT_DAEMON_INJECTION_MAX since its type is uinit32_t */
+    if (id >= DLT_DAEMON_INJECTION_MIN) {
+        /* This a a real SW-C injection call */
+        data_length_inject = 0;
+        data_length_inject_tmp = 0;
+
+        DLT_MSG_READ_VALUE(data_length_inject_tmp, ptr, datalength, uint32_t); /* Get data length */
+        data_length_inject = DLT_ENDIAN_GET_32(msg->baseheaderv2->htyp2, data_length_inject_tmp);
+
+        /* Get context handle for apid, ctid (and seid) */
+        /* Warning: seid is ignored in this implementation! */
+        //TBD: Review EH(htyp2) vs UEH(htyp)
+        if (DLT_IS_HTYP2_EH(msg->baseheaderv2->htyp2)) {
+            //TBD: Check if apidlen and ctidlen are fetched properly in runtime
+            apidlen = msg->extendedheaderv2.apidlen;
+            dlt_set_id_v2(&apid, msg->extendedheaderv2.apid, msg->extendedheaderv2.apidlen);
+            ctidlen = msg->extendedheaderv2.ctidlen;
+            dlt_set_id_v2(&ctid, msg->extendedheaderv2.ctid, msg->extendedheaderv2.ctidlen);
+        }
+        else {
+            /* No extended header, and therefore no apid and ctid available */
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        /* At this point, apid and ctid is available */
+        context = dlt_daemon_context_find_v2(daemon,
+                                          apidlen,
+                                          apid,
+                                          ctidlen,
+                                          ctid,
+                                          daemon->ecuid2len,
+                                          daemon->ecuid2,
+                                          verbose);
+
+        if (context == 0) {
+            /* dlt_log(LOG_INFO,"No context found!\n"); */
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        /* Send user message to handle, specified in context */
+        if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_INJECTION) < DLT_RETURN_OK) {
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        usercontext.log_level_pos = context->log_level_pos;
+
+        if (data_length_inject > (uint32_t) msg->databuffersize) {
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        userbuffer = malloc(data_length_inject);
+
+        if (userbuffer == 0) {
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+            return;
+        }
+
+        usercontext.data_length_inject = (uint32_t) data_length_inject;
+        usercontext.service_id = id;
+
+        memcpy(userbuffer, ptr, (size_t) data_length_inject);  /* Copy received injection to send buffer */
+
+        /* write to FIFO */
+        DltReturnValue ret =
+            dlt_user_log_out3_with_timeout(context->user_handle, &(userheader), sizeof(DltUserHeader),
+                              &(usercontext), sizeof(DltUserControlMsgInjection),
+                              userbuffer, (size_t) data_length_inject);
+
+        if (ret < DLT_RETURN_OK) {
+            if (ret == DLT_RETURN_PIPE_ERROR) {
+                /* Close connection */
+                close(context->user_handle);
+                context->user_handle = DLT_FD_INIT;
+            }
+
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+        }
+        else {
+            dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+        }
+
+        free(userbuffer);
+        userbuffer = 0;
+
+    }
+    else {
+        /* Invalid ID */
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_NOT_SUPPORTED,
+                                            verbose);
+    }
+}
+
 void dlt_daemon_send_log_level(int sock,
                                DltDaemon *daemon,
                                DltDaemonLocal *daemon_local,

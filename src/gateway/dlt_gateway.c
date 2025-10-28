@@ -1608,6 +1608,89 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     return DLT_RETURN_OK;
 }
 
+int dlt_gateway_forward_control_message_v2(DltGateway *gateway,
+                                        DltDaemonLocal *daemon_local,
+                                        DltMessageV2 *msg,
+                                        uint8_t eculen,
+                                        char *ecu,
+                                        int verbose)
+{
+    int i = 0;
+    int ret = 0;
+    DltGatewayConnection *con = NULL;
+    uint32_t id_tmp;
+    uint32_t id;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((gateway == NULL) || (daemon_local == NULL) || (msg == NULL) || (ecu == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    for (i = 0; i < gateway->num_connections; i++)
+        if (strncmp(gateway->connections[i].ecuid2,
+                    ecu,
+                    eculen) == 0) {
+            con = &gateway->connections[i];
+            break;
+        }
+
+
+
+    if (con == NULL) {
+        dlt_log(LOG_WARNING, "Unknown passive node identifier\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if (con->status != DLT_GATEWAY_CONNECTED) {
+        dlt_log(LOG_INFO, "Passive node is not connected\n");
+        return DLT_RETURN_ERROR;
+    }
+
+    if (con->send_serial) { /* send serial header */
+        ret = send(con->client.sock,
+                   (void *)dltSerialHeader,
+                   sizeof(dltSerialHeader),
+                   0);
+
+        if (ret == -1) {
+            dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    //TBD: Review if storage header needs to be sent for v2
+    //TBD: Review msg->storageheadersizev2 or need to calculate size
+    ret = send(con->client.sock,
+               msg->headerbufferv2 + msg->storageheadersizev2,
+               msg->headersizev2 - msg->storageheadersizev2,
+               0);
+
+    if (ret == -1) {
+        dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+        return DLT_RETURN_ERROR;
+    }
+    else {
+        ret = send(con->client.sock, msg->databuffer, msg->datasize, 0);
+
+        if (ret == -1) {
+            dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    id_tmp = *((uint32_t *)(msg->databuffer));
+    //TBD: Review id extraction for v2
+    id = DLT_ENDIAN_GET_32(msg->baseheaderv2->htyp2, id_tmp);
+
+    //TBD: Review check if dlt_get_service_name_v2 is needed
+    dlt_vlog(LOG_INFO,
+             "Control message forwarded : %s\n",
+             dlt_get_service_name(id));
+    return DLT_RETURN_OK;
+}
+
 int dlt_gateway_process_on_demand_request(DltGateway *gateway,
                                           DltDaemonLocal *daemon_local,
                                           char node_id[DLT_ID_SIZE],
