@@ -679,6 +679,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
         return -1;
 
     memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2);
+
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
         (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
 

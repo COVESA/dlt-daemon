@@ -817,7 +817,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     datalength =(int32_t) message->datasize;
 
     DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
-    id = DLT_BETOH_32(uint32_tmp);
+    id = uint32_tmp;   
 
     if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY) &&
         (id == req_header->service_id)) {
@@ -833,6 +833,20 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                                           message->extendedheaderv2.ecid);
                 else
                     dlt_set_storageheader_v2(&(message->storageheaderv2), 4, "LCTL");
+                message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
+
+                /* Add Storage Header to Header Buffer and update header size*/
+                uint8_t temp_buffer[message->headersizev2];
+                memcpy(temp_buffer, message->headerbufferv2, message->headersizev2);
+                free(message->headerbufferv2);
+                message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+
+                message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
+
+                if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
+                    return -1;
+
+                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2);
 
                 /* get response data */
                 ret = dlt_message_header_v2(message, resp_text,

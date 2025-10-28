@@ -3000,6 +3000,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
 {
     int bytes_to_be_removed = 0;
     int must_close_socket = -1;
+    uint8_t dlt_version;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -3020,39 +3021,75 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
         return -1;
     }
 
-    /* Process all received messages */
-    while (dlt_message_read(&(daemon_local->msg),
-                            (uint8_t *)receiver->buf,
-                            (unsigned int) receiver->bytesRcvd,
-                            daemon_local->flags.nflag,
-                            daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-        /* Check for control message */
-        if ((0 < receiver->fd) &&
-            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
-            dlt_daemon_client_process_control(receiver->fd,
-                                              daemon,
-                                              daemon_local,
-                                              &(daemon_local->msg),
-                                              daemon_local->flags.vflag);
+    uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
+    dlt_version = (firstByteWithVersion >> 5) & (0x07);
 
-        uint8_t dlt_version = (uint8_t)receiver->buf[3];
+    if(dlt_version == DLT_VERSION2) {
+        /* Process all received messages */
+        while (dlt_message_read_v2(&(daemon_local->msgv2),
+                                   (uint8_t *)receiver->buf,
+                                   (unsigned int) receiver->bytesRcvd,
+                                   daemon_local->flags.nflag,
+                                   daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
-        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-            daemon_local->msg.datasize -
-            sizeof(DltStorageHeader));
+            /* Check for control message */
+            if ((0 < receiver->fd) &&
+                DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
+                dlt_daemon_client_process_control_v2(receiver->fd,
+                                                     daemon,
+                                                     daemon_local,
+                                                     &(daemon_local->msgv2),
+                                                     daemon_local->flags.vflag);
+                printf("Debug loc reached here##\n");
+            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
+                daemon_local->msgv2.datasize);
 
-        if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+            if (daemon_local->msg.found_serialheader)
+                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
 
-        if (daemon_local->msg.resync_offset)
-            bytes_to_be_removed += daemon_local->msg.resync_offset;
+            if (daemon_local->msg.resync_offset)
+                bytes_to_be_removed += daemon_local->msg.resync_offset;
 
-        if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-            dlt_log(LOG_WARNING,
-                    "Can't remove bytes from receiver for sockets\n");
-            return -1;
-        }
-    } /* while */
+            if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
+                dlt_log(LOG_WARNING,
+                        "Can't remove bytes from receiver for sockets\n");
+                return -1;
+            }
+        } /* while */
+    }else if (dlt_version == DLT_VERSION1) { // DLT Version 1
+        /* Process all received messages */
+        while (dlt_message_read(&(daemon_local->msg),
+                                (uint8_t *)receiver->buf,
+                                (unsigned int) receiver->bytesRcvd,
+                                daemon_local->flags.nflag,
+                                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+
+            /* Check for control message */
+            if ((0 < receiver->fd) &&
+                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
+                dlt_daemon_client_process_control(receiver->fd,
+                                                daemon,
+                                                daemon_local,
+                                                &(daemon_local->msg),
+                                                daemon_local->flags.vflag);
+
+            bytes_to_be_removed = (int) (daemon_local->msg.headersize +
+                daemon_local->msg.datasize -
+                sizeof(DltStorageHeader));
+
+            if (daemon_local->msg.found_serialheader)
+                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+
+            if (daemon_local->msg.resync_offset)
+                bytes_to_be_removed += daemon_local->msg.resync_offset;
+
+            if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
+                dlt_log(LOG_WARNING,
+                        "Can't remove bytes from receiver for sockets\n");
+                return -1;
+            }
+        } /* while */
+    }
 
     if (dlt_receiver_move_to_begin(receiver) == -1) {
         dlt_log(LOG_WARNING,
@@ -3062,13 +3099,12 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
 
     if (must_close_socket == 0)
         /* FIXME: Why the hell do we need to close the socket
-         * on control message reception ??
-         */
+        * on control message reception ??
+        */
         dlt_daemon_close_socket(receiver->fd,
                                 daemon,
                                 daemon_local,
                                 verbose);
-
     return 0;
 }
 
@@ -3541,8 +3577,6 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     return -1;
                 }
             }
-
-            printf("V1 Userheader mtype: %u\n", userheader->message);
 
             if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
                 func = dlt_daemon_process_user_message_not_sup;
@@ -4219,7 +4253,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             offset = 0;
             //TBD
 
-            dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
+            //dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
             dlt_message_free_v2(&msg, verbose);
         }
 

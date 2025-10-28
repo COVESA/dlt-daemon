@@ -561,8 +561,8 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
         {
             /* Call callback function */
             if (message_callback_function)
-                (*message_callback_function)(&msg, data);
-
+               (*message_callback_function)(&msg, data);
+  
             if (msg.found_serialheader) {
                 if (dlt_receiver_remove(&(client->receiver),
                                         (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader) +
@@ -618,48 +618,17 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
 
             return DLT_RETURN_TRUE;
         }
-        // printf("HEX: ");
-        // for(int i = 0; i<client->receiver.bytesRcvd; i++){
-        //     printf("%x ", (uint8_t)client->receiver.buf[i]);
-        // }
-        // printf("\n");
-        // printf("ASCII: ");
-        // for (int j = 0; j < client->receiver.bytesRcvd; j++){
-        //     if (client->receiver.buf[j] > 48 && client->receiver.buf[j] < 122) {
-        //         printf("%c", client->receiver.buf[j]);
-        //     }
-        //     else {
-        //         printf(" 0x%02X", (uint8_t)(client->receiver.buf[j]));
-        //     }
-        // }
-
-        // printf("receiver.bytesRcvd %d\n", client->receiver.bytesRcvd);
-        // printf("receiver.resync %d\n", client->resync_serial_header);        
+       
         while (dlt_message_read_v2(&msg, (unsigned char *)(client->receiver.buf),
                                 client->receiver.bytesRcvd,
                                 client->resync_serial_header,
                                 verbose) == DLT_MESSAGE_ERROR_OK)
-        {
-            // printf("message details: header type 2: %x\n", msg.baseheaderv2->htyp2);
-            // printf("message details: mcnt: %x\n", msg.baseheaderv2->mcnt);
-            // printf("message details: len: %x\n", msg.baseheaderv2->len);
-            // printf("message details: msin: %x\n", msg.headerextrav2.msin);
-            // printf("message details: ecuid: %s\n", msg.extendedheaderv2.ecid); 
-            // printf("message details: appid: %s\n", msg.extendedheaderv2.apid); 
-            // printf("message details: ctxid: %s\n", msg.extendedheaderv2.ctid);   
-            // printf("message details: filename: %s\n", msg.extendedheaderv2.fina);   
-            // printf("message details: tag1: %s\n", msg.extendedheaderv2.tag[0].tagname);
-            // printf("message details: tag2: %s\n", msg.extendedheaderv2.tag[1].tagname);  
-            // printf("message details: tag3: %s\n", msg.extendedheaderv2.tag[2].tagname); 
-            // printf("message details: headersize: %d\n", msg.headersizev2);  
-            // printf("message details: baseheadersize: %d\n", msg.baseheadersizev2);   
-            // printf("message details: baseheaderextrasize: %d\n", msg.baseheaderextrasizev2); 
-            // printf("message details: extendedheadersize: %d\n", msg.extendedheadersizev2);                           
+        {                          
             /* Call callback function */
             if (message_callback_function_v2) {
-                (*message_callback_function_v2)(&msg, data);
+                (*message_callback_function_v2)(&msg, data);  
             }
- 
+
             if (msg.found_serialheader) {
                 if (dlt_receiver_remove(&(client->receiver),
                                         (int) (msg.headersizev2 + msg.datasize - msg.storageheadersizev2 +
@@ -972,13 +941,13 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
     /* copy data */
     memcpy(msg.databuffer, payload, size);
 
-    if (apid == NULL){
+    if (strcmp(apid, "") == 0){
         appidlen = strlen(DLT_CLIENT_DUMMY_APP_ID);
     }else {
         appidlen = strlen(apid);
     }
 
-    if (ctid == NULL){
+    if (strcmp(ctid, "") == 0){
         ctxidlen = strlen(DLT_CLIENT_DUMMY_CON_ID);
     }else {
         ctxidlen = strlen(ctid);
@@ -1083,13 +1052,13 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.apidlen = appidlen;
-        if (apid == NULL){
+        if (strcmp(apid, "") == 0){
             dlt_set_id_v2(&(msg.extendedheaderv2.apid), DLT_CLIENT_DUMMY_APP_ID, msg.extendedheaderv2.apidlen);
         }else {
             dlt_set_id_v2(&(msg.extendedheaderv2.apid), apid, msg.extendedheaderv2.apidlen);
         }
         msg.extendedheaderv2.ctidlen = ctxidlen;
-        if (ctid == NULL){
+        if (strcmp(ctid, "") == 0){
             dlt_set_id_v2(&(msg.extendedheaderv2.ctid), DLT_CLIENT_DUMMY_CON_ID, msg.extendedheaderv2.ctidlen);
         }else {
             dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctid, msg.extendedheaderv2.ctidlen);
@@ -1110,8 +1079,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         dlt_message_free_v2(&msg, 0);
         return DLT_RETURN_ERROR;
     }
-
-    msg.baseheaderv2->len = DLT_HTOBE_16(len);
+    msg.baseheaderv2->len = (uint16_t)len;
 
     /* Send data (without storage header) */
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
@@ -1378,22 +1346,22 @@ DltReturnValue dlt_client_get_log_info_v2(DltClient *client)
     if (buffer == NULL)
         return ret;
 
-    memcpy(buffer, &(req.service_id), 4);
+    memcpy(buffer + offset, &(req.service_id), 4);
     offset = offset + 4;
-    memcpy(buffer, &(req.options), 1);
+    memcpy(buffer + offset, &(req.options), 1);
     offset = offset + 1;
-    memcpy(buffer, &(req.apidlen), 1);
+    memcpy(buffer + offset, &(req.apidlen), 1);
     offset = offset + 1;
     // Since App Id is null, not copying it into buffer
-    memcpy(buffer, &(req.ctidlen), 1);
+    memcpy(buffer + offset, &(req.ctidlen), 1);
     offset = offset + 1;
     // Since Context Id is null, not copying it into buffer
-    memcpy(buffer, req.com, 4);
+    memcpy(buffer + offset, req.com, 4);
 
     /* send control message to daemon*/
-    ret = dlt_client_send_ctrl_msg(client,
-                                   NULL,
-                                   NULL,
+    ret = dlt_client_send_ctrl_msg_v2(client,
+                                   "",
+                                   "",
                                    (uint8_t *)buffer,
                                    buffersize);
 
