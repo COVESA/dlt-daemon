@@ -1,0 +1,67 @@
+name: 'Daily Perf Improver Build Steps'
+description: 'Build steps for DLT daemon performance development work'
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        echo "=== Installing build dependencies ===" | tee -a build-steps.log
+        sudo apt-get update 2>&1 | tee -a build-steps.log
+        sudo apt-get install -y \
+          cmake \
+          zlib1g-dev \
+          libdbus-glib-1-dev \
+          build-essential \
+          linux-tools-common \
+          linux-tools-generic \
+          valgrind \
+          ccache 2>&1 | tee -a build-steps.log
+        echo "=== Dependencies installed ===" | tee -a build-steps.log
+
+    - name: Prepare submodules
+      shell: bash
+      run: |
+        echo "=== Initializing git submodules ===" | tee -a build-steps.log
+        git submodule init 2>&1 | tee -a build-steps.log
+        git submodule update 2>&1 | tee -a build-steps.log
+        echo "=== Submodules ready ===" | tee -a build-steps.log
+
+    - name: Configure build for performance testing
+      shell: bash
+      run: |
+        echo "=== Configuring CMake for performance testing ===" | tee -a build-steps.log
+        mkdir -p build-perf
+        cd build-perf
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DWITH_DLT_TESTS=ON \
+              -DWITH_DLT_EXAMPLES=ON \
+              -DWITH_GPROF=OFF \
+              .. 2>&1 | tee -a ../build-steps.log
+        echo "=== CMake configuration complete ===" | tee -a ../build-steps.log
+
+    - name: Build DLT daemon and tests
+      shell: bash
+      run: |
+        echo "=== Building DLT daemon (Release mode) ===" | tee -a build-steps.log
+        cd build-perf
+        make -j$(nproc) 2>&1 | tee -a ../build-steps.log
+        echo "=== Build complete ===" | tee -a ../build-steps.log
+
+    - name: Verify test binaries exist
+      shell: bash
+      run: |
+        echo "=== Verifying test binaries ===" | tee -a build-steps.log
+        cd build-perf
+        ls -lh src/tests/dlt-test-stress-user 2>&1 | tee -a ../build-steps.log || echo "dlt-test-stress-user not found" | tee -a ../build-steps.log
+        ls -lh src/tests/dlt-test-stress 2>&1 | tee -a ../build-steps.log || echo "dlt-test-stress not found" | tee -a ../build-steps.log
+        ls -lh src/tests/dlt-test-multi-process 2>&1 | tee -a ../build-steps.log || echo "dlt-test-multi-process not found" | tee -a ../build-steps.log
+        echo "=== Verification complete ===" | tee -a ../build-steps.log
+
+    - name: Setup complete
+      shell: bash
+      run: |
+        echo "=== Build steps completed successfully ===" | tee -a build-steps.log
+        echo "The repository is now ready for performance testing and benchmarking." | tee -a build-steps.log
+        echo "Build directory: build-perf/" | tee -a build-steps.log
+        echo "Test binaries location: build-perf/src/tests/" | tee -a build-steps.log
