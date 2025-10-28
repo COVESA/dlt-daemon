@@ -3430,13 +3430,12 @@ void dlt_daemon_find_multiple_context_and_send_trace_status_v2(int sock,
     for (count = 0; count < user_list->num_contexts; count++) {
         context = &(user_list->contexts[count]);
 
-        //TBD: Review src_str allocation and free
         if (context) {
             if (app_flag == 1)
                 strncpy(src_str, context->apid2, context->apid2len);
             else
                 strncpy(src_str, context->ctid2, context->ctid2len);
-
+            //TBD: Review src_str warning: argument 1 null where non-null expected
             ret = strncmp(src_str, str, len);
 
             if (ret == 0)
@@ -3759,6 +3758,47 @@ void dlt_daemon_control_set_all_log_level(int sock,
     }
     else {
         dlt_daemon_control_service_response(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
+    }
+}
+
+void dlt_daemon_control_set_all_log_level_v2(int sock,
+                                          DltDaemon *daemon,
+                                          DltDaemonLocal *daemon_local,
+                                          DltMessageV2 *msg,
+                                          int verbose)
+{
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    DltServiceSetDefaultLogLevel *req = NULL;
+    uint32_t id = DLT_SERVICE_ID_SET_ALL_LOG_LEVEL;
+    int8_t loglevel = 0;
+
+    if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
+        return;
+    }
+
+    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetDefaultLogLevel)) < 0)
+        return;
+
+    req = (DltServiceSetDefaultLogLevel *)(msg->databuffer);
+
+    /* No endianess conversion necessary */
+    if ((req != NULL) && ((req->log_level <= DLT_LOG_VERBOSE) || (req->log_level == (uint8_t)DLT_LOG_DEFAULT))) {
+        loglevel = (int8_t) req->log_level;
+
+        /* Send Update to all contexts using the new log level */
+        dlt_daemon_user_send_all_log_level_update_v2(
+            daemon,
+            daemon_local->flags.enforceContextLLAndTS,
+            (int8_t)daemon_local->flags.contextLogLevel,
+            loglevel,
+            verbose);
+
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_OK, verbose);
+    }
+    else {
+        dlt_daemon_control_service_response_v2(sock, daemon, daemon_local, id, DLT_SERVICE_RESPONSE_ERROR, verbose);
     }
 }
 

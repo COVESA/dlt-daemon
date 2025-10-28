@@ -126,6 +126,18 @@ typedef struct
     char ctid[DLT_ID_SIZE];    /**< Context id for which the settings are valid, empty if valid for all ap ids  */
     DltLogLevelType log_level; /**< Log level to use */
 } DltDaemonContextLogSettings;
+
+/*
+ * The parameter of level per app and context id settings for DLT Daemon V2
+ */
+typedef struct
+{
+    uint8_t apid2len;               /**< length of application id */
+    char *apid;                     /**< Application id for which the settings are valid */
+    uint8_t ctid2len;               /**< length of context id */
+    char *ctid;                     /**< Context id for which the settings are valid, empty if valid for all ap ids  */
+    DltLogLevelType log_level;      /**< Log level to use */
+} DltDaemonContextLogSettingsV2;
 #endif
 
 /**
@@ -311,6 +323,16 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list_v2(DltDaemon *daemon,
 DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
     const DltDaemon *daemon, const char *apid, const char *ctid);
 
+/**
+ * Find configuration for app/ctx id specific log settings configuration
+ * for DLT V2
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings_v2(
+    const DltDaemon *daemon, const char *apid, const char *ctid);
 
 /**
  * Find configured log levels in a given DltDaemonApplication for the passed context id.
@@ -763,6 +785,21 @@ void dlt_daemon_user_send_default_update_v2(DltDaemon *daemon, int verbose);
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
+                                               int enforce_context_ll_and_ts,
+                                               int8_t context_log_level,
+                                               int8_t log_level,
+                                               int verbose);
+
+/**
+ * Send user messages to all user applications context to update with the new log level
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
+ * @param context_log_level the log level of the context
+ * @param log_level new log level to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_level_update_v2(DltDaemon *daemon,
                                                int enforce_context_ll_and_ts,
                                                int8_t context_log_level,
                                                int8_t log_level,

@@ -267,6 +267,44 @@ DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
 }
 
 /**
+ * Find configuration for app/ctx id specific log settings configuration
+ * for DLT V2
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettingsV2 *dlt_daemon_find_configured_app_id_ctx_id_settings_v2(
+    const DltDaemon *daemon, const char *apid, const char *ctid) {
+    DltDaemonContextLogSettingsV2 *app_id_settings = NULL;
+    for (int i = 0; i < daemon->num_app_id_log_level_settings; ++i) {
+        DltDaemonContextLogSettingsV2 *settings = &daemon->app_id_log_level_settings[i];
+        //TBD: Check settings->apid, settings->apid2len in runtime
+        if (strncmp(apid, settings->apid, settings->apidlen) != 0) {
+            if (app_id_settings != NULL)
+                return app_id_settings;
+            continue;
+        }
+
+        if (strlen(settings->ctid) == 0) {
+            app_id_settings = settings;
+        }
+
+        if (ctid == NULL || strlen(ctid) == 0) {
+            if (app_id_settings != NULL) {
+                return app_id_settings;
+            }
+        } else {
+            if (strncmp(ctid, settings->ctid, settings->ctidlen) == 0) {
+                return settings;
+            }
+        }
+    }
+
+    return app_id_settings;
+}
+
+/**
  * Find configured log levels in a given DltDaemonApplication for the passed context id.
  * @param app The application settings which contain the previously loaded ap id settings
  * @param ctid The context id to find.
@@ -2865,6 +2903,63 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
                 }
 
                 if (dlt_daemon_user_send_log_level(daemon,
+                                                   context,
+                                                   verbose) == -1)
+                    dlt_vlog(LOG_WARNING,
+                             "Cannot send log level %.4s:%.4s -> %i\n",
+                             context->apid,
+                             context->ctid,
+                             context->log_level);
+            }
+        }
+    }
+}
+
+void dlt_daemon_user_send_all_log_level_update_v2(DltDaemon *daemon,
+                                               int enforce_context_ll_and_ts,
+                                               int8_t context_log_level,
+                                               int8_t log_level,
+                                               int verbose)
+{
+    int32_t count = 0;
+    DltDaemonContext *context = NULL;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (daemon == NULL)
+        return;
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
+
+    if (user_list == NULL)
+        return;
+
+    for (count = 0; count < user_list->num_contexts; count++) {
+        context = &(user_list->contexts[count]);
+
+        if (context) {
+            if (context->user_handle >= DLT_FD_MINIMUM) {
+                context->log_level = log_level;
+
+                if (enforce_context_ll_and_ts) {
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                    //TBD: Check if function params require apid/ctid lengths
+                    DltDaemonContextLogSettingsV2 *settings =
+                        dlt_daemon_find_configured_app_id_ctx_id_settings_v2(
+                            daemon, context->apid, context->ctid);
+                    if (settings != NULL) {
+                        if (log_level > settings->log_level) {
+                          context->log_level = settings->log_level;
+                        }
+                    } else
+#endif
+                    if (log_level > context_log_level) {
+                        context->log_level = (int8_t)context_log_level;
+                    }
+                }
+
+                if (dlt_daemon_user_send_log_level_v2(daemon,
                                                    context,
                                                    verbose) == -1)
                     dlt_vlog(LOG_WARNING,
