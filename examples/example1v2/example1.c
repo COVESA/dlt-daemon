@@ -54,17 +54,17 @@ int main()
 {
     struct timespec ts;
 
-    DLT_REGISTER_APP("EXA1", "First Example");
+    DLT_REGISTER_APP_V2("EXA1", "First Example");
 
-    DLT_REGISTER_CONTEXT(con_exa1, "CON", "First context");
+    DLT_REGISTER_CONTEXT_V2(con_exa1, "CON", "First context");
 
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("Hello world!"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("Hello world!"));
 
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     nanosleep(&ts, NULL);
 
-    DLT_UNREGISTER_CONTEXT(con_exa1);
+    DLT_UNREGISTER_CONTEXT_V2(con_exa1);
 
-    DLT_UNREGISTER_APP();
+    DLT_UNREGISTER_APP_V2();
 }

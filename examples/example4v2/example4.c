@@ -56,52 +56,52 @@ int main()
     int num;
     struct timespec ts;
 
-    DLT_REGISTER_APP("EXA4", "Fourth Example");
+    DLT_REGISTER_APP_V2("EXA4", "Fourth Example");
 
-    DLT_REGISTER_CONTEXT(con_exa1, "CON", "First context");
+    DLT_REGISTER_CONTEXT_V2(con_exa1, "CON", "First context");
 
     for (num = 0; num < 256; num++)
         buffer[num] = num;
 
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_RAW"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_RAW(buffer, 256));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_RAW"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_RAW(buffer, 256));
 
     uint8_t uint8data = 0x2a;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_UINT8"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_UINT8(uint8data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_UINT8"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_UINT8(uint8data));
 
     uint8_t hex8data = 0x1a;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX8"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_HEX8(hex8data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX8"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_HEX8(hex8data));
 
     uint16_t hex16data = 0x1ad3;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX16"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_HEX16(hex16data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX16"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_HEX16(hex16data));
 
     uint32_t hex32data = 0x1abcd3e4;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX32"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_HEX32(hex32data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX32"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_HEX32(hex32data));
 
     uint64_t hex64data = 0x17b4ddcf34eabb2a;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX64"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_HEX64(hex64data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_HEX64"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_HEX64(hex64data));
 
     uint8_t bin8data = 0xe2;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN8"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_BIN8(bin8data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN8"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_BIN8(bin8data));
     bin8data = 0x01;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN8"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_BIN8(bin8data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN8"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_BIN8(bin8data));
 
     uint16_t bin16data = 0x1234;
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN16"));
-    DLT_LOG_V2(con_exa1, DLT_LOG_INFO, DLT_BIN16(bin16data));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_STRING("DLT_BIN16"));
+    DLT_LOG(con_exa1, DLT_LOG_INFO, DLT_BIN16(bin16data));
 
     ts.tv_sec = 0;
     ts.tv_nsec = 1000000;
     nanosleep(&ts, NULL);
 
-    DLT_UNREGISTER_CONTEXT(con_exa1);
+    DLT_UNREGISTER_CONTEXT_V2(con_exa1);
 
-    DLT_UNREGISTER_APP();
+    DLT_UNREGISTER_APP_V2();
 }
