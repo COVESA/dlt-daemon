@@ -201,8 +201,6 @@
 /* DLT Version. Version is based on R19_11 and Version is based R22_11*/
 #   define DLT_VERSION1 1
 #   define DLT_VERSION2 2
-#   define DLT_VERSION_1 "1"
-#   define DLT_VERSION_2 "2"
 
 /* Initial value for file descriptor */
 #   define DLT_FD_INIT -1
@@ -1113,7 +1111,7 @@ extern pthread_rwlock_t trace_load_rw_lock;
 
 /* Precomputation  */
 static const uint64_t TIMESTAMP_BASED_WINDOW_SIZE = DLT_TRACE_LOAD_WINDOW_SIZE * DLT_TRACE_LOAD_WINDOW_RESOLUTION;
-typedef DltReturnValue (DltLogInternal)(DltLogLevelType loglevel, const char *text, const char *dlt_version, void* params);
+typedef DltReturnValue (DltLogInternal)(DltLogLevelType loglevel, const char *text, void* params);
 
 /**
  * Check if the trace load is within the limits.

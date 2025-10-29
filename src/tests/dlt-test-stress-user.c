@@ -233,7 +233,7 @@ int testall(int count, int repeat, int delay, int size)
 
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
-            if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO, DLT_VERSION_1) > 0) {
+            if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
                 dlt_user_log_write_int(&context_data, num);
                 dlt_user_log_write_raw(&context_data, buffer, size);
                 dlt_user_log_write_finish(&context_data);
