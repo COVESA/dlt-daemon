@@ -134,7 +134,7 @@ jobs:
         id: check_stop_time
         uses: actions/github-script@v8
         env:
-          GITHUB_AW_STOP_TIME: 2025-10-29 04:50:14
+          GITHUB_AW_STOP_TIME: 2025-10-31 04:50:14
           GITHUB_AW_WORKFLOW_NAME: "Daily Perf Improver"
         with:
           script: |
