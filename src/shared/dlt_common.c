@@ -1372,10 +1372,8 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlengt
     pdatalength = &datalength;
 
     /* non-verbose mode */
-
     /* print payload as hex */
     if (DLT_MSG_IS_NONVERBOSE(msg)) {
-
         DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t);
         id = DLT_ENDIAN_GET_32(msg->standardheader->htyp, id_tmp);
 
@@ -1466,6 +1464,7 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlengt
 DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t textlength, int type, int verbose)
 {
     uint32_t id = 0;
+    uint32_t id_tmp = 0;
     uint8_t retval = 0;
 
     uint8_t *ptr;
@@ -1517,8 +1516,8 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
 
     /* print payload as hex */
     if (DLT_MSG_IS_NONVERBOSE_V2(msg)) {
-
-        id = DLT_BETOH_32(msg->headerextrav2.msid);
+        // In version 2, message ID is not part of payload but stored in header conditional parameters
+        id = DLT_LETOH_32(msg->headerextrav2.msid);
 
         if (textlength < (((unsigned int)datalength * 3) + 20)) {
             dlt_vlog(LOG_WARNING,
@@ -1527,20 +1526,37 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
             return DLT_RETURN_ERROR;
         }
 
-        /* process message id / service id */
-        if (DLT_MSG_IS_CONTROL_V2(msg)) {
-            if ((id > 0) && (id < DLT_SERVICE_ID_LAST_ENTRY))
-                snprintf(text + strlen(text), textlength - strlen(text), "%s",
-                         service_id_name[id]); /* service id */
-            else if (!(DLT_MSG_IS_CONTROL_TIME_V2(msg)))
-                snprintf(text + strlen(text), textlength - strlen(text), "service(%u)", id); /* service id */
+        if (type == DLT_OUTPUT_ASCII_LIMITED) {
+            ret = dlt_print_hex_string(text + strlen(text),
+                                       (int)(textlength - strlen(
+                                                text)),
+                                                ptr,
+                                                (datalength >
+                                        DLT_COMMON_ASCII_LIMIT_MAX_CHARS ? DLT_COMMON_ASCII_LIMIT_MAX_CHARS : datalength));
 
-            if (datalength > 0)
-                snprintf(text + strlen(text), textlength - strlen(text), ", ");
+            if ((datalength > DLT_COMMON_ASCII_LIMIT_MAX_CHARS) &&
+                ((textlength - strlen(text)) > 4))
+                snprintf(text + strlen(text), textlength - strlen(text), " ...");
         }
         else {
-            snprintf(text + strlen(text), textlength - strlen(text), "%u, ", id); /* message id */
+            ret = dlt_print_hex_string(text + strlen(text), (int)(textlength - strlen(text)), ptr, datalength);
         }
+        return ret;
+    }
+
+    /* process control message */
+    if (DLT_MSG_IS_CONTROL_V2(msg)) {
+        DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t);
+        id = DLT_LETOH_32(id_tmp);
+
+        if ((id > 0) && (id < DLT_SERVICE_ID_LAST_ENTRY))
+            snprintf(text + strlen(text), textlength - strlen(text), "%s",
+                        service_id_name[id]); /* service id */
+        else if (!(DLT_MSG_IS_CONTROL_TIME_V2(msg)))
+            snprintf(text + strlen(text), textlength - strlen(text), "service(%u)", id); /* service id */
+
+        if (datalength > 0)
+            snprintf(text + strlen(text), textlength - strlen(text), ", ");
 
         /* process return value */
         if (DLT_MSG_IS_CONTROL_RESPONSE_V2(msg)) {
@@ -1559,10 +1575,10 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
 
         if (type == DLT_OUTPUT_ASCII_LIMITED) {
             ret = dlt_print_hex_string(text + strlen(text),
-                                       (int)(textlength - strlen(
-                                                 text)),
-                                       ptr,
-                                       (datalength >
+                                        (int)(textlength - strlen(
+                                                    text)),
+                                        ptr,
+                                        (datalength >
                                         DLT_COMMON_ASCII_LIMIT_MAX_CHARS ? DLT_COMMON_ASCII_LIMIT_MAX_CHARS : datalength));
 
             if ((datalength > DLT_COMMON_ASCII_LIMIT_MAX_CHARS) &&
@@ -1572,7 +1588,6 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
         else {
             ret = dlt_print_hex_string(text + strlen(text), (int)(textlength - strlen(text)), ptr, datalength);
         }
-
         return ret;
     }
 
@@ -1590,14 +1605,14 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
         /* To update: check, ideally it should be from Big endian*/
         type_info = DLT_LETOH_32(type_info_tmp);
-
         /* print out argument */
         text_offset = (int)strlen(text);
 
         if (dlt_message_argument_print_v2(msg, type_info, pptr, pdatalength,
                                        (text + text_offset), (textlength - (size_t)text_offset), -1,
-                                       0) == DLT_RETURN_ERROR)
+                                       0) == DLT_RETURN_ERROR){
             return DLT_RETURN_ERROR;
+        }
     }
 
     return DLT_RETURN_OK;
@@ -1871,7 +1886,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & 0x03);
 
     /* To Update: what is size of storage header, ecuid length*/
-    msg->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE;
+    msg->storageheadersizev2 = 0;
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
     msg->baseheaderextrasizev2 = dlt_message_get_extraparameters_size_v2(msgcontent);
     /* Fill extra parameters */
@@ -5497,7 +5512,6 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
 
         if (DLT_TYLE_32BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
             DLT_MSG_READ_VALUE(value32u, *ptr, *datalength, uint32_t);
-
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
