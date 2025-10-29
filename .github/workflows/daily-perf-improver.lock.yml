@@ -1438,12 +1438,34 @@ jobs:
           if-no-files-found: warn
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
-        # Copilot CLI tool arguments (sorted):
         timeout-minutes: 30
         run: |
           set -o pipefail
-          COPILOT_CLI_INSTRUCTION=$(cat /tmp/gh-aw/aw-prompts/prompt.txt)
-          copilot --add-dir /tmp/gh-aw/ --log-level all --log-dir /tmp/gh-aw/.copilot/logs/ --allow-all-tools --add-dir / --prompt "$COPILOT_CLI_INSTRUCTION" 2>&1 | tee /tmp/gh-aw/agent-stdio.log
+        
+          # 1) Collect the prompt exactly as you already do
+          COPILOT_CLI_INSTRUCTION="$(cat /tmp/gh-aw/aw-prompts/prompt.txt)"
+      
+          # 2) Build approval flags for headless CI:
+          #    - Tools: already allowed with --allow-all-tools
+          #    - Paths: some Copilot CLI builds require explicit path approvals in non-interactive mode.
+          #      Not all builds expose the same flags, so detect what's available at runtime.
+          ALLOW_FLAGS="--allow-all-tools"
+          if copilot --help 2>/dev/null | grep -q -- "--allow-all-paths"; then
+            ALLOW_FLAGS="$ALLOW_FLAGS --allow-all-paths"
+          elif copilot --help 2>/dev/null | grep -q -- "--allow-path"; then
+            # Approve the repository workspace + the workflow temp dir used by the agent
+            ALLOW_FLAGS="$ALLOW_FLAGS --allow-path \"$GITHUB_WORKSPACE\" --allow-path \"/tmp/gh-aw\""
+          fi
+      
+          # 3) Run Copilot CLI (unchanged options preserved), now with path approvals
+          copilot \
+            --add-dir /tmp/gh-aw/ \
+            --log-level all \
+            --log-dir /tmp/gh-aw/.copilot/logs/ \
+            --add-dir / \
+            --prompt "$COPILOT_CLI_INSTRUCTION" \
+            $ALLOW_FLAGS \
+            2>&1 | tee /tmp/gh-aw/agent-stdio.log
         env:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           GITHUB_AW_MCP_CONFIG: /home/runner/.copilot/mcp-config.json
@@ -1452,8 +1474,9 @@ jobs:
           GITHUB_AW_SAFE_OUTPUTS_CONFIG: "{\"add_comment\":{\"max\":1,\"target\":\"*\"},\"create_discussion\":{\"max\":5},\"create_pull_request\":{},\"missing_tool\":{}}"
           GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
-          GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN  }}
+          GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
           XDG_CONFIG_HOME: /home/runner
+
       - name: Upload Safe Outputs
         if: always()
         uses: actions/upload-artifact@v4
