@@ -488,7 +488,6 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         else if (dltdata->running_test == 1)
         {
             if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
-                //TBD: Verify How to get MSTP from version 2 message?
                 if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
                     mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
@@ -548,7 +547,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                     if (message->headerextrav2.noar >= 2) {
                         /* get type of first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
@@ -561,7 +560,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if ((type_info & DLT_TYPE_INFO_STRG) &&
                                     ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII)) {
@@ -969,9 +968,8 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                             datalength = (int32_t) message->datasize;
 
                             /* first read the type info of the first argument: must be string */
-                            //TBD: Verify How to get type_info in v2
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t) type_info_tmp; //To update : Need to check endianess for type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
@@ -984,7 +982,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* read type of second argument: must be raw */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
@@ -1146,7 +1144,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_RAWD) {
                             /* skip string */
@@ -1159,7 +1157,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
@@ -1228,7 +1226,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                         datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* Read NWTR */
@@ -1241,7 +1239,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                 dltdata->test_counter_macro[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_RAWD) {
                                 char hdr[2048];
@@ -1253,7 +1251,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                     dltdata->test_counter_macro[7]++;
 
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     uint32_t orig_size;
@@ -1264,7 +1262,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                         dltdata->test_counter_macro[7]++;
 
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -1334,7 +1332,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -1347,7 +1345,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* Streahandle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
@@ -1359,7 +1357,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* Header */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -1375,7 +1373,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* Payload size */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_UINT) {
                                         uint32_t pl_sz;
@@ -1388,7 +1386,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                         /* Segmentcount */
                                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                         if (type_info & DLT_TYPE_INFO_UINT) {
                                             uint16_t scount;
@@ -1401,7 +1399,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                             /* Segment length */
                                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                             if (type_info & DLT_TYPE_INFO_UINT) {
                                                 uint16_t slen;
@@ -1431,7 +1429,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -1444,7 +1442,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
@@ -1456,7 +1454,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* Sequence */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     /*uint16_t seq; */
@@ -1466,7 +1464,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* Data */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -1493,7 +1491,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -1506,7 +1504,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
@@ -1604,7 +1602,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                     if (message->headerextrav2.noar >= 2) {
                         /* get type of first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
@@ -1617,7 +1615,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_BOOL) {
                                     if (datalength == sizeof(uint8_t))
@@ -1994,7 +1992,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* first read the type info of the first argument: should be string */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
@@ -2007,7 +2005,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* read type of second argument: should be raw */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
@@ -2170,7 +2168,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* first read the type info of the first argument: should be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_RAWD) {
                             /* skip string */
@@ -2183,7 +2181,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* read type of second argument: should be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
@@ -2252,7 +2250,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                         datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* Read NWTR */
@@ -2265,7 +2263,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                 dltdata->test_counter_function[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_RAWD) {
                                 char hdr[2048];
@@ -2277,7 +2275,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                     dltdata->test_counter_function[7]++;
 
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     uint32_t orig_size;
@@ -2288,7 +2286,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                         dltdata->test_counter_function[7]++;
 
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -2358,7 +2356,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -2371,7 +2369,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* Streahandle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
@@ -2383,7 +2381,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* Header */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -2399,7 +2397,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* Payload size */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_UINT) {
                                         uint32_t pl_sz;
@@ -2412,7 +2410,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                         /* Segmentcount */
                                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                         if (type_info & DLT_TYPE_INFO_UINT) {
                                             uint16_t scount;
@@ -2425,7 +2423,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                             /* Segment length */
                                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                             if (type_info & DLT_TYPE_INFO_UINT) {
                                                 uint16_t slen;
@@ -2455,7 +2453,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -2468,7 +2466,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
@@ -2480,7 +2478,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* Sequence */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     /*uint16_t seq; */
@@ -2490,7 +2488,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                     /* Data */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                    type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
@@ -2517,7 +2515,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
@@ -2530,7 +2528,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                            type_info = (uint32_t)type_info_tmp; //TBD: Verify How to get type_info in v2
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
