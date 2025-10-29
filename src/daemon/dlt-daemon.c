@@ -3492,9 +3492,9 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             offset = 0;
             userheader = (DltUserHeader *)(receiver->buf + offset);
 
-            int ret_val = dlt_user_check_userheader_v2(userheader);
+            int ret_val = dlt_user_check_userheader(userheader);
 
-            while (!dlt_user_check_userheader_v2(userheader) &&
+            while (!dlt_user_check_userheader(userheader) &&
                 (offset + min_size <= receiver->bytesRcvd)) {
                 /* resync if necessary */
                 offset++;
@@ -3502,8 +3502,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             }
 
             /* Check for user header pattern */
-            ret_val = dlt_user_check_userheader_v2(userheader);
-            if (!dlt_user_check_userheader_v2(userheader))
+            ret_val = dlt_user_check_userheader(userheader);
+            if (!dlt_user_check_userheader(userheader))
                 break;
 
             /* Set new start offset */
@@ -4952,9 +4952,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-        DltDaemonApplication *app = dlt_daemon_application_find_v2(
+        DltDaemonApplication *app = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+        dlt_daemon_application_find_v2(
             daemon, daemon_local->msgv2.extendedheaderv2->apidlen, 
-            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose);
+            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose, &app);
 #endif
 
         /* discard non-allowed levels if enforcement is on */
@@ -5327,22 +5328,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
-#if 0 // TBD: Remove DEBUG prints
-        printf("\nDEBUG: %s - Received Buffer: length = %d\n", __func__, length);
-
-        for (int j = 0; j < length; j++){
-            if (data[j] > 48 && data[j] < 122) {
-                printf("%c", data[j]);
-            }
-            else {
-                printf(" 0x%02X", (uint8_t)(data[j]));
-            }
-        }
-        printf("\nBuffer in Hex: \n");
-        for (int k = 0; k < length; k++){
-            printf(" 0x%02X", (uint8_t)(data[k]));
-        }
-#endif // End of DEBUG prints
         if ((ret =
                  dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
                                         verbose)))

@@ -199,7 +199,7 @@ typedef struct
 
     /* Log Level changed callback */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
-    void (*log_level_changed_callback_v2)(char *context_id, uint8_t context_id_len, uint8_t log_level, uint8_t trace_status);
+    void (*log_level_changed_callback_v2)(char *context_id, uint8_t log_level, uint8_t trace_status);
 
 } dlt_ll_ts_type;
 
@@ -1173,6 +1173,18 @@ DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
                                                            char context_id[DLT_ID_SIZE],
                                                            uint8_t log_level,
                                                            uint8_t trace_status));
+                                            
+/**
+ * Register callback function called when log level of context of Version 2 was changed
+ * @param handle pointer to an object containing information about one special logging context
+ * @param (*dlt_log_level_changed_callback) function pointer to callback function
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_log_level_changed_callback_v2(DltContext *handle,
+                                                          void (*dlt_log_level_changed_callback_v2)(
+                                                          char *context_id,
+                                                          uint8_t log_level,
+                                                          uint8_t trace_status));
 
 /**
  * Switch to verbose mode

@@ -3615,33 +3615,42 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                       int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
-
-    //TBD: Review init of ptr
     char *apid =NULL;
     char *ctid =NULL;
-    DltServiceSetLogLevelV2 *req = NULL;
+    DltServiceSetLogLevelV2 req = {0};
     DltDaemonContext *context = NULL;
     int8_t apid_length = 0;
     int8_t ctid_length = 0;
+    int offset = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
         return;
 
-    //TBD: Review sizeof(DltServiceSetLogLevelV2)) or fixed size
-    if (dlt_check_rcv_data_size(msg->datasize, sizeof(DltServiceSetLogLevelV2)) < 0)
+    if (dlt_check_rcv_data_size(msg->datasize, DLT_SERVICE_SET_LOG_LEVEL_FIXED_SIZE_V2) < 0)
         return;
 
-    req = (DltServiceSetLogLevelV2 *)(msg->databuffer);
+    memcpy(&(req.service_id), msg->databuffer + offset, sizeof(uint32_t));
+    offset = offset + sizeof(uint32_t);
+    memcpy(&(req.apidlen), msg->databuffer + offset, sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    dlt_set_id_v2(&(req.apid), msg->databuffer + offset, req.apidlen);
+    offset = offset + req.apidlen;
+    memcpy(&(req.ctidlen), msg->databuffer + offset, sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    dlt_set_id_v2(&(req.ctid), msg->databuffer + offset, req.ctidlen);
+    offset = offset + req.ctidlen;
+    memcpy(&(req.log_level), msg->databuffer + offset, sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    memcpy(&(req.com), msg->databuffer + offset, DLT_ID_SIZE);
 
     if (daemon_local->flags.enforceContextLLAndTS)
-        req->log_level = (uint8_t) getStatus(req->log_level, daemon_local->flags.contextLogLevel);
+        req.log_level = (uint8_t) getStatus(req.log_level, daemon_local->flags.contextLogLevel);
 
-    apid_length = (int8_t) req->apidlen;
-    dlt_set_id_v2(&apid, req->apid, req->apidlen);
-    ctid_length = (int8_t) req->ctidlen;
-    dlt_set_id_v2(&ctid, req->ctid, req->ctidlen);
+    apid_length = (int8_t) req.apidlen;
+    dlt_set_id_v2(&apid, req.apid, req.apidlen);
+    ctid_length = (int8_t) req.ctidlen;
+    dlt_set_id_v2(&ctid, req.ctid, req.ctidlen);
 
-    //TBD: Review apid[apid_length - 1] == '*'
     if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
                                                             daemon,
@@ -3649,7 +3658,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             1,
                                                             apid,
                                                             (int8_t) (apid_length - 1),
-                                                            (int8_t) req->log_level,
+                                                            (int8_t) req.log_level,
                                                             verbose);
     }
     else if ((ctid_length != 0) && (ctid[ctid_length - 1] == '*') && (apid == NULL)) /*ctid provided is having '*' in it and apid is null*/
@@ -3660,7 +3669,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             0,
                                                             ctid,
                                                             (int8_t) (ctid_length - 1),
-                                                            (int8_t) req->log_level,
+                                                            (int8_t) req.log_level,
                                                             verbose);
     }
     else if ((apid_length != 0) && (apid[apid_length - 1] != '*') && (ctid == NULL)) /*only app id case*/
@@ -3671,7 +3680,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             1,
                                                             apid,
                                                             apid_length,
-                                                            (int8_t) req->log_level,
+                                                            (int8_t) req.log_level,
                                                             verbose);
     }
     else if ((ctid_length != 0) && (ctid[ctid_length - 1] != '*') && (apid == NULL)) /*only context id case*/
@@ -3682,7 +3691,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             0,
                                                             ctid,
                                                             ctid_length,
-                                                            (int8_t) req->log_level,
+                                                            (int8_t) req.log_level,
                                                             verbose);
     }
     else {
@@ -3697,10 +3706,10 @@ void dlt_daemon_control_set_log_level_v2(int sock,
 
         /* Set log level */
         if (context != 0) {
-            dlt_daemon_send_log_level_v2(sock, daemon, daemon_local, context, (int8_t) req->log_level, verbose);
+            dlt_daemon_send_log_level_v2(sock, daemon, daemon_local, context, (int8_t) req.log_level, verbose);
         }
         else {
-            dlt_vlog(LOG_ERR, "Could not set log level: %d. Context [%.4s:%.4s] not found:", req->log_level, apid,
+            dlt_vlog(LOG_ERR, "Could not set log level: %d. Context [%s:%s] not found:", req.log_level, apid,
                      ctid);
             dlt_daemon_control_service_response_v2(sock,
                                                 daemon,

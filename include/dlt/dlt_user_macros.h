@@ -268,6 +268,14 @@
         (void)dlt_register_log_level_changed_callback(&(CONTEXT), CALLBACK); } while(false)
 
 /**
+ * Register callback function called when log level of version 2 context was changed
+ * @param CONTEXT object containing information about one special logging context
+ * @param CALLBACK function pointer to callback function
+ */
+#define DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK_V2(CONTEXT, CALLBACK) do { \
+        (void)dlt_register_log_level_changed_callback_v2(&(CONTEXT), CALLBACK); } while(false)
+
+/**
  * Send log message with variable list of messages (intended for verbose mode)
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message

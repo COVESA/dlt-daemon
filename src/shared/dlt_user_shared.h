@@ -268,11 +268,11 @@ DltReturnValue dlt_user_set_userheader_v2(DltUserHeader *userheader, uint32_t mt
 int dlt_user_check_userheader(DltUserHeader *userheader);
 
 /**
- * Check if user header contains its marker
- * @param userheader pointer to the userheader for version 2
- * @return 0 no, 1 yes, negative value if there was an error
+ * Get version from user header
+ * @param userheader pointer to the userheader
+ * @return DLT Version
  */
-int dlt_user_check_userheader_v2(DltUserHeader *userheader);
+int dlt_get_version_from_userheader(DltUserHeader *userheader);
 
 /**
  * Atomic write to file descriptor, using vector of 2 elements

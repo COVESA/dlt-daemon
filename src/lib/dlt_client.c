@@ -1264,19 +1264,19 @@ DltReturnValue dlt_client_send_log_level_v2(DltClient *client, char *apid, char 
     if (buffer == NULL)
         return ret;
 
-    memcpy(buffer, &(req.service_id), 4);
+    memcpy(buffer + offset, &(req.service_id), 4);
     offset = offset + 4;
-    memcpy(buffer, &(req.apidlen), 1);
+    memcpy(buffer + offset, &(req.apidlen), 1);
     offset = offset + 1;
-    memcpy(buffer, req.apid, req.apidlen);
+    memcpy(buffer + offset, req.apid, req.apidlen);
     offset = offset + req.apidlen;
-    memcpy(buffer, &(req.ctidlen), 1);
+    memcpy(buffer + offset, &(req.ctidlen), 1);
     offset = offset + 1;
-    memcpy(buffer, req.ctid, req.ctidlen);
+    memcpy(buffer + offset, req.ctid, req.ctidlen);
     offset = offset + req.ctidlen;
-    memcpy(buffer, &(req.log_level), 1);
+    memcpy(buffer + offset, &(req.log_level), 1);
     offset = offset + 1;
-    memcpy(buffer, req.com, 4);
+    memcpy(buffer + offset, req.com, 4);
 
     ret = dlt_client_send_ctrl_msg_v2(client,
                                    "APP",
@@ -1526,17 +1526,17 @@ DltReturnValue dlt_client_send_trace_status_v2(DltClient *client, char *apid, ch
     if (buffer == NULL)
         return ret;
 
-    memcpy(buffer, &(req.service_id), 4);
+    memcpy(buffer + offset, &(req.service_id), 4);
     offset = offset + 4;
-    memcpy(buffer, &(req.apidlen), 1);
+    memcpy(buffer + offset, &(req.apidlen), 1);
     offset = offset + 1;
-    memcpy(buffer, req.apid, req.apidlen);
+    memcpy(buffer + offset, req.apid, req.apidlen);
     offset = offset + req.apidlen;
-    memcpy(buffer, &(req.ctidlen), 1);
+    memcpy(buffer + offset, &(req.ctidlen), 1);
     offset = offset + 1;
-    memcpy(buffer, req.ctid, req.ctidlen);
+    memcpy(buffer + offset, req.ctid, req.ctidlen);
     offset = offset + req.ctidlen;
-    memcpy(buffer, &(req.log_level), 1);
+    memcpy(buffer + offset, &(req.log_level), 1);
     offset = offset + 1;
     memcpy(buffer, req.com, 4);
 
