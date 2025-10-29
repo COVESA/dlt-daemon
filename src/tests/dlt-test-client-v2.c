@@ -86,7 +86,7 @@
 static int g_testsFailed = 0;
 DltClient g_dltclient;
 /* Function prototypes */
-int dlt_testclient_message_callback(DltMessage *message, void *data);
+int dlt_testclient_message_callback(DltMessageV2 *message, void *data);
 bool dlt_testclient_fetch_next_message_callback(void *data);
 
 typedef struct
@@ -105,7 +105,8 @@ typedef struct
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
 
-    char ecuid[4];
+    uint8_t ecuid2len;
+    char *ecuid2;
     int ohandle;
 
     DltFile file;
@@ -160,7 +161,6 @@ int main(int argc, char *argv[])
     DltTestclientData dltdata;
     int c, i;
     int index;
-    int8_t len;
 
     /* Initialize dltdata */
     dltdata.aflag = 0;
@@ -362,11 +362,15 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    len = strlen(DLT_TESTCLIENT_ECU_ID);
-    if (dltdata.evalue)
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, len);
-    else
-        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, len);
+
+    if (dltdata.evalue) {
+        dltdata.ecuid2len = strlen(dltdata.evalue);
+        dlt_set_id_v2(&(dltdata.ecuid2), dltdata.evalue, dltdata.ecuid2len);
+    }
+    else {
+        dltdata.ecuid2len = strlen(DLT_TESTCLIENT_ECU_ID);
+        dlt_set_id_v2(&(dltdata.ecuid2), DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
+    }
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&g_dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
@@ -405,7 +409,7 @@ bool dlt_testclient_fetch_next_message_callback(void *data)
   return true;
 }
 
-int dlt_testclient_message_callback(DltMessage *message, void *data)
+int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 {
     static char text[DLT_TESTCLIENT_TEXTBUFSIZE];
     int mtin;
@@ -429,13 +433,20 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         return -1;
 
     dltdata = (DltTestclientData *)data;
-    len = strlen(message->headerextra.ecu);
+    if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+        /* extended header present */
+        len = message->extendedheaderv2.ecidlen;
+    }
+    else {
+        /* no extended header present */
+        len = strlen(DLT_TESTCLIENT_ECU_ID);
+    }
 
     /* prepare storage header */
-    if (DLT_IS_HTYP_WEID(message->standardheader->htyp))
-        dlt_set_storageheader_v2(message->storageheader, len, message->headerextra.ecu);
+    if (DLT_IS_HTYP_WEID(message->baseheaderv2->htyp2))
+        dlt_set_storageheader_v2(&(message->storageheaderv2), len, message->extendedheaderv2.ecid);
     else
-        dlt_set_storageheader_v2(message->storageheader, len, dltdata->ecuid);
+        dlt_set_storageheader_v2(&(message->storageheaderv2), len, dltdata->ecuid2);
 
     if ((dltdata->fvalue == 0) ||
         (dltdata->fvalue &&
@@ -476,9 +487,10 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 1)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                //TBD: Verify How to get MSTP from version 2 message?
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_LOG_FATAL)
                         dltdata->test_counter_macro[0]++;
@@ -523,7 +535,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 2)
         {
             /* Verbose */
-            if (!(DLT_MSG_IS_NONVERBOSE(message))) {
+            if (!(DLT_MSG_IS_NONVERBOSE_V2(message))) {
                 type_info = 0;
                 type_info_tmp = 0;
                 length = 0;  /* the macro can set this variable to -1 */
@@ -532,16 +544,16 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 datalength = (int32_t) message->datasize;
 
                 /* Log message */
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
-                    if (message->extendedheader->noar >= 2) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
+                    if (message->headerextrav2.noar >= 2) {
                         /* get type of first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                             if (length >= 0) {
                                 ptr += length;
@@ -549,7 +561,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if ((type_info & DLT_TYPE_INFO_STRG) &&
                                     ((type_info & DLT_TYPE_INFO_SCOD) == DLT_SCOD_ASCII)) {
@@ -679,7 +691,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 {
                                     /* Get length */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     if ((length == datalength) && (10 == length))
                                         dltdata->test_counter_macro[1]++;
@@ -713,7 +725,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 3)
         {
             /* Nonverbose */
-            if (DLT_MSG_IS_NONVERBOSE(message)) {
+            if (DLT_MSG_IS_NONVERBOSE_V2(message)) {
                 id = 0;
                 id_tmp = 0;
                 ptr = message->databuffer;
@@ -724,7 +736,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                 /* Get message id */
                 DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t);
-                id = DLT_ENDIAN_GET_32(message->standardheader->htyp, id_tmp);
+                id = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, id_tmp);
 
                 /* Length of string */
                 datalength -= (int32_t) sizeof(uint16_t);
@@ -940,13 +952,13 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 4)
         {
             /* Extended header */
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
                 /* Log message */
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
                     /* Verbose */
-                    if (DLT_IS_MSIN_VERB(message->extendedheader->msin)) {
+                    if (DLT_IS_MSIN_VERB(message->headerextrav2.msin)) {
                         /* 2 arguments */
-                        if (message->extendedheader->noar == 2) {
+                        if (message->headerextrav2.noar == 2) {
                             /* verbose mode */
                             type_info = 0;
                             type_info_tmp = 0;
@@ -957,13 +969,14 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                             datalength = (int32_t) message->datasize;
 
                             /* first read the type info of the first argument: must be string */
+                            //TBD: Verify How to get type_info in v2
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                 if (length >= 0) {
                                     ptr += length;
@@ -971,12 +984,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                     /* read type of second argument: must be raw */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         if ((length >= 0) && (length == datalength))
                                             /*printf("Raw data found in payload, length="); */
@@ -1102,11 +1115,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 7)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_macro[6]++;
@@ -1122,7 +1135,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                     /* Check payload, must be two arguments (2 raw data blocks) */
                     /* If the payload is correct, the counter is increased by 1 */
-                    if (message->extendedheader->noar == 2) {
+                    if (message->headerextrav2.noar == 2) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -1133,12 +1146,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_RAWD) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                             if (length >= 0) {
                                 ptr += length;
@@ -1146,12 +1159,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     if ((length >= 0) && (length == datalength))
                                         /*printf("Raw data found in payload, length="); */
@@ -1186,11 +1199,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 8)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_macro[7]++;
@@ -1206,7 +1219,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                     /* Check payload, must be two arguments (2 raw data blocks) */
                     /* If the payload is correct, the counter is increased by 1 */
-                    if (message->extendedheader->noar == 4) {
+                    if (message->headerextrav2.noar == 4) {
                         type_info = 0;
                         type_info_tmp = 0;
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
@@ -1215,47 +1228,47 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* Read NWTR */
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_macro[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_RAWD) {
                                 char hdr[2048];
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                                 DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
                                 if ((length == 16) && (hdr[15] == 15))
                                     dltdata->test_counter_macro[7]++;
 
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     uint32_t orig_size;
                                     DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                    orig_size = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                    orig_size = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                     if (orig_size == 1024 * 5)
                                         dltdata->test_counter_macro[7]++;
 
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         /* Size of the truncated message after headers */
                                         if (length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))
@@ -1291,11 +1304,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 9)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_macro[8]++;
@@ -1310,7 +1323,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         dltdata->test_counter_macro[8]++;
 
                     /* Payload for first segmented message */
-                    if (message->extendedheader->noar == 6) {
+                    if (message->headerextrav2.noar == 6) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -1321,12 +1334,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
@@ -1334,23 +1347,23 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* Streahandle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_macro[8]++;
 
                                 /* Header */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     /* Test packet header size 16 */
                                     if (length == 16)
@@ -1362,12 +1375,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                     /* Payload size */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_UINT) {
                                         uint32_t pl_sz;
                                         DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                        pl_sz = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                        pl_sz = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                         /* Test packet payload size. */
                                         if (pl_sz == 5120)
@@ -1375,12 +1388,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                         /* Segmentcount */
                                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                         if (type_info & DLT_TYPE_INFO_UINT) {
                                             uint16_t scount;
                                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                            scount = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                            scount = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                             /* Test packet segment count 5 */
                                             if (scount == 5)
@@ -1388,12 +1401,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                             /* Segment length */
                                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                             if (type_info & DLT_TYPE_INFO_UINT) {
                                                 uint16_t slen;
                                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                                slen = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                                slen = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                                 /* Default segment size 1024 */
                                                 if (slen == 1024)
@@ -1406,7 +1419,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         }
                     }
                     /* Data segment */
-                    else if (message->extendedheader->noar == 4)
+                    else if (message->headerextrav2.noar == 4)
                     {
                         /* verbose mode */
                         type_info = 0;
@@ -1418,12 +1431,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
@@ -1431,33 +1444,33 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_macro[8]++;
 
                                 /* Sequence */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     /*uint16_t seq; */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    /*seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp); */
+                                    /*seq=DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp); */
                                     dltdata->test_counter_macro[8]++;
 
                                     /* Data */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         /* Segment size by default, 1024 */
                                         if (length == 1024)
@@ -1468,7 +1481,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         }
                     }
                     /* End segment */
-                    else if (message->extendedheader->noar == 2)
+                    else if (message->headerextrav2.noar == 2)
                     {
                         /* verbose mode */
                         type_info = 0;
@@ -1480,12 +1493,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
@@ -1493,12 +1506,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_macro[8]++;
@@ -1531,9 +1544,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 10)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_LOG_FATAL)
                         dltdata->test_counter_function[0]++;
@@ -1578,7 +1591,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 11)
         {
             /* Verbose */
-            if (!(DLT_MSG_IS_NONVERBOSE(message))) {
+            if (!(DLT_MSG_IS_NONVERBOSE_V2(message))) {
                 type_info = 0;
                 type_info_tmp = 0;
                 length = 0;
@@ -1587,16 +1600,16 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                 datalength = (int32_t) message->datasize;
 
                 /* Log message */
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
-                    if (message->extendedheader->noar >= 2) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
+                    if (message->headerextrav2.noar >= 2) {
                         /* get type of first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                             if (length >= 0) {
                                 ptr += length;
@@ -1604,7 +1617,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_BOOL) {
                                     if (datalength == sizeof(uint8_t))
@@ -1724,7 +1737,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 {
                                     /* Get length */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     if ((length == datalength) && (length == 10))
                                         dltdata->test_counter_function[1]++;
@@ -1758,7 +1771,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 12)
         {
             /* Nonverbose */
-            if (DLT_MSG_IS_NONVERBOSE(message)) {
+            if (DLT_MSG_IS_NONVERBOSE_V2(message)) {
                 id = 0;
                 id_tmp = 0;
                 ptr = message->databuffer;
@@ -1769,7 +1782,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                 /* Get message id */
                 DLT_MSG_READ_VALUE(id_tmp, ptr, datalength, uint32_t);
-                id = DLT_ENDIAN_GET_32(message->standardheader->htyp, id_tmp);
+                id = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, id_tmp);
 
                 /* Length of string */
                 datalength -= sizeof(uint16_t);
@@ -1963,13 +1976,13 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         else if (dltdata->running_test == 13)
         {
             /* Extended header */
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
                 /* Log message */
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_LOG) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
                     /* Verbose */
-                    if (DLT_IS_MSIN_VERB(message->extendedheader->msin)) {
+                    if (DLT_IS_MSIN_VERB(message->headerextrav2.msin)) {
                         /* 2 arguments */
-                        if (message->extendedheader->noar == 2) {
+                        if (message->headerextrav2.noar == 2) {
                             /* verbose mode */
                             type_info = 0;
                             type_info_tmp = 0;
@@ -1981,12 +1994,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* first read the type info of the first argument: should be string */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                 if (length >= 0) {
                                     ptr += length;
@@ -1994,12 +2007,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                     /* read type of second argument: should be raw */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         if ((length >= 0) && (length == datalength))
                                             /*printf("Raw data found in payload, length="); */
@@ -2125,11 +2138,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 16)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_function[6]++;
@@ -2145,7 +2158,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                     /* Check payload, must be two arguments (2 raw data blocks) */
                     /* If the payload is correct, the counter is increased by 1 */
-                    if (message->extendedheader->noar == 2) {
+                    if (message->headerextrav2.noar == 2) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -2157,12 +2170,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* first read the type info of the first argument: should be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_RAWD) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                             if (length >= 0) {
                                 ptr += length;
@@ -2170,12 +2183,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                 /* read type of second argument: should be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     if ((length >= 0) && (length == datalength))
                                         /*printf("Raw data found in payload, length="); */
@@ -2210,11 +2223,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 17)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_function[7]++;
@@ -2230,7 +2243,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                     /* Check payload, must be two arguments (2 raw data blocks) */
                     /* If the payload is correct, the counter is increased by 1 */
-                    if (message->extendedheader->noar == 4) {
+                    if (message->headerextrav2.noar == 4) {
                         type_info = 0;
                         type_info_tmp = 0;
                         length = 0, length_tmp = 0; /* the macro can set this variable to -1 */
@@ -2239,47 +2252,47 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         datalength = (int32_t) message->datasize;
 
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* Read NWTR */
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
                                 dltdata->test_counter_function[7]++;
 
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_RAWD) {
                                 char hdr[2048];
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                                 DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
                                 if ((length == 16) && (hdr[15] == 15))
                                     dltdata->test_counter_function[7]++;
 
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     uint32_t orig_size;
                                     DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                    orig_size = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                    orig_size = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                     if (orig_size == 1024 * 5)
                                         dltdata->test_counter_function[7]++;
 
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         /* Size of the truncated message after headers */
                                         if (length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))
@@ -2315,11 +2328,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         }
         else if (dltdata->running_test == 18)
         {
-            if (DLT_IS_HTYP_UEH(message->standardheader->htyp)) {
-                if ((DLT_GET_MSIN_MSTP(message->extendedheader->msin)) == DLT_TYPE_NW_TRACE) {
+            if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
+                if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_NW_TRACE) {
                     /* Check message type information*/
                     /* Each correct message type increases the counter by 1 */
-                    mtin = DLT_GET_MSIN_MTIN(message->extendedheader->msin);
+                    mtin = DLT_GET_MSIN_MTIN(message->headerextrav2.msin);
 
                     if (mtin == DLT_NW_TRACE_IPC)
                         dltdata->test_counter_function[8]++;
@@ -2334,7 +2347,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         dltdata->test_counter_function[8]++;
 
                     /* Payload for first segmented message */
-                    if (message->extendedheader->noar == 6) {
+                    if (message->headerextrav2.noar == 6) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -2345,12 +2358,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWST */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
@@ -2358,23 +2371,23 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* Streahandle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_function[8]++;
 
                                 /* Header */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                     /* Test packet header size 16 */
                                     if (length == 16)
@@ -2386,12 +2399,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                     /* Payload size */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_UINT) {
                                         uint32_t pl_sz;
                                         DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                        pl_sz = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                        pl_sz = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                         /* Test packet payload size. */
                                         if (pl_sz == 5120)
@@ -2399,12 +2412,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                         /* Segmentcount */
                                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                         if (type_info & DLT_TYPE_INFO_UINT) {
                                             uint16_t scount;
                                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                            scount = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                            scount = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                             /* Test packet segment count 5 */
                                             if (scount == 5)
@@ -2412,12 +2425,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                                             /* Segment length */
                                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                             if (type_info & DLT_TYPE_INFO_UINT) {
                                                 uint16_t slen;
                                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                                slen = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                                slen = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                                 /* Default segment size 1024 */
                                                 if (slen == 1024)
@@ -2430,7 +2443,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         }
                     }
                     /* Data segment */
-                    else if (message->extendedheader->noar == 4)
+                    else if (message->headerextrav2.noar == 4)
                     {
                         /* verbose mode */
                         type_info = 0;
@@ -2442,12 +2455,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWCH */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_SEGMENT) == 0)
@@ -2455,33 +2468,33 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_function[8]++;
 
                                 /* Sequence */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                 if (type_info & DLT_TYPE_INFO_UINT) {
                                     /*uint16_t seq; */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    /*seq=DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp); */
+                                    /*seq=DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp); */
                                     dltdata->test_counter_function[8]++;
 
                                     /* Data */
                                     DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                    type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                                    type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                        length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                        length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
 
                                         /* Segment size by default, 1024 */
                                         if (length == 1024)
@@ -2492,7 +2505,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         }
                     }
                     /* End segment */
-                    else if (message->extendedheader->noar == 2)
+                    else if (message->headerextrav2.noar == 2)
                     {
                         /* verbose mode */
                         type_info = 0;
@@ -2504,12 +2517,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                         /* NWEN */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             char chdr[10];
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                            length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                            length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
                             DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
                             if (strcmp((char *)chdr, DLT_TRACE_NW_END) == 0)
@@ -2517,12 +2530,12 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
                             /* handle */
                             DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                            type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
+                            type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
 
                             if (type_info & DLT_TYPE_INFO_UINT) {
                                 uint32_t handle;
                                 DLT_MSG_READ_VALUE(length_tmp32, ptr, datalength, uint32_t);
-                                handle = DLT_ENDIAN_GET_32(message->standardheader->htyp, length_tmp32);
+                                handle = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, length_tmp32);
 
                                 if (handle > 0)
                                     dltdata->test_counter_function[8]++;
@@ -2550,16 +2563,16 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
 
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag)
-            dlt_message_print_hex(message, text, DLT_TESTCLIENT_TEXTBUFSIZE, dltdata->vflag);
+            dlt_message_print_hex_v2(message, text, DLT_TESTCLIENT_TEXTBUFSIZE, dltdata->vflag);
         else if (dltdata->mflag)
-            dlt_message_print_mixed_plain(message, text, DLT_TESTCLIENT_TEXTBUFSIZE, dltdata->vflag);
+            dlt_message_print_mixed_plain_v2(message, text, DLT_TESTCLIENT_TEXTBUFSIZE, dltdata->vflag);
         else if (dltdata->sflag)
-            dlt_message_print_header(message, text, sizeof(text), dltdata->vflag);
+            dlt_message_print_header_v2(message, text, sizeof(text), dltdata->vflag);
 
         /* if file output enabled write message */
         if (dltdata->ovalue) {
-            iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = message->headersize;
+            iov[0].iov_base = message->headerbufferv2;
+            iov[0].iov_len = message->headersizev2;
             iov[1].iov_base = message->databuffer;
             iov[1].iov_len = message->datasize;
 
