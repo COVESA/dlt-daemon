@@ -1838,6 +1838,85 @@ int dlt_gateway_send_control_message(DltGatewayConnection *con,
     return DLT_RETURN_OK;
 }
 
+int dlt_gateway_send_control_message_v2(DltGatewayConnection *con,
+                                     DltPassiveControlMessage *control_msg,
+                                     void *data,
+                                     int verbose)
+{
+    int ret = DLT_RETURN_OK;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if (con == NULL) {
+        dlt_vlog(LOG_WARNING,
+                 "%s: Invalid parameter given\n",
+                 __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    /* no (more) control message to be send */
+    if (control_msg->id == 0)
+        return DLT_RETURN_ERROR;
+
+    /* check sendtime counter and message interval */
+    /* sendtime counter is 0 on startup, otherwise positive value */
+    if ((control_msg->type != CONTROL_MESSAGE_ON_DEMAND) && (con->sendtime_cnt > 0)) {
+        if (control_msg->interval <= 0)
+            return DLT_RETURN_ERROR;
+
+        if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
+            (control_msg->type == CONTROL_MESSAGE_BOTH)) {
+            if ((con->sendtime_cnt - 1) % control_msg->interval != 0)
+                return DLT_RETURN_ERROR;
+        }
+    }
+
+    if (con->send_serial) { /* send serial header */
+        ret = send(con->client.sock,
+                   (void *)dltSerialHeader,
+                   sizeof(dltSerialHeader),
+                   0);
+
+        if (ret == -1) {
+            dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    switch (control_msg->id) {
+    case DLT_SERVICE_ID_GET_LOG_INFO:
+        return dlt_client_get_log_info_v2(&con->client);
+        break;
+    case DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL:
+        return dlt_client_get_default_log_level_v2(&con->client);
+        break;
+    case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
+        return dlt_client_get_software_version_v2(&con->client);
+        break;
+    case DLT_SERVICE_ID_SET_LOG_LEVEL:
+
+        if (data == NULL) {
+            dlt_vlog(LOG_WARNING,
+                     "Insufficient data for %s received. Send control request failed.\n",
+                     dlt_get_service_name(control_msg->id));
+            return DLT_RETURN_ERROR;
+        }
+
+        DltServiceSetLogLevel *req = (DltServiceSetLogLevel *)data;
+        return dlt_client_send_log_level_v2(&con->client,
+                                         req->apid,
+                                         req->ctid,
+                                         req->log_level);
+        break;
+    default:
+        dlt_vlog(LOG_WARNING,
+                 "Cannot forward request: %s.\n",
+                 dlt_get_service_name(control_msg->id));
+    }
+
+    return DLT_RETURN_OK;
+}
+
 DltGatewayConnection *dlt_gateway_get_connection(DltGateway *gateway,
                                                  char *ecu,
                                                  int verbose)
