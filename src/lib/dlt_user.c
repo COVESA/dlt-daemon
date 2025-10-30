@@ -3500,9 +3500,9 @@ DltReturnValue dlt_register_injection_callback(DltContext *handle, uint32_t serv
 
 DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
                                                        void (*dlt_log_level_changed_callback)(
-                                                           char context_id[DLT_ID_SIZE],
-                                                           uint8_t log_level,
-                                                           uint8_t trace_status))
+                                                       char context_id[DLT_ID_SIZE],
+                                                       uint8_t log_level,
+                                                       uint8_t trace_status))
 {
     DltContextData log;
     uint32_t i;
@@ -3527,6 +3527,41 @@ DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
 
     /* Store new callback function */
     dlt_user.dlt_ll_ts[i].log_level_changed_callback = dlt_log_level_changed_callback;
+
+    DLT_SEM_FREE();
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_register_log_level_changed_callback_v2(DltContext *handle,
+                                                       void (*dlt_log_level_changed_callback_v2)(
+                                                       char *context_id,
+                                                       uint8_t log_level,
+                                                       uint8_t trace_status))
+{
+    DltContextData log;
+    uint32_t i;
+
+    if (dlt_user_log_init(handle, &log) < DLT_RETURN_OK)
+        return DLT_RETURN_ERROR;
+
+    /* This function doesn't make sense storing to local file is choosen;
+     * so terminate this function */
+    if (dlt_user.dlt_is_file)
+        return DLT_RETURN_OK;
+
+    DLT_SEM_LOCK();
+
+    if (dlt_user.dlt_ll_ts == NULL) {
+        DLT_SEM_FREE();
+        return DLT_RETURN_OK;
+    }
+
+    /* Insert callback in corresponding table */
+    i = (uint32_t) handle->log_level_pos;
+
+    /* Store new callback function */
+    dlt_user.dlt_ll_ts[i].log_level_changed_callback_v2 = dlt_log_level_changed_callback_v2;
 
     DLT_SEM_FREE();
 
@@ -6022,6 +6057,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
     int offset = 0;
     int leave_while = 0;
     int ret = 0;
+    int version = 0;
 
     uint32_t i;
     int fd;
@@ -6053,6 +6089,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
     delayed_injection_callback.injection_callback_with_id = 0;
     delayed_injection_callback.service_id = 0;
     delayed_log_level_changed_callback.log_level_changed_callback = 0;
+    delayed_log_level_changed_callback.log_level_changed_callback_v2 = 0;    
     delayed_injection_callback.data = 0;
 
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
@@ -6105,6 +6142,8 @@ DltReturnValue dlt_user_log_check_user_message(void)
                     receiver->bytesRcvd -= offset;
                 }
 
+                version = dlt_get_version_from_userheader(userheader);
+
                 switch (userheader->message) {
                 case DLT_USER_MESSAGE_LOG_LEVEL:
                 {
@@ -6133,13 +6172,25 @@ DltReturnValue dlt_user_log_check_user_message(void)
                                 if (dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr)
                                     *(dlt_user.dlt_ll_ts[usercontextll->log_level_pos].trace_status_ptr) =
                                         (int8_t) usercontextll->trace_status;
-
-                                delayed_log_level_changed_callback.log_level_changed_callback =
-                                    dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback;
-                                memcpy(delayed_log_level_changed_callback.contextID,
-                                       dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID, DLT_ID_SIZE);
-                                delayed_log_level_changed_callback.log_level = (int8_t) usercontextll->log_level;
-                                delayed_log_level_changed_callback.trace_status = (int8_t) usercontextll->trace_status;
+                                
+                                if (version == 1) {
+                                    delayed_log_level_changed_callback.log_level_changed_callback =
+                                        dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback;
+                                    memcpy(delayed_log_level_changed_callback.contextID,
+                                        dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID, DLT_ID_SIZE);
+                                    delayed_log_level_changed_callback.log_level = (int8_t) usercontextll->log_level;
+                                    delayed_log_level_changed_callback.trace_status = (int8_t) usercontextll->trace_status;
+                                }else if (version == 2) {
+                                    delayed_log_level_changed_callback.log_level_changed_callback_v2 =
+                                        dlt_user.dlt_ll_ts[usercontextll->log_level_pos].log_level_changed_callback_v2;
+                                    delayed_log_level_changed_callback.contextID2len = dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2len;    
+                                    delayed_log_level_changed_callback.contextID2 = NULL;
+                                    dlt_set_id_v2(&(delayed_log_level_changed_callback.contextID2),
+                                            dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2,
+                                            dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2len);
+                                    delayed_log_level_changed_callback.log_level = (int8_t) usercontextll->log_level;
+                                    delayed_log_level_changed_callback.trace_status = (int8_t) usercontextll->trace_status;
+                                }
                             }
                         }
 
@@ -6147,17 +6198,31 @@ DltReturnValue dlt_user_log_check_user_message(void)
                     }
 
                     /* call callback outside of semaphore */
-                    if (delayed_log_level_changed_callback.log_level_changed_callback != 0)
-                        delayed_log_level_changed_callback.log_level_changed_callback(
-                            delayed_log_level_changed_callback.contextID,
-                            (uint8_t) delayed_log_level_changed_callback.log_level,
-                            (uint8_t) delayed_log_level_changed_callback.trace_status);
+                    if (version == 1) {
+                        if (delayed_log_level_changed_callback.log_level_changed_callback != 0)
+                            delayed_log_level_changed_callback.log_level_changed_callback(
+                                delayed_log_level_changed_callback.contextID,
+                                (uint8_t) delayed_log_level_changed_callback.log_level,
+                                (uint8_t) delayed_log_level_changed_callback.trace_status);
 
-                    /* keep not read data in buffer */
-                    if (dlt_receiver_remove(receiver,
-                                            sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel)) ==
-                        DLT_RETURN_ERROR)
-                        return DLT_RETURN_ERROR;
+                        /* keep not read data in buffer */
+                        if (dlt_receiver_remove(receiver,
+                                                sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel)) ==
+                            DLT_RETURN_ERROR)
+                            return DLT_RETURN_ERROR;
+                    }else if (version == 2) {
+                        if (delayed_log_level_changed_callback.log_level_changed_callback_v2 != 0)
+                            delayed_log_level_changed_callback.log_level_changed_callback_v2(
+                                delayed_log_level_changed_callback.contextID2,
+                                (uint8_t) delayed_log_level_changed_callback.log_level,
+                                (uint8_t) delayed_log_level_changed_callback.trace_status);
+
+                        /* keep not read data in buffer */
+                        if (dlt_receiver_remove(receiver,
+                                                sizeof(DltUserHeader) + sizeof(DltUserControlMsgLogLevel)) ==
+                            DLT_RETURN_ERROR)
+                            return DLT_RETURN_ERROR;
+                    }
                 }
                 break;
                 case DLT_USER_MESSAGE_INJECTION:
@@ -6516,7 +6581,7 @@ DltReturnValue dlt_user_log_resend_buffer_v2(void)
             DltUserHeader *userheader = (DltUserHeader *)(dlt_user.resend_buffer);
 
             /* Add application id to the messages of needed*/
-            if (dlt_user_check_userheader_v2(userheader)) {
+            if (dlt_user_check_userheader(userheader)) {
                 switch (userheader->message) {
                 case DLT_USER_MESSAGE_REGISTER_CONTEXT:
                 {

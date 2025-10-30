@@ -3040,9 +3040,8 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                                      daemon_local,
                                                      &(daemon_local->msgv2),
                                                      daemon_local->flags.vflag);
-                printf("Debug loc reached here##\n");
             bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
-                daemon_local->msgv2.datasize);
+                daemon_local->msgv2.datasize - daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3210,6 +3209,14 @@ int dlt_daemon_process_control_connect(
     /* check if file file descriptor was already used, and make it invalid if it
      *  is reused */
     /* This prevents sending messages to wrong file descriptor */
+    /* To update multiplexer logic for V1 and V2 */
+    if(0){ // Logic to check for DLT Version 2
+        dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
+    }else{ // Logic to check for DLT Version 1
+        dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
+        dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);        
+    }
     dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
     dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
@@ -3283,6 +3290,7 @@ int dlt_daemon_process_control_messages(
     int verbose)
 {
     int bytes_to_be_removed = 0;
+    uint8_t dlt_version;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -3298,33 +3306,30 @@ int dlt_daemon_process_control_messages(
                                 daemon,
                                 daemon_local,
                                 verbose);
-        /* FIXME: Why the hell do we need to close the socket
-         * on control message reception ??
-         */
-        return 0;
+        return -1;
     }
 
-    uint8_t dlt_version = (uint8_t)receiver->buf[3]; //TBD: Write function to get version
-    if (dlt_version == DLT_VERSION2) {
+    uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
+    dlt_version = (firstByteWithVersion >> 5) & (0x07);
+
+    if(dlt_version == DLT_VERSION2) {
         /* Process all received messages */
-        while (dlt_message_read_v2(
-                &(daemon_local->msgv2),
-                (uint8_t *)receiver->buf,
-                (unsigned int) receiver->bytesRcvd,
-                daemon_local->flags.nflag,
-                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
+        while (dlt_message_read_v2(&(daemon_local->msgv2),
+                                   (uint8_t *)receiver->buf,
+                                   (unsigned int) receiver->bytesRcvd,
+                                   daemon_local->flags.nflag,
+                                   daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
 
             /* Check for control message */
-            if ((receiver->fd > 0) &&
-                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
-                dlt_daemon_client_process_control(receiver->fd,
-                                                daemon, daemon_local,
-                                                &(daemon_local->msg),
-                                                daemon_local->flags.vflag);
-
-            bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-                daemon_local->msg.datasize -
-                sizeof(DltStorageHeader));
+            if ((0 < receiver->fd) &&
+                DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
+                dlt_daemon_client_process_control_v2(receiver->fd,
+                                                     daemon,
+                                                     daemon_local,
+                                                     &(daemon_local->msgv2),
+                                                     daemon_local->flags.vflag);
+            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
+                daemon_local->msgv2.datasize - daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3487,9 +3492,9 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             offset = 0;
             userheader = (DltUserHeader *)(receiver->buf + offset);
 
-            int ret_val = dlt_user_check_userheader_v2(userheader);
+            int ret_val = dlt_user_check_userheader(userheader);
 
-            while (!dlt_user_check_userheader_v2(userheader) &&
+            while (!dlt_user_check_userheader(userheader) &&
                 (offset + min_size <= receiver->bytesRcvd)) {
                 /* resync if necessary */
                 offset++;
@@ -3497,8 +3502,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             }
 
             /* Check for user header pattern */
-            ret_val = dlt_user_check_userheader_v2(userheader);
-            if (!dlt_user_check_userheader_v2(userheader))
+            ret_val = dlt_user_check_userheader(userheader);
+            if (!dlt_user_check_userheader(userheader))
                 break;
 
             /* Set new start offset */
@@ -4947,9 +4952,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-        DltDaemonApplication *app = dlt_daemon_application_find_v2(
+        DltDaemonApplication *app = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+        dlt_daemon_application_find_v2(
             daemon, daemon_local->msgv2.extendedheaderv2->apidlen, 
-            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose);
+            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose, &app);
 #endif
 
         /* discard non-allowed levels if enforcement is on */
@@ -5322,22 +5328,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
-#if 0 // TBD: Remove DEBUG prints
-        printf("\nDEBUG: %s - Received Buffer: length = %d\n", __func__, length);
-
-        for (int j = 0; j < length; j++){
-            if (data[j] > 48 && data[j] < 122) {
-                printf("%c", data[j]);
-            }
-            else {
-                printf(" 0x%02X", (uint8_t)(data[j]));
-            }
-        }
-        printf("\nBuffer in Hex: \n");
-        for (int k = 0; k < length; k++){
-            printf(" 0x%02X", (uint8_t)(data[k]));
-        }
-#endif // End of DEBUG prints
         if ((ret =
                  dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
                                         verbose)))

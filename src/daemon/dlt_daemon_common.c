@@ -2654,7 +2654,7 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
     DltUserHeader userheader;
     DltUserControlMsgLogLevel usercontext;
     DltReturnValue ret;
-    DltDaemonApplication *app;
+    DltDaemonApplication *app = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2681,9 +2681,9 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
 
     usercontext.log_level_pos = context->log_level_pos;
 
-    dlt_vlog(LOG_NOTICE, "Send log-level to context: %.4s:%.4s [%i -> %i] [%i -> %i]\n",
-             context->apid,
-             context->ctid,
+    dlt_vlog(LOG_NOTICE, "Send log-level to context: %s:%s [%i -> %i] [%i -> %i]\n",
+             context->apid2,
+             context->ctid2,
              context->log_level,
              usercontext.log_level,
              context->trace_status,
@@ -2701,12 +2701,13 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
                  errno != 0 ? strerror(errno) : "Unknown error");
 
         if (errno == EPIPE || errno == EBADF) {
-            app = dlt_daemon_application_find(daemon, context->apid, daemon->ecuid, verbose);
+            dlt_daemon_application_find_v2(daemon, context->apid2len, context->apid2, 
+                                                 daemon->ecuid2len, daemon->ecuid2, verbose, &app);
             if (app != NULL)
                 dlt_daemon_application_reset_user_handle(daemon, app, verbose);
         }
+        free(app);
     }
-
     return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;
 }
 
@@ -2755,19 +2756,10 @@ int dlt_daemon_user_send_log_state_v2(DltDaemon *daemon, DltDaemonApplication *a
 
     logstate.log_state = daemon->connectionState;
 
-    // printf("DEBUG: userheader.pattern = %4.4s\n", userheader.pattern);
-    // printf("DEBUG: userheader.message = %u\n", userheader.message);
-    // printf("DEBUG: logstate = %d\n\n", logstate.log_state);
-
-    // const char *filename = "/mnt/c/Users/A537103/projects/dlt/output.txt";
-    // int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
     /* log to FIFO */
     ret = dlt_user_log_out2_with_timeout(app->user_handle,
                             &(userheader), sizeof(DltUserHeader),
                             &(logstate.log_state), sizeof(int8_t));
-    
-    // close(fd);
 
     if (ret < DLT_RETURN_OK) {
         if (errno == EPIPE || errno == EBADF)

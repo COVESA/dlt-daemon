@@ -318,7 +318,7 @@ void *dlt_connection_get_callback(DltConnection *con)
         ret = dlt_daemon_process_control_connect;
         break;
     case DLT_CONNECTION_CONTROL_MSG:
-        ret = dlt_daemon_process_control_messages; //TBD: Set Log, Get LogInfo
+        ret = dlt_daemon_process_control_messages;
         break;
     case DLT_CONNECTION_GATEWAY:
         ret = dlt_gateway_process_passive_node_messages;
