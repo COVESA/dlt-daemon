@@ -6635,22 +6635,6 @@ DltReturnValue dlt_user_log_resend_buffer(void)
             msgcontent = DLT_NON_VERBOSE_DATA_MSG;
         }
 
-        int headersize = sizeof(DltUserHeader) + STORAGE_HEADER_V2_FIXED_SIZE + dlt_user.ecuID2len + 
-                            BASE_HEADER_V2_FIXED_SIZE +
-                            dlt_message_get_extraparameters_size_v2(msgcontent) +
-                            dlt_get_extendedheadersize_v2(dlt_user, MAX_CONTEXT_LEN_V2);
-
-        if (dlt_user.resend_buffer != NULL) {
-            free(dlt_user.resend_buffer);
-            dlt_user.resend_buffer = NULL;
-            dlt_user.resend_buffer = calloc(sizeof(unsigned char), (dlt_user.log_buf_len + headersize));
-
-            if (dlt_user.resend_buffer == NULL) {
-                DLT_SEM_FREE();
-                dlt_vlog(LOG_ERR, "cannot allocate memory for resend buffer\n");
-                return DLT_RETURN_ERROR;
-            }
-        }
         for (num = 0; num < count; num++) {
             DLT_SEM_LOCK();
             size = dlt_buffer_copy(&(dlt_user.startup_buffer), dlt_user.resend_buffer, dlt_user.log_buf_len);
@@ -6687,12 +6671,12 @@ DltReturnValue dlt_user_log_resend_buffer(void)
                             offset = dlt_user.ecuID2len + 1;
                         };
                         memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + BASE_HEADER_V2_FIXED_SIZE +
-                                dlt_message_get_extraparameters_size_v2(DLT_VERBOSE_DATA_MSG) + offset,
+                                dlt_message_get_extraparameters_size_v2(msgcontent) + offset,
                                 &(extendedheaderv2.apidlen),
                                 1);
 
                         memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + BASE_HEADER_V2_FIXED_SIZE +
-                                dlt_message_get_extraparameters_size_v2(DLT_VERBOSE_DATA_MSG) + offset + 1,
+                                dlt_message_get_extraparameters_size_v2(msgcontent) + offset + 1,
                                 extendedheaderv2.apid,
                                 extendedheaderv2.apidlen);
                         break;

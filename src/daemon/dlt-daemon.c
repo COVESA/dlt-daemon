@@ -4971,16 +4971,10 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         keep_message &=
             trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
 #endif
-
         if (keep_message){
             dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
         }
         /* keep not read data in buffer */
-        // TBD: Verify calculation of size for DLT V2
-        // size = (int) (daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2 +
-        //     daemon_local->msgv2.datasize +
-        //     sizeof(DltUserHeader));
-
         size = (int) (daemon_local->msgv2.headersizev2 + 
             daemon_local->msgv2.datasize +
             sizeof(DltUserHeader) -
