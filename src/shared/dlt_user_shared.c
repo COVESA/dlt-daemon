@@ -118,18 +118,16 @@ int dlt_user_check_userheader(DltUserHeader *userheader)
     return (userheader->pattern[0] == 'D') &&
            (userheader->pattern[1] == 'U') &&
            (userheader->pattern[2] == 'H') &&
-           (userheader->pattern[3] == 1);
+           ((userheader->pattern[3] == 1) || (userheader->pattern[3] == 2));
 }
 
-int dlt_user_check_userheader_v2(DltUserHeader *userheader)
-{
+int dlt_get_version_from_userheader(DltUserHeader *userheader){
     if (userheader == 0)
         return -1;
-
-    return (userheader->pattern[0] == 'D') &&
-           (userheader->pattern[1] == 'U') &&
-           (userheader->pattern[2] == 'H') &&
-           (userheader->pattern[3] == 2);
+    
+    int version = userheader->pattern[3];
+    
+    return version;
 }
 
 DltReturnValue dlt_user_log_out2(int handle, void *ptr1, size_t len1, void *ptr2, size_t len2)

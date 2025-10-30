@@ -163,8 +163,7 @@ int main(int argc, char *argv[])
     DltTestclientData dltdata;
     int c, i;
     int index;
-    int8_t len;
-
+   
     /* Initialize dltclient */
     memset(&dltclient, 0x0, sizeof(DltClient));
 
@@ -373,11 +372,14 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    len = strlen(dltdata.ecuid);
-    if (dltdata.evalue)
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, len);
-    else
-        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, len);
+    if (dltdata.evalue) {
+        dltdata.ecuid2len = strlen(dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuid2len);
+    }
+    else {
+        dltdata.ecuid2len = strlen(DLT_TESTCLIENT_ECU_ID);
+        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
+    }
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {

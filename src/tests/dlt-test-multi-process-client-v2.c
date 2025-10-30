@@ -183,8 +183,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
     int len;
 
     if (argc < 2)
-        return -1;
-    len = strlen(ECUID);
+        return -1;   
     if (params->serial > 0) {
         client->mode = 1;
 
@@ -199,6 +198,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
         fprintf(stderr, "set serial ip didn't succeed\n");
         return -1;
     }
+    len = strlen(ECUID);
     dlt_set_id_v2(id, ECUID, len);
     return 0;
 }

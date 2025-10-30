@@ -77,7 +77,7 @@
 int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
 int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data);
 
-void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
+void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level, uint8_t trace_status);
 
 DLT_DECLARE_CONTEXT(mycontext1)
 DLT_DECLARE_CONTEXT(mycontext2)
@@ -322,7 +322,7 @@ int main(int argc, char *argv[])
     //                                         dlt_user_injection_callback_with_specific_data,
     //                                         (void *)"TS2 context");
     // DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
-    // DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK(mycontext1, dlt_user_log_level_changed_callback);
+    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK_V2(mycontext1, dlt_user_log_level_changed_callback_v2);
 
     text = message;
 
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             // /* Non-verbose mode */
-            // DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
+            DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
         else {
             if (rvalue == -1) {
@@ -464,12 +464,7 @@ int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *da
     return 0;
 }
 
-void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status)
+void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level, uint8_t trace_status)
 {
-    char text[5];
-    text[4] = 0;
-
-    memcpy(text, context_id, DLT_ID_SIZE);
-
-    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u \n", text, log_level, trace_status);
+    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u\n", context_id, log_level, trace_status);
 }
