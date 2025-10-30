@@ -91,7 +91,6 @@ option(WITH_DLT_NETWORK_TRACE "Set to ON to enable network trace (if message que
 option(WITH_DLT_LOG_LEVEL_APP_CONFIG "Set to ON to enable default log levels based on application ids"               OFF)
 option(WITH_DLT_TRACE_LOAD_CTRL "Set to ON to enable trace load control in libdlt and dlt-daemon"                    OFF)
 
-
 set(DLT_IPC "FIFO"
     CACHE STRING "UNIX_SOCKET,FIFO")
 set(DLT_USER "covesa"
