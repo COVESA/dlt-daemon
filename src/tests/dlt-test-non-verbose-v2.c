@@ -192,7 +192,7 @@ int test_function_interface(void)
 
     printf("Test03: (Function IF) Test all variable types (non-verbose)\n");
     if (dlt_user_log_write_start(&context_info,
-                     &context_data,DLT_LOG_INFO, DLT_VERSION_1) > 0)
+                     &context_data,DLT_LOG_INFO) > 0)
     {
         dlt_user_log_write_string(&context_data,
              "Test03: (Function IF) Test all variable types (non-verbose)");
@@ -200,7 +200,7 @@ int test_function_interface(void)
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data,DLT_LOG_INFO, DLT_VERSION_1, 1) > 0)
+                      &context_data,DLT_LOG_INFO, 1) > 0)
     {
         dlt_user_log_write_string(&context_data, "bool");
         dlt_user_log_write_bool(&context_data, 1);
@@ -208,35 +208,35 @@ int test_function_interface(void)
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 2) > 0)
+                      &context_data, DLT_LOG_INFO, 2) > 0)
     {
         dlt_user_log_write_string(&context_data, "int");
         dlt_user_log_write_int(&context_data, INT32_MIN);/* (-2147483647-1) */
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 3) > 0)
+                      &context_data, DLT_LOG_INFO, 3) > 0)
     {
         dlt_user_log_write_string(&context_data, "int8");
         dlt_user_log_write_int8(&context_data, INT8_MIN); /*         (-128) */
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 4) > 0)
+                      &context_data, DLT_LOG_INFO, 4) > 0)
     {
         dlt_user_log_write_string(&context_data, "int16");
         dlt_user_log_write_int16(&context_data, INT16_MIN);/*    (-32767-1) */
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 5) > 0)
+                      &context_data, DLT_LOG_INFO, 5) > 0)
     {
         dlt_user_log_write_string(&context_data, "int32");
         dlt_user_log_write_int32(&context_data, INT32_MIN);/*(-2147483647-1)*/
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 6) > 0)
+                      &context_data, DLT_LOG_INFO, 6) > 0)
     {
         dlt_user_log_write_string(&context_data, "int64");
         dlt_user_log_write_int64(&context_data, INT64_MIN);
@@ -245,35 +245,35 @@ int test_function_interface(void)
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 7) > 0)
+                      &context_data, DLT_LOG_INFO, 7) > 0)
     {
         dlt_user_log_write_string(&context_data, "uint");
         dlt_user_log_write_uint(&context_data, UINT32_MAX);/*  (4294967295U)*/
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 8) > 0)
+                      &context_data, DLT_LOG_INFO, 8) > 0)
     {
         dlt_user_log_write_string(&context_data, "uint8");
         dlt_user_log_write_uint8(&context_data, UINT8_MAX);/*         (255) */
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 9) > 0)
+                      &context_data, DLT_LOG_INFO, 9) > 0)
     {
         dlt_user_log_write_string(&context_data, "uint16");
         dlt_user_log_write_uint16(&context_data, UINT16_MAX);/*    (65535)  */
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO, DLT_VERSION_1, 10) > 0)
+                      &context_data, DLT_LOG_INFO, 10) > 0)
     {
         dlt_user_log_write_string(&context_data,"uint32");
         dlt_user_log_write_uint32(&context_data,UINT32_MAX);/* (4294967295U)*/
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                             &context_data, DLT_LOG_INFO, DLT_VERSION_1, 11) > 0)
+                             &context_data, DLT_LOG_INFO, 11) > 0)
     {
         dlt_user_log_write_string(&context_data,"uint64");
         dlt_user_log_write_uint64(&context_data,UINT64_MAX);
@@ -282,7 +282,7 @@ int test_function_interface(void)
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),
-                             &context_data, DLT_LOG_INFO, DLT_VERSION_1, 12) > 0)
+                             &context_data, DLT_LOG_INFO, 12) > 0)
     {
         dlt_user_log_write_string(&context_data,"float32");
         dlt_user_log_write_float32(&context_data,FLT_MIN);
@@ -290,7 +290,7 @@ int test_function_interface(void)
         dlt_user_log_write_finish_v2(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                             &context_data, DLT_LOG_INFO, DLT_VERSION_1, 13) > 0)
+                             &context_data, DLT_LOG_INFO, 13) > 0)
     {
         dlt_user_log_write_string(&context_data,"float64");
         dlt_user_log_write_float64(&context_data,DBL_MIN);
@@ -304,7 +304,7 @@ int test_function_interface(void)
     }
 
     if (dlt_user_log_write_start_id(&(context_function_test),
-                             &context_data, DLT_LOG_INFO, DLT_VERSION_1, 14) > 0)
+                             &context_data, DLT_LOG_INFO, 14) > 0)
     {
         dlt_user_log_write_string(&context_data, "raw");
         dlt_user_log_write_raw(&context_data,buffer, 10);
@@ -313,7 +313,7 @@ int test_function_interface(void)
 
     sleep(2);
     if (dlt_user_log_write_start(&context_info,
-                           &context_data, DLT_LOG_INFO, DLT_VERSION_1) > 0)
+                           &context_data, DLT_LOG_INFO) > 0)
     {
         dlt_user_log_write_string(&context_data,
                           "Test03: (Function IF) finished");
