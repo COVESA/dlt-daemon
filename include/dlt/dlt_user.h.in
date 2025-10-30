@@ -192,6 +192,9 @@ typedef struct
     /* Log Level changed callback */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    DltTraceLoadSettings *trace_load_settings;    /**< trace load setting for the context */
+#endif
 } dlt_ll_ts_type;
 
 /**
@@ -1259,19 +1262,8 @@ DltReturnValue dlt_user_log_resend_buffer(void);
  * @param loglevel this is the current log level of the log message to be sent
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is enabled
  */
-static inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel)
-{
-    if ((loglevel < DLT_LOG_DEFAULT) || (loglevel >= DLT_LOG_MAX))
-        return DLT_RETURN_WRONG_PARAMETER;
+inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel);
 
-    if ((handle == NULL) || (handle->log_level_ptr == NULL))
-        return DLT_RETURN_WRONG_PARAMETER;
-
-    if ((loglevel <= (DltLogLevelType)(*(handle->log_level_ptr))) && (loglevel != DLT_LOG_OFF))
-        return DLT_RETURN_TRUE;
-
-    return DLT_RETURN_LOGGING_DISABLED;
-}
 
 #   ifdef DLT_TEST_ENABLE
 void dlt_user_test_corrupt_user_header(int enable);

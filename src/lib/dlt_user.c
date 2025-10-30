@@ -230,6 +230,7 @@ static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /* For trace load control feature */
 static DltReturnValue dlt_user_output_internal_msg(DltLogLevelType loglevel, const char *text, void* params);
+DltContext trace_load_context = {0};
 DltTraceLoadSettings* trace_load_settings = NULL;
 uint32_t trace_load_settings_count = 0;
 pthread_rwlock_t trace_load_rw_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -520,11 +521,12 @@ DltReturnValue dlt_init(void)
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     pthread_rwlock_wrlock(&trace_load_rw_lock);
-
     trace_load_settings = malloc(sizeof(DltTraceLoadSettings));
     if (trace_load_settings == NULL) {
         dlt_vlog(LOG_ERR, "Failed to allocate memory for trace load settings\n");
-        dlt_user_init_state = INIT_UNITIALIZED;
+        dlt_user_init_state = INIT_DONE;
+        pthread_rwlock_unlock(&trace_load_rw_lock);
+        dlt_free();
         return DLT_RETURN_ERROR;
     }
     memset(trace_load_settings, 0, sizeof(DltTraceLoadSettings));
@@ -532,9 +534,7 @@ DltReturnValue dlt_init(void)
     trace_load_settings[0].hard_limit = DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;
     strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
     trace_load_settings_count = 1;
-
     pthread_rwlock_unlock(&trace_load_rw_lock);
-
 #endif
 #ifdef DLT_LIB_USE_UNIX_SOCKET_IPC
 
@@ -1328,7 +1328,18 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
     DLT_SEM_FREE();
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
     strncpy(trace_load_settings[0].apid, dlt_user.appID, DLT_ID_SIZE);
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+    if (!trace_load_context.contextID[0])
+    {
+        // Register Special Context ID for output DLT library internal message
+        ret = dlt_register_context(&trace_load_context, DLT_TRACE_LOAD_CONTEXT_ID, "DLT user library internal context");
+        if (ret < DLT_RETURN_OK)
+        {
+            return ret;
+        }
+    }
 #endif
 
     ret = dlt_user_log_send_register_application();
@@ -1563,8 +1574,16 @@ DltReturnValue dlt_register_context_ll_ts_llccb(DltContext *handle,
     log.trace_status = tracestatus;
 
     dlt_user.dlt_ll_ts_num_entries++;
-
     DLT_SEM_FREE();
+
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_rdlock(&trace_load_rw_lock);
+    DltTraceLoadSettings *settings = dlt_find_runtime_trace_load_settings(
+        trace_load_settings, trace_load_settings_count, dlt_user.appID,
+        ctx_entry->contextID);
+    ctx_entry->trace_load_settings = settings;
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+#endif
 
     return dlt_user_log_send_register_context(&log);
 }
@@ -1697,6 +1716,10 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
         return DLT_RETURN_ERROR;
     }
 
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
+#endif
+
     DLT_SEM_LOCK();
 
     handle->log_level_ptr = NULL;
@@ -1733,7 +1756,9 @@ DltReturnValue dlt_unregister_context(DltContext *handle)
         dlt_user.dlt_ll_ts[handle->log_level_pos].nrcallbacks = 0;
         dlt_user.dlt_ll_ts[handle->log_level_pos].log_level_changed_callback = 0;
     }
-
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_unlock(&trace_load_rw_lock);
+#endif
     DLT_SEM_FREE();
 
     /* Inform daemon to unregister context */
@@ -3982,24 +4007,33 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         return DLT_RETURN_ERROR;
     }
 
+    DLT_SEM_LOCK();
     if ((log == NULL) ||
         (log->handle == NULL) ||
         (log->handle->contextID[0] == '\0') ||
         (mtype < DLT_TYPE_LOG) || (mtype > DLT_TYPE_CONTROL)
-        )
+        ) {
+        DLT_SEM_FREE();
         return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     /* also for Trace messages */
-    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK)
+    if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG) < DLT_RETURN_OK) {
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
+    }
 
-    if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR) {
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
+    }
 
     msg.storageheader = (DltStorageHeader *)msg.headerbuffer;
 
-    if (dlt_set_storageheader(msg.storageheader, dlt_user.ecuID) == DLT_RETURN_ERROR)
+    if (dlt_set_storageheader(msg.storageheader, dlt_user.ecuID) == DLT_RETURN_ERROR) {
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
+    }
 
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_PROTOCOL_VERSION1;
@@ -4050,8 +4084,10 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     time_stamp = msg.headerextra.tmsp;
 #endif
 
-    if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_set_extraparameters(&msg, 0) == DLT_RETURN_ERROR) {
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
+    }
 
     /* Fill out extended header, if extended header should be provided */
     if (DLT_IS_HTYP_UEH(msg.standardheader->htyp)) {
@@ -4076,6 +4112,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         default:
         {
             /* This case should not occur */
+            DLT_SEM_FREE();
             return DLT_RETURN_ERROR;
             break;
         }
@@ -4102,6 +4139,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
 
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
+        DLT_SEM_FREE();
         return DLT_RETURN_ERROR;
     }
 
@@ -4111,12 +4149,15 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
         (dlt_user.local_print_mode != DLT_PM_AUTOMATIC)) {
         if ((dlt_user.enable_local_print) || (dlt_user.local_print_mode == DLT_PM_FORCE_ON))
-            if (dlt_user_print_msg(&msg, log) == DLT_RETURN_ERROR)
+            if (dlt_user_print_msg(&msg, log) == DLT_RETURN_ERROR) {
+                DLT_SEM_FREE();
                 return DLT_RETURN_ERROR;
+            }
     }
 
     if (dlt_user.dlt_is_file) {
         if (dlt_user_file_reach_max) {
+            DLT_SEM_FREE();
             return DLT_RETURN_FILESZERR;
         }
         else {
@@ -4125,6 +4166,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             if(fstat(dlt_user.dlt_log_handle, &st) != 0) {
                 dlt_vlog(LOG_WARNING,
                      "%s: Cannot get file information (errno=%d)\n", __func__, errno);
+                DLT_SEM_FREE();
                 return DLT_RETURN_ERROR;
             }
 
@@ -4139,6 +4181,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                 dlt_vlog(LOG_ERR,
                          "%s: File size (%ld bytes) reached to defined maximum size (%d bytes)\n",
                          __func__, st.st_size, dlt_user.filesize_max);
+                DLT_SEM_FREE();
                 return DLT_RETURN_FILESZERR;
             }
             else {
@@ -4146,6 +4189,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                 ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                                         msg.headerbuffer, msg.headersize,
                                         log->buffer, log->size);
+                DLT_SEM_FREE();
                 return ret;
             }
         }
@@ -4160,8 +4204,11 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         /* try to resent old data first */
         ret = DLT_RETURN_OK;
 
-        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID[0] != '\0'))
+        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID[0] != '\0')) {
+            DLT_SEM_LOCK();
             ret = dlt_user_log_resend_buffer();
+            DLT_SEM_FREE();
+        }
 
         if ((ret == DLT_RETURN_OK) && (dlt_user.appID[0] != '\0')) {
             /* resend ok or nothing to resent */
@@ -4194,13 +4241,27 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             /* check trace load before output */
             if (!sent_size)
             {
+                if ((uint32_t)log->handle->log_level_pos > dlt_user.dlt_ll_ts_num_entries) {
+                    char msg[255];
+                    sprintf(msg, "log handle has invalid log level pos %d, current entries: %u, dropping message\n",
+                            log->handle->log_level_pos, dlt_user.dlt_ll_ts_num_entries);
+                    DLT_SEM_FREE();
+                    dlt_user_output_internal_msg(LOG_ERR, msg, NULL);
+                    return DLT_RETURN_ERROR;
+                }
+
                 pthread_rwlock_wrlock(&trace_load_rw_lock);
-                DltTraceLoadSettings* settings =
-                    dlt_find_runtime_trace_load_settings(
+                dlt_ll_ts_type* ll_ts = &dlt_user.dlt_ll_ts[log->handle->log_level_pos];
+                if (ll_ts->trace_load_settings == NULL) {
+                    ll_ts->trace_load_settings = dlt_find_runtime_trace_load_settings(
                         trace_load_settings, trace_load_settings_count, dlt_user.appID, log->handle->contextID);
+                }
+
+                DLT_SEM_FREE();
                 const bool trace_load_in_limits = dlt_check_trace_load(
-                        settings,
-                        log->log_level, time_stamp,
+                        ll_ts->trace_load_settings,
+                        log->log_level,
+                        time_stamp,
                         sizeof(DltUserHeader)
                             + msg.headersize - sizeof(DltStorageHeader)
                             + log->size,
@@ -4210,6 +4271,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                 if (!trace_load_in_limits){
                     return DLT_RETURN_LOAD_EXCEEDED;
                 }
+                DLT_SEM_LOCK();
             }
             else
             {
@@ -4239,11 +4301,14 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                                                   log->buffer,
                                                   log->size);
 
-        if (process_error_ret == DLT_RETURN_OK)
+        if (process_error_ret == DLT_RETURN_OK) {
+            DLT_SEM_FREE();
             return DLT_RETURN_OK;
+        }
         if (process_error_ret == DLT_RETURN_BUFFER_FULL) {
             /* Buffer full */
             dlt_user.overflow_counter += 1;
+            DLT_SEM_FREE();
             return DLT_RETURN_BUFFER_FULL;
         }
 
@@ -4252,6 +4317,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             case DLT_RETURN_PIPE_FULL:
             {
                 /* data could not be written */
+                DLT_SEM_FREE();
                 return DLT_RETURN_PIPE_FULL;
             }
             case DLT_RETURN_PIPE_ERROR:
@@ -4271,25 +4337,30 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             if (dlt_user.local_print_mode == DLT_PM_AUTOMATIC)
                 dlt_user_print_msg(&msg, log);
 
+            DLT_SEM_FREE();
             return DLT_RETURN_PIPE_ERROR;
         }
         case DLT_RETURN_ERROR:
         {
             /* other error condition */
+            DLT_SEM_FREE();
             return DLT_RETURN_ERROR;
         }
         case DLT_RETURN_OK:
         {
+            DLT_SEM_FREE();
             return DLT_RETURN_OK;
         }
         default:
         {
             /* This case should never occur. */
+            DLT_SEM_FREE();
             return DLT_RETURN_ERROR;
         }
         }
     }
 
+    DLT_SEM_FREE();
     return DLT_RETURN_OK;
 }
 
@@ -4428,7 +4499,6 @@ DltReturnValue dlt_user_log_send_register_context(DltContextData *log)
                                                usercontext.description_length);
 
     return DLT_RETURN_OK;
-
 }
 
 DltReturnValue dlt_user_log_send_unregister_context(DltContextData *log)
@@ -4912,46 +4982,60 @@ DltReturnValue dlt_user_log_check_user_message(void)
                     // Remove the default created at startup
                     if (trace_load_settings != NULL) {
                         free(trace_load_settings);
+                        trace_load_settings_count = 0;
+                        trace_load_settings = NULL;
                     }
 
-                    char msg[255];
                     trace_load_settings_alloc_size = sizeof(DltTraceLoadSettings) * trace_load_settings_user_messages_count;
                     trace_load_settings = malloc(trace_load_settings_alloc_size);
-                    if (trace_load_settings == NULL) {
+                                       if (trace_load_settings == NULL) {
                         pthread_rwlock_unlock(&trace_load_rw_lock);
-                        dlt_log(LOG_ERR, "Failed to allocate memory for trace load settings\n");
-                        return DLT_RETURN_ERROR;
-                    }
-                    memset(trace_load_settings, 0, trace_load_settings_alloc_size);
-                    for (i = 0; i < trace_load_settings_user_messages_count; i++) {
-                        strncpy(trace_load_settings[i].apid, dlt_user.appID, DLT_ID_SIZE);
-                        strncpy(trace_load_settings[i].ctid, trace_load_settings_user_messages[i].ctid, DLT_ID_SIZE);
-                        trace_load_settings[i].soft_limit = trace_load_settings_user_messages[i].soft_limit;
-                        trace_load_settings[i].hard_limit = trace_load_settings_user_messages[i].hard_limit;
-                    }
-                    trace_load_settings_count = trace_load_settings_user_messages_count;
-                    pthread_rwlock_unlock(&trace_load_rw_lock);
-
-                    // must be sent with unlocked trace_load_rw_lock
-                    for (i = 0; i < trace_load_settings_user_messages_count; i++) {
-                        if (trace_load_settings[i].ctid[0] == '\0') {
-                            snprintf(
-                                msg, sizeof(msg),
-                                "Received trace load settings: apid=%.4s, soft_limit=%u, hard_limit=%u\n",
-                                trace_load_settings[i].apid,
-                                trace_load_settings[i].soft_limit,
-                                trace_load_settings[i].hard_limit);
-                        } else {
-                            snprintf(
-                                msg, sizeof(msg),
-                                "Received trace load settings: apid=%.4s, ctid=%.4s, soft_limit=%u, hard_limit=%u\n",
-                                trace_load_settings[i].apid,
-                                trace_load_settings[i].ctid,
-                                trace_load_settings[i].soft_limit,
-                                trace_load_settings[i].hard_limit);
+                        dlt_vlog(LOG_EMERG, "Unable to allocate memory for trace load settings, no logging will be possible\n");
+                   } else {
+                        memset(trace_load_settings, 0, trace_load_settings_alloc_size);
+                        for (i = 0; i < trace_load_settings_user_messages_count; i++) {
+                            strncpy(trace_load_settings[i].apid, dlt_user.appID, DLT_ID_SIZE);
+                            strncpy(trace_load_settings[i].ctid, trace_load_settings_user_messages[i].ctid, DLT_ID_SIZE);
+                            trace_load_settings[i].soft_limit = trace_load_settings_user_messages[i].soft_limit;
+                            trace_load_settings[i].hard_limit = trace_load_settings_user_messages[i].hard_limit;
                         }
-                        dlt_user_output_internal_msg(DLT_LOG_INFO, msg, NULL);
-                    }
+
+                        trace_load_settings_count = trace_load_settings_user_messages_count;
+                        for (i = 0; i < dlt_user.dlt_ll_ts_num_entries; ++i) {
+                            dlt_ll_ts_type* ctx_entry = &dlt_user.dlt_ll_ts[i];
+                            ctx_entry->trace_load_settings = dlt_find_runtime_trace_load_settings(
+                                trace_load_settings, trace_load_settings_count, dlt_user.appID, ctx_entry->contextID);
+                        }
+
+                        char **messages = malloc(trace_load_settings_count * sizeof(char *));
+                        if (messages == NULL) {
+                            pthread_rwlock_unlock(&trace_load_rw_lock);
+                            dlt_vlog(LOG_ERR, "unable to allocate memory for trace load message buffer\n");
+                        } else {
+                            uint32_t msg_count = 0U;
+                            for (i = 0U; i < trace_load_settings_count; i++) {
+                                messages[i] = malloc(255 * sizeof(char));
+                                if (messages[i] == NULL) {
+                                    dlt_vlog(LOG_ERR, "unable to allocate memory for trace load message buffer, index: %u, skipping remaining entries\n", i);
+                                    break;
+                                }
+                                ++msg_count;
+                                snprintf(messages[i], 255, "Received trace load settings: apid=%.4s%s%.4s, soft_limit=%u, hard_limit=%u\n",
+                                trace_load_settings[i].apid,
+                                        trace_load_settings[i].ctid[0] == '\0' ? "" : ", ctid=",
+                                        trace_load_settings[i].ctid[0] == '\0' ? "" : trace_load_settings[i].ctid,
+                                trace_load_settings[i].soft_limit,
+                                trace_load_settings[i].hard_limit);
+                            }
+                            pthread_rwlock_unlock(&trace_load_rw_lock);
+
+                            for (i = 0U; i < msg_count; i++) {
+                                dlt_user_output_internal_msg(DLT_LOG_INFO, messages[i], NULL);
+                                free(messages[i]);
+                            }
+                            free(messages);
+                        }
+                   }
 
                     /* keep not read data in buffer */
                     if (dlt_receiver_remove(receiver, trace_load_settings_user_message_bytes_required)
@@ -5396,20 +5480,9 @@ static DltReturnValue dlt_user_output_internal_msg(
     const DltLogLevelType loglevel, const char *const text, void* const params)
 {
     (void)params; // parameter is not needed
-    static DltContext handle;
     DltContextData log;
     int ret;
     int sent_size = 0;
-
-    if (!handle.contextID[0])
-    {
-        // Register Special Context ID for output DLT library internal message
-        ret = dlt_register_context(&handle, DLT_TRACE_LOAD_CONTEXT_ID, "DLT user library internal context");
-        if (ret < DLT_RETURN_OK)
-        {
-            return ret;
-        }
-    }
 
     if (dlt_user.verbose_mode == 0)
     {
@@ -5427,7 +5500,7 @@ static DltReturnValue dlt_user_output_internal_msg(
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    ret = dlt_user_log_write_start(&handle, &log, loglevel);
+    ret = dlt_user_log_write_start(&trace_load_context, &log, loglevel);
 
     // Ok means below threshold
     // see src/dlt-qnx-system/dlt-qnx-slogger2-adapter.cpp::sloggerinfo_callback for reference
@@ -5485,4 +5558,25 @@ DltReturnValue dlt_user_log_out_error_handling(void *ptr1, size_t len1, void *pt
     DLT_SEM_FREE();
 
     return ret;
+}
+
+DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel)
+{
+   if ((loglevel < DLT_LOG_DEFAULT) || (loglevel >= DLT_LOG_MAX)) {
+       return DLT_RETURN_WRONG_PARAMETER;
+   }
+
+   DLT_SEM_LOCK();
+   if ((handle == NULL) || (handle->log_level_ptr == NULL)) {
+       DLT_SEM_FREE();
+       return DLT_RETURN_WRONG_PARAMETER;
+   }
+
+   if ((loglevel <= (DltLogLevelType)(*(handle->log_level_ptr))) && (loglevel != DLT_LOG_OFF)) {
+       DLT_SEM_FREE();
+       return DLT_RETURN_TRUE;
+   }
+
+   DLT_SEM_FREE();
+   return DLT_RETURN_LOGGING_DISABLED;
 }

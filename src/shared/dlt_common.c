@@ -4453,6 +4453,12 @@ bool dlt_check_trace_load(
         return true;
     }
 
+    if (tl_settings == NULL)
+    {
+        internal_dlt_log(DLT_LOG_ERROR, "tl_settings is NULL", internal_dlt_log_params);
+        return false;
+    }
+
     if (size < 0)
     {
         dlt_vlog(LOG_ERR, "Invalid size: %d", size);
@@ -4485,11 +4491,11 @@ bool dlt_check_trace_load(
 
 DltTraceLoadSettings*
 dlt_find_runtime_trace_load_settings(DltTraceLoadSettings *settings, uint32_t settings_count, const char* apid, const char* ctid) {
-    if ((apid == NULL) || (strlen(apid) == 0))
+    if ((apid == NULL) || (strnlen(apid, DLT_ID_SIZE) == 0))
         return NULL;
 
     DltTraceLoadSettings* app_level = NULL;
-    size_t ctid_len = (ctid != NULL) ? strlen(ctid) : 0;
+    size_t ctid_len = (ctid != NULL) ? strnlen(ctid, DLT_ID_SIZE) : 0;
 
     for (uint32_t i = 0; i < settings_count; ++i) {
         if (strncmp(apid, settings->apid, DLT_ID_SIZE) != 0) {
