@@ -99,8 +99,8 @@ typedef struct
     int bvalue;
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
-
-    char ecuid[4];
+    uint8_t ecuid2len;
+    char *ecuid2;
     int ohandle;
 
     DltFile file;
@@ -374,11 +374,11 @@ int main(int argc, char *argv[])
     }
     if (dltdata.evalue) {
         dltdata.ecuid2len = strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuid2len);
+        dlt_set_id_v2(&(dltdata.ecuid2), dltdata.evalue, dltdata.ecuid2len);
     }
     else {
         dltdata.ecuid2len = strlen(DLT_TESTCLIENT_ECU_ID);
-        dlt_set_id_v2(dltdata.ecuid, DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
+        dlt_set_id_v2(&(dltdata.ecuid2), DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
     }
 
     /* Connect to TCP socket or open serial device */
@@ -423,8 +423,8 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         return -1;
 
     dltdata = (DltTestclientData *)data;
-    len = strlen(dltdata->ecuid);
-    //dlt_set_storageheader_v2(message->storageheaderv2, len, dltdata->ecuid);
+    len = strlen(dltdata->ecuid2);
+    dlt_set_storageheader_v2(&(message->storageheaderv2), len, dltdata->ecuid2);
 
     if ((dltdata->fvalue == 0) ||
         (dltdata->fvalue &&

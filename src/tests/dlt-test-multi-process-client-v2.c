@@ -81,7 +81,7 @@ typedef struct {
 } s_statistics;
 
 /* Forward declarations */
-int receive(DltMessage *msg, void *data);
+int receive(DltMessageV2 *msg, void *data);
 
 /**
  * Print usage information
@@ -179,7 +179,7 @@ int read_params(s_parameters *params, int argc, char *argv[])
  */
 int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, char *argv[])
 {
-    char id[4];
+    char *id = NULL;
     int len;
 
     if (argc < 2)
@@ -199,7 +199,7 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
         return -1;
     }
     len = strlen(ECUID);
-    dlt_set_id_v2(id, ECUID, len);
+    dlt_set_id_v2(&id, ECUID, len);
     return 0;
 }
 
@@ -294,7 +294,7 @@ void print_stats(s_statistics stats, s_parameters params)
 /**
  * Callback for dlt client
  */
-int receive(DltMessage *msg, void *data)
+int receive(DltMessageV2 *msg, void *data)
 {
     static s_statistics stats;
     char apid[5];
@@ -302,7 +302,7 @@ int receive(DltMessage *msg, void *data)
     s_parameters *params = (s_parameters *)data;
 
     memset(apid, 0, 5);
-    memcpy(apid, msg->extendedheader->apid, 4);
+    memcpy(apid, msg->extendedheaderv2.apid, 4);
 
     if ((apid[0] != 'M') || (apid[1] != 'T')) /* TODO: Check through the app description */
         return 0;
@@ -329,15 +329,15 @@ int receive(DltMessage *msg, void *data)
     else
         stats.broken_messages_received++;
 
-    stats.bytes_received += msg->datasize + msg->headersize - sizeof(DltStorageHeader);
+    stats.bytes_received += msg->datasize + msg->headersizev2 - sizeof(DltStorageHeaderV2);
 
     free(buf);
 
     print_stats(stats, *params);
 
     if (params->output_handle > 0) {
-        iov[0].iov_base = msg->headerbuffer;
-        iov[0].iov_len = msg->headersize;
+        iov[0].iov_base = msg->headerbufferv2;
+        iov[0].iov_len = msg->headersizev2;
         iov[1].iov_base = msg->databuffer;
         iov[1].iov_len = msg->datasize;
 
