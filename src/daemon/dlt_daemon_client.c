@@ -598,6 +598,7 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
         return DLT_DAEMON_ERROR_UNKNOWN;
     }
 
+    temp_extended_size = daemon_local->msgv2.extendedheadersizev2;
     /* set overwrite ecu id */
     if ((daemon_local->flags.evalue[0]) &&
         (strncmp(daemon_local->msgv2.extendedheaderv2.ecid,
@@ -608,7 +609,6 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
         daemon_local->msgv2.extendedheaderv2.seid = 0;
 
         /* Get new extended header size and header size, update header buffer*/
-        temp_extended_size = daemon_local->msgv2.extendedheadersizev2;
         daemon_local->msgv2.extendedheadersizev2 = dlt_message_get_extendedparameters_size_v2(&(daemon_local->msgv2));
     }
 

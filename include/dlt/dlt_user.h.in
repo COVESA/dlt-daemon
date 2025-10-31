@@ -108,7 +108,7 @@ extern "C" {
 #   define DLT_USER_BUF_MAX_SIZE 1390            /**< maximum size of each user buffer, also used for injection buffer */
 
 #   define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)    /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
-
+#   define MAX_CONTEXT_LEN_V2 255
 /* Use a semaphore or mutex from your OS to prevent concurrent access to the DLT buffer. */
 #define DLT_SEM_LOCK() do{ \
         int err_check = pthread_mutex_lock(&dlt_mutex); \
@@ -1440,12 +1440,6 @@ int dlt_user_atexit_blow_out_user_buffer(void);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_resend_buffer(void);
-
-/**
- * Try to resend log message in the user buffer.
- * @return Value from DltReturnValue enum
- */
-DltReturnValue dlt_user_log_resend_buffer_v2(void);
 
 /**
  * Checks the log level passed by the log function if enabled for that context or not.
