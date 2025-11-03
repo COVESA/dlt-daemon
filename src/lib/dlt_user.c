@@ -1761,7 +1761,6 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
                                                    int loglevel,
                                                    int tracestatus,
                                                    void (*dlt_log_level_changed_callback_v2)(char *context_id,
-                                                                                       uint8_t context_id_len,
                                                                                        uint8_t log_level,
                                                                                        uint8_t trace_status))
 {
@@ -1985,7 +1984,6 @@ DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
                                           const char *contextid,
                                           const char *description,
                                           void (*dlt_log_level_changed_callback_v2)(char *context_id,
-                                                                                    uint8_t context_id_len,
                                                                                     uint8_t log_level,
                                                                                     uint8_t trace_status))
 {
@@ -4444,8 +4442,7 @@ DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int lin
     }
     strcpy(dlt_user.filename, fina);
 
-    dlt_user.linenumber = linr;
-
+    dlt_user.linenumber = (uint32_t)linr;
     return DLT_RETURN_OK;
 }
 
@@ -5194,7 +5191,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     if (DLT_IS_HTYP2_WSFLN(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.finalen = dlt_user.filenamelen;
         dlt_set_id_v2(&(msg.extendedheaderv2.fina), dlt_user.filename, msg.extendedheaderv2.finalen);
-        msg.extendedheaderv2.linr = DLT_HTOBE_16(dlt_user.linenumber);
+        msg.extendedheaderv2.linr = dlt_user.linenumber;
     }
 
     if (DLT_IS_HTYP2_WTGS(msg.baseheaderv2->htyp2)) {
@@ -5934,7 +5931,7 @@ DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid, DltLogLevelType log
         return DLT_RETURN_ERROR;
     }
 
-    if ((apid == NULL) || (apid == '\0'))
+    if ((apid == NULL) || (*apid == '\0'))
         return DLT_RETURN_ERROR;
 
     /* set userheader */
@@ -6881,8 +6878,9 @@ DltReturnValue dlt_user_log_send_overflow(void)
         return dlt_user_log_out2(dlt_user.dlt_log_handle,
                                 &(userheader), sizeof(DltUserHeader),
                                 buffer, buffersize);
+    }else {
+        return DLT_RETURN_ERROR;
     }
-
 }
 
 DltReturnValue dlt_user_check_buffer(int *total_size, int *used_size)
