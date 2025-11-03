@@ -1262,6 +1262,42 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
         currtextlength++;
     }
 
+    if ((flags & DLT_HEADER_SHOW_FLNA_LNR) == DLT_HEADER_SHOW_FLNA_LNR) {
+        if ((DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.finalen != 0)) {
+            memcpy(text + currtextlength, msg->extendedheaderv2.fina, (msg->extendedheaderv2.finalen)+1);
+            currtextlength = currtextlength + (msg->extendedheaderv2.finalen);
+            snprintf(text + currtextlength, textlength - currtextlength, " ");
+            currtextlength++;
+        }
+
+        if ((DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.linr != 0)) {
+            snprintf(text + currtextlength, textlength - currtextlength, "%.5u", msg->extendedheaderv2.linr);
+            currtextlength = currtextlength + 5;
+            snprintf(text + currtextlength, textlength - currtextlength, " ");
+            currtextlength++;
+        }
+    }
+
+    if ((flags & DLT_HEADER_SHOW_PRLV) == DLT_HEADER_SHOW_PRLV) {
+        if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+            snprintf(text + currtextlength, textlength - currtextlength, "%.3u", msg->extendedheaderv2.prlv);
+            currtextlength = currtextlength + 3;
+            snprintf(text + currtextlength, textlength - currtextlength, " ");
+            currtextlength++;
+        }
+    }
+
+    if ((flags & DLT_HEADER_SHOW_TAG) == DLT_HEADER_SHOW_TAG) {
+        if ((DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.notg != 0)) {
+            for(int i=0; i<msg->extendedheaderv2.notg; i++){
+                memcpy(text + currtextlength, msg->extendedheaderv2.tag[i].tagname, (msg->extendedheaderv2.tag[i].taglen)+1);
+                currtextlength = currtextlength + (msg->extendedheaderv2.tag[i].taglen);
+                snprintf(text + currtextlength, textlength - currtextlength, " ");
+                currtextlength++;               
+            }
+        }
+    }
+
     /* print info about message type and length */
     if ((msgcontent==DLT_VERBOSE_DATA_MSG)||(msgcontent==DLT_CONTROL_MSG)) {
         if ((flags & DLT_HEADER_SHOW_MSGTYPE) == DLT_HEADER_SHOW_MSGTYPE) {

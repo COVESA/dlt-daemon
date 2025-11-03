@@ -3464,7 +3464,7 @@ void dlt_daemon_find_multiple_context_and_send_log_level_v2(int sock,
 
     int count = 0;
     DltDaemonContext *context = NULL;
-    char src_str[DLT_ID_SIZE + 1] = { 0 };
+    char *src_str = NULL;
     int ret = 0;
     DltDaemonRegisteredUsers *user_list = NULL;
 
@@ -3483,9 +3483,9 @@ void dlt_daemon_find_multiple_context_and_send_log_level_v2(int sock,
 
         if (context) {
             if (app_flag == 1)
-                strncpy(src_str, context->apid2, context->apid2len);
+                dlt_set_id_v2(&src_str, context->apid2, context->apid2len);
             else
-                strncpy(src_str, context->ctid2, context->ctid2len);
+                dlt_set_id_v2(&src_str, context->ctid2, context->ctid2len);
 
             ret = strncmp(src_str, str, len);
 

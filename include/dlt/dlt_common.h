@@ -362,6 +362,9 @@
 #   define DLT_HEADER_SHOW_MSGSUBTYPE 0x0080
 #   define DLT_HEADER_SHOW_VNVSTATUS  0x0100
 #   define DLT_HEADER_SHOW_NOARG      0x0200
+#   define DLT_HEADER_SHOW_FLNA_LNR   0x0400
+#   define DLT_HEADER_SHOW_PRLV       0x0800
+#   define DLT_HEADER_SHOW_TAG        0x1000
 #   define DLT_HEADER_SHOW_ALL        0xFFFF
 
 /* dlt_receiver_check_and_get flags */
