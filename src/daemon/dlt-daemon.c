@@ -2794,7 +2794,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             msg.databuffer, (int) msg.datasize, verbose);
 
         free(msg.databuffer);
-
+    }else {
+        return -1;
     }
 
     return 0;
@@ -2846,8 +2847,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         return -1;
     }
 
-    /* To update multiplexer logic for V1 and V2 */
-    if (1) {
+    if (DLT_DAEMON_VERSION == 2) {
         /* check if file file descriptor was already used, and make it invalid if it
         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
@@ -2929,7 +2929,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             daemon->bytes_recv = 0;
     #endif
         }
-    } else {
+    } else if (DLT_DAEMON_VERSION == 1) {
         /* check if file file descriptor was already used, and make it invalid if it
         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
@@ -3010,6 +3010,8 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             daemon->bytes_recv = 0;
     #endif
         }
+    }else {
+        return -1;
     }
     return 0;
 }
@@ -3230,13 +3232,14 @@ int dlt_daemon_process_control_connect(
     /* check if file file descriptor was already used, and make it invalid if it
      *  is reused */
     /* This prevents sending messages to wrong file descriptor */
-    /* To update multiplexer logic for V1 and V2 */
-    if(0){ // Logic to check for DLT Version 2
+    if (DLT_DAEMON_VERSION == 2) {
         dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
-    }else{ // Logic to check for DLT Version 1
+    }else if (DLT_DAEMON_VERSION == 1) {
         dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);        
+    }else {
+        return -1;
     }
     dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
     dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
@@ -5558,7 +5561,14 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     if (daemon_local->client_connections == 0) {
         /* send new log state to all applications */
         daemon->connectionState = 0;
-        dlt_daemon_user_send_all_log_state(daemon, verbose);
+
+        if (DLT_DAEMON_VERSION == 2) {
+            dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
+        }else if (DLT_DAEMON_VERSION == 1){
+            dlt_daemon_user_send_all_log_state(daemon, verbose);
+        }else {
+            return -1;
+        }
 
         /* For offline tracing we still can use the same states */
         /* as for socket sending. Using this trick we see the traces */
@@ -5567,12 +5577,23 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER);
     }
 
-    dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
-                                               daemon,
-                                               daemon_local,
-                                               DLT_CONNECTION_STATUS_DISCONNECTED,
-                                               "",
-                                               verbose);
+    if (DLT_DAEMON_VERSION == 2) {
+        dlt_daemon_control_message_connection_info_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                      daemon,
+                                                      daemon_local,
+                                                      DLT_CONNECTION_STATUS_DISCONNECTED,
+                                                      "",
+                                                      verbose);
+    }else if (DLT_DAEMON_VERSION == 1){
+        dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
+                                                   daemon,
+                                                   daemon_local,
+                                                   DLT_CONNECTION_STATUS_DISCONNECTED,
+                                                   "",
+                                                   verbose);
+    }else {
+        return -1;
+    }
 
     snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
              "Client connection #%d closed. Total Clients : %d",
