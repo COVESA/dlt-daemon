@@ -84,6 +84,8 @@
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
+#define DLT_DAEMON_VERSION 2 /* Daemon version should be either 1 or 2 to support V1 or V2*/
+
 /**
  * The flags of a dlt daemon.
  */
@@ -166,6 +168,7 @@ typedef struct
     DltMessage msg;           /**< one dlt message */
     DltMessageV2 msgv2;         /**< one dlt v2 message */
     int client_connections;    /**< counter for nr. of client connections */
+    int client_connection_version; /* Connected client version*/
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;                /**< Shared memory handling */

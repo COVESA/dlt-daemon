@@ -846,7 +846,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                 if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
                     return -1;
 
-                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2);
+                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2 - message->storageheadersizev2);
 
                 /* get response data */
                 ret = dlt_message_header_v2(message, resp_text,

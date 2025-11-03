@@ -101,9 +101,9 @@ enum InitState {
 
 static DltUser dlt_user;
 static _Atomic enum InitState dlt_user_init_state = INIT_UNITIALIZED;
-#define DLT_USER_INITALIZED (dlt_user_init_state == INIT_DONE)
+#define DLT_USER_INITIALIZED (dlt_user_init_state == INIT_DONE)
 #define DLT_USER_INIT_ERROR (dlt_user_init_state == INIT_ERROR)
-#define DLT_USER_INITALIZED_NOT_FREEING (DLT_USER_INITALIZED && (dlt_user_freeing == 0))
+#define DLT_USER_INITIALIZED_NOT_FREEING (DLT_USER_INITIALIZED && (dlt_user_freeing == 0))
 
 static _Atomic int dlt_user_freeing = 0;
 static bool dlt_user_file_reach_max = false;
@@ -605,7 +605,7 @@ DltReturnValue dlt_init(void)
     /* prepare for fork() call */
     pthread_atfork(NULL, NULL, &dlt_fork_child_fork_handler);
 
-    dlt_user_init_state = INIT_DONE;
+    atomic_store(&dlt_user_init_state, INIT_DONE);
 
     return DLT_RETURN_OK;
 }
@@ -784,7 +784,7 @@ DltReturnValue dlt_init_common(void)
     uint32_t header_size = 0;
 
     // already initialized, nothing to do
-    if (DLT_USER_INITALIZED) {
+    if (DLT_USER_INITIALIZED) {
         return DLT_RETURN_OK;
     }
 
@@ -1013,7 +1013,7 @@ void dlt_user_atexit_handler(void)
     if (g_dlt_is_child)
         return;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         /* close file */
         dlt_log_free();
@@ -1119,7 +1119,7 @@ DltReturnValue dlt_free(void)
 
     // no need to free when not initialized and no error occurred.
     // on error some resources might have been allocated, so free them.
-    if (!DLT_USER_INITALIZED && !DLT_USER_INIT_ERROR) {
+    if (!DLT_USER_INITIALIZED && !DLT_USER_INIT_ERROR) {
         dlt_user_freeing = 0;
         return DLT_RETURN_ERROR;
     }
@@ -1318,7 +1318,7 @@ DltReturnValue dlt_register_app(const char *apid, const char *description)
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -1398,7 +1398,7 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -1463,7 +1463,7 @@ DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, c
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -1490,7 +1490,7 @@ DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -1740,7 +1740,7 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -1997,7 +1997,7 @@ DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -2023,7 +2023,7 @@ DltReturnValue dlt_unregister_app_util(bool force_sending_messages)
         return DLT_RETURN_ERROR;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2063,7 +2063,7 @@ DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages)
         return DLT_RETURN_ERROR;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2114,7 +2114,7 @@ DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2136,7 +2136,7 @@ DltReturnValue dlt_unregister_app_flush_buffered_logs_v2(void)
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2292,7 +2292,7 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -2321,7 +2321,7 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
     DLT_SEM_FREE();
 
     /* Inform DLT server about update */
-    if(dlt_user.appID != '\0'){
+    if(dlt_user.appID[0] != '\0'){
         return dlt_send_app_ll_ts_limit(dlt_user.appID, loglevel, tracestatus);
     }else if (dlt_user.appID2 != NULL){
         return dlt_send_app_ll_ts_limit_v2(dlt_user.appID2, loglevel, tracestatus);
@@ -2348,7 +2348,7 @@ DltReturnValue dlt_set_log_mode(DltUserLogMode mode)
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -2364,7 +2364,7 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
     if (g_dlt_is_child)
         return DLT_RETURN_ERROR;
 
-    if (DLT_USER_INITALIZED == 0)
+    if (DLT_USER_INITIALIZED == 0)
         if (dlt_init() < 0)
             return -1;
 
@@ -2577,7 +2577,7 @@ static DltReturnValue dlt_user_log_write_raw_internal(DltContextData *log, const
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2672,7 +2672,7 @@ static DltReturnValue dlt_user_log_write_generic_attr(DltContextData *log, const
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2751,7 +2751,7 @@ static DltReturnValue dlt_user_log_write_generic_formatted(DltContextData *log, 
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2827,7 +2827,7 @@ DltReturnValue dlt_user_log_write_uint(DltContextData *log, unsigned int data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -2892,7 +2892,7 @@ DltReturnValue dlt_user_log_write_uint_attr(DltContextData *log, unsigned int da
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -2985,7 +2985,7 @@ DltReturnValue dlt_user_log_write_ptr(DltContextData *log, void *data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -3013,7 +3013,7 @@ DltReturnValue dlt_user_log_write_int(DltContextData *log, int data)
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -3078,7 +3078,7 @@ DltReturnValue dlt_user_log_write_int_attr(DltContextData *log, int data, const 
     if (log == NULL)
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_initialised false\n", __FUNCTION__);
         return DLT_RETURN_ERROR;
     }
@@ -3248,7 +3248,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
     if ((log == NULL) || (text == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -4316,7 +4316,7 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
 
 DltReturnValue dlt_log_marker()
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4328,7 +4328,7 @@ DltReturnValue dlt_log_marker()
 
 DltReturnValue dlt_verbose_mode(void)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4343,7 +4343,7 @@ DltReturnValue dlt_verbose_mode(void)
 
 DltReturnValue dlt_nonverbose_mode(void)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4358,7 +4358,7 @@ DltReturnValue dlt_nonverbose_mode(void)
 
 DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_header_for_non_verbose)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4373,7 +4373,7 @@ DltReturnValue dlt_use_extended_header_for_non_verbose(int8_t use_extended_heade
 
 DltReturnValue dlt_with_session_id(int8_t with_session_id)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4388,7 +4388,7 @@ DltReturnValue dlt_with_session_id(int8_t with_session_id)
 
 DltReturnValue dlt_with_timestamp(int8_t with_timestamp)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4403,7 +4403,7 @@ DltReturnValue dlt_with_timestamp(int8_t with_timestamp)
 
 DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4422,7 +4422,7 @@ DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int lin
             dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
             return DLT_RETURN_ERROR;
     }
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4451,7 +4451,7 @@ DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int lin
 
 DltReturnValue dlt_with_prlv(uint8_t prlv)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4470,7 +4470,7 @@ DltReturnValue dlt_with_tags(const char *firstTag, ...) {
             dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
             return DLT_RETURN_ERROR;
     }
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4514,7 +4514,7 @@ DltReturnValue dlt_with_tags(const char *firstTag, ...) {
 
 DltReturnValue dlt_enable_local_print(void)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4528,7 +4528,7 @@ DltReturnValue dlt_enable_local_print(void)
 
 DltReturnValue dlt_disable_local_print(void)
 {
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
             dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
             return DLT_RETURN_ERROR;
@@ -4643,7 +4643,7 @@ DltReturnValue dlt_user_log_init(DltContext *handle, DltContextData *log)
     if ((handle == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (!DLT_USER_INITALIZED) {
+    if (!DLT_USER_INITIALIZED) {
         ret = dlt_init();
 
         if (ret < DLT_RETURN_OK) {
@@ -4673,7 +4673,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
 
     DltReturnValue ret = DLT_RETURN_OK;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -5004,7 +5004,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 #endif
  */
     DltReturnValue ret = DLT_RETURN_OK;
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
@@ -5989,7 +5989,7 @@ DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
     }
 
     /* set userheader */
-    if(dlt_user.appID != '\0'){
+    if(dlt_user.appID[0] != '\0'){
         if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }else if (dlt_user.appID2 != NULL){
@@ -6027,7 +6027,7 @@ DltReturnValue dlt_user_log_send_marker()
     DltReturnValue ret;
 
     /* set userheader */
-    if(dlt_user.appID != '\0'){
+    if(dlt_user.appID[0] != '\0'){
         if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }else if (dlt_user.appID2 != NULL){
@@ -6732,7 +6732,7 @@ void dlt_user_log_reattach_to_daemon(void)
     DltContext handle;
     DltContextData log_new;
 
-    if (!DLT_USER_INITALIZED_NOT_FREEING) {
+    if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         return;
     }
 
@@ -6849,7 +6849,7 @@ DltReturnValue dlt_user_log_send_overflow(void)
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
 
-    if (dlt_user.appID != '\0'){
+    if (dlt_user.appID[0] != '\0'){
         /* set userheader */
         if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_OVERFLOW) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;

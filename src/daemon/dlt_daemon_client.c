@@ -784,16 +784,6 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    /* Debug prints for verifying DLT Version
-    if(dlt_version == DLT_VERSION2) {
-        dlt_log(LOG_INFO, "DLT VERSION 2 \n"); // DLT_DEBUG
-    } else if(dlt_version == DLT_VERSION1) {
-        dlt_log(LOG_INFO, "DLT VERSION 1 \n"); // DLT_DEBUG
-    } else {
-        dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
-    }
-    
-    */ //TBD Remove
     if ((daemon == 0) || (msg == 0) || (apid == NULL) || (ctid == NULL))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
@@ -2933,7 +2923,7 @@ int dlt_daemon_control_message_connection_info_v2(int sock,
     dlt_set_id(resp->comid, comid);
 
     /* send message */
-    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose)) {
         dlt_message_free_v2(&msg, 0);
         return -1;
     }

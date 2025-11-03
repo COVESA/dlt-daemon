@@ -51,12 +51,16 @@ if(WITH_DLT_QNX_SYSTEM)
     set(TARGET_LIST ${TARGET_LIST} dlt-test-qnx-slogger)
 endif()
  
-foreach(TARGET IN LISTS TARGET_LIST)
-    set(TARGET_SRCS ${TARGET})
-    add_executable(${TARGET} ${TARGET_SRCS})
-    target_link_libraries(${TARGET} dlt)
-    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE C)
-    install(TARGETS ${TARGET}
+foreach(TARGET_NAME IN LISTS TARGET_LIST)
+    if(TARGET_NAME STREQUAL "dlt-test-cpp-extension")
+        set(TARGET_SRCS ${TARGET_NAME}.cpp)
+    else()
+        set(TARGET_SRCS ${TARGET_NAME}.c)
+    endif()
+    add_executable(${TARGET_NAME} ${TARGET_SRCS})
+    target_link_libraries(${TARGET_NAME} dlt)
+    set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE C)
+    install(TARGETS ${TARGET_NAME}
             RUNTIME DESTINATION bin
             COMPONENT base)
 endforeach()
