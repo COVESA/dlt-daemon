@@ -1619,10 +1619,10 @@ int main(int argc, char *argv[])
                                   daemon_local.flags.vflag) == 0))
         daemon.runtime_context_cfg_loaded = 1;
 
-    // dlt_daemon_log_internal(&daemon, &daemon_local,
-    //                         "Daemon launched. Starting to output traces...",
-    //                         DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-    //                         daemon_local.flags.vflag);
+    dlt_daemon_log_internal(&daemon, &daemon_local,
+                            "Daemon launched. Starting to output traces...",
+                            DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                            daemon_local.flags.vflag);
 
     /* Even handling loop. */
     while ((back >= 0) && (g_exit >= 0))
@@ -1632,9 +1632,9 @@ int main(int argc, char *argv[])
 
     snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Exiting DLT daemon... [%d]",
              g_signo);
-    // dlt_daemon_log_internal(&daemon, &daemon_local, local_str, DLT_LOG_INFO,
-    //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-    //                         daemon_local.flags.vflag);
+    dlt_daemon_log_internal(&daemon, &daemon_local, local_str, DLT_LOG_INFO,
+                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                            daemon_local.flags.vflag);
     dlt_vlog(LOG_NOTICE, "%s%s", local_str, "\n");
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
@@ -2567,40 +2567,30 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             char *str, DltLogLevelType level,
                             const char *app_id, const char *ctx_id, int verbose)
 {
-    if (0) {
-        /* DLTV2 - Multiplexing logic for DLT protocol version 2 */
+    static uint8_t uiMsgCount = 0;
+    if (DLT_DAEMON_VERSION == 2) {
         DltMessageV2 msg;
         if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
-        static uint8_t uiMsgCount = 0;
-        DltBaseHeaderExtraV2 *pBaseHeaderExtraV2 = NULL;
-        DltExtendedHeaderV2 *pExtendedHeaderV2 = NULL;
+
         uint32_t uiType;
         uint16_t uiSize;
 
-        struct timespec ts;
         /* To Update: what is the content type*/
         DltHtyp2ContentType msgcontent = DLT_VERBOSE_DATA_MSG;
 
         PRINT_FUNCTION_VERBOSE(verbose);
 
-        /* Set storageheader */
-        /* TBD
-        if (msg.headerbuffer == NULL) {
-            dlt_vlog(LOG_ERR, "Could not allocate memory for message header\n");
-            return -1;
-        }
-        */
         msg.storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + DLT_DAEMON_ECU_ID_LEN;
         msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
         msg.baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(msgcontent);
-        /* To Update: Update to correct size for extended header */
-        msg.extendedheadersizev2 = 23; // To extract the size from flags in the header
+        /* Ecu Id, App Id, Ctx Id and Session Id*/
+        msg.extendedheadersizev2 = DLT_DAEMON_ECU_ID_LEN + 1 + strlen(app_id) + 1 + strlen(ctx_id) + 1 + sizeof(uint32_t);
 
         msg.headersizev2 = (uint32_t) (msg.storageheadersizev2 +
-            msg.baseheadersizev2 +
-            msg.baseheaderextrasizev2 +
-            msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT);
+                                       msg.baseheadersizev2 +
+                                       msg.baseheaderextrasizev2 +
+                                       msg.extendedheadersizev2);
 
         msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
 
@@ -2612,24 +2602,44 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         /* Set standardheader */
         msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
-        msg.baseheaderv2->htyp2 = DLT_HTYP2_WEID | DLT_HTYP2_WSID | DLT_HTYP_WTMS | DLT_HTYP2_WACID |
-            DLT_HTYP2_VERS;
-
-        /* Flags not added
-        DLT_HTYP2_WSFLN 0x100 with source filename and line number
-        DLT_HTYP2_WTGS 0x200 with tags
-        DLT_HTYP2_WPVL 0x400 with privacy level
-        DLT_HTYP2_WSGM 0x800 with segmentation */
+        msg.baseheaderv2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
+        msg.baseheaderv2->htyp2 |= msgcontent;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WEID;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WACID;
+        msg.baseheaderv2->htyp2 |= DLT_HTYP2_WSID;        
 
         msg.baseheaderv2->mcnt = uiMsgCount++;
 
-        /* Set Extendedheader */
-        pExtendedHeaderV2 = (DltExtendedHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2 +
-            msg.baseheadersizev2 + msg.baseheaderextrasizev2);
-        pExtendedHeaderV2->ecidlen = DLT_DAEMON_ECU_ID_LEN;
-        dlt_set_id_v2(&(pExtendedHeaderV2->ecid), daemon->ecuid, pExtendedHeaderV2->ecidlen);
-
-        /* Set timestamp */
+        /* Fill base header conditional parameters */
+        msg.headerextrav2.msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+                                 ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+        msg.headerextrav2.noar = 1; /* number of arguments */
+        memset(msg.headerextrav2.seconds, 0, 5);
+        msg.headerextrav2.nanoseconds = 0;
+        #if defined (__WIN32__) || defined(_MSC_VER)
+        time_t t = time(NULL);
+        if (t==-1){
+            uint32_t tcnt = (uint32_t)(GetTickCount()); /* GetTickCount() in 10 ms resolution */
+            tcnt_seconds = tcnt / 100;
+            tcnt_ns = (tcnt - (tcnt*100)) * 10000;
+            msg.headerextrav2.seconds[0]=(tcnt_seconds >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(tcnt_seconds >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(tcnt_seconds >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(tcnt_seconds >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= tcnt_seconds & 0xFF;
+            if (ts.tv_nsec < 0x3B9ACA00) {
+                msg.headerextrav2.nanoseconds = tcnt_ns;
+            }
+        }else{
+            msg.headerextrav2.seconds[0]=(t >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1]=(t >> 24) & 0xFF;
+            msg.headerextrav2.seconds[2]=(t >> 16) & 0xFF;
+            msg.headerextrav2.seconds[3]=(t >> 8) & 0xFF;
+            msg.headerextrav2.seconds[4]= t & 0xFF;
+            msg.headerextrav2.nanoseconds |= 0x8000;
+        }
+        #else
+        struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
             msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
             msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
@@ -2650,23 +2660,36 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             }
             msg.headerextrav2.nanoseconds |= 0x8000;
         }
+        #endif
 
-        pExtendedHeaderV2->seid = (unsigned int) DLT_HTOBE_32(getpid());
+        /* Copy header extra parameters to headerbuffer */
+        if (dlt_message_set_extraparameters_v2(&msg, 0) == DLT_RETURN_ERROR) {
+            dlt_message_free_v2(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
 
-        /* Set extraheader */
-        pBaseHeaderExtraV2 =
-            (DltBaseHeaderExtraV2 *)(msg.headerbufferv2 + msg.storageheadersizev2 + msg.baseheadersizev2);
+        /* Fill out extended header */
+        if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
+            msg.extendedheaderv2.ecidlen = DLT_DAEMON_ECU_ID_LEN;
+            dlt_set_id_v2(&(msg.extendedheaderv2.ecid), DLT_DAEMON_ECU_ID, DLT_DAEMON_ECU_ID_LEN);
+        }
 
-        pBaseHeaderExtraV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-        pBaseHeaderExtraV2->noar = 1;
+        if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
+            msg.extendedheaderv2.apidlen = strlen(app_id);
+            dlt_set_id_v2(&(msg.extendedheaderv2.apid), app_id, strlen(app_id));
 
-        pBaseHeaderExtraV2->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
-        pBaseHeaderExtraV2->noar = 1;
+            msg.extendedheaderv2.ctidlen = strlen(ctx_id);
+            dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctx_id, strlen(ctx_id));
+        }
 
-        dlt_set_id_v2(&(msg.extendedheaderv2.apid), app_id, strlen(app_id));
-        dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctx_id, strlen(ctx_id));
+        if (DLT_IS_HTYP2_WSID(msg.baseheaderv2->htyp2)) {
+            msg.extendedheaderv2.seid = (uint32_t)getpid();
+        }
+
+        if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK) {
+            dlt_message_free_v2(&msg, 0);
+            return DLT_RETURN_ERROR;
+        }
 
         /* Set payload data... */
         uiType = DLT_TYPE_INFO_STRG;
@@ -2690,7 +2713,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.datasize += uiSize;
 
         /* Calc length */
-        msg.baseheaderv2->len = DLT_HTOBE_16(msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
+        msg.baseheaderv2->len = (uint16_t)(msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
 
         dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                             msg.headerbufferv2, msg.storageheadersizev2,
@@ -2698,12 +2721,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             (int) (msg.headersizev2 - msg.storageheadersizev2),
                             msg.databuffer, (int) msg.datasize, verbose);
 
-        free(msg.headerbufferv2);
-        free(msg.databuffer);
-    } else {
+        dlt_message_free_v2(&msg, 0);
+    } else if (DLT_DAEMON_VERSION == 1) {
         DltMessage msg = { 0 };
 
-        static uint8_t uiMsgCount = 0;
         DltStandardHeaderExtra *pStandardExtra = NULL;
         uint32_t uiType;
         uint16_t uiSize;
@@ -2882,9 +2903,9 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                 "New client connection #%d established, Total Clients : %d",
                 in_sock, daemon_local->client_connections);
 
-        // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-        //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-        //                         daemon_local->flags.vflag);
+        dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+                                DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                                daemon_local->flags.vflag);
         dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
         if (daemon_local->client_connections == 1) {
@@ -2964,9 +2985,9 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
                 "New client connection #%d established, Total Clients : %d",
                 in_sock, daemon_local->client_connections);
 
-        // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-        //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-        //                         daemon_local->flags.vflag);
+        dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+                                DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                                daemon_local->flags.vflag);
         dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
         if (daemon_local->client_connections == 1) {
@@ -3845,11 +3866,10 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                     application->apid2,
                     application->pid,
                     application->application_description); //TBD: %.6s to use apidlen
-            //TBD: Remove DEBUG prints
-            // printf("DEBUG: register_application Before calling dlt_daemon_log_internal: %s\n", local_str);
-            // dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-            //                         DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-            //                         daemon_local->flags.vflag);
+
+            dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
+                                    DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                                    daemon_local->flags.vflag);
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
 
@@ -4182,12 +4202,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                     context->apid2,
                     context->context_description); //TBD: %.6s to use ctidlen , apidlen
 
-            //TBD: Remove DEBUG prints
-            // printf("DEBUG: register_context Before calling dlt_daemon_log_internal: %s\n", local_str);
-            // if (verbose)
-            //     dlt_daemon_log_internal(daemon, daemon_local, local_str,
-            //                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-            //                             DLT_DAEMON_CTX_ID, verbose);
+            if (verbose)
+                dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                                        DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                                        DLT_DAEMON_CTX_ID, verbose);
 
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
@@ -4588,9 +4606,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                             DLT_DAEMON_TEXTBUFSIZE,
                             "Unregistered ApID '%.6s'",
                             userapp.apid); //TBD: Replace %.6s with apidlen
-                    // dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                    //                         DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                    //                         DLT_DAEMON_CTX_ID, verbose);
+                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                                            DLT_DAEMON_CTX_ID, verbose);
                     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
                 }
             }
@@ -4761,12 +4779,11 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                         "Unregistered CtID '%.6s' for ApID '%.6s'",
                         usercontext.ctid,
                         usercontext.apid); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
-                //TBD: Remove DEBUG prints
-                // printf("DEBUG: unregister_context before calling dlt_daemon_log_internal: %s\n", local_str);
-                // if (verbose)
-                //     dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                //                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                //                             DLT_DAEMON_CTX_ID, verbose);
+
+                if (verbose)
+                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
+                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+                                            DLT_DAEMON_CTX_ID, verbose);
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
@@ -5580,7 +5597,3 @@ static DltReturnValue dlt_daemon_output_internal_msg(
 }
 #endif
 
-
-/**
- \}
- */

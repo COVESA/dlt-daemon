@@ -1827,9 +1827,9 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((msg == NULL) || (buffer == NULL) || (length <= 0))
-        return DLT_MESSAGE_ERROR_UNKNOWN;
-    
+    if ((msg == NULL) || (buffer == NULL) || (length <= 0)){
+        return DLT_MESSAGE_ERROR_UNKNOWN;}
+
     if (dlt_message_init_v2(msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
@@ -1901,12 +1901,17 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msg->headersizev2 = (uint32_t) (msg->baseheadersizev2 + 
                                     msg->baseheaderextrasizev2 + msg->extendedheadersizev2);
 
+    if(msg->headerbufferv2){
+        free(msg->headerbufferv2);
+    }
+
     msg->headerbufferv2 = (uint8_t *)malloc(msg->headersizev2);
+
     if(msg->headerbufferv2 == NULL){
         return DLT_RETURN_ERROR;
     }
     memcpy(msg->headerbufferv2, buffer, msg->headersizev2);
-
+  
     /* calculate complete size of payload */
     int32_t temp_datasize;
 
@@ -1928,7 +1933,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
         dlt_vlog(LOG_DEBUG, "BufferLength=%u, HeaderSize=%u, DataSize=%u\n",
                  length, msg->headersizev2, msg->datasize);
     }
-
+ 
     /* check if payload fits length */
     if (length < (msg->headersizev2 + msg->datasize))
         /* dlt_log(LOG_ERR,"length does not fit!\n"); */
@@ -1954,7 +1959,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
                  msg->datasize);
         return DLT_MESSAGE_ERROR_UNKNOWN;
     }
-
+  
     /* load payload data from buffer */
     memcpy(msg->databuffer, buffer + msg->headersizev2, msg->datasize);
     return DLT_MESSAGE_ERROR_OK;
