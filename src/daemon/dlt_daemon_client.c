@@ -2127,12 +2127,11 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     dlt_set_id_v2(&(req->apid), msg->databuffer + db_offset, req->apidlen);
     db_offset = db_offset + req->apidlen;
     memcpy(&(req->ctidlen), msg->databuffer + db_offset, sizeof(uint8_t));
-    db_offset = db_offset + sizeof(uint32_t);
+    db_offset = db_offset + sizeof(uint8_t);
     req->ctid = NULL;
     dlt_set_id_v2(&(req->ctid), msg->databuffer + db_offset, req->ctidlen);
     db_offset = db_offset + req->ctidlen;
     memcpy((req->com), msg->databuffer + db_offset, DLT_ID_SIZE);
-    
 
     /* initialise new message */
     if (dlt_message_init_v2(&resp, 0) == DLT_RETURN_ERROR) {
@@ -2170,7 +2169,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
             num_applications = 1;
             if (req->ctidlen != 0) {
                 context = dlt_daemon_context_find_v2(daemon,
-                                                  req->ctidlen,
+                                                  req->apidlen,
                                                   req->apid,
                                                   req->ctidlen,
                                                   req->ctid,
@@ -2209,24 +2208,45 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     if ((req->options == 5) || (req->options == 6) || (req->options == 7))
         sizecont += sizeof(int8_t); /* trace status */
 
-    for(int i = 0; i<num_applications; i++){
-        resp.datasize += (uint32_t) ((uint32_t)(sizeof(uint8_t) /* app_id length */ + user_list->applications[i].apid2len /* app_id */ + sizeof(uint16_t) /* count_con_ids */));
-    }
+    if ((num_applications == user_list->num_applications) && (num_contexts == user_list->num_contexts)){
+        for(int i = 0; i<num_applications; i++){
+            resp.datasize += (uint32_t) ((uint32_t)(sizeof(uint8_t) /* app_id length */ + user_list->applications[i].apid2len /* app_id */ + sizeof(uint16_t) /* count_con_ids */));
+        }
+        for(int j = 0; j<num_contexts; j++){
+            resp.datasize += (sizecont + user_list->contexts[j].ctid2len);
+        }
+    }else if (num_applications == 1) {
+        resp.datasize += (uint32_t) ((uint32_t)(sizeof(uint8_t) /* app_id length */ + application->apid2len /* app_id */ + sizeof(uint16_t) /* count_con_ids */));
+        /* 1 application and 1 context*/
+        if (num_contexts == 1) {
+            resp.datasize += (sizecont + context->ctid2len);
+        }else if (num_contexts == application->num_contexts) {
+            if ((user_list->applications) && (application)) {
+                /* Calculate start offset within contexts[] */
+                offset_base = 0;
 
-    for(int j = 0; j<num_contexts; j++){
-                resp.datasize += (sizecont + user_list->contexts[j].ctid2len);
-    }
+                for (i = 0; i < (application - (user_list->applications)); i++)
+                    offset_base += user_list->applications[i].num_contexts;
 
+                /* Iterate over all contexts belonging to this application */
+                for (j = 0; j < application->num_contexts; j++) {
+
+                    context = &(user_list->contexts[offset_base + j]);
+
+                    if (context) {
+                        resp.datasize += sizecont + context->ctid2len;
+                    }
+                }
+            }
+        }
+    }
     resp.datasize += (uint32_t) sizeof(uint16_t) /* count_app_ids */;
 
     /* Add additional size for response of Mode 7 */
     if (req->options == 7) {
         if (req->apidlen != 0) {
             if (req->ctidlen != 0) {
-                /* One application, one context */
-                /* To update: check if following needs to be uncommented */
-                //TBD: REVIEW Need to enable dlt_daemon_context_find_v2 below?
-                /* context = dlt_daemon_context_find_v2(daemon, req->apidlen, req->apid, req->ctidlen, req->ctid, daemon->ecuid2len, daemon->ecuid2, verbose); */
+                /* One application, one context */                
                 if (context) {
                     resp.datasize += (uint32_t) sizeof(uint16_t) /* len_context_description */;
 
@@ -2361,17 +2381,13 @@ void dlt_daemon_control_get_log_info_v2(int sock,
                 offset += 1;
                 memcpy(resp.databuffer + offset, apid, apidlen);
                 offset += apidlen;
-                /* To update based on expected structure if apid length to be copied*/
-                //TBD: Need to set apidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
-                // dlt_print_id_v2(buf, apid, apidlen);
-                //TBD: Enable below check for NULL
-                /*
+                dlt_print_id_v2(buf, apid, apidlen);
                 if ((buf == NULL) || (apid == NULL) || (apidlen == 0)) {
                     dlt_vlog(LOG_ERR, "Failed to memcpy apid\n");
                 }
-                */
+
 
                 memcpy(buf, apid, apidlen);
                 dlt_vlog(LOG_DEBUG, "apid: %s\n", buf);
@@ -2402,14 +2418,12 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
                     if ((context) &&
                         ((req->ctidlen == 0) || ((req->ctidlen != 0) &&
-                        (memcmp(context->ctid, req->ctid, req->ctidlen) == 0)))
+                        (memcmp(context->ctid2, req->ctid, req->ctidlen) == 0)))
                         ) {
                             memcpy(resp.databuffer + offset, &(context->ctid2len), 1);
                             offset += 1;
                             memcpy(resp.databuffer + offset, context->ctid2, context->ctid2len);
                             offset += context->ctid2len;
-                        /* To update based on expected structure if ctid length to be copied*/
-                        //TBD: Need to set ctidlen in resp.databuffer?
 
 #if (DLT_DEBUG_GETLOGINFO == 1)
                         // dlt_print_id_v2(buf, context->ctid, context->ctid2len);
@@ -3843,10 +3857,10 @@ void dlt_daemon_find_multiple_context_and_send_trace_status_v2(int sock,
 
         if (context) {
             if (app_flag == 1)
-                strncpy(src_str, context->apid2, context->apid2len);
+                dlt_set_id_v2(&src_str, context->apid2, context->apid2len);
             else
-                strncpy(src_str, context->ctid2, context->ctid2len);
-            //TBD: Review src_str warning: argument 1 null where non-null expected
+                dlt_set_id_v2(&src_str, context->ctid2, context->ctid2len);
+
             ret = strncmp(src_str, str, len);
 
             if (ret == 0)
@@ -5321,7 +5335,7 @@ void dlt_daemon_control_passive_node_connect_status_v2(int sock,
                                            NULL,
                                            verbose);
     /* free message */
-    dlt_message_free(&msg, verbose);
+    dlt_message_free_v2(&msg, verbose);
 }
 
 void dlt_daemon_control_passive_node_connect_status(int sock,
