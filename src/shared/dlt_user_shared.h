@@ -206,6 +206,18 @@ typedef struct
 } DLT_PACKED DltUserControlMsgAppLogLevelTraceStatus;
 
 /**
+ * This is the internal message content to exchange information about application log level and trace stats between
+ * application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;
+    char *apid;                    /**< application id */
+    uint8_t log_level;             /**< log level */
+    uint8_t trace_status;          /**< trace status */
+} DLT_PACKED DltUserControlMsgAppLogLevelTraceStatusV2;
+
+/**
  * This is the internal message content to set the logging mode: off, external, internal, both.
  */
 typedef struct
@@ -229,6 +241,12 @@ typedef struct
     uint32_t overflow_counter;          /**< counts the number of lost messages */
     char apid[4];                        /**< application which lost messages */
 } DLT_PACKED DltUserControlMsgBufferOverflow;
+typedef struct
+{
+    uint32_t overflow_counter;          /**< counts the number of lost messages */
+    uint8_t apidlen;
+    char *apid;                         /**< application which lost messages */
+} DLT_PACKED DltUserControlMsgBufferOverflowV2;
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 typedef struct
