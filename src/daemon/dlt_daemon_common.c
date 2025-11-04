@@ -111,10 +111,14 @@ static int dlt_daemon_cmp_apid_v2(const void *m1, const void *m2)
 
     DltDaemonApplication *mi1 = (DltDaemonApplication *)m1;
     DltDaemonApplication *mi2 = (DltDaemonApplication *)m2; 
-    if (mi1->apid2len != mi2->apid2len){
+
+    if (mi1->apid2len < mi2->apid2len){
         return -1;
+    }else if (mi1->apid2len > mi2->apid2len){
+        return 1;
     }
-    return memcmp(mi1->apid2, mi2->apid2, mi1->apid2len); //TBD: use strncmp
+
+    return memcmp(mi1->apid2, mi2->apid2, mi1->apid2len);
 }
 
 static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
@@ -147,24 +151,27 @@ static int dlt_daemon_cmp_apid_ctid_v2(const void *m1, const void *m2)
     DltDaemonContext *mi1 = (DltDaemonContext *)m1;
     DltDaemonContext *mi2 = (DltDaemonContext *)m2;
 
-    if (mi1->apid2len != mi2->apid2len){
+    if (mi1->apid2len < mi2->apid2len){
         return -1;
+    }else if (mi1->apid2len > mi2->apid2len){
+        return 1;
     }
 
-    cmp = memcmp(mi1->apid2, mi2->apid2, mi1->apid2len); //TBD: use strncmp
+    cmp = memcmp(mi1->apid2, mi2->apid2, mi1->apid2len);
 
-    if (cmp < 0)
-        ret = -1;
-    else if (cmp == 0){
-        if (mi1->ctid2len != mi2->ctid2len){
+    if (cmp < 0){
+        return -1;
+    }else if (cmp > 0){
+        return 1;
+    }else {
+        if (mi1->ctid2len < mi2->ctid2len){
             return -1;
+        }else if (mi1->ctid2len > mi2->ctid2len){
+            return 1;
+        }else{
+            return memcmp(mi1->ctid2, mi2->ctid2, mi1->ctid2len);
         }
-        ret = memcmp(mi1->ctid2, mi2->ctid2, mi1->ctid2len); //TBD: use strncmp
     }
-    else
-        ret = 1;
-
-    return ret;
 }
 
 DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
@@ -1381,23 +1388,13 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
         *application = NULL;
         return;
         }
-        // printf("Debug loc1: %d\n",daemon->user_list[0].applications[0].apid2len);
-        // printf("Debug loc1: %s\n",daemon->user_list[0].applications[0].apid2);   
+
     user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if ((user_list == NULL) || (user_list->num_applications == 0)){
         *application = NULL;
         return;
     }
-  
-    /* Check, if apid is smaller than smallest apid or greater than greatest apid */
-    if ((memcmp(apid, user_list->applications[0].apid2, apidlen) < 0) ||
-        (memcmp(apid,
-                user_list->applications[user_list->num_applications - 1].apid2,
-                apidlen) > 0)){
-                    *application = NULL;
-                    return;
-                }
 
     search_app.apid2 = NULL;
     search_app.apid2len = apidlen;
@@ -1835,14 +1832,16 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
     /* Check if application [apid] is available */
     dlt_daemon_application_find_v2(daemon, apidlen, apid, eculen, ecu, verbose, &application);
 
-    if (application == NULL)
+
+    if (application == NULL){
         return (DltDaemonContext *)NULL;
+    }
+
     /* Check if context [apid, ctid] is already available */
     context = dlt_daemon_context_find_v2(daemon, apidlen, apid, ctidlen, ctid, eculen, ecu, verbose);
 
     if (context == NULL) {
         user_list->num_contexts += 1;
-
         if (user_list->num_contexts != 0) {
             if ((user_list->num_contexts % DLT_DAEMON_CONTEXT_ALLOC_SIZE) == 0) {
                 /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
@@ -2175,13 +2174,6 @@ DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
     user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
 
     if ((user_list == NULL) || (user_list->num_contexts == 0))
-        return (DltDaemonContext *)NULL;
-
-    /* Check, if apid is smaller than smallest apid or greater than greatest apid */
-    if ((memcmp(apid, user_list->contexts[0].apid2, apidlen) < 0) ||
-        (memcmp(apid,
-                user_list->contexts[user_list->num_contexts - 1].apid2,
-                apidlen) > 0))
         return (DltDaemonContext *)NULL;
 
     context.apid2 = NULL;

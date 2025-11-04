@@ -4041,23 +4041,6 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         origin = rec->buf;
 
-        //TBD: Remove DEBUG prints
-        // printf("\nDEBUG: Register Context - Received Buffer: ");
-
-        // for (int j = 0; j < ((uint8_t)rec->bytesRcvd); j++){
-        //     if (rec->buf[j] > 48 && rec->buf[j] < 122) {
-        //         printf("%c", rec->buf[j]);
-        //     }
-        //     else {
-        //         printf(" 0x%02X", (uint8_t)(rec->buf[j]));
-        //     }
-        // }
-        // printf("\nBuffer in Hex: \n");
-        // for (int k = 0; k < ((uint8_t)rec->bytesRcvd); k++){
-        //     printf(" 0x%02X", (uint8_t)(rec->buf[k]));
-        // }
-        // printf("\n\n"); // End of DEBUG:
-
         /* Adding temp variable to check the return value */
         int temp = 0;
 
@@ -4277,9 +4260,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             offset += usercontext.ctidlen;
             memcpy(msg.databuffer + offset, req.com, DLT_ID_SIZE);
             offset = 0;
-            //TBD
 
-            //dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
+            dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
             dlt_message_free_v2(&msg, verbose);
         }
 
