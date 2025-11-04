@@ -604,8 +604,8 @@ TEST(t_dlt_connection_send_multiple_v2, normal_1)
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
 
     daemon_local.msg.headersize = sizeof(DltStorageHeaderV2) +
-        sizeof(DltStandardHeaderV2) +
-        sizeof(DltStandardHeaderExtraV2) +
+        sizeof(DltBaseHeaderV2) +
+        sizeof(DltBaseHeaderExtraV2) +
         sizeof(DltExtendedHeaderV2);
 
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
@@ -626,7 +626,7 @@ TEST(t_dlt_connection_send_multiple_v2, normal_1)
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple_v2(&conn,
+    ret = dlt_connection_send_multiple(&conn,
                                        data1,
                                        size1,
                                        data2,
@@ -666,8 +666,8 @@ TEST(t_dlt_connection_send_multiple_v2, normal_2)
     conn.type = DLT_CONNECTION_CLIENT_MSG_TCP;
 
     daemon_local.msg.headersize = sizeof(DltStorageHeaderV2) +
-        sizeof(DltStandardHeaderV2) +
-        sizeof(DltStandardHeaderExtraV2) +
+        sizeof(DltBaseHeaderV2) +
+        sizeof(DltBaseHeaderExtraV2) +
         sizeof(DltExtendedHeaderV2);
 
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
@@ -688,7 +688,7 @@ TEST(t_dlt_connection_send_multiple_v2, normal_2)
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple_v2(&conn,
+    ret = dlt_connection_send_multiple(&conn,
                                        data1,
                                        size1,
                                        data2,
@@ -717,7 +717,7 @@ TEST(t_dlt_connection_send_multiple_v2, nullpointer)
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
-    ret = dlt_connection_send_multiple_v2(NULL,
+    ret = dlt_connection_send_multiple(NULL,
                                        data1,
                                        size1,
                                        data2,
