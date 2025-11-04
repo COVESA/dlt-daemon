@@ -1090,7 +1090,6 @@ DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
                                           const char *contextid,
                                           const char *description,
                                           void (*dlt_log_level_changed_callback_v2)(char *context_id,
-                                                                                 uint8_t context_id_len,
                                                                                  uint8_t log_level,
                                                                                  uint8_t trace_status));
 

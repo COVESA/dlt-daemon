@@ -70,28 +70,33 @@ set(TARGET_LIST gtest_dlt_common
                 dlt_env_ll_unit_test)
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
-    if(${target} STREQUAL "gtest_dlt_daemon_common")
-        set(target_SRCS ${target_SRCS} ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
+    set(target_SRCS)
+    if(${target} STREQUAL "dlt_env_ll_unit_test")
+        set(target_SRCS ${target}.cpp)
+    elseif(${target} STREQUAL "gtest_dlt_daemon_common")
+        set(target_SRCS ${target}.cpp ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     elseif(${target} STREQUAL "gtest_dlt_daemon")
-        set(target_SRCS ${target_SRCS}
-                ../src/daemon/dlt-daemon.c
-                ../src/daemon/dlt_daemon_client.c
-                ../src/daemon/dlt_daemon_common.c
-                ../src/daemon/dlt_daemon_connection.c
-                ../src/daemon/dlt_daemon_event_handler.c
-                ../src/daemon/dlt_daemon_offline_logstorage.c
-                ../src/daemon/dlt_daemon_serial.c
-                ../src/daemon/dlt_daemon_socket.c
-                ../src/daemon/dlt_daemon_unix_socket.c
-                ../src/gateway/dlt_gateway.c
-                ../src/offlinelogstorage/dlt_offline_logstorage_behavior.c
-                ../src/offlinelogstorage/dlt_offline_logstorage.c
-                ../src/shared/dlt_config_file_parser.c
-                ../src/shared/dlt_offline_trace.c
+        set(target_SRCS ${target}.cpp
+            ../src/daemon/dlt-daemon.c
+            ../src/daemon/dlt_daemon_client.c
+            ../src/daemon/dlt_daemon_common.c
+            ../src/daemon/dlt_daemon_connection.c
+            ../src/daemon/dlt_daemon_event_handler.c
+            ../src/daemon/dlt_daemon_offline_logstorage.c
+            ../src/daemon/dlt_daemon_serial.c
+            ../src/daemon/dlt_daemon_socket.c
+            ../src/daemon/dlt_daemon_unix_socket.c
+            ../src/gateway/dlt_gateway.c
+            ../src/offlinelogstorage/dlt_offline_logstorage_behavior.c
+            ../src/offlinelogstorage/dlt_offline_logstorage.c
+            ../src/shared/dlt_config_file_parser.c
+            ../src/shared/dlt_offline_trace.c
         )
         add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
+    else()
+        set(target_SRCS ${target}.cpp)
     endif()
+
     add_executable(${target} ${target_SRCS})
     target_link_libraries(${target} ${DLT_LIBRARIES})
     if(WITH_DLT_INSTALLED_TESTS)
@@ -99,7 +104,7 @@ foreach(target IN LISTS TARGET_LIST)
         if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)
             install(PROGRAMS ${target}.sh DESTINATION ${DLT_TEST_DIR})
         endif()
-    endif(WITH_DLT_INSTALLED_TESTS)
+    endif()
     if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)
         configure_file(${PROJECT_SOURCE_DIR}/tests/${target}.sh ${PROJECT_BINARY_DIR}/tests COPYONLY)
         set(CMD_SEQ_SETUP "sh $<TARGET_FILE:${target}>.sh")
@@ -128,7 +133,7 @@ if(WITH_DLT_SHM_ENABLE)
 endif()
 
 foreach(target IN LISTS TARGET_LIST)
-    set(target_SRCS ${target})
+    set(target_SRCS ${target}.cpp)
     add_executable(${target} ${target_SRCS} ${systemd_SRCS})
     target_link_libraries(${target} ${DLT_DAEMON_LIBRARIES} ${ZLIB_LIBRARY})
     if(WITH_DLT_INSTALLED_TESTS)

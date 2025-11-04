@@ -601,7 +601,6 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
 {
     DltMessageV2 msg;
     int ret;
-
     if (client == 0)
         return DLT_RETURN_ERROR;
     if (dlt_message_init_v2(&msg, verbose) == DLT_RETURN_ERROR)
@@ -609,8 +608,10 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
 
     bool fetch_next_message = true;
     while (fetch_next_message) {
+
         /* wait for data from socket or serial connection */
         ret = dlt_receiver_receive(&(client->receiver));
+
         if (ret <= 0) {
             /* No more data to be received */
             if (dlt_message_free_v2(&msg, verbose) == DLT_RETURN_ERROR)
@@ -623,7 +624,7 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
                                 client->receiver.bytesRcvd,
                                 client->resync_serial_header,
                                 verbose) == DLT_MESSAGE_ERROR_OK)
-        {                          
+        {                        
             /* Call callback function */
             if (message_callback_function_v2) {
                 (*message_callback_function_v2)(&msg, data);  
@@ -641,7 +642,6 @@ DltReturnValue dlt_client_main_loop_v2(DltClient *client, void *data, int verbos
             else if (dlt_receiver_remove(&(client->receiver),
                                          (int) (msg.headersizev2 + msg.datasize - msg.storageheadersizev2)) ==
                      DLT_RETURN_ERROR) {
-
                 /* Return value ignored */
                 dlt_message_free_v2(&msg, verbose);
                 return DLT_RETURN_ERROR;

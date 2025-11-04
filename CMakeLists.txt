@@ -14,11 +14,7 @@
 #######
 
 # Set minimum Cmake version and setup policy behavior
-cmake_minimum_required(VERSION 3.3)
-
-if(${CMAKE_VERSION} VERSION_GREATER "3.20" OR ${CMAKE_VERSION} VERSION_EQUAL "3.20")
-    cmake_policy(SET CMP0115 OLD)
-endif()
+cmake_minimum_required(VERSION 3.13...4.0)
 project(automotive-dlt VERSION 2.18.10)
 
 
@@ -298,7 +294,11 @@ if(WITH_SYSTEMD
 
     find_package(PkgConfig REQUIRED)
     execute_process(COMMAND pkg-config --modversion systemd OUTPUT_VARIABLE SYSTEMD_VERSION)
-    string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
+    if(SYSTEMD_VERSION)
+        string(REPLACE "\n" "" SYSTEMD_VERSION ${SYSTEMD_VERSION})
+    else()
+        set(SYSTEMD_VERSION "")
+    endif()
 
     if(WITH_SYSTEMD)
         add_definitions(-DDLT_SYSTEMD_ENABLE)

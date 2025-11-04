@@ -15,5 +15,5 @@ INSTALL_PREFIX_PATH/share/man/man1/dlt-passive-node-ctrl.1.gz
 INSTALL_PREFIX_PATH/share/man/man1/dlt-receive.1.gz
 INSTALL_PREFIX_PATH/share/man/man1/dlt-system.1.gz
 INSTALL_PREFIX_PATH/share/man/man5/dlt-system.conf.5.gz
-lib/systemd/system/dlt-adaptor-udp.service
-lib/systemd/system/dlt-receive.service
+INSTALL_PREFIX_PATH/lib/systemd/system/dlt-adaptor-udp.service
+INSTALL_PREFIX_PATH/lib/systemd/system/dlt-receive.service
