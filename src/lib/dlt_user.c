@@ -5026,7 +5026,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     msg.extendedheadersizev2 = (uint32_t)dlt_get_extendedheadersize_v2(dlt_user, log->handle->contextID2len);
 
     msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 + 
-                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2 + HEADER_SIZE_CONSTANT; /* To Update: Findout why extra constant needed*/
+                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2;
 
     if (msg.headerbufferv2 != NULL) {
         free(msg.headerbufferv2);
@@ -5222,7 +5222,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     /* To Update: Free mallocs of extended header*/
 
-    len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
+    len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 + log->size);
 
     if (len > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
@@ -5270,7 +5270,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             else {
                 /* log to file */
                 ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
-                                        msg.headerbufferv2, (msg.headersizev2 - HEADER_SIZE_CONSTANT),
+                                        msg.headerbufferv2, msg.headersizev2,
                                         log->buffer, log->size);
                 return ret;
             }
@@ -5296,7 +5296,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
             if (dlt_user.dlt_log_handle != -1)
                 dlt_shm_push(&dlt_user.dlt_shm, msg.headerbufferv2 + msg.storageheadersizev2,
-                             msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
+                             msg.headersizev2 - msg.storageheadersizev2,
                              log->buffer, log->size, 0, 0);
 
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
@@ -5329,7 +5329,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                         settings,
                         log->log_level, time_stamp,
                         sizeof(DltUserHeader)
-                            + msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT
+                            + msg.headersizev2 - msg.storageheadersizev2
                             + log->size,
                         dlt_user_output_internal_msg,
                         NULL);
@@ -5340,14 +5340,14 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             }
             else
             {
-                *sent_size = (sizeof(DltUserHeader) + msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT + log->size);
+                *sent_size = (sizeof(DltUserHeader) + msg.headersizev2 - msg.storageheadersizev2 + log->size);
             }
 #endif
 
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     msg.headerbufferv2 + msg.storageheadersizev2,
-                                    msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
+                                    msg.headersizev2 - msg.storageheadersizev2,
                                     log->buffer, log->size);
 
 #endif
@@ -5363,7 +5363,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
                                                   msg.headerbufferv2 + msg.storageheadersizev2,
-                                                  msg.headersizev2 - msg.storageheadersizev2 - HEADER_SIZE_CONSTANT,
+                                                  msg.headersizev2 - msg.storageheadersizev2,
                                                   log->buffer,
                                                   log->size);
 

@@ -212,7 +212,6 @@
  * The size of a DLT ID
  */
 #   define DLT_ID_SIZE 4
-#   define HEADER_SIZE_CONSTANT 13
 
 #   define DLT_SIZE_WEID DLT_ID_SIZE
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
@@ -843,8 +842,7 @@ typedef struct
     char *apid;                     /**< application id */
     uint8_t ctidlen;                /**< length of context id */
     char *ctid;                     /**< context id */
-    char comid[DLT_ID_SIZE];        /**< communication interface */ //TBD: should this also be length + pointer?
-    //TBD: Is comid variable size in DLT V2?
+    char comid[DLT_ID_SIZE];        /**< communication interface */
 } DLT_PACKED DltServiceUnregisterContextV2;
 
 /**

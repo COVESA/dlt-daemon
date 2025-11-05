@@ -1088,10 +1088,10 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
     {
 
         dlt_vlog(LOG_WARNING,
-                 "Duplicate registration of ApplicationID: '%.6s'; registering from PID %d, existing from PID %d\n",
+                 "Duplicate registration of ApplicationID: '%s'; registering from PID %d, existing from PID %d\n",
                  apid,
                  pid,
-                 application->pid); //TBD: adjust length %.6s according to apidlen
+                 application->pid);
     }
 
     /* Store application description and pid of application */
@@ -1933,7 +1933,7 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
             trace_status = daemon->default_trace_status;
 
         dlt_vlog(LOG_NOTICE,
-            "Adapting ll_ts for context: %.6s:%.6s with %i %i\n",
+            "Adapting ll_ts for context: %s:%s with %i %i\n",
             apid,
             ctid,
             log_level,
@@ -3182,7 +3182,7 @@ void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose)
         if (app != NULL) {
             if (app->user_handle >= DLT_FD_MINIMUM) {
                 if (dlt_daemon_user_send_log_state_v2(daemon, app, verbose) == -1) {
-                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %.6s, PID: %d %s\n", app->apid2, app->pid, __func__);
+                    dlt_vlog(LOG_WARNING, "Cannot send log state to Apid: %s, PID: %d %s\n", app->apid2, app->pid, __func__);
                 }
             }
         }

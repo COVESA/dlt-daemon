@@ -688,16 +688,6 @@ int dlt_daemon_client_send_control_message(int sock,
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    /* Debug prints for verifying DLT Version
-    if(dlt_version == DLT_VERSION2) {
-        dlt_log(LOG_INFO, "DLT VERSION 2 \n"); // DLT_DEBUG
-    } else if(dlt_version == DLT_VERSION1) {
-        dlt_log(LOG_INFO, "DLT VERSION 1 \n"); // DLT_DEBUG
-    } else {
-        dlt_log(LOG_INFO, "DLT VERSION UNKNOWN \n"); // DLT_DEBUG
-    }
-    */ //TBD Remove
-
     if ((daemon == 0) || (msg == 0) || (apid == 0) || (ctid == 0))
         return DLT_DAEMON_ERROR_UNKNOWN;
 
@@ -926,7 +916,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
     }
 
     msg->baseheaderv2->len = (uint16_t)len;
- 
+
     if ((ret =
              dlt_daemon_client_send_v2(sock, daemon, daemon_local, msg->headerbufferv2, msg->storageheadersizev2,
                                     msg->headerbufferv2 + msg->storageheadersizev2,
@@ -1581,7 +1571,7 @@ void dlt_daemon_control_get_software_version_v2(int sock, DltDaemon *daemon, Dlt
     memcpy(msg.databuffer + msg.datasize - len, daemon->ECUVersionString, len);
 
     /* send message */
-    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose);
 
     /* free message */
     dlt_message_free_v2(&msg, 0);
@@ -1691,7 +1681,7 @@ void dlt_daemon_control_get_default_log_level_v2(int sock, DltDaemon *daemon, Dl
     resp->log_level = (uint8_t) daemon->default_log_level;
 
     /* send message */
-    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose);
 
     /* free message */
     dlt_message_free_v2(&msg, 0);
@@ -2624,7 +2614,7 @@ int dlt_daemon_control_message_buffer_overflow_v2(int sock,
     resp->overflow_counter = overflow_counter;
 
     /* send message */
-    if ((ret = dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, apid, NULL, verbose))) {
+    if ((ret = dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, apid, "", verbose))) {
         dlt_message_free_v2(&msg, 0);
         return ret;
     }
@@ -2721,7 +2711,7 @@ void dlt_daemon_control_service_response_v2(int sock,
     resp->status = (uint8_t) status;
 
     /* send message */
-    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose);
+    dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose);
 
     /* free message */
     dlt_message_free_v2(&msg, 0);
@@ -2793,8 +2783,11 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
                                                   int verbose)
 {
     DltMessageV2 msg;
-    DltServiceUnregisterContextV2 *resp;
+    DltServiceUnregisterContextV2 resp;
     uint8_t contextSize = 0;
+    resp.apid = NULL;
+    resp.ctid = NULL;
+    int offset = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2823,15 +2816,30 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
     if (msg.databuffer == 0)
         return -1;
 
-    resp = (DltServiceUnregisterContextV2 *)msg.databuffer;
-    resp->service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
-    resp->status = DLT_SERVICE_RESPONSE_OK;
-    dlt_set_id_v2(&(resp->apid), apid, apidlen);
-    dlt_set_id_v2(&(resp->ctid), ctid, ctidlen);
-    dlt_set_id(resp->comid, comid);
+    resp.service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
+    resp.status = DLT_SERVICE_RESPONSE_OK;
+    resp.apidlen = apidlen;
+    dlt_set_id_v2(&(resp.apid), apid, apidlen);
+    resp.ctidlen = ctidlen;
+    dlt_set_id_v2(&(resp.ctid), ctid, ctidlen);
+    dlt_set_id(resp.comid, comid);
+
+    memcpy(msg.databuffer + offset, &(resp.service_id), sizeof(uint32_t));
+    offset = offset + sizeof(uint32_t);
+    memcpy(msg.databuffer + offset, &(resp.status), sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    memcpy(msg.databuffer + offset, &(resp.apidlen), sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    memcpy(msg.databuffer + offset, resp.apid, resp.apidlen);
+    offset = offset + resp.apidlen;
+    memcpy(msg.databuffer + offset, &(resp.ctidlen), sizeof(uint8_t));
+    offset = offset + sizeof(uint8_t);
+    memcpy(msg.databuffer + offset, resp.ctid, resp.ctidlen);
+    offset = offset + resp.ctidlen;
+    memcpy(msg.databuffer + offset, resp.comid, DLT_ID_SIZE);   
 
     /* send message */
-    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose)) {
         dlt_message_free_v2(&msg, 0);
         return -1;
     }
@@ -3047,7 +3055,7 @@ int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemo
     resp->isdst = (uint8_t)lt.tm_isdst;
 
     /* send message */
-    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, NULL, NULL, verbose)) {
+    if (dlt_daemon_client_send_control_message_v2(sock, daemon, daemon_local, &msg, "", "", verbose)) {
         dlt_message_free_v2(&msg, 0);
         return -1;
     }
@@ -5331,8 +5339,8 @@ void dlt_daemon_control_passive_node_connect_status_v2(int sock,
                                            daemon,
                                            daemon_local,
                                            &msg,
-                                           NULL,
-                                           NULL,
+                                           "",
+                                           "",
                                            verbose);
     /* free message */
     dlt_message_free_v2(&msg, verbose);
