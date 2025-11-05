@@ -368,11 +368,14 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         if (strncmp(text, "FLDA", 4) == 0) {
             /* truncate beginning of data stream ( FLDA, File identifier and package number) */
             char *position = strchr(text, 32); /* search for space */
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE - 1);
+            text[DLT_RECEIVE_BUFSIZE - 1] = '\0';
             position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE - 1);
+            text[DLT_RECEIVE_BUFSIZE - 1] = '\0';
             position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE - 1);
+            text[DLT_RECEIVE_BUFSIZE - 1] = '\0';
 
             /* truncate ending of data stream ( FLDA ) */
             int len = strlen(text);

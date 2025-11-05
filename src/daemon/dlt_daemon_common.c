@@ -720,11 +720,15 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         if (dlt_user_handle < DLT_FD_MINIMUM) {
-            snprintf(filename,
-                     DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                     "%s/dltpipes/dlt%d",
-                     dltFifoBaseDir,
-                     pid);
+            if (strlen(dltFifoBaseDir) + strlen("/dltpipes/dlt") + 11 < DLT_DAEMON_COMMON_TEXTBUFSIZE) { // 11 for max pid digits
+                snprintf(filename,
+                         DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                         "%s/dltpipes/dlt%d",
+                         dltFifoBaseDir,
+                         pid);
+            } else {
+                filename[0] = '\0';
+            }
 
             dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 

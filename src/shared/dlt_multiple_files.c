@@ -115,20 +115,33 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
     return num_log_files;
 }
 
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const size_t length, const unsigned int idx)
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
     char* file_name = files_buffer->filename;
-    memset(file_name, 0, length * sizeof(char));
+    size_t bufsize = sizeof(files_buffer->filename);
+    memset(file_name, 0, bufsize);
 
-    const size_t size = length - strlen(file_name) - 1;
-    strncat(file_name, files_buffer->filenameBase, size);
-    strncat(file_name, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
-    strncat(file_name, file_index, size);
-    strncat(file_name, files_buffer->filenameExt, size);
+    size_t total_len = strlen(files_buffer->filenameBase)
+        + strlen(MULTIPLE_FILES_FILENAME_INDEX_DELIM)
+        + strlen(file_index)
+        + strlen(files_buffer->filenameExt);
+
+    if (total_len < bufsize) {
+        int written = snprintf(file_name, bufsize, "%s%s%s%s",
+                              files_buffer->filenameBase,
+                              MULTIPLE_FILES_FILENAME_INDEX_DELIM,
+                              file_index,
+                              files_buffer->filenameExt);
+        if (written < 0 || (size_t)written >= bufsize) {
+            file_name[bufsize - 1] = '\0';
+        }
+    } else {
+        file_name[0] = '\0';
+    }
 }
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
@@ -199,7 +212,7 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
 
         idx = multiple_files_buffer_get_idx_of_log_file(newest) + 1;
 
-        multiple_files_buffer_file_name(files_buffer, sizeof(files_buffer->filename), idx);
+        multiple_files_buffer_file_name(files_buffer, idx);
         ret = snprintf(file_path, sizeof(file_path), "%s/%s",
                        files_buffer->directory, files_buffer->filename);
 

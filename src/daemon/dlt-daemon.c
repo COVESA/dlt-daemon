@@ -61,6 +61,14 @@
 #   endif
 #endif
 
+#include <getopt.h>
+#ifndef CONFIGURATION_FILES_DIR
+#define CONFIGURATION_FILES_DIR "/etc"
+#endif
+#ifndef DLT_USER_IPC_PATH
+#define DLT_USER_IPC_PATH "/tmp"
+#endif
+
 #include "dlt_types.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
@@ -204,7 +212,7 @@ void usage()
     printf("Options:\n");
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
-    printf("  -c filename   DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
+    printf("  -c filename   DLT daemon configuration file (Default: %s/dlt.conf)\n", CONFIGURATION_FILES_DIR);
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     printf("  -t directory  Directory for local fifo and user-pipes (Default: /tmp)\n");
@@ -363,10 +371,18 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
-             "%s/dltpipes", dltFifoBaseDir);
-    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
-             "%s/dlt", dltFifoBaseDir);
+    if (strlen(dltFifoBaseDir) + strlen("/dltpipes") < DLT_PATH_MAX) {
+        snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+                 "%s/dltpipes", dltFifoBaseDir);
+    } else {
+        daemon_local->flags.userPipesDir[0] = '\0';
+    }
+    if (strlen(dltFifoBaseDir) + strlen("/dlt") < DLT_PATH_MAX) {
+        snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+                 "%s/dlt", dltFifoBaseDir);
+    } else {
+        daemon_local->flags.daemonFifoName[0] = '\0';
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -407,7 +423,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #else /* DLT_DAEMON_USE_FIFO_IPC */
     n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", dltFifoBaseDir);
+                 "%s/dlt.log", DLT_USER_IPC_PATH);
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
@@ -1309,7 +1325,7 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
 }
 #endif
 
-static int dlt_mkdir_recursive(const char *dir)
+int dlt_mkdir_recursive(const char *dir)
 {
     int ret = 0;
     char tmp[PATH_MAX + 1];
@@ -1464,20 +1480,16 @@ int main(int argc, char *argv[])
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
 /* Make sure the parent user directory is created */
+const char *dir_to_create;
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-
-    if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
-        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
-        return -1;
-  }
-
+    dir_to_create = dltFifoBaseDir;
 #else
-    if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
-        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", daemon_local.flags.appSockPath);
+    dir_to_create = DLT_USER_IPC_PATH;
+#endif
+    if (dlt_mkdir_recursive(dir_to_create) != 0) {
+        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dir_to_create);
         return -1;
     }
-
-#endif
 
     /* --- Daemon init phase 1 begin --- */
     if (dlt_daemon_local_init_p1(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {

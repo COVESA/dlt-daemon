@@ -2638,7 +2638,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 1;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+    memcpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+    message[index + strlen(utf8_2byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
@@ -2719,7 +2720,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 1;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+    memcpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
+    message[index + strlen(utf8_2byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
@@ -2874,7 +2876,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 2;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+    memcpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+    message[index + strlen(utf8_3byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
@@ -2955,7 +2958,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 2;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+    memcpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
+    message[index + strlen(utf8_3byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
@@ -3110,7 +3114,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 3;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+    memcpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+    message[index + strlen(utf8_4byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;
@@ -3191,7 +3196,8 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     str_truncate_message_length = strlen(STR_TRUNCATED_MESSAGE) + 1;
     remaining_byte_truncated_utf8_character = 3;
     index = (DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
-    strncpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+    memcpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
+    message[index + strlen(utf8_4byte_character)] = '\0';
 
     /* Create the expected message */
     expected_message_length = DLT_USER_BUF_MAX_SIZE - package_description_size;

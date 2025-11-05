@@ -112,7 +112,7 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *g, int fd);
  * @param verbose verbose flag
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
+DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                               DltDaemonLocal *daemon_local,
                                               DltReceiver *recv,
                                               int verbose);
@@ -157,7 +157,7 @@ int dlt_gateway_forward_control_message(DltGateway *g,
  * @param verbose           verbose flag
  * @return 0 on success, -1 otherwise
  */
-int dlt_gateway_process_on_demand_request(DltGateway *g,
+DltReturnValue dlt_gateway_process_on_demand_request(DltGateway *g,
                                           DltDaemonLocal *daemon_local,
                                           char *node_id,
                                           int connection_status,

@@ -241,6 +241,7 @@ add_compile_options(
     # -pedantic
     -Wno-variadic-macros
     -Wno-strict-aliasing
+    -Werror
 )
 
 if(WITH_DOC STREQUAL "OFF")

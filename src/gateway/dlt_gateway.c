@@ -1608,9 +1608,9 @@ int dlt_gateway_forward_control_message(DltGateway *gateway,
     return DLT_RETURN_OK;
 }
 
-int dlt_gateway_process_on_demand_request(DltGateway *gateway,
+DltReturnValue dlt_gateway_process_on_demand_request(DltGateway *gateway,
                                           DltDaemonLocal *daemon_local,
-                                          char node_id[DLT_ID_SIZE],
+                                          char *node_id,
                                           int connection_status,
                                           int verbose)
 {

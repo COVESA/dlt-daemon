@@ -1262,7 +1262,7 @@ DltReturnValue dlt_user_log_resend_buffer(void);
  * @param loglevel this is the current log level of the log message to be sent
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is enabled
  */
-inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel);
+DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel);
 
 
 #   ifdef DLT_TEST_ENABLE

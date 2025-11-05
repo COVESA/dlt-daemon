@@ -138,14 +138,14 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
     DltConfigFileSection *s = &file->sections[section];
 
     /* alloc data for entries */
-    s->name = calloc(sizeof(char), DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1);
+    s->name = calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1, sizeof(char));
 
     if (s->name == NULL) {
         dlt_log(LOG_ERR, "Cannot allocate memory for internal data structure\n");
         return -1;
     }
 
-    s->keys = calloc(sizeof(char), DLT_CONFIG_FILE_ENTRY_MAX_LEN * DLT_CONFIG_FILE_KEYS_MAX + 1);
+    s->keys = calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN * DLT_CONFIG_FILE_KEYS_MAX + 1, sizeof(char));
 
     if (s->keys == NULL) {
         free(s->name);
@@ -436,14 +436,14 @@ DltConfigFile *dlt_config_file_init(char *file_name)
         return NULL;
     }
 
-    file = calloc(sizeof(DltConfigFile), 1);
+    file = calloc(1, sizeof(DltConfigFile));
 
     if (file == NULL) {
         dlt_log(LOG_ERR, "Setup internal data structure to parse config file failed\n");
         return NULL;
     }
 
-    file->sections = calloc(sizeof(DltConfigFileSection), DLT_CONFIG_FILE_SECTIONS_MAX);
+    file->sections = calloc(DLT_CONFIG_FILE_SECTIONS_MAX, sizeof(DltConfigFileSection));
 
     /* open file */
     if ((hdl = fopen(file_name, "r")) == NULL) {

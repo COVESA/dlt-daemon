@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
 
     DLT_REGISTER_APP("FSNC", "CT: Logstorage fsync");
     for(i = 0; i < num_context; i++) {
-        char ctid[DLT_ID_SIZE + 1], ctdesc[255];
-        snprintf(ctid, DLT_ID_SIZE + 1, "CT%02d", i + 1);
-        snprintf(ctdesc, 255, "Test Context %02d", i + 1);
+        char ctid[16], ctdesc[255];
+        snprintf(ctid, sizeof(ctid), "CT%02d", i + 1);
+        snprintf(ctdesc, sizeof(ctdesc), "Test Context %02d", i + 1);
         DLT_REGISTER_CONTEXT(ctx[i], ctid, ctdesc);
     }
 

@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
             message = argv[index];
     }
     else { /* allocate raw buffer */
-        message = calloc(sizeof(char), rvalue);
+        message = calloc(rvalue, sizeof(char));
         memset(message, 'X', rvalue - 1);
     }
 

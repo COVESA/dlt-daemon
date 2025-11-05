@@ -540,7 +540,16 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
         return -1;
     }
 
-    snprintf(storage_path, DLT_MOUNT_PATH_MAX, "%s/", dev_path);
+    size_t dev_path_len = strnlen(dev_path, DLT_MOUNT_PATH_MAX - 2);
+    if (dev_path_len + 2 > DLT_MOUNT_PATH_MAX) {
+        dlt_vlog(LOG_ERR, "device path too long for storage_path buffer\n");
+        return -1;
+    }
+    int written = snprintf(storage_path, DLT_MOUNT_PATH_MAX, "%s/", dev_path);
+    if (written < 0 || (size_t)written >= DLT_MOUNT_PATH_MAX) {
+        dlt_vlog(LOG_ERR, "snprintf truncated storage_path\n");
+        return -1;
+    }
 
     /* check if there are already files stored */
     if (config->records == NULL || is_update_required) {
@@ -601,7 +610,13 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
             }
             config->working_file_name = strdup((*newest)->name);
         }
-        strncat(absolute_file_path, config->working_file_name, strlen(config->working_file_name));
+        size_t abs_len = strnlen(absolute_file_path, sizeof(absolute_file_path));
+        size_t name_len = strnlen(config->working_file_name, sizeof(absolute_file_path) - abs_len - 1);
+        if (abs_len + name_len >= sizeof(absolute_file_path)) {
+            dlt_vlog(LOG_ERR, "absolute_file_path too small for working_file_name\n");
+            return -1;
+        }
+        snprintf(absolute_file_path + abs_len, sizeof(absolute_file_path) - abs_len, "%s", config->working_file_name);
 
         dlt_vlog(LOG_DEBUG,
                  "%s: Number of log files-newest file-wrap_id [%u]-[%s]-[%u]\n",
@@ -716,7 +731,13 @@ int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
                            0,
                            sizeof(absolute_file_path) / sizeof(char));
                     strcat(absolute_file_path, storage_path);
-                    strncat(absolute_file_path, (*head)->name, strlen((*head)->name));
+                    size_t abs_len2 = strnlen(absolute_file_path, sizeof(absolute_file_path));
+                    size_t head_name_len = strnlen((*head)->name, sizeof(absolute_file_path) - abs_len2 - 1);
+                    if (abs_len2 + head_name_len >= sizeof(absolute_file_path)) {
+                        dlt_vlog(LOG_ERR, "absolute_file_path too small for head->name\n");
+                        return -1;
+                    }
+                    snprintf(absolute_file_path + abs_len2, sizeof(absolute_file_path) - abs_len2, "%s", (*head)->name);
                     dlt_vlog(LOG_DEBUG,
                              "%s: Remove '%s' (num_log_files: %d, config->num_files:%d, file_name:%s)\n",
                              __func__, absolute_file_path, num_log_files,
@@ -1107,20 +1128,21 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 /* Sync only if on_msg */
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
                     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
-                        if (fsync(fileno(config->gzlog)) != 0) {
-                            if (errno != ENOSYS) {
-                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
-                            }
+                        if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0) {
+                            dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
                         }
-                    }
-                    else {
+                    } else {
+#endif
                         if (fsync(fileno(config->log)) != 0) {
                             if (errno != ENOSYS) {
                                 dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
                             }
                         }
+#ifdef DLT_LOGSTORAGE_USE_GZIP
                     }
+#endif
                 }
 
                 dlt_logstorage_close_file(config);

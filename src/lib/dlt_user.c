@@ -91,6 +91,9 @@
 #   define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL)
 #endif /* DLT_FATAL_LOG_RESET_ENABLE */
 
+/* Extra length for FIFO filename: /dlt + pid */
+#define DLT_FIFO_FILENAME_EXTRA_LEN 20
+
 enum InitState {
     INIT_UNITIALIZED,
     INIT_IN_PROGRESS,
@@ -402,8 +405,16 @@ static DltReturnValue dlt_initialize_fifo_connection(void)
     char filename[DLT_PATH_MAX];
     int ret;
 
-    snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
-    snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    if (strlen(dltFifoBaseDir) + strlen("/dltpipes") < DLT_PATH_MAX) {
+        snprintf(dlt_user_dir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
+    } else {
+        dlt_user_dir[0] = '\0';
+    }
+    if (strlen(dltFifoBaseDir) + strlen("/dlt") < DLT_PATH_MAX) {
+        snprintf(dlt_daemon_fifo, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
+    } else {
+        dlt_daemon_fifo[0] = '\0';
+    }
     ret = mkdir(dlt_user_dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
 
     if ((ret == -1) && (errno != EEXIST)) {
@@ -911,8 +922,7 @@ DltReturnValue dlt_init_common(void)
     }
 
     if (dlt_user.resend_buffer == NULL) {
-        dlt_user.resend_buffer = calloc(sizeof(unsigned char),
-                                        (dlt_user.log_buf_len + header_size));
+        dlt_user.resend_buffer = calloc((dlt_user.log_buf_len + header_size), sizeof(unsigned char));
 
         if (dlt_user.resend_buffer == NULL) {
             dlt_user_init_state = INIT_UNITIALIZED;
@@ -1083,7 +1093,11 @@ DltReturnValue dlt_free(void)
     if (dlt_user.dlt_user_handle != DLT_FD_INIT) {
         close(dlt_user.dlt_user_handle);
         dlt_user.dlt_user_handle = DLT_FD_INIT;
-        snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        if (strlen(dlt_user_dir) + DLT_FIFO_FILENAME_EXTRA_LEN < DLT_PATH_MAX) {
+            snprintf(filename, DLT_PATH_MAX, "%s/dlt%d", dlt_user_dir, getpid());
+        } else {
+            filename[0] = '\0';
+        }
         unlink(filename);
     }
 
@@ -1936,7 +1950,7 @@ DltReturnValue dlt_user_log_write_start_internal(DltContext *handle,
         }
         else
         {
-            log->buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+            log->buffer = calloc(dlt_user.log_buf_len, sizeof(unsigned char));
         }
 
         if (log->buffer == NULL) {
@@ -3049,7 +3063,7 @@ DltReturnValue dlt_user_trace_network_segmented_start(uint32_t *id,
             return DLT_RETURN_ERROR;
 
         if (log.buffer == NULL) {
-            log.buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+            log.buffer = calloc(dlt_user.log_buf_len, sizeof(unsigned char));
 
             if (log.buffer == NULL) {
                 dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
@@ -3151,7 +3165,7 @@ DltReturnValue dlt_user_trace_network_segmented_segment(uint32_t id,
 
         /* initialize values */
         if (log.buffer == NULL) {
-            log.buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+            log.buffer = calloc(dlt_user.log_buf_len, sizeof(unsigned char));
 
             if (log.buffer == NULL) {
                 dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
@@ -3220,7 +3234,7 @@ DltReturnValue dlt_user_trace_network_segmented_end(uint32_t id, DltContext *han
 
         /* initialize values */
         if (log.buffer == NULL) {
-            log.buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+            log.buffer = calloc(dlt_user.log_buf_len, sizeof(unsigned char));
 
             if (log.buffer == NULL) {
                 dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
@@ -3486,7 +3500,7 @@ DltReturnValue dlt_user_trace_network_truncated(DltContext *handle,
 
         /* initialize values */
         if (log.buffer == NULL) {
-            log.buffer = calloc(sizeof(unsigned char), dlt_user.log_buf_len);
+            log.buffer = calloc(dlt_user.log_buf_len, sizeof(unsigned char));
 
             if (log.buffer == NULL) {
                 dlt_vlog(LOG_ERR, "Cannot allocate buffer for DLT Log message\n");
