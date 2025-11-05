@@ -67,7 +67,7 @@ extern char *app_recv_buffer;
  *         errno is appropriately set.
  */
 DLT_STATIC int dlt_connection_send(DltConnection *conn,
-                                   void *msg,
+                                   const void *msg,
                                    size_t msg_size)
 {
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
@@ -78,16 +78,19 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
 
     switch (type) {
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-
-        if (write(conn->receiver->fd, msg, msg_size) > 0)
-            return DLT_DAEMON_ERROR_OK;
-
+        if (msg_size > 0 && msg_size <= SSIZE_MAX) {
+            if (write(conn->receiver->fd, msg, msg_size) > 0)
+                return DLT_DAEMON_ERROR_OK;
+        }
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     case DLT_CONNECTION_CLIENT_MSG_TCP:
+        if (msg_size > INT_MAX) {
+            return DLT_DAEMON_ERROR_UNKNOWN;
+        }
         ret = dlt_daemon_socket_sendreliable(conn->receiver->fd,
-                                             msg,
-                                             msg_size);
+                                            msg,
+                                            (int)msg_size);
         return ret;
     default:
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -122,14 +125,16 @@ int dlt_connection_send_multiple(DltConnection *con,
 
     if (sendserialheader)
         ret = dlt_connection_send(con,
-                                  (void *)dltSerialHeader,
-                                  sizeof(dltSerialHeader));
+                                (const void *)dltSerialHeader,
+                                (size_t)sizeof(dltSerialHeader));
 
-    if ((data1 != NULL) && (ret == DLT_RETURN_OK))
-        ret = dlt_connection_send(con, data1, size1);
+    if ((data1 != NULL) && (ret == DLT_RETURN_OK) && size1 > 0) {
+        ret = dlt_connection_send(con, data1, (size_t)size1);
+    }
 
-    if ((data2 != NULL) && (ret == DLT_RETURN_OK))
-        ret = dlt_connection_send(con, data2, size2);
+    if ((data2 != NULL) && (ret == DLT_RETURN_OK) && size2 > 0) {
+        ret = dlt_connection_send(con, data2, (size_t)size2);
+    }
 
     return ret;
 }
@@ -287,44 +292,44 @@ void *dlt_connection_get_callback(DltConnection *con)
 
     switch (type) {
     case DLT_CONNECTION_CLIENT_CONNECT:
-        ret = dlt_daemon_process_client_connect;
+        ret = (void *)(intptr_t)dlt_daemon_process_client_connect;
         break;
     case DLT_CONNECTION_CLIENT_MSG_TCP:
-        ret = dlt_daemon_process_client_messages;
+        ret = (void *)(intptr_t)dlt_daemon_process_client_messages;
         break;
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-        ret = dlt_daemon_process_client_messages_serial;
+        ret = (void *)(intptr_t)dlt_daemon_process_client_messages_serial;
         break;
 #if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
     case DLT_CONNECTION_APP_CONNECT:
-        ret = dlt_daemon_process_app_connect;
+        ret = (void *)(intptr_t)dlt_daemon_process_app_connect;
         break;
 #endif
     case DLT_CONNECTION_APP_MSG:
-        ret = dlt_daemon_process_user_messages;
+        ret = (void *)(intptr_t)dlt_daemon_process_user_messages;
         break;
     case DLT_CONNECTION_ONE_S_TIMER:
-        ret = dlt_daemon_process_one_s_timer;
+        ret = (void *)(intptr_t)dlt_daemon_process_one_s_timer;
         break;
     case DLT_CONNECTION_SIXTY_S_TIMER:
-        ret = dlt_daemon_process_sixty_s_timer;
+        ret = (void *)(intptr_t)dlt_daemon_process_sixty_s_timer;
         break;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     case DLT_CONNECTION_SYSTEMD_TIMER:
-        ret = dlt_daemon_process_systemd_timer;
+        ret = (void *)(intptr_t)dlt_daemon_process_systemd_timer;
         break;
 #endif
     case DLT_CONNECTION_CONTROL_CONNECT:
-        ret = dlt_daemon_process_control_connect;
+        ret = (void *)(intptr_t)dlt_daemon_process_control_connect;
         break;
     case DLT_CONNECTION_CONTROL_MSG:
-        ret = dlt_daemon_process_control_messages;
+        ret = (void *)(intptr_t)dlt_daemon_process_control_messages;
         break;
     case DLT_CONNECTION_GATEWAY:
-        ret = dlt_gateway_process_passive_node_messages;
+        ret = (void *)(intptr_t)dlt_gateway_process_passive_node_messages;
         break;
     case DLT_CONNECTION_GATEWAY_TIMER:
-        ret = dlt_gateway_process_gateway_timer;
+        ret = (void *)(intptr_t)dlt_gateway_process_gateway_timer;
         break;
     default:
         ret = NULL;

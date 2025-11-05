@@ -121,9 +121,9 @@ void verbose(int level, char *msg, ...) {
  */
 int compare_index_timestamps(const void *a, const void *b) {
     int ret = -1;
-    if (((TimestampIndex *)a)->tmsp > ((TimestampIndex *)b)->tmsp)
+    if (((const TimestampIndex *)a)->tmsp > ((const TimestampIndex *)b)->tmsp)
         ret = 1;
-    else if (((TimestampIndex *)a)->tmsp == ((TimestampIndex *)b)->tmsp)
+    else if (((const TimestampIndex *)a)->tmsp == ((const TimestampIndex *)b)->tmsp)
         ret = 0;
 
     return ret;
@@ -135,9 +135,9 @@ int compare_index_timestamps(const void *a, const void *b) {
  */
 int compare_index_systime(const void *a, const void *b) {
     int ret = -1;
-    if(((TimestampIndex *) a)->systmsp > ((TimestampIndex *) b)->systmsp)
+    if(((const TimestampIndex *) a)->systmsp > ((const TimestampIndex *) b)->systmsp)
         ret = 1;
-    else if(((TimestampIndex *) a)->systmsp == ((TimestampIndex *) b)->systmsp)
+    else if(((const TimestampIndex *) a)->systmsp == ((const TimestampIndex *) b)->systmsp)
         ret = 0;
 
     return ret;
@@ -160,36 +160,36 @@ void write_messages(int ohandle, DltFile *file,
         if ((0 == i % 1001) || (i == message_count - 1))
             verbose(2, "Writing message %d\r", i);
 
-        if (timestamps != NULL) {
-            if (dlt_file_message(file, timestamps[i].num, 0) == DLT_RETURN_OK) {
-                iov[0].iov_base = file->msg.headerbuffer;
-                iov[0].iov_len = file->msg.headersize;
-                iov[1].iov_base = file->msg.databuffer;
-                iov[1].iov_len = file->msg.datasize;
-
-                bytes_written = writev(ohandle, iov, 2);
-                last_errno = errno;
-
-                if (0 > bytes_written) {
-                    printf("%s: returned an error [%s]!\n",
-                            __func__,
-                            strerror(last_errno));
-                    if (ohandle > 0) {
-                        close(ohandle);
-                        ohandle = -1;
-                    }
-                    free(timestamps);
-                    timestamps = NULL;
-
-                    dlt_file_free(file, 0);
-                    exit (-1);
-                }
-            }
+        if (timestamps == NULL) {
+            continue;
         }
-    }
+        if (dlt_file_message(file, timestamps[i].num, 0) < DLT_RETURN_OK)
+            continue;
+        iov[0].iov_base = file->msg.headerbuffer;
+        iov[0].iov_len = (size_t)file->msg.headersize;
+        iov[1].iov_base = file->msg.databuffer;
+        iov[1].iov_len = (size_t)file->msg.datasize;
 
+        bytes_written = writev(ohandle, iov, 2);
+        last_errno = errno;
+
+        if (0 > bytes_written) {
+            printf("%s: returned an error [%s]!\n",
+                    __func__,
+                    strerror(last_errno));
+            if (ohandle > 0) {
+                close(ohandle);
+                ohandle = -1;
+            }
+            free(timestamps);
+            timestamps = NULL;
+        }
+        dlt_file_free(file, 0);
+        exit (-1);
+    }
     verbose (2, "\n");
 }
+
 
 /**
  * Print usage information of tool.

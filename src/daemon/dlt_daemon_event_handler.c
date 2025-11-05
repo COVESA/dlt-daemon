@@ -111,9 +111,9 @@ int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
 static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
 {
     if (ev->max_nfds <= ev->nfds) {
-        int i = ev->nfds;
-        int max = 2 * ev->max_nfds;
-        struct pollfd *tmp = realloc(ev->pfd, max * sizeof(*ev->pfd));
+        nfds_t i = ev->nfds;
+        nfds_t max = 2 * ev->max_nfds;
+        struct pollfd *tmp = realloc(ev->pfd, (size_t)max * sizeof(*ev->pfd));
 
         if (!tmp) {
             dlt_log(LOG_CRIT,
@@ -129,7 +129,7 @@ static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
     }
 
     ev->pfd[ev->nfds].fd = fd;
-    ev->pfd[ev->nfds].events = mask;
+    ev->pfd[ev->nfds].events = (short)mask;
     ev->nfds++;
 }
 
@@ -145,7 +145,7 @@ static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
 {
     unsigned int i = 0;
     unsigned int j = 0;
-    unsigned int nfds = ev->nfds;
+    unsigned int nfds = (unsigned int)ev->nfds;
 
     for (; i < nfds; i++, j++) {
         if (ev->pfd[i].fd == fd) {
@@ -245,7 +245,13 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         }
 
         /* Get the function to be used to handle the event */
-        callback = dlt_connection_get_callback(con);
+        union {
+            void *ptr;
+            int (*callback_func)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int);
+        } callback_converter;
+
+        callback_converter.ptr = dlt_connection_get_callback(con);
+        callback = callback_converter.callback_func;
 
         if (!callback) {
             dlt_vlog(LOG_CRIT, "Unable to find function for %u handle type.\n",

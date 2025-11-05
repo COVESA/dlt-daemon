@@ -76,7 +76,7 @@ typedef struct {
     int messages_received;
     int broken_messages_received;
     int bytes_received;
-    int first_message_time;
+    time_t first_message_time;
     int output_bytes;
 } s_statistics;
 
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
  */
 void print_stats(s_statistics stats, s_parameters params)
 {
-    static int last_print_time;
+    static time_t last_print_time;
 
     if ((last_print_time >= time(NULL)) && /* Only print once a second */
         ((stats.messages_received + stats.broken_messages_received) % 1000 != 0) &&
@@ -276,10 +276,10 @@ void print_stats(s_statistics stats, s_parameters params)
     printf(" Messages received             : %d\n", stats.messages_received);
     printf(" Broken messages received      : %d\n", stats.broken_messages_received);
     printf(" Bytes received                : %d\n", stats.bytes_received);
-    printf(" Time running (seconds)        : %ld\n", time(NULL) - stats.first_message_time);
+    printf(" Time running (seconds)        : %ld\n", (long)(time(NULL) - stats.first_message_time));
     printf(" Throughput (msgs/sec)/(B/sec) : %ld/%ld\n",
-           stats.messages_received / ((time(NULL) - stats.first_message_time) + 1),
-           (stats.bytes_received) / ((time(NULL) - stats.first_message_time) + 1));
+            stats.messages_received / ((long)(time(NULL) - stats.first_message_time) + 1),
+            (stats.bytes_received) / ((long)(time(NULL) - stats.first_message_time) + 1));
 
     if (params.messages_left == 0) {
         if (stats.broken_messages_received == 0)
@@ -289,7 +289,7 @@ void print_stats(s_statistics stats, s_parameters params)
     }
 
     fflush(stdout);
-    last_print_time = (int) time(NULL);
+    last_print_time = time(NULL);
 }
 /**
  * Callback for dlt client
@@ -322,14 +322,14 @@ int receive(DltMessage *msg, void *data)
 
     memset(buf, 0, (size_t) buflen);
 
-    dlt_message_payload(msg, buf, buflen - 1, DLT_OUTPUT_ASCII, 0);
+    dlt_message_payload(msg, buf, (size_t)(buflen - 1), DLT_OUTPUT_ASCII, 0);
 
     if (strcmp(buf, PAYLOAD_DATA) == 0)
         stats.messages_received++;
     else
         stats.broken_messages_received++;
 
-    stats.bytes_received += msg->datasize + msg->headersize - sizeof(DltStorageHeader);
+    stats.bytes_received += (int)((size_t)msg->datasize + (size_t)msg->headersize - (size_t)sizeof(DltStorageHeader));
 
     free(buf);
 
@@ -337,9 +337,9 @@ int receive(DltMessage *msg, void *data)
 
     if (params->output_handle > 0) {
         iov[0].iov_base = msg->headerbuffer;
-        iov[0].iov_len = msg->headersize;
+        iov[0].iov_len = (size_t)msg->headersize;
         iov[1].iov_base = msg->databuffer;
-        iov[1].iov_len = msg->datasize;
+        iov[1].iov_len = (size_t)msg->datasize;
 
         stats.output_bytes += (int) writev(params->output_handle, iov, 2);
     }

@@ -116,7 +116,7 @@ typedef struct {
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 
@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
     }
 
     if (g_dltclient.mode == DLT_CLIENT_MODE_TCP) {
-        g_dltclient.port = dltdata.port;
+        g_dltclient.port = (uint16_t)dltdata.port;
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1) {
                 pr_error("set server ip didn't succeed\n");

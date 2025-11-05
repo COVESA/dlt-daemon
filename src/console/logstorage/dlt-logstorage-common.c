@@ -130,7 +130,13 @@ DltLogstorageCtrl *get_logstorage_control(void)
 
 void *dlt_logstorage_get_handler_cb(void)
 {
-    return lctrl.callback;
+    union {
+        void *ptr;
+        int (*callback)(void);
+    } callback_converter;
+
+    callback_converter.callback = lctrl.callback;
+    return callback_converter.ptr;
 }
 
 int dlt_logstorage_get_handler_fd(void)
@@ -187,7 +193,7 @@ int dlt_logstorage_deinit_handler(void)
  */
 int dlt_logstorage_check_config_file(char *mnt_point)
 {
-    struct dirent **files;
+    struct dirent **files = NULL;
     int n;
     int i = 0;
     int ret = 0;
@@ -201,7 +207,7 @@ int dlt_logstorage_check_config_file(char *mnt_point)
 
     n = scandir(mnt_point, &files, NULL, alphasort);
 
-    if (n <= 0) {
+    if (n <= 0 || files == NULL) {
         pr_error("Cannot read mounted directory\n");
         return ret;
     }
@@ -217,10 +223,11 @@ int dlt_logstorage_check_config_file(char *mnt_point)
         }
     } while (++i < n);
 
-    for (i = 0; i < n; i++)
-        free(files[i]);
-
-    free(files);
+    if (files != NULL) {
+        for (i = 0; i < n; i++)
+            free(files[i]);
+        free(files);
+    }
     return ret;
 }
 

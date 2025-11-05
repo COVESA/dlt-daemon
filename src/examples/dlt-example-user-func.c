@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 
         if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 13) > 0) {
             dlt_user_log_write_uint8(&mycontextdata, 123);
-            dlt_user_log_write_float32(&mycontextdata, 1.12);
+            dlt_user_log_write_float32(&mycontextdata, (float)1.12);
             dlt_user_log_write_finish(&mycontextdata);
         }
 
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             /* Non-verbose mode */
-            if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_WARN, num) > 0) {
+            if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_WARN, (uint32_t)num) > 0) {
                 dlt_user_log_write_int(&mycontextdata, num);
                 dlt_user_log_write_string(&mycontextdata, text);
                 dlt_user_log_write_finish(&mycontextdata);
@@ -277,7 +277,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
-        dlt_print_mixed_string(text, 1024, data, length, 0);
+        dlt_print_mixed_string(text, 1024, data, (int)length, 0);
         printf("%s \n", text);
     }
 

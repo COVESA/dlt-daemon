@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
         DLT_LOG_ID0(mycontext, DLT_LOG_INFO, 10);
         DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 11, DLT_UINT16(1011));
         DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
-        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
+        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32((float)1.12));
         DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 
         if (gflag)
             /* Non-verbose mode */
-            DLT_LOG_ID2(mycontext, DLT_LOG_WARN, num, DLT_INT(num), DLT_STRING(text));
+            DLT_LOG_ID2(mycontext, DLT_LOG_WARN, (uint32_t)num, DLT_INT(num), DLT_STRING(text));
         else
             /* Verbose mode */
             DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_INT(num), DLT_STRING(text));

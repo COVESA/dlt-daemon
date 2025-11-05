@@ -70,6 +70,8 @@
 #include <string.h>     /* for strcmp() */
 #include <fcntl.h>
 #include <sys/uio.h>    /* for writev() */
+#include <unistd.h>     /* for getopt(), opterr, optarg, optopt, optind */
+#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
 
 #include "dlt_client.h"
 #include "dlt_protocol.h"
@@ -128,7 +130,7 @@ typedef struct
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 
@@ -406,11 +408,11 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
     DltTestclientData *dltdata;
 
     uint32_t type_info, type_info_tmp;
-    int16_t length, length_tmp; /* the macro can set this variable to -1 */
+    int16_t length;
+    int32_t length_tmp; /* the macro can set this variable to -1 */
     uint8_t *ptr;
     int32_t datalength;
     int32_t value;
-    uint32_t value_tmp = 0;
 
     struct iovec iov[2];
     int bytes_written;
@@ -443,7 +445,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         /* do something here */
 
         /* Count number of received bytes */
-        dltdata->bytes_received += message->datasize + message->headersize - sizeof(DltStorageHeader);
+        dltdata->bytes_received += (unsigned long)(message->datasize) + (unsigned long)(message->headersize) - (unsigned long)sizeof(DltStorageHeader);
 
         /* print number of received bytes */
         if ((dlt_uptime() - dltdata->time_elapsed) > 10000) {
@@ -475,9 +477,10 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                         type_info = DLT_ENDIAN_GET_32(message->standardheader->htyp, type_info_tmp);
 
                         if (type_info & DLT_TYPE_INFO_SINT) {
-                            /* read value */
-                            DLT_MSG_READ_VALUE(value_tmp, ptr, datalength, int32_t);
-                            value = DLT_ENDIAN_GET_32(message->standardheader->htyp, value_tmp);
+                            /* read value as int32_t, then cast for endian conversion */
+                            int32_t value_tmp_signed = 0;
+                            DLT_MSG_READ_VALUE(value_tmp_signed, ptr, datalength, int32_t);
+                            value = (int32_t)DLT_ENDIAN_GET_32(message->standardheader->htyp, (uint32_t)value_tmp_signed);
                             /*printf("%d\n",value); */
 
                             if (value < dltdata->last_value) {
@@ -512,7 +515,8 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
+                                    length_tmp = (int16_t)length_tmp;
+                                    length = (int16_t)DLT_ENDIAN_GET_16(message->standardheader->htyp, length_tmp);
 
                                     if ((length >= 0) && (length == datalength))
                                         /*printf("Raw data found in payload, length="); */
@@ -537,9 +541,9 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
         /* if file output enabled write message */
         if (dltdata->ovalue) {
             iov[0].iov_base = message->headerbuffer;
-            iov[0].iov_len = message->headersize;
+            iov[0].iov_len = (size_t)message->headersize;
             iov[1].iov_base = message->databuffer;
-            iov[1].iov_len = message->datasize;
+            iov[1].iov_len = (size_t)message->datasize;
 
             bytes_written = (int) writev(dltdata->ohandle, iov, 2);
 

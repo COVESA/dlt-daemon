@@ -337,12 +337,12 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     msg->standardheader->mcnt = 0;
 
     /* prepare length information */
-    msg->headersize = (uint32_t) (sizeof(DltStorageHeader) +
-        sizeof(DltStandardHeader) +
-        sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
+    msg->headersize = (int32_t)(sizeof(DltStorageHeader) +
+                    sizeof(DltStandardHeader) +
+                    sizeof(DltExtendedHeader) +
+                    DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
-    len = (uint32_t) (msg->headersize - sizeof(DltStorageHeader) + msg->datasize);
+    len = (uint32_t)(msg->headersize - (int32_t)sizeof(DltStorageHeader) + msg->datasize);
 
     if (len > UINT16_MAX) {
         pr_error("Message header is too long.\n");
@@ -388,7 +388,7 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     }
 
     /* prepare payload of data */
-    msg->databuffersize = msg->datasize = (uint32_t) data->size;
+    msg->databuffersize = msg->datasize = (int32_t)data->size;
 
     /* Allocate memory for Dlt Message's buffer */
     msg->databuffer = (uint8_t *)calloc(1, data->size);
@@ -432,7 +432,14 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
  */
 static int dlt_control_init_connection(DltClient *client, void *cb)
 {
-    int (*callback)(DltMessage *message, void *data) = cb;
+    union {
+        void *ptr;
+        int (*callback)(DltMessage *message, void *data);
+    } callback_converter;
+    int (*callback)(DltMessage *message, void *data);
+
+    callback_converter.ptr = cb;
+    callback = callback_converter.callback;
 
     if (!cb || !client) {
         pr_error("%s: Invalid parameters\n", __func__);
@@ -624,11 +631,18 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
         return -1;
     }
 
+    union {
+        void *ptr;
+        int (*callback)(DltMessage *message, void *data);
+    } callback_converter;
+
     response_analyzer_cb = response_analyzer;
     set_ecuid(ecuid);
     set_verbosity(verbosity);
+    callback_converter.callback = dlt_control_callback;
 
-    if (dlt_control_init_connection(&g_client, dlt_control_callback) != 0) {
+    /* Initialize DLT connection */
+    if (dlt_control_init_connection(&g_client, callback_converter.ptr) != 0) {
         pr_error("Connection initialization failed\n");
         dlt_client_cleanup(&g_client, get_verbosity());
         return -1;

@@ -66,7 +66,7 @@ extern "C"
 /* Begin Method: dlt_gateway::t_dlt_gateway_init*/
 TEST(t_dlt_gateway_init, normal)
 {
-    DltDaemonLocal daemon_local;
+    DltDaemonLocal daemon_local = {};
     DltGatewayConnection connections;
     daemon_local.pGateway.connections = &connections;
     daemon_local.pGateway.num_connections = 1;
@@ -101,7 +101,6 @@ TEST(t_dlt_gateway_send_control_message, Normal)
     DltReceiver receiver1;
     DltPassiveControlMessage p_control_msgs;
     DltServiceSetLogLevel req;
-    memset(&daemon_local,0, sizeof(DltDaemonLocal));
     memset(&connections, 0, sizeof(DltGatewayConnection));
     memset(&p_control_msgs,0, sizeof(DltPassiveControlMessage));
     strcpy(req.apid,"LOG");
@@ -394,8 +393,7 @@ TEST(t_dlt_gateway_establish_connections, normal)
     gateway->connections->trigger = DLT_GATEWAY_ON_STARTUP;
     gateway->connections->client.mode = DLT_CLIENT_MODE_TCP;
     gateway->connections->client.servIP = ip;
-    gateway->connections->client.port = port;
-
+    gateway->connections->client.port = static_cast<uint16_t>(port);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_establish_connections(gateway, &daemon_local, 0));
 }
@@ -460,8 +458,8 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
     char ecuid[] = "ECU2";
     uint32_t sid = DLT_SERVICE_ID_GET_LOG_INFO;
     uint8_t status = 7;
-    uint16_t count_app_ids = DLT_HTOLE_16(1);
-    uint16_t count_context_ids =DLT_HTOLE_16(1);
+    uint16_t count_app_ids = 1;
+    uint16_t count_context_ids = 1;
     const char *apid = "LOG";
     const char *ctid = "TEST";
     const char *com = "remo";
@@ -481,52 +479,52 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
     ASSERT_EQ(DLT_RETURN_OK, ret);
 
     /* create response message */
-    msg.datasize = sizeof(DltServiceGetLogInfoResponse) +
+    msg.datasize = static_cast<int32_t>(sizeof(DltServiceGetLogInfoResponse) +
         sizeof(AppIDsType) +
         sizeof(ContextIDsInfoType) +
         strlen(app_description) +
-        strlen(context_description);
+        strlen(context_description));
     msg.databuffer = (uint8_t *)malloc(msg.datasize);
     msg.databuffersize = msg.datasize;
     memset(msg.databuffer, 0, msg.datasize);
 
     memcpy(msg.databuffer, &sid, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
+    offset += static_cast<int>(sizeof(uint32_t));
 
     memcpy(msg.databuffer + offset, &status, sizeof(int8_t));
-    offset += sizeof(int8_t);
+    offset += static_cast<int>(sizeof(int8_t));
 
     memcpy(msg.databuffer + offset, &count_app_ids, sizeof(uint16_t));
-    offset += sizeof(uint16_t);
+    offset += static_cast<int>(sizeof(uint16_t));
 
     dlt_set_id((char *)(msg.databuffer + offset), apid);
-    offset += sizeof(ID4);
+    offset += static_cast<int>(sizeof(ID4));
 
     memcpy(msg.databuffer + offset, &count_context_ids, sizeof(uint16_t));
-    offset += sizeof(uint16_t);
+    offset += static_cast<int>(sizeof(uint16_t));
 
     dlt_set_id((char *)(msg.databuffer + offset), ctid);
-    offset += sizeof(ID4);
+    offset += static_cast<int>(sizeof(ID4));
 
     memcpy(msg.databuffer + offset, &log_level, sizeof(int8_t));
-    offset += sizeof(int8_t);
+    offset += static_cast<int>(sizeof(int8_t));
 
     memcpy(msg.databuffer + offset, &trace_status, sizeof(int8_t));
-    offset += sizeof(int8_t);
+    offset += static_cast<int>(sizeof(int8_t));
 
-    len_con = strlen(context_description);
+    len_con = static_cast<uint16_t>(strlen(context_description));
     memcpy(msg.databuffer + offset, &len_con, sizeof(uint16_t));
-    offset += sizeof(uint16_t);
+    offset += static_cast<int>(sizeof(uint16_t));
 
     memcpy(msg.databuffer + offset, context_description, strlen(context_description));
-    offset += strlen(context_description);
+    offset += static_cast<int>(strlen(context_description));
 
-    len_app = strlen(app_description);
+    len_app = static_cast<uint16_t>(strlen(app_description));
     memcpy(msg.databuffer + offset, &len_app, sizeof(uint16_t));
-    offset += sizeof(uint16_t);
+    offset += static_cast<int>(sizeof(uint16_t));
 
     memcpy(msg.databuffer + offset, app_description, strlen(app_description));
-    offset += strlen(app_description);
+    offset += static_cast<int>(strlen(app_description));
 
     dlt_set_id((char *)(msg.databuffer + offset), com);
 
@@ -535,9 +533,6 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
 
     msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
     msg.standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
-#if (BYTE_ORDER == BIG_ENDIAN)
-    msg.standardheader->htyp = (msg.standardheader->htyp | DLT_HTYP_MSBF);
-#endif
     msg.standardheader->mcnt = 0;
 
     dlt_set_id(msg.headerextra.ecu, ecuid);
@@ -553,11 +548,11 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
     dlt_set_id(msg.extendedheader->apid, "");
     dlt_set_id(msg.extendedheader->ctid, "");
 
-    msg.headersize = sizeof(DltStorageHeader) +
+    msg.headersize = static_cast<int32_t>(sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
         sizeof(DltExtendedHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp);
-    len = msg.headersize - sizeof(DltStorageHeader) + msg.datasize;
+        DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+    len = static_cast<int32_t>(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
     msg.standardheader->len = DLT_HTOBE_16(len);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_parse_get_log_info(&daemon, ecuid, &msg, CONTROL_MESSAGE_NOT_REQUESTED, 0));
@@ -609,7 +604,7 @@ TEST(t_dlt_gateway_process_gateway_timer, normal)
     daemon_local.pGateway.connections->trigger = DLT_GATEWAY_ON_STARTUP;
     daemon_local.pGateway.connections->client.mode = DLT_CLIENT_MODE_TCP;
     daemon_local.pGateway.connections->client.servIP = ip;
-    daemon_local.pGateway.connections->client.port = port;
+    daemon_local.pGateway.connections->client.port = static_cast<uint16_t>(port);
 
 
     daemon_local.pEvent.connections = &connections1;
@@ -631,7 +626,7 @@ TEST(t_dlt_gateway_process_gateway_timer, nullpointer)
 TEST(t_dlt_gateway_process_on_demand_request, normal)
 {
     char node_id[DLT_ID_SIZE] = "123";
-    uint32_t connection_status = 1;
+    uint32_t conn_status = 1;
     DltDaemonLocal daemon_local;
     DltGatewayConnection connections;
     daemon_local.pGateway.connections = &connections;
@@ -643,14 +638,14 @@ TEST(t_dlt_gateway_process_on_demand_request, normal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_process_on_demand_request(&daemon_local.pGateway,
                                                                    &daemon_local,
                                                                    node_id,
-                                                                   connection_status,
+                                                                   conn_status,
                                                                    1));
 }
 
 TEST(t_dlt_gateway_process_on_demand_request, abnormal)
 {
     char node_id[DLT_ID_SIZE] = "123";
-    uint32_t connection_status = 1;
+    uint32_t conn_status = 1;
     DltDaemonLocal daemon_local;
     DltGatewayConnection connections;
     daemon_local.pGateway.connections = &connections;
@@ -661,7 +656,7 @@ TEST(t_dlt_gateway_process_on_demand_request, abnormal)
     EXPECT_EQ(DLT_RETURN_ERROR, dlt_gateway_process_on_demand_request(&daemon_local.pGateway,
                                                                       &daemon_local,
                                                                       node_id,
-                                                                      connection_status,
+                                                                      conn_status,
                                                                       0));
 }
 

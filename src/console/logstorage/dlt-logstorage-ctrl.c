@@ -236,7 +236,14 @@ static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl,
 static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
 {
     int ret = 0;
-    int (*callback)() = ev->func;
+    union {
+        void *ptr;
+        int (*callback)(void);
+    } callback_converter;
+    int (*callback)(void);
+
+    callback_converter.ptr = ev->func;
+    callback = callback_converter.callback;
 
     ret = poll(&ev->pfd, 1, POLL_TIME_OUT);
 
@@ -271,7 +278,8 @@ static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
         return -1;
     }
 
-    pr_verbose("Got new event, calling %p.\n", callback);
+    callback_converter.callback = callback;
+    pr_verbose("Got new event, calling %p.\n", callback_converter.ptr);
 
     if (callback() < 0) {
         pr_error("Error while calling the callback, exiting.\n");

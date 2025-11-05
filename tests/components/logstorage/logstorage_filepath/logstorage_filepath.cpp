@@ -30,7 +30,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    DLT_DECLARE_CONTEXT(ctx[num_context]);
+    DltContext *ctx = (DltContext *)malloc(sizeof(DltContext) * num_context);
+    if (!ctx) {
+        fprintf(stderr, "Failed to allocate memory for contexts\n");
+        return 1;
+    }
 
     DLT_REGISTER_APP("FPTH", "Logstorage filepath");
     for(i = 0; i < num_context; i++) {
@@ -47,6 +51,7 @@ int main(int argc, char *argv[])
         struct timespec tv = {0, 1000000};
         nanosleep(&tv, NULL);
     }
+    free(ctx);
 
     for (i = 0; i < num_context; i++) {
         DLT_UNREGISTER_CONTEXT(ctx[i]);

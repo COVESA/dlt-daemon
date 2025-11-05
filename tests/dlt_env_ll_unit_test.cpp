@@ -287,7 +287,7 @@ TEST(DltExtensionTests, basic_ll_set_handling)
     dlt_env_init_ll_set(&ll_set);
 
     for (int i = 0; i < DLT_ENV_LL_SET_INCREASE; ++i)
-        ll_set.item[i].ll = i;
+         ll_set.item[i].ll = (uint8_t)i;
 
     dlt_env_increase_ll_set(&ll_set);
     EXPECT_EQ(2 * DLT_ENV_LL_SET_INCREASE, ll_set.array_size);
@@ -539,4 +539,3 @@ TEST(DltExtensionTests, dlt_env_extract_symbolic_ll)
     ASSERT_EQ('i', *tmp2);
     ASSERT_EQ(28, result); /* 'result' is not touched */
 }
-

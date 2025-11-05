@@ -48,7 +48,7 @@ void *dlt_connection_get_callback(DltConnection *);
 
 #ifdef DLT_UNIT_TESTS
 int dlt_connection_send(DltConnection *conn,
-                        void *msg,
+                        const void *msg,
                         size_t msg_size);
 
 void dlt_connection_destroy_receiver(DltConnection *con);

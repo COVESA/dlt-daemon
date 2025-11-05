@@ -93,7 +93,7 @@ typedef struct
 void stress1(void);
 
 void stress2(void);
-void thread_function(void);
+void *thread_function(void *arg);
 
 void stress3(void);
 
@@ -295,7 +295,7 @@ void stress2(void)
 
     for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++) {
         thread_data[index].num = index;
-        ret = pthread_create(&(thread[index]), NULL, (void *)&thread_function, (void *)&(thread_data[index]));
+        ret = pthread_create(&(thread[index]), NULL, thread_function, (void *)&(thread_data[index]));
 
         if (ret != 0)
             printf("Error creating thread %d: %s \n", index, strerror(errno));
@@ -314,8 +314,9 @@ void stress2(void)
     printf("Finished stress test2 \n\n");
 }
 
-void thread_function(void)
+void *thread_function(void *arg)
 {
+    (void)arg;
     /*thread_data_t *data; */
     DltContext context_thread1;
     DltContextData context_thread1_data;
@@ -341,6 +342,7 @@ void thread_function(void)
     }
 
     dlt_unregister_context(&context_thread1);
+    return NULL;
 }
 
 void stress3(void)

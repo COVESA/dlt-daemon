@@ -88,16 +88,16 @@ typedef enum
 
 typedef struct
 {
-    DltReceiver receiver;  /**< receiver pointer to dlt receiver structure */
-    int sock;              /**< sock Connection handle/socket */
-    char *servIP;          /**< servIP IP adress/Hostname of interface */
-    char *hostip;          /**< hostip IP address of UDP host receiver interface */
-    int port;              /**< Port for TCP connections (optional) */
-    char *serialDevice;    /**< serialDevice Devicename of serial device */
-    char *socketPath;      /**< socketPath Unix socket path */
-    char ecuid[4];         /**< ECUiD */
-    speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
-    DltClientMode mode;    /**< mode DltClientMode */
+    DltReceiver receiver;      /**< receiver pointer to dlt receiver structure */
+    int sock;                  /**< sock Connection handle/socket */
+    char *servIP;              /**< servIP IP adress/Hostname of interface */
+    char *hostip;              /**< hostip IP address of UDP host receiver interface */
+    uint16_t  port;            /**< Port for TCP connections (optional) */
+    char *serialDevice;        /**< serialDevice Devicename of serial device */
+    char *socketPath;          /**< socketPath Unix socket path */
+    char ecuid[4];             /**< ECUiD */
+    speed_t baudrate;          /**< baudrate Baudrate of serial interface, as speed_t */
+    DltClientMode mode;        /**< mode DltClientMode */
     int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
     int resync_serial_header;  /**< (Boolean) Resync to serial header on all connection */
 } DltClient;

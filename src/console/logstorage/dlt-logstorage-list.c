@@ -76,13 +76,13 @@ static struct LogstorageDeviceInfo
  * This can be used to debug the behavior.
  * Therefore, it's only available in verbose mode.
  */
-void print_list()
+void print_list(void)
 {
     struct LogstorageDeviceInfo *ptr = g_info;
     pr_verbose(" -------Device list-------\n");
 
     while (ptr != NULL) {
-        pr_verbose("%p:\t[%s][%s] \n", ptr, ptr->dev_node, ptr->mnt_point);
+        pr_verbose("%p:\t[%s][%s] \n", (void *)ptr, ptr->dev_node, ptr->mnt_point);
         ptr = ptr->next;
     }
 
@@ -111,7 +111,7 @@ static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
 
     while (ptr != NULL) {
         if (strncmp(ptr->dev_node, node, DLT_MOUNT_PATH_MAX) == 0) {
-            pr_verbose("%s found in %p.\n", node, ptr);
+            pr_verbose("%s found in %p.\n", node, (void *)ptr);
             break;
         }
         else {
@@ -165,6 +165,7 @@ int logstorage_store_dev_info(const char *node, const char *path)
 
     if (ptr->mnt_point == NULL) {
         pr_error("memory allocation failed for mnt_point\n");
+        free(ptr->dev_node);
         free(ptr);
         ptr = NULL;
         return -1;

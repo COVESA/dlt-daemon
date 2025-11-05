@@ -30,7 +30,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    DLT_DECLARE_CONTEXT(ctx[num_context]);
+    DltContext *ctx = (DltContext *)malloc(sizeof(DltContext) * num_context);
+    if (!ctx) {
+        fprintf(stderr, "Failed to allocate memory for contexts\n");
+        return 1;
+    }
 
     DLT_REGISTER_APP("DSNW", "APP: Disable network routing");
     for(i = 0; i < num_context; i++) {
@@ -52,6 +56,6 @@ int main(int argc, char *argv[])
         DLT_UNREGISTER_CONTEXT(ctx[i]);
     }
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
-
+    free(ctx);
     return EXIT_SUCCESS;
 }

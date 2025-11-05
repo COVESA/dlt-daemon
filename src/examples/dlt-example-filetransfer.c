@@ -87,7 +87,10 @@ bool shutdownStatus = false;
 void *cancel_filetransfer()
 {
     // wait 200msec once a filetransfer is started and then set the flag to true
-    sleep(.2);
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = 200000000; // 200 ms
+    nanosleep(&ts, NULL);
     shutdownStatus = true;
     return NULL;
 }

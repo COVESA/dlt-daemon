@@ -145,7 +145,7 @@ typedef struct {
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 
@@ -510,11 +510,11 @@ int main(int argc, char *argv[])
     }
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
-        dltclient.port = dltdata.port;
+        dltclient.port = (uint16_t)dltdata.port;
 
         unsigned int servIPLength = 1; // Counting the terminating 0 byte
         for (index = optind; index < argc; index++) {
-            servIPLength += strlen(argv[index]);
+            servIPLength += (unsigned int)strlen(argv[index]);
             if (index > optind) {
                 servIPLength++; // For the comma delimiter
             }
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
 
             if (dltdata.rflag == 1 && sig_close_recv == false) {
                 dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
-                sleep(dltdata.rvalue / 1000);
+                sleep((unsigned int)(dltdata.rvalue / 1000));
             } else {
                 /* Dlt Client Cleanup */
                 dlt_client_cleanup(&dltclient, dltdata.vflag);
@@ -713,7 +713,7 @@ int dlt_receive_message_callback(DltMessage *message, void *data)
             iov[1].iov_len = (uint32_t)message->datasize;
 
             if (dltdata->climit > -1) {
-                uint32_t bytes_to_write = message->headersize + message->datasize;
+                uint32_t bytes_to_write = (uint32_t)message->headersize + (uint32_t)message->datasize;
 
                 if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
                     dlt_receive_close_output_file(dltdata);
