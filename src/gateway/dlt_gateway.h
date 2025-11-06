@@ -196,7 +196,7 @@ int dlt_gateway_send_control_message(DltGatewayConnection *con,
                                      int verbose);
 
 /**
- * Send control message to passive node
+ * Send control message to passive node for DLT version 2
  *
  * @param con           DltGatewayConnection
  * @param control_msg   DltPassiveControlMessage
@@ -205,9 +205,9 @@ int dlt_gateway_send_control_message(DltGatewayConnection *con,
  * @return 0 on success, -1 otherwise
  */
 int dlt_gateway_send_control_message_v2(DltGatewayConnection *con,
-                                        DltPassiveControlMessage *control_msg,
-                                        void *data,
-                                        int verbose);
+                                     DltPassiveControlMessage *control_msg,
+                                     void *data,
+                                     int verbose);
 
 /**
  * Gets the connection handle of passive node with specified ECU
