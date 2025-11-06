@@ -897,7 +897,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                 resp->service_id = id;
                 DLT_MSG_READ_VALUE(resp->status, ptr, datalength, uint8_t);
                 DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
-                resp->length = DLT_BETOH_32(uint32_tmp);
+                resp->length = uint32_tmp;
 
                 if (resp->status != DLT_SERVICE_RESPONSE_OK) {
                     fprintf(stderr, "GET_SOFTWARE_VERSION failed [status=%d]\n",

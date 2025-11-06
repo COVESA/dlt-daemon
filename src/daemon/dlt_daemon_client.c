@@ -4592,11 +4592,21 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
          * let's go on sending notification */
     }
 
-    if (daemon_local->flags.sendECUSoftwareVersion > 0)
-        dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
-                                                daemon,
-                                                daemon_local,
-                                                daemon_local->flags.vflag);
+    if (daemon_local->flags.sendECUSoftwareVersion > 0){
+        if (DLT_DAEMON_VERSION == 2) {
+            dlt_daemon_control_get_software_version_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                       daemon,
+                                                       daemon_local,
+                                                       daemon_local->flags.vflag);
+        }else if (DLT_DAEMON_VERSION == 1) {
+            dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
+                                                    daemon,
+                                                    daemon_local,
+                                                    daemon_local->flags.vflag);
+        }else {
+            return -1;
+        }
+    }
 
     if (daemon_local->flags.sendTimezone > 0) {
         /* send timezone information */
@@ -4607,11 +4617,19 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
         memset((void *)&lt, 0, sizeof(lt));
         tzset();
         localtime_r(&t, &lt);
-
-        dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
-                                            daemon,
-                                            daemon_local,
-                                            daemon_local->flags.vflag);
+        if (DLT_DAEMON_VERSION == 2) {
+            dlt_daemon_control_message_timezone_v2(DLT_DAEMON_SEND_TO_ALL,
+                                                   daemon,
+                                                   daemon_local,
+                                                   daemon_local->flags.vflag);
+        }else if (DLT_DAEMON_VERSION == 1) {
+            dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
+                                                daemon,
+                                                daemon_local,
+                                                daemon_local->flags.vflag);
+        }else {
+            return -1;
+        }
     }
 
     dlt_log(LOG_DEBUG, "Timer ecuversion\n");
