@@ -39,19 +39,18 @@ int main()
 
     DLT_REGISTER_CONTEXT_V2(mainContext, "CTXP", "main context");
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message before app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("First message before app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Second message before app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("Second message before app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_REGISTER_APP("PRNT", "Sample pre-register application");
+    DLT_REGISTER_APP_V2("PRNT", "Sample pre-register application");
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message after app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("First message after app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_UNREGISTER_APP_V2()
-    ;
+    DLT_UNREGISTER_APP_V2();
 
     return 0;
 }
