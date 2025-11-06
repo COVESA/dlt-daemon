@@ -3855,7 +3855,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         dlt_daemon_user_send_log_state_v2(daemon, application, verbose);
 
         if (application == NULL) {
-            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.6s' for PID %d\n",
+            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%s' for PID %d\n",
                     usercontext.apid, usercontext.pid);
             return -1;
         }
@@ -3865,10 +3865,10 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
             snprintf(local_str,
                     DLT_DAEMON_TEXTBUFSIZE,
-                    "ApplicationID '%.6s' registered for PID %d, Description=%s",
+                    "ApplicationID '%s' registered for PID %d, Description=%s",
                     application->apid2,
                     application->pid,
-                    application->application_description); //TBD: %.6s to use apidlen
+                    application->application_description);
 
             dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
                                     DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
@@ -4129,10 +4129,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         if (application == NULL) {
             dlt_vlog(LOG_WARNING,
-                    "ApID '%.6s' not found for new ContextID '%.6s' in %s\n",
+                    "ApID '%s' not found for new ContextID '%s' in %s\n",
                     usercontext.apid,
                     usercontext.ctid,
-                    __func__); //TBD: %.6s to use apidlen , ctidlen
+                    __func__);
 
             return 0;
         }
@@ -4174,8 +4174,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                         verbose);
         if (context == NULL) {
             dlt_vlog(LOG_WARNING,
-                    "Can't add ContextID '%.6s' for ApID '%.6s'\n in %s",
-                    usercontext.ctid, usercontext.apid, __func__); //TBD: Update %.6s to use apidlen, ctidlen
+                    "Can't add ContextID '%s' for ApID '%s'\n in %s",
+                    usercontext.ctid, usercontext.apid, __func__);
             return -1;
         }
         else {
@@ -4183,10 +4183,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
             snprintf(local_str,
                     DLT_DAEMON_TEXTBUFSIZE,
-                    "ContextID '%.6s' registered for ApID '%.6s', Description=%s",
+                    "ContextID '%s' registered for ApID '%s', Description=%s",
                     context->ctid2,
                     context->apid2,
-                    context->context_description); //TBD: %.6s to use ctidlen , apidlen
+                    context->context_description);
 
             if (verbose)
                 dlt_daemon_log_internal(daemon, daemon_local, local_str,
@@ -4269,10 +4269,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             if ((usercontext.log_level == DLT_LOG_DEFAULT) || (usercontext.trace_status == DLT_TRACE_STATUS_DEFAULT)) {
                 /* This call also replaces the default values with the values defined for default */
                 if (dlt_daemon_user_send_log_level_v2(daemon, context, verbose) == -1) {
-                    dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.6s;%.6s)\n",
+                    dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%s;%s)\n",
                             __func__,
                             context->apid,
-                            context->ctid); //TBD Update %.6s to use apidlen, ctidlen
+                            context->ctid);
                     return -1;
                 }
             }
@@ -4565,10 +4565,10 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                 daemon->ecuid2,
                                                 verbose) == -1) {
                             dlt_vlog(LOG_WARNING,
-                                    "Can't delete CtID '%.6s' for ApID '%.6s' in %s\n",
+                                    "Can't delete CtID '%s' for ApID '%s' in %s\n",
                                     context->ctid,
                                     context->apid,
-                                    __func__); //TBD: Replace %.6s with ctidlen and apidlen
+                                    __func__);
                             return -1;
                         }
                     }
@@ -4580,17 +4580,17 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                             daemon->ecuid2,
                                             verbose) == -1) {
                     dlt_vlog(LOG_WARNING,
-                            "Can't delete ApID '%.6s' in %s\n",
+                            "Can't delete ApID '%s' in %s\n",
                             application->apid,
-                            __func__); //TBD: Replace %.6s with apidlen
+                            __func__);
                     return -1;
                 }
                 else {
                     char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
                     snprintf(local_str,
                             DLT_DAEMON_TEXTBUFSIZE,
-                            "Unregistered ApID '%.6s'",
-                            userapp.apid); //TBD: Replace %.6s with apidlen
+                            "Unregistered ApID '%s'",
+                            userapp.apid);
                     dlt_daemon_log_internal(daemon, daemon_local, local_str,
                                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
                                             DLT_DAEMON_CTX_ID, verbose);
@@ -4750,10 +4750,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
             /* Delete this connection entry from internal table*/
             if (dlt_daemon_context_del_v2(daemon, context, daemon->ecuid2len, daemon->ecuid2, verbose) == -1) {
                 dlt_vlog(LOG_WARNING,
-                        "Can't delete CtID '%.6s' for ApID '%.6s' in %s\n",
+                        "Can't delete CtID '%s' for ApID '%s' in %s\n",
                         usercontext.ctid,
                         usercontext.apid,
-                        __func__); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
+                        __func__);
                 return -1;
             }
             else {
@@ -4761,14 +4761,15 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
                 snprintf(local_str,
                         DLT_DAEMON_TEXTBUFSIZE,
-                        "Unregistered CtID '%.6s' for ApID '%.6s'",
+                        "Unregistered CtID '%s' for ApID '%s'",
                         usercontext.ctid,
-                        usercontext.apid); //TBD: Use usercontext.ctidlen and usercontext.apidlen instead of %.6s
+                        usercontext.apid);
 
-                if (verbose)
+                if (verbose){                    
                     dlt_daemon_log_internal(daemon, daemon_local, local_str,
                                             DLT_LOG_INFO, DLT_DAEMON_APP_ID,
                                             DLT_DAEMON_CTX_ID, verbose);
+                }
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
