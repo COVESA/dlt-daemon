@@ -4204,6 +4204,27 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
     return ret;
 }
 
+DltReturnValue dlt_log_string_v2(DltContext *handle, DltLogLevelType loglevel, const char *text)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if ((handle == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+        ret = dlt_user_log_write_string(&log, text);
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
+            ret = DLT_RETURN_ERROR;
+    }
+
+    return ret;
+}
+
 DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
@@ -4220,6 +4241,28 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
         dlt_user_log_write_int(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
+            ret = DLT_RETURN_ERROR;
+    }
+
+    return ret;
+}
+
+DltReturnValue dlt_log_string_int_v2(DltContext *handle, DltLogLevelType loglevel, const char *text, int data)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if ((handle == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+        ret = dlt_user_log_write_string(&log, text);
+        dlt_user_log_write_int(&log, data);
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
             ret = DLT_RETURN_ERROR;
     }
 
@@ -4248,6 +4291,28 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
     return ret;
 }
 
+DltReturnValue dlt_log_string_uint_v2(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if ((handle == NULL) || (text == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    DltReturnValue ret = DLT_RETURN_OK;
+    DltContextData log;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+        ret = dlt_user_log_write_string(&log, text);
+        dlt_user_log_write_uint(&log, data);
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
+            ret = DLT_RETURN_ERROR;
+    }
+
+    return ret;
+}
+
 DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
@@ -4262,6 +4327,26 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
         dlt_user_log_write_int(&log, data);
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_log_int_v2(DltContext *handle, DltLogLevelType loglevel, int data)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if (handle == NULL)
+        return DLT_RETURN_ERROR;
+
+    DltContextData log;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+        dlt_user_log_write_int(&log, data);
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }
 
@@ -4288,6 +4373,26 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
     return DLT_RETURN_OK;
 }
 
+DltReturnValue dlt_log_uint_v2(DltContext *handle, DltLogLevelType loglevel, unsigned int data)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if (handle == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    DltContextData log;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) == DLT_RETURN_TRUE) {
+        dlt_user_log_write_uint(&log, data);
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
 DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length)
 {
     if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
@@ -4306,6 +4411,30 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
         }
 
         if (dlt_user_log_write_finish(&log) < DLT_RETURN_OK)
+            return DLT_RETURN_ERROR;
+    }
+
+    return DLT_RETURN_OK;
+}
+
+DltReturnValue dlt_log_raw_v2(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length)
+{
+    if (!is_verbose_mode(dlt_user.verbose_mode, NULL))
+        return DLT_RETURN_ERROR;
+
+    if (handle == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    DltContextData log;
+    DltReturnValue ret = DLT_RETURN_OK;
+
+    if (dlt_user_log_write_start(handle, &log, loglevel) > 0) {
+        if ((ret = dlt_user_log_write_raw(&log, data, length)) < DLT_RETURN_OK) {
+            dlt_user_free_buffer(&(log.buffer));
+            return ret;
+        }
+
+        if (dlt_user_log_write_finish_v2(&log) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }
 
@@ -5101,7 +5230,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             break;
         }
         }
-        
+        /* If in verbose mode, set flag in header for verbose mode */
+        if (is_verbose_mode(dlt_user.verbose_mode, log))
+            msg.headerextrav2.msin |= DLT_MSIN_VERB;
         msg.headerextrav2.noar = (uint8_t) log->args_num;              /* number of arguments */
     }
 
@@ -5920,6 +6051,7 @@ DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid, DltLogLevelType log
     DltUserHeader userheader;
     DltUserControlMsgAppLogLevelTraceStatusV2 usercontext;
     DltReturnValue ret;
+    usercontext.apid = NULL;
 
     if ((loglevel < DLT_USER_LOG_LEVEL_NOT_SET) || (loglevel >= DLT_LOG_MAX)) {
         dlt_vlog(LOG_ERR, "Loglevel %d is outside valid range", loglevel);

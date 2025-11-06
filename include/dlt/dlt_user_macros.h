@@ -357,6 +357,35 @@
 #endif
 
 /**
+ * Send log message with variable list of messages (intended for verbose mode)
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TS timestamp to be used for log message
+ * @param ... variable list of arguments
+ * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
+ *       Example: DLT_LOG_TS(hContext, DLT_LOG_INFO, timestamp, DLT_STRING("Hello world"); DLT_INT(123));
+ */
+#ifdef _MSC_VER
+/* DLT_LOG_TS is not supported by MS Visual C++ */
+/* use function interface instead            */
+#else
+#   define DLT_LOG_TS_V2(CONTEXT, LOGLEVEL, TS, ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            __VA_ARGS__; \
+            log_local.use_timestamp = DLT_USER_TIMESTAMP; \
+            log_local.user_timestamp = (uint32_t) TS; \
+            (void)dlt_user_log_write_finish_v2(&log_local); \
+        } \
+    } while (false)
+#endif
+
+/**
  * Send log message with variable list of messages (intended for non-verbose mode)
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -797,6 +826,20 @@
     } while(false)
 
 /**
+ * Send log message with string parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TEXT ASCII string
+ */
+#define DLT_LOG_STRING_V2(CONTEXT, LOGLEVEL, TEXT) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_v2(&(CONTEXT), LOGLEVEL, TEXT); \
+        } \
+    } while(false)
+
+/**
  * Send log message with string parameter and integer parameter.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log messages
@@ -808,6 +851,21 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+        } \
+    } while(false)
+
+/**
+ * Send log message with string parameter and integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log messages
+ * @param TEXT ASCII string
+ * @param INT_VAR integer value
+ */
+#define DLT_LOG_STRING_INT_V2(CONTEXT, LOGLEVEL, TEXT, INT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_int_v2(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
         } \
     } while(false)
 
@@ -827,6 +885,21 @@
     } while(false)
 
 /**
+ * Send log message with string parameter and unsigned integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TEXT ASCII string
+ * @param UINT_VAR unsigned integer value
+ */
+#define DLT_LOG_STRING_UINT_V2(CONTEXT, LOGLEVEL, TEXT, UINT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_uint_v2(&(CONTEXT), LOGLEVEL, TEXT, UINT_VAR); \
+        } \
+    } while(false)
+
+/**
  * Send log message with unsigned integer parameter.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -837,6 +910,20 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_uint(&(CONTEXT), LOGLEVEL, UINT_VAR); \
+        } \
+    } while(false)
+
+/**
+ * Send log message with unsigned integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param UINT_VAR unsigned integer value
+ */
+#define DLT_LOG_UINT_V2(CONTEXT, LOGLEVEL, UINT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_uint_v2(&(CONTEXT), LOGLEVEL, UINT_VAR); \
         } \
     } while(false)
 
@@ -855,6 +942,20 @@
     } while(false)
 
 /**
+ * Send log message with integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param INT_VAR integer value
+ */
+#define DLT_LOG_INT_V2(CONTEXT, LOGLEVEL, INT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_int_v2(&(CONTEXT), LOGLEVEL, INT_VAR); \
+        } \
+    } while(false)
+
+/**
  * Send log message with binary memory block.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -866,6 +967,21 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_raw(&(CONTEXT), LOGLEVEL, BUF, LEN); \
+        } \
+    } while(false)
+
+/**
+ * Send log message with binary memory block.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param BUF pointer to memory block
+ * @param LEN length of memory block
+ */
+#define DLT_LOG_RAW_V2(CONTEXT, LOGLEVEL, BUF, LEN) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_raw_v2(&(CONTEXT), LOGLEVEL, BUF, LEN); \
         } \
     } while(false)
 
