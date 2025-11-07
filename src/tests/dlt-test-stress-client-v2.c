@@ -443,7 +443,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         /* do something here */
 
         /* Count number of received bytes */
-        dltdata->bytes_received += message->datasize + message->headersizev2 - sizeof(DltStorageHeaderV2);
+        dltdata->bytes_received += message->datasize + message->headersizev2 - message->storageheadersizev2;
 
         /* print number of received bytes */
         if ((dlt_uptime() - dltdata->time_elapsed) > 10000) {
@@ -454,11 +454,11 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         }
 
         /* Extended header */
-        if (DLT_IS_HTYP_UEH(message->baseheaderv2->htyp2)) {
+        if (DLT_IS_HTYP2_EH(message->baseheaderv2->htyp2)) {
             /* Log message */
-            if ((DLT_GET_MSIN_MSTP(message->baseheaderv2->mcnt)) == DLT_TYPE_LOG) {
+            if ((DLT_GET_MSIN_MSTP(message->headerextrav2.msin)) == DLT_TYPE_LOG) {
                 /* Verbose */
-                if (DLT_IS_MSIN_VERB(message->baseheaderv2->mcnt)) {
+                if (DLT_IS_MSIN_VERB(message->headerextrav2.msin)) {
                         /* verbose mode */
                         type_info = 0;
                         type_info_tmp = 0;
@@ -475,8 +475,8 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                         if (type_info & DLT_TYPE_INFO_SINT) {
                             /* read value */
                             DLT_MSG_READ_VALUE(value_tmp, ptr, datalength, int32_t);
-                            value = value_tmp;
-
+                            value = (int32_t)value_tmp;
+                            
                             if (value < dltdata->last_value) {
                                 if (dltdata->nvalue == dltdata->count_received_messages)
                                     printf("PASSED: %d Msg received, %d not received\n",
