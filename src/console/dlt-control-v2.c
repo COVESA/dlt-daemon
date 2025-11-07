@@ -19,7 +19,7 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-control.c
+ * \file dlt-control-v2.c
  */
 
 
@@ -49,7 +49,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**              Suyash Chandra             Volvo                              **
+**   sc         Suyash Chandra             Volvo                              **
 *******************************************************************************/
 
 #include <ctype.h>      /* for isprint() */
@@ -123,7 +123,7 @@ void usage()
 
     dlt_get_version(version, 255);
 
-    printf("Usage: dlt-control [options] hostname/serial_device_name\n");
+    printf("Usage: dlt-control-v2 [options] hostname/serial_device_name\n");
     printf("Send control message to DLT daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");

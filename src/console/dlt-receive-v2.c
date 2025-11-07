@@ -19,20 +19,19 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-receive.c
+ * \file dlt-receive-v2.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-receive.c                                                 **
+**  SRC-MODULE: dlt-receive-v2.c                                              **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**              Markus Klein                                                  **
+**  AUTHOR    : Suyash Chandra suyash.chandra@consultant.volvo.com            **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -50,8 +49,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
+**   sc         Suyash Chandra             Volvo                              **
 *******************************************************************************/
 
 /*******************************************************************************
@@ -152,7 +150,7 @@ void usage()
 
     dlt_get_version(version, 255);
 
-    printf("Usage: dlt-receive [options] hostname/serial_device_name\n");
+    printf("Usage: dlt-receive-v2 [options] hostname/serial_device_name\n");
     printf("Receive DLT messages from DLT daemon and print or store the messages.\n");
     printf("Use filters to filter received messages.\n");
     printf("%s \n", version);
