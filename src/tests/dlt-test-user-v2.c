@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 
 #if !DLT_DISABLE_MACRO
     /* with macro interface */
-    DLT_LOG(context_macro_callback, DLT_LOG_INFO,
+    DLT_LOG_V2(context_macro_callback, DLT_LOG_INFO,
             DLT_STRING("Register callback (Macro Interface) for Injection ID: 0xFFF"));
     DLT_REGISTER_INJECTION_CALLBACK(context_macro_callback, 0xFFF, test_injection_macro_callback);
 #endif
@@ -335,9 +335,9 @@ int main(int argc, char *argv[])
         case 3:
         {
 #if !DLT_DISABLE_MACRO
-            test3m();
+            // test3m(); /* Commented as non verbose not suported in V2 currently */
 #endif
-            test3f();
+            // test3f(); /* Commented as non verbose not suported in V2 currently */
             break;
         }
         case 4:
@@ -367,33 +367,33 @@ int main(int argc, char *argv[])
         case 7:
         {
 #if !DLT_DISABLE_MACRO
-            test7m();
+            // test7m(); /* DLT Network Trace is not supported in V2 currently */
 #endif
-            test7f();
+            // test7f(); /* DLT Network Trace is not supported in V2 currently */
             break;
         }
         case 8:
         {
 #if !DLT_DISABLE_MACRO
-            test8m();
+            // test8m(); /* DLT Network Trace is not supported in V2 currently */
 #endif
-            test8f();
+            // test8f(); /* DLT Network Trace is not supported in V2 currently */
             break;
         }
         case 9:
         {
 #if !DLT_DISABLE_MACRO
-            test9m();
+            // test9m(); /* DLT Network Trace is not supported in V2 currently */
 #endif
-            test9f();
+            // test9f(); /* DLT Network Trace is not supported in V2 currently */
             break;
         }
         case 10:
         {
 #if !DLT_DISABLE_MACRO
-            test10m();
+            // test10m(); /* DLT user supplied timestamp is not supported in V2 currently */
 #endif
-            test10f();
+            // test10f(); /* DLT user supplied timestamp is not supported in V2 currently */
             break;
         }
         case 11:
@@ -409,28 +409,28 @@ int main(int argc, char *argv[])
             /* with macro interface */
             test1m();
             test2m();
-            test3m();
+            // test3m(); /* Commented as non verbose not suported in V2 currently */
             test4m();
             test5m();
             test6m();
-            test7m();
-            test8m();
-            test9m();
-            test10m();
-            test11m();
+            // test7m(); /* DLT Network Trace is not supported in V2 currently */
+            // test8m(); /* DLT Network Trace is not supported in V2 currently */
+            // test9m(); /* DLT Network Trace is not supported in V2 currently */
+            // test10m(); /* DLT user supplied timestamp is not supported in V2 currently */
+            test11m(); 
 #endif
 
             /* with function interface */
             test1f();
             test2f();
-            test3f();
+            //test3f(); /* Commented as non verbose not suported in V2 currently */
             test4f();
             test5f();
             test6f();
-            test7f();
-            test8f();
-            test9f();
-            test10f();
+            // test7f(); /* DLT Network Trace is not supported in V2 currently */
+            // test8f(); /* DLT Network Trace is not supported in V2 currently */
+            // test9f(); /* DLT Network Trace is not supported in V2 currently */
+            // test10f(); /* DLT user supplied timestamp is not supported in V2 currently */
             test11f();
             break;
         }
@@ -481,18 +481,18 @@ int test1m(void)
 {
     /* Test 1: (Macro IF) Test all log levels */
     printf("Test1m: (Macro IF) Test all log levels\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test1: (Macro IF) Test all log levels"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test1: (Macro IF) Test all log levels"));
 
-    DLT_LOG(context_macro_test[0], DLT_LOG_FATAL, DLT_STRING("fatal"));
-    DLT_LOG(context_macro_test[0], DLT_LOG_ERROR, DLT_STRING("error"));
-    DLT_LOG(context_macro_test[0], DLT_LOG_WARN, DLT_STRING("warn"));
-    DLT_LOG(context_macro_test[0], DLT_LOG_INFO, DLT_STRING("info"));
-    DLT_LOG(context_macro_test[0], DLT_LOG_DEBUG, DLT_STRING("debug"));
-    DLT_LOG(context_macro_test[0], DLT_LOG_VERBOSE, DLT_STRING("verbose"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_FATAL, DLT_STRING("fatal"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_ERROR, DLT_STRING("error"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_WARN, DLT_STRING("warn"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_INFO, DLT_STRING("info"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_DEBUG, DLT_STRING("debug"));
+    DLT_LOG_V2(context_macro_test[0], DLT_LOG_VERBOSE, DLT_STRING("verbose"));
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test1: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test1: (Macro IF) finished"));
 
     return 0;
 }
@@ -504,32 +504,32 @@ int test2m(void)
 
     /* Test 2: (Macro IF) Test all variable types (verbose) */
     printf("Test2m: (Macro IF) Test all variable types (verbose)\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test2: (Macro IF) Test all variable types (verbose)"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test2: (Macro IF) Test all variable types (verbose)"));
 
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("string"), DLT_STRING("Hello world"));
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("utf8"), DLT_UTF8("Hello world"));
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("bool"), DLT_BOOL(1));
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int"), DLT_INT(INT32_MIN));         /* (-2147483647-1) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int8"), DLT_INT8(INT8_MIN));        /*          (-128) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int16"), DLT_INT16(INT16_MIN));     /*      (-32767-1) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int32"), DLT_INT32(INT32_MIN));     /* (-2147483647-1) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int64"), DLT_INT64(INT64_MIN));     /* (-__INT64_C(9223372036854775807)-1) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint"), DLT_UINT(UINT32_MAX));      /*   (4294967295U) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint8"), DLT_UINT8(UINT8_MAX));     /*           (255) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint16"), DLT_UINT16(UINT16_MAX));  /*         (65535) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint32"), DLT_UINT32(UINT32_MAX));  /*   (4294967295U) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint64"), DLT_UINT64(UINT64_MAX));  /* (__UINT64_C(18446744073709551615)) */
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("float32"), DLT_FLOAT32(FLT_MIN), DLT_FLOAT32(FLT_MAX));
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("float64"), DLT_FLOAT64(DBL_MIN), DLT_FLOAT64(DBL_MAX));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("string"), DLT_STRING("Hello world"));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("utf8"), DLT_UTF8("Hello world"));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("bool"), DLT_BOOL(1));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int"), DLT_INT(INT32_MIN));         /* (-2147483647-1) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int8"), DLT_INT8(INT8_MIN));        /*          (-128) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int16"), DLT_INT16(INT16_MIN));     /*      (-32767-1) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int32"), DLT_INT32(INT32_MIN));     /* (-2147483647-1) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("int64"), DLT_INT64(INT64_MIN));     /* (-__INT64_C(9223372036854775807)-1) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint"), DLT_UINT(UINT32_MAX));      /*   (4294967295U) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint8"), DLT_UINT8(UINT8_MAX));     /*           (255) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint16"), DLT_UINT16(UINT16_MAX));  /*         (65535) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint32"), DLT_UINT32(UINT32_MAX));  /*   (4294967295U) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("uint64"), DLT_UINT64(UINT64_MAX));  /* (__UINT64_C(18446744073709551615)) */
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("float32"), DLT_FLOAT32(FLT_MIN), DLT_FLOAT32(FLT_MAX));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("float64"), DLT_FLOAT64(DBL_MIN), DLT_FLOAT64(DBL_MAX));
 
     for (num2 = 0; num2 < 10; num2++)
         buffer[num2] = (char) num2;
 
-    DLT_LOG(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("raw"), DLT_RAW(buffer, 10));
+    DLT_LOG_V2(context_macro_test[1], DLT_LOG_INFO, DLT_STRING("raw"), DLT_RAW(buffer, 10));
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test2: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test2: (Macro IF) finished"));
 
     return 0;
 }
@@ -541,7 +541,7 @@ int test3m(void)
 
     /* Test 3: (Macro IF) Test all variable types (non-verbose) */
     printf("Test3m: (Macro IF) Test all variable types (non-verbose)\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test3: (Macro IF) Test all variable types (non-verbose)"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test3: (Macro IF) Test all variable types (non-verbose)"));
 
     DLT_NONVERBOSE_MODE();
 
@@ -580,7 +580,7 @@ int test3m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test3: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test3: (Macro IF) finished"));
 
     return 0;
 }
@@ -595,16 +595,16 @@ int test4m(void)
 
     /* Test 4: (Macro IF) Message size test */
     printf("Test4m: (Macro IF) Test different message sizes\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test4: (Macro IF) Test different message sizes"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test4: (Macro IF) Test different message sizes"));
 
-    DLT_LOG(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("1"), DLT_RAW(buffer, 1));
-    DLT_LOG(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("16"), DLT_RAW(buffer, 16));
-    DLT_LOG(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("256"), DLT_RAW(buffer, 256));
-    DLT_LOG(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("1024"), DLT_RAW(buffer, 1024));
+    DLT_LOG_V2(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("1"), DLT_RAW(buffer, 1));
+    DLT_LOG_V2(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("16"), DLT_RAW(buffer, 16));
+    DLT_LOG_V2(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("256"), DLT_RAW(buffer, 256));
+    DLT_LOG_V2(context_macro_test[3], DLT_LOG_INFO, DLT_STRING("1024"), DLT_RAW(buffer, 1024));
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test4: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test4: (Macro IF) finished"));
 
     return 0;
 }
@@ -622,39 +622,39 @@ int test5m(void)
 
     /* Test 5: (Macro IF) Test high-level API */
     printf("Test5m: (Macro IF) Test high-level API\n");
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test5: (Macro IF) Test high-level API"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test5: (Macro IF) Test high-level API"));
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_INT"));
-    DLT_LOG_INT(context_macro_test[4], DLT_LOG_INFO, -42);
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_INT"));
+    DLT_LOG_INT_V2(context_macro_test[4], DLT_LOG_INFO, -42);
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_UINT"));
-    DLT_LOG_UINT(context_macro_test[4], DLT_LOG_INFO, 42);
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_UINT"));
+    DLT_LOG_UINT_V2(context_macro_test[4], DLT_LOG_INFO, 42);
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING"));
-    DLT_LOG_STRING(context_macro_test[4], DLT_LOG_INFO, "String output");
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING"));
+    DLT_LOG_STRING_V2(context_macro_test[4], DLT_LOG_INFO, "String output");
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_RAW"));
-    DLT_LOG_RAW(context_macro_test[4], DLT_LOG_INFO, buffer, 16);
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_RAW"));
+    DLT_LOG_RAW_V2(context_macro_test[4], DLT_LOG_INFO, buffer, 16);
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING_INT"));
-    DLT_LOG_STRING_INT(context_macro_test[4], DLT_LOG_INFO, "String output: ", -42);
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING_INT"));
+    DLT_LOG_STRING_INT_V2(context_macro_test[4], DLT_LOG_INFO, "String output: ", -42);
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING_UINT"));
-    DLT_LOG_STRING_UINT(context_macro_test[4], DLT_LOG_INFO, "String output: ", 42);
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_STRING_UINT"));
+    DLT_LOG_STRING_UINT_V2(context_macro_test[4], DLT_LOG_INFO, "String output: ", 42);
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_PTR"));
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_PTR(ptr));
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next line: DLT_LOG_PTR"));
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_PTR(ptr));
 
-    DLT_LOG(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next lines: DLT_IS_LOG_LEVEL_ENABLED"));
+    DLT_LOG_V2(context_macro_test[4], DLT_LOG_INFO, DLT_STRING("Next lines: DLT_IS_LOG_LEVEL_ENABLED"));
 
     for (i = DLT_LOG_FATAL; i < DLT_LOG_MAX; i++) {
         if (DLT_IS_LOG_LEVEL_ENABLED(context_macro_test[4], i))
-            DLT_LOG(context_info,
+            DLT_LOG_V2(context_info,
                     DLT_LOG_INFO,
                     DLT_STRING("Loglevel is enabled: "),
                     DLT_STRING(loglevelstr[i]));
         else
-            DLT_LOG(context_info,
+            DLT_LOG_V2(context_info,
                     DLT_LOG_INFO,
                     DLT_STRING("Loglevel is disabled: "),
                     DLT_STRING(loglevelstr[i]));
@@ -662,7 +662,7 @@ int test5m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test5: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test5: (Macro IF) finished"));
 
     free(ptr);
     return 0;
@@ -672,20 +672,22 @@ int test6m(void)
 {
     /* Test 6: (Macro IF) Test local printing */
     printf("Test6m: (Macro IF) Test local printing\n");
-    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 6: (Macro IF) Test local printing");
+    DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test 6: (Macro IF) Test local printing");
 
     DLT_ENABLE_LOCAL_PRINT();
-    DLT_LOG_STRING(context_macro_test[5], DLT_LOG_INFO, "Message (visible: locally printed)");
+    DLT_LOG_STRING_V2(context_macro_test[5], DLT_LOG_INFO, "Message (visible: locally printed)");
 
     DLT_DISABLE_LOCAL_PRINT();
-    DLT_LOG_STRING(context_macro_test[5], DLT_LOG_INFO, "Message (invisible: not locally printed)");
+    DLT_LOG_STRING_V2(context_macro_test[5], DLT_LOG_INFO, "Message (invisible: not locally printed)");
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test6: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test6: (Macro IF) finished"));
 
     return 0;
 }
+
+/* DLT Network Trace is not supported in V2 currently */
 
 int test7m(void)
 {
@@ -701,7 +703,7 @@ int test7m(void)
 
     /* Test 7: (Macro IF) Test network trace */
     printf("Test7m: (Macro IF) Test network trace\n");
-    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test 7: (Macro IF) Test network trace");
+    DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test 7: (Macro IF) Test network trace");
 
     /* Dummy messages: 16 byte header, 32 byte payload */
     DLT_TRACE_NETWORK(context_macro_test[6], DLT_NW_TRACE_IPC, 16, buffer, 32, buffer);
@@ -711,7 +713,7 @@ int test7m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test7: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test7: (Macro IF) finished"));
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
@@ -748,7 +750,7 @@ int test8m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test8: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test8: (Macro IF) finished"));
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
@@ -785,7 +787,7 @@ int test9m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test9: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test9: (Macro IF) finished"));
 
     DLT_SET_APPLICATION_LL_TS_LIMIT(DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT);
     sleep(2);
@@ -804,7 +806,7 @@ int test10m(void)
     /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
 
     printf("Test10m: (Macro IF) Test user-supplied time stamps\n");
-    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test10: (Macro IF) Test user-supplied timestamps");
+    DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test10: (Macro IF) Test user-supplied timestamps");
 
     for (int i = 0; i < 3; i++) {
         char s[12];
@@ -812,7 +814,7 @@ int test10m(void)
 
         DLT_VERBOSE_MODE();
         DLT_LOG_TS(context_macro_test[9], DLT_LOG_INFO, timestamp[i], DLT_STRING("Tested Timestamp:"), DLT_STRING(s));
-
+        /* Non verbose mode not supported in V2*/
         DLT_NONVERBOSE_MODE();
         DLT_LOG_ID_TS(context_macro_test[9], DLT_LOG_INFO, 16, timestamp[i], DLT_STRING(s));
     }
@@ -821,7 +823,7 @@ int test10m(void)
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
 
     return 0;
 }
@@ -829,14 +831,14 @@ int test10m(void)
 int test11m(void)
 {
     printf("Test11m: (Macro IF) Test log buffer input interface\n");
-    DLT_LOG_STRING(context_info, DLT_LOG_INFO, "Test11m: (Macro IF) Test log buffer input interface");
+    DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test11m: (Macro IF) Test log buffer input interface");
 
     /* Test11m: (Macro IF) Test log buffer input interface */
     /* Do nothing as there is no macro interface implemented as of now */
 
     /* wait 2 second before next test */
     sleep(2);
-    DLT_LOG(context_info, DLT_LOG_INFO, DLT_STRING("Test11: (Macro IF) finished"));
+    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test11: (Macro IF) finished"));
 
     return 0;
 }
@@ -1186,42 +1188,42 @@ int test5f(void)
 
     /* Test 5: (Function IF) Test high-level API */
     printf("Test5f: (Function IF) Test high-level API\n");
-    dlt_log_string(&context_info, DLT_LOG_INFO, "Test5: (Function IF) Test high-level API");
+    dlt_log_string_v2(&context_info, DLT_LOG_INFO, "Test5: (Function IF) Test high-level API");
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_int()");
-    dlt_log_int(&(context_function_test[4]), DLT_LOG_INFO, -42);
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_int()");
+    dlt_log_int_v2(&(context_function_test[4]), DLT_LOG_INFO, -42);
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_uint()");
-    dlt_log_uint(&(context_function_test[4]), DLT_LOG_INFO, 42);
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_uint()");
+    dlt_log_uint_v2(&(context_function_test[4]), DLT_LOG_INFO, 42);
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string()");
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "String output");
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string()");
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "String output");
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_raw()");
-    dlt_log_raw(&(context_function_test[4]), DLT_LOG_INFO, buffer, 16);
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_raw()");
+    dlt_log_raw_v2(&(context_function_test[4]), DLT_LOG_INFO, buffer, 16);
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string_int()");
-    dlt_log_string_int(&(context_function_test[4]), DLT_LOG_INFO, "String output: ", -42);
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string_int()");
+    dlt_log_string_int_v2(&(context_function_test[4]), DLT_LOG_INFO, "String output: ", -42);
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string_uint()");
-    dlt_log_string_uint(&(context_function_test[4]), DLT_LOG_INFO, "String output: ", 42);
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next line: dlt_log_string_uint()");
+    dlt_log_string_uint_v2(&(context_function_test[4]), DLT_LOG_INFO, "String output: ", 42);
 
-    dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, "Next lines: dlt_user_is_logLevel_enabled");
+    dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, "Next lines: dlt_user_is_logLevel_enabled");
 
     for (i = DLT_LOG_FATAL; i < DLT_LOG_MAX; i++) {
         if (dlt_user_is_logLevel_enabled(&(context_function_test[4]), i) == DLT_RETURN_TRUE) {
             snprintf(log, DLT_USER_BUF_MAX_SIZE, "Loglevel is enabled: %s", loglevelstr[i]);
-            dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, log);
+            dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, log);
         }
         else {
             snprintf(log, DLT_USER_BUF_MAX_SIZE, "Loglevel is disabled: %s", loglevelstr[i]);
-            dlt_log_string(&(context_function_test[4]), DLT_LOG_INFO, log);
+            dlt_log_string_v2(&(context_function_test[4]), DLT_LOG_INFO, log);
         }
     }
 
     /* wait 2 second before next test */
     sleep(2);
-    dlt_log_string(&context_info, DLT_LOG_INFO, "Test5: (Function IF) finished");
+    dlt_log_string_v2(&context_info, DLT_LOG_INFO, "Test5: (Function IF) finished");
 
     return 0;
 }
@@ -1536,7 +1538,7 @@ int test_injection_macro_callback(uint32_t service_id, void *data, uint32_t leng
     memset(text, 0, 1024);
     snprintf(text, 1024, "Injection received (macro IF). ID: 0x%.4x, Length: %d", service_id, length);
     printf("%s \n", text);
-    DLT_LOG(context_macro_callback, DLT_LOG_INFO, DLT_STRING("Injection received (macro IF). ID: "),
+    DLT_LOG_V2(context_macro_callback, DLT_LOG_INFO, DLT_STRING("Injection received (macro IF). ID: "),
             DLT_UINT32(service_id), DLT_STRING("Data:"), DLT_STRING(text));
     memset(text, 0, 1024);
 
@@ -1585,6 +1587,6 @@ void test11f_internal(DltContext context, DltContextData contextData, uint32_t t
     size += data_size;
     args_num++;
     if (dlt_user_log_write_start_w_given_buffer(&context, &contextData, DLT_LOG_WARN, buffer, size, args_num) > 0) {
-        dlt_user_log_write_finish_w_given_buffer(&contextData);
+        dlt_user_log_write_finish_w_given_buffer_v2(&contextData);
     }
 }

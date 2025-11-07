@@ -350,11 +350,11 @@ int main(int argc, char *argv[])
 
     if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
+        // DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
+        // DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
+        // DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
+        // DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
+        // DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
 #ifdef DLT_TEST_ENABLE
@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             // /* Non-verbose mode */
-            DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
+            //DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
         else {
             if (rvalue == -1) {

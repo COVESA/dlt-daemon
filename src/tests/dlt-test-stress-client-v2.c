@@ -470,13 +470,12 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                         /* first read the type info of the first argument: must be string */
                         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                        type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                        type_info = type_info_tmp;
 
                         if (type_info & DLT_TYPE_INFO_SINT) {
                             /* read value */
                             DLT_MSG_READ_VALUE(value_tmp, ptr, datalength, int32_t);
-                            value = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, value_tmp);
-                            /*printf("%d\n",value); */
+                            value = value_tmp;
 
                             if (value < dltdata->last_value) {
                                 if (dltdata->nvalue == dltdata->count_received_messages)
@@ -505,12 +504,12 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 /* read type of second argument: must be raw */
                                 DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-                                type_info = DLT_ENDIAN_GET_32(message->baseheaderv2->htyp2, type_info_tmp);
+                                type_info = type_info_tmp;
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-                                    length = DLT_ENDIAN_GET_16(message->baseheaderv2->htyp2, length_tmp);
+                                    length = length_tmp;
 
                                     if ((length >= 0) && (length == datalength))
                                         /*printf("Raw data found in payload, length="); */

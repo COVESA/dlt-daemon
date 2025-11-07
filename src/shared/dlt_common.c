@@ -5433,7 +5433,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = (uint16_t) DLT_BETOH_16(value16u_tmp);
+            length2 = (uint16_t) DLT_LETOH_16(value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -5465,7 +5465,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = (uint16_t) DLT_BETOH_16(value16u_tmp);
+            length2 = (uint16_t) DLT_LETOH_16(value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -5803,13 +5803,13 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_BETOH_16(value16u_tmp);
+            length2 = DLT_LETOH_16(value16u_tmp);
             DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
 
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length3 = DLT_BETOH_16(value16u_tmp);
+            length3 = DLT_LETOH_16(value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -5876,7 +5876,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
 
                 memcpy(&value32f_tmp_int32i, &value32f_tmp, sizeof(float32_t));
                 value32f_tmp_int32i_swaped =
-                    (int32_t) DLT_BETOH_32((uint32_t)value32f_tmp_int32i);
+                    (int32_t) DLT_LETOH_32((uint32_t)value32f_tmp_int32i);
                 memcpy(&value32f, &value32f_tmp_int32i_swaped, sizeof(float32_t));
                 snprintf(value_text, textlength, "%g", value32f);
             }
@@ -5901,7 +5901,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
 
                 memcpy(&value64f_tmp_int64i, &value64f_tmp, sizeof(float64_t));
                 value64f_tmp_int64i_swaped =
-                    (int64_t) DLT_BETOH_64((uint64_t)value64f_tmp_int64i);
+                    (int64_t) DLT_LETOH_64((uint64_t)value64f_tmp_int64i);
                 memcpy(&value64f, &value64f_tmp_int64i_swaped, sizeof(float64_t));
 #ifdef __arm__
                 snprintf(value_text, textlength, "ILLEGAL");
@@ -5942,7 +5942,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        length = DLT_BETOH_16(value16u_tmp);
+        length = DLT_LETOH_16(value16u_tmp);
 
         if (type_info & DLT_TYPE_INFO_VARI) {
             DLT_MSG_READ_VALUE(value16u_tmp, *ptr, *datalength, uint16_t);
@@ -5950,7 +5950,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
             if ((*datalength) < 0)
                 return DLT_RETURN_ERROR;
 
-            length2 = DLT_BETOH_16(value16u_tmp);
+            length2 = DLT_LETOH_16(value16u_tmp);
 
             if ((*datalength) < length2)
                 return DLT_RETURN_ERROR;
@@ -5984,7 +5984,7 @@ DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
         if ((*datalength) < 0)
             return DLT_RETURN_ERROR;
 
-        length = DLT_BETOH_16(value16u_tmp);
+        length = DLT_LETOH_16(value16u_tmp);
 
         DLT_MSG_READ_STRING(value_text, *ptr, *datalength, textlength, length);
 

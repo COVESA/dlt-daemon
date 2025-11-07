@@ -33,7 +33,6 @@ set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client-v2)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-v2)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler-v2)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context-v2)
-set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer-v2)
 install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
         DESTINATION share/dlt-filetransfer)
 
