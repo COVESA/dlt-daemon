@@ -391,9 +391,9 @@ int main(int argc, char *argv[])
         case 10:
         {
 #if !DLT_DISABLE_MACRO
-            // test10m(); /* DLT user supplied timestamp is not supported in V2 currently */
+            // test10m(); /* DLT user supplied timestamp is conditional parameter in V2 */
 #endif
-            // test10f(); /* DLT user supplied timestamp is not supported in V2 currently */
+            // test10f(); /* DLT user supplied timestamp is conditional parameter in V2 */
             break;
         }
         case 11:
@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
             // test7m(); /* DLT Network Trace is not supported in V2 currently */
             // test8m(); /* DLT Network Trace is not supported in V2 currently */
             // test9m(); /* DLT Network Trace is not supported in V2 currently */
-            // test10m(); /* DLT user supplied timestamp is not supported in V2 currently */
+            // test10m(); /* DLT user supplied timestamp is conditional parameter in V2 */
             test11m(); 
 #endif
 
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
             // test7f(); /* DLT Network Trace is not supported in V2 currently */
             // test8f(); /* DLT Network Trace is not supported in V2 currently */
             // test9f(); /* DLT Network Trace is not supported in V2 currently */
-            // test10f(); /* DLT user supplied timestamp is not supported in V2 currently */
+            // test10f(); /* DLT user supplied timestamp is conditional parameter in V2 */
             test11f();
             break;
         }
@@ -802,28 +802,29 @@ int test9m(void)
 
 int test10m(void)
 {
-    unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
-    /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
+    /* Not applicable in V2*/
+    // unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
+    // /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
 
-    printf("Test10m: (Macro IF) Test user-supplied time stamps\n");
-    DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test10: (Macro IF) Test user-supplied timestamps");
+    // printf("Test10m: (Macro IF) Test user-supplied time stamps\n");
+    // DLT_LOG_STRING_V2(context_info, DLT_LOG_INFO, "Test10: (Macro IF) Test user-supplied timestamps");
 
-    for (int i = 0; i < 3; i++) {
-        char s[12];
-        snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
+    // for (int i = 0; i < 3; i++) {
+    //     char s[12];
+    //     snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
 
-        DLT_VERBOSE_MODE();
-        DLT_LOG_TS(context_macro_test[9], DLT_LOG_INFO, timestamp[i], DLT_STRING("Tested Timestamp:"), DLT_STRING(s));
-        /* Non verbose mode not supported in V2*/
-        DLT_NONVERBOSE_MODE();
-        DLT_LOG_ID_TS(context_macro_test[9], DLT_LOG_INFO, 16, timestamp[i], DLT_STRING(s));
-    }
+    //     DLT_VERBOSE_MODE();
+    //     DLT_LOG_TS(context_macro_test[9], DLT_LOG_INFO, timestamp[i], DLT_STRING("Tested Timestamp:"), DLT_STRING(s));
+    //     /* Non verbose mode not supported in V2*/
+    //     DLT_NONVERBOSE_MODE();
+    //     DLT_LOG_ID_TS(context_macro_test[9], DLT_LOG_INFO, 16, timestamp[i], DLT_STRING(s));
+    // }
 
-    DLT_VERBOSE_MODE();
+    // DLT_VERBOSE_MODE();
 
-    /* wait 2 second before next test */
-    sleep(2);
-    DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
+    // /* wait 2 second before next test */
+    // sleep(2);
+    // DLT_LOG_V2(context_info, DLT_LOG_INFO, DLT_STRING("Test10: (Macro IF) finished"));
 
     return 0;
 }
@@ -1413,46 +1414,47 @@ int test9f(void)
 
 int test10f(void)
 {
-    unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
-    /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
+    /* Not applicable in V2*/
+    // unsigned long timestamp[] = { 0, 100000, DLT_MAX_TIMESTAMP };
+    // /* Test 10: test minimum, regular and maximum timestamp for both verbose and non verbose mode*/
 
-    printf("Test10f: (Function IF) Test user-supplied timestamps\n");
-    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
-        dlt_user_log_write_string(&context_data, "Test10: (Function IF) Test user-supplied time stamps");
-        dlt_user_log_write_finish_v2(&context_data);
-    }
+    // printf("Test10f: (Function IF) Test user-supplied timestamps\n");
+    // if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+    //     dlt_user_log_write_string(&context_data, "Test10: (Function IF) Test user-supplied time stamps");
+    //     dlt_user_log_write_finish_v2(&context_data);
+    // }
 
-    for (int i = 0; i < 3; i++) {
-        char s[12];
-        snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
+    // for (int i = 0; i < 3; i++) {
+    //     char s[12];
+    //     snprintf(s, 12, "%d.%04d", (int)(timestamp[i] / 10000), (int)(timestamp[i] % 10000));
 
-        dlt_verbose_mode();
-        if (dlt_user_log_write_start(&context_function_test[9], &context_data, DLT_LOG_INFO) > 0) {
-            context_data.use_timestamp = DLT_USER_TIMESTAMP;
-            context_data.user_timestamp = (uint32_t) timestamp[i];
-            dlt_user_log_write_string(&context_data, "Tested Timestamp:");
-            dlt_user_log_write_string(&context_data, s);
-            dlt_user_log_write_finish_v2(&context_data);
-        }
+    //     dlt_verbose_mode();
+    //     if (dlt_user_log_write_start(&context_function_test[9], &context_data, DLT_LOG_INFO) > 0) {
+    //         context_data.use_timestamp = DLT_USER_TIMESTAMP;
+    //         context_data.user_timestamp = (uint32_t) timestamp[i];
+    //         dlt_user_log_write_string(&context_data, "Tested Timestamp:");
+    //         dlt_user_log_write_string(&context_data, s);
+    //         dlt_user_log_write_finish_v2(&context_data);
+    //     }
 
-        dlt_nonverbose_mode();
-        if (dlt_user_log_write_start_id(&(context_function_test[9]), &context_data, DLT_LOG_INFO, 16) > 0) {
-            context_data.use_timestamp = DLT_USER_TIMESTAMP;
-            context_data.user_timestamp = (uint32_t) timestamp[i];
-            dlt_user_log_write_string(&context_data, s);
-            dlt_user_log_write_finish_v2(&context_data);
-        }
-    }
+    //     dlt_nonverbose_mode();
+    //     if (dlt_user_log_write_start_id(&(context_function_test[9]), &context_data, DLT_LOG_INFO, 16) > 0) {
+    //         context_data.use_timestamp = DLT_USER_TIMESTAMP;
+    //         context_data.user_timestamp = (uint32_t) timestamp[i];
+    //         dlt_user_log_write_string(&context_data, s);
+    //         dlt_user_log_write_finish_v2(&context_data);
+    //     }
+    // }
 
-    dlt_verbose_mode();
+    // dlt_verbose_mode();
 
-    /* wait 2 second before next test */
-    sleep(2);
+    // /* wait 2 second before next test */
+    // sleep(2);
 
-    if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
-        dlt_user_log_write_string(&context_data, "Test10: (Function IF) finished");
-        dlt_user_log_write_finish_v2(&context_data);
-    }
+    // if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+    //     dlt_user_log_write_string(&context_data, "Test10: (Function IF) finished");
+    //     dlt_user_log_write_finish_v2(&context_data);
+    // }
 
     return 0;
 }
