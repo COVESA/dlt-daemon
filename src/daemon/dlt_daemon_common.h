@@ -224,6 +224,7 @@ typedef struct
     DltDaemonState state;   /**< the current logging state of dlt daemon. */
     DltLogStorage *storage_handle;
     int maintain_logstorage_loglevel;     /* Permission to maintain the logstorage loglevel*/
+    int daemon_version;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     int received_message_since_last_watchdog_interval;
 #endif

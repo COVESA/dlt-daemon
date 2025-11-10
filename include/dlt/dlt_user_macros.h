@@ -418,6 +418,28 @@
 #endif
 
 /**
+ * Send log with filename and line number
+ * @param FILENAME filename string
+ * @param LINR int line number
+ */
+#define DLT_WITH_FILENAME_LINENUMBER(FILENAME, LINR) \
+    (void)dlt_with_filename_and_line_number(FILENAME, LINR)
+
+/**
+ * Send log with tags
+ * @param Tag list of string tags, minimum 1 tag to be provided
+ */
+#define DLT_WITH_TAGS(TAG, ...) \
+    (void)dlt_with_tags(TAG, __VA_ARGS__, NULL)
+
+/**
+ * Send privacy level in logs
+ * @param prlv uint privacy level
+ */
+#define DLT_WITH_PRIVACYLEVEL(PRLV) \
+    (void)dlt_with_prlv(PRLV)
+
+/**
  * Add string parameter to the log messsage.
  * @param TEXT ASCII string
  */

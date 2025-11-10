@@ -1420,6 +1420,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    /* Get daemon version*/
+    daemon.daemon_version = dlt_get_daemon_version();
+
     /* Configuration file option handling */
     if ((back = option_file_parser(&daemon_local)) < 0) {
         if (back != -2)
@@ -2568,7 +2571,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             const char *app_id, const char *ctx_id, int verbose)
 {
     static uint8_t uiMsgCount = 0;
-    if (DLT_DAEMON_VERSION == 2) {
+    if (daemon->daemon_version == 2) {
         DltMessageV2 msg;
         if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
             return DLT_RETURN_ERROR;
@@ -2722,7 +2725,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                             msg.databuffer, (int) msg.datasize, verbose);
 
         dlt_message_free_v2(&msg, 0);
-    } else if (DLT_DAEMON_VERSION == 1) {
+    } else if (daemon->daemon_version == 1) {
         DltMessage msg = { 0 };
 
         DltStandardHeaderExtra *pStandardExtra = NULL;
@@ -2847,7 +2850,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         return -1;
     }
 
-    if (DLT_DAEMON_VERSION == 2) {
+    if (daemon->daemon_version == 2) {
         /* check if file file descriptor was already used, and make it invalid if it
         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
@@ -2929,7 +2932,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             daemon->bytes_recv = 0;
     #endif
         }
-    } else if (DLT_DAEMON_VERSION == 1) {
+    } else if (daemon->daemon_version == 1) {
         /* check if file file descriptor was already used, and make it invalid if it
         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
@@ -3232,10 +3235,10 @@ int dlt_daemon_process_control_connect(
     /* check if file file descriptor was already used, and make it invalid if it
      *  is reused */
     /* This prevents sending messages to wrong file descriptor */
-    if (DLT_DAEMON_VERSION == 2) {
+    if (daemon->daemon_version == 2) {
         dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
-    }else if (DLT_DAEMON_VERSION == 1) {
+    }else if (daemon->daemon_version == 1) {
         dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);        
     }else {
@@ -5389,6 +5392,22 @@ int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *d
     return DLT_DAEMON_ERROR_OK;
 }
 
+int dlt_get_daemon_version(void)
+{
+    int version = 0;
+    char *daemon_version_str = getenv("DLT_DAEMON_VERSION");
+
+    if (daemon_version_str != NULL){
+        if (sscanf(daemon_version_str, "%d", &version) == 1){
+            return version;
+        }else{
+            return DLT_DAEMON_VERSION;
+        }
+    }else{
+        return DLT_DAEMON_VERSION;
+    }
+}
+
 #ifdef __QNX__
 static void *timer_thread(void *data)
 {
@@ -5545,9 +5564,9 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         /* send new log state to all applications */
         daemon->connectionState = 0;
 
-        if (DLT_DAEMON_VERSION == 2) {
+        if (daemon->daemon_version == 2) {
             dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
-        }else if (DLT_DAEMON_VERSION == 1){
+        }else if (daemon->daemon_version == 1){
             dlt_daemon_user_send_all_log_state(daemon, verbose);
         }else {
             return -1;
@@ -5560,14 +5579,14 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER);
     }
 
-    if (DLT_DAEMON_VERSION == 2) {
+    if (daemon->daemon_version == 2) {
         dlt_daemon_control_message_connection_info_v2(DLT_DAEMON_SEND_TO_ALL,
                                                       daemon,
                                                       daemon_local,
                                                       DLT_CONNECTION_STATUS_DISCONNECTED,
                                                       "",
                                                       verbose);
-    }else if (DLT_DAEMON_VERSION == 1){
+    }else if (daemon->daemon_version == 1){
         dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
                                                    daemon,
                                                    daemon_local,
