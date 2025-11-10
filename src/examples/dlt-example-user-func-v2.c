@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
         switch (c) {
         case 'g':
         {
-            gflag = 1;
+            //gflag = 1; /* Non verbose is not supported in V2 currently */
             break;
         }
         case 'a':
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     text = message;
 
     if (gflag)
-        //dlt_nonverbose_mode();
+        dlt_nonverbose_mode();
 
     if (aflag)
         dlt_enable_local_print();
