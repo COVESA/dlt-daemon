@@ -19,19 +19,18 @@
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-example-user.c
+ * \file dlt-example-user-v2.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-example-user.c                                            **
+**  SRC-MODULE: dlt-example-user-v2.c                                         **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**              Markus Klein                                                  **
+**  AUTHOR    : Suyash Chandra suyash.chandra@consultant.volvo.com            **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -49,8 +48,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
+**   sc         Suyash Chandra             Volvo                              **
 *******************************************************************************/
 
 /*******************************************************************************
@@ -94,7 +92,7 @@ void usage()
 
     dlt_get_version(version, 255);
 
-    printf("Usage: dlt-example-user [options] message\n");
+    printf("Usage: dlt-example-user-v2 [options] message\n");
     printf("Generate DLT messages and store them to file or send them to daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");
@@ -327,7 +325,7 @@ int main(int argc, char *argv[])
     }
 
     if (gflag)
-        DLT_NONVERBOSE_MODE();
+        //DLT_NONVERBOSE_MODE();
 
     if (aflag)
         DLT_ENABLE_LOCAL_PRINT();

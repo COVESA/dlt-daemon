@@ -229,7 +229,7 @@ int testall(int count, int repeat, int delay, int size)
 
     /* Test All: Test all start */
     /*printf("Test1: Test all\n"); */
-    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all")); */
+    /*DLT_LOG_V2(context_info,DLT_LOG_INFO,DLT_STRING("Test1: Test all")); */
 
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
@@ -245,7 +245,7 @@ int testall(int count, int repeat, int delay, int size)
 
     /* wait 5 seconds after test */
     /*sleep(5); */
-    /*DLT_LOG(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished")); */
+    /*DLT_LOG_V2(context_info,DLT_LOG_INFO,DLT_STRING("Test1: finished")); */
 
     return 0;
 }
