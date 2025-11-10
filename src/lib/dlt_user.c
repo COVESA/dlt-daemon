@@ -1411,7 +1411,7 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
         return DLT_RETURN_WRONG_PARAMETER;
 
 
-    if (dlt_user.appID2 != NULL) {
+    if (dlt_user.appID2len != 0) {
         if (!strncmp(apid, dlt_user.appID2, apidlen)) {
             return DLT_RETURN_OK;
         }
@@ -2321,7 +2321,7 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
     /* Inform DLT server about update */
     if(dlt_user.appID[0] != '\0'){
         return dlt_send_app_ll_ts_limit(dlt_user.appID, loglevel, tracestatus);
-    }else if (dlt_user.appID2 != NULL){
+    }else if (dlt_user.appID2len != 0){
         return dlt_send_app_ll_ts_limit_v2(dlt_user.appID2, loglevel, tracestatus);
     }else {
         return DLT_RETURN_ERROR;
@@ -5417,11 +5417,11 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         /* try to resent old data first */
         ret = DLT_RETURN_OK;
 
-        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID2 != NULL)) {   
+        if ((dlt_user.dlt_log_handle != -1) && (dlt_user.appID2len != 0)) {   
             ret = dlt_user_log_resend_buffer();
         }
 
-        if ((ret == DLT_RETURN_OK) && (dlt_user.appID2 != NULL)) {
+        if ((ret == DLT_RETURN_OK) && (dlt_user.appID2len != 0)) {
             /* resend ok or nothing to resent */
 #ifdef DLT_SHM_ENABLE
 
@@ -5487,9 +5487,9 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         DltReturnValue process_error_ret = DLT_RETURN_OK;
         /* store message in ringbuffer, if an error has occurred */
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        if (((ret!=DLT_RETURN_OK) || (dlt_user.appID2 == NULL)) && !sent_size)
+        if (((ret!=DLT_RETURN_OK) || (dlt_user.appID2len == 0)) && !sent_size)
 #else
-        if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 == NULL))
+        if ((ret != DLT_RETURN_OK) || (dlt_user.appID2len == 0))
 #endif
             process_error_ret = dlt_user_log_out_error_handling(&(userheader),
                                                   sizeof(DltUserHeader),
@@ -5609,7 +5609,7 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
     DltReturnValue ret;
     int usercontextSize;
 
-    if (dlt_user.appID2 == NULL)
+    if (dlt_user.appID2len == 0)
         return DLT_RETURN_ERROR;
 
     /* set userheader */
@@ -5702,7 +5702,7 @@ DltReturnValue dlt_user_log_send_unregister_application_v2(void)
     DltReturnValue ret;
     int usercontextSize;
 
-    if (dlt_user.appID2 == NULL)
+    if (dlt_user.appID2len == 0)
         return DLT_RETURN_ERROR;
 
     /* set userheader */
@@ -5864,7 +5864,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     memcpy(buffer + offset, &(usercontext.description_length), sizeof(uint32_t));
     offset = offset + 4;      
 
-    if (dlt_user.appID2 != NULL)
+    if (dlt_user.appID2len != 0)
         ret =
             dlt_user_log_out3(dlt_user.dlt_log_handle,
                               &(userheader),
@@ -5875,7 +5875,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
                               usercontext.description_length);
 
     /* store message in ringbuffer, if an error has occured */
-    if ((ret != DLT_RETURN_OK) || (dlt_user.appID2 == NULL))
+    if ((ret != DLT_RETURN_OK) || (dlt_user.appID2len == 0))
         ret = dlt_user_log_out_error_handling(&(userheader),
                                                sizeof(DltUserHeader),
                                                buffer,
@@ -6121,7 +6121,7 @@ DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
     if(dlt_user.appID[0] != '\0'){
         if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
-    }else if (dlt_user.appID2 != NULL){
+    }else if (dlt_user.appID2len != 0){
         if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }else {
@@ -6159,7 +6159,7 @@ DltReturnValue dlt_user_log_send_marker()
     if(dlt_user.appID[0] != '\0'){
         if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
-    }else if (dlt_user.appID2 != NULL){
+    }else if (dlt_user.appID2len != 0){
         if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
     }else {
@@ -6672,7 +6672,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 
     DLT_SEM_LOCK();
 
-    if ((dlt_user.appID[0] == '\0') && (dlt_user.appID2 == NULL)) {
+    if ((dlt_user.appID[0] == '\0') && (dlt_user.appID2len == 0)) {
         DLT_SEM_FREE();
         return 0;
     }
@@ -6755,7 +6755,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
 
             DLT_SEM_FREE();
         }
-    }else if (dlt_user.appID2 != NULL) {
+    }else if (dlt_user.appID2len != 0) {
         /* Initialize resend buffer for version 2*/
         DltHtyp2ContentType msgcontent;
         if (dlt_user.verbose_mode == 1){
@@ -6911,7 +6911,7 @@ void dlt_user_log_reattach_to_daemon(void)
         if (dlt_user.appID[0] != '\0') {
             if (dlt_user_log_send_register_application() < DLT_RETURN_ERROR)
                 return;
-        }else if (dlt_user.appID2 != NULL) {
+        }else if (dlt_user.appID2len != 0) {
             if (dlt_user_log_send_register_application_v2() < DLT_RETURN_ERROR)
                 return;            
         }
@@ -6942,7 +6942,7 @@ void dlt_user_log_reattach_to_daemon(void)
                 DLT_SEM_LOCK();
             }
             /* Register V2 apids and context if present*/
-            else if ((dlt_user.appID2 != NULL) && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID2[0] != NULL))
+            else if ((dlt_user.appID2len != 0) && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID2[0] != NULL))
             {
                 handle.contextID2len = dlt_user.dlt_ll_ts[num].contextID2len;
                 dlt_set_id_v2(&(handle.contextID2), dlt_user.dlt_ll_ts[num].contextID2, handle.contextID2len);
@@ -6991,7 +6991,7 @@ DltReturnValue dlt_user_log_send_overflow(void)
         return dlt_user_log_out2(dlt_user.dlt_log_handle,
                                 &(userheader), sizeof(DltUserHeader),
                                 &(userpayload), sizeof(DltUserControlMsgBufferOverflow));
-    }else if (dlt_user.appID2 != NULL){
+    }else if (dlt_user.appID2len != 0){
         /* set userheader */
         if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_OVERFLOW) < DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
