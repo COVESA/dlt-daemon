@@ -275,7 +275,7 @@ TEST(t_dlt_daemon_find_users_list_v2, normal_one_list)
 TEST(t_dlt_daemon_find_users_list_v2, nullpointer)
 {
     DltDaemon daemon;
-    char *ecu = "ECU1";
+    char ecu[] = "ECU1";
 
     EXPECT_EQ(NULL, dlt_daemon_find_users_list_v2(NULL, 0, NULL, 0));
     EXPECT_EQ(NULL, dlt_daemon_find_users_list_v2(&daemon, 0, NULL, 0));
@@ -433,9 +433,6 @@ TEST(t_dlt_daemon_application_add, nullpointer)
 // }
 /* End Method:dlt_daemon_common::dlt_daemon_application_add_v2 */
 
-
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_application_del */
 TEST(t_dlt_daemon_application_del, normal)
 {
@@ -500,9 +497,6 @@ TEST(t_dlt_daemon_application_del, nullpointer)
     EXPECT_GE(-1, dlt_daemon_application_del(&daemon, NULL, ecu, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_application_del */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_applikation_find */
 TEST(t_dlt_daemon_application_find, normal)
@@ -572,9 +566,6 @@ TEST(t_dlt_daemon_application_find, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applikation_find */
 
-
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_applications_clear */
 TEST(t_dlt_daemon_applications_clear, normal)
 {
@@ -619,8 +610,6 @@ TEST(t_dlt_daemon_applications_clear, nullpointer)
     EXPECT_GE(-1, dlt_daemon_applications_clear(NULL, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_clear */
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_applications_invalidate_fd */
 TEST(t_dlt_daemon_applications_invalidate_fd, normal)
@@ -673,9 +662,6 @@ TEST(t_dlt_daemon_applications_invalidate_fd, nullpointer)
     EXPECT_GE(-1, dlt_daemon_applications_invalidate_fd(NULL, NULL, 0, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_invalidate_fd */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_applications_save */
 TEST(t_dlt_daemon_applications_save, normal)
@@ -742,9 +728,6 @@ TEST(t_dlt_daemon_applications_save, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_save */
 
-
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_applications_load */
 TEST(t_dlt_daemon_applications_load, normal)
 {
@@ -802,15 +785,9 @@ TEST(t_dlt_daemon_applications_load, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_load */
 
-
-
-
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_context_add */
 TEST(t_dlt_daemon_context_add, normal)
@@ -1030,8 +1007,6 @@ TEST(t_dlt_daemon_context_add, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_context_add */
 
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_context_del */
 TEST(t_dlt_daemon_context_del, normal)
 {
@@ -1118,9 +1093,6 @@ TEST(t_dlt_daemon_context_del, nullpointer)
     EXPECT_GE(-1, dlt_daemon_context_del(&daemon, NULL, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_context_del */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_context_find */
 TEST(t_dlt_daemon_context_find, normal)
@@ -1269,9 +1241,6 @@ TEST(t_dlt_daemon_context_find, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_context_find */
 
-
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_contexts_clear */
 TEST(t_dlt_daemon_contexts_clear, normal)
 {
@@ -1338,9 +1307,6 @@ TEST(t_dlt_daemon_contexts_clear, nullpointer)
     EXPECT_GE(-1, dlt_daemon_contexts_clear(NULL, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_contexts_clear */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_contexts_invalidate_fd */
 TEST(t_dlt_daemon_contexts_invalidate_fd, normal)
@@ -1410,9 +1376,6 @@ TEST(t_dlt_daemon_contexts_invalidate_fd, nullpointer)
     EXPECT_GE(-1, dlt_daemon_contexts_invalidate_fd(NULL, NULL, 0, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_contexts_invalidate_fd */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_contexts_save */
 TEST(t_dlt_daemon_contexts_save, normal)
@@ -1498,9 +1461,6 @@ TEST(t_dlt_daemon_contexts_save, nullpointer)
     EXPECT_GE(-1, dlt_daemon_contexts_save(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_contexts_save */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_contexts_load */
 TEST(t_dlt_daemon_contexts_load, normal)
@@ -1596,8 +1556,6 @@ TEST(t_dlt_daemon_contexts_load, nullpointer)
 /*##############################################################################################################################*/
 
 
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_user_send_all_log_state */
 /* Can't test this Method, maybe a return value would be a better solution */
 TEST(t_dlt_daemon_user_send_all_log_state, normal)
@@ -1625,9 +1583,6 @@ TEST(t_dlt_daemon_user_send_all_log_state, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_all_log_state */
 
-
-
-
 /* Begin Method: dlt_daemon_common::dlt_daemon_user_send_default_update */
 /* Can't test this Method, maybe a return value would be a better solution */
 TEST(t_dlt_daemon_user_send_default_update, normal)
@@ -1654,9 +1609,6 @@ TEST(t_dlt_daemon_user_send_default_update, nullpointer)
     EXPECT_NO_FATAL_FAILURE(dlt_daemon_user_send_default_update(NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_default_update */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_user_send_log_level */
 TEST(t_dlt_daemon_user_send_log_level, normal)
@@ -1740,9 +1692,6 @@ TEST(t_dlt_daemon_user_send_log_level, nullpointer)
     EXPECT_GE(-1, dlt_daemon_user_send_log_level(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_log_level */
-
-
-
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_user_send_log_state */
 TEST(t_dlt_daemon_user_send_log_state, normal)
@@ -1833,7 +1782,6 @@ TEST(t_dlt_daemon_user_send_log_state, nullpointer)
     EXPECT_GE(0, dlt_daemon_user_send_log_state(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_user_send_log_state */
-
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 TEST(t_dlt_daemon_find_preconfigured_trace_load_settings, nullpointer)
@@ -2109,8 +2057,6 @@ TEST(t_dlt_daemon_user_send_trace_load_config, normal)
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
-
-
 
 
 int main(int argc, char **argv)
