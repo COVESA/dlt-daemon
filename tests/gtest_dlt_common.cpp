@@ -30,6 +30,7 @@
 
 #define MAX_LINE 200
 #define BINARY_FILE_NAME "/testfile.dlt"
+#define BINARY_FILEV2_NAME "/testfile-v2.dlt"
 #define FILTER_FILE_NAME "/testfilter.txt"
 
 extern "C"
@@ -1797,12 +1798,12 @@ TEST(t_dlt_message_print_ascii_v2, normal)
 
     /* Get PWD so file can be used*/
     char pwd[MAX_LINE];
-    char openfile[MAX_LINE+sizeof(BINARY_FILE_NAME)];
+    char openfile[MAX_LINE+sizeof(BINARY_FILEV2_NAME)];
 
     /* ignore returned value from getcwd */
     if (getcwd(pwd, MAX_LINE) == NULL) {}
 
-    sprintf(openfile, "%s" BINARY_FILE_NAME, pwd);
+    sprintf(openfile, "%s" BINARY_FILEV2_NAME, pwd);
     /*---------------------------------------*/
 
     /* Normal Use-Case, expected 0 */

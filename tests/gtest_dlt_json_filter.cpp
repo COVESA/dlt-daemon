@@ -114,12 +114,12 @@ TEST(t_dlt_message_print_ascii_with_json_filter_v2, normal)
     while (dlt_file_read_v2(&file, 0) >= 0) {}
 
     for (int i = 0; i < file.counter; i++) {
-        EXPECT_LE(DLT_RETURN_OK, dlt_file_message_v2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_message(&file, i, 0));
         EXPECT_LE(DLT_RETURN_OK, dlt_message_print_ascii_v2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 0));
     }
 
     for (int i = 0; i < file.counter; i++) {
-        EXPECT_LE(DLT_RETURN_OK, dlt_file_message_v2(&file, i, 0));
+        EXPECT_LE(DLT_RETURN_OK, dlt_file_message(&file, i, 0));
         EXPECT_LE(DLT_RETURN_OK, dlt_message_print_ascii_v2(&file.msg, text, DLT_DAEMON_TEXTSIZE, 1));
     }
 
