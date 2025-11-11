@@ -525,8 +525,7 @@ TEST(t_dlt_daemon_application_find, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
     app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-    // TBD: Trace/breakpoint trap (core dumped)
-    // EXPECT_STREQ(apid, app->apid);
+    EXPECT_EQ(0, strncmp(apid, app->apid, DLT_ID_SIZE));
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
