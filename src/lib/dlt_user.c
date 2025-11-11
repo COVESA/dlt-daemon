@@ -1497,10 +1497,11 @@ DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid
         }
     }
 
+    if (contextid == NULL) {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
     int8_t contextidlen = strlen(contextid);
 
-    if ((contextid == NULL) || (contextidlen == 0))
-        return DLT_RETURN_WRONG_PARAMETER;
     return dlt_register_context_ll_ts_v2(handle,
                                       contextid,
                                       description,
@@ -1768,10 +1769,11 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
     uint32_t i;
     int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
 
-    int8_t contextidlen = strlen(contextid);
     /*check nullpointer */
-    if ((handle == NULL) || (contextid == NULL) || (contextidlen == 0))
+    if ((handle == NULL) || (contextid == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
+
+    int8_t contextidlen = strlen(contextid);
 
     /* forbid dlt usage in child after fork */
     if (g_dlt_is_child)
@@ -1883,6 +1885,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
     ctx_entry = &dlt_user.dlt_ll_ts[dlt_user.dlt_ll_ts_num_entries];
 
     /* Store locally context id and context description */
+    ctx_entry->contextID2 = NULL;
     dlt_set_id_v2(&ctx_entry->contextID2, contextid, contextidlen);
     ctx_entry->contextID2len = contextidlen;
 
@@ -1942,6 +1945,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
         ctx_entry->trace_status = (int8_t) tracestatus;
 
     /* Prepare transfer struct */
+    handle->contextID2 = NULL;
     dlt_set_id_v2(&handle->contextID2, contextid, contextidlen);
     handle->contextID2len = contextidlen;
     handle->log_level_pos = (int32_t) dlt_user.dlt_ll_ts_num_entries;
