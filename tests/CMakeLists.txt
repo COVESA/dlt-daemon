@@ -67,6 +67,7 @@ set(TARGET_LIST gtest_dlt_common
                 gtest_dlt_user
                 gtest_dlt_user_v2
                 gtest_dlt_daemon
+                gtest_dlt_daemon_v2
                 gtest_dlt_daemon_common
                 dlt_env_ll_unit_test)
 

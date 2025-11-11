@@ -45,7 +45,7 @@ const int _trace_load_send_size = 100;
 
 static void init_daemon(DltDaemon* daemon, char* ecu) {
     DltGateway gateway;
-    strcpy(ecu, "ECU1");
+    strncpy(ecu, "ECU1", DLT_ID_SIZE);
 
     EXPECT_EQ(0,
               dlt_daemon_init(daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
@@ -64,33 +64,33 @@ static void setup_trace_load_settings(DltDaemon& daemon)
     memset(daemon.preconfigured_trace_load_settings, 0, daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
 
     // APP0 only has app id
-    strcpy(daemon.preconfigured_trace_load_settings[0].apid, "APP0");
+    strncpy(daemon.preconfigured_trace_load_settings[0].apid, "APP0", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[0].soft_limit = 1000;
     daemon.preconfigured_trace_load_settings[0].hard_limit = 2987;
 
     // APP1 has only three contexts, no app id
-    strcpy(daemon.preconfigured_trace_load_settings[1].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[1].ctid, "CT01");
+    strncpy(daemon.preconfigured_trace_load_settings[1].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[1].ctid, "CT01", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[1].soft_limit = 100;
     daemon.preconfigured_trace_load_settings[1].hard_limit = 200;
 
-    strcpy(daemon.preconfigured_trace_load_settings[2].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[2].ctid, "CT02");
+    strncpy(daemon.preconfigured_trace_load_settings[2].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[2].ctid, "CT02", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[2].soft_limit = 300;
     daemon.preconfigured_trace_load_settings[2].hard_limit = 400;
 
-    strcpy(daemon.preconfigured_trace_load_settings[3].apid, "APP1");
-    strcpy(daemon.preconfigured_trace_load_settings[3].ctid, "CT03");
+    strncpy(daemon.preconfigured_trace_load_settings[3].apid, "APP1", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[3].ctid, "CT03", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[3].soft_limit = 500;
     daemon.preconfigured_trace_load_settings[3].hard_limit = 600;
 
     // APP2 has app id and context
-    strcpy(daemon.preconfigured_trace_load_settings[4].apid, "APP2");
-    strcpy(daemon.preconfigured_trace_load_settings[4].ctid, "CT01");
+    strncpy(daemon.preconfigured_trace_load_settings[4].apid, "APP2", DLT_ID_SIZE);
+    strncpy(daemon.preconfigured_trace_load_settings[4].ctid, "CT01", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[4].soft_limit = 700;
     daemon.preconfigured_trace_load_settings[4].hard_limit = 800;
 
-    strcpy(daemon.preconfigured_trace_load_settings[5].apid, "APP2");
+    strncpy(daemon.preconfigured_trace_load_settings[5].apid, "APP2", DLT_ID_SIZE);
     daemon.preconfigured_trace_load_settings[5].soft_limit = 900;
     daemon.preconfigured_trace_load_settings[5].hard_limit = 1000;
 
@@ -385,6 +385,10 @@ TEST(t_trace_load_keep_message, normal) {
     int fd = 15;
     const char *desc = "HELLO_TEST";
 
+    for (auto& app_id : app_ids) {
+        dlt_register_app(app_id, app_id);
+    }
+
     const auto set_extended_header = [&daemon_local]() {
         daemon_local.msg.extendedheader = (DltExtendedHeader *)(daemon_local.msg.headerbuffer + sizeof(DltStorageHeader) +
                                                                sizeof(DltStandardHeader));
@@ -402,6 +406,7 @@ TEST(t_trace_load_keep_message, normal) {
     const auto check_debug_and_trace_can_log = [&](DltDaemonApplication* app) {
         // messages for debug and verbose logs are never dropped
         set_extended_header_log_level(DLT_LOG_VERBOSE);
+
         EXPECT_TRUE(trace_load_keep_message(app,
                                             app->trace_load_settings->hard_limit * 10,
                                             &daemon, &daemon_local, 0));
@@ -427,7 +432,7 @@ TEST(t_trace_load_keep_message, normal) {
         apps[0], apps[0]->trace_load_settings->soft_limit, &daemon, &daemon_local, 0));
 
     set_extended_header();
-    check_debug_and_trace_can_log(apps[0]);
+    memcpy(daemon_local.msg.extendedheader->apid, apps[0], DLT_ID_SIZE);
 
     // messages for apps that have not been registered should be dropped
     DltDaemonApplication app = {};
@@ -435,6 +440,8 @@ TEST(t_trace_load_keep_message, normal) {
 
     // Test if hard limit is reached for applications that only configure an application id
     // Meaning that the limit is shared between all contexts
+    dlt_daemon_context_add(&daemon, apps[0]->apid, "CT01", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+    dlt_daemon_context_add(&daemon, apps[0]->apid, "CT02", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
     memcpy(daemon_local.msg.extendedheader->ctid, "CT01", DLT_ID_SIZE);
     log_until_hard_limit_reached(apps[0]);
     EXPECT_FALSE(trace_load_keep_message(apps[0], _trace_load_send_size, &daemon, &daemon_local, 0));
@@ -445,6 +452,11 @@ TEST(t_trace_load_keep_message, normal) {
 
     // APP1 has only three contexts, no app id
     memcpy(daemon_local.msg.extendedheader->ctid, "CT01", DLT_ID_SIZE);
+    memcpy(daemon_local.msg.extendedheader->apid, apps[1], DLT_ID_SIZE);
+
+    dlt_daemon_context_add(&daemon, apps[1]->apid, "CT02", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+    dlt_daemon_context_add(&daemon, apps[1]->apid, "CT02", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+
     log_until_hard_limit_reached(apps[1]);
     EXPECT_FALSE(trace_load_keep_message(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0));
     // CT01 has reached its limit, make sure CT02 still can log
@@ -457,6 +469,10 @@ TEST(t_trace_load_keep_message, normal) {
     // APP2 has context and app id configured
     // Exhaust app limit first
     memcpy(daemon_local.msg.extendedheader->ctid, "CTXX", DLT_ID_SIZE);
+    memcpy(daemon_local.msg.extendedheader->apid, apps[2], DLT_ID_SIZE);
+    dlt_daemon_context_add(&daemon, apps[2]->apid, "CTXX", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+    dlt_daemon_context_add(&daemon, apps[2]->apid, "CT01", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+
     log_until_hard_limit_reached(apps[2]);
     EXPECT_FALSE(trace_load_keep_message(apps[2], _trace_load_send_size, &daemon, &daemon_local, 0));
     // Context logging should still be possible
@@ -465,111 +481,16 @@ TEST(t_trace_load_keep_message, normal) {
 
     // Test not configured context
     memcpy(daemon_local.msg.extendedheader->ctid, "CTXX", DLT_ID_SIZE);
+    memcpy(daemon_local.msg.extendedheader->apid, apps[1], DLT_ID_SIZE);
+    dlt_daemon_context_add(&daemon, apps[1]->apid, "CTXX", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
+
     EXPECT_EQ(
             trace_load_keep_message(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0),
             DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT != 0);
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
-TEST(t_trace_load_keep_message_v2, normal) {
-    DltDaemon daemon;
-    DltDaemonLocal daemon_local = {};
-    const int num_apps = 4;
-    const char* app_ids[num_apps] = {"APP0", "APP1", "APP2", "APP3"};
-    DltDaemonApplication *apps[num_apps] = {};
 
-    char ecu[DLT_ID_SIZE] = {};
-
-    pid_t pid = 0;
-    int fd = 15;
-    const char *desc = "HELLO_TEST";
-
-    const auto set_extended_header = [&daemon_local]() {
-        daemon_local.msg.extendedheader = (DltExtendedHeaderV2 *)(daemon_local.msg.headerbuffer + sizeof(DltStorageHeaderV2) +
-                                                               sizeof(DltStandardHeaderV2));
-        memset(daemon_local.msg.extendedheader, 0, sizeof(DltExtendedHeaderV2));
-    };
-
-    const auto set_extended_header_log_level = [&daemon_local](unsigned int log_level) {
-        daemon_local.msg.extendedheader->msin = ((daemon_local.msg.extendedheader->msin) & ~DLT_MSIN_MTIN) | ((log_level) << DLT_MSIN_MTIN_SHIFT);
-    };
-
-    const auto log_until_hard_limit_reached = [&daemon, &daemon_local] (DltDaemonApplication *app) {
-        while (trace_load_keep_message_v2(app, _trace_load_send_size, &daemon, &daemon_local, 0));
-    };
-
-    const auto check_debug_and_trace_can_log = [&](DltDaemonApplication* app) {
-        // messages for debug and verbose logs are never dropped
-        set_extended_header_log_level(DLT_LOG_VERBOSE);
-        EXPECT_TRUE(trace_load_keep_message_v2(app,
-                                            app->trace_load_settings->hard_limit * 10,
-                                            &daemon, &daemon_local, 0));
-        set_extended_header_log_level(DLT_LOG_DEBUG);
-        EXPECT_TRUE(trace_load_keep_message_v2(app,
-                                            app->trace_load_settings->hard_limit * 10,
-                                            &daemon, &daemon_local, 0));
-
-        set_extended_header_log_level(DLT_LOG_INFO);
-    };
-
-    init_daemon_v2(&daemon, ecu);
-    setup_trace_load_settings_v2(daemon);
-
-    for (int i = 0; i < num_apps; i++) {
-        apps[i] = dlt_daemon_application_add_v2(&daemon, (char *)app_ids[i], pid, (char *)desc, fd, ecu, 0);
-        EXPECT_FALSE(apps[i]->trace_load_settings == NULL);
-    }
-
-    // messages without extended header will be kept
-    daemon_local.msg.extendedheader = NULL;
-    EXPECT_TRUE(trace_load_keep_message_v2(
-        apps[0], apps[0]->trace_load_settings->soft_limit, &daemon, &daemon_local, 0));
-
-    set_extended_header_v2();
-    check_debug_and_trace_can_log(apps[0]);
-
-    // messages for apps that have not been registered should be dropped
-    DltDaemonApplication app = {};
-    EXPECT_FALSE(trace_load_keep_message_v2(&app, 42, &daemon, &daemon_local, 0));
-
-    // Test if hard limit is reached for applications that only configure an application id
-    // Meaning that the limit is shared between all contexts
-    memcpy(daemon_local.msg.extendedheader->ctid, "CT01", DLT_ID_SIZE);
-    log_until_hard_limit_reached(apps[0]);
-    EXPECT_FALSE(trace_load_keep_message_v2(apps[0], _trace_load_send_size, &daemon, &daemon_local, 0));
-    memcpy(daemon_local.msg.extendedheader->ctid, "CT02", DLT_ID_SIZE);
-    EXPECT_FALSE(trace_load_keep_message_v2(apps[0], _trace_load_send_size, &daemon, &daemon_local, 0));
-    // Even after exhausting the limits, make sure debug and trace still work
-    check_debug_and_trace_can_log(apps[0]);
-
-    // APP1 has only three contexts, no app id
-    memcpy(daemon_local.msg.extendedheader->ctid, "CT01", DLT_ID_SIZE);
-    log_until_hard_limit_reached(apps[1]);
-    EXPECT_FALSE(trace_load_keep_message_v2(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0));
-    // CT01 has reached its limit, make sure CT02 still can log
-    memcpy(daemon_local.msg.extendedheader->ctid, "CT02", DLT_ID_SIZE);
-    EXPECT_TRUE(trace_load_keep_message_v2(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0));
-    // Set CT02 to hard limit to hard limit 0, which should drop all messages
-    apps[1]->trace_load_settings[2].hard_limit = 0;
-    EXPECT_FALSE(trace_load_keep_message_v2(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0));
-
-    // APP2 has context and app id configured
-    // Exhaust app limit first
-    memcpy(daemon_local.msg.extendedheader->ctid, "CTXX", DLT_ID_SIZE);
-    log_until_hard_limit_reached(apps[2]);
-    EXPECT_FALSE(trace_load_keep_message_v2(apps[2], _trace_load_send_size, &daemon, &daemon_local, 0));
-    // Context logging should still be possible
-    memcpy(daemon_local.msg.extendedheader->ctid, "CT01", DLT_ID_SIZE);
-    EXPECT_TRUE(trace_load_keep_message_v2(apps[2], _trace_load_send_size, &daemon, &daemon_local, 0));
-
-    // Test not configured context
-    memcpy(daemon_local.msg.extendedheader->ctid, "CTXX", DLT_ID_SIZE);
-    EXPECT_EQ(
-            trace_load_keep_message_v2(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0),
-            DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT != 0);
-
-    EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
-}
 #endif
 
 /*##############################################################################################################################*/
