@@ -2,6 +2,7 @@ SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
 
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(${PROJECT_SOURCE_DIR}/tests/testfile-v2.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile_filetransfer.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/test_dlt.conf ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -65,10 +66,11 @@ string(CONCAT TEST_ENV_IPv6 "${TEST_ENV};"
 ####################
 set(TARGET_LIST gtest_dlt_common
                 gtest_dlt_user
-                gtest_dlt_user_v2
                 gtest_dlt_daemon
-                gtest_dlt_daemon_v2
                 gtest_dlt_daemon_common
+                gtest_dlt_common_v2
+                gtest_dlt_daemon_v2
+                gtest_dlt_user_v2
                 dlt_env_ll_unit_test)
 
 foreach(target IN LISTS TARGET_LIST)
