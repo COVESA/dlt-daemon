@@ -142,23 +142,13 @@ TEST(t_dlt_daemon_application_add_v2, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid2, daemon.user_list[0].ecuid2, eculen));
 
-    app = dlt_daemon_application_add_v2(&daemon, apidlen, (char *)apid, pid, (char *)desc, fd, eculen, ecu, 0);
+    app = dlt_daemon_application_add_v2(&daemon, apidlen, (char *)apid, pid, (char *)desc, fd, eculen, (char *)ecu, 0);
     // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
     EXPECT_STREQ(apid, app->apid2);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
     EXPECT_LE(0, dlt_daemon_application_del_v2(&daemon, app, eculen, ecu, 0));
-    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
-
-    /* Apid > 4, expected truncate to 4 char or error */
-    apid = "TO_LONG";
-    app = dlt_daemon_application_add_v2(&daemon, apidlen, (char *)apid, pid, (char *)desc, fd, eculen, ecu, 0);
-    char tmp[5];
-    strncpy(tmp, apid, 4);
-    tmp[4] = '\0';
-    EXPECT_STREQ(tmp, app->apid);
-    EXPECT_LE(0, dlt_daemon_application_del_v2(&daemon, app, eculen, ecu, 0));
-    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear_v2(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 /* End Method:dlt_daemon_common::dlt_daemon_application_add_v2 */

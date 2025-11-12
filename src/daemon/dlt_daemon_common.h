@@ -540,6 +540,16 @@ int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
 int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose);
 
 /**
+ * Clear all applications in internal application management of specific ecu
+ * for DLT V2
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_clear_v2(DltDaemon *daemon, char *ecu, int verbose);
+
+/**
  * Add (new) context to internal context management
  * @param daemon pointer to dlt daemon structure
  * @param apid pointer to application id

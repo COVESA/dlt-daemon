@@ -719,6 +719,50 @@ int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose)
     return 0;
 }
 
+int dlt_daemon_applications_clear_v2(DltDaemon *daemon, char *ecu, int verbose)
+{
+    int i;
+    DltDaemonRegisteredUsers *user_list = NULL;
+
+    PRINT_FUNCTION_VERBOSE(verbose);
+
+    if ((daemon == NULL) || (daemon->user_list == NULL) || (ecu == NULL))
+        return DLT_RETURN_WRONG_PARAMETER;
+
+    uint8_t eculen = strlen(ecu);
+
+    user_list = dlt_daemon_find_users_list_v2(daemon, eculen, ecu, verbose);
+
+    if (user_list == NULL)
+        return DLT_RETURN_ERROR;
+
+    for (i = 0; i < user_list->num_applications; i++)
+        if (user_list->applications[i].application_description != NULL) {
+
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+            if (user_list->applications[i].context_log_level_settings)
+                free(user_list->applications[i].context_log_level_settings);
+#endif
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+            if (user_list->applications[i].trace_load_settings) {
+                free(user_list->applications[i].trace_load_settings);
+                user_list->applications[i].trace_load_settings = NULL;
+                user_list->applications[i].trace_load_settings_count = 0;
+            }
+#endif
+            free(user_list->applications[i].application_description);
+            user_list->applications[i].application_description = NULL;
+        }
+
+    if (user_list->applications != NULL)
+        free(user_list->applications);
+
+    user_list->applications = NULL;
+    user_list->num_applications = 0;
+
+    return 0;
+}
+
 static void dlt_daemon_application_reset_user_handle(DltDaemon *daemon,
                                                      DltDaemonApplication *application,
                                                      int verbose)
