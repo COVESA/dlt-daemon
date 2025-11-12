@@ -15,13 +15,42 @@
 
 /*!
  * \author
- * Stefan Held <stefan_held@mentor.com>
+ * Jayaprasad T J <jayaprasad.tj@consultant.volvo.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file gtest_dlt_common.cpp
+ * \file gtest_dlt_daemon_common_v2.cpp
  */
+
+/*******************************************************************************
+**                                                                            **
+**  FILE      : gtest_dlt_daemon_common_v2.cpp                                **
+**                                                                            **
+**  TARGET    : linux                                                         **
+**                                                                            **
+**  PROJECT   : DLT                                                           **
+**                                                                            **
+**  AUTHOR    : Jayaprasad T J jayaprasad.tj@consultant.volvo.com             **
+**                                                                            **
+**  PURPOSE   :                                                               **
+**                                                                            **
+**  REMARKS   :                                                               **
+**                                                                            **
+**  PLATFORM DEPENDANT [yes/no]: yes                                          **
+**                                                                            **
+**  TO BE CHANGED BY USER [yes/no]: no                                        **
+**                                                                            **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Author Identity                                       **
+********************************************************************************
+**                                                                            **
+** Initials     Name                       Company                            **
+** --------     -------------------------  ---------------------------------- **
+**   jtj        Jayaprasad T J             Volvo                              **
+*******************************************************************************/
 
 #include <stdio.h>
 #include <gtest/gtest.h>
@@ -115,7 +144,6 @@ TEST(t_dlt_daemon_application_add_v2, normal)
 
     app = dlt_daemon_application_add_v2(&daemon, apidlen, (char *)apid, pid, (char *)desc, fd, eculen, ecu, 0);
     // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
-    printf("*** 118\n");
     EXPECT_STREQ(apid, app->apid2);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
