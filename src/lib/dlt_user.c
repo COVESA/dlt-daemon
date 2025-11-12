@@ -5125,14 +5125,13 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     DltUserHeader userheader;
     int32_t len;
 
-/* To Update
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     uint32_t time_stamp;
 #else
     // shut up warning
     (void)sent_size;
 #endif
- */
+
     DltReturnValue ret = DLT_RETURN_OK;
     if (!DLT_USER_INITIALIZED_NOT_FREEING) {
         dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
@@ -5355,8 +5354,6 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
-    /* To Update: Free mallocs of extended header*/
-
     len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 + log->size);
 
     if (len > UINT16_MAX) {
@@ -5364,9 +5361,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         return DLT_RETURN_ERROR;
     }
 
-    // msg.baseheaderv2->len = DLT_HTOBE_16(len);
     msg.baseheaderv2->len = (uint16_t) len;
-    // printf("DEBUG: msg.baseheaderv2->len = %u\n", msg.baseheaderv2->len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&

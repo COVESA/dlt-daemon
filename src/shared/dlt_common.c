@@ -1642,7 +1642,7 @@ DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t text
 
         /* first read the type info of the argument */
         DLT_MSG_READ_VALUE(type_info_tmp, ptr, datalength, uint32_t);
-        /* To update: check, ideally it should be from Big endian*/
+
         type_info = DLT_LETOH_32(type_info_tmp);
         /* print out argument */
         text_offset = (int)strlen(text);
@@ -1924,7 +1924,6 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     msg->baseheaderv2 = (DltBaseHeaderV2 *)buffer;
     msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & MSGCONTENT_MASK);
 
-    /* To Update: what is size of storage header, ecuid length*/
     msg->storageheadersizev2 = 0;
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
     msg->baseheaderextrasizev2 = dlt_message_get_extraparameters_size_v2(msgcontent);

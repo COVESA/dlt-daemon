@@ -2579,7 +2579,6 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         uint32_t uiType;
         uint16_t uiSize;
 
-        /* To Update: what is the content type*/
         DltHtyp2ContentType msgcontent = DLT_VERBOSE_DATA_MSG;
 
         PRINT_FUNCTION_VERBOSE(verbose);
