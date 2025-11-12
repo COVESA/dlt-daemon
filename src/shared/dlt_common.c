@@ -67,6 +67,8 @@
 #   include <winbase.h>
 #endif
 
+#define MSGCONTENT_MASK 0x03
+
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 char dltSerialHeaderChar[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
 
@@ -1181,9 +1183,10 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    DltHtyp2ContentType msgcontent = msg->baseheaderv2->htyp2 & 0x03;
     if ((msg == NULL) || (text == NULL) || (textlength <= 0))
         return DLT_RETURN_WRONG_PARAMETER;
+    
+    DltHtyp2ContentType msgcontent = msg->baseheaderv2->htyp2 & MSGCONTENT_MASK;
 
     if ((flags < DLT_HEADER_SHOW_NONE) || (flags > DLT_HEADER_SHOW_ALL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -1919,7 +1922,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
 
     /* Extract Base header */
     msg->baseheaderv2 = (DltBaseHeaderV2 *)buffer;
-    msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & 0x03);
+    msgcontent = (((uint32_t)msg->baseheaderv2->htyp2) & MSGCONTENT_MASK);
 
     /* To Update: what is size of storage header, ecuid length*/
     msg->storageheadersizev2 = 0;
@@ -2097,7 +2100,7 @@ DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose
         return DLT_RETURN_WRONG_PARAMETER;
     
     DltHtyp2ContentType msgcontent;
-    msgcontent = ((*(msg->headerbufferv2 + msg->storageheadersizev2)) & 0x03);
+    msgcontent = ((*(msg->headerbufferv2 + msg->storageheadersizev2)) & MSGCONTENT_MASK);
 
     if (msgcontent == DLT_VERBOSE_DATA_MSG) {
         memcpy(&(msg->headerextrav2.msin),
@@ -2228,7 +2231,7 @@ DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose
         return DLT_RETURN_WRONG_PARAMETER;
     
     DltHtyp2ContentType msgcontent;
-    msgcontent = ((msg->baseheaderv2->htyp2) & 0x03);
+    msgcontent = ((msg->baseheaderv2->htyp2) & MSGCONTENT_MASK);
 
     if (msgcontent == DLT_VERBOSE_DATA_MSG) {
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2,
