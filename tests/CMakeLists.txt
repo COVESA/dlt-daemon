@@ -69,8 +69,9 @@ set(TARGET_LIST gtest_dlt_common
                 gtest_dlt_daemon
                 gtest_dlt_daemon_common
                 gtest_dlt_common_v2
-                gtest_dlt_daemon_v2
                 gtest_dlt_user_v2
+                gtest_dlt_daemon_v2
+                gtest_dlt_daemon_common_v2
                 dlt_env_ll_unit_test)
 
 foreach(target IN LISTS TARGET_LIST)
@@ -79,7 +80,27 @@ foreach(target IN LISTS TARGET_LIST)
         set(target_SRCS ${target}.cpp)
     elseif(${target} STREQUAL "gtest_dlt_daemon_common")
         set(target_SRCS ${target}.cpp ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
+    elseif(${target} STREQUAL "gtest_dlt_daemon_common_v2")
+        set(target_SRCS ${target}.cpp ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
     elseif(${target} STREQUAL "gtest_dlt_daemon")
+        set(target_SRCS ${target}.cpp
+            ../src/daemon/dlt-daemon.c
+            ../src/daemon/dlt_daemon_client.c
+            ../src/daemon/dlt_daemon_common.c
+            ../src/daemon/dlt_daemon_connection.c
+            ../src/daemon/dlt_daemon_event_handler.c
+            ../src/daemon/dlt_daemon_offline_logstorage.c
+            ../src/daemon/dlt_daemon_serial.c
+            ../src/daemon/dlt_daemon_socket.c
+            ../src/daemon/dlt_daemon_unix_socket.c
+            ../src/gateway/dlt_gateway.c
+            ../src/offlinelogstorage/dlt_offline_logstorage_behavior.c
+            ../src/offlinelogstorage/dlt_offline_logstorage.c
+            ../src/shared/dlt_config_file_parser.c
+            ../src/shared/dlt_offline_trace.c
+        )
+        add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
+    elseif(${target} STREQUAL "gtest_dlt_daemon_v2")
         set(target_SRCS ${target}.cpp
             ../src/daemon/dlt-daemon.c
             ../src/daemon/dlt_daemon_client.c

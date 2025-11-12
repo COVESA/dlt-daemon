@@ -596,7 +596,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
 
         dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
         daemon->user_list[0].ecuid2len = daemon->ecuid2len;
-        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid, daemon->ecuid2len);
+        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid2, daemon->ecuid2len);
         daemon->num_user_lists = 1;
     }
     else { /* gateway is active */
@@ -612,7 +612,7 @@ int dlt_daemon_init_user_information(DltDaemon *daemon,
 
         dlt_set_id(daemon->user_list[0].ecu, daemon->ecuid);
         daemon->user_list[0].ecuid2len = daemon->ecuid2len;
-        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid, daemon->ecuid2len);
+        dlt_set_id_v2(&(daemon->user_list[0].ecuid2), daemon->ecuid2, daemon->ecuid2len);
         daemon->num_user_lists = nodes;
 
         for (i = 1; i < nodes; i++){

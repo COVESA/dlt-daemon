@@ -221,108 +221,47 @@ TEST(t_dlt_daemon_find_users_list, nullpointer)
     EXPECT_EQ(NULL, dlt_daemon_find_users_list(&daemon, NULL, 0));
     EXPECT_EQ(NULL, dlt_daemon_find_users_list(NULL, &ecu[0], 0));
 }
-/* End Method:dlt_daemon_common::dlt_daemon_find_users_list */
 
-/* Begin Method:dlt_daemon_common::dlt_daemon_find_users_list_v2 */
-TEST(t_dlt_daemon_find_users_list_v2, normal_one_list)
+/* Begin Method:dlt_daemon_common::dlt_daemon_application_add */
+TEST(t_dlt_daemon_application_add, normal)
 {
     DltDaemon daemon;
     DltGateway gateway;
-    DltDaemonRegisteredUsers *user_list;
+    const char *apid = "TEST";
+    pid_t pid = 0;
+    const char *desc = "HELLO_TEST";
+    DltDaemonApplication *app = NULL;
     char ecu[] = "ECU1";
-    uint8_t eculen = (uint8_t)strlen(ecu);
+    int fd = 15;
 
-    EXPECT_EQ(0, dlt_daemon_init(&daemon,
-                                 DLT_DAEMON_RINGBUFFER_MIN_SIZE,
-                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
-                                 DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
-    dlt_set_id_v2(&(daemon.ecuid2), ecu, eculen);
+    /* Normal Use-Case */
+    EXPECT_EQ(0,
+              dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
+                              DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                              DLT_TRACE_STATUS_OFF, 0, 0));
+    dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
+    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
 
-    user_list = dlt_daemon_find_users_list_v2(&daemon, eculen, ecu, 0);
-    EXPECT_NE(user_list, nullptr);
-    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecuid2, daemon.ecuid2, daemon.ecuid2len));
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    /*printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid,app->application_description, app->num_contexts, app->pid, app->user_handle); */
+    EXPECT_STREQ(apid, app->apid);
+    EXPECT_STREQ(desc, app->application_description);
+    EXPECT_EQ(pid, app->pid);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
 
+    /* Apid > 4, expected truncate to 4 char or error */
+    apid = "TO_LONG";
+    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    char tmp[5];
+    strncpy(tmp, apid, 4);
+    tmp[4] = '\0';
+    EXPECT_STREQ(tmp, app->apid);
+    EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
+    EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
-
-// TEST(t_dlt_daemon_find_users_list_v2, abnormal)
-// {
-//     DltDaemon daemon;
-//     DltGateway gateway;
-//     DltDaemonRegisteredUsers *user_list;
-//     char ecu[] = "ECU1";
-//     char bla[] = "BLAH";
-//     uint8_t eculen = (uint8_t)strlen(ecu);
-
-//     EXPECT_EQ(0, dlt_daemon_init(&daemon,
-//                                  DLT_DAEMON_RINGBUFFER_MIN_SIZE,
-//                                  DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-//                                  DLT_DAEMON_RINGBUFFER_STEP_SIZE,
-//                                  DLT_RUNTIME_DEFAULT_DIRECTORY,
-//                                  DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
-//     dlt_set_id_v2(&(daemon.ecuid2), ecu, eculen);
-//     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-
-//     user_list = dlt_daemon_find_users_list_v2(&daemon, eculen, bla, 0);
-//     EXPECT_EQ(user_list, nullptr);
-
-//     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
-// }
-
-TEST(t_dlt_daemon_find_users_list_v2, nullpointer)
-{
-    DltDaemon daemon;
-    char ecu[] = "ECU1";
-
-    EXPECT_EQ(NULL, dlt_daemon_find_users_list_v2(NULL, 0, NULL, 0));
-    EXPECT_EQ(NULL, dlt_daemon_find_users_list_v2(&daemon, 0, NULL, 0));
-    EXPECT_EQ(NULL, dlt_daemon_find_users_list_v2(NULL, 0, ecu, 0));
-}
-
-// /* Begin Method:dlt_daemon_common::dlt_daemon_application_add */
-// TEST(t_dlt_daemon_application_add, normal)
-// {
-//     DltDaemon daemon;
-//     DltGateway gateway;
-//     const char *apid = "TEST";
-//     pid_t pid = 0;
-//     const char *desc = "HELLO_TEST";
-//     DltDaemonApplication *app = NULL;
-//     char ecu[] = "ECU1";
-//     int fd = 15;
-
-//     /* Normal Use-Case */
-//     EXPECT_EQ(0,
-//               dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-//                               DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
-//                               DLT_TRACE_STATUS_OFF, 0, 0));
-//     dlt_set_id(daemon.ecuid, ecu);
-//     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-//     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-
-//     app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-//     /*printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid,app->application_description, app->num_contexts, app->pid, app->user_handle); */
-//     EXPECT_STREQ(apid, app->apid);
-//     EXPECT_STREQ(desc, app->application_description);
-//     EXPECT_EQ(pid, app->pid);
-//     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
-//     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
-
-//     /* Apid > 4, expected truncate to 4 char or error */
-//     apid = "TO_LONG";
-//     app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-//     char tmp[5];
-//     strncpy(tmp, apid, 4);
-//     tmp[4] = '\0';
-//     EXPECT_STREQ(tmp, app->apid);
-//     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
-//     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
-//     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
-// }
-
 TEST(t_dlt_daemon_application_add, abnormal)
 {
 /*    DltDaemon daemon; */
@@ -387,51 +326,8 @@ TEST(t_dlt_daemon_application_add, nullpointer)
 }
 /* End Method:dlt_daemon_common::dlt_daemon_application_add */
 
-/* Begin Method:dlt_daemon_common::dlt_daemon_application_add_v2 */
-// TEST(t_dlt_daemon_application_add_v2, normal)
-// {
-//     DltDaemon daemon;
-//     DltGateway gateway;
-//     const char *apid = "TEST";
-//     uint8_t apidlen = (uint8_t)strlen(apid);
-//     pid_t pid = 0;
-//     const char *desc = "HELLO_TEST";
-//     DltDaemonApplication *app = NULL;
-//     char ecu[] = "ECU1";
-//     uint8_t eculen = (uint8_t)strlen(ecu);
-//     int fd = 15;
 
-//     /* Normal Use-Case */
-//     EXPECT_EQ(0,
-//               dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-//                               DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
-//                               DLT_TRACE_STATUS_OFF, 0, 0));
-//     daemon.ecuid2len = eculen;
-//     daemon.ecuid2 = NULL;
-//     dlt_set_id_v2(&(daemon.ecuid2), ecu, eculen);
-//     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-//     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid2, daemon.user_list[0].ecuid2, eculen));
 
-//     app = dlt_daemon_application_add_v2(&daemon, apidlen, (char *)apid, pid, (char *)desc, fd, eculen, ecu, 0);
-//     // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
-//     EXPECT_STREQ(apid, app->apid2);
-//     EXPECT_STREQ(desc, app->application_description);
-//     EXPECT_EQ(pid, app->pid);
-//     EXPECT_LE(0, dlt_daemon_application_del_v2(&daemon, app, eculen, ecu, 0));
-//     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
-
-//     /* Apid > 4, expected truncate to 4 char or error */
-//     apid = "TO_LONG";
-//     app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-//     char tmp[5];
-//     strncpy(tmp, apid, 4);
-//     tmp[4] = '\0';
-//     EXPECT_STREQ(tmp, app->apid);
-//     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
-//     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
-//     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
-// }
-/* End Method:dlt_daemon_common::dlt_daemon_application_add_v2 */
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_application_del */
 TEST(t_dlt_daemon_application_del, normal)
@@ -785,9 +681,15 @@ TEST(t_dlt_daemon_applications_load, nullpointer)
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_load */
 
+
+
+
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
+
+
+
 
 /* Begin Method: dlt_daemon_common::dlt_daemon_context_add */
 TEST(t_dlt_daemon_context_add, normal)
@@ -2052,7 +1954,7 @@ TEST(t_dlt_daemon_user_send_trace_load_config, normal)
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 
-#endif
+#endif // #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
