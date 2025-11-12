@@ -378,7 +378,7 @@ int dlt_daemon_client_send_v2(int sock,
     if ((sock != DLT_DAEMON_SEND_FORCE) && (daemon->state != DLT_DAEMON_STATE_SEND_BUFFER)) {
         if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
             && daemon_local->flags.offlineTraceDirectory[0]) {
-            /* To update to v2*/
+            /* To update for v2*/
             if (dlt_offline_trace_write(&(daemon_local->offlineTrace), storage_header, storage_header_size, data1,
                                         size1, data2, size2)) {
                 static int error_dlt_offline_trace_write_failed = 0;
@@ -1210,7 +1210,7 @@ int dlt_daemon_client_process_control_v2(int sock,
         return -1;
 
     extended = msg->extendedheaderv2;
-    /* To update: v2 for gateway forward control message*/
+
     /* check if the message needs to be forwarded */
     if (daemon_local->flags.gatewayMode == 1) {
         if (strncmp(daemon_local->flags.evalue, extended.ecid, extended.ecidlen) != 0)

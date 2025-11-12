@@ -1112,7 +1112,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         }
 
         id_tmp = *((uint32_t *)(msg.databuffer));
-        id = DLT_LETOH_32(id_tmp); /* To update: check what endianness needed */
+        id = DLT_LETOH_32(id_tmp);
 
         dlt_vlog(LOG_INFO,
                 "%s: Control message forwarded : %s\n",
@@ -2202,7 +2202,7 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text_v2(DltServiceGetLogInfoRe
     *  jj jj      : description length of apid
     *  kk kk ..   : description text of apid
     *  ------------------------------------------------------ */
-    /* To Update: Message Header size in DLT_GET_LOG_INFO in version 1 is fixed, DLT_GET_LOG_INFO_HEADER 18*/
+
     rp = resp_text + DLT_GET_LOG_INFO_HEADER;
     rp_count = 0;
 

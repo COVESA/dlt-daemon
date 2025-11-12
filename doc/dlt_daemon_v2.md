@@ -28,7 +28,7 @@ To support the V2 requirements following major changes are included.
 The current implementation has not adapted for V2 for following features:
 
 1. Non-Verbose logs
-2. Trace Limit
+2. Trace load control
 3. Network trace
 4. Message segmentation
 5. Offline log storage
