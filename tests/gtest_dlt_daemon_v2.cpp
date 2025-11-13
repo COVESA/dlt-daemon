@@ -1,28 +1,56 @@
-
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2024, Mercedes Benz Tech Innovation GmbH
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
- * This file is part of GENIVI Project DLT - Diagnostic Log and Trace.
+ * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
  * This Source Code Form is subject to the terms of the
  * Mozilla Public License (MPL), v. 2.0.
  * If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * For further information see https://www.covesa.global/.
+ * For further information see http://www.covesa.org/.
  */
 
 /*!
  * \author
- * Alexander Mohr <alexander.m.mohr@mercedes-benz.com>
+ * Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2024 Mercedes Benz Tech Innovation GmbH. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file gtest_dlt_daemon.cpp
+ * \file gtest_dlt_daemon_v2.cpp
  */
+
+/*******************************************************************************
+**                                                                            **
+**  FILE      : gtest_dlt_daemon_v2.cpp                                       **
+**                                                                            **
+**  TARGET    : linux                                                         **
+**                                                                            **
+**  PROJECT   : DLT                                                           **
+**                                                                            **
+**  AUTHOR    : Shivam Goel shivam.goel@volvo.com                             **
+**                                                                            **
+**  PURPOSE   :                                                               **
+**                                                                            **
+**  REMARKS   :                                                               **
+**                                                                            **
+**  PLATFORM DEPENDANT [yes/no]: yes                                          **
+**                                                                            **
+**  TO BE CHANGED BY USER [yes/no]: no                                        **
+**                                                                            **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Author Identity                                       **
+********************************************************************************
+**                                                                            **
+** Initials     Name                       Company                            **
+** --------     -------------------------  ---------------------------------- **
+**   sg         Shivam Goel                V2 - Volvo Group                   **
+*******************************************************************************/
 
 #include "dlt_daemon_common_cfg.h"
 #include <gtest/gtest.h>

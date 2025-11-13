@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -14,13 +14,14 @@
  */
 
 /*!
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+ * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-example-user-func-v2.c
  */
+
 
 /*******************************************************************************
 **                                                                            **
@@ -30,7 +31,7 @@
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Suyash Chandra suyash.chandra@consultant.volvo.com            **
+**  AUTHOR    : Shivam Goel <shivam.goel@volvo.com>                           **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -48,7 +49,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**   sc         Suyash Chandra             Volvo                              **
+**  sg          Shivam Goel                V2 - Volvo Group                   **
 *******************************************************************************/
 
 /*******************************************************************************
@@ -56,12 +57,13 @@
 *******************************************************************************/
 
 /*
- * $LastChangedRevision: 1670 $
- * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
+ * $LastChangedRevision:  $
+ * $LastChangedDate: 2025-11-12 15:12:06 +0200 (We, 12. Nov 2025) $
  * $LastChangedBy$
  * Initials    Date         Comment
- * aw          13.01.2010   initial
+ * sg          12.11.2025   initial
  */
+
 #include <netdb.h>
 #include <ctype.h>
 #include <stdio.h>      /* for printf() and fprintf() */

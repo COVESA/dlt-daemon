@@ -1126,6 +1126,15 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
 DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
 
 /**
+ * Set the logging mode used by the daemon for V2 format.
+ * The logging mode is stored persistantly by the daemon.
+ * @see DltUserLogMode
+ * @param mode the new logging mode used by the daemon: off, extern, internal, both.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_set_log_mode_v2(DltUserLogMode mode);
+
+/**
  * Get the state of the connected client to the daemon.
  * The user application gets a message, when client is connected or disconnected.
  * This value contains the last state.

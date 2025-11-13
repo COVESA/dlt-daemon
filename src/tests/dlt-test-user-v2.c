@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -14,25 +14,24 @@
  */
 
 /*!
- * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
+ * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-test-user.c
+ * \file dlt-test-user-v2.c
  */
 
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-user.c                                               **
+**  SRC-MODULE: dlt-test-user-v2.c                                            **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Alexander Wenzel Alexander.AW.Wenzel@bmw.de                   **
-**              Markus Klein                                                  **
+**  AUTHOR    : Shivam Goel <shivam.goel@volvo.com>                           **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -50,8 +49,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**  aw          Alexander Wenzel           BMW                                **
-**  mk          Markus Klein               Fraunhofer ESK                     **
+**  sg          Shivam Goel                V2 - Volvo Group                   **
 *******************************************************************************/
 
 /*******************************************************************************
@@ -59,11 +57,11 @@
 *******************************************************************************/
 
 /*
- * $LastChangedRevision: 1670 $
- * $LastChangedDate: 2011-04-08 15:12:06 +0200 (Fr, 08. Apr 2011) $
+ * $LastChangedRevision:  $
+ * $LastChangedDate: 2025-11-12 15:12:06 +0200 (We, 12. Nov 2025) $
  * $LastChangedBy$
  * Initials    Date         Comment
- * aw          13.01.2010   initial
+ * sg          12.11.2025   initial
  */
 
 #include <stdio.h>      /* for printf() and fprintf() */

@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2015  Intel Corporation
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -14,12 +14,54 @@
  */
 
 /*!
- * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
+ * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2015 Intel Corporation. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-test-cpp-extension.cpp
+ * \file dlt-test-cpp-extension-v2.cpp
+ */
+
+
+/*******************************************************************************
+**                                                                            **
+**  SRC-MODULE: dlt-test-cpp-extension-v2.cpp                                 **
+**                                                                            **
+**  TARGET    : linux                                                         **
+**                                                                            **
+**  PROJECT   : DLT                                                           **
+**                                                                            **
+**  AUTHOR    : Shivam Goel <shivam.goel@volvo.com>                           **
+**                                                                            **
+**  PURPOSE   :                                                               **
+**                                                                            **
+**  REMARKS   :                                                               **
+**                                                                            **
+**  PLATFORM DEPENDANT [yes/no]: yes                                          **
+**                                                                            **
+**  TO BE CHANGED BY USER [yes/no]: no                                        **
+**                                                                            **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Author Identity                                       **
+********************************************************************************
+**                                                                            **
+** Initials     Name                       Company                            **
+** --------     -------------------------  ---------------------------------- **
+**  sg          Shivam Goel                V2 - Volvo Group                   **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Revision Control History                              **
+*******************************************************************************/
+
+/*
+ * $LastChangedRevision:  $
+ * $LastChangedDate: 2025-11-12 15:12:06 +0200 (We, 12. Nov 2025) $
+ * $LastChangedBy$
+ * Initials    Date         Comment
+ * sg          12.11.2025   initial
  */
 
 #include "dlt_cpp_extension.hpp"
