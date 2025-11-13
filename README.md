@@ -19,9 +19,12 @@ you can [learn more](#learn-more) about advanced concepts and features.
 
 ## Overview
 
-COVESA DLT provides a log and trace interface, based on the standardised
-protocol specified in the
-[AUTOSAR Classic Platform R19-11 DLT](https://www.autosar.org/fileadmin/standards/R19-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf).
+COVESA DLT provides a standardized logging and tracing interface with support for two protocol versions: **V1** and **V2**.
+ 
+- **Version 1 (V1)** is based on the AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R19-11 DLT](https://www.autosar.org/fileadmin/standards/R19-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf), offering a stable and widely adopted diagnostic logging protocol.
+- **Version 2 (V2)** follows the updated AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R22-11 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf). Currently released as a Minimum Viable Product (MVP), V2 supports a limited feature set.
+For more details, refer to [DLT Daemon V2](doc/dlt_daemon_v2.md).
+
 It is used by other COVESA components but can serve as logging framework for
 other applications without relation to COVESA.
 
@@ -176,7 +179,9 @@ make generate_man
 |[dlt.conf(5)](doc/dlt.conf.5.md) | Configure the DLT framework to reflect your use case|
 | *Control running instances of DLT*||
 |[dlt-receive(1)](doc/dlt-receive.1.md)| Receive DLT messages from daemon and print or store the log messages. |
+|dlt-receive-v2| Receive DLT messages from daemon and print or store the log messages of V2 protocol.|
 |[dlt-control(1)](doc/dlt-control.1.md)| Send control messages to daemon. |
+|dlt-control-v2| Send control messages to daemon in V2 protocol.|
 |[dlt-logstorage-ctrl(1)](doc/dlt-logstorage-ctrl.1.md)| Send a trigger to daemon to connect/disconnect certain logstorage device, or send a demand to sync data the internal buffer into logstorage file. |
 |[dlt-passive-node-ctrl(1)](doc/dlt-passive-node-ctrl.1.md)| Send a trigger to daemon to connect/disconnect passive daemon. |
 | *Interfacing DLT* ||
