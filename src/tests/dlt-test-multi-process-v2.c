@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -14,33 +14,56 @@
  */
 
 /*!
- * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
+ * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-test-multi-process.c
+ * \file dlt-test-multi-process-v2.c
  */
+
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-multi-process.c                                      **
+**  SRC-MODULE: dlt-test-multi-process-v2.c                                   **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Lassi Marttala Lassi.LM.Marttala@partner.bmw.de               **
+**  AUTHOR    : Shivam Goel <shivam.goel@volvo.com>                           **
 **                                                                            **
-**  PURPOSE   : Stress test timing using multiple processes                   **
+**  PURPOSE   :                                                               **
 **                                                                            **
-**  REMARKS   : Requires POSIX fork()                                         **
+**  REMARKS   :                                                               **
 **                                                                            **
 **  PLATFORM DEPENDANT [yes/no]: yes                                          **
 **                                                                            **
 **  TO BE CHANGED BY USER [yes/no]: no                                        **
 **                                                                            **
 *******************************************************************************/
+
+/*******************************************************************************
+**                      Author Identity                                       **
+********************************************************************************
+**                                                                            **
+** Initials     Name                       Company                            **
+** --------     -------------------------  ---------------------------------- **
+**  sg          Shivam Goel                V2 - Volvo Group                   **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Revision Control History                              **
+*******************************************************************************/
+
+/*
+ * $LastChangedRevision: $
+ * $LastChangedDate: 2025-11-12 15:12:06 +0200 (We, 12. Nov 2025) $
+ * $LastChangedBy$
+ * Initials    Date         Comment
+ * sg          12.11.2025   initial
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>

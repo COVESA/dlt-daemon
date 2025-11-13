@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -15,9 +15,9 @@
 
 /*!
  * \author
- * Jayaprasad T J <jayaprasad.tj@consultant.volvo.com>
+ * Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
  * \file gtest_dlt_common_v2.cpp
@@ -25,13 +25,13 @@
 
 /*******************************************************************************
 **                                                                            **
-**  FILE      : gtest_dlt_common_v2.cpp                                **
+**  FILE      : gtest_dlt_common_v2.cpp                                       **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Jayaprasad T J jayaprasad.tj@consultant.volvo.com             **
+**  AUTHOR    : Shivam Goel shivam.goel@volvo.com                             **
 **                                                                            **
 **  PURPOSE   :                                                               **
 **                                                                            **
@@ -49,7 +49,7 @@
 **                                                                            **
 ** Initials     Name                       Company                            **
 ** --------     -------------------------  ---------------------------------- **
-**   jtj        Jayaprasad T J             Volvo                              **
+**   sg         Shivam Goel                V2 - Volvo Group                   **
 *******************************************************************************/
 
 #include <stdio.h>

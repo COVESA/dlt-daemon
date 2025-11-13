@@ -1,7 +1,7 @@
 /*
  * SPDX license identifier: MPL-2.0
  *
- * Copyright (C) 2011-2015, BMW AG
+ * Copyright (C) 2011-2015, V2 - Volvo Group
  *
  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.
  *
@@ -14,25 +14,26 @@
  */
 
 /*!
- * \author Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de>
+ * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
+ * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
  *
- * \file dlt-test-multi-process-client.c
+ * \file dlt-test-multi-process-client-v2.c
  */
+
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-multi-process-client.c                               **
+**  SRC-MODULE: dlt-test-multi-process-client-v2.c                            **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
 **  PROJECT   : DLT                                                           **
 **                                                                            **
-**  AUTHOR    : Lassi Marttala <Lassi.LM.Marttala@partner.bmw.de>             **
+**  AUTHOR    : Shivam Goel <shivam.goel@volvo.com>                           **
 **                                                                            **
-**  PURPOSE   : Receive, validate and measure data from multi process tester  **
+**  PURPOSE   :                                                               **
 **                                                                            **
 **  REMARKS   :                                                               **
 **                                                                            **
@@ -41,6 +42,28 @@
 **  TO BE CHANGED BY USER [yes/no]: no                                        **
 **                                                                            **
 *******************************************************************************/
+
+/*******************************************************************************
+**                      Author Identity                                       **
+********************************************************************************
+**                                                                            **
+** Initials     Name                       Company                            **
+** --------     -------------------------  ---------------------------------- **
+**  sg          Shivam Goel                V2 - Volvo Group                   **
+*******************************************************************************/
+
+/*******************************************************************************
+**                      Revision Control History                              **
+*******************************************************************************/
+
+/*
+ * $LastChangedRevision:  $
+ * $LastChangedDate: 2025-11-12 15:12:06 +0200 (We, 12. Nov 2025) $
+ * $LastChangedBy$
+ * Initials    Date         Comment
+ * sg          12.11.2025   initial
+ */
+
 /* System includes */
 #include <string.h>
 #include <stdio.h>
