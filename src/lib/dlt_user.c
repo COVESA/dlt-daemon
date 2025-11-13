@@ -209,7 +209,7 @@ static DltReturnValue dlt_send_app_ll_ts_limit(const char *apid,
 static DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid,
                                                   DltLogLevelType loglevel,
                                                   DltTraceStatusType tracestatus);
-static DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode);
+static DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode, uint8_t version);
 static DltReturnValue dlt_user_log_send_marker();
 static DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log);
 static DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log);
@@ -2357,7 +2357,30 @@ DltReturnValue dlt_set_log_mode(DltUserLogMode mode)
         }
     }
 
-    return dlt_user_log_send_log_mode(mode);
+    return dlt_user_log_send_log_mode(mode, DLT_VERSION1);
+}
+
+DltReturnValue dlt_set_log_mode_v2(DltUserLogMode mode)
+{
+    DLT_UNUSED(mode);
+
+    /* forbid dlt usage in child after fork */
+    if (g_dlt_is_child)
+        return DLT_RETURN_ERROR;
+
+    if ((mode < DLT_USER_MODE_UNDEFINED) || (mode >= DLT_USER_MODE_MAX)) {
+        dlt_vlog(LOG_ERR, "User log mode %d is outside valid range", mode);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    if (!DLT_USER_INITIALIZED) {
+        if (dlt_init() < 0) {
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            return DLT_RETURN_ERROR;
+        }
+    }
+
+    return dlt_user_log_send_log_mode(mode, DLT_VERSION2);
 }
 
 int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds)
@@ -6105,7 +6128,7 @@ DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid, DltLogLevelType log
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
+DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode, uint8_t version)
 {
     DltUserHeader userheader;
     DltUserControlMsgLogMode logmode;
@@ -6117,13 +6140,17 @@ DltReturnValue dlt_user_log_send_log_mode(DltUserLogMode mode)
     }
 
     /* set userheader */
-    if(dlt_user.appID[0] != '\0'){
-        if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
+    if (version == DLT_VERSION1) {
+        if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK) {
             return DLT_RETURN_ERROR;
-    }else if (dlt_user.appID2len != 0){
-        if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK)
+        }
+    }
+    else if (version == DLT_VERSION2) {
+        if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_MARKER) < DLT_RETURN_OK) {
             return DLT_RETURN_ERROR;
-    }else {
+        }
+    }
+    else {
         return DLT_RETURN_ERROR;
     }
 

@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 
     if (mvalue) {
         printf("Set log mode to %d\n", atoi(mvalue));
-        if (dlt_set_log_mode(atoi(mvalue)) == DLT_RETURN_ERROR)
+        if (dlt_set_log_mode_v2(atoi(mvalue)) == DLT_RETURN_ERROR)
             printf("Set log mode failed\n");
     }
 
