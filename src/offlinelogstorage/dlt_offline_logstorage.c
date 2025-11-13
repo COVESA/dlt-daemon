@@ -2504,6 +2504,7 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
  * @param disable_nw Flag to disable network routing
  * @return          0 on success or write errors < max write errors, -1 on error
  */
+/* To Update for v2*/
 int dlt_logstorage_write(DltLogStorage *handle,
                          DltLogStorageUserConfig *uconfig,
                          unsigned char *data1,

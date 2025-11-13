@@ -282,6 +282,7 @@ int main(int argc, char *argv[])
     }
 
     if (fvalue) {
+
         /* DLT is initialized automatically, except another output target will be used */
         if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
@@ -380,7 +381,6 @@ int main(int argc, char *argv[])
 
     for (num = 0; num < maxnum; num++) {
         printf("Send %d %s\n", num, text);
-
         newstate = dlt_get_log_state();
 
         if (state != newstate) {
@@ -399,11 +399,13 @@ int main(int argc, char *argv[])
             DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
         }
         else {
-            if (rvalue == -1)
+            if (rvalue == -1) {
                 /* Verbose mode */
                 DLT_LOG(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
-            else
+            }
+            else {
                 DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
+            }
         }
 
         if (delay > 0) {

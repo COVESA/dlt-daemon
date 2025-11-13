@@ -24,11 +24,21 @@ set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-init-free)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context)
 set(TARGET_LIST ${TARGET_LIST} dlt-test-filetransfer)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-multi-process-client-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-user-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-client-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-user-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-client-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-stress-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-fork-handler-v2)
+set(TARGET_LIST ${TARGET_LIST} dlt-test-preregister-context-v2)
 install(FILES dlt-test-filetransfer-file dlt-test-filetransfer-image.png
         DESTINATION share/dlt-filetransfer)
 
 if(WITH_DLT_CXX11_EXT)
     set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension)
+    set(TARGET_LIST ${TARGET_LIST} dlt-test-cpp-extension-v2)
 endif()
 
 #TODO: Enable again once dlt-test-non-verbose is adapted to non-macro usage

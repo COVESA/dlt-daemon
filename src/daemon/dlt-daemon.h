@@ -80,6 +80,12 @@
 
 #define DLT_DAEMON_FLAG_MAX 256
 
+// DLTV2 - Definitions for DLT Version 2
+#define DLT_VERSION_MASK 0xE0
+#define DLT_VERSION_SHIFT 5
+
+#define DLT_DAEMON_VERSION 2 /* Daemon version should be either 1 or 2 to support V1 or V2*/
+
 /**
  * The flags of a dlt daemon.
  */
@@ -160,7 +166,9 @@ typedef struct
     DltEventHandler pEvent; /**< struct for message producer event handling */
     DltGateway pGateway; /**< struct for passive node connection handling */
     DltMessage msg;           /**< one dlt message */
+    DltMessageV2 msgv2;         /**< one dlt v2 message */
     int client_connections;    /**< counter for nr. of client connections */
+    int client_connection_version; /* Connected client version*/
     size_t baudrate;          /**< Baudrate of serial connection */
 #ifdef DLT_SHM_ENABLE
     DltShm dlt_shm;                /**< Shared memory handling */
@@ -242,6 +250,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
                                              DltReceiver *rec,
                                              int verbose);
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltDaemonLocal *daemon_local,
                                                          DltReceiver *rec,
@@ -269,6 +278,12 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
 #endif
                                             );
 
+bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            ,DltDaemonApplication *app
+#endif
+                                            );
+
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   DltReceiver *rec,
@@ -279,6 +294,8 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
                                            int verbose);
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_get_daemon_version(void);
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)

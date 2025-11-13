@@ -61,6 +61,14 @@ DltReturnValue dlt_logstorage_update_all_contexts(DltDaemon *daemon,
                                                   char *ecuid,
                                                   int verbose);
 
+DltReturnValue dlt_logstorage_update_all_contexts_v2(DltDaemon *daemon,
+                                                  DltDaemonLocal *daemon_local,
+                                                  char *id,
+                                                  int curr_log_level,
+                                                  int cmp_flag,
+                                                  char *ecuid,
+                                                  int verbose);
+
 DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              DltDaemonLocal *daemon_local,
                                              char *apid,
@@ -70,6 +78,12 @@ DltReturnValue dlt_logstorage_update_context(DltDaemon *daemon,
                                              int verbose);
 
 DltReturnValue dlt_logstorage_update_context_loglevel(DltDaemon *daemon,
+                                                      DltDaemonLocal *daemon_local,
+                                                      char *key,
+                                                      int curr_log_level,
+                                                      int verbose);
+
+DltReturnValue dlt_logstorage_update_context_loglevel_v2(DltDaemon *daemon,
                                                       DltDaemonLocal *daemon_local,
                                                       char *key,
                                                       int curr_log_level,

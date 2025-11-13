@@ -198,6 +198,9 @@
  */
 #   define DLT_DAEMON_TCP_PORT 3490
 
+/* DLT Version. Version is based on R19_11 and Version is based R22_11*/
+#   define DLT_VERSION1 1
+#   define DLT_VERSION2 2
 
 /* Initial value for file descriptor */
 #   define DLT_FD_INIT -1
@@ -213,6 +216,10 @@
 #   define DLT_SIZE_WEID DLT_ID_SIZE
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
 #   define DLT_SIZE_WTMS (sizeof(uint32_t))
+
+#   define DLT_SIZE_VERBOSE_DATA_MSG 11
+#   define DLT_SIZE_NONVERBOSE_DATA_MSG 13
+#   define DLT_SIZE_CONTROL_MSG 2
 
 /* Size of buffer for text output */
 #define DLT_CONVERT_TEXTBUFSIZE  10024
@@ -230,7 +237,6 @@
 #   define DLT_STANDARD_HEADER_EXTRA_SIZE(htyp) ((DLT_IS_HTYP_WEID(htyp) ? DLT_SIZE_WEID : 0) + \
                                                  (DLT_IS_HTYP_WSID(htyp) ? DLT_SIZE_WSID : 0) + \
                                                  (DLT_IS_HTYP_WTMS(htyp) ? DLT_SIZE_WTMS : 0))
-
 
 #   if defined (__MSDOS__) || defined (_MSC_VER)
 #      define __func__ __FUNCTION__
@@ -269,6 +275,22 @@
 #   define DLT_MSG_IS_NONVERBOSE(MSG)       (!(DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) || \
                                              ((DLT_IS_HTYP_UEH((MSG)->standardheader->htyp)) && \
                                               (!(DLT_IS_MSIN_VERB((MSG)->extendedheader->msin)))))
+
+#   define DLT_MSG_IS_CONTROL_V2(MSG)       (((MSG->baseheaderv2->htyp2 & 0x03)==0x02) && \
+                                             (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL))
+
+#   define DLT_MSG_IS_CONTROL_REQUEST_V2(MSG)  ((((MSG)->baseheaderv2->htyp2 & 0x03)==0x02) && \
+                                                (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                                (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_REQUEST))
+
+#   define DLT_MSG_IS_CONTROL_TIME_V2(MSG)   ((DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                              (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_TIME))
+
+#   define DLT_MSG_IS_CONTROL_RESPONSE_V2(MSG)  ((((MSG)->baseheaderv2->htyp2 & 0x03) == 0x02) && \
+                                                (DLT_GET_MSIN_MSTP((MSG)->headerextrav2.msin) == DLT_TYPE_CONTROL) && \
+                                                (DLT_GET_MSIN_MTIN((MSG)->headerextrav2.msin) == DLT_CONTROL_RESPONSE))
+
+#   define DLT_MSG_IS_NONVERBOSE_V2(MSG)     ((MSG->baseheaderv2->htyp2 & 0x03)==0x01)
 
 /*
  *
@@ -339,6 +361,9 @@
 #   define DLT_HEADER_SHOW_MSGSUBTYPE 0x0080
 #   define DLT_HEADER_SHOW_VNVSTATUS  0x0100
 #   define DLT_HEADER_SHOW_NOARG      0x0200
+#   define DLT_HEADER_SHOW_FLNA_LNR   0x0400
+#   define DLT_HEADER_SHOW_PRLV       0x0800
+#   define DLT_HEADER_SHOW_TAG        0x1000
 #   define DLT_HEADER_SHOW_ALL        0xFFFF
 
 /* dlt_receiver_check_and_get flags */
@@ -379,6 +404,12 @@
  */
 #   define DLT_LINE_LEN 1024
 
+#define STORAGE_HEADER_V2_FIXED_SIZE 14
+#define BASE_HEADER_V2_FIXED_SIZE 7
+#define EXTENDED_HEADER_V2_FIXED_SIZE 16
+#define DLT_SERVICE_GET_LOG_INFO_REQUEST_FIXED_SIZE_V2 11 
+#define DLT_SERVICE_SET_LOG_LEVEL_FIXED_SIZE_V2 11
+
 /**
  * Macros for network trace
  */
@@ -405,6 +436,14 @@ typedef enum
     DLT_RECEIVE_UDP_SOCKET,
     DLT_RECEIVE_FD
 } DltReceiverType;
+
+typedef enum
+{
+    DLT_FIRST_FRAME,
+    DLT_CONSECUTIVE_FRAME,
+    DLT_LAST_FRAME,
+    DLT_ABORT_FRAME,
+} DLTSegmentationFrameType;
 
 /**
  * The definition of the serial header containing the characters "DLS" + 0x01.
@@ -435,6 +474,19 @@ extern char dltShmName[NAME_MAX + 1];
  */
 typedef char ID4[DLT_ID_SIZE];
 
+typedef struct
+{
+    uint8_t taglen;
+    char* tagname;
+} DltTag;
+
+
+typedef union{
+    uint8_t firstframe_totallength[8];
+    uint32_t consecutiveframe_sequencecounter;
+    uint8_t abortframe_abortreason;
+} SegmentationFrame;
+
 /**
  * The structure of the DLT file storage header. This header is used before each stored DLT message.
  */
@@ -447,6 +499,18 @@ typedef struct
 } DLT_PACKED DltStorageHeader;
 
 /**
+ * The structure of the DLT file storage header. This header is used before each stored DLT message.
+ */
+typedef struct
+{
+    char pattern[DLT_ID_SIZE]; /**< This pattern should be DLT0x02 */
+    uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 in Big Endian */
+    int32_t nanoseconds;      /**< nanoseconds */
+    uint8_t ecidlen;              /**< Length of ecu id */
+    char *ecid;
+} DltStorageHeaderV2;
+
+/**
  * The structure of the DLT standard header. This header is used in each DLT message.
  */
 typedef struct
@@ -455,6 +519,16 @@ typedef struct
     uint8_t mcnt;           /**< The message counter is increased with each sent DLT message */
     uint16_t len;           /**< Length of the complete message, without storage header */
 } DLT_PACKED DltStandardHeader;
+
+/**
+ * The structure of the DLT Base header for version 2. This header is used in each DLT message.
+ */
+typedef struct
+{
+    uint32_t htyp2;           /**< This parameter contains several informations, see definitions below */
+    uint8_t mcnt;           /**< The message counter is increased with each sent DLT message */
+    uint16_t len;           /**< Length of the complete message, without storage header */
+} DLT_PACKED DltBaseHeaderV2;
 
 /**
  * The structure of the DLT extra header parameters. Each parameter is sent only if enabled in htyp.
@@ -467,6 +541,18 @@ typedef struct
 } DLT_PACKED DltStandardHeaderExtra;
 
 /**
+ * The structure of the DLT extra header parameters for version 2. Each parameter is sent only if enabled in htyp.
+ */
+typedef struct
+{
+    uint8_t msin;                /**< Message info */
+    uint8_t noar;                /**< Number of arguments */
+    uint32_t nanoseconds;        /**< Nanoseconds part of the tmsp2. Invalid value in nanoseconds: [0x3B9A CA00] to [0x3FFF FFFF]; Bit 30 and 31 are reserved in this case. */   
+    uint8_t seconds[5];          /**< 40 bits for seconds since 1.1.1970 */
+    uint32_t msid;               /**< Message Id */
+} DLT_PACKED DltBaseHeaderExtraV2;
+
+/**
  * The structure of the DLT extended header. This header is only sent if enabled in htyp parameter.
  */
 typedef struct
@@ -476,6 +562,29 @@ typedef struct
     char apid[DLT_ID_SIZE];    /**< application id */
     char ctid[DLT_ID_SIZE];    /**< context id */
 } DLT_PACKED DltExtendedHeader;
+
+/**
+ * The structure of the DLT extended header for version 2. This header is only sent if enabled in htyp parameter.
+ */
+typedef struct
+{
+    uint8_t ecidlen;              /**< Length of ecu id */
+    char *ecid;
+    uint8_t apidlen;              /**< Length of app id */
+    char *apid;
+    uint8_t ctidlen;              /**< Length of context id */
+    char *ctid;
+    uint32_t seid;                /**< Session id */
+    uint8_t finalen;              /**< Length of filename */
+    char *fina;
+    uint32_t linr;                /**< Line number */
+    uint8_t notg;                 /**< Number of tags */
+    DltTag *tag;
+    uint8_t prlv;                 /**< Privacy level */
+    uint8_t sgmtinfo;             /**< Segmentation info */
+    uint8_t frametype;            /**< Segmentation frame */
+    SegmentationFrame *sgmtdetails; /**< Segmentation details */
+} DltExtendedHeaderV2;
 
 /**
  * The structure to organise the DLT messages.
@@ -504,7 +613,39 @@ typedef struct sDltMessage
     DltStandardHeader *standardheader;      /**< pointer to standard header of current loaded header */
     DltStandardHeaderExtra headerextra;     /**< extra parameters of current loaded header */
     DltExtendedHeader *extendedheader;      /**< pointer to extended of current loaded header */
-} DltMessage;
+} DLT_PACKED DltMessage;
+
+/**
+ * The structure to organise the DLT messages.
+ * This structure is used by the corresponding functions.
+ */
+typedef struct sDltMessageV2
+{
+    /* flags */
+    int8_t found_serialheader;
+
+    /* offsets */
+    int32_t resync_offset;
+
+    /* size parameters */
+    int32_t headersizev2;    /**< size of complete header including storage header */
+    int32_t datasize;      /**< size of complete payload */
+
+    /* buffer for current loaded message */
+    uint8_t *headerbufferv2;       /**< buffer for loading complete header */
+    uint8_t *databuffer;         /**< buffer for loading payload */
+    int32_t databuffersize;
+    uint32_t storageheadersizev2;
+    uint32_t baseheadersizev2;
+    uint32_t baseheaderextrasizev2;
+    uint32_t extendedheadersizev2;
+
+    /* header values of current loaded message */
+    DltStorageHeaderV2 storageheaderv2;        /**< pointer to storage header of current loaded header */
+    DltBaseHeaderV2 *baseheaderv2;      /**< pointer to standard header of current loaded header */
+    DltBaseHeaderExtraV2 headerextrav2;     /**< extra parameters of current loaded header */
+    DltExtendedHeaderV2 extendedheaderv2;      /**< pointer to extended of current loaded header */
+} DLT_PACKED DltMessageV2;
 
 /**
  * The structure of the DLT Service Get Log Info.
@@ -518,6 +659,20 @@ typedef struct
     char com[DLT_ID_SIZE];          /**< communication interface */
 } DLT_PACKED DltServiceGetLogInfoRequest;
 
+/**
+ * The structure of the DLT Service Get Log Info for DLT V2
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t options;                /**< type of request */
+    uint8_t apidlen;                /**< length of application id */
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;                /**< length of context id */
+    char *ctid;                     /**< context id */
+    char com[DLT_ID_SIZE];          /**< communication interface */
+} DLT_PACKED DltServiceGetLogInfoRequestV2;
+
 typedef struct
 {
     uint32_t service_id;            /**< service ID */
@@ -529,6 +684,8 @@ typedef struct
 typedef struct
 {
     char context_id[DLT_ID_SIZE];
+    uint8_t context_id2len;
+    char *context_id2;
     int16_t log_level;
     int16_t trace_status;
     uint16_t len_context_description;
@@ -538,6 +695,8 @@ typedef struct
 typedef struct
 {
     char app_id[DLT_ID_SIZE];
+    uint8_t app_id2len;
+    char *app_id2;
     uint16_t count_context_ids;
     ContextIDsInfoType *context_id_info; /**< holds info about a specific con id */
     uint16_t len_app_description;
@@ -570,6 +729,21 @@ typedef struct
     uint8_t log_level;              /**< log level to be set */
     char com[DLT_ID_SIZE];          /**< communication interface */
 } DLT_PACKED DltServiceSetLogLevel;
+
+/**
+ * The structure of the DLT Service Set Log Level.
+ */
+typedef struct
+{
+
+    uint32_t service_id;            /**< service ID */
+    uint8_t apidlen;
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;
+    char *ctid;                     /**< context id */
+    uint8_t log_level;              /**< log level to be set */
+    char com[DLT_ID_SIZE];          /**< communication interface */
+} DLT_PACKED DltServiceSetLogLevelV2;
 
 /**
  * The structure of the DLT Service Set Default Log Level.
@@ -657,6 +831,21 @@ typedef struct
 } DLT_PACKED DltServiceUnregisterContext;
 
 /**
+ * The structure of the DLT Service Unregister Context
+ * for DLT V2
+ */
+typedef struct
+{
+    uint32_t service_id;            /**< service ID */
+    uint8_t status;                 /**< reponse status */
+    uint8_t apidlen;                /**< length of application id */
+    char *apid;                     /**< application id */
+    uint8_t ctidlen;                /**< length of context id */
+    char *ctid;                     /**< context id */
+    char comid[DLT_ID_SIZE];        /**< communication interface */
+} DLT_PACKED DltServiceUnregisterContextV2;
+
+/**
  * The structure of the DLT Service Connection Info
  */
 typedef struct
@@ -726,6 +915,10 @@ typedef struct
 {
     char apid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< application id */
     char ctid[DLT_FILTER_MAX][DLT_ID_SIZE]; /**< context id */
+    uint8_t apid2len[DLT_FILTER_MAX];
+    char *apid2[DLT_FILTER_MAX];
+    uint8_t ctid2len[DLT_FILTER_MAX];
+    char *ctid2[DLT_FILTER_MAX];
     int log_level[DLT_FILTER_MAX];          /**< log level */
     int32_t payload_max[DLT_FILTER_MAX];        /**< upper border for payload */
     int32_t payload_min[DLT_FILTER_MAX];        /**< lower border for payload */
@@ -758,6 +951,7 @@ typedef struct sDltFile
 
     /* current loaded message */
     DltMessage msg;     /**< pointer to message */
+    DltMessageV2 msgv2; /**< pointer to v2 message */
 
 } DltFile;
 
@@ -899,8 +1093,11 @@ typedef struct
 typedef struct
 {
     char apid[DLT_ID_SIZE];  /**< Application id for which the settings are valid */
+    uint8_t apid2len;
+    char *apid2;             /**< Application id of version 2 for which the settings are valid */
     char ctid[DLT_ID_SIZE];  /**< Context id for which the settings are valid, this is optional */
-
+    uint8_t ctid2len;
+    char *ctid2;              /**< Context id of version 2 for which the settings are valid, this is optional */
     uint32_t soft_limit;     /**< Warning threshold, if load is above soft limit a warning will be logged but message won't be discarded */
     uint32_t hard_limit;     /**< limit threshold, if load is above hard limit a warning will be logged and message will be discarded */
 
@@ -1004,11 +1201,27 @@ PURE_FUNCTION size_t dlt_strnlen_s(const char* str, size_t maxsize);
 void dlt_print_id(char *text, const char *id);
 
 /**
+ * Helper function to print an id.
+ * @param text pointer to ASCII string where to write the id
+ * @param id char array as used in DLT mesages as IDs.
+ * @param length length of string to be printed into ID
+ */
+void dlt_print_id_v2(char *text, const char *id, uint8_t length);
+
+/**
  * Helper function to set an ID parameter.
  * @param id four byte char array as used in DLT mesages as IDs.
  * @param text string to be copied into char array.
  */
 void dlt_set_id(char *id, const char *text);
+
+/**
+ * Helper function to set an ID parameter.
+ * @param id char array as used in DLT mesages as IDs.
+ * @param text string to be copied into char array.
+ * @param len length of string to be copied into ID
+ */
+void dlt_set_id_v2(char **id, const char *text, int8_t len);
 
 /**
  * Helper function to remove not nice to print characters, e.g. NULL or carage return.
@@ -1040,6 +1253,16 @@ DltReturnValue dlt_filter_free(DltFilter *filter, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verbose);
+
+/**
+ * Load filter list from file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to load filters from
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_load_v2(DltFilter *filter, const char *filename, int verbose);
+
 /**
  * Save filter in space separated list to text file.
  * @param filter pointer to structure of organising DLT filter
@@ -1048,6 +1271,16 @@ DltReturnValue dlt_filter_load(DltFilter *filter, const char *filename, int verb
  * @return negative value if there was an error
  */
 DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verbose);
+
+/**
+ * Save filter in space separated list to text file.
+ * @param filter pointer to structure of organising DLT filter
+ * @param filename filename to safe filters into
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_save_v2(DltFilter *filter, const char *filename, int verbose);
+
 /**
  * Find index of filter in filter list
  * @param filter pointer to structure of organising DLT filter
@@ -1061,6 +1294,21 @@ DltReturnValue dlt_filter_save(DltFilter *filter, const char *filename, int verb
  */
 int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
+
+/**
+ * Find index of filter in filter list
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be found in filter list
+ * @param ctid context id to be found in filter list
+ * @param log_level log level to be found in filter list
+ * @param payload_min minimum payload lenght to be found in filter list
+ * @param payload_max maximum payload lenght to be found in filter list
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error (or not found), else return index of filter
+ */
+int dlt_filter_find_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
+
 /**
  * Add new filter to filter list.
  * @param filter pointer to structure of organising DLT filter
@@ -1074,6 +1322,21 @@ int dlt_filter_find(DltFilter *filter, const char *apid, const char *ctid, const
  */
 DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
+
+/**
+ * Add new filter to filter list.
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be added to filter list (must always be set).
+ * @param ctid context id to be added to filter list. empty equals don't care.
+ * @param log_level log level to be added to filter list. 0 equals don't care.
+ * @param payload_min min lenght of payload to be added to filter list. 0 equals don't care.
+ * @param payload_max max lenght of payload to be added to filter list. INT32_MAX equals don't care.
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_add_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
+
 /**
  * Delete filter from filter list
  * @param filter pointer to structure of organising DLT filter
@@ -1087,6 +1350,20 @@ DltReturnValue dlt_filter_add(DltFilter *filter, const char *apid, const char *c
  */
 DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
                                 const int32_t payload_min, const int32_t payload_max, int verbose);
+                            
+/**
+ * Delete filter from filter list
+ * @param filter pointer to structure of organising DLT filter
+ * @param apid application id to be deleted from filter list
+ * @param ctid context id to be deleted from filter list
+ * @param log_level log level to be deleted from filter list
+ * @param payload_min minimum payload lenght to be deleted from filter list
+ * @param payload_max maximum payload lenght to be deleted from filter list
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_filter_delete_v2(DltFilter *filter, const char *apid, const char *ctid, const int log_level,
+                                const int32_t payload_min, const int32_t payload_max, int verbose);
 
 /**
  * Initialise the structure used to access a DLT message.
@@ -1096,6 +1373,16 @@ DltReturnValue dlt_filter_delete(DltFilter *filter, const char *apid, const char
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_init(DltMessage *msg, int verbose);
+
+/**
+ * Initialise the structure used to access a DLT message.
+ * This function must be called before using further dlt_message functions.
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_init_v2(DltMessageV2 *msg, int verbose);
+
 /**
  * Free the used memory by the organising structure of file.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1103,6 +1390,15 @@ DltReturnValue dlt_message_init(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
+
+/**
+ * Free the used memory by the organising structure of file.
+ * @param msg pointer to structure of organising access to DLT V2 messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose);
+
 /**
  * Print Header into an ASCII string.
  * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
@@ -1113,6 +1409,18 @@ DltReturnValue dlt_message_free(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string.
+ * This function calls dlt_message_header_flags() with flags=DLT_HEADER_SHOW_ALL
+ * @param msg pointer to structure of organising access to DLT messages version 2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_v2(DltMessageV2 *msg, char *text, size_t textlength, int verbose);
+
 /**
  * Print Header into an ASCII string, selective.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1123,6 +1431,18 @@ DltReturnValue dlt_message_header(DltMessage *msg, char *text, size_t textlength
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t textlength, int flags, int verbose);
+
+/**
+ * Print V2 Header into an ASCII string, selective.
+ * @param msg pointer to structure of organising access to DLT messages V2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param flags select, bit-field to select, what should be printed (DLT_HEADER_SHOW_...)
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_header_flags_v2(DltMessageV2 *msg, char *text, size_t textlength, int flags, int verbose);
+
 /**
  * Print Payload into an ASCII string.
  * @param msg pointer to structure of organising access to DLT messages
@@ -1133,6 +1453,18 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlength, int type, int verbose);
+
+/**
+ * Print Payload into an ASCII string.
+ * @param msg pointer to structure of organising access to DLT messages version 2
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param textlength maximal size of text buffer
+ * @param type 1 = payload as hex, 2 = payload as ASCII.
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_payload_v2(DltMessageV2 *msg, char *text, size_t textlength, int type, int verbose);
+
 /**
  * Check if message is filtered or not. All filters are applied (logical OR).
  * @param msg pointer to structure of organising access to DLT messages
@@ -1141,6 +1473,15 @@ DltReturnValue dlt_message_payload(DltMessage *msg, char *text, size_t textlengt
  * @return 1 = filter matches, 0 = filter does not match, negative value if there was an error
  */
 DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int verbose);
+
+/**
+ * Check if message is filtered or not. All filters are applied (logical OR).
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param filter pointer to filter
+ * @param verbose if set to true verbose information is printed out.
+ * @return 1 = filter matches, 0 = filter does not match, negative value if there was an error
+ */
+DltReturnValue dlt_message_filter_check_v2(DltMessageV2 *msg, DltFilter *filter, int verbose);
 
 /**
  * Read message from memory buffer.
@@ -1155,12 +1496,48 @@ DltReturnValue dlt_message_filter_check(DltMessage *msg, DltFilter *filter, int 
 int dlt_message_read(DltMessage *msg, uint8_t *buffer, unsigned int length, int resync, int verbose);
 
 /**
+ * Read DLT V2 message from memory buffer.
+ * Message in buffer has no storage header.
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param buffer pointer to memory buffer
+ * @param length length of message in buffer
+ * @param resync if set to true resync to serial header is enforced
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length, int resync, int verbose);
+
+/**
+ * Get storage header parameters for version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_get_storageparameters_v2(DltMessageV2 *msg, int verbose);
+
+/**
+ * Set storage header parameters for version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_storageparameters_v2(DltMessageV2 *msg, int verbose);
+
+/**
  * Get standard header extra parameters
  * @param msg pointer to structure of organising access to DLT messages
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose);
+
+/**
+ * Get base header extra parameters for DLT version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_get_extraparameters_v2(DltMessageV2 *msg, int verbose);
 
 /**
  * Set standard header extra parameters
@@ -1171,6 +1548,37 @@ DltReturnValue dlt_message_get_extraparameters(DltMessage *msg, int verbose);
 DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose);
 
 /**
+ * Set base header extra parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose);
+
+/**
+ * Get size of base header extra parameters for Version 2
+ * @param msgcontent extra parameters size is based on msgcontent.
+ * @return size of base header extra parameters
+ */
+uint8_t dlt_message_get_extraparameters_size_v2(DltHtyp2ContentType msgcontent);
+
+/**
+ * Set extended header parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param header_offset Offset of header buffer before baseheader pointer
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg);
+
+/**
+ * Set extended header parameters for Version 2
+ * @param msg pointer to structure of organising access to DLT messages
+ * @param header_offset Offset of header buffer before baseheader pointer
+ * @return negative value if there was an error
+ */
+uint32_t dlt_message_get_extendedparameters_size_v2(DltMessageV2 *msg);
+
+/**
  * Initialise the structure used to access a DLT file.
  * This function must be called before using further dlt_file functions.
  * @param file pointer to structure of organising access to DLT file
@@ -1178,6 +1586,16 @@ DltReturnValue dlt_message_set_extraparameters(DltMessage *msg, int verbose);
  * @return negative value if there was an error
  */
 DltReturnValue dlt_file_init(DltFile *file, int verbose);
+
+/**
+ * Initialise the structure used to access a DLT file.
+ * This function must be called before using further dlt_file functions.
+ * @param file pointer to structure of organising access to DLT file
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_file_init_v2(DltFile *file, int verbose);
+
 /**
  * Set a list to filters.
  * This function should be called before loading a DLT file, if filters should be used.
@@ -1283,6 +1701,14 @@ DltReturnValue dlt_file_message(DltFile *file, int index, int verbose);
  */
 DltReturnValue dlt_file_free(DltFile *file, int verbose);
 
+/**
+ * Free the used memory by the organising structure of file.
+ * @param file pointer to structure of organising access to DLT file
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_file_free_v2(DltFile *file, int verbose);
+
 #if defined DLT_DAEMON_USE_FIFO_IPC || defined DLT_LIB_USE_FIFO_IPC
 /**
  * Set FIFO base direction
@@ -1367,12 +1793,29 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
  * @return negative value if there was an error
  */
 DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu);
+
+/**
+ * Fill out storage header of a dlt message Version 2
+ * @param storageheader pointer to storage header of a dlt message
+ * @param ecuIDlen Length of ecu name to be set in storage header
+ * @param ecu name of ecu to be set in storage header
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8_t ecuIDlen, const char *ecu);
+
 /**
  * Check if a storage header contains its marker
  * @param storageheader pointer to storage header of a dlt message
  * @return 0 no, 1 yes, negative value if there was an error
  */
 DltReturnValue dlt_check_storageheader(DltStorageHeader *storageheader);
+
+/**
+ * Check if a storage header contains its marker
+ * @param storageheader pointer to storage header of a dlt message
+ * @return 0 no, 1 yes, negative value if there was an error
+ */
+DltReturnValue dlt_check_storageheader_v2(DltStorageHeaderV2 *storageheader);
 
 /**
  * Checks if received size is big enough for expected data
@@ -1606,6 +2049,16 @@ uint32_t dlt_uptime(void);
 DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_t size, int verbose);
 
 /**
+ * Print header of a DLT message
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the header is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_header_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
+
+/**
  * Print payload of a DLT message as Hex-Output
  * @param message pointer to structure of organising access to DLT messages
  * @param text pointer to a ASCII string, in which the output is written
@@ -1614,6 +2067,16 @@ DltReturnValue dlt_message_print_header(DltMessage *message, char *text, uint32_
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print payload of a DLT message as Hex-Output
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_hex_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as ASCII-Output
@@ -1626,6 +2089,16 @@ DltReturnValue dlt_message_print_hex(DltMessage *message, char *text, uint32_t s
 DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t size, int verbose);
 
 /**
+ * Print payload of a DLT message as ASCII-Output for version 2
+ * @param message pointer to structure of organising access to DLT messages in version 2
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_ascii_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
+
+/**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output
  * @param message pointer to structure of organising access to DLT messages
  * @param text pointer to a ASCII string, in which the output is written
@@ -1634,6 +2107,16 @@ DltReturnValue dlt_message_print_ascii(DltMessage *message, char *text, uint32_t
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_print_mixed_plain(DltMessage *message, char *text, uint32_t size, int verbose);
+
+/**
+ * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for plain text output
+ * @param message pointer to structure of organising access to DLT messages
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param size maximal size of text buffer
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_print_mixed_plain_v2(DltMessageV2 *message, char *text, uint32_t size, int verbose);
 
 /**
  * Print payload of a DLT message as Mixed-Ouput (Hex and ASCII), for HTML text output
@@ -1658,6 +2141,27 @@ DltReturnValue dlt_message_print_mixed_html(DltMessage *message, char *text, uin
  * @return negative value if there was an error
  */
 DltReturnValue dlt_message_argument_print(DltMessage *msg,
+                                          uint32_t type_info,
+                                          uint8_t **ptr,
+                                          int32_t *datalength,
+                                          char *text,
+                                          size_t textlength,
+                                          int byteLength,
+                                          int verbose);
+
+/**
+ * Decode and print a argument of a DLT message
+ * @param msg pointer to structure of organising access to DLT messages Version 2
+ * @param type_info Type of argument
+ * @param ptr pointer to pointer to data (pointer to data is changed within this function)
+ * @param datalength pointer to datalength (datalength is changed within this function)
+ * @param text pointer to a ASCII string, in which the output is written
+ * @param textlength maximal size of text buffer
+ * @param byteLength If argument is a string, and this value is 0 or greater, this value will be taken as string length
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_message_argument_print_v2(DltMessageV2 *msg,
                                           uint32_t type_info,
                                           uint8_t **ptr,
                                           int32_t *datalength,
@@ -1698,6 +2202,15 @@ int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
  * @return length
  */
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char *rp, int *rp_count);
+
+/**
+ * Convert get log info from ASCII to uint8_t
+ *
+ * @param rp        char
+ * @param rp_count  int
+ * @return length
+ */
+uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char *rp, int *rp_count);
 
 
 /**
