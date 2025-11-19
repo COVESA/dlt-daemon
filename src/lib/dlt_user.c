@@ -5064,8 +5064,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
                             free(messages);
                         }
                         /* continue outer flow, rwlock already unlocked */
-                        }
-                   }
+                    }
 
                     /* keep not read data in buffer */
                     if (dlt_receiver_remove(receiver, trace_load_settings_user_message_bytes_required)
