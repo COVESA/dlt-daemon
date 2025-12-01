@@ -96,6 +96,15 @@ if (WITH_DLT_UNIT_TESTS)
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
             COMPONENT base)
+
+    if(NOT WITH_LIB_NO_VERSION)
+        if(WITH_LIB_SHORT_VERSION)
+            set_target_properties(dlt_daemon PROPERTIES VERSION ${PROJECT_VERSION_MAJOR} SOVERSION ${PROJECT_VERSION_MAJOR})
+        else()
+            set_target_properties(dlt_daemon PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+        endif()
+    endif()
+
 endif(WITH_DLT_UNIT_TESTS)
 
 INSTALL(FILES dlt.conf
