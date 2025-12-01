@@ -1108,11 +1108,15 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                 if ((config->sync == DLT_LOGSTORAGE_SYNC_ON_MSG) ||
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
                     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
+#ifdef DLT_LOGSTORAGE_USE_GZIP
                         if (fsync(fileno(config->gzlog)) != 0) {
                             if (errno != ENOSYS) {
                                 dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
                             }
                         }
+#else
+                        dlt_vlog(LOG_ERR, "%s: dlt-daemon not compiled with logstorage gzip support\n", __func__);
+#endif
                     }
                     else {
                         if (fsync(fileno(config->log)) != 0) {
