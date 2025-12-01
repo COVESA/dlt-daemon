@@ -121,7 +121,7 @@ The Context Id of the filetransfer.
 
 ## FiletransferTimeStartup
 
-Time in seconds after startup of dlt-system when first file is transfered.
+Time in seconds after startup of dlt-system when first file is transferred.
 
     Default: 0
 
