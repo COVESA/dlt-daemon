@@ -1830,7 +1830,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
         dlt_get_version(daemon->ECUVersionString, DLT_DAEMON_TEXTBUFSIZE);
     }
 
-    /* Set to allows to maintain logstorage loglevel as default */
+    /* Set to allows one to maintain logstorage loglevel as default */
     daemon->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
 
     return 0;

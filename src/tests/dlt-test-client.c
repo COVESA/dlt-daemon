@@ -877,7 +877,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     datalength -= slen;
                     ptr += slen;
 
-                    /* 2*, as the min and the max is transfered */
+                    /* 2*, as the min and the max is transferred */
                     if (datalength == 2 * sizeof(float))
                         dltdata->test_counter_macro[2]++;
 
@@ -889,7 +889,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     datalength -= slen;
                     ptr += slen;
 
-                    /* 2*, as the min and the max is transfered */
+                    /* 2*, as the min and the max is transferred */
                     if (datalength == 2 * sizeof(double))
                         dltdata->test_counter_macro[2]++;
 
@@ -1900,7 +1900,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     datalength -= slen;
                     ptr += slen;
 
-                    /* 2*, as the min and the max is transfered */
+                    /* 2*, as the min and the max is transferred */
                     if (datalength == 2 * sizeof(float))
                         dltdata->test_counter_function[2]++;
 
@@ -1912,7 +1912,7 @@ int dlt_testclient_message_callback(DltMessage *message, void *data)
                     datalength -= slen;
                     ptr += slen;
 
-                    /* 2*, as the min and the max is transfered */
+                    /* 2*, as the min and the max is transferred */
                     if (datalength == 2 * sizeof(double))
                         dltdata->test_counter_function[2]++;
 

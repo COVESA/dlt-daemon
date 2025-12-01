@@ -99,7 +99,7 @@ static inline int8_t getStatus(uint8_t request_log, int context_log)
  * @param size2 The second message size.
  * @param verbose Needed for socket closure.
  *
- * @return The amount of data transfered.
+ * @return The amount of data transferred.
  */
 static int dlt_daemon_client_send_all_multiple(DltDaemon *daemon,
                                                DltDaemonLocal *daemon_local,

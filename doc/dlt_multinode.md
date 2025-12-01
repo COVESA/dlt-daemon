@@ -4,7 +4,7 @@ Back to [README.md](../README.md)
 
 ## Overview
 
-MultiNode allows to connect DLT Daemons running on different operating systems,
+MultiNode allows one to connect DLT Daemons running on different operating systems,
 e.g. in a virtualized environment. The central component is the Gateway DLT
 Daemon which connects external DLT Clients, like the DLT Viewer running on a
 host computer with Passive DLT Daemons running on nodes without a physical
