@@ -236,7 +236,7 @@ This value defines the max size of a offline trace file, if offline trace is ena
 
 ## OfflineTraceMaxSize
 
-This value defines the max offline Trace memory size, if offline trace is enabled. This value is defined in bytes. If the overall offline trace size is excedded, the oldest log files are deleted, until a new trace file fits the overall offline trace max size.
+This value defines the max offline Trace memory size, if offline trace is enabled. This value is defined in bytes. If the overall offline trace size is exceeded, the oldest log files are deleted, until a new trace file fits the overall offline trace max size.
 
     Default: 4000000
 
