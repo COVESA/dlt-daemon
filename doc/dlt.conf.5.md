@@ -276,7 +276,7 @@ If this value is set to a serial device name, e.g. /dev/ttyS0, a serial port is 
 
 ## RS232Baudrate
 
-The used serial baud rate, if serial loggin is enabled. The RS232DeviceName must be set to enable serial logging.
+The used serial baud rate, if serial logging is enabled. The RS232DeviceName must be set to enable serial logging.
 
     Default: 115200
 
