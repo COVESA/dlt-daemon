@@ -11,7 +11,7 @@ filetransfer, syslog adapater, logging of any kind of files and
 procfilesystem logger. The individual features can be enabled and
 disabled in the configuration file.
 
-The configuration file dlt-system.conf allows to configure the different runtime behaviour of dlt-system. The configuration file is loaded during startup of dlt-system.
+The configuration file dlt-system.conf allows one to configure the different runtime behaviour of dlt-system. The configuration file is loaded during startup of dlt-system.
 
 dlt-system loads by default the configuration file  /etc/dlt-system.conf.
 An alternative configuration file can be loaded with the option -c.

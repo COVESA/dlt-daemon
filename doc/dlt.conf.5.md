@@ -8,7 +8,7 @@
 
 The DLT daemon is the central application which gathers logs and traces from different applications, stores them temporarily or permanently and transfers them to a DLT client application, which could run directly on the COVESA system or more likely on some external tester device.
 
-The configuration file dlt.conf allows to configure the different
+The configuration file dlt.conf allows one to configure the different
 runtime behaviour of the dlt-daemon. It is loaded during startup of dlt-daemon.
 
 # GENERAL OPTIONS
