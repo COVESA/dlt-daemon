@@ -1727,6 +1727,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     signal(SIGHUP, dlt_daemon_signal_handler);  /* hangup signal */
     signal(SIGQUIT, dlt_daemon_signal_handler);
     signal(SIGINT, dlt_daemon_signal_handler);
+    signal(SIGSEGV, dlt_daemon_signal_handler);
 #ifdef __QNX__
     signal(SIGUSR1, dlt_daemon_signal_handler); /* for timer threads */
 #endif
@@ -1898,19 +1899,38 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
     int fd = -1;
+    int dir_fd = -1;
     int fifo_size;
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
 
-    /* Try to delete existing pipe, ignore result of unlink */
+    /* Valid fifo means there is a daemon running, stop init phase of the new */
     const char *tmpFifo = daemon_local->flags.daemonFifoName;
-    unlink(tmpFifo);
+    if (access(tmpFifo, F_OK) == 0) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s is in use (%s)!\n",
+                 tmpFifo, strerror(errno));
+        return -1;
+    }
 
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
 
     if (ret == -1) {
         dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n",
+                 tmpFifo, strerror(errno));
+        return -1;
+    } /* if */
+
+    dir_fd = open(dltFifoBaseDir, O_RDONLY);
+    if (dir_fd == -1) {
+        dlt_vlog(LOG_WARNING, "Directory %s of fifo  cannot be opened (%s)!\n",
+                 dltFifoBaseDir, strerror(errno));
+        return -1;
+    }
+
+    fd = openat(dir_fd, tmpFifo, O_RDWR);
+    if (fd == -1) {
+        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
                  tmpFifo, strerror(errno));
         return -1;
     } /* if */
@@ -1921,7 +1941,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         struct group *group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
 
         if (group_dlt) {
-            ret = chown(tmpFifo, -1, group_dlt->gr_gid);
+            ret = fchown(fd, -1, group_dlt->gr_gid);
 
             if (ret == -1)
                 dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
@@ -1940,14 +1960,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
                      strerror(errno));
         }
     }
-
-    fd = open(tmpFifo, O_RDWR);
-
-    if (fd == -1) {
-        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
-                 tmpFifo, strerror(errno));
-        return -1;
-    } /* if */
 
 #ifdef __linux__
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
@@ -2462,6 +2474,7 @@ void dlt_daemon_signal_handler(int sig)
         case SIGTERM:
         case SIGINT:
         case SIGQUIT:
+        case SIGSEGV:
         {
             /* finalize the server */
             dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
