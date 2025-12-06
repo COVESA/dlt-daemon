@@ -24,7 +24,6 @@
 #include <ctype.h>
 #include <syslog.h>
 #include <sys/stat.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <time.h>
