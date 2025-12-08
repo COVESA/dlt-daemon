@@ -11,7 +11,7 @@
 #DESCRIPTION
 
 The DLT system logging process is the central application, which logs system information from the platform. It provides the features
-filetransfer, syslog adapater, logging of any kind of files and
+filetransfer, syslog adapter, logging of any kind of files and
 procfilesystem logger. The individual features can be enabled and
 disabled in the configuration file.
 

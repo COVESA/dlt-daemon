@@ -53,7 +53,9 @@
 
 #include <search.h>
 #include <stdbool.h>
+#ifdef DLT_LOGSTORAGE_USE_GZIP
 #include <zlib.h>
+#endif
 #include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_config_file_parser.h"
@@ -214,7 +216,9 @@ struct DltLogStorageFilterConfig
                                int status);
     FILE *log;                      /* current open log file */
     int fd;                         /* The file descriptor for the active log file */
+#ifdef DLT_LOGSTORAGE_USE_GZIP
     gzFile *gzlog;                  /* current open gz log file */
+#endif
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
     unsigned int current_write_file_offset;    /* file offset for specific_size sync strategy */

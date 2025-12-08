@@ -6,7 +6,7 @@
 
 # DESCRIPTION
 
-The configuration file dlt_gateway.conf allows to configure the different runtime behaviour of gateway in Multinode feature.
+The configuration file dlt_gateway.conf allows one to configure the different runtime behaviour of gateway in Multinode feature.
 
 The configuration file is written in an INI file format and contains information about different connected passive nodes.
 

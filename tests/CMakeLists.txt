@@ -98,7 +98,7 @@ foreach(target IN LISTS TARGET_LIST)
     endif()
 
     add_executable(${target} ${target_SRCS})
-    target_link_libraries(${target} ${DLT_LIBRARIES})
+    target_link_libraries(${target} ${DLT_LIBRARIES} ${ZLIB_LIBRARY})
     if(WITH_DLT_INSTALLED_TESTS)
         install(TARGETS ${target} RUNTIME DESTINATION ${DLT_TEST_DIR})
         if(EXISTS ${PROJECT_SOURCE_DIR}/tests/${target}.sh)

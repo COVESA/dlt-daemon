@@ -117,7 +117,7 @@ static void catch_signal(int signo)
 
 /** @brief Install a handler for some signals
  *
- * Handler are installed on exit related signals. That allows to exit from
+ * Handler are installed on exit related signals. That allows one to exit from
  * the main loop gracefully.
  */
 static void install_signal_handler(void)

@@ -282,7 +282,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 /** @brief Find connection with a specific \a fd in the connection list.
  *
  * There can be only one event per \a fd. We can then find a specific connection
- * based on this \a fd. That allows to check if a specific \a fd has already been
+ * based on this \a fd. That allows one to check if a specific \a fd has already been
  * registered.
  *
  * @param ev The event handler structure where the list of connection is.

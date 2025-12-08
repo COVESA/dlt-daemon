@@ -854,12 +854,13 @@ TEST(t_dlt_daemon_context_add, abnormal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    DltLogLevelType DLT_LOG_NOT_EXIST = (DltLogLevelType)0;
+    /* Log level out of valid range (-1 to 6), should return NULL */
+    int8_t invalid_log_level = 100;
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,
                                         apid,
                                         ctid,
-                                        DLT_LOG_NOT_EXIST,
+                                        invalid_log_level,
                                         DLT_TRACE_STATUS_DEFAULT,
                                         0,
                                         0,
@@ -873,14 +874,14 @@ TEST(t_dlt_daemon_context_add, abnormal)
     EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
 
-    /* Trace Status dont exists */
-    DltTraceStatusType DLT_TRACE_TYPE_NOT_EXIST = (DltTraceStatusType)0;
+    /* Trace Status out of valid range (-1 to 1), should return NULL */
+    int8_t invalid_trace_status = 100;
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,
                                         apid,
                                         ctid,
                                         DLT_LOG_DEFAULT,
-                                        DLT_TRACE_TYPE_NOT_EXIST,
+                                        invalid_trace_status,
                                         0,
                                         0,
                                         desc,

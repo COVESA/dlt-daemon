@@ -93,11 +93,6 @@
 #   define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL)
 #endif /* DLT_FATAL_LOG_RESET_ENABLE */
 
-/* Extra length for FIFO filename: /dlt + pid */
-#define DLT_FIFO_FILENAME_EXTRA_LEN 20
-/* Extra length for FIFO filename: /dlt + pid */
-#define DLT_FIFO_FILENAME_EXTRA_LEN 20
-
 enum InitState {
     INIT_UNITIALIZED,
     INIT_IN_PROGRESS,
@@ -1219,6 +1214,7 @@ DltReturnValue dlt_free(void)
     dlt_mutex_free();
 
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
+
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
 
     /* Clear and free local stored application information */

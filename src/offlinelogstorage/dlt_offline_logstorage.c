@@ -394,11 +394,16 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
         len = DLT_OFFLINE_LOGSTORAGE_MIN(len, 4);
 
         int written = snprintf((*names + y), 5, "%.*s", (int)len, tok);
-        if ((num > 1) && (i < num)) {
-            (*names)[y + written] = ',';
-            (*names)[y + written + 1] = '\0';
+        if (written > 0 && written < 5) {
+            if ((num > 1) && (i < num)) {
+                (*names)[y + written] = ',';
+                (*names)[y + written + 1] = '\0';
+            }
+            y += written + 1;
+        } else {
+            /* snprintf failed or truncated, do not advance y */
+            break;
         }
-        y += written + 1;
         i++;
         tok = strtok(NULL, ",");
     }

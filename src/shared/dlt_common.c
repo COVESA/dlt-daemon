@@ -3478,9 +3478,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(value_text, textlength, "%d", value8i);
                 snprintf(value_text, (size_t)textlength, "%d", value8i);
-                snprintf(value_text, (size_t)textlength, "%d", value8u);
             }
             else {
                 value8u = 0;
@@ -3489,7 +3487,7 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                 if ((*datalength) < 0)
                     return DLT_RETURN_ERROR;
 
-                snprintf(value_text, textlength, "%d", value8u);
+                snprintf(value_text, (size_t)textlength, "%d", value8u);
             }
 
             break;
@@ -3505,7 +3503,6 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16i = (int16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16i_tmp);
-                snprintf(value_text, textlength, "%hd", value16i);
                 snprintf(value_text, (size_t)textlength, "%hd", value16i);
             }
             else {
@@ -3517,7 +3514,6 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value16u = (uint16_t) DLT_ENDIAN_GET_16(msg->standardheader->htyp, value16u_tmp);
-                snprintf(value_text, textlength, "%hu", value16u);
                 snprintf(value_text, (size_t)textlength, "%hu", value16u);
             }
 
@@ -3534,7 +3530,6 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32i = (int32_t) DLT_ENDIAN_GET_32(msg->standardheader->htyp, (uint32_t)value32i_tmp);
-                snprintf(value_text, textlength, "%d", value32i);
                 snprintf(value_text, (size_t)textlength, "%d", value32i);
             }
             else {
@@ -3546,7 +3541,6 @@ DltReturnValue dlt_message_argument_print(DltMessage *msg,
                     return DLT_RETURN_ERROR;
 
                 value32u = DLT_ENDIAN_GET_32(msg->standardheader->htyp, value32u_tmp);
-                snprintf(value_text, textlength, "%u", value32u);
                 snprintf(value_text, (size_t)textlength, "%u", value32u);
             }
 

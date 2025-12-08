@@ -125,22 +125,13 @@ void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, cons
     size_t bufsize = sizeof(files_buffer->filename);
     memset(file_name, 0, bufsize);
 
-    size_t total_len = strlen(files_buffer->filenameBase)
-        + strlen(MULTIPLE_FILES_FILENAME_INDEX_DELIM)
-        + strlen(file_index)
-        + strlen(files_buffer->filenameExt);
-
-    if (total_len < bufsize) {
-        int written = snprintf(file_name, bufsize, "%s%s%s%s",
-                              files_buffer->filenameBase,
-                              MULTIPLE_FILES_FILENAME_INDEX_DELIM,
-                              file_index,
-                              files_buffer->filenameExt);
-        if (written < 0 || (size_t)written >= bufsize) {
-            file_name[bufsize - 1] = '\0';
-        }
-    } else {
-        file_name[0] = '\0';
+    int written = snprintf(file_name, bufsize, "%s%s%s%s",
+                          files_buffer->filenameBase,
+                          MULTIPLE_FILES_FILENAME_INDEX_DELIM,
+                          file_index,
+                          files_buffer->filenameExt);
+    if (written < 0 || (size_t)written >= bufsize) {
+        file_name[bufsize - 1] = '\0';
     }
 }
 

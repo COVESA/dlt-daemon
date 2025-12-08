@@ -281,7 +281,7 @@ runtime configuration).
 
 - Environment variable `DLT_INITIAL_LOG_LEVEL`
     - There is an environment variable which is called `DLT_INITIAL_LOG_LEVEL`.
-      It allows to set a per-application-context log level. Refer to
+      It allows one to set a per-application-context log level. Refer to
       [Initial Log level](#initial-log-level) for more detail.
 
 - Application registers itself at daemon with self-defined log level

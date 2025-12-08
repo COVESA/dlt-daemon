@@ -8,7 +8,7 @@
 
 The DLT daemon is the central application which gathers logs and traces from different applications, stores them temporarily or permanently and transfers them to a DLT client application, which could run directly on the COVESA system or more likely on some external tester device.
 
-The configuration file dlt.conf allows to configure the different
+The configuration file dlt.conf allows one to configure the different
 runtime behaviour of the dlt-daemon. It is loaded during startup of dlt-daemon.
 
 # GENERAL OPTIONS
@@ -236,7 +236,7 @@ This value defines the max size of a offline trace file, if offline trace is ena
 
 ## OfflineTraceMaxSize
 
-This value defines the max offline Trace memory size, if offline trace is enabled. This value is defined in bytes. If the overall offline trace size is excedded, the oldest log files are deleted, until a new trace file fits the overall offline trace max size.
+This value defines the max offline Trace memory size, if offline trace is enabled. This value is defined in bytes. If the overall offline trace size is exceeded, the oldest log files are deleted, until a new trace file fits the overall offline trace max size.
 
     Default: 4000000
 
@@ -276,7 +276,7 @@ If this value is set to a serial device name, e.g. /dev/ttyS0, a serial port is 
 
 ## RS232Baudrate
 
-The used serial baud rate, if serial loggin is enabled. The RS232DeviceName must be set to enable serial logging.
+The used serial baud rate, if serial logging is enabled. The RS232DeviceName must be set to enable serial logging.
 
     Default: 115200
 

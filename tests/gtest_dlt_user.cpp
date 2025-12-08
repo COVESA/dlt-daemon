@@ -31,6 +31,8 @@
 #include <stdint.h>
 #include <float.h>
 #include <chrono>
+#include <unistd.h>
+#include <fcntl.h>
 
 extern "C" {
 #include "dlt_user.h"
@@ -1884,8 +1886,9 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
@@ -1955,8 +1958,9 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
@@ -2027,9 +2031,10 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
     expected_message = (char *)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
-        expected_message[index] = '#';
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len; index++) {
+        expected_message[index] = '$';
     }
     /* Use memcpy for the truncated message, but ensure we do not overflow and always null-terminate */
     if (str_truncate_message_length > 0 && (user_message_after_truncated_size + str_truncate_message_length) <= expected_message_length) {
@@ -2270,12 +2275,11 @@ TEST(t_dlt_user_log_write_constant_string, normal_too_long_message_is_truncated_
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
-        expected_message[index] = '#';
-    }
-    strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
-    expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
+    /* Fill the safe region with '#' and append the truncated message */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    memset(expected_message, '#', fill_len);
+    strncpy(expected_message + fill_len, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
+    expected_message[fill_len + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_constant_string(&contextData, message));
     ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
@@ -2441,8 +2445,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
-    for (index = 0; index < (user_message_after_truncated_size - 1); index++)
-    {
+    for (index = 0; index < (user_message_after_truncated_size - 1) && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     expected_message[user_message_after_truncated_size - 1] = '$';
@@ -2591,7 +2594,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_a
     expected_message = (char *)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '$';
     }
@@ -2671,8 +2676,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len; index++) {
         expected_message[index] = '#';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
@@ -2753,8 +2759,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
-    {
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len; index++) {
         expected_message[index] = '#';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
@@ -2829,7 +2836,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_a
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '$';
     }
@@ -2918,7 +2927,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '#';
     }
@@ -3001,7 +3012,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '#';
     }
@@ -3086,7 +3099,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_a
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '$';
     }
@@ -3149,16 +3164,31 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
      * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
      */
     package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
+
+    /**
+     * Fill the "𐍈" character at the position which the last byte of this character is exceed the buffer length and
+     * expectation is it will be truncated 3 more bytes in the character sequence
+     */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
+    remaining_byte_truncated_utf8_character = 3;
+    const char *utf8_4byte_character = "𐍈";
+    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    /* Ensure we do not overflow the buffer when copying utf8_4byte_character */
+    size_t max_utf8_copy = send_message_length - index - 1; /* leave space for null-terminator */
+    size_t utf8_len = strlen(utf8_4byte_character);
+    if (utf8_len > max_utf8_copy) utf8_len = max_utf8_copy;
+    memcpy(message + index, utf8_4byte_character, utf8_len);
+    message[send_message_length - 1] = '\0';
 
     /* Create the expected message */
-    remaining_byte_truncated_utf8_character = 3;
-    expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
+    expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
     expected_message = (char *)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '#';
     }
@@ -3249,7 +3279,9 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
-    for (index = 0; index < user_message_after_truncated_size; index++)
+    /* Ensure we do not write past the allocated buffer */
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++)
     {
         expected_message[index] = '#';
     }
@@ -5447,5 +5479,22 @@ TEST(t_dlt_user_run_into_trace_limit, normal)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+
+    /* Suppress DLT internal logging to stderr during tests */
+    int saved_stderr = dup(STDERR_FILENO);
+    int devnull = open("/dev/null", O_WRONLY);
+    if (devnull >= 0) {
+        dup2(devnull, STDERR_FILENO);
+        close(devnull);
+    }
+
+    int result = RUN_ALL_TESTS();
+
+    /* Restore stderr */
+    if (saved_stderr >= 0) {
+        dup2(saved_stderr, STDERR_FILENO);
+        close(saved_stderr);
+    }
+
+    return result;
 }

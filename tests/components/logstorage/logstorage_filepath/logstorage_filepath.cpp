@@ -51,12 +51,11 @@ int main(int argc, char *argv[])
         struct timespec tv = {0, 1000000};
         nanosleep(&tv, NULL);
     }
-    free(ctx);
-
     for (i = 0; i < num_context; i++) {
         DLT_UNREGISTER_CONTEXT(ctx[i]);
     }
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
+    free(ctx);
 
     return EXIT_SUCCESS;
 }

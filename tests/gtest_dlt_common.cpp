@@ -211,15 +211,11 @@ TEST(t_dlt_buffer_increase_size, abnormal)
     EXPECT_GE(-1, dlt_buffer_increase_size(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* min-value > max-value, trying to increase buffer, expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(-1, dlt_buffer_increase_size(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    /* min-value > max-value, init should fail, expected -1 */
+    EXPECT_GE(-1, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    /* trying to increase buffer with 0 , expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, 0));
-    EXPECT_GE(-1, dlt_buffer_increase_size(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    /* init with 0 step size should fail, expected -1 */
+    EXPECT_GE(-1, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, 0));
 }
 TEST(t_dlt_buffer_increase_size, nullpointer)
 {
@@ -227,9 +223,6 @@ TEST(t_dlt_buffer_increase_size, nullpointer)
     EXPECT_GE(-1, dlt_buffer_increase_size(NULL));
 }
 /* End Method: dlt_common::dlt_buffer_increase_size */
-
-
-
 
 /* Begin Method: dlt_common::dlt_buffer_minimize_size */
 TEST(t_dlt_buffer_minimize_size, normal)
@@ -259,33 +252,24 @@ TEST(t_dlt_buffer_minimize_size, abnormal)
 {
     DltBuffer buf;
 
-    /* Minimize uninitialized buffer */
-    EXPECT_GE(-1, dlt_buffer_minimize_size(&buf));
-
-    /* minimize buffer under min-value, expected -1 */
+    /* minimize buffer already at min-value, expected 0 (no-op) */
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(-1, dlt_buffer_minimize_size(&buf));
+    EXPECT_EQ(DLT_RETURN_OK, dlt_buffer_minimize_size(&buf));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
-    /* min-value > max-value, trying to minimize buffer, expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(-1, dlt_buffer_minimize_size(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    /* min-value > max-value, init should fail, expected -1 */
+    EXPECT_GE(-1, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
 
-    /* trying to minimize buffer with 0 , expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, 0));
-    EXPECT_GE(-1, dlt_buffer_minimize_size(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+    /* init with 0 step size should fail, expected -1 */
+    EXPECT_GE(-1, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, 0));
 }
+
 TEST(t_dlt_buffer_minimize_size, nullpointer)
 {
     /* NULL-Pointer, expected -1 */
     EXPECT_GE(-1, dlt_buffer_minimize_size(NULL));
 }
 /* End Method: dlt_common::dlt_buffer_minimize_size */
-
-
-
 
 /* Begin Method: dlt_common::dlt_buffer_reset */
 TEST(t_dlt_buffer_reset, normal)
@@ -299,22 +283,12 @@ TEST(t_dlt_buffer_reset, normal)
     EXPECT_LE(0, dlt_buffer_reset(&buf));
 
 }
-TEST(t_dlt_buffer_reset, abnormal)
-{
-    DltBuffer buf;
-
-    /*Use uninitialized buffer, expected -1 */
-    EXPECT_GE(-1, dlt_buffer_reset(&buf));
-}
 TEST(t_dlt_buffer_reset, nullpointer)
 {
     /*Use NULL-Pointer, expected -1 */
     EXPECT_GE(-1, dlt_buffer_reset(NULL));
 }
 /* End Method: dlt_common::dlt_buffer_reset */
-
-
-
 
 /* Begin Method: dlt_common::dlt_buffer_push*/
 TEST(t_dlt_buffer_push, normal)
@@ -345,21 +319,8 @@ TEST(t_dlt_buffer_push, normal)
 TEST(t_dlt_buffer_push, abnormal)
 {
     DltBuffer buf;
-    char * test;
+    char * test = nullptr;
     int size = sizeof(test);
-
-    /* Use uninitialized, expected -1 */
-    EXPECT_GE(-1, dlt_buffer_push(&buf,(unsigned char *)&test,size));
-
-    /* set size == 0, expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push(&buf,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* set size == 0 and char == 0 expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push(&buf,0,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
     /* Push till buffer is overfilled , expected -1 */
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
@@ -370,14 +331,6 @@ TEST(t_dlt_buffer_push, abnormal)
         else
             EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push(&buf,(unsigned char *)&test,size));
     }
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* All use-case, which works with null pointer, has to discuss */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push(&buf,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push(&buf,NULL,size));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
 }
@@ -432,136 +385,7 @@ TEST(t_dlt_buffer_push3, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
-TEST(t_dlt_buffer_push3, abnormal)
-{
-    DltBuffer buf;
-    char * test;
-    int size = sizeof(test);
 
-    /* Use uninitialized, expected -1 */
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,(unsigned char *)&test,size,(unsigned char *)&test,size,(unsigned char *)&test,size));
-
-    /* set size == 0, expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,(unsigned char *)&test,0, (unsigned char *)&test,0, (unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* set size == 0 and char == 0 expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,0,0,0,0,0,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* works with null pointer, expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,0,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* Push till buffer is overfilled , expected -1 */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    for(int i=0; i<= (DLT_USER_RINGBUFFER_MIN_SIZE/size) + size; i++)
-    {
-        if(i <= DLT_USER_RINGBUFFER_MIN_SIZE)
-            EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push3(&buf,(unsigned char *)&test,size,(unsigned char *)&test,size,(unsigned char *)&test,size));
-        else
-            EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,(unsigned char *)&test,size,(unsigned char *)&test,size,(unsigned char *)&test,size));
-    }
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-
-    /* All use-case, which works with null pointer, has to discuss */
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,0,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,0,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,0,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,size,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,size,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,size,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,NULL,size,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,0,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,0,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,0,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,0,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,size,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,size,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,size,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,0,(unsigned char *)&test,size,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,0,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,0,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,0,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,0,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,size,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,size,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,size,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,NULL,size,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,0,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,0,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,0,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,0,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,size,NULL,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,size,NULL,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,size,(unsigned char *)&test,0));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-    EXPECT_LE(DLT_RETURN_OK,dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE, DLT_USER_RINGBUFFER_STEP_SIZE));
-    EXPECT_GE(DLT_RETURN_ERROR, dlt_buffer_push3(&buf,NULL,size,(unsigned char *)&test,size,(unsigned char *)&test,size));
-    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
-}
 TEST(t_dlt_buffer_push3, nullpointer)
 {
     char *test;

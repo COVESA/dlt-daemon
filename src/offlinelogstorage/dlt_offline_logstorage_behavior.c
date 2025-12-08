@@ -1087,6 +1087,7 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
     }
 
     /* This is for ON_MSG/UNSET strategy */
+    /* Handle log file open for ON_MSG/UNSET strategy */
 #ifdef DLT_LOGSTORAGE_USE_GZIP
     if (config->log == NULL && config->gzlog == NULL) {
 #else
@@ -1129,19 +1130,20 @@ int dlt_logstorage_prepare_on_msg(DltLogStorageFilterConfig *config,
                     (config->sync == DLT_LOGSTORAGE_SYNC_UNSET)) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
                     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
-                        if (gzflush(config->gzlog, Z_SYNC_FLUSH) != 0) {
-                            dlt_vlog(LOG_ERR, "%s: failed to gzflush log file\n", __func__);
+                        if (fsync(fileno(config->gzlog)) != 0) {
+                            if (errno != ENOSYS) {
+                                dlt_vlog(LOG_ERR, "%s: failed to sync gzip log file\n", __func__);
+                            }
                         }
-                    } else {
+                    } else
 #endif
+                    {
                         if (fsync(fileno(config->log)) != 0) {
                             if (errno != ENOSYS) {
                                 dlt_vlog(LOG_ERR, "%s: failed to sync log file\n", __func__);
                             }
                         }
-#ifdef DLT_LOGSTORAGE_USE_GZIP
                     }
-#endif
                 }
 
                 dlt_logstorage_close_file(config);
