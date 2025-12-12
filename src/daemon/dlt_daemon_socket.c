@@ -30,7 +30,12 @@
 #include <ctype.h>
 #include <stdio.h>      /* for printf() and fprintf() */
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
+
+#pragma GCC diagnostic ignored "-Wconversion"
+#include <arpa/inet.h> /* for sockaddr_in and inet_addr() */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic pop
+
 #include <stdlib.h>     /* for atoi() and exit() */
 #include <string.h>     /* for memset() */
 #include <unistd.h>     /* for close() */
@@ -87,7 +92,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
 #endif
 
-    dlt_vlog(LOG_INFO, "%s: Socket created\n", __FUNCTION__);
+    dlt_vlog(LOG_INFO, "%s: Socket created\n", __func__);
 
     /* setsockpt SO_REUSEADDR */
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
@@ -142,7 +147,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     }
 
     /*listen */
-    dlt_vlog(LOG_INFO, "%s: Listening on ip %s and port: %u\n", __FUNCTION__, ip, servPort);
+    dlt_vlog(LOG_INFO, "%s: Listening on ip %s and port: %u\n", __func__, ip, servPort);
 
     /* get socket buffer size */
     dlt_vlog(LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
@@ -179,7 +184,7 @@ int dlt_daemon_socket_send(int sock,
     /* Optional: Send serial header, if requested */
     if (serialheader) {
         ret = dlt_daemon_socket_sendreliable(sock,
-                                             (void *)dltSerialHeader,
+                                             dltSerialHeader,
                                              sizeof(dltSerialHeader));
 
         if (ret != DLT_RETURN_OK) {
@@ -216,14 +221,14 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
     return n;
 }
 
-int dlt_daemon_socket_sendreliable(int sock, void *data_buffer, int message_size)
+int dlt_daemon_socket_sendreliable(int sock, const void *data_buffer, int message_size)
 {
     int data_sent = 0;
 
     while (data_sent < message_size) {
         ssize_t ret = send(sock,
-                           (uint8_t *)data_buffer + data_sent,
-                           message_size - data_sent,
+                           (const uint8_t *)data_buffer + data_sent,
+                           (size_t)(message_size - data_sent),
                            0);
 
         if (ret < 0) {

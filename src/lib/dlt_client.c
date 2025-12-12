@@ -72,7 +72,12 @@
 #   include <winsock2.h> /* for socket(), connect(), send(), and recv() */
 #else
 #   include <sys/socket.h> /* for socket(), connect(), send(), and recv() */
+
+#pragma GCC diagnostic ignored "-Wconversion"
 #   include <arpa/inet.h> /* for sockaddr_in and inet_addr() */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic pop
+
 #   include <netdb.h>
 #   include <sys/stat.h>
 #   include <sys/un.h>
@@ -126,7 +131,7 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
     client->servIP = NULL;
     client->serialDevice = NULL;
     client->baudrate = DLT_CLIENT_INITIAL_BAUDRATE;
-    client->port = port;
+    client->port = (uint16_t)port;
     client->socketPath = NULL;
     client->mode = DLT_CLIENT_MODE_TCP;
     client->receiver.buffer = NULL;
@@ -540,7 +545,7 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
         }
 
         while (dlt_message_read(&msg, (unsigned char *)(client->receiver.buf),
-                                client->receiver.bytesRcvd,
+                                (unsigned int)client->receiver.bytesRcvd,
                                 client->resync_serial_header,
                                 verbose) == DLT_MESSAGE_ERROR_OK)
         {
@@ -548,19 +553,16 @@ DltReturnValue dlt_client_main_loop(DltClient *client, void *data, int verbose)
             if (message_callback_function)
                 (*message_callback_function)(&msg, data);
 
+            int total_size = (int)((size_t)msg.headersize
+                            + (size_t)msg.datasize
+                            - sizeof(DltStorageHeader));
+
             if (msg.found_serialheader) {
-                if (dlt_receiver_remove(&(client->receiver),
-                                        (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader) +
-                                        sizeof(dltSerialHeader))) ==
-                    DLT_RETURN_ERROR) {
-                    /* Return value ignored */
-                    dlt_message_free(&msg, verbose);
-                    return DLT_RETURN_ERROR;
-                }
+                total_size += (int)sizeof(dltSerialHeader);
             }
-            else if (dlt_receiver_remove(&(client->receiver),
-                                         (int) (msg.headersize + msg.datasize - sizeof(DltStorageHeader))) ==
-                     DLT_RETURN_ERROR) {
+
+            if (dlt_receiver_remove(&(client->receiver),
+                                    total_size) == DLT_RETURN_ERROR) {
                 /* Return value ignored */
                 dlt_message_free(&msg, verbose);
                 return DLT_RETURN_ERROR;
@@ -595,7 +597,7 @@ DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *
 
     if (client->send_serial_header)
     {
-        ret = send(client->sock, (const char *)dltSerialHeader,
+        ret = (int)send(client->sock, (const char *)dltSerialHeader,
                    sizeof(dltSerialHeader), 0);
         if (ret < 0)
         {
@@ -605,16 +607,16 @@ DltReturnValue dlt_client_send_message_to_socket(DltClient *client, DltMessage *
         }
     }
 
-    ret = send(client->sock,
+    ret = (int)send(client->sock,
                (const char *)(msg->headerbuffer + sizeof(DltStorageHeader)),
-               msg->headersize - sizeof(DltStorageHeader), 0);
+               (size_t)((int32_t)msg->headersize - (int32_t)sizeof(DltStorageHeader)), 0);
     if (ret < 0)
     {
         dlt_vlog(LOG_ERR, "Sending message header failed: %s\n", strerror(errno));
         return DLT_RETURN_ERROR;
     }
 
-    ret = send(client->sock, (const char *)msg->databuffer, msg->datasize, 0);
+    ret = (int)send(client->sock, (const char *)msg->databuffer, (size_t)msg->datasize, 0);
     if ( ret < 0)
     {
         dlt_vlog(LOG_ERR, "Sending message failed: %s\n", strerror(errno));
@@ -641,7 +643,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         return DLT_RETURN_ERROR;
 
     /* prepare payload of data */
-    msg.datasize = size;
+    msg.datasize = (int32_t)size;
 
     if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
         free(msg.databuffer);
@@ -649,7 +651,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     }
 
     if (msg.databuffer == 0) {
-        msg.databuffer = (uint8_t *)malloc(msg.datasize);
+        msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
         msg.databuffersize = msg.datasize;
     }
 
@@ -704,12 +706,13 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
     dlt_set_id(msg.extendedheader->ctid, (ctid[0] == '\0') ? DLT_CLIENT_DUMMY_CON_ID : ctid);
 
     /* prepare length information */
-    msg.headersize = (uint32_t) (sizeof(DltStorageHeader) +
+    msg.headersize = (int32_t)(sizeof(DltStorageHeader) +
         sizeof(DltStandardHeader) +
         sizeof(DltExtendedHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
 
-    len = (int32_t) (msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
+    len = (int32_t)((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize);
+
 
     if (len > UINT16_MAX) {
         dlt_vlog(LOG_ERR,
@@ -721,7 +724,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
         return DLT_RETURN_ERROR;
     }
 
-    msg.standardheader->len = DLT_HTOBE_16(len);
+    msg.standardheader->len = (uint16_t)DLT_HTOBE_16((uint16_t)len);
 
     /* Send data (without storage header) */
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {
@@ -736,8 +739,8 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
                 return DLT_RETURN_ERROR;
             }
         }
-        ret =
-            (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), msg.headersize - sizeof(DltStorageHeader));
+
+        ret = (int) write(client->sock, msg.headerbuffer + sizeof(DltStorageHeader), (size_t)((int32_t)msg.headersize - (int32_t)sizeof(DltStorageHeader)));
 
         if (0 > ret) {
             dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
@@ -745,7 +748,7 @@ DltReturnValue dlt_client_send_ctrl_msg(DltClient *client, char *apid, char *cti
             return DLT_RETURN_ERROR;
         }
 
-        ret = (int) write(client->sock, msg.databuffer, msg.datasize);
+        ret = (int) write(client->sock, msg.databuffer, (size_t)msg.datasize);
 
         if (0 > ret) {
             dlt_vlog(LOG_ERR, "%s: Sending message failed\n", __func__);
@@ -1277,9 +1280,8 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
     }
 
     /* count_app_ids */
-    int16_t ret = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-    if (ret >= 0)
-        resp->log_info_type.count_app_ids = ret;
+    resp->log_info_type.count_app_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                              &rp_count);
 
     resp->log_info_type.app_ids = (AppIDsType *)calloc
             (resp->log_info_type.count_app_ids, sizeof(AppIDsType));
@@ -1296,9 +1298,8 @@ DltReturnValue dlt_client_parse_get_log_info_resp_text(DltServiceGetLogInfoRespo
         dlt_getloginfo_conv_ascii_to_id(rp, &rp_count, app->app_id, DLT_ID_SIZE);
 
         /* count_con_ids */
-        ret = dlt_getloginfo_conv_ascii_to_uint16_t(rp, &rp_count);
-        if (ret >= 0)
-            app->count_context_ids = ret;
+        app->count_context_ids = (uint16_t) dlt_getloginfo_conv_ascii_to_uint16_t(rp,
+                                                                       &rp_count);
 
         app->context_id_info = (ContextIDsInfoType *)calloc
                 (app->count_context_ids, sizeof(ContextIDsInfoType));

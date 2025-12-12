@@ -61,6 +61,22 @@
 #   endif
 #endif
 
+#include <getopt.h>
+#ifndef CONFIGURATION_FILES_DIR
+#define CONFIGURATION_FILES_DIR "/etc"
+#endif
+#ifndef DLT_USER_IPC_PATH
+#define DLT_USER_IPC_PATH "/tmp"
+#endif
+
+#include <getopt.h>
+#ifndef CONFIGURATION_FILES_DIR
+#define CONFIGURATION_FILES_DIR "/etc"
+#endif
+#ifndef DLT_USER_IPC_PATH
+#define DLT_USER_IPC_PATH "/tmp"
+#endif
+
 #include "dlt_types.h"
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
@@ -204,7 +220,7 @@ void usage()
     printf("Options:\n");
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
-    printf("  -c filename   DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
+    printf("  -c filename   DLT daemon configuration file (Default: %s/dlt.conf)\n", CONFIGURATION_FILES_DIR);
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     printf("  -t directory  Directory for local fifo and user-pipes (Default: /tmp)\n");
@@ -363,10 +379,28 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
-             "%s/dltpipes", dltFifoBaseDir);
-    snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
-             "%s/dlt", dltFifoBaseDir);
+    int ret;
+    size_t base_dir_len = strlen(dltFifoBaseDir);
+
+    /* Check if base directory path is too long to append suffixes */
+    if (base_dir_len > DLT_PATH_MAX - 10) { /* 10 for "/dltpipes\0" */
+        dlt_log(LOG_ERR, "FIFO base directory path too long!\n");
+        return -1;
+    }
+
+    ret = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
+                    "%s/dltpipes", dltFifoBaseDir);
+    if (ret < 0 || ret >= DLT_PATH_MAX) {
+        dlt_log(LOG_ERR, "Failed to construct userPipesDir path!\n");
+        return -1;
+    }
+
+    ret = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
+                    "%s/dlt", dltFifoBaseDir);
+    if (ret < 0 || ret >= DLT_PATH_MAX) {
+        dlt_log(LOG_ERR, "Failed to construct daemonFifoName path!\n");
+        return -1;
+    }
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -407,7 +441,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #else /* DLT_DAEMON_USE_FIFO_IPC */
     n = snprintf(daemon_local->flags.loggingFilename,
                  sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", dltFifoBaseDir);
+                 "%s/dlt.log", DLT_USER_IPC_PATH);
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
@@ -689,7 +723,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "OfflineLogstorageMaxDevices") == 0)
                     {
-                        daemon_local->flags.offlineLogstorageMaxDevices = (uint32_t) atoi(value);
+                        daemon_local->flags.offlineLogstorageMaxDevices = (int)strtoul(value, NULL, 10);
                     }
                     else if (strcmp(token, "OfflineLogstorageDirPath") == 0)
                     {
@@ -1309,7 +1343,7 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
 }
 #endif
 
-static int dlt_mkdir_recursive(const char *dir)
+int dlt_mkdir_recursive(const char *dir)
 {
     int ret = 0;
     char tmp[PATH_MAX + 1];
@@ -1442,7 +1476,7 @@ int main(int argc, char *argv[])
     if (log_init_result != DLT_RETURN_OK) {
       fprintf(stderr, "Failed to init internal logging\n");
 
-#if WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK
+#ifdef WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK
         if (daemon_local.flags.loggingMode == DLT_LOG_TO_FILE) {
           fprintf(stderr, "Falling back to syslog mode\n");
 
@@ -1464,20 +1498,16 @@ int main(int argc, char *argv[])
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
 /* Make sure the parent user directory is created */
+const char *dir_to_create;
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-
-    if (dlt_mkdir_recursive(dltFifoBaseDir) != 0) {
-        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dltFifoBaseDir);
-        return -1;
-  }
-
+    dir_to_create = dltFifoBaseDir;
 #else
-    if (dlt_mkdir_recursive(DLT_USER_IPC_PATH) != 0) {
-        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", daemon_local.flags.appSockPath);
+    dir_to_create = DLT_USER_IPC_PATH;
+#endif
+    if (dlt_mkdir_recursive(dir_to_create) != 0) {
+        dlt_vlog(LOG_ERR, "Base dir %s cannot be created!\n", dir_to_create);
         return -1;
     }
-
-#endif
 
     /* --- Daemon init phase 1 begin --- */
     if (dlt_daemon_local_init_p1(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
@@ -1771,14 +1801,15 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     /* Init offline logstorage for MAX devices */
     if (daemon_local->flags.offlineLogstorageMaxDevices > 0) {
-        daemon->storage_handle = malloc(sizeof(DltLogStorage) * daemon_local->flags.offlineLogstorageMaxDevices);
+        size_t max_devices = (size_t)daemon_local->flags.offlineLogstorageMaxDevices;
+        daemon->storage_handle = malloc(sizeof(DltLogStorage) * max_devices);
 
         if (daemon->storage_handle == NULL) {
             dlt_log(LOG_ERR, "Could not initialize offline logstorage\n");
             return -1;
         }
 
-        memset(daemon->storage_handle, 0, (sizeof(DltLogStorage) * daemon_local->flags.offlineLogstorageMaxDevices));
+        memset(daemon->storage_handle, 0, sizeof(DltLogStorage) * max_devices);
     }
 
     /* Set ECU id of daemon */
@@ -1921,7 +1952,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
         struct group *group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
 
         if (group_dlt) {
-            ret = chown(tmpFifo, -1, group_dlt->gr_gid);
+            ret = chown(tmpFifo, (uid_t)-1, group_dlt->gr_gid);
 
             if (ret == -1)
                 dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
@@ -2395,10 +2426,12 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     unlink(daemon_local->flags.daemonFifoName);
 #else /* DLT_DAEMON_USE_UNIX_SOCKET_IPC */
     /* Try to delete existing pipe, ignore result of unlink() */
+#ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     if (unlink(daemon_local->flags.appSockPath) != 0) {
         dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
                 __func__, strerror(errno));
     }
+#endif
 #endif
 
 #ifdef DLT_SHM_ENABLE
@@ -2597,21 +2630,21 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
         (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
-    msg.headersize = (uint32_t) sizeof(DltStorageHeader) + (uint32_t) sizeof(DltStandardHeader) + uiExtraSize;
+    msg.headersize = (int32_t)((size_t)sizeof(DltStorageHeader) + (size_t)sizeof(DltStandardHeader) + (size_t)uiExtraSize);
 
     /* Set extraheader */
     pStandardExtra =
         (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
     dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
     pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
-    pStandardExtra->seid = (unsigned int) DLT_HTOBE_32(getpid());
+    pStandardExtra->seid = DLT_HTOBE_32((uint32_t)getpid());
 
     /* Set extendedheader */
     msg.extendedheader =
         (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
                               DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-    msg.extendedheader->msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+    msg.extendedheader->msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+        ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
     msg.extendedheader->noar = 1;
     dlt_set_id(msg.extendedheader->apid, app_id);
     dlt_set_id(msg.extendedheader->ctid, ctx_id);
@@ -2619,10 +2652,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     /* Set payload data... */
     uiType = DLT_TYPE_INFO_STRG;
     uiSize = (uint16_t) (strlen(str) + 1);
-    msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
+    msg.datasize = (int32_t)((size_t)sizeof(uint32_t) + (size_t)sizeof(uint16_t) + (size_t)uiSize);
 
     msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
-    msg.databuffersize = msg.datasize;
+    msg.databuffersize = (int32_t)msg.datasize;
 
     if (msg.databuffer == 0) {
         dlt_log(LOG_WARNING, "Can't allocate buffer for get log info message\n");
@@ -2631,20 +2664,20 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
     msg.datasize = 0;
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
-    msg.datasize += (uint32_t) sizeof(uint32_t);
+    msg.datasize += (int32_t)sizeof(uint32_t);
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
-    msg.datasize += (uint32_t) sizeof(uint16_t);
+    msg.datasize += (int32_t)sizeof(uint16_t);
     memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
-    msg.datasize += uiSize;
+    msg.datasize += (int32_t)uiSize;
 
     /* Calc length */
-    msg.standardheader->len = DLT_HTOBE_16(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
+    msg.standardheader->len = DLT_HTOBE_16((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize);
 
     dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                            msg.headerbuffer, sizeof(DltStorageHeader),
                            msg.headerbuffer + sizeof(DltStorageHeader),
-                           (int) (msg.headersize - sizeof(DltStorageHeader)),
-                           msg.databuffer, (int) msg.datasize, verbose);
+                           (size_t)(msg.headersize - (int32_t)sizeof(DltStorageHeader)),
+                           msg.databuffer, (size_t)msg.datasize, verbose);
 
     free(msg.databuffer);
 
@@ -2783,6 +2816,131 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
     return 0;
 }
 
+/**
+ * Create a sanitized copy of the message for control processing
+ * This breaks the taint chain by creating a new clean message structure
+ * Uses allow list validation for all path-containing messages
+ * @param tainted_msg The tainted message from receiver
+ * @param secure_msg The secure message to populate (output)
+ * @return 0 on success, -1 on validation failure
+ */
+static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage *secure_msg)
+{
+    uint32_t service_id;
+    DltServiceOfflineLogstorage *tainted_req;
+    DltServiceOfflineLogstorage *secure_req;
+    char secure_mount_point[DLT_MOUNT_PATH_MAX];
+    size_t i;
+
+    if ((tainted_msg == NULL) || (secure_msg == NULL))
+        return -1;
+
+    /* Initialize secure message with clean data */
+    memset(secure_msg, 0, sizeof(DltMessage));
+
+    /* Copy safe, non-tainted fields from message structure */
+    secure_msg->headersize = tainted_msg->headersize;
+    secure_msg->datasize = tainted_msg->datasize;
+    secure_msg->found_serialheader = tainted_msg->found_serialheader;
+    secure_msg->resync_offset = tainted_msg->resync_offset;
+
+    /* Copy header buffers (these don't contain user-controlled paths) */
+    if (tainted_msg->headersize > 0 && tainted_msg->headersize < (int32_t)sizeof(secure_msg->headerbuffer)) {
+        for (i = 0; i < (size_t)tainted_msg->headersize; i++) {
+            secure_msg->headerbuffer[i] = tainted_msg->headerbuffer[i];
+        }
+    }
+
+    /* Set up header pointers */
+    secure_msg->storageheader = (DltStorageHeader *)(secure_msg->headerbuffer);
+    secure_msg->standardheader = (DltStandardHeader *)(secure_msg->headerbuffer + sizeof(DltStorageHeader));
+    if (DLT_IS_HTYP_UEH(secure_msg->standardheader->htyp)) {
+        secure_msg->extendedheader = (DltExtendedHeader *)(secure_msg->headerbuffer +
+                                                           sizeof(DltStorageHeader) +
+                                                           sizeof(DltStandardHeader) +
+                                                           DLT_STANDARD_HEADER_EXTRA_SIZE(secure_msg->standardheader->htyp));
+    }
+
+    /* Point to the same databuffer initially */
+    secure_msg->databuffer = tainted_msg->databuffer;
+    secure_msg->databuffersize = tainted_msg->databuffersize;
+
+    if (tainted_msg->databuffer == NULL || tainted_msg->datasize < (int32_t)sizeof(uint32_t))
+        return 0;
+
+    /* Get service ID */
+    service_id = DLT_ENDIAN_GET_32(tainted_msg->standardheader->htyp,
+                                   *((uint32_t *)(tainted_msg->databuffer)));
+
+    /* Sanitize logstorage messages with path validation */
+    if (service_id == DLT_SERVICE_ID_OFFLINE_LOGSTORAGE) {
+        /* Cast to logstorage request structure */
+        tainted_req = (DltServiceOfflineLogstorage *)(tainted_msg->databuffer);
+        if (tainted_req == NULL)
+            return -1;
+
+        /* Ensure null-termination */
+        tainted_req->mount_point[DLT_MOUNT_PATH_MAX - 1] = '\0';
+
+        /* Get path length */
+        size_t path_len = strnlen(tainted_req->mount_point, DLT_MOUNT_PATH_MAX);
+
+        /* Validate basic path requirements */
+        if (path_len == 0) {
+            /* Empty path only allowed for sync all caches operation */
+            if (tainted_req->connection_type != DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES) {
+                dlt_vlog(LOG_WARNING, "Rejected logstorage message with empty path\n");
+                return -1;
+            }
+        } else {
+            /* Path must be absolute (start with /) */
+            if (tainted_req->mount_point[0] != '/') {
+                dlt_vlog(LOG_WARNING, "Rejected logstorage message with non-absolute path\n");
+                return -1;
+            }
+        }
+
+        /* Now sanitize the databuffer */
+        secure_req = (DltServiceOfflineLogstorage *)(secure_msg->databuffer);
+
+        /* Explicitly sanitize: copy path to secure local buffer using allow list */
+        memset(secure_mount_point, 0, sizeof(secure_mount_point));
+        for (i = 0; i < DLT_MOUNT_PATH_MAX - 1 && tainted_req->mount_point[i] != '\0'; i++) {
+            char c = tainted_req->mount_point[i];
+            /* Apply allow list - only safe characters allowed */
+            if ((c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c >= '0' && c <= '9') ||
+                c == '/' || c == '-' || c == '_' || c == '.') {
+                secure_mount_point[i] = c;
+            } else {
+                dlt_vlog(LOG_WARNING, "Rejected logstorage message with invalid character in path at position %zu\n", i);
+                return -1;
+            }
+        }
+        secure_mount_point[DLT_MOUNT_PATH_MAX - 1] = '\0';
+
+        /* Check for path traversal attempts (defense in depth) */
+        if (strstr(secure_mount_point, "..") != NULL) {
+            dlt_vlog(LOG_WARNING, "Rejected logstorage message with path traversal attempt\n");
+            return -1;
+        }
+
+        /* Deny consecutive slashes */
+        if (strstr(secure_mount_point, "//") != NULL) {
+            dlt_vlog(LOG_WARNING, "Rejected logstorage message with consecutive slashes in path\n");
+            return -1;
+        }
+
+        /* Copy secure data to the secure message's databuffer */
+        for (i = 0; i < DLT_MOUNT_PATH_MAX; i++) {
+            secure_req->mount_point[i] = secure_mount_point[i];
+        }
+    }
+
+    return 0;
+}
+
 int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                        DltDaemonLocal *daemon_local,
                                        DltReceiver *receiver,
@@ -2825,9 +2983,9 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                               &(daemon_local->msg),
                                               daemon_local->flags.vflag);
 
-        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-            daemon_local->msg.datasize -
-            sizeof(DltStorageHeader));
+        bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize +
+                       (size_t)daemon_local->msg.datasize -
+                       (size_t)sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
             bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -2891,6 +3049,11 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
+            DltMessage secure_msg = {0};
+            /* Create sanitized message to break taint chain */
+            if (dlt_daemon_create_secure_message(&(daemon_local->msg), &secure_msg) < 0)
+                continue;
+
             if (dlt_daemon_client_process_control(receiver->fd,
                                                   daemon,
                                                   daemon_local,
@@ -2902,9 +3065,9 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
             }
         }
 
-        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-            daemon_local->msg.datasize -
-            sizeof(DltStorageHeader));
+        bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize +
+                            (size_t)daemon_local->msg.datasize -
+                            sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
             bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3062,15 +3225,26 @@ int dlt_daemon_process_control_messages(
                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
         if ((receiver->fd > 0) &&
-            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
-            dlt_daemon_client_process_control(receiver->fd,
-                                              daemon, daemon_local,
-                                              &(daemon_local->msg),
-                                              daemon_local->flags.vflag);
+            DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
+            DltMessage secure_msg = {0};
+            /* Create sanitized message to break taint chain */
+            if (dlt_daemon_create_secure_message(&(daemon_local->msg), &secure_msg) < 0)
+                continue;
 
-        bytes_to_be_removed = (int) (daemon_local->msg.headersize +
-            daemon_local->msg.datasize -
-            sizeof(DltStorageHeader));
+            if (dlt_daemon_client_process_control(receiver->fd,
+                                                  daemon,
+                                                  daemon_local,
+                                                  &secure_msg,
+                                              daemon_local->flags.vflag)
+                == -1) {
+                dlt_log(LOG_WARNING, "Can't process control messages\n");
+                return -1;
+            }
+        }
+
+        bytes_to_be_removed = (int) ((size_t)daemon_local->msg.headersize +
+                            (size_t)daemon_local->msg.datasize -
+                            sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
             bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3591,7 +3765,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         }
 
         if (msg.databuffer == 0) {
-            msg.databuffer = (uint8_t *)malloc(msg.datasize);
+            msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
             msg.databuffersize = msg.datasize;
         }
 
@@ -3925,8 +4099,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
       dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
     /* keep not read data in buffer */
-    size = (int) (daemon_local->msg.headersize +
-        daemon_local->msg.datasize - sizeof(DltStorageHeader) +
+    size = (int) ((size_t)daemon_local->msg.headersize +
+        (size_t)daemon_local->msg.datasize - sizeof(DltStorageHeader) +
         sizeof(DltUserHeader));
 
     if (daemon_local->msg.found_serialheader)

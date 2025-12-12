@@ -106,7 +106,7 @@ void stringHash(const char *str, uint32_t *hash)
         return;
     }
 
-    unsigned int len = strlen(str);
+    unsigned int len = (unsigned int)strlen(str);
 
     unsigned int i = 0;
 
@@ -115,7 +115,7 @@ void stringHash(const char *str, uint32_t *hash)
     }
 
     for (i = 0; i < len; i++) {
-        *hash = 53 * *hash + str[i];
+        *hash = 53 * *hash + (uint32_t)(unsigned char)str[i];
     }
 }
 
@@ -136,10 +136,10 @@ uint32_t getFileSerialNumber(const char *file, int *ok)
         ret = 0;
     } else {
         *ok = 1;
-        ret = st.st_ino;
+        ret = (uint32_t)st.st_ino;
         ret = ret << (sizeof(ret) * 8) / 2;
-        ret |= st.st_size;
-        ret ^= st.st_ctime;
+        ret |= (uint32_t)st.st_size;
+        ret ^= (uint32_t)st.st_ctime;
         stringHash(file, &ret);
     }
 
@@ -215,7 +215,7 @@ void doTimeout(int timeout)
 /**
  * @return -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
  */
-int checkUserBufferForFreeSpace()
+int checkUserBufferForFreeSpace(void)
 {
     int total_size, used_size;
 
@@ -344,7 +344,7 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
                 DLT_STRING("file size in bytes"), DLT_UINT(fsize),
                 DLT_STRING("file creation date"), DLT_STRING(creationdate),
                 DLT_STRING("number of packages"),
-                DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
                 DLT_STRING("FLIF")
                 );
         return 0;
@@ -423,7 +423,7 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
         if (filesize < BUFFER_SIZE) {
             return packages;
         } else {
-            packages = filesize / BUFFER_SIZE;
+            packages = (int)(filesize / BUFFER_SIZE);
 
             if (filesize % BUFFER_SIZE == 0) {
                 return packages;
@@ -492,7 +492,7 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
                 DLT_STRING(alias),
                 DLT_UINT(fsize),
                 DLT_STRING(fcreationdate);
-                DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
                 DLT_UINT(BUFFER_SIZE),
                 DLT_STRING("FLST")
                 );
@@ -553,7 +553,7 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
                 DLT_STRING(filename),
                 DLT_UINT(fsize),
                 DLT_STRING(fcreationdate);
-                DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
                 DLT_UINT(BUFFER_SIZE),
                 DLT_STRING("FLST")
                 );
@@ -617,9 +617,9 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
                     DLT_STRING("Error at dlt_user_log_file_data: packageToTransfer out of scope"),
                     DLT_STRING("packageToTransfer:"),
-                    DLT_UINT(packageToTransfer),
+                    DLT_UINT((unsigned int)packageToTransfer),
                     DLT_STRING("numberOfMaximalPackages:"),
-                    DLT_UINT(dlt_user_log_file_packagesCount(fileContext, filename)),
+                    DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
                     DLT_STRING("for File:"),
                     DLT_STRING(filename)
                     );
@@ -646,7 +646,7 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                 return -1;
             }
 
-            readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+            readBytes = (uint32_t)fread(buffer, sizeof(char), BUFFER_SIZE, file);
             int ok;
 
             uint32_t fserial = getFileSerialNumber(filename, &ok);
@@ -662,8 +662,8 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
             DLT_LOG(*fileContext, DLT_LOG_INFO,
                     DLT_STRING("FLDA"),
                     DLT_UINT(fserial),
-                    DLT_UINT(packageToTransfer),
-                    DLT_RAW(buffer, readBytes),
+                    DLT_UINT((unsigned int)packageToTransfer),
+                    DLT_RAW(buffer, (uint16_t)readBytes),
                     DLT_STRING("FLDA")
                     );
 
@@ -683,7 +683,7 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
 /*                If free space < 50% the package won't be transferred. */
                 if (checkUserBufferForFreeSpace() > 0) {
                     pkgNumber++;
-                    readBytes = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+                    readBytes = (uint32_t)fread(buffer, sizeof(char), BUFFER_SIZE, file);
 
                     if (readBytes == 0) {
                         // If the file size is divisible by the package size don't send
@@ -706,8 +706,8 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                     DLT_LOG(*fileContext, DLT_LOG_INFO,
                             DLT_STRING("FLDA"),
                             DLT_UINT(fserial),
-                            DLT_UINT(pkgNumber),
-                            DLT_RAW(buffer, readBytes),
+                            DLT_UINT((unsigned int)pkgNumber),
+                            DLT_RAW(buffer, (uint16_t)readBytes),
                             DLT_STRING("FLDA")
                             );
                     if(*fileCancelTransferFlag) {

@@ -45,20 +45,20 @@ extern unordered_map<string, DltContext*> map_ctx_json;
 extern bool json_is_available;
 extern volatile sig_atomic_t exit_parser_loop;
 
-DLT_IMPORT_CONTEXT(dlt_ctx_self);
-DLT_IMPORT_CONTEXT(dlt_ctx_main);
-DLT_IMPORT_CONTEXT(dlt_ctx_rdio);
-DLT_IMPORT_CONTEXT(dlt_ctx_evnt);
-DLT_IMPORT_CONTEXT(dlt_ctx_syst);
-DLT_IMPORT_CONTEXT(dlt_ctx_crsh);
-DLT_IMPORT_CONTEXT(dlt_ctx_stat);
-DLT_IMPORT_CONTEXT(dlt_ctx_secu);
-DLT_IMPORT_CONTEXT(dlt_ctx_krnl);
-DLT_IMPORT_CONTEXT(dlt_ctx_othe);
+DLT_IMPORT_CONTEXT(dlt_ctx_self)
+DLT_IMPORT_CONTEXT(dlt_ctx_main)
+DLT_IMPORT_CONTEXT(dlt_ctx_rdio)
+DLT_IMPORT_CONTEXT(dlt_ctx_evnt)
+DLT_IMPORT_CONTEXT(dlt_ctx_syst)
+DLT_IMPORT_CONTEXT(dlt_ctx_crsh)
+DLT_IMPORT_CONTEXT(dlt_ctx_stat)
+DLT_IMPORT_CONTEXT(dlt_ctx_secu)
+DLT_IMPORT_CONTEXT(dlt_ctx_krnl)
+DLT_IMPORT_CONTEXT(dlt_ctx_othe)
 
 struct logger_list *t_logger_list = nullptr;
 struct dlt_log_container *dlt_log_data = nullptr;
-struct log_msg t_log_msg;
+struct log_msg *t_log_msg = nullptr;
 
 string t_load_json_file()
 {
@@ -113,25 +113,25 @@ struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail, pid
     return t_logger_list;
 }
 
-int t_android_logger_list_read(logger_list *logger_list, struct log_msg *t_log_msg)
+int t_android_logger_list_read(logger_list *logger_list, struct log_msg *tmp_log_msg)
 {
-    if (!t_log_msg->entry.len) {
-        t_log_msg->entry.len = LOGGER_ENTRY_MAX_LEN;
+    if (!tmp_log_msg->entry.len) {
+        tmp_log_msg->entry.len = LOGGER_ENTRY_MAX_LEN;
     }
-    if (!t_log_msg->entry.hdr_size) {
-        t_log_msg->entry.hdr_size = 100;
+    if (!tmp_log_msg->entry.hdr_size) {
+        tmp_log_msg->entry.hdr_size = 100;
     }
-    if (!t_log_msg->entry.sec) {
-        t_log_msg->entry.sec = 1/10000;
+    if (!tmp_log_msg->entry.sec) {
+        tmp_log_msg->entry.sec = 1/10000;
     }
-    if (!t_log_msg->entry.nsec) {
-        t_log_msg->entry.nsec = 100000;
+    if (!tmp_log_msg->entry.nsec) {
+        tmp_log_msg->entry.nsec = 100000;
     }
-    if (!t_log_msg->entry.lid) {
-        t_log_msg->entry.lid = LOG_ID_MAIN;
+    if (!tmp_log_msg->entry.lid) {
+        tmp_log_msg->entry.lid = LOG_ID_MAIN;
     }
-    if (!t_log_msg->buf[t_log_msg->entry.hdr_size]) {
-        t_log_msg->buf[t_log_msg->entry.hdr_size] = (unsigned char)ANDROID_LOG_INFO;
+    if (!tmp_log_msg->buf[tmp_log_msg->entry.hdr_size]) {
+        tmp_log_msg->buf[tmp_log_msg->entry.hdr_size] = (unsigned char)ANDROID_LOG_INFO;
     }
     if (logger_list->signal == -EINVAL) {
         return -EINVAL;
@@ -416,7 +416,7 @@ TEST(t_init_logger_list, normal)
 
 TEST(t_get_log_context_from_log_msg, normal)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     t_log_msg = new log_msg;
     t_log_msg->entry.lid = LOG_ID_MAIN;
     EXPECT_EQ(&dlt_ctx_main, get_log_context_from_log_msg(t_log_msg));
@@ -437,18 +437,17 @@ TEST(t_get_log_context_from_log_msg, normal)
     t_log_msg->entry.lid = 1024;
     EXPECT_EQ(&dlt_ctx_self, get_log_context_from_log_msg(t_log_msg));
     delete t_log_msg;
-    t_log_msg = nullptr;
 }
 
 TEST(t_get_log_context_from_log_msg, nullpointer)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     EXPECT_EQ(&dlt_ctx_self, get_log_context_from_log_msg(t_log_msg));
 }
 
 TEST(t_get_timestamp_from_log_msg, normal)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     t_log_msg = new log_msg;
     t_log_msg->entry.sec = 0;
     t_log_msg->entry.nsec = 0;
@@ -463,13 +462,13 @@ TEST(t_get_timestamp_from_log_msg, normal)
 
 TEST(t_get_timestamp_from_log_msg, nullpointer)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     EXPECT_EQ(DLT_FAIL_TO_GET_LOG_MSG, get_timestamp_from_log_msg(t_log_msg));
 }
 
 TEST(t_get_log_level_from_log_msg, normal)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     t_log_msg = new log_msg;
     t_log_msg->entry.hdr_size = 0;
     t_log_msg->buf[0] = (unsigned char)ANDROID_LOG_VERBOSE;
@@ -496,7 +495,7 @@ TEST(t_get_log_level_from_log_msg, normal)
 
 TEST(t_get_log_level_from_log_msg, nullpointer)
 {
-    struct log_msg *t_log_msg = nullptr;
+    t_log_msg = nullptr;
     EXPECT_EQ(DLT_LOG_DEFAULT, get_log_level_from_log_msg(t_log_msg));
 }
 
@@ -574,10 +573,10 @@ TEST(t_logd_parser_loop, normal)
     unsigned char tag[sizeof("QtiVehicleHal")] = "QtiVehicleHal";
     unsigned char message[sizeof("dlt-logd-converter")] = "dlt-logd-converter";
     for (uint idx = 0; idx < sizeof(tag); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + 1] = tag[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + 1] = tag[idx];
     }
     for (uint idx = 0; idx < sizeof(message); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + sizeof(tag) + 1] = message[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + sizeof(tag) + 1] = message[idx];
     }
 
     auto search = map_ctx_json.find("QtiVehicleHal");
@@ -594,10 +593,10 @@ TEST(t_logd_parser_loop, normal)
     unsigned char othe_tag[sizeof("OtherTags")] = "OtherTags";
     unsigned char othe_message[sizeof("No tag found")] = "No tag found";
     for (uint idx = 0; idx < sizeof(othe_tag); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + 1] = othe_tag[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + 1] = othe_tag[idx];
     }
     for (uint idx = 0; idx < sizeof(othe_message); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + sizeof(othe_tag) + 1] = othe_message[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + sizeof(othe_tag) + 1] = othe_message[idx];
     }
 
     search = map_ctx_json.find("OtherTags");
@@ -611,14 +610,14 @@ TEST(t_logd_parser_loop, normal)
     EXPECT_STREQ("No tag found", dlt_log_data->message);
 
     /* TEST with another buffer */
-    t_log_msg.entry.lid = LOG_ID_RADIO;
+    t_log_msg->entry.lid = LOG_ID_RADIO;
     unsigned char radio_tag[sizeof("RadioTag")] = "RadioTag";
     unsigned char radio_message[sizeof("It is from radio buffer")] = "It is from radio buffer";
     for (uint idx = 0; idx < sizeof(radio_tag); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + 1] = radio_tag[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + 1] = radio_tag[idx];
     }
     for (uint idx = 0; idx < sizeof(radio_message); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + sizeof(radio_tag) + 1] = radio_message[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + sizeof(radio_tag) + 1] = radio_message[idx];
     }
 
     ret = logd_parser_loop(t_logger_list);
@@ -631,15 +630,15 @@ TEST(t_logd_parser_loop, normal)
     EXPECT_STREQ("It is from radio buffer", dlt_log_data->message);
 
     /* TEST with no JSON file */
-    t_log_msg.entry.lid = LOG_ID_KERNEL;
+    t_log_msg->entry.lid = LOG_ID_KERNEL;
     json_is_available = false;
     unsigned char no_json_tag[sizeof("Kernel")] = "Kernel";
     unsigned char no_json_message[sizeof("It is from kernel")] = "It is from kernel";
     for (uint idx = 0; idx < sizeof(no_json_tag); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + 1] = no_json_tag[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + 1] = no_json_tag[idx];
     }
     for (uint idx = 0; idx < sizeof(no_json_message); idx++) {
-        t_log_msg.buf[idx + t_log_msg.entry.hdr_size + sizeof(no_json_tag) + 1] = no_json_message[idx];
+        t_log_msg->buf[idx + t_log_msg->entry.hdr_size + sizeof(no_json_tag) + 1] = no_json_message[idx];
     }
 
     ret = logd_parser_loop(t_logger_list);

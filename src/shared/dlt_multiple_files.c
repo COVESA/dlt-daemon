@@ -60,9 +60,9 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
 
     for (i = 0; i < file_cnt; i++) {
         int len = 0;
-        len = strlen(file_name);
+        len = (int)strlen(file_name);
 
-        if ((strncmp(files[i]->d_name, file_name, len) == 0) &&
+        if ((strncmp(files[i]->d_name, file_name, (size_t)len) == 0) &&
             (files[i]->d_name[len] == MULTIPLE_FILES_FILENAME_INDEX_DELIM[0])) {
             num_log_files++;
 
@@ -115,20 +115,24 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
     return num_log_files;
 }
 
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const size_t length, const unsigned int idx)
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
     char* file_name = files_buffer->filename;
-    memset(file_name, 0, length * sizeof(char));
+    size_t bufsize = sizeof(files_buffer->filename);
+    memset(file_name, 0, bufsize);
 
-    const size_t size = length - strlen(file_name) - 1;
-    strncat(file_name, files_buffer->filenameBase, size);
-    strncat(file_name, MULTIPLE_FILES_FILENAME_INDEX_DELIM, size);
-    strncat(file_name, file_index, size);
-    strncat(file_name, files_buffer->filenameExt, size);
+    int written = snprintf(file_name, bufsize, "%s%s%s%s",
+                          files_buffer->filenameBase,
+                          MULTIPLE_FILES_FILENAME_INDEX_DELIM,
+                          file_index,
+                          files_buffer->filenameExt);
+    if (written < 0 || (size_t)written >= bufsize) {
+        file_name[bufsize - 1] = '\0';
+    }
 }
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
@@ -142,7 +146,7 @@ unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
     /* we are interested in 2. token because of log file name */
     token = strtok(NULL, d);
 
-    return token != NULL ? strtol(token, NULL, 10) : 0;
+    return token != NULL ? (unsigned int)strtol(token, NULL, 10) : 0;
 }
 
 DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *files_buffer)
@@ -199,7 +203,7 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
 
         idx = multiple_files_buffer_get_idx_of_log_file(newest) + 1;
 
-        multiple_files_buffer_file_name(files_buffer, sizeof(files_buffer->filename), idx);
+        multiple_files_buffer_file_name(files_buffer, idx);
         ret = snprintf(file_path, sizeof(file_path), "%s/%s",
                        files_buffer->directory, files_buffer->filename);
 
@@ -307,7 +311,7 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
                 if (0 == stat(filename, &status)) {
                     if ((time_oldest == 0) || (status.st_mtime < time_oldest)) {
                         time_oldest = status.st_mtime;
-                        size_oldest = status.st_size;
+                        size_oldest = (unsigned long)status.st_size;
                         strncpy(filename_oldest, filename, PATH_MAX);
                         filename_oldest[PATH_MAX] = 0;
                     }
@@ -316,9 +320,9 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
                 }
             } else {
                 //index based
-                const int index = multiple_files_buffer_get_idx_of_log_file(filename);
-                if (index < index_oldest) {
-                    index_oldest = index;
+                const unsigned int index = multiple_files_buffer_get_idx_of_log_file(filename);
+                if (index < (unsigned int)index_oldest) {
+                    index_oldest = (int)index;
                     snprintf(filename, sizeof(filename), "%s/%s", files_buffer->directory, dp->d_name);
                     strncpy(filename_oldest, filename, PATH_MAX);
                     filename_oldest[PATH_MAX] = 0;
@@ -341,7 +345,7 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
     }
 
     /* return size of deleted file*/
-    return size_oldest;
+    return (int)size_oldest;
 }
 
 DltReturnValue multiple_files_buffer_check_size(MultipleFilesRingBuffer *files_buffer)
@@ -463,7 +467,7 @@ DltReturnValue multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *
     }
 
     if (data && (files_buffer->ohandle >= 0)) {
-        if (write(files_buffer->ohandle, data, size) != size) {
+        if (write(files_buffer->ohandle, data, (size_t)size) != (ssize_t)size) {
             fprintf(stderr, "file write failed!\n");
             return DLT_RETURN_ERROR;
         }

@@ -367,15 +367,20 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         /* 2nd check if incomming data are filetransfer data */
         if (strncmp(text, "FLDA", 4) == 0) {
             /* truncate beginning of data stream ( FLDA, File identifier and package number) */
-            char *position = strchr(text, 32); /* search for space */
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
-            position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
-            position = strchr(text, 32);
-            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            int space_char = 32;
+            char *position = strchr(text, space_char); /* search for space */
+            if (position == NULL) {
+                printf("Filetransfer FLDA: No space found in text: '%s'\n", text);
+                return -1;
+            }
+            memmove(text, position + 1, strlen(position + 1) + 1);
+            position = strchr(text, space_char);
+            memmove(text, position + 1, strlen(position + 1) + 1);
+            position = strchr(text, space_char);
+            memmove(text, position + 1, strlen(position + 1) + 1);
 
             /* truncate ending of data stream ( FLDA ) */
-            int len = strlen(text);
+            int len = (int)strlen(text);
             text[len - 4] = '\0';
             /* hex to ascii and store at /tmp */
             char tmp[3];
@@ -414,7 +419,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         tmp[4] = '\0';
         const char *substring = text;
         const char *founding = "Test Systemlogger";
-        int length = strlen(founding);
+        int length = (int)strlen(founding);
 
         if (strcmp(tmp, (const char *)"PROC") == 0) {
             substring = strstr(text, founding);
@@ -432,11 +437,11 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     /* if file output enabled write message */
     if (dltdata->ovalue) {
         iov[0].iov_base = message->headerbuffer;
-        iov[0].iov_len = message->headersize;
+        iov[0].iov_len = (size_t)message->headersize;
         iov[1].iov_base = message->databuffer;
-        iov[1].iov_len = message->datasize;
+        iov[1].iov_len = (size_t)message->datasize;
 
-        bytes_written = writev(dltdata->ohandle, iov, 2);
+        bytes_written = (int)writev(dltdata->ohandle, iov, 2);
 
         if (0 > bytes_written) {
             printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");

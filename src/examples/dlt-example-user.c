@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
         }
         case 'S':
         {
-            filesize = atoi(optarg);
+            filesize = (unsigned int)atoi(optarg);
             break;
         }
         case 'n':
@@ -270,8 +270,8 @@ int main(int argc, char *argv[])
             message = argv[index];
     }
     else { /* allocate raw buffer */
-        message = calloc(sizeof(char), rvalue);
-        memset(message, 'X', rvalue - 1);
+        message = calloc((size_t)rvalue, sizeof(char));
+        memset(message, 'X', (size_t)(rvalue - 1));
     }
 
     if (message == 0) {
@@ -344,14 +344,14 @@ int main(int argc, char *argv[])
         delay = 500;
 
     if (tvalue)
-        dlt_set_resend_timeout_atexit(atoi(tvalue));
+        dlt_set_resend_timeout_atexit((uint32_t)atoi(tvalue));
 
     if (gflag) {
         /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32((float)1.12));
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
@@ -396,14 +396,14 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             /* Non-verbose mode */
-            DLT_LOG_ID(mycontext1, lvalue, num, DLT_INT(num), DLT_STRING(text));
+            DLT_LOG_ID(mycontext1, lvalue, (uint32_t)num, DLT_INT(num), DLT_STRING(text));
         }
         else {
             if (rvalue == -1)
                 /* Verbose mode */
                 DLT_LOG(mycontext1, lvalue, DLT_INT(num), DLT_STRING(text));
             else
-                DLT_LOG(mycontext1, lvalue, DLT_RAW(text, rvalue));
+                DLT_LOG(mycontext1, lvalue, DLT_RAW(text, (uint16_t)rvalue));
         }
 
         if (delay > 0) {
@@ -431,7 +431,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
-        dlt_print_mixed_string(text, 1024, data, length, 0);
+        dlt_print_mixed_string(text, 1024, data, (int)length, 0);
         DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
         printf("%s \n", text);
     }
@@ -447,7 +447,7 @@ int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *da
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
-        dlt_print_mixed_string(text, 1024, data, length, 0);
+        dlt_print_mixed_string(text, 1024, data, (int)length, 0);
         DLT_LOG(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text), DLT_STRING(priv_data));
         printf("%s \n", text);
     }

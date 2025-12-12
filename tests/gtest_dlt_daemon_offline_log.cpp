@@ -42,7 +42,7 @@ TEST(t_dlt_logstorage_list_add, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char path[] = "/tmp";
     char key = 1;
     int num_keys = 1;
 
@@ -52,6 +52,7 @@ TEST(t_dlt_logstorage_list_add, normal)
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
+        /* Cast away const only for API compatibility, do not modify the string */
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
 }
@@ -78,7 +79,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     DltLogStorageFilterList *list = NULL;
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     char key = 1;
     int num_keys = 1;
 
@@ -99,7 +100,7 @@ TEST(t_dlt_logstorage_list_find, normal)
     DltLogStorageFilterConfig *data = NULL;
     int num_configs = 0;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     char key[] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
@@ -203,7 +204,7 @@ TEST(t_dlt_logstorage_prepare_table, normal)
     DltLogStorage handle;
     DltLogStorageFilterConfig data;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     memset(&handle, 0, sizeof(DltLogStorage));
     memset(&data, 0, sizeof(DltLogStorageFilterConfig));
     char apids[] = "1234";
@@ -525,7 +526,7 @@ TEST(t_dlt_logstorage_store_filters, normal)
     memset(&handle, 0, sizeof(DltLogStorage));
     DltLogStorageUserConfig file_config;
     memset(&file_config, 0, sizeof(DltLogStorageUserConfig));
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     char config_file_name[] = "/tmp/dlt_logstorage.conf";
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
@@ -547,7 +548,7 @@ TEST(t_dlt_logstorage_load_config, normal)
 {
     DltLogStorage handle;
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
     handle.config_status = 0;
     handle.write_errors = 0;
@@ -866,7 +867,7 @@ TEST(t_dlt_logstorage_write, normal)
                          sizeof(DltStandardHeader) +
                          DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
     msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-                               ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
+                               (uint8_t)(((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB);
     msg.extendedheader->noar = 1;
     dlt_set_id(msg.extendedheader->apid, apid);
     dlt_set_id(msg.extendedheader->ctid, ctid);
@@ -877,7 +878,7 @@ TEST(t_dlt_logstorage_write, normal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_write(&handle, &uconfig,
                                              (unsigned char*)&(userheader), sizeof(DltUserHeader),
                                              msg.headerbuffer + sizeof(DltStorageHeader),
-                                             msg.headersize - sizeof(DltStorageHeader),
+                                             (int)(msg.headersize - sizeof(DltStorageHeader)),
                                              data, size, &disable_nw));
     dlt_message_free(&msg, 0);
 }
@@ -1147,7 +1148,7 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
     char name[] = "Test";
-    char *file = (char *)"Test_002_20160509_191132.dlt";
+    char *file = const_cast<char*>("Test_002_20160509_191132.dlt");
 
     DltLogStorageFilterConfig filter_config;
     memset(&filter_config, 0, sizeof(filter_config));
@@ -1155,7 +1156,7 @@ TEST(t_dlt_logstorage_get_idx_of_log_file, normal)
 
     EXPECT_EQ(2, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, file));
 
-    char *gz_file = (char *)"Test_142_20160509_191132.dlt.gz";
+    char *gz_file = const_cast<char*>("Test_142_20160509_191132.dlt.gz");
     filter_config.gzip_compression = 1;
 
     EXPECT_EQ(142, dlt_logstorage_get_idx_of_log_file(&file_config, &filter_config, gz_file));
@@ -1173,14 +1174,14 @@ TEST(t_dlt_logstorage_storage_dir_info, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test_002_20160509_191132.dlt";
+    config.file_name = const_cast<char*>("Test_002_20160509_191132.dlt");
     config.records = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_storage_dir_info(&file_config, path, &config));
@@ -1199,14 +1200,14 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
@@ -1233,22 +1234,22 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
 
     DltNewestFileName newest_file_name;
-    newest_file_name.file_name = (char *)"Test";
-    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.file_name = const_cast<char*>("Test");
+    newest_file_name.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt");
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
@@ -1262,22 +1263,22 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = NULL;
     config.wrap_id = 0;
 
     DltNewestFileName newest_file_name;
-    newest_file_name.file_name = (char *)"Test";
-    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.file_name = const_cast<char*>("Test");
+    newest_file_name.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt");
     newest_file_name.wrap_id = 1;
     newest_file_name.next = NULL;
 
@@ -1304,23 +1305,23 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal3)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
-    char *working_file_name = (char *)"Test_002_20160509_191132.dlt";
+    char *working_file_name = const_cast<char*>("Test_002_20160509_191132.dlt");
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = strdup(working_file_name);
     config.wrap_id = 0;
 
     DltNewestFileName newest_file_name;
-    newest_file_name.file_name = (char *)"Test";
-    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.file_name = const_cast<char*>("Test");
+    newest_file_name.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt");
     newest_file_name.wrap_id = 1;
     newest_file_name.next = NULL;
 
@@ -1353,14 +1354,14 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = NULL;
@@ -1372,8 +1373,8 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
     unsigned char data3[] = "dlt_data";
 
     DltNewestFileName newest_file_name;
-    newest_file_name.file_name = (char *)"Test";
-    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_file_name.file_name = const_cast<char*>("Test");
+    newest_file_name.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt");
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 
@@ -1394,14 +1395,14 @@ TEST(t_dlt_logstorage_write_on_msg, gzip)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     char apids;
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = NULL;
@@ -1413,7 +1414,7 @@ TEST(t_dlt_logstorage_write_on_msg, gzip)
     unsigned char data3[] = "dlt_data";
 
     DltNewestFileName newest_file_name;
-    newest_file_name.file_name = (char *)"Test";
+    newest_file_name.file_name = const_cast<char*>("Test");
     newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt.gz";
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
@@ -1440,7 +1441,7 @@ TEST(t_dlt_logstorage_sync_on_msg, normal)
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.working_file_name = NULL;
@@ -1463,7 +1464,7 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 2;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     DltNewestFileName newest_info;
     memset(&newest_info, 0, sizeof(DltNewestFileName));
@@ -1472,7 +1473,7 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.cache = NULL;
@@ -1481,8 +1482,8 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     config.working_file_name = NULL;
     config.wrap_id = 0;
     g_logstorage_cache_max = 16;
-    newest_info.file_name = (char *)"Test";
-    newest_info.newest_file = (char *)"Test_003_20200728_191132.dlt";
+    newest_info.file_name = const_cast<char*>("Test");
+    newest_info.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt");
     newest_info.wrap_id = 0;
     newest_info.next = NULL;
 
@@ -1506,7 +1507,7 @@ TEST(t_dlt_logstorage_write_msg_cache, normal)
     DltLogStorageFilterConfig config;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
     DltLogStorageUserConfig file_config;
-    char *path = (char*)"/tmp";
+    char *path = const_cast<char*>("/tmp");
 
     config.cache = calloc(1, 50 + sizeof(DltLogStorageCacheFooter));
 
@@ -1866,8 +1867,8 @@ TEST(t_dlt_daemon_logstorage_write, normal)
                          sizeof(DltStorageHeader) +
                          sizeof(DltStandardHeader) +
                          DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-    msg.extendedheader->msin = (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-                               ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB;
+    msg.extendedheader->msin = (uint8_t)((DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+                               ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB);
     msg.extendedheader->noar = 1;
     dlt_set_id(msg.extendedheader->apid, apid);
     dlt_set_id(msg.extendedheader->ctid, ctid);
@@ -1878,7 +1879,7 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_write(&daemon, &uconfig,
                                              (unsigned char*)&(userheader), sizeof(DltUserHeader),
                                              msg.headerbuffer + sizeof(DltStorageHeader),
-                                             msg.headersize - sizeof(DltStorageHeader),
+                                             (int)(msg.headersize - sizeof(DltStorageHeader)),
                                              data, size));
     dlt_message_free(&msg, 0);
 }
@@ -2012,7 +2013,7 @@ TEST(t_dlt_logstorage_find_dlt_header, normal)
     config.cache = calloc(1, sizeof(data));
 
     if (config.cache != NULL) {
-        strncpy((char *)config.cache, data, sizeof(data));
+        memcpy(config.cache, data, sizeof(data));
         /* DLT header starts from index 2 */
         EXPECT_EQ(2, dlt_logstorage_find_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
@@ -2028,7 +2029,7 @@ TEST(t_dlt_logstorage_find_dlt_header, null)
 
     if (config.cache != NULL) {
         /* config.cache =(void *) "a,b,D,L,T,0x01"; */
-        strncpy((char *)config.cache, data, sizeof(data));
+        memcpy(config.cache, data, sizeof(data));
         EXPECT_EQ(DLT_RETURN_ERROR, dlt_logstorage_find_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
     }
@@ -2043,7 +2044,7 @@ TEST(t_dlt_logstorage_find_last_dlt_header, normal)
     config.cache = calloc(1, sizeof(data));
 
     if (config.cache != NULL) {
-        strncpy((char *)config.cache, data, sizeof(data));
+        memcpy(config.cache, data, sizeof(data));
 
         /* DLT header starts from index 2 */
         EXPECT_EQ(2, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
@@ -2060,7 +2061,7 @@ TEST(t_dlt_logstorage_find_last_dlt_header, null)
     if (config.cache != NULL)
     {
         /* config.cache =(void *) "a,b,D,L,T,0x01"; */
-        strncpy((char *)config.cache, data, sizeof(data));
+        memcpy(config.cache, data, sizeof(data));
         EXPECT_EQ(-1, dlt_logstorage_find_last_dlt_header(config.cache, 0, sizeof(data)));
         free(config.cache);
     }
@@ -2075,7 +2076,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 6;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
     DltLogStorageFilterConfig config;
     DltNewestFileName newest_info;
     memset(&config, 0, sizeof(DltLogStorageFilterConfig));
@@ -2084,7 +2085,7 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.cache = NULL;
@@ -2152,7 +2153,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
     file_config.logfile_delimiter = { '_' };
     file_config.logfile_maxcounter = 8;
     file_config.logfile_counteridxlen = 2;
-    char *path = (char *)"/tmp";
+    char *path = const_cast<char*>("/tmp");
 
     DltLogStorageFilterConfig config;
     DltNewestFileName newest_info;
@@ -2162,7 +2163,7 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
     char ctids;
     config.apids = &apids;
     config.ctids = &ctids;
-    config.file_name = (char *)"Test";
+    config.file_name = const_cast<char*>("Test");
     config.records = NULL;
     config.log = NULL;
     config.cache = NULL;

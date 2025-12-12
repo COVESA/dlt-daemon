@@ -45,9 +45,9 @@
 #endif
 
 #define pr_error(fmt, ...) \
-    ({ fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); })
+    do { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } while(0)
 #define pr_verbose(fmt, ...) \
-    ({ if (get_verbosity()) { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } })
+    do { if (get_verbosity()) { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } } while(0)
 
 #define DLT_CTRL_DEFAULT_ECUID "ECU1"
 

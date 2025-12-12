@@ -104,7 +104,7 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 
     while (ch && (count < res_len - 1) && (ch != ';')) {
         if ((ch >= 'A') && (ch <= 'Z')) {
-            result[count] = ch + 'a' - 'A';
+            result[count] = (char)(ch + 'a' - 'A');
         } else {
             result[count] = ch;
         }
@@ -135,7 +135,7 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
         return -1;
     }
 
-    if (dlt_env_helper_to_lower(env, &result[0], sizeof(result)) == 0) {
+    if (dlt_env_helper_to_lower(env, &result[0], (int)sizeof(result)) == 0) {
         if (strncmp("default", result, sizeof(result)) == 0) {
             *ll = -1;
         } else if (strncmp("off", result, sizeof(result)) == 0) {
@@ -215,7 +215,7 @@ int dlt_env_extract_ll(char **const env, int8_t *ll)
         }
     } else {
         if ((**env >= '0') && (**env < '7')) {
-            *ll = **env - '0';
+            *ll = (int8_t)(**env - '0');
             (*env)++;
         } else if (dlt_env_extract_symbolic_ll(env, ll) != 0) {
             return -1;
@@ -496,5 +496,3 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
 
     return res;
 }
-
-

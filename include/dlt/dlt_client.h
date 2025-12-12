@@ -88,16 +88,16 @@ typedef enum
 
 typedef struct
 {
-    DltReceiver receiver;  /**< receiver pointer to dlt receiver structure */
-    int sock;              /**< sock Connection handle/socket */
-    char *servIP;          /**< servIP IP adress/Hostname of interface */
-    char *hostip;          /**< hostip IP address of UDP host receiver interface */
-    int port;              /**< Port for TCP connections (optional) */
-    char *serialDevice;    /**< serialDevice Devicename of serial device */
-    char *socketPath;      /**< socketPath Unix socket path */
-    char ecuid[4];         /**< ECUiD */
-    speed_t baudrate;      /**< baudrate Baudrate of serial interface, as speed_t */
-    DltClientMode mode;    /**< mode DltClientMode */
+    DltReceiver receiver;      /**< receiver pointer to dlt receiver structure */
+    int sock;                  /**< sock Connection handle/socket */
+    char *servIP;              /**< servIP IP adress/Hostname of interface */
+    char *hostip;              /**< hostip IP address of UDP host receiver interface */
+    uint16_t  port;            /**< Port for TCP connections (optional) */
+    char *serialDevice;        /**< serialDevice Devicename of serial device */
+    char *socketPath;          /**< socketPath Unix socket path */
+    char ecuid[4];             /**< ECUiD */
+    speed_t baudrate;          /**< baudrate Baudrate of serial interface, as speed_t */
+    DltClientMode mode;        /**< mode DltClientMode */
     int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
     int resync_serial_header;  /**< (Boolean) Resync to serial header on all connection */
 } DltClient;
@@ -116,7 +116,7 @@ void dlt_client_register_fetch_next_message_callback(bool (*registerd_callback)(
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-int dlt_client_init_port(DltClient *client, int port, int verbose);
+DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose);
 
 /**
  * Initialising dlt client structure
@@ -196,7 +196,7 @@ DltReturnValue dlt_client_send_log_level(DltClient *client, char *apid, char *ct
  * @param client pointer to dlt client structure
  * @return negative value if there was an error
  */
-int dlt_client_get_log_info(DltClient *client);
+DltReturnValue dlt_client_get_log_info(DltClient *client);
 /**
  * Send an request to get default log level to the dlt daemon
  * @param client pointer to dlt client structure
@@ -208,7 +208,7 @@ DltReturnValue dlt_client_get_default_log_level(DltClient *client);
  * @param client pointer to dlt client structure
  * @return negative value if there was an error
  */
-int dlt_client_get_software_version(DltClient *client);
+DltReturnValue dlt_client_get_software_version(DltClient *client);
 /**
  * Initialise get log info structure
  * @return void

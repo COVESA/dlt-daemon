@@ -271,6 +271,11 @@ typedef struct
 typedef int (*dlt_injection_callback_id)(uint32_t, void *, uint32_t, void *);
 typedef int (*dlt_injection_callback)(uint32_t, void *, uint32_t);
 
+typedef union {
+    int (*with_id)(uint32_t, void *, uint32_t, void *);
+    int (*without_id)(uint32_t, void *, uint32_t);
+} dlt_injection_callback_internal;
+
 /**************************************************************************************************
 * The following API functions define a low level function interface for DLT
 **************************************************************************************************/
@@ -851,7 +856,7 @@ DltReturnValue dlt_user_trace_network_segmented(DltContext *handle,
  * This function has to be called first, before using any DLT user lib functions.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_init();
+DltReturnValue dlt_init(void);
 
 /**
  * Initialize the user lib writing only to file.
@@ -874,7 +879,7 @@ DltReturnValue dlt_set_filesize_max(unsigned int filesize);
  * This function has to be called when finishing using the DLT user lib.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_free();
+DltReturnValue dlt_free(void);
 
 /**
  * Check the library version of DLT library.
@@ -989,7 +994,7 @@ DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
  * Until then the state is "unknown state".
  * @return -1 = unknown state, 0 = client not connected, 1 = client connected
  */
-int dlt_get_log_state();
+int dlt_get_log_state(void);
 
 /**
  * Register callback function called when injection message was received
@@ -1207,7 +1212,7 @@ DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *d
  * Write marker message to DLT.
  * @return Value from DltReturnValue enum
  */
-DltReturnValue dlt_log_marker();
+DltReturnValue dlt_log_marker(void);
 
 /**
  * Get the total size and available size of the shared memory buffer between daemon and applications.
@@ -1241,7 +1246,7 @@ DltReturnValue dlt_user_log_resend_buffer(void);
  * @param loglevel this is the current log level of the log message to be sent
  * @return Value from DltReturnValue enum, DLT_RETURN_TRUE if log level is enabled
  */
-inline DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel);
+DltReturnValue dlt_user_is_logLevel_enabled(DltContext *handle, DltLogLevelType loglevel);
 
 
 #   ifdef DLT_TEST_ENABLE

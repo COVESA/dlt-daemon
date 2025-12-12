@@ -75,6 +75,7 @@
  */
 
 #include <dirent.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -97,7 +98,7 @@
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[DLT_CONVERT_TEXTBUFSIZE];
 
@@ -130,43 +131,59 @@ void empty_dir(const char *dir)
 {
     struct dirent **files = { 0 };
     struct stat st;
-    uint32_t n = 0;
     char tmp_filename[FILENAME_SIZE] = { 0 };
-    uint32_t i;
 
     if (dir == NULL) {
-        fprintf(stderr, "ERROR: %s: invalid arguments\n", __FUNCTION__);
+        fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
         return;
     }
 
     if (stat(dir, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {
-            n = (uint32_t) scandir(dir, &files, NULL, alphasort);
-
+            int n = scandir(dir, &files, NULL, alphasort);
+            if (n < 0) {
+                fprintf(stderr, "ERROR: Failed to scan %s with error %s\n", dir, strerror(errno));
+                if (files) {
+                    free(files);
+                }
+                return;
+            }
             /* Do not include /. and /.. */
-            if (n < 2)
+            if (n < 2) {
                 fprintf(stderr, "ERROR: Failed to scan %s with error %s\n",
                         dir, strerror(errno));
+                if (files) {
+                    for (int i = 0; i < n; i++)
+                        if (files[i])
+                            free(files[i]);
+                    free(files);
+                }
+                return;
+            }
             else if (n == 2)
                 printf("%s is already empty\n", dir);
             else {
-                for (i = 2; i < n; i++) {
+                for (int i = 2; i < n; i++) {
                     memset(tmp_filename, 0, FILENAME_SIZE);
-                    snprintf(tmp_filename, FILENAME_SIZE, "%s%s", dir, files[i]->d_name);
-
-                    if (remove(tmp_filename) != 0)
-                        fprintf(stderr, "ERROR: Failed to delete %s with error %s\n",
-                                tmp_filename, strerror(errno));
+                    /* Validate filename to prevent path traversal */
+                    if (strstr(files[i]->d_name, "/") == NULL && strstr(files[i]->d_name, "..") == NULL) {
+                        snprintf(tmp_filename, FILENAME_SIZE, "%s%s", dir, files[i]->d_name);
+                        if (remove(tmp_filename) != 0)
+                            fprintf(stderr, "ERROR: Failed to delete %s with error %s\n",
+                                    tmp_filename, strerror(errno));
+                    } else {
+                        fprintf(stderr, "WARNING: Skipping suspicious filename: %s\n", files[i]->d_name);
+                    }
                 }
-                if (files) {
-                    for (i = 0; i < n ; i++)
-                        if (files[i]) {
-                            free(files[i]);
-                            files[i] = NULL;
-                        }
-                    free(files);
-                    files = NULL;
-                }
+            }
+            if (files) {
+                for (int i = 0; i < n ; i++)
+                    if (files[i]) {
+                        free(files[i]);
+                        files[i] = NULL;
+                    }
+                free(files);
+                files = NULL;
             }
         }
         else
@@ -212,7 +229,6 @@ int main(int argc, char *argv[])
     memset(&st, 0, sizeof(struct stat));
     struct dirent **files = { 0 };
     int n = 0;
-    int i = 0;
 
     struct iovec iov[2];
     int bytes_written = 0;
@@ -333,12 +349,13 @@ int main(int argc, char *argv[])
 
     if (tflag) {
         /* Prepare the temp dir to untar compressed files */
-        if (stat(DLT_CONVERT_WS, &st) == -1) {
-            if (mkdir(DLT_CONVERT_WS, 0700) != 0) {
+        if (mkdir(DLT_CONVERT_WS, 0700) != 0) {
+            if (errno != EEXIST) {
                 fprintf(stderr,"ERROR: Cannot create temp dir %s!\n", DLT_CONVERT_WS);
-                if (ovalue)
+                if (ovalue) {
                     close(ohandle);
-
+                    ohandle = -1;
+                }
                 return -1;
             }
         }
@@ -353,7 +370,8 @@ int main(int argc, char *argv[])
             /* Check extension of input file
              * If it is a compressed file, uncompress it
              */
-            if (strcmp(get_filename_ext(argv[index]), DLT_EXTENSION) != 0) {
+            const char *file_ext = get_filename_ext(argv[index]);
+            if (file_ext && strcmp(file_ext, DLT_EXTENSION) != 0) {
                 syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", DLT_CONVERT_WS, NULL);
                 if (syserr != 0)
                     fprintf(stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n",
@@ -371,9 +389,10 @@ int main(int argc, char *argv[])
         n = scandir(DLT_CONVERT_WS, &files, NULL, alphasort);
         if (n == -1) {
             fprintf(stderr,"ERROR: Cannot scan temp dir %s!\n", DLT_CONVERT_WS);
-            if (ovalue)
+            if (ovalue) {
                 close(ohandle);
-
+                ohandle = -1;
+            }
             return -1;
         }
 
@@ -409,18 +428,19 @@ int main(int argc, char *argv[])
 
             if ((begin < 0) || (begin >= file.counter)) {
                 fprintf(stderr, "ERROR: Selected first message %d is out of range!\n", begin);
-                if (ovalue)
+                if (ovalue) {
                     close(ohandle);
-
+                    ohandle = -1;
+                }
                 return -1;
             }
 
             if ((end < 0) || (end >= file.counter) || (end < begin)) {
                 fprintf(stderr, "ERROR: Selected end message %d is out of range!\n", end);
-                if (ovalue)
+                if (ovalue) {
                     close(ohandle);
-
-                return -1;
+                    ohandle = -1;
+                }
             }
 
             for (num = begin; num <= end; num++) {
@@ -471,6 +491,7 @@ int main(int argc, char *argv[])
                     if (0 > bytes_written) {
                         printf("in main: writev(ohandle, iov, 2); returned an error!");
                         close(ohandle);
+                        ohandle = -1;
                         dlt_file_free(&file, vflag);
                         return -1;
                     }
@@ -507,13 +528,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (ovalue)
+    if (ovalue) {
         close(ohandle);
+        ohandle = -1;
+    }
 
     if (tflag) {
         empty_dir(DLT_CONVERT_WS);
         if (files) {
-            for (i = 0; i < n ; i++)
+            for (int i = 0; i < n ; i++)
                 if (files[i])
                     free(files[i]);
 

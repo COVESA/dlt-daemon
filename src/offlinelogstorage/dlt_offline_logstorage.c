@@ -208,13 +208,12 @@ DLT_STATIC int dlt_logstorage_list_add(char *keys,
         list = &(*list)->next;
     }
 
-    tmp = calloc(1, sizeof(DltLogStorageFilterList));
+    tmp = (DltLogStorageFilterList *)calloc(1, sizeof(DltLogStorageFilterList));
 
     if (tmp == NULL)
         return -1;
 
-    tmp->key_list = (char *)calloc(
-                (num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN), sizeof(char));
+    tmp->key_list = (char *)calloc((size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
     if (tmp->key_list == NULL)
     {
         free(tmp);
@@ -222,10 +221,10 @@ DLT_STATIC int dlt_logstorage_list_add(char *keys,
         return -1;
     }
 
-    memcpy(tmp->key_list, keys, num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
+    memcpy(tmp->key_list, keys, (size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
     tmp->num_keys = num_keys;
     tmp->next = NULL;
-    tmp->data = calloc(1, sizeof(DltLogStorageFilterConfig));
+    tmp->data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
 
     if (tmp->data == NULL) {
         free(tmp->key_list);
@@ -348,7 +347,7 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
 {
     int i = 0;
     int y = 0;
-    int len = 0;
+    size_t len = 0;
     char *tok;
     int num = 1;
 
@@ -375,34 +374,41 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
     num = dlt_logstorage_count_ids(value);
 
     /* need to alloc space for 5 chars, 4 for the name and "," and "\0" */
-    *names = (char *)calloc(num * 5, sizeof(char));
+    *names = (char *)calloc((size_t)num * 5, sizeof(char));
 
     if (*names == NULL) {
         dlt_vlog(LOG_ERR, "%s: Cannot allocate memory\n", __func__);
         return -1;
     }
 
-    tok = strdup(value);
-    tok = strtok(tok, ",");
+
+    char *tok_buf = strdup(value);
+    char *tok_ptr = tok_buf;
+    tok = strtok(tok_ptr, ",");
 
     i = 1;
+
 
     while (tok != NULL) {
         len = strlen(tok);
         len = DLT_OFFLINE_LOGSTORAGE_MIN(len, 4);
 
-        strncpy((*names + y), tok, len);
-
-        if ((num > 1) && (i < num))
-            strncpy((*names + y + len), ",", 2);
-
-        y += len + 1;
-
+        int written = snprintf((*names + y), 5, "%.*s", (int)len, tok);
+        if (written > 0 && written < 5) {
+            if ((num > 1) && (i < num)) {
+                (*names)[y + written] = ',';
+                (*names)[y + written + 1] = '\0';
+            }
+            y += written + 1;
+        } else {
+            /* snprintf failed or truncated, do not advance y */
+            break;
+        }
         i++;
         tok = strtok(NULL, ",");
     }
 
-    free(tok);
+    free(tok_buf);
 
     return 0;
 }
@@ -434,8 +440,8 @@ DLT_STATIC int dlt_logstorage_set_number(unsigned int *number, unsigned int valu
  */
 DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 {
-    int i = 0;
-    int len = 0;
+    size_t i = 0;
+    size_t len = 0;
     unsigned long size = 0;
 
     if (value == NULL)
@@ -446,14 +452,17 @@ DLT_STATIC int dlt_logstorage_read_number(unsigned int *number, char *value)
 
     /* check if string consists of digits only */
     for (i = 0; i < len; i++)
-        if (!isdigit(value[i])) {
+        if (!isdigit((unsigned char)value[i])) {
             dlt_log(LOG_ERR, "Invalid, is not a number \n");
             return -1;
         }
 
     size = strtoul(value, NULL, 10);
-
-    return dlt_logstorage_set_number(number, size);
+    if (size > UINT_MAX) {
+        dlt_log(LOG_ERR, "Value out of range for unsigned int\n");
+        return -1;
+    }
+    return dlt_logstorage_set_number(number, (unsigned int)size);
 }
 
 /**
@@ -490,8 +499,7 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
         return -1;
     }
 
-    *list = (char *)calloc(DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1),
-                           sizeof(char));
+    *list = (char *)calloc((size_t)DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1), sizeof(char));
 
     if (*(list) == NULL) {
         free(ids_local);
@@ -505,8 +513,7 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
             return 0;
         }
 
-        strncpy(((*list) + ((*numids) * (DLT_ID_SIZE + 1))), token,
-                DLT_ID_SIZE);
+        snprintf(((*list) + ((*numids) * (DLT_ID_SIZE + 1))), DLT_ID_SIZE + 1, "%.*s", DLT_ID_SIZE, token);
         *numids = *numids + 1;
         token = strtok_r(NULL, sep, &tmp_token);
     }
@@ -570,24 +577,17 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
                                                      char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
     const char *delimiter = "::";
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, delimiter, strlen(delimiter));
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, delimiter);
+    } else {
+        snprintf(curr_str, sizeof(curr_str), "%s", delimiter);
     }
-    else {
-        strncpy(curr_str, delimiter, strlen(delimiter));
-    }
-
     if (ctid != NULL) {
-        curr_len = strlen(ctid);
-        strncat(curr_str, ctid, curr_len);
+        strncat(curr_str, ctid, sizeof(curr_str) - strlen(curr_str) - 1);
     }
-
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    snprintf(key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1, "%s", curr_str);
 }
 
 /**
@@ -605,25 +605,18 @@ DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
                                                      char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
     const char *colon = ":";
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, colon, strlen(colon));
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, colon);
+    } else {
+        snprintf(curr_str, sizeof(curr_str), "%s", colon);
     }
-    else {
-        strncat(curr_str, colon, strlen(colon));
-    }
-
     if (apid != NULL) {
-        curr_len = strlen(apid);
-        strncat(curr_str, apid, curr_len);
+        strncat(curr_str, apid, sizeof(curr_str) - strlen(curr_str) - 1);
     }
-
-    strncat(curr_str, colon, strlen(colon));
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    strncat(curr_str, colon, sizeof(curr_str) - strlen(curr_str) - 1);
+    snprintf(key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1, "%s", curr_str);
 }
 
 /**
@@ -642,31 +635,21 @@ DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
                                                  char *ctid, char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
-    int curr_len = 0;
     const char *colon = ":";
 
     if (ecuid != NULL) {
-        strncpy(curr_str, ecuid, DLT_ID_SIZE);
-        strncat(curr_str, colon, strlen(colon));
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, colon);
+    } else {
+        snprintf(curr_str, sizeof(curr_str), "%s", colon);
     }
-    else {
-        strncat(curr_str, colon, strlen(colon));
-    }
-
     if (apid != NULL) {
-        curr_len = strlen(apid);
-        strncat(curr_str, apid, curr_len);
+        strncat(curr_str, apid, sizeof(curr_str) - strlen(curr_str) - 1);
     }
-
-    strncat(curr_str, colon, strlen(colon));
-
+    strncat(curr_str, colon, sizeof(curr_str) - strlen(curr_str) - 1);
     if (ctid != NULL) {
-        curr_len = strlen(ctid);
-        strncat(curr_str, ctid, curr_len);
+        strncat(curr_str, ctid, sizeof(curr_str) - strlen(curr_str) - 1);
     }
-
-    curr_len = strlen(curr_str);
-    strncpy(key, curr_str, curr_len);
+    snprintf(key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1, "%s", curr_str);
 }
 
 /**
@@ -682,10 +665,8 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
 {
     char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
 
-    strncpy(curr_str, ecuid, DLT_ID_SIZE);
-    strncat(curr_str, "::", 2);
-
-    strncpy(key, curr_str, strlen(curr_str));
+    snprintf(curr_str, sizeof(curr_str), "%.*s::", DLT_ID_SIZE, ecuid);
+    snprintf(key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1, "%s", curr_str);
 }
 
 /**
@@ -738,13 +719,13 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
          (ctids != NULL) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
         dlt_logstorage_create_keys_only_ecu(ecuid, curr_key);
         *(num_keys) = 1;
-        *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
-                                 sizeof(char));
+        *(keys) = (char *)calloc((size_t)(*num_keys) * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
 
         if (*(keys) == NULL)
             return -1;
 
-        strncpy(*keys, curr_key, strlen(curr_key));
+        strncpy(*keys, curr_key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - 1);
+        (*keys)[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - 1] = '\0';
         return 0;
     }
 
@@ -769,8 +750,7 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
     *(num_keys) = num_apids * num_ctids;
 
     /* allocate memory for needed number of keys */
-    *(keys) = (char *)calloc(*num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
-                             sizeof(char));
+    *(keys) = (char *)calloc((size_t)(*num_keys) * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
 
     if (*(keys) == NULL) {
         free(apid_list);
@@ -792,8 +772,9 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
             else /* key is combination of all */
                 dlt_logstorage_create_keys_multi(ecuid, curr_apid, curr_ctid, curr_key);
 
-            strncpy((*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
-                    curr_key, strlen(curr_key));
+            memcpy((*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                   curr_key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
+            (*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN))[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - 1] = '\0';
             num_currkey += 1;
             memset(&curr_key[0], 0, sizeof(curr_key));
         }
@@ -870,7 +851,7 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         }
 
         if (!found) {
-            new_tmp = calloc(1, sizeof(DltNewestFileName));
+            new_tmp = (DltNewestFileName *)calloc(1, sizeof(DltNewestFileName));
             if (new_tmp == NULL) {
                 /* In this case, the existing list does not need to be freed.*/
                 dlt_vlog(LOG_ERR,
@@ -907,11 +888,11 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
  */
 DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
 {
-    int len = 0;
+    size_t len = 0;
     int idx = 0;
-    int config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
-    int storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
-    int control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
+    size_t config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
+    size_t storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
+    size_t control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
 
     if (name == NULL)
         return -1;
@@ -922,32 +903,27 @@ DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
     if (strncmp(name,
                 DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION,
                 config_sec_len) == 0) {
-        for (idx = config_sec_len; idx < len - 1; idx++)
-            if (!isdigit(name[idx]))
+        for (idx = (int)config_sec_len; (size_t)idx < len - 1; idx++)
+            if (!isdigit((unsigned char)name[idx]))
                 return -1;
-
         return 0;
     }
-    /* Check if section header is of format "FILTER" followed by a number */
     else if (strncmp(name,
                      DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION,
                      storage_sec_len) == 0)
     {
-        for (idx = storage_sec_len; idx < len - 1; idx++)
-            if (!isdigit(name[idx]))
+        for (idx = (int)storage_sec_len; (size_t)idx < len - 1; idx++)
+            if (!isdigit((unsigned char)name[idx]))
                 return -1;
-
         return 0;
     }
-    /* Check if section header is of format "FILTER" followed by a number */
     else if (strncmp(name,
                      DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION,
                      control_sec_len) == 0)
     {
-        for (idx = control_sec_len; idx < len - 1; idx++)
-            if (!isdigit(name[idx]))
+        for (idx = (int)control_sec_len; (size_t)idx < len - 1; idx++)
+            if (!isdigit((unsigned char)name[idx]))
                 return -1;
-
         return 0;
     }
     else {
@@ -1118,12 +1094,10 @@ DLT_STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *co
 DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
                                              char *value)
 {
-    int len;
+    size_t len;
 
-    if ((value == NULL) || (strcmp(value, "") == 0)) {
-        dlt_vlog(LOG_ERR, "%s: Arguments are set to NULL\n", __func__);
+    if ((value == NULL) || (strcmp(value, "") == 0))
         return -1;
-    }
 
     if (config->file_name != NULL) {
         free(config->file_name);
@@ -1140,7 +1114,7 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
 
     /* do not allow the user to change directory by adding a relative path */
     if (strstr(value, "..") == NULL) {
-        config->file_name = calloc((len + 1), sizeof(char));
+        config->file_name = (char *)calloc(len + 1, sizeof(char));
 
         if (config->file_name == NULL) {
             dlt_log(LOG_ERR,
@@ -1148,7 +1122,8 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
             return -1;
         }
 
-        strncpy(config->file_name, value, len);
+        memcpy(config->file_name, value, len);
+        config->file_name[len] = '\0';
     }
     else {
         dlt_log(LOG_ERR,
@@ -1184,22 +1159,6 @@ DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *conf
         return -1;
 
     return dlt_logstorage_read_number(&config->specific_size, value);
-}
-
-DLT_STATIC int dlt_logstorage_set_sync_strategy(int *sync,
-                                                int value)
-{
-    *sync = value;
-
-    if (value == 0)
-    {
-        dlt_log(LOG_WARNING,
-                "Unknown sync strategies. Set default ON_MSG\n");
-        *sync = DLT_LOGSTORAGE_SYNC_ON_MSG;
-        return 1;
-    }
-
-    return 0;
 }
 
 /**
@@ -1345,6 +1304,7 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
         return 1;
     }
 #else
+    (void)value;
     dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
     config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
 #endif
@@ -1363,7 +1323,7 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
 DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
                                           char *value)
 {
-    int len;
+    size_t len;
 
     if ((config == NULL) || (value == NULL) || (value[0] == '\0'))
         return -1;
@@ -1374,12 +1334,13 @@ DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
     }
 
     len = strlen(value);
-    config->ecuid = calloc((len + 1), sizeof(char));
+    config->ecuid = (char *)calloc(len + 1, sizeof(char));
 
     if (config->ecuid == NULL)
         return -1;
 
-    strncpy(config->ecuid, value, len);
+    memcpy(config->ecuid, value, len);
+    config->ecuid[len] = '\0';
 
     return 0;
 }
@@ -1684,9 +1645,9 @@ DLT_STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
                                                char *value)
 {
     int ret = 0;
-    int config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
-    int storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
-    int control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
+    size_t config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
+    size_t storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
+    size_t control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
 
     if ((config_file == NULL) || (sec_name == NULL))
         return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
@@ -2265,12 +2226,11 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
                               char *ecuid)
 {
     DltLogStorageFilterConfig **cur_config_ptr = NULL;
-    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] =
-    { { '\0' }, { '\0' }, { '\0' } };
+    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = { { '\0' }, { '\0' }, { '\0' } };
     int i = 0;
-    int apid_len = 0;
-    int ctid_len = 0;
-    int ecuid_len = 0;
+    size_t apid_len = 0;
+    size_t ctid_len = 0;
+    size_t ecuid_len = 0;
     int num_configs = 0;
     int num = 0;
 
@@ -2292,15 +2252,12 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
      * :apid: */
 
     ecuid_len = strlen(ecuid);
-
     if (ecuid_len > DLT_ID_SIZE)
         ecuid_len = DLT_ID_SIZE;
 
     if ((apid == NULL) && (ctid == NULL)) {
         /* ecu:: */
-        strncpy(key[0], ecuid, ecuid_len);
-        strncat(key[0], ":", 1);
-        strncat(key[0], ":", 1);
+        snprintf(key[0], sizeof(key[0]), "%.*s::", (int)ecuid_len, ecuid);
 
         num_configs = dlt_logstorage_list_find(key[0], &(handle->config_list),
                                                config);
@@ -2309,67 +2266,44 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
 
     if (apid != NULL){
         apid_len = strlen(apid);
-
         if (apid_len > DLT_ID_SIZE)
             apid_len = DLT_ID_SIZE;
     }
-
     if (ctid != NULL){
         ctid_len = strlen(ctid);
-
         if (ctid_len > DLT_ID_SIZE)
             ctid_len = DLT_ID_SIZE;
     }
 
     /* :apid: */
-    strncpy(key[0], ":", 1);
-    if (apid != NULL)
-        strncat(key[0], apid, apid_len);
-    strncat(key[0], ":", 1);
+    snprintf(key[0], sizeof(key[0]), ":%.*s:", (int)apid_len, apid ? apid : "");
 
     /* ::ctid */
-    strncpy(key[1], ":", 1);
-    strncat(key[1], ":", 1);
-    if (ctid != NULL)
-        strncat(key[1], ctid, ctid_len);
+    snprintf(key[1], sizeof(key[1]), "::%.*s", (int)ctid_len, ctid ? ctid : "");
 
     /* :apid:ctid */
-    strncpy(key[2], ":", 1);
-    if (apid != NULL)
-        strncat(key[2], apid, apid_len);
-    strncat(key[2], ":", 1);
-    if (ctid != NULL)
-        strncat(key[2], ctid, ctid_len);
+    snprintf(key[2], sizeof(key[2]), ":%.*s:%.*s", (int)apid_len, apid ? apid : "", (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:apid:ctid */
-    strncpy(key[3], ecuid, ecuid_len);
-    strncat(key[3], ":", 1);
-    if (apid != NULL)
-        strncat(key[3], apid, apid_len);
-    strncat(key[3], ":", 1);
-    if (ctid != NULL)
-        strncat(key[3], ctid, ctid_len);
+    snprintf(key[3], sizeof(key[3]), "%.*s:%.*s:%.*s",
+        (int)ecuid_len, ecuid,
+        (int)apid_len, apid ? apid : "",
+        (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:apid: */
-    strncpy(key[4], ecuid, ecuid_len);
-    strncat(key[4], ":", 1);
-    if (apid != NULL)
-        strncat(key[4], apid, apid_len);
-    strncat(key[4], ":", 1);
+    snprintf(key[4], sizeof(key[4]), "%.*s:%.*s:",
+        (int)ecuid_len, ecuid,
+        (int)apid_len, apid ? apid : "");
 
     /* ecu::ctid */
-    strncpy(key[5], ecuid, ecuid_len);
-    strncat(key[5], ":", 1);
-    strncat(key[5], ":", 1);
-    if (ctid != NULL)
-        strncat(key[5], ctid, ctid_len);
+    snprintf(key[5], sizeof(key[5]), "%.*s::%.*s",
+        (int)ecuid_len, ecuid,
+        (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:: */
-    strncpy(key[6], ecuid, ecuid_len);
-    strncat(key[6], ":", 1);
-    strncat(key[6], ":", 1);
+    snprintf(key[6], sizeof(key[6]), "%.*s::",
+        (int)ecuid_len, ecuid);
 
-    /* Search the list three times with keys as -apid: , :ctid and apid:ctid */
     for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS; i++)
     {
         cur_config_ptr = &config[num_configs];
@@ -2525,8 +2459,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
     DltExtendedHeader *extendedHeader = NULL;
     DltStandardHeaderExtra *extraHeader = NULL;
     DltStandardHeader *standardHeader = NULL;
-    unsigned int standardHeaderExtraLen = sizeof(DltStandardHeaderExtra);
-    unsigned int header_len = 0;
+    size_t standardHeaderExtraLen = sizeof(DltStandardHeaderExtra);
+    size_t header_len = 0;
     DltNewestFileName *tmp = NULL;
     int found = 0;
 
@@ -2542,13 +2476,13 @@ int dlt_logstorage_write(DltLogStorage *handle,
     standardHeader = (DltStandardHeader *)data2;
 
     if (!DLT_IS_HTYP_WEID(standardHeader->htyp))
-        standardHeaderExtraLen -= DLT_ID_SIZE;
+        standardHeaderExtraLen -= (size_t)DLT_ID_SIZE;
 
     if (!DLT_IS_HTYP_WSID(standardHeader->htyp))
-        standardHeaderExtraLen -= DLT_SIZE_WSID;
+        standardHeaderExtraLen -= (size_t)DLT_SIZE_WSID;
 
     if (!DLT_IS_HTYP_WTMS(standardHeader->htyp))
-        standardHeaderExtraLen -= DLT_SIZE_WTMS;
+        standardHeaderExtraLen -= (size_t)DLT_SIZE_WTMS;
 
     extraHeader = (DltStandardHeaderExtra *)(data2
                                              + sizeof(DltStandardHeader));
@@ -2557,7 +2491,7 @@ int dlt_logstorage_write(DltLogStorage *handle,
         header_len = sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) + standardHeaderExtraLen;
 
         /* check if size2 is big enough to contain expected DLT message header */
-        if ((unsigned int)size2 < header_len) {
+        if ((size_t)size2 < header_len) {
             dlt_vlog(LOG_ERR, "%s: DLT message header is too small\n", __func__);
             return 0;
         }
@@ -2583,7 +2517,7 @@ int dlt_logstorage_write(DltLogStorage *handle,
         header_len = sizeof(DltStandardHeader) + standardHeaderExtraLen;
 
         /* check if size2 is big enough to contain expected DLT message header */
-        if ((unsigned int)size2 < header_len) {
+        if ((size_t)size2 < header_len) {
             dlt_log(LOG_ERR, "DLT message header is too small (without extended header)\n");
             return 0;
         }

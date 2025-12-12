@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <errno.h>
-#if DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
+#ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
 #include <systemd/sd-daemon.h>
 #endif
 
@@ -87,7 +87,7 @@ DltReturnValue dlt_daemon_unix_android_get_socket(int *sock, const char *sock_pa
 int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
 {
     struct sockaddr_un addr;
-    int old_mask;
+    mode_t old_mask;
 
     if ((sock == NULL) || (sock_path == NULL)) {
         dlt_log(LOG_ERR, "dlt_daemon_unix_socket_open: arguments invalid");
@@ -151,7 +151,7 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     }
 
     /* set appropriate access permissions */
-    old_mask = umask(mask);
+    old_mask = umask((mode_t)mask);
 
     if (bind(*sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         dlt_vlog(LOG_WARNING, "%s: bind() error (%s)\n", __func__,
@@ -166,7 +166,7 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     }
 
     /* restore permissions */
-    umask(old_mask);
+    umask((mode_t)old_mask);
 
 #ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
     } // end of: if (!sd_socket_open) {

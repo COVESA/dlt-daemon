@@ -319,7 +319,7 @@ void dlt_log_multiple_files_write(const char* format, ...)
     va_start (args, format);
     vsnprintf(output_string, 2047, format, args);
     va_end (args);
-    multiple_files_buffer_write(&multiple_files_ring_buffer, (unsigned char*)output_string, strlen(output_string));
+    multiple_files_buffer_write(&multiple_files_ring_buffer, (unsigned char*)output_string, (int)strlen(output_string));
 }
 
 void dlt_log_free(void)

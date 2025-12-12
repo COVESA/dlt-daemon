@@ -68,6 +68,7 @@
 
 #include <stdio.h>      /* for printf() and fprintf() */
 #include <float.h>
+#include <unistd.h>     /* for getopt(), opterr, optarg, optopt */
 #include <stdlib.h>     /* for atoi(), abort() */
 #include <string.h>     /* for memset() */
 #include <ctype.h>      /* for isprint() */
@@ -88,7 +89,7 @@ DltContextData context_data;
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 
@@ -235,7 +236,7 @@ int testall(int count, int repeat, int delay, int size)
         for (num = 1; num <= count; num++) {
             if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
                 dlt_user_log_write_int(&context_data, num);
-                dlt_user_log_write_raw(&context_data, buffer, size);
+                dlt_user_log_write_raw(&context_data, buffer, (uint16_t)size);
                 dlt_user_log_write_finish(&context_data);
             }
             ts.tv_sec = (delay * 1000) / 1000000000;
@@ -249,6 +250,3 @@ int testall(int count, int repeat, int delay, int size)
 
     return 0;
 }
-
-
-

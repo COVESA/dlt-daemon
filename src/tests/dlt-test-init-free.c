@@ -31,10 +31,10 @@
 #include "dlt_user.h"
 
 void exec(const char *cmd, char *buffer, size_t length);
-void printMemoryUsage();
+void printMemoryUsage(void);
 char *occupyMemory(int size);
-void do_example_test();
-void do_dlt_test();
+void do_example_test(void);
+void do_dlt_test(void);
 
 int num_repetitions;
 
@@ -56,14 +56,14 @@ int main(int argc, char **argv)
 }
 
 /* Should increase and then decrease memory amount. */
-void do_example_test()
+void do_example_test(void)
 {
     const int immediatelyFree = 0;
 
     int numBufs = 1024;
     int sizePerBuf = 1024 * 1024; /* 1MB */
 
-    char **bufs = (char **)malloc(numBufs * sizeof(char *));
+    char **bufs = (char **)malloc((size_t)numBufs * sizeof(char *));
 
     for (int i = 0; i < numBufs; i++) {
         bufs[i] = occupyMemory(sizePerBuf);
@@ -94,11 +94,11 @@ void do_example_test()
 }
 
 /* Should give stable amount of memory across all iterations. */
-void do_dlt_test()
+void do_dlt_test(void)
 {
     for (int i = 0; i < num_repetitions; i++) {
         if (dlt_init() < DLT_RETURN_OK) {
-            printf("%s Failed to initialise dlt\n", __FUNCTION__);
+            printf("%s Failed to initialise dlt\n", __func__);
             return;
         }
         dlt_free();
@@ -122,7 +122,7 @@ void exec(const char *cmd, char *buffer, size_t length)
         pclose(pipe);
 }
 
-void printMemoryUsage()
+void printMemoryUsage(void)
 {
     char result[128] = { 0 };
     char command[128] = { 0 };
@@ -136,7 +136,7 @@ void printMemoryUsage()
 
 char *occupyMemory(int size)
 {
-    char *buf = (char *)malloc(size * sizeof(char));
+    char *buf = (char *)malloc((size_t)size * sizeof(char));
 
     for (int i = 0; i < 1; i++)
         buf[i] = 1;

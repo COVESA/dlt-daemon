@@ -231,13 +231,20 @@ if(WITH_DLT_COVERAGE)
 endif()
 
 add_compile_options(
-    $<$<COMPILE_LANGUAGE:C>:-std=gnu99>
+    $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
     $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++14>
     -Wall
     -Wextra
-    # -pedantic
+    -pedantic
     -Wno-variadic-macros
     -Wno-strict-aliasing
+    -Werror
+    -Wconversion
+    -Wshadow
+    -Wundef
+    -Wcast-qual
+    -Wno-system-headers
+    -Wno-unused-function
 )
 
 if(WITH_DOC STREQUAL "OFF")

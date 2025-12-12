@@ -98,8 +98,8 @@ static int dlt_daemon_cmp_apid(const void *m1, const void *m2)
     if ((m1 == NULL) || (m2 == NULL))
         return -1;
 
-    DltDaemonApplication *mi1 = (DltDaemonApplication *)m1;
-    DltDaemonApplication *mi2 = (DltDaemonApplication *)m2;
+    const DltDaemonApplication *mi1 = (const DltDaemonApplication *)m1;
+    const DltDaemonApplication *mi2 = (const DltDaemonApplication *)m2;
 
     return memcmp(mi1->apid, mi2->apid, DLT_ID_SIZE);
 }
@@ -110,8 +110,8 @@ static int dlt_daemon_cmp_apid_ctid(const void *m1, const void *m2)
         return -1;
 
     int ret, cmp;
-    DltDaemonContext *mi1 = (DltDaemonContext *)m1;
-    DltDaemonContext *mi2 = (DltDaemonContext *)m2;
+    const DltDaemonContext *mi1 = (const DltDaemonContext *)m1;
+    const DltDaemonContext *mi2 = (const DltDaemonContext *)m2;
 
     cmp = memcmp(mi1->apid, mi2->apid, DLT_ID_SIZE);
 
@@ -641,9 +641,9 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                 /* allocate memory in steps of DLT_DAEMON_APPL_ALLOC_SIZE, e.g. 100 */
                 old = user_list->applications;
                 user_list->applications = (DltDaemonApplication *)
-                    malloc(sizeof(DltDaemonApplication) *
-                           ((user_list->num_applications / DLT_DAEMON_APPL_ALLOC_SIZE) + 1) *
-                           DLT_DAEMON_APPL_ALLOC_SIZE);
+                    malloc((size_t)sizeof(DltDaemonApplication) *
+                           ((size_t)(user_list->num_applications / DLT_DAEMON_APPL_ALLOC_SIZE) + 1) *
+                           (size_t)DLT_DAEMON_APPL_ALLOC_SIZE);
 
                 if (user_list->applications == NULL) {
                     user_list->applications = old;
@@ -651,14 +651,14 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                     return (DltDaemonApplication *)NULL;
                 }
 
-                memcpy(user_list->applications,
-                       old,
-                       sizeof(DltDaemonApplication) * user_list->num_applications);
+                  memcpy(user_list->applications,
+                      old,
+                      (size_t)sizeof(DltDaemonApplication) * (size_t)user_list->num_applications);
                 free(old);
             }
         }
 
-        application = &(user_list->applications[user_list->num_applications - 1]);
+        application = &(user_list->applications[(size_t)(user_list->num_applications - 1)]);
 
         dlt_set_id(application->apid, apid);
         application->pid = 0;
@@ -720,11 +720,14 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
         if (dlt_user_handle < DLT_FD_MINIMUM) {
-            snprintf(filename,
-                     DLT_DAEMON_COMMON_TEXTBUFSIZE,
-                     "%s/dltpipes/dlt%d",
-                     dltFifoBaseDir,
-                     pid);
+            int ret = snprintf(filename,
+                            DLT_DAEMON_COMMON_TEXTBUFSIZE,
+                            "%s/dltpipes/dlt%d",
+                            dltFifoBaseDir,
+                            (int)pid);
+            if (ret < 0 || ret >= DLT_DAEMON_COMMON_TEXTBUFSIZE) {
+                filename[0] = '\0';
+            }
 
             dlt_user_handle = open(filename, O_WRONLY | O_NONBLOCK);
 
@@ -761,7 +764,7 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
     application->num_context_log_level_settings = 0;
     application->context_log_level_settings = NULL;
 #endif
-#if DLT_TRACE_LOAD_CTRL_ENABLE
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     if (application->trace_load_settings == NULL) {
         DltTraceLoadSettings* pre_configured_trace_load_settings = NULL;
         int num_settings = 0;
@@ -846,7 +849,7 @@ int dlt_daemon_application_del(DltDaemon *daemon,
             application->application_description = NULL;
         }
 
-#if DLT_TRACE_LOAD_CTRL_ENABLE
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         if (application->trace_load_settings != NULL) {
             free(application->trace_load_settings);
             application->trace_load_settings = NULL;
@@ -858,12 +861,12 @@ int dlt_daemon_application_del(DltDaemon *daemon,
         /* move all applications above pos to pos */
         memmove(&(user_list->applications[pos]),
                 &(user_list->applications[pos + 1]),
-                sizeof(DltDaemonApplication) * ((user_list->num_applications - 1) - pos));
+                (size_t)sizeof(DltDaemonApplication) * (size_t)((user_list->num_applications - 1) - pos));
 
         /* Clear last application */
-        memset(&(user_list->applications[user_list->num_applications - 1]),
-               0,
-               sizeof(DltDaemonApplication));
+         memset(&(user_list->applications[(size_t)(user_list->num_applications - 1)]),
+                0,
+                (size_t)sizeof(DltDaemonApplication));
 
         user_list->num_applications--;
     }
@@ -1104,9 +1107,9 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                 /* allocate memory for context in steps of DLT_DAEMON_CONTEXT_ALLOC_SIZE, e.g 100 */
                 old = user_list->contexts;
                 user_list->contexts = (DltDaemonContext *)calloc(1, (size_t) sizeof(DltDaemonContext) *
-                                                                 ((user_list->num_contexts /
-                                                                   DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) *
-                                                                 DLT_DAEMON_CONTEXT_ALLOC_SIZE);
+                                                                ((size_t)(user_list->num_contexts /
+                                                                DLT_DAEMON_CONTEXT_ALLOC_SIZE) + 1) *
+                                                                (size_t)DLT_DAEMON_CONTEXT_ALLOC_SIZE);
 
                 if (user_list->contexts == NULL) {
                     user_list->contexts = old;
@@ -1115,13 +1118,13 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                 }
 
                 memcpy(user_list->contexts,
-                       old,
-                       (size_t) sizeof(DltDaemonContext) * user_list->num_contexts);
+                        old,
+                        (size_t) sizeof(DltDaemonContext) * (size_t)user_list->num_contexts);
                 free(old);
             }
         }
 
-        context = &(user_list->contexts[user_list->num_contexts - 1]);
+        context = &(user_list->contexts[(size_t)(user_list->num_contexts - 1)]);
         memset(context, 0, sizeof(DltDaemonContext));
 
         dlt_set_id(context->apid, apid);
@@ -1320,12 +1323,12 @@ int dlt_daemon_context_del(DltDaemon *daemon,
         /* move all contexts above pos to pos */
         memmove(&(user_list->contexts[pos]),
                 &(user_list->contexts[pos + 1]),
-                sizeof(DltDaemonContext) * ((user_list->num_contexts - 1) - pos));
+                (size_t)sizeof(DltDaemonContext) * (size_t)((user_list->num_contexts - 1) - pos));
 
         /* Clear last context */
-        memset(&(user_list->contexts[user_list->num_contexts - 1]),
-               0,
-               sizeof(DltDaemonContext));
+        memset(&(user_list->contexts[(size_t)(user_list->num_contexts - 1)]),
+                0,
+                (size_t)sizeof(DltDaemonContext));
 
         user_list->num_contexts--;
 

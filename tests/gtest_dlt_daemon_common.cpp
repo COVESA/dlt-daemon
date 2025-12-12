@@ -243,7 +243,13 @@ TEST(t_dlt_daemon_application_add, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
 
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     /*printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid,app->application_description, app->num_contexts, app->pid, app->user_handle); */
     EXPECT_STREQ(apid, app->apid);
     EXPECT_STREQ(desc, app->application_description);
@@ -253,9 +259,13 @@ TEST(t_dlt_daemon_application_add, normal)
 
     /* Apid > 4, expected truncate to 4 char or error */
     apid = "TO_LONG";
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     char tmp[5];
-    strncpy(tmp, apid, 4);
+    memcpy(tmp, apid, 4);
     tmp[4] = '\0';
     EXPECT_STREQ(tmp, app->apid);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
@@ -313,14 +323,19 @@ TEST(t_dlt_daemon_application_add, nullpointer)
     const char *desc = "HELLO_TEST";
     int fd = 42;
     char ecu[] = "ECU1";
-
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
     /* NULL-Pointer test */
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, NULL, 0, NULL, 0, NULL, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, NULL, 0, (char *)desc, 0, NULL, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, (char *)apid, 0, NULL, 0, NULL, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, (char *)apid, 0, (char *)desc, 0, NULL, 0));
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, NULL, 0, desc_buf, 0, NULL, 0));
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, apid_buf, 0, NULL, 0, NULL, 0));
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, apid_buf, 0, desc_buf, 0, NULL, 0));
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(&daemon, NULL, 0, NULL, 0, NULL, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(&daemon, NULL, 0, (char *)desc, 0, NULL, 0));
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(&daemon, NULL, 0, desc_buf, 0, NULL, 0));
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, NULL, 0, NULL, fd, NULL, 0));
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_add(NULL, NULL, 0, NULL, 0, ecu, 0));
 }
@@ -349,7 +364,13 @@ TEST(t_dlt_daemon_application_del, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
@@ -417,7 +438,13 @@ TEST(t_dlt_daemon_application_find, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     EXPECT_STREQ(apid, app->apid);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
@@ -425,12 +452,19 @@ TEST(t_dlt_daemon_application_find, normal)
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
 
     /* Application doesn't exist, expect NULL */
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, (char *)apid, 0));
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, apid_buf, 0));
 
     /* Use a different apid, expect NULL */
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-    EXPECT_LE((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, (char *)apid, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, (char *)"NEXI", 0));
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
+    EXPECT_LE((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, apid_buf, 0));
+    char nexi[DLT_ID_SIZE+1] = {0};
+    memcpy(nexi, "NEXI", DLT_ID_SIZE);
+    nexi[DLT_ID_SIZE] = '\0';
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, ecu, nexi, 0));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
@@ -460,7 +494,10 @@ TEST(t_dlt_daemon_application_find, nullpointer)
 
     /* NULL-Pointer, expected NULL */
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(NULL, NULL, NULL, 0));
-    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(NULL, (char *)apid, NULL, 0));
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(NULL, apid_buf, NULL, 0));
     EXPECT_EQ((DltDaemonApplication *)0, dlt_daemon_application_find(&daemon, NULL, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applikation_find */
@@ -485,9 +522,26 @@ TEST(t_dlt_daemon_applications_clear, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
+    char apid1_buf[DLT_ID_SIZE+1] = {0};
+    char desc1_buf[32] = {0};
+    memcpy(apid1_buf, "TES1", DLT_ID_SIZE);
+    apid1_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc1_buf, "Test clear 1", sizeof(desc1_buf)-1);
+    desc1_buf[sizeof(desc1_buf)-1] = '\0';
     EXPECT_LE((DltDaemonApplication *)0,
-              dlt_daemon_application_add(&daemon, (char *)"TES1", pid, (char *)"Test clear 1", fd, ecu, 0));
-    dlt_daemon_application_add(&daemon, (char *)"TES2", pid, (char *)"Test clear 2", fd, ecu, 0);
+              dlt_daemon_application_add(&daemon, apid1_buf, pid, desc1_buf, fd, ecu, 0));
+    memcpy(apid1_buf, "TES1", DLT_ID_SIZE);
+    apid1_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc1_buf, "Test clear 1", sizeof(desc1_buf)-1);
+    desc1_buf[sizeof(desc1_buf)-1] = '\0';
+    dlt_daemon_application_add(&daemon, apid1_buf, pid, desc1_buf, fd, ecu, 0);
+    char apid2_buf[DLT_ID_SIZE+1] = {0};
+    char desc2_buf[32] = {0};
+    memcpy(apid2_buf, "TES2", DLT_ID_SIZE);
+    apid2_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc2_buf, "Test clear 2", sizeof(desc2_buf)-1);
+    desc2_buf[sizeof(desc2_buf)-1] = '\0';
+    dlt_daemon_application_add(&daemon, apid2_buf, pid, desc2_buf, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -535,7 +589,13 @@ TEST(t_dlt_daemon_applications_invalidate_fd, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     EXPECT_LE(0, dlt_daemon_applications_invalidate_fd(&daemon, ecu, app->user_handle, 0));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
@@ -591,8 +651,17 @@ TEST(t_dlt_daemon_applications_save, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc, fd, ecu, 0);
-    EXPECT_LE(0, dlt_daemon_applications_save(&daemon, (char *)filename, 0));
+    char apid_buf[DLT_ID_SIZE+1] = {0};
+    char desc_buf[32] = {0};
+    memcpy(apid_buf, apid, DLT_ID_SIZE);
+    apid_buf[DLT_ID_SIZE] = '\0';
+    strncpy(desc_buf, desc, sizeof(desc_buf)-1);
+    desc_buf[sizeof(desc_buf)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
+    char filename_buf[256] = {0};
+    strncpy(filename_buf, filename, sizeof(filename_buf)-1);
+    filename_buf[sizeof(filename_buf)-1] = '\0';
+    EXPECT_LE(0, dlt_daemon_applications_save(&daemon, filename_buf, 0));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
@@ -630,7 +699,10 @@ TEST(t_dlt_daemon_applications_save, nullpointer)
 
     /* NULL-Pointer */
     EXPECT_GE(-1, dlt_daemon_applications_save(NULL, NULL, 0));
-    EXPECT_GE(-1, dlt_daemon_applications_save(NULL, (char *)filename, 0));
+    char filename_buf[256] = {0};
+    strncpy(filename_buf, filename, sizeof(filename_buf)-1);
+    filename_buf[sizeof(filename_buf)-1] = '\0';
+    EXPECT_GE(-1, dlt_daemon_applications_save(NULL, filename_buf, 0));
     EXPECT_GE(-1, dlt_daemon_applications_save(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_save */
@@ -654,7 +726,10 @@ TEST(t_dlt_daemon_applications_load, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    EXPECT_LE(0, dlt_daemon_applications_load(&daemon, (char *)filename, 0));
+    char filename_buf[256] = {0};
+    strncpy(filename_buf, filename, sizeof(filename_buf)-1);
+    filename_buf[sizeof(filename_buf)-1] = '\0';
+    EXPECT_LE(0, dlt_daemon_applications_load(&daemon, filename_buf, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
 TEST(t_dlt_daemon_applications_load, abnormal)
@@ -690,7 +765,10 @@ TEST(t_dlt_daemon_applications_load, nullpointer)
 
     /* NULL-Pointer */
     EXPECT_GE(-1, dlt_daemon_applications_load(NULL, NULL, 0));
-    EXPECT_GE(-1, dlt_daemon_applications_load(NULL, (char *)filename, 0));
+    char filename_buf[256] = {0};
+    strncpy(filename_buf, filename, sizeof(filename_buf)-1);
+    filename_buf[sizeof(filename_buf)-1] = '\0';
+    EXPECT_GE(-1, dlt_daemon_applications_load(NULL, filename_buf, 0));
     EXPECT_GE(-1, dlt_daemon_applications_load(&daemon, NULL, 0));
 }
 /* End Method: dlt_daemon_common::dlt_daemon_applications_load */
@@ -776,12 +854,13 @@ TEST(t_dlt_daemon_context_add, abnormal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-    DltLogLevelType DLT_LOG_NOT_EXIST = (DltLogLevelType) - 100;
+    /* Log level out of valid range (-1 to 6), should return NULL */
+    int8_t invalid_log_level = 100;
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,
                                         apid,
                                         ctid,
-                                        DLT_LOG_NOT_EXIST,
+                                        invalid_log_level,
                                         DLT_TRACE_STATUS_DEFAULT,
                                         0,
                                         0,
@@ -795,14 +874,14 @@ TEST(t_dlt_daemon_context_add, abnormal)
     EXPECT_LE(0, dlt_daemon_contexts_clear(&daemon, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
 
-    /* Trace Status dont exists */
-    DltTraceStatusType DLT_TRACE_TYPE_NOT_EXIST = (DltTraceStatusType) - 100;
+    /* Trace Status out of valid range (-1 to 1), should return NULL */
+    int8_t invalid_trace_status = 100;
     app = dlt_daemon_application_add(&daemon, apid, 0, desc, fd, ecu, 0);
     daecontext = dlt_daemon_context_add(&daemon,
                                         apid,
                                         ctid,
                                         DLT_LOG_DEFAULT,
-                                        DLT_TRACE_TYPE_NOT_EXIST,
+                                        invalid_trace_status,
                                         0,
                                         0,
                                         desc,
@@ -1880,9 +1959,9 @@ TEST(t_dlt_daemon_application_add, trace_load_settings_not_found)
 {
     DltDaemon daemon;
     DltGateway gateway;
-    const char *apid = "TEST";
+    const char *apid_const = "TEST";
     pid_t pid = 0;
-    const char *desc = "HELLO_TEST";
+    const char *desc_const = "HELLO_TEST";
     DltDaemonApplication *app = NULL;
     char ecu[] = "ECU1";
     int fd = 15;
@@ -1896,8 +1975,13 @@ TEST(t_dlt_daemon_application_add, trace_load_settings_not_found)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK,
               strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+    char apid[DLT_ID_SIZE+1] = {0};
+    char desc[32] = {0};
+    strncpy(apid, apid_const, DLT_ID_SIZE);
+    apid[DLT_ID_SIZE] = '\0';
+    strncpy(desc, desc_const, sizeof(desc)-1);
+    desc[sizeof(desc)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid, pid, desc,
                                      fd, ecu, 0);
     EXPECT_FALSE(app->trace_load_settings == NULL);
     EXPECT_EQ(app->trace_load_settings_count, 1);
@@ -1921,9 +2005,9 @@ TEST(t_dlt_daemon_application_add, trace_load_settings_configured)
 {
     DltDaemon daemon;
     DltGateway gateway;
-    const char *apid = "APP1";
+    const char *apid_const = "APP1";
     pid_t pid = 0;
-    const char *desc = "HELLO_TEST";
+    const char *desc_const = "HELLO_TEST";
     DltDaemonApplication *app = NULL;
     char ecu[] = "ECU1";
     int fd = 15;
@@ -1941,8 +2025,13 @@ TEST(t_dlt_daemon_application_add, trace_load_settings_configured)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK,
               strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+    char apid[DLT_ID_SIZE+1] = {0};
+    char desc[32] = {0};
+    strncpy(apid, apid_const, DLT_ID_SIZE);
+    apid[DLT_ID_SIZE] = '\0';
+    strncpy(desc, desc_const, sizeof(desc)-1);
+    desc[sizeof(desc)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid, pid, desc,
                                      fd, ecu, 0);
     EXPECT_FALSE(app->trace_load_settings == NULL);
     EXPECT_EQ(app->trace_load_settings_count, 4);
@@ -1965,9 +2054,9 @@ TEST(t_dlt_daemon_user_send_trace_load_config, normal)
 {
     DltDaemon daemon;
     DltGateway gateway;
-    const char *apid = "APP1";
+    const char *apid_const = "APP1";
     pid_t pid = 0;
-    const char *desc = "HELLO_TEST";
+    const char *desc_const = "HELLO_TEST";
     DltDaemonApplication *app = NULL;
     char ecu[] = "ECU1";
     int fd = 15;
@@ -1982,15 +2071,24 @@ TEST(t_dlt_daemon_user_send_trace_load_config, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK,
               strncmp(daemon.ecuid, daemon.user_list[0].ecu, DLT_ID_SIZE));
-
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+    char apid[DLT_ID_SIZE+1] = {0};
+    char desc[32] = {0};
+    strncpy(apid, apid_const, DLT_ID_SIZE);
+    apid[DLT_ID_SIZE] = '\0';
+    strncpy(desc, desc_const, sizeof(desc)-1);
+    desc[sizeof(desc)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid, pid, desc,
                                      fd, ecu, 0);
     dlt_daemon_user_send_trace_load_config(&daemon, app, 0);
     dlt_daemon_application_del(&daemon, app, ecu, 0);
 
     setup_trace_load_settings(daemon);
 
-    app = dlt_daemon_application_add(&daemon, (char *)apid, pid, (char *)desc,
+    strncpy(apid, apid_const, DLT_ID_SIZE);
+    apid[DLT_ID_SIZE] = '\0';
+    strncpy(desc, desc_const, sizeof(desc)-1);
+    desc[sizeof(desc)-1] = '\0';
+    app = dlt_daemon_application_add(&daemon, apid, pid, desc,
                                      fd, ecu, 0);
     dlt_daemon_user_send_trace_load_config(&daemon, app, 0);
     dlt_daemon_application_del(&daemon, app, ecu, 0);

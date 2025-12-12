@@ -85,7 +85,7 @@ DltReturnValue dlt_log_init_multiple_logfiles_support(DltLoggingMode mode, bool 
 /**
  * Initialize (external) logging facility for single logfile.
  */
-DltReturnValue dlt_log_init_single_logfile();
+DltReturnValue dlt_log_init_single_logfile(void);
 
 /**
  * Initialize (external) logging facility for multiple files logging.
@@ -136,14 +136,14 @@ void dlt_log_multiple_files_write(const char* format, ...);
  */
 void dlt_log_free(void);
 
-void dlt_log_free_single_logfile();
+void dlt_log_free_single_logfile(void);
 
-void dlt_log_free_multiple_logfiles();
+void dlt_log_free_multiple_logfiles(void);
 
 /**
  * Checks whether (internal) logging in multiple files is active.
  */
-bool dlt_is_log_in_multiple_files_active();
+bool dlt_is_log_in_multiple_files_active(void);
 
 #   ifdef __cplusplus
 }

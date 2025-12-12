@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
     DLT_REGISTER_CONTEXT(mycontext, ctid, PS_DLT_CONTEXT_DESC);
 
     if (timeout > -1)
-        dlt_set_resend_timeout_atexit(timeout);
+        dlt_set_resend_timeout_atexit((uint32_t)timeout);
 
     while (fgets(str, MAXSTRLEN, stdin))
         if (strcmp(str, "") != 0)
@@ -202,4 +202,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

@@ -102,14 +102,10 @@ TEST(t_dlt_daemon_handle_event, nullpointer)
 TEST(t_dlt_event_handler_find_connection, normal)
 {
     int fd = 10;
-    DltEventHandler ev;
-    DltConnection connections;
+    DltEventHandler ev = {};
+    DltConnection connections = {};
     DltConnection *ret = nullptr;
-    DltReceiver receiver;
-
-    memset(&ev, 0, sizeof(DltEventHandler));
-    memset(&connections, 0, sizeof(DltConnection));
-    memset(&receiver, 0, sizeof(DltReceiver));
+    DltReceiver receiver = {};
 
     receiver.fd = fd;
 
@@ -123,22 +119,17 @@ TEST(t_dlt_event_handler_find_connection, normal)
 /* Begin Method: dlt_daemon_event_handler::dlt_daemon_add_connection*/
 TEST(t_dlt_daemon_add_connection, normal)
 {
-    DltEventHandler ev1;
+    DltEventHandler ev1 = {};
     DltConnection *head = nullptr;
     DltConnection *connections1 = nullptr;
-    DltReceiver receiver;
-
-    memset(&ev1, 0, sizeof(DltEventHandler));
-    memset(&receiver, 0, sizeof(DltReceiver));
+    DltReceiver receiver = {};
 
     ev1.connections = (DltConnection *)malloc(sizeof(DltConnection));
     head = (DltConnection *)ev1.connections;
-    memset(ev1.connections, 0, sizeof(DltConnection));
     ev1.connections->next = 0;
     ev1.connections->type = DLT_CONNECTION_CLIENT_MSG_SERIAL;
 
     connections1 = (DltConnection *)malloc(sizeof(DltConnection));
-    memset(connections1, 0, sizeof(DltConnection));
     connections1->next = 0;
     connections1->type = DLT_CONNECTION_GATEWAY;
     connections1->receiver = &receiver;
@@ -153,6 +144,7 @@ TEST(t_dlt_daemon_add_connection, normal)
     free(ev1.connections);
     free(connections1);
 }
+
 
 /* Begin Method: dlt_daemon_event_handler::dlt_daemon_remove_connection*/
 TEST(t_dlt_daemon_remove_connection, normal)
@@ -489,7 +481,7 @@ TEST(t_dlt_connection_send, normal_2)
     conn.type = DLT_CONNECTION_CLIENT_MSG_SERIAL;
 
     ret = dlt_connection_send(&conn,
-                              (void *)dltSerialHeader,
+                              const_cast<void*>(static_cast<const void*>(dltSerialHeader)),
                               sizeof(dltSerialHeader));
 
     EXPECT_EQ(DLT_RETURN_OK, ret);
@@ -509,7 +501,7 @@ TEST(t_dlt_connection_send, abnormal)
     conn.type = DLT_CONNECTION_TYPE_MAX;
 
     ret = dlt_connection_send(&conn,
-                              (void *)dltSerialHeader,
+                              const_cast<void*>(static_cast<const void*>(dltSerialHeader)),
                               sizeof(dltSerialHeader));
     EXPECT_EQ(DLT_RETURN_ERROR, ret);
 }
@@ -522,16 +514,12 @@ TEST(t_dlt_connection_send_multiple, normal_1)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltConnection conn;
-    DltReceiver receiver;
-    DltDaemonLocal daemon_local;
-
-    memset(&conn, 0, sizeof(DltConnection));
-    memset(&receiver, 0, sizeof(DltReceiver));
-    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    DltConnection conn = {};
+    DltReceiver receiver = {};
+    DltDaemonLocal daemon_local = {};
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    size1 = static_cast<int>(daemon_local.msg.headersize - sizeof(DltStorageHeader));
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
@@ -549,7 +537,7 @@ TEST(t_dlt_connection_send_multiple, normal_1)
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    size1 = static_cast<int>(daemon_local.msg.headersize - sizeof(DltStorageHeader));
 
     daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
 
@@ -584,16 +572,12 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltConnection conn;
-    DltReceiver receiver;
-    DltDaemonLocal daemon_local;
-
-    memset(&conn, 0, sizeof(DltConnection));
-    memset(&receiver, 0, sizeof(DltReceiver));
-    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    DltConnection conn = {};
+    DltReceiver receiver = {};
+    DltDaemonLocal daemon_local = {};
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    size1 = static_cast<int>(daemon_local.msg.headersize - sizeof(DltStorageHeader));
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
@@ -611,7 +595,7 @@ TEST(t_dlt_connection_send_multiple, normal_2)
     memset(daemon_local.msg.headerbuffer, 0, daemon_local.msg.headersize);
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    size1 = static_cast<int>(daemon_local.msg.headersize - sizeof(DltStorageHeader));
 
     daemon_local.msg.databuffer = (uint8_t *)malloc(sizeof(uint8_t));
 
@@ -646,12 +630,10 @@ TEST(t_dlt_connection_send_multiple, nullpointer)
     void *data2 = nullptr;
     int size1 = 0;
     int size2 = 0;
-    DltDaemonLocal daemon_local;
-
-    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    DltDaemonLocal daemon_local = {};
 
     data1 = daemon_local.msg.headerbuffer + sizeof(DltStorageHeader);
-    size1 = daemon_local.msg.headersize - sizeof(DltStorageHeader);
+    size1 = static_cast<int>(daemon_local.msg.headersize - sizeof(DltStorageHeader));
     data2 = daemon_local.msg.databuffer;
     size2 = daemon_local.msg.datasize;
 
@@ -679,7 +661,7 @@ int connectServer(void)
     memcpy((char *)&serv_addr.sin_addr.s_addr,
            (char *)server->h_addr,
            server->h_length);
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(static_cast<uint16_t>(portno));
 
     if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         printf("Error: %s (%d) occured in connect socket\n",
@@ -723,7 +705,7 @@ int main(int argc, char **argv)
 
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = INADDR_ANY;
-        serv_addr.sin_port = htons(portno);
+        serv_addr.sin_port = htons(static_cast<uint16_t>(portno));
 
         if (setsockopt(sockfd,
                        SOL_SOCKET,

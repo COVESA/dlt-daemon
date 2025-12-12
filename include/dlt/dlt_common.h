@@ -73,7 +73,11 @@
  \{
  */
 
-#   include <netinet/in.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#include <netinet/in.h>
+#pragma GCC diagnostic pop
+
 #   include <stdio.h>
 #   include <stdbool.h>
 #   ifdef __linux__
@@ -116,8 +120,7 @@
  * Macros to swap the byte order.
  */
 #   define DLT_SWAP_64(value) ((((uint64_t)DLT_SWAP_32((value) & 0xffffffffull)) << 32) | (DLT_SWAP_32((value) >> 32)))
-
-#   define DLT_SWAP_16(value) ((((value) >> 8) & 0xff) | (((value) << 8) & 0xff00))
+#   define DLT_SWAP_16(value) ((uint16_t)((((value) >> 8) & 0xff) | (((value) << 8) & 0xff00)))
 #   define DLT_SWAP_32(value) ((((value) >> 24) & 0xff) | (((value) << 8) & 0xff0000) | (((value) >> 8) & 0xff00) | \
                                (((value) << 24) & 0xff000000))
 
@@ -174,9 +177,9 @@
 #      define DLT_LETOH_64(x) ((x))
 #   endif
 
-#   define DLT_ENDIAN_GET_16(htyp, x) ((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_16(x) : DLT_LETOH_16(x))
-#   define DLT_ENDIAN_GET_32(htyp, x) ((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_32(x) : DLT_LETOH_32(x))
-#   define DLT_ENDIAN_GET_64(htyp, x) ((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_64(x) : DLT_LETOH_64(x))
+#   define DLT_ENDIAN_GET_16(htyp, x) ((uint16_t)((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_16(x) : DLT_LETOH_16(x)))
+#   define DLT_ENDIAN_GET_32(htyp, x) ((uint32_t)((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_32(x) : DLT_LETOH_32(x)))
+#   define DLT_ENDIAN_GET_64(htyp, x) ((uint64_t)((((htyp) & DLT_HTYP_MSBF) > 0) ? DLT_BETOH_64(x) : DLT_LETOH_64(x)))
 
 #   if defined (__WIN32__) || defined (_MSC_VER)
 #      define LOG_EMERG     0
@@ -233,7 +236,7 @@
 
 
 #   if defined (__MSDOS__) || defined (_MSC_VER)
-#      define __func__ __FUNCTION__
+#       define __func__ __func__
 #   endif
 
 #   define PRINT_FUNCTION_VERBOSE(_verbose) \
@@ -293,7 +296,7 @@
         if ((length < 0) || ((length) < ((int32_t)sizeof(type)))) \
         { length = -1; } \
         else \
-        { dst = *((type *)src); src += sizeof(type); length -= sizeof(type); } \
+        { dst = *((type *)src); src += sizeof(type); length -= (int32_t)sizeof(type); } \
     } while(false)
 
 #   define DLT_MSG_READ_ID(dst, src, length) \
@@ -1688,7 +1691,7 @@ int dlt_set_loginfo_parse_service_id(char *resp_text, uint32_t *service_id, uint
  * @param rp_count  int
  * @return length
  */
-int16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
+uint16_t dlt_getloginfo_conv_ascii_to_uint16_t(char *rp, int *rp_count);
 
 /**
  * Convert get log info from ASCII to int16

@@ -103,7 +103,7 @@ void printTestResultNegativeExpected(const char *function, int result)
 }
 
 /*!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using dlt_user_log_file_complete. */
-int testFile1Run1()
+int testFile1Run1(void)
 {
     /*Just some log to the main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF1P1 - dlt_user_log_file_complete"), DLT_STRING(file1));
@@ -119,13 +119,13 @@ int testFile1Run1()
     /*Just some log to the main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF1P1"), DLT_STRING(file1));
 
-    printTestResultPositiveExpected(__FUNCTION__, transferResult);
+    printTestResultPositiveExpected(__func__, transferResult);
 
     return transferResult;
 }
 
 /*!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer */
-int testFile1Run2()
+int testFile1Run2(void)
 {
     int total_size, used_size;
 
@@ -134,7 +134,7 @@ int testFile1Run2()
 
     if (countPackages < 0) {
         printf("Error: dlt_user_log_file_packagesCount\n");
-        printTestResultPositiveExpected(__FUNCTION__, countPackages);
+        printTestResultPositiveExpected(__func__, countPackages);
         return -1;
     }
 
@@ -152,7 +152,7 @@ int testFile1Run2()
 
             if ((total_size - used_size) < (total_size / 2)) {
                 printf("Error: dlt_user_log_file_data\n");
-                printTestResultPositiveExpected(__FUNCTION__, transferResult);
+                printTestResultPositiveExpected(__func__, transferResult);
                 break;
             }
 
@@ -161,7 +161,7 @@ int testFile1Run2()
 
             if (transferResult < 0) {
                 printf("Error: dlt_user_log_file_data\n");
-                printTestResultPositiveExpected(__FUNCTION__, transferResult);
+                printTestResultPositiveExpected(__func__, transferResult);
                 return transferResult;
             }
         }
@@ -172,23 +172,23 @@ int testFile1Run2()
 
         if (transferResult < 0) {
             printf("Error: dlt_user_log_file_end\n");
-            printTestResultPositiveExpected(__FUNCTION__, transferResult);
+            printTestResultPositiveExpected(__func__, transferResult);
             return transferResult;
         }
     }
     else {
         printf("Error: dlt_user_log_file_header\n");
-        printTestResultPositiveExpected(__FUNCTION__, transferResult);
+        printTestResultPositiveExpected(__func__, transferResult);
         return transferResult;
     }
 
     /*Just some log to main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF1P2 - transfer single package"), DLT_STRING(file1));
-    printTestResultPositiveExpected(__FUNCTION__, transferResult);
+    printTestResultPositiveExpected(__func__, transferResult);
     return 0;
 }
 /*!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using dlt_user_log_file_complete. */
-int testFile2Run1()
+int testFile2Run1(void)
 {
     /*Just some log to main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF2P1 - dlt_user_log_file_complete"), DLT_STRING(file2));
@@ -198,18 +198,18 @@ int testFile2Run1()
 
     if (transferResult < 0) {
         printf("Error: dlt_user_log_file_complete\n");
-        printTestResultPositiveExpected(__FUNCTION__, transferResult);
+        printTestResultPositiveExpected(__func__, transferResult);
         return transferResult;
     }
 
     /*Just some log to main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P1"), DLT_STRING(file2));
-    printTestResultPositiveExpected(__FUNCTION__, transferResult);
+    printTestResultPositiveExpected(__func__, transferResult);
     return transferResult;
 }
 
 /*!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer */
-int testFile2Run2()
+int testFile2Run2(void)
 {
     int total_size, used_size;
 
@@ -218,7 +218,7 @@ int testFile2Run2()
 
     if (countPackages < 0) {
         printf("Error: dlt_user_log_file_packagesCount\n");
-        printTestResultPositiveExpected(__FUNCTION__, countPackages);
+        printTestResultPositiveExpected(__func__, countPackages);
         return -1;
     }
 
@@ -237,7 +237,7 @@ int testFile2Run2()
 
             if ((total_size - used_size) < (total_size / 2)) {
                 printf("Error: dlt_user_log_file_data\n");
-                printTestResultPositiveExpected(__FUNCTION__, transferResult);
+                printTestResultPositiveExpected(__func__, transferResult);
                 break;
             }
 
@@ -246,7 +246,7 @@ int testFile2Run2()
 
             if (transferResult < 0) {
                 printf("Error: dlt_user_log_file_data\n");
-                printTestResultPositiveExpected(__FUNCTION__, transferResult);
+                printTestResultPositiveExpected(__func__, transferResult);
                 return transferResult;
             }
         }
@@ -257,24 +257,24 @@ int testFile2Run2()
 
         if (transferResult < 0) {
             printf("Error: dlt_user_log_file_end\n");
-            printTestResultPositiveExpected(__FUNCTION__, transferResult);
+            printTestResultPositiveExpected(__func__, transferResult);
             return transferResult;
         }
     }
     else {
         printf("Error: dlt_user_log_file_header\n");
-        printTestResultPositiveExpected(__FUNCTION__, transferResult);
+        printTestResultPositiveExpected(__func__, transferResult);
         return transferResult;
     }
 
     /*Just some log to the main context */
     DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P2"), DLT_STRING(file2));
-    printTestResultPositiveExpected(__FUNCTION__, transferResult);
+    printTestResultPositiveExpected(__func__, transferResult);
     return 0;
 }
 
 /*!Test the file transfer with the condition that the transferred file does not exist using dlt_user_log_file_complete. */
-int testFile3Run1()
+int testFile3Run1(void)
 {
 
     /*Just some log to the main context */
@@ -288,17 +288,17 @@ int testFile3Run1()
         /*printf("Error: dlt_user_log_file_complete\n"); */
         /*Just some log to the main context */
         DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"), DLT_STRING(file3_1));
-        printTestResultNegativeExpected(__FUNCTION__, transferResult);
+        printTestResultNegativeExpected(__func__, transferResult);
         return transferResult;
     }
 
-    printTestResultNegativeExpected(__FUNCTION__, transferResult);
+    printTestResultNegativeExpected(__func__, transferResult);
     return transferResult;
 }
 
 
 /*!Test the file transfer with the condition that the transferred file does not exist using single package transfer */
-int testFile3Run2()
+int testFile3Run2(void)
 {
 
     /*Get the information how many packages have the file */
@@ -309,7 +309,7 @@ int testFile3Run2()
         /*printf("Error: dlt_user_log_file_packagesCount\n"); */
         /*Just some log to the main context */
         DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"), DLT_STRING(file3_2));
-        printTestResultNegativeExpected(__FUNCTION__, countPackages);
+        printTestResultNegativeExpected(__func__, countPackages);
         return -1;
     }
 
@@ -329,7 +329,7 @@ int testFile3Run2()
 
             if (transferResult < 0) {
                 printf("Error: dlt_user_log_file_data\n");
-                printTestResultNegativeExpected(__FUNCTION__, transferResult);
+                printTestResultNegativeExpected(__func__, transferResult);
                 return transferResult;
             }
         }
@@ -340,18 +340,18 @@ int testFile3Run2()
 
         if (transferResult < 0) {
             printf("Error: dlt_user_log_file_end\n");
-            printTestResultNegativeExpected(__FUNCTION__, transferResult);
+            printTestResultNegativeExpected(__func__, transferResult);
             return transferResult;
         }
     }
 
-    printTestResultNegativeExpected(__FUNCTION__, transferResult);
+    printTestResultNegativeExpected(__func__, transferResult);
     return 0;
 }
 
 
 /*!Logs some information about the file. */
-int testFile3Run3()
+int testFile3Run3(void)
 {
 
     /*Just some log to the main context */
@@ -365,15 +365,15 @@ int testFile3Run3()
         /*printf("Error: dlt_user_log_file_infoAbout\n"); */
         /*Just some log to the main context */
         DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P2"), DLT_STRING(file3_3));
-        printTestResultNegativeExpected(__FUNCTION__, transferResult);
+        printTestResultNegativeExpected(__func__, transferResult);
         return transferResult;
     }
 
-    printTestResultNegativeExpected(__FUNCTION__, transferResult);
+    printTestResultNegativeExpected(__func__, transferResult);
     return 0;
 }
 
-void usage()
+void usage(void)
 {
     char version[255];
 

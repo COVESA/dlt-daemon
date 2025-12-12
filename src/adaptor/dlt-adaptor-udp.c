@@ -72,6 +72,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <getopt.h>
 
 #include "dlt_common.h"
 #include "dlt_user.h"
@@ -210,7 +211,7 @@ int main(int argc, char *argv[])
 #else
     server_addr.sin_family = AF_INET;
 #endif
-    server_addr.sin_port = htons(port);
+    server_addr.sin_port = htons((uint16_t)port);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     memset(&(server_addr.sin_zero), 0, 8);
     if (bind(sock, (struct sockaddr *)&server_addr,
@@ -227,8 +228,8 @@ int main(int argc, char *argv[])
     while (1) {
         bytes_read = 0;
 
-        bytes_read = recvfrom(sock, recv_data, MAXSTRLEN, 0,
-                              (struct sockaddr *)&client_addr, &addr_len);
+        bytes_read = (int)recvfrom(sock, recv_data, MAXSTRLEN, 0,
+                                   (struct sockaddr *)&client_addr, &addr_len);
 
         if (bytes_read == -1) {
             if (errno == EINTR) {
