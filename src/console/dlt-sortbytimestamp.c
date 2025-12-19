@@ -402,7 +402,7 @@ int main(int argc, char *argv[]) {
 
     verbose(1, "Filling %d entries\n", message_count);
 
-    for (num = begin; num <= end; num++) {
+    for (num = begin; num < end; num++) {
         if (dlt_file_message(&file, num, vflag) < DLT_RETURN_OK)
             continue;
         timestamp_index[num - begin].num = num;
@@ -411,14 +411,14 @@ int main(int argc, char *argv[]) {
     }
 
     /* This step is extending the array one more element by copying the first element */
-    timestamp_index[num].num = timestamp_index[0].num;
-    timestamp_index[num].systmsp = timestamp_index[0].systmsp;
-    timestamp_index[num].tmsp = timestamp_index[0].tmsp;
+    timestamp_index[message_count].num = timestamp_index[0].num;
+    timestamp_index[message_count].systmsp = timestamp_index[0].systmsp;
+    timestamp_index[message_count].tmsp = timestamp_index[0].tmsp;
 
     verbose(1, "Sorting\n");
     qsort((void *) timestamp_index, message_count, sizeof(TimestampIndex), compare_index_systime);
 
-    for (num = begin; num <= end; num++) {
+    for (num = begin; num < end; num++) {
         delta_tmsp = (uint32_t)llabs((int64_t)timestamp_index[num + 1].tmsp - timestamp_index[num].tmsp);
         delta_systime = (uint32_t)llabs((int64_t)timestamp_index[num + 1].systmsp - timestamp_index[num].systmsp);
 
