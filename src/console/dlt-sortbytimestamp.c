@@ -392,6 +392,7 @@ int main(int argc, char *argv[]) {
     message_count = (uint32_t) (1 + end - begin);
 
     timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * (message_count + 1));
+    size_t timestamp_index_allocated_capacity = message_count + 1;
 
     if (timestamp_index == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for message index!\n");
@@ -410,6 +411,18 @@ int main(int argc, char *argv[]) {
         timestamp_index[num - begin].tmsp = file.msg.headerextra.tmsp;
     }
 
+    if (num >= timestamp_index_allocated_capacity) {
+        timestamp_index_allocated_capacity = num + 1;
+        timestamp_index = (TimestampIndex *) realloc(timestamp_index, sizeof(TimestampIndex) * timestamp_index_allocated_capacity);
+        if (timestamp_index == NULL) {
+            fprintf(stderr, "ERROR: Failed to reallocate memory for message index!\n");
+            dlt_file_free(&file, vflag);
+            close(ohandle);
+            free(timestamp_index);
+            timestamp_index = NULL;
+            return -1;
+        }
+    }
     /* This step is extending the array one more element by copying the first element */
     timestamp_index[num].num = timestamp_index[0].num;
     timestamp_index[num].systmsp = timestamp_index[0].systmsp;
