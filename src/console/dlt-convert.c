@@ -432,6 +432,7 @@ int main(int argc, char *argv[])
                     close(ohandle);
                     ohandle = -1;
                 }
+                dlt_file_free(&file, vflag);
                 return -1;
             }
 
@@ -441,6 +442,8 @@ int main(int argc, char *argv[])
                     close(ohandle);
                     ohandle = -1;
                 }
+                dlt_file_free(&file, vflag);
+                return -1;
             }
 
             for (num = begin; num <= end; num++) {
