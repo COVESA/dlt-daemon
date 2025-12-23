@@ -403,24 +403,26 @@ int main(int argc, char *argv[]) {
     verbose(1, "Filling %d entries\n", message_count);
 
     for (num = begin; num <= end; num++) {
+        int curr_idx = num - begin;
         if (dlt_file_message(&file, num, vflag) < DLT_RETURN_OK)
             continue;
-        timestamp_index[num - begin].num = num;
-        timestamp_index[num - begin].systmsp = file.msg.storageheader->seconds;
-        timestamp_index[num - begin].tmsp = file.msg.headerextra.tmsp;
+        timestamp_index[curr_idx].num = num;
+        timestamp_index[curr_idx].systmsp = file.msg.storageheader->seconds;
+        timestamp_index[curr_idx].tmsp = file.msg.headerextra.tmsp;
     }
 
     /* This step is extending the array one more element by copying the first element */
-    timestamp_index[num].num = timestamp_index[0].num;
-    timestamp_index[num].systmsp = timestamp_index[0].systmsp;
-    timestamp_index[num].tmsp = timestamp_index[0].tmsp;
+    timestamp_index[message_count + 1].num = timestamp_index[0].num;
+    timestamp_index[message_count + 1].systmsp = timestamp_index[0].systmsp;
+    timestamp_index[message_count + 1].tmsp = timestamp_index[0].tmsp;
 
     verbose(1, "Sorting\n");
     qsort((void *) timestamp_index, message_count, sizeof(TimestampIndex), compare_index_systime);
 
     for (num = begin; num <= end; num++) {
-        delta_tmsp = (uint32_t)llabs((int64_t)timestamp_index[num + 1].tmsp - timestamp_index[num].tmsp);
-        delta_systime = (uint32_t)llabs((int64_t)timestamp_index[num + 1].systmsp - timestamp_index[num].systmsp);
+        int curr_idx = num - begin;
+        delta_tmsp = (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].tmsp - timestamp_index[curr_idx].tmsp);
+        delta_systime = (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].systmsp - timestamp_index[curr_idx].systmsp);
 
         /*
          * Here is a try to detect a new cycle of boot in system.
