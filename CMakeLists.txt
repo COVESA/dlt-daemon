@@ -79,6 +79,7 @@ option(WITH_DLT_EXAMPLES "Set to ON to build src/examples binaries"             
 option(WITH_DLT_FILETRANSFER "Set to ON to build dlt-system with filetransfer support"                               OFF)
 option(WITH_DLT_SYSTEM "Set to ON to build src/system binaries"                                                      OFF)
 option(WITH_DLT_DBUS "Set to ON to build src/dbus binaries"                                                          OFF)
+option(WITH_DLT_DEBUGGERS "Set to ON to enable debug symbols, AddressSanitizer, and Valgrind support"                OFF)
 option(WITH_DLT_TESTS "Set to ON to build src/test binaries"                                                         ON)
 option(WITH_DLT_UNIT_TESTS "Set to ON to build gtest framework and tests/binaries"                                   OFF)
 cmake_dependent_option(WITH_DLT_INSTALLED_TESTS "Set to ON to install tests/binaries"                                OFF WITH_DLT_UNIT_TESTS OFF)
@@ -154,6 +155,20 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/src/gateway
     ${PROJECT_SOURCE_DIR}/systemd/3rdparty
 )
+
+if(WITH_DLT_DEBUGGERS)
+    message(STATUS "WITH_DLT_DEBUGGERS is ON: Enabling -g3, -O0, AddressSanitizer, and Valgrind compatibility.")
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -O0 -fsanitize=address")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fsanitize=address")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    endif()
+    set(ENV{ASAN_OPTIONS} "detect_leaks=1")
+    message(STATUS "AddressSanitizer enabled: run your binaries normally.")
+    message(STATUS "If a memory error occurs, AddressSanitizer will print a detailed error report to the terminal, including the type of bug, stack trace, and location.")
+    message(STATUS "Leak detection is enabled by default (ASAN_OPTIONS=detect_leaks=1). See https://clang.llvm.org/docs/AddressSanitizer.html for more info.")
+    message(STATUS "You can also run the binaries with Valgrind: valgrind ./your_binary")
+endif()
 
 add_definitions(-D_GNU_SOURCE)
 add_definitions(-DDLT_WRITEV_TIMEOUT_MS=${DLT_WRITEV_TIMEOUT_MS})
@@ -245,6 +260,7 @@ add_compile_options(
     -Wcast-qual
     -Wno-system-headers
     -Wno-unused-function
+    -Wno-stringop-truncation
 )
 
 if(WITH_DOC STREQUAL "OFF")
