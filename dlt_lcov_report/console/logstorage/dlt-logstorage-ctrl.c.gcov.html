@@ -1,0 +1,686 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - dlt_final_coverage.info - console/logstorage/dlt-logstorage-ctrl.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">console/logstorage</a> - dlt-logstorage-ctrl.c<span style="font-size: 80%;"> (source / <a href="dlt-logstorage-ctrl.c.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">dlt_final_coverage.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryLo">23.0&nbsp;%</td>
+            <td class="headerCovTableEntry">187</td>
+            <td class="headerCovTableEntry">43</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-12-23 11:07:30</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryLo">30.8&nbsp;%</td>
+            <td class="headerCovTableEntry">13</td>
+            <td class="headerCovTableEntry">4</td>
+          </tr>
+                  <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : /**</span>
+<span id="L2"><span class="lineNum">       2</span>              :  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.</span>
+<span id="L3"><span class="lineNum">       3</span>              :  * This code is developed by Advanced Driver Information Technology.</span>
+<span id="L4"><span class="lineNum">       4</span>              :  * Copyright of Advanced Driver Information Technology, Bosch and DENSO. *</span>
+<span id="L5"><span class="lineNum">       5</span>              :  * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.</span>
+<span id="L6"><span class="lineNum">       6</span>              :  *</span>
+<span id="L7"><span class="lineNum">       7</span>              :  *</span>
+<span id="L8"><span class="lineNum">       8</span>              :  * \copyright</span>
+<span id="L9"><span class="lineNum">       9</span>              :  * This Source Code Form is subject to the terms of the</span>
+<span id="L10"><span class="lineNum">      10</span>              :  * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with</span>
+<span id="L11"><span class="lineNum">      11</span>              :  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.</span>
+<span id="L12"><span class="lineNum">      12</span>              :  *</span>
+<span id="L13"><span class="lineNum">      13</span>              :  *</span>
+<span id="L14"><span class="lineNum">      14</span>              :  * \author Syed Hameed &lt;shameed@jp.adit-jv.com&gt; ADIT 2013 - 2015</span>
+<span id="L15"><span class="lineNum">      15</span>              :  * \author Christoph Lipka &lt;clipka@jp.adit-jv.com&gt; ADIT 2015</span>
+<span id="L16"><span class="lineNum">      16</span>              :  * \author Frederic Berat &lt;fberat@de.adit-jv.com&gt; ADIT 2015</span>
+<span id="L17"><span class="lineNum">      17</span>              :  *</span>
+<span id="L18"><span class="lineNum">      18</span>              :  * \file dlt-logstorage-ctrl.c</span>
+<span id="L19"><span class="lineNum">      19</span>              :  * For further information see http://www.covesa.org/.</span>
+<span id="L20"><span class="lineNum">      20</span>              :  */</span>
+<span id="L21"><span class="lineNum">      21</span>              : /*******************************************************************************</span>
+<span id="L22"><span class="lineNum">      22</span>              : **                                                                            **</span>
+<span id="L23"><span class="lineNum">      23</span>              : **  SRC-MODULE: dlt-logstorage-ctrl.c                                         **</span>
+<span id="L24"><span class="lineNum">      24</span>              : **                                                                            **</span>
+<span id="L25"><span class="lineNum">      25</span>              : **  TARGET    : linux                                                         **</span>
+<span id="L26"><span class="lineNum">      26</span>              : **                                                                            **</span>
+<span id="L27"><span class="lineNum">      27</span>              : **  PROJECT   : DLT                                                           **</span>
+<span id="L28"><span class="lineNum">      28</span>              : **                                                                            **</span>
+<span id="L29"><span class="lineNum">      29</span>              : **  AUTHOR    : Syed Hameed shameed@jp.adit-jv.com                            **</span>
+<span id="L30"><span class="lineNum">      30</span>              : **              Christoph Lipka clipka@jp.adit-jv.com                         **</span>
+<span id="L31"><span class="lineNum">      31</span>              : **              AnithaAmmaji.baggam@in.bosch.com                              **</span>
+<span id="L32"><span class="lineNum">      32</span>              : **              Frederic Berat fberat@de.adit-jv.com                          **</span>
+<span id="L33"><span class="lineNum">      33</span>              : **  PURPOSE   :                                                               **</span>
+<span id="L34"><span class="lineNum">      34</span>              : **                                                                            **</span>
+<span id="L35"><span class="lineNum">      35</span>              : **  REMARKS   :                                                               **</span>
+<span id="L36"><span class="lineNum">      36</span>              : **                                                                            **</span>
+<span id="L37"><span class="lineNum">      37</span>              : **  PLATFORM DEPENDANT [yes/no]: yes                                          **</span>
+<span id="L38"><span class="lineNum">      38</span>              : **                                                                            **</span>
+<span id="L39"><span class="lineNum">      39</span>              : **  TO BE CHANGED BY USER [yes/no]: no                                        **</span>
+<span id="L40"><span class="lineNum">      40</span>              : **                                                                            **</span>
+<span id="L41"><span class="lineNum">      41</span>              : *******************************************************************************/</span>
+<span id="L42"><span class="lineNum">      42</span>              : </span>
+<span id="L43"><span class="lineNum">      43</span>              : /*******************************************************************************</span>
+<span id="L44"><span class="lineNum">      44</span>              : **                      Author Identity                                       **</span>
+<span id="L45"><span class="lineNum">      45</span>              : ********************************************************************************</span>
+<span id="L46"><span class="lineNum">      46</span>              : ** Initials     Name                       Company                            **</span>
+<span id="L47"><span class="lineNum">      47</span>              : ** --------     -------------------------  ---------------------------------- **</span>
+<span id="L48"><span class="lineNum">      48</span>              : **  sh          Syed Hameed                ADIT                               **</span>
+<span id="L49"><span class="lineNum">      49</span>              : **  cl          Christoph Lipka            ADIT                               **</span>
+<span id="L50"><span class="lineNum">      50</span>              : **  BA          Anitha BA                  ADIT                               **</span>
+<span id="L51"><span class="lineNum">      51</span>              : **  fb          Frederic Berat             ADIT                               **</span>
+<span id="L52"><span class="lineNum">      52</span>              : *******************************************************************************/</span>
+<span id="L53"><span class="lineNum">      53</span>              : </span>
+<span id="L54"><span class="lineNum">      54</span>              : #define pr_fmt(fmt) &quot;Logstorage control: &quot;fmt</span>
+<span id="L55"><span class="lineNum">      55</span>              : </span>
+<span id="L56"><span class="lineNum">      56</span>              : #include &lt;ctype.h&gt;</span>
+<span id="L57"><span class="lineNum">      57</span>              : #include &lt;errno.h&gt;</span>
+<span id="L58"><span class="lineNum">      58</span>              : #include &lt;stdio.h&gt;</span>
+<span id="L59"><span class="lineNum">      59</span>              : #include &lt;stdlib.h&gt;</span>
+<span id="L60"><span class="lineNum">      60</span>              : #include &lt;signal.h&gt;</span>
+<span id="L61"><span class="lineNum">      61</span>              : #include &lt;string.h&gt;</span>
+<span id="L62"><span class="lineNum">      62</span>              : #include &lt;getopt.h&gt;</span>
+<span id="L63"><span class="lineNum">      63</span>              : </span>
+<span id="L64"><span class="lineNum">      64</span>              : #include &lt;poll.h&gt;</span>
+<span id="L65"><span class="lineNum">      65</span>              : </span>
+<span id="L66"><span class="lineNum">      66</span>              : #if defined(__linux__)</span>
+<span id="L67"><span class="lineNum">      67</span>              : #   include &quot;sd-daemon.h&quot;</span>
+<span id="L68"><span class="lineNum">      68</span>              : #endif</span>
+<span id="L69"><span class="lineNum">      69</span>              : </span>
+<span id="L70"><span class="lineNum">      70</span>              : #include &quot;dlt_protocol.h&quot;</span>
+<span id="L71"><span class="lineNum">      71</span>              : #include &quot;dlt_client.h&quot;</span>
+<span id="L72"><span class="lineNum">      72</span>              : #include &quot;dlt-control-common.h&quot;</span>
+<span id="L73"><span class="lineNum">      73</span>              : #include &quot;dlt-logstorage-common.h&quot;</span>
+<span id="L74"><span class="lineNum">      74</span>              : #include &quot;dlt-logstorage-ctrl.h&quot;</span>
+<span id="L75"><span class="lineNum">      75</span>              : </span>
+<span id="L76"><span class="lineNum">      76</span>              : #define POLL_TIME_OUT   500</span>
+<span id="L77"><span class="lineNum">      77</span>              : #define EV_MASK_REJECTED (POLLERR | POLLHUP | POLLNVAL)</span>
+<span id="L78"><span class="lineNum">      78</span>              : </span>
+<span id="L79"><span class="lineNum">      79</span>              : #define DLT_LOGSTORAGE_CTRL_EXIT 1</span>
+<span id="L80"><span class="lineNum">      80</span>              : static int must_exit;</span>
+<span id="L81"><span class="lineNum">      81</span>              : struct dlt_event {</span>
+<span id="L82"><span class="lineNum">      82</span>              :     struct pollfd pfd;</span>
+<span id="L83"><span class="lineNum">      83</span>              :     void *func;</span>
+<span id="L84"><span class="lineNum">      84</span>              : };</span>
+<span id="L85"><span class="lineNum">      85</span>              : </span>
+<span id="L86"><span class="lineNum">      86</span>              : /** @brief Triggers the application exit</span>
+<span id="L87"><span class="lineNum">      87</span>              :  *</span>
+<span id="L88"><span class="lineNum">      88</span>              :  * The application will exit on next poll timeout.</span>
+<span id="L89"><span class="lineNum">      89</span>              :  */</span>
+<span id="L90"><span class="lineNum">      90</span> <span class="tlaUNC tlaBgUNC">           0 : void dlt_logstorage_exit(void)</span></span>
+<span id="L91"><span class="lineNum">      91</span>              : {</span>
+<span id="L92"><span class="lineNum">      92</span> <span class="tlaUNC">           0 :     must_exit = DLT_LOGSTORAGE_CTRL_EXIT;</span></span>
+<span id="L93"><span class="lineNum">      93</span> <span class="tlaUNC">           0 : }</span></span>
+<span id="L94"><span class="lineNum">      94</span>              : </span>
+<span id="L95"><span class="lineNum">      95</span>              : /** @brief Check if the application must exit</span>
+<span id="L96"><span class="lineNum">      96</span>              :  *</span>
+<span id="L97"><span class="lineNum">      97</span>              :  * The application will exit on next poll timeout.</span>
+<span id="L98"><span class="lineNum">      98</span>              :  */</span>
+<span id="L99"><span class="lineNum">      99</span> <span class="tlaUNC">           0 : int dlt_logstorage_must_exit(void)</span></span>
+<span id="L100"><span class="lineNum">     100</span>              : {</span>
+<span id="L101"><span class="lineNum">     101</span> <span class="tlaUNC">           0 :     return must_exit;</span></span>
+<span id="L102"><span class="lineNum">     102</span>              : }</span>
+<span id="L103"><span class="lineNum">     103</span>              : </span>
+<span id="L104"><span class="lineNum">     104</span>              : /** @brief Signal handler.</span>
+<span id="L105"><span class="lineNum">     105</span>              :  *</span>
+<span id="L106"><span class="lineNum">     106</span>              :  * Triggers the exit of the application in case of specific signals</span>
+<span id="L107"><span class="lineNum">     107</span>              :  *</span>
+<span id="L108"><span class="lineNum">     108</span>              :  * @param signo The value of the signal received.</span>
+<span id="L109"><span class="lineNum">     109</span>              :  */</span>
+<span id="L110"><span class="lineNum">     110</span> <span class="tlaUNC">           0 : static void catch_signal(int signo)</span></span>
+<span id="L111"><span class="lineNum">     111</span>              : {</span>
+<span id="L112"><span class="lineNum">     112</span> <span class="tlaUNC">           0 :     if (signo) {</span></span>
+<span id="L113"><span class="lineNum">     113</span> <span class="tlaUNC">           0 :         pr_error(&quot;Signal %d received, exiting.&quot;, signo);</span></span>
+<span id="L114"><span class="lineNum">     114</span>              :         dlt_logstorage_exit();</span>
+<span id="L115"><span class="lineNum">     115</span>              :     }</span>
+<span id="L116"><span class="lineNum">     116</span> <span class="tlaUNC">           0 : }</span></span>
+<span id="L117"><span class="lineNum">     117</span>              : </span>
+<span id="L118"><span class="lineNum">     118</span>              : /** @brief Install a handler for some signals</span>
+<span id="L119"><span class="lineNum">     119</span>              :  *</span>
+<span id="L120"><span class="lineNum">     120</span>              :  * Handler are installed on exit related signals. That allows one to exit from</span>
+<span id="L121"><span class="lineNum">     121</span>              :  * the main loop gracefully.</span>
+<span id="L122"><span class="lineNum">     122</span>              :  */</span>
+<span id="L123"><span class="lineNum">     123</span> <span class="tlaUNC">           0 : static void install_signal_handler(void)</span></span>
+<span id="L124"><span class="lineNum">     124</span>              : {</span>
+<span id="L125"><span class="lineNum">     125</span> <span class="tlaUNC">           0 :     int signals[] = { SIGINT, SIGQUIT, SIGTERM, 0 };</span></span>
+<span id="L126"><span class="lineNum">     126</span>              :     unsigned int i;</span>
+<span id="L127"><span class="lineNum">     127</span>              :     struct sigaction sa;</span>
+<span id="L128"><span class="lineNum">     128</span>              : </span>
+<span id="L129"><span class="lineNum">     129</span> <span class="tlaUNC">           0 :     pr_verbose(&quot;Installing signal handler.\n&quot;);</span></span>
+<span id="L130"><span class="lineNum">     130</span>              : </span>
+<span id="L131"><span class="lineNum">     131</span>              :     /* install a signal handler for the above listed signals */</span>
+<span id="L132"><span class="lineNum">     132</span> <span class="tlaUNC">           0 :     for (i = 0; signals[i]; i++) {</span></span>
+<span id="L133"><span class="lineNum">     133</span>              :         memset(&amp;sa, 0, sizeof(sa));</span>
+<span id="L134"><span class="lineNum">     134</span> <span class="tlaUNC">           0 :         sa.sa_handler = catch_signal;</span></span>
+<span id="L135"><span class="lineNum">     135</span>              : </span>
+<span id="L136"><span class="lineNum">     136</span> <span class="tlaUNC">           0 :         if (sigaction(signals[i], &amp;sa, NULL) &lt; 0)</span></span>
+<span id="L137"><span class="lineNum">     137</span> <span class="tlaUNC">           0 :             pr_error(&quot;Failed to install signal %u handler. Error: %s\n&quot;,</span></span>
+<span id="L138"><span class="lineNum">     138</span>              :                      signals[i], strerror(errno));</span>
+<span id="L139"><span class="lineNum">     139</span>              :     }</span>
+<span id="L140"><span class="lineNum">     140</span> <span class="tlaUNC">           0 : }</span></span>
+<span id="L141"><span class="lineNum">     141</span>              : </span>
+<span id="L142"><span class="lineNum">     142</span>              : #define MAX_RESPONSE_LENGTH 32</span>
+<span id="L143"><span class="lineNum">     143</span>              : /** @brief Analyze the daemon answer to a request</span>
+<span id="L144"><span class="lineNum">     144</span>              :  *</span>
+<span id="L145"><span class="lineNum">     145</span>              :  * This function checks whether if the daemon answered positively to</span>
+<span id="L146"><span class="lineNum">     146</span>              :  * the request or not.</span>
+<span id="L147"><span class="lineNum">     147</span>              :  *</span>
+<span id="L148"><span class="lineNum">     148</span>              :  * @param data    The textual answer</span>
+<span id="L149"><span class="lineNum">     149</span>              :  * @param payload The answer payload</span>
+<span id="L150"><span class="lineNum">     150</span>              :  * @param len     The answer payload length</span>
+<span id="L151"><span class="lineNum">     151</span>              :  * @return 0 on success, -1 otherwise.</span>
+<span id="L152"><span class="lineNum">     152</span>              :  */</span>
+<span id="L153"><span class="lineNum">     153</span> <span class="tlaGNC tlaBgGNC">           2 : static int analyze_response(char *data, void *payload, int len)</span></span>
+<span id="L154"><span class="lineNum">     154</span>              : {</span>
+<span id="L155"><span class="lineNum">     155</span>              :     int ret = -1;</span>
+<span id="L156"><span class="lineNum">     156</span> <span class="tlaGNC">           2 :     char resp_ok[MAX_RESPONSE_LENGTH] = { 0 };</span></span>
+<span id="L157"><span class="lineNum">     157</span> <span class="tlaGNC">           2 :     char resp_warning[MAX_RESPONSE_LENGTH] = { 0 };</span></span>
+<span id="L158"><span class="lineNum">     158</span> <span class="tlaGNC">           2 :     char resp_perm_denied[MAX_RESPONSE_LENGTH] = { 0 };</span></span>
+<span id="L159"><span class="lineNum">     159</span>              : </span>
+<span id="L160"><span class="lineNum">     160</span> <span class="tlaGNC">           2 :     if ((data == NULL) || (payload == NULL))</span></span>
+<span id="L161"><span class="lineNum">     161</span>              :         return -1;</span>
+<span id="L162"><span class="lineNum">     162</span>              : </span>
+<span id="L163"><span class="lineNum">     163</span>              :     /* satisfy compiler */</span>
+<span id="L164"><span class="lineNum">     164</span>              :     (void)payload;</span>
+<span id="L165"><span class="lineNum">     165</span>              :     (void)len;</span>
+<span id="L166"><span class="lineNum">     166</span>              : </span>
+<span id="L167"><span class="lineNum">     167</span>              :     snprintf(resp_ok,</span>
+<span id="L168"><span class="lineNum">     168</span>              :              MAX_RESPONSE_LENGTH,</span>
+<span id="L169"><span class="lineNum">     169</span>              :              &quot;service(%d), ok&quot;,</span>
+<span id="L170"><span class="lineNum">     170</span>              :              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);</span>
+<span id="L171"><span class="lineNum">     171</span>              : </span>
+<span id="L172"><span class="lineNum">     172</span>              :     snprintf(resp_warning,</span>
+<span id="L173"><span class="lineNum">     173</span>              :              MAX_RESPONSE_LENGTH,</span>
+<span id="L174"><span class="lineNum">     174</span>              :              &quot;service(%d), warning&quot;,</span>
+<span id="L175"><span class="lineNum">     175</span>              :              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);</span>
+<span id="L176"><span class="lineNum">     176</span>              : </span>
+<span id="L177"><span class="lineNum">     177</span>              :     snprintf(resp_perm_denied,</span>
+<span id="L178"><span class="lineNum">     178</span>              :              MAX_RESPONSE_LENGTH,</span>
+<span id="L179"><span class="lineNum">     179</span>              :              &quot;service(%d), perm_denied&quot;,</span>
+<span id="L180"><span class="lineNum">     180</span>              :              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);</span>
+<span id="L181"><span class="lineNum">     181</span>              : </span>
+<span id="L182"><span class="lineNum">     182</span> <span class="tlaGNC">           2 :     if (strncmp(data, resp_ok, strlen(resp_ok)) == 0)</span></span>
+<span id="L183"><span class="lineNum">     183</span>              :         ret = 0;</span>
+<span id="L184"><span class="lineNum">     184</span>              : </span>
+<span id="L185"><span class="lineNum">     185</span> <span class="tlaGNC">           2 :     if (strncmp(data, resp_warning, strlen(resp_warning)) == 0) {</span></span>
+<span id="L186"><span class="lineNum">     186</span> <span class="tlaUNC tlaBgUNC">           0 :         pr_error(&quot;Warning:Some filter configurations are ignored due to configuration issues \n&quot;);</span></span>
+<span id="L187"><span class="lineNum">     187</span>              :         ret = 0;</span>
+<span id="L188"><span class="lineNum">     188</span>              :     }</span>
+<span id="L189"><span class="lineNum">     189</span>              : </span>
+<span id="L190"><span class="lineNum">     190</span> <span class="tlaGNC tlaBgGNC">           2 :     if (strncmp(data, resp_perm_denied, strlen(resp_perm_denied)) == 0) {</span></span>
+<span id="L191"><span class="lineNum">     191</span> <span class="tlaUNC tlaBgUNC">           0 :         pr_error(&quot;Warning: Permission denied.\n&quot;);</span></span>
+<span id="L192"><span class="lineNum">     192</span>              :         ret = 0;</span>
+<span id="L193"><span class="lineNum">     193</span>              :     }</span>
+<span id="L194"><span class="lineNum">     194</span>              : </span>
+<span id="L195"><span class="lineNum">     195</span> <span class="tlaGNC tlaBgGNC">           2 :     pr_verbose(&quot;Response received: '%s'\n&quot;, data);</span></span>
+<span id="L196"><span class="lineNum">     196</span> <span class="tlaGNC">           2 :     pr_verbose(&quot;Response expected: '%s'\n&quot;, resp_ok);</span></span>
+<span id="L197"><span class="lineNum">     197</span>              : </span>
+<span id="L198"><span class="lineNum">     198</span>              :     return ret;</span>
+<span id="L199"><span class="lineNum">     199</span>              : }</span>
+<span id="L200"><span class="lineNum">     200</span>              : </span>
+<span id="L201"><span class="lineNum">     201</span>              : /** @brief Add a new event to watch</span>
+<span id="L202"><span class="lineNum">     202</span>              :  *</span>
+<span id="L203"><span class="lineNum">     203</span>              :  * This function could be exported to be used by udev/prop so that they can</span>
+<span id="L204"><span class="lineNum">     204</span>              :  * register several events.</span>
+<span id="L205"><span class="lineNum">     205</span>              :  *</span>
+<span id="L206"><span class="lineNum">     206</span>              :  * @param ev_hdl The structure containing the file descriptors</span>
+<span id="L207"><span class="lineNum">     207</span>              :  * @param fd The file descriptor to watch</span>
+<span id="L208"><span class="lineNum">     208</span>              :  * @param cb The callback to be called on event.</span>
+<span id="L209"><span class="lineNum">     209</span>              :  *</span>
+<span id="L210"><span class="lineNum">     210</span>              :  * @return 0 on success, -1 if the parameters are invalid.</span>
+<span id="L211"><span class="lineNum">     211</span>              :  */</span>
+<span id="L212"><span class="lineNum">     212</span> <span class="tlaUNC tlaBgUNC">           0 : static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl,</span></span>
+<span id="L213"><span class="lineNum">     213</span>              :                                          int fd,</span>
+<span id="L214"><span class="lineNum">     214</span>              :                                          void *cb)</span>
+<span id="L215"><span class="lineNum">     215</span>              : {</span>
+<span id="L216"><span class="lineNum">     216</span> <span class="tlaUNC">           0 :     if ((fd &lt; 0) || !cb || !ev_hdl) {</span></span>
+<span id="L217"><span class="lineNum">     217</span> <span class="tlaUNC">           0 :         pr_error(&quot;Wrong parameter to add event (%d %p)\n&quot;, fd, cb);</span></span>
+<span id="L218"><span class="lineNum">     218</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L219"><span class="lineNum">     219</span>              :     }</span>
+<span id="L220"><span class="lineNum">     220</span>              : </span>
+<span id="L221"><span class="lineNum">     221</span> <span class="tlaUNC">           0 :     pr_verbose(&quot;Setting up the event handler with (%d, %p).\n&quot;, fd, cb);</span></span>
+<span id="L222"><span class="lineNum">     222</span>              : </span>
+<span id="L223"><span class="lineNum">     223</span> <span class="tlaUNC">           0 :     ev_hdl-&gt;func = cb;</span></span>
+<span id="L224"><span class="lineNum">     224</span> <span class="tlaUNC">           0 :     ev_hdl-&gt;pfd.fd = fd;</span></span>
+<span id="L225"><span class="lineNum">     225</span>              : </span>
+<span id="L226"><span class="lineNum">     226</span> <span class="tlaUNC">           0 :     return 0;</span></span>
+<span id="L227"><span class="lineNum">     227</span>              : }</span>
+<span id="L228"><span class="lineNum">     228</span>              : </span>
+<span id="L229"><span class="lineNum">     229</span>              : /** @brief Main execution loop</span>
+<span id="L230"><span class="lineNum">     230</span>              :  *</span>
+<span id="L231"><span class="lineNum">     231</span>              :  * Waits on events, and executes the callbacks retrieved</span>
+<span id="L232"><span class="lineNum">     232</span>              :  * back from the event structure.</span>
+<span id="L233"><span class="lineNum">     233</span>              :  *</span>
+<span id="L234"><span class="lineNum">     234</span>              :  * @return 0 on success, -1 otherwise.</span>
+<span id="L235"><span class="lineNum">     235</span>              :  */</span>
+<span id="L236"><span class="lineNum">     236</span> <span class="tlaUNC">           0 : static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)</span></span>
+<span id="L237"><span class="lineNum">     237</span>              : {</span>
+<span id="L238"><span class="lineNum">     238</span>              :     int ret = 0;</span>
+<span id="L239"><span class="lineNum">     239</span>              :     union {</span>
+<span id="L240"><span class="lineNum">     240</span>              :         void *ptr;</span>
+<span id="L241"><span class="lineNum">     241</span>              :         int (*callback)(void);</span>
+<span id="L242"><span class="lineNum">     242</span>              :     } callback_converter;</span>
+<span id="L243"><span class="lineNum">     243</span>              :     int (*callback)(void);</span>
+<span id="L244"><span class="lineNum">     244</span>              : </span>
+<span id="L245"><span class="lineNum">     245</span> <span class="tlaUNC">           0 :     callback_converter.ptr = ev-&gt;func;</span></span>
+<span id="L246"><span class="lineNum">     246</span> <span class="tlaUNC">           0 :     callback = callback_converter.callback;</span></span>
+<span id="L247"><span class="lineNum">     247</span>              : </span>
+<span id="L248"><span class="lineNum">     248</span> <span class="tlaUNC">           0 :     ret = poll(&amp;ev-&gt;pfd, 1, POLL_TIME_OUT);</span></span>
+<span id="L249"><span class="lineNum">     249</span>              : </span>
+<span id="L250"><span class="lineNum">     250</span> <span class="tlaUNC">           0 :     if (ret &lt;= 0) {</span></span>
+<span id="L251"><span class="lineNum">     251</span> <span class="tlaUNC">           0 :         if (errno == EINTR)</span></span>
+<span id="L252"><span class="lineNum">     252</span>              :             ret = 0;</span>
+<span id="L253"><span class="lineNum">     253</span>              : </span>
+<span id="L254"><span class="lineNum">     254</span> <span class="tlaUNC">           0 :         if (ret &lt; 0)</span></span>
+<span id="L255"><span class="lineNum">     255</span> <span class="tlaUNC">           0 :             pr_error(&quot;poll error: %s\n&quot;, strerror(errno));</span></span>
+<span id="L256"><span class="lineNum">     256</span>              : </span>
+<span id="L257"><span class="lineNum">     257</span> <span class="tlaUNC">           0 :         return ret;</span></span>
+<span id="L258"><span class="lineNum">     258</span>              :     }</span>
+<span id="L259"><span class="lineNum">     259</span>              : </span>
+<span id="L260"><span class="lineNum">     260</span> <span class="tlaUNC">           0 :     if (ev-&gt;pfd.revents == 0)</span></span>
+<span id="L261"><span class="lineNum">     261</span>              :         return 0;</span>
+<span id="L262"><span class="lineNum">     262</span>              : </span>
+<span id="L263"><span class="lineNum">     263</span> <span class="tlaUNC">           0 :     if (ev-&gt;pfd.events &amp; EV_MASK_REJECTED) {</span></span>
+<span id="L264"><span class="lineNum">     264</span> <span class="tlaUNC">           0 :         pr_error(&quot;Error while polling. Event received: 0x%x\n&quot;, ev-&gt;pfd.events);</span></span>
+<span id="L265"><span class="lineNum">     265</span>              :         /* We only support one event producer.</span>
+<span id="L266"><span class="lineNum">     266</span>              :          * Error means that this producer died.</span>
+<span id="L267"><span class="lineNum">     267</span>              :          */</span>
+<span id="L268"><span class="lineNum">     268</span> <span class="tlaUNC">           0 :         pr_error(&quot;Now closing fd and exiting.\n&quot;);</span></span>
+<span id="L269"><span class="lineNum">     269</span> <span class="tlaUNC">           0 :         close(ev-&gt;pfd.fd);</span></span>
+<span id="L270"><span class="lineNum">     270</span> <span class="tlaUNC">           0 :         ev-&gt;pfd.fd = -1;</span></span>
+<span id="L271"><span class="lineNum">     271</span>              :         dlt_logstorage_exit();</span>
+<span id="L272"><span class="lineNum">     272</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L273"><span class="lineNum">     273</span>              :     }</span>
+<span id="L274"><span class="lineNum">     274</span>              : </span>
+<span id="L275"><span class="lineNum">     275</span> <span class="tlaUNC">           0 :     if (!callback) {</span></span>
+<span id="L276"><span class="lineNum">     276</span> <span class="tlaUNC">           0 :         pr_error(&quot;Callback not found, exiting.\n&quot;);</span></span>
+<span id="L277"><span class="lineNum">     277</span>              :         dlt_logstorage_exit();</span>
+<span id="L278"><span class="lineNum">     278</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L279"><span class="lineNum">     279</span>              :     }</span>
+<span id="L280"><span class="lineNum">     280</span>              : </span>
+<span id="L281"><span class="lineNum">     281</span>              :     callback_converter.callback = callback;</span>
+<span id="L282"><span class="lineNum">     282</span> <span class="tlaUNC">           0 :     pr_verbose(&quot;Got new event, calling %p.\n&quot;, callback_converter.ptr);</span></span>
+<span id="L283"><span class="lineNum">     283</span>              : </span>
+<span id="L284"><span class="lineNum">     284</span> <span class="tlaUNC">           0 :     if (callback() &lt; 0) {</span></span>
+<span id="L285"><span class="lineNum">     285</span> <span class="tlaUNC">           0 :         pr_error(&quot;Error while calling the callback, exiting.\n&quot;);</span></span>
+<span id="L286"><span class="lineNum">     286</span>              :         dlt_logstorage_exit();</span>
+<span id="L287"><span class="lineNum">     287</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L288"><span class="lineNum">     288</span>              :     }</span>
+<span id="L289"><span class="lineNum">     289</span>              : </span>
+<span id="L290"><span class="lineNum">     290</span>              :     return 0;</span>
+<span id="L291"><span class="lineNum">     291</span>              : }</span>
+<span id="L292"><span class="lineNum">     292</span>              : </span>
+<span id="L293"><span class="lineNum">     293</span>              : /** @brief Start event loop and receive messages from DLT.</span>
+<span id="L294"><span class="lineNum">     294</span>              :  *</span>
+<span id="L295"><span class="lineNum">     295</span>              :  * The function will first install the signal handler,</span>
+<span id="L296"><span class="lineNum">     296</span>              :  * then create the poll instance, initialize the communication controller,</span>
+<span id="L297"><span class="lineNum">     297</span>              :  * initialize the event handler and finally start the polling.</span>
+<span id="L298"><span class="lineNum">     298</span>              :  *</span>
+<span id="L299"><span class="lineNum">     299</span>              :  * @return 0 on success, -1 on error</span>
+<span id="L300"><span class="lineNum">     300</span>              :  */</span>
+<span id="L301"><span class="lineNum">     301</span> <span class="tlaUNC">           0 : static int dlt_logstorage_ctrl_setup_event_loop(void)</span></span>
+<span id="L302"><span class="lineNum">     302</span>              : {</span>
+<span id="L303"><span class="lineNum">     303</span>              :     int ret = 0;</span>
+<span id="L304"><span class="lineNum">     304</span> <span class="tlaUNC">           0 :     struct dlt_event ev_hdl = {</span></span>
+<span id="L305"><span class="lineNum">     305</span>              :         .pfd = {</span>
+<span id="L306"><span class="lineNum">     306</span>              :             .fd = -1,</span>
+<span id="L307"><span class="lineNum">     307</span>              :             .events = POLLIN</span>
+<span id="L308"><span class="lineNum">     308</span>              :         }</span>
+<span id="L309"><span class="lineNum">     309</span>              :     };</span>
+<span id="L310"><span class="lineNum">     310</span>              : </span>
+<span id="L311"><span class="lineNum">     311</span> <span class="tlaUNC">           0 :     install_signal_handler();</span></span>
+<span id="L312"><span class="lineNum">     312</span>              : </span>
+<span id="L313"><span class="lineNum">     313</span> <span class="tlaUNC">           0 :     pr_verbose(&quot;Creating poll instance.\n&quot;);</span></span>
+<span id="L314"><span class="lineNum">     314</span>              : </span>
+<span id="L315"><span class="lineNum">     315</span>              :     /* Initializing the communication with the daemon */</span>
+<span id="L316"><span class="lineNum">     316</span> <span class="tlaUNC">           0 :     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &amp;&amp;</span></span>
+<span id="L317"><span class="lineNum">     317</span>              :            !dlt_logstorage_must_exit()) {</span>
+<span id="L318"><span class="lineNum">     318</span> <span class="tlaUNC">           0 :         pr_error(&quot;Failed to initialize connection with the daemon.\n&quot;);</span></span>
+<span id="L319"><span class="lineNum">     319</span> <span class="tlaUNC">           0 :         pr_error(&quot;Retrying to connect in %ds.\n&quot;, get_timeout());</span></span>
+<span id="L320"><span class="lineNum">     320</span> <span class="tlaUNC">           0 :         sleep((unsigned int) get_timeout());</span></span>
+<span id="L321"><span class="lineNum">     321</span>              :     }</span>
+<span id="L322"><span class="lineNum">     322</span>              : </span>
+<span id="L323"><span class="lineNum">     323</span> <span class="tlaUNC">           0 :     if (dlt_logstorage_must_exit()) {</span></span>
+<span id="L324"><span class="lineNum">     324</span> <span class="tlaUNC">           0 :         pr_verbose(&quot;Exiting.\n&quot;);</span></span>
+<span id="L325"><span class="lineNum">     325</span> <span class="tlaUNC">           0 :         return 0;</span></span>
+<span id="L326"><span class="lineNum">     326</span>              :     }</span>
+<span id="L327"><span class="lineNum">     327</span>              : </span>
+<span id="L328"><span class="lineNum">     328</span> <span class="tlaUNC">           0 :     pr_verbose(&quot;Initializing event generator.\n&quot;);</span></span>
+<span id="L329"><span class="lineNum">     329</span>              : </span>
+<span id="L330"><span class="lineNum">     330</span> <span class="tlaUNC">           0 :     if (dlt_logstorage_init_handler() &lt; 0) {</span></span>
+<span id="L331"><span class="lineNum">     331</span> <span class="tlaUNC">           0 :         pr_error(&quot;Failed to initialize handler.\n&quot;);</span></span>
+<span id="L332"><span class="lineNum">     332</span> <span class="tlaUNC">           0 :         dlt_control_deinit();</span></span>
+<span id="L333"><span class="lineNum">     333</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L334"><span class="lineNum">     334</span>              :     }</span>
+<span id="L335"><span class="lineNum">     335</span>              : </span>
+<span id="L336"><span class="lineNum">     336</span> <span class="tlaUNC">           0 :     if (dlt_logstorage_ctrl_add_event(&amp;ev_hdl,</span></span>
+<span id="L337"><span class="lineNum">     337</span>              :                                       dlt_logstorage_get_handler_fd(),</span>
+<span id="L338"><span class="lineNum">     338</span>              :                                       dlt_logstorage_get_handler_cb()) &lt; 0) {</span>
+<span id="L339"><span class="lineNum">     339</span> <span class="tlaUNC">           0 :         pr_error(&quot;add_event error: %s\n&quot;, strerror(errno));</span></span>
+<span id="L340"><span class="lineNum">     340</span>              :         dlt_logstorage_exit();</span>
+<span id="L341"><span class="lineNum">     341</span>              :     }</span>
+<span id="L342"><span class="lineNum">     342</span>              : </span>
+<span id="L343"><span class="lineNum">     343</span> <span class="tlaUNC">           0 :     while (!dlt_logstorage_must_exit() &amp;&amp; (ret == 0))</span></span>
+<span id="L344"><span class="lineNum">     344</span> <span class="tlaUNC">           0 :         ret = dlt_logstorage_ctrl_execute_event_loop(&amp;ev_hdl);</span></span>
+<span id="L345"><span class="lineNum">     345</span>              : </span>
+<span id="L346"><span class="lineNum">     346</span>              :     /* Clean up */</span>
+<span id="L347"><span class="lineNum">     347</span> <span class="tlaUNC">           0 :     dlt_logstorage_deinit_handler();</span></span>
+<span id="L348"><span class="lineNum">     348</span> <span class="tlaUNC">           0 :     dlt_control_deinit();</span></span>
+<span id="L349"><span class="lineNum">     349</span>              : </span>
+<span id="L350"><span class="lineNum">     350</span> <span class="tlaUNC">           0 :     return ret;</span></span>
+<span id="L351"><span class="lineNum">     351</span>              : }</span>
+<span id="L352"><span class="lineNum">     352</span>              : </span>
+<span id="L353"><span class="lineNum">     353</span>              : /** @brief Send a single command to DLT daemon and wait for response</span>
+<span id="L354"><span class="lineNum">     354</span>              :  *</span>
+<span id="L355"><span class="lineNum">     355</span>              :  * @return 0 on success, -1 otherwise.</span>
+<span id="L356"><span class="lineNum">     356</span>              :  */</span>
+<span id="L357"><span class="lineNum">     357</span> <span class="tlaGNC tlaBgGNC">           2 : static int dlt_logstorage_ctrl_single_request()</span></span>
+<span id="L358"><span class="lineNum">     358</span>              : {</span>
+<span id="L359"><span class="lineNum">     359</span>              :     int ret = 0;</span>
+<span id="L360"><span class="lineNum">     360</span>              : </span>
+<span id="L361"><span class="lineNum">     361</span>              :     /* in case sync all caches, an empty path is given */</span>
+<span id="L362"><span class="lineNum">     362</span> <span class="tlaGNC">           2 :     if (get_default_event_type() != EVENT_SYNC_CACHE) {</span></span>
+<span id="L363"><span class="lineNum">     363</span>              :         /* Check if a 'CONF_NAME' file is present at the given path */</span>
+<span id="L364"><span class="lineNum">     364</span> <span class="tlaUNC tlaBgUNC">           0 :         if (!dlt_logstorage_check_config_file(get_default_path())) {</span></span>
+<span id="L365"><span class="lineNum">     365</span> <span class="tlaUNC">           0 :             pr_error(&quot;No '%s' file available at: %s\n&quot;,</span></span>
+<span id="L366"><span class="lineNum">     366</span>              :                      CONF_NAME,</span>
+<span id="L367"><span class="lineNum">     367</span>              :                      get_default_path());</span>
+<span id="L368"><span class="lineNum">     368</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L369"><span class="lineNum">     369</span>              :         }</span>
+<span id="L370"><span class="lineNum">     370</span>              : </span>
+<span id="L371"><span class="lineNum">     371</span> <span class="tlaUNC">           0 :         if (!dlt_logstorage_check_directory_permission(get_default_path())) {</span></span>
+<span id="L372"><span class="lineNum">     372</span> <span class="tlaUNC">           0 :             pr_error(&quot;'%s' is not writable\n&quot;, get_default_path());</span></span>
+<span id="L373"><span class="lineNum">     373</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L374"><span class="lineNum">     374</span>              :         }</span>
+<span id="L375"><span class="lineNum">     375</span>              :     }</span>
+<span id="L376"><span class="lineNum">     376</span>              : </span>
+<span id="L377"><span class="lineNum">     377</span>              :     /* Initializing the communication with the daemon */</span>
+<span id="L378"><span class="lineNum">     378</span> <span class="tlaGNC tlaBgGNC">           2 :     while (dlt_control_init(analyze_response, get_ecuid(), get_verbosity()) &amp;&amp;</span></span>
+<span id="L379"><span class="lineNum">     379</span>              :            !dlt_logstorage_must_exit()) {</span>
+<span id="L380"><span class="lineNum">     380</span> <span class="tlaUNC tlaBgUNC">           0 :         pr_error(&quot;Failed to initialize connection with the daemon.\n&quot;);</span></span>
+<span id="L381"><span class="lineNum">     381</span> <span class="tlaUNC">           0 :         pr_error(&quot;Retrying to connect in %ds.\n&quot;, get_timeout());</span></span>
+<span id="L382"><span class="lineNum">     382</span> <span class="tlaUNC">           0 :         sleep( (unsigned int) get_timeout());</span></span>
+<span id="L383"><span class="lineNum">     383</span>              :     }</span>
+<span id="L384"><span class="lineNum">     384</span>              : </span>
+<span id="L385"><span class="lineNum">     385</span> <span class="tlaGNC tlaBgGNC">           2 :     pr_verbose(&quot;event type is [%d]\t device path is [%s]\n&quot;,</span></span>
+<span id="L386"><span class="lineNum">     386</span>              :                get_default_event_type(),</span>
+<span id="L387"><span class="lineNum">     387</span>              :                get_default_path());</span>
+<span id="L388"><span class="lineNum">     388</span>              : </span>
+<span id="L389"><span class="lineNum">     389</span> <span class="tlaGNC">           2 :     ret = dlt_logstorage_send_event(get_default_event_type(),</span></span>
+<span id="L390"><span class="lineNum">     390</span>              :                                     get_default_path());</span>
+<span id="L391"><span class="lineNum">     391</span>              : </span>
+<span id="L392"><span class="lineNum">     392</span> <span class="tlaGNC">           2 :     dlt_control_deinit();</span></span>
+<span id="L393"><span class="lineNum">     393</span>              : </span>
+<span id="L394"><span class="lineNum">     394</span> <span class="tlaGNC">           2 :     return ret;</span></span>
+<span id="L395"><span class="lineNum">     395</span>              : }</span>
+<span id="L396"><span class="lineNum">     396</span>              : </span>
+<span id="L397"><span class="lineNum">     397</span>              : /** @brief Print out the application help</span>
+<span id="L398"><span class="lineNum">     398</span>              :  */</span>
+<span id="L399"><span class="lineNum">     399</span> <span class="tlaUNC tlaBgUNC">           0 : static void usage(void)</span></span>
+<span id="L400"><span class="lineNum">     400</span>              : {</span>
+<span id="L401"><span class="lineNum">     401</span>              :     printf(&quot;Usage: dlt-logstorage-ctrl [options]\n&quot;);</span>
+<span id="L402"><span class="lineNum">     402</span>              :     printf(&quot;Send a trigger to DLT daemon to connect/disconnect&quot;</span>
+<span id="L403"><span class="lineNum">     403</span>              :            &quot;a certain logstorage device\n&quot;);</span>
+<span id="L404"><span class="lineNum">     404</span>              :     printf(&quot;\n&quot;);</span>
+<span id="L405"><span class="lineNum">     405</span>              :     printf(&quot;Options:\n&quot;);</span>
+<span id="L406"><span class="lineNum">     406</span>              :     printf(&quot;  -c --command               Connection type: connect = 1, disconnect = 0\n&quot;);</span>
+<span id="L407"><span class="lineNum">     407</span>              :     printf(&quot;  -d[prop] --daemonize=prop  Run as daemon: prop = use proprietary handler\n&quot;);</span>
+<span id="L408"><span class="lineNum">     408</span>              :     printf(&quot;                             'prop' may be replaced by any meaningful word\n&quot;);</span>
+<span id="L409"><span class="lineNum">     409</span>              :     printf(&quot;                             If prop is not specified, udev will be used\n&quot;);</span>
+<span id="L410"><span class="lineNum">     410</span>              :     printf(&quot;  -e --ecuid                 Set ECU ID (Default: %s)\n&quot;, DLT_CTRL_DEFAULT_ECUID);</span>
+<span id="L411"><span class="lineNum">     411</span>              :     printf(&quot;  -h --help                  Usage\n&quot;);</span>
+<span id="L412"><span class="lineNum">     412</span>              :     printf(&quot;  -p --path                  Mount point path\n&quot;);</span>
+<span id="L413"><span class="lineNum">     413</span>              :     printf(&quot;  -s[path] --snapshot=path   Sync Logstorage cache\n&quot;);</span>
+<span id="L414"><span class="lineNum">     414</span>              :     printf(&quot;                             Don't use -s together with -d and -c\n&quot;);</span>
+<span id="L415"><span class="lineNum">     415</span>              :     printf(&quot;  -t                         Specify connection timeout (Default: %ds)\n&quot;,</span>
+<span id="L416"><span class="lineNum">     416</span>              :            DLT_CTRL_TIMEOUT);</span>
+<span id="L417"><span class="lineNum">     417</span>              :     printf(&quot;  -S --send-header           Send message with serial header (Default: Without serial header)\n&quot;);</span>
+<span id="L418"><span class="lineNum">     418</span>              :     printf(&quot;  -R --resync-header         Enable resync serial header\n&quot;);</span>
+<span id="L419"><span class="lineNum">     419</span> <span class="tlaUNC">           0 :     printf(&quot;  -v --verbose               Set verbose flag (Default:%d)\n&quot;, get_verbosity());</span></span>
+<span id="L420"><span class="lineNum">     420</span>              :     printf(&quot;  -C filename                DLT daemon configuration file (Default: &quot; CONFIGURATION_FILES_DIR</span>
+<span id="L421"><span class="lineNum">     421</span>              :            &quot;/dlt.conf)\n&quot;);</span>
+<span id="L422"><span class="lineNum">     422</span> <span class="tlaUNC">           0 : }</span></span>
+<span id="L423"><span class="lineNum">     423</span>              : </span>
+<span id="L424"><span class="lineNum">     424</span>              : static struct option long_options[] = {</span>
+<span id="L425"><span class="lineNum">     425</span>              :     {&quot;command&quot;,       required_argument,  0,  'c'},</span>
+<span id="L426"><span class="lineNum">     426</span>              :     {&quot;daemonize&quot;,     optional_argument,  0,  'd'},</span>
+<span id="L427"><span class="lineNum">     427</span>              :     {&quot;ecuid&quot;,         required_argument,  0,  'e'},</span>
+<span id="L428"><span class="lineNum">     428</span>              :     {&quot;help&quot;,          no_argument,        0,  'h'},</span>
+<span id="L429"><span class="lineNum">     429</span>              :     {&quot;path&quot;,          required_argument,  0,  'p'},</span>
+<span id="L430"><span class="lineNum">     430</span>              :     {&quot;snapshot&quot;,      optional_argument,  0,  's'},</span>
+<span id="L431"><span class="lineNum">     431</span>              :     {&quot;timeout&quot;,       required_argument,  0,  't'},</span>
+<span id="L432"><span class="lineNum">     432</span>              :     {&quot;send-header&quot;,   no_argument,        0,  'S'},</span>
+<span id="L433"><span class="lineNum">     433</span>              :     {&quot;resync-header&quot;, no_argument,        0,  'R'},</span>
+<span id="L434"><span class="lineNum">     434</span>              :     {&quot;verbose&quot;,       no_argument,        0,  'v'},</span>
+<span id="L435"><span class="lineNum">     435</span>              :     {0,               0,                  0,  0}</span>
+<span id="L436"><span class="lineNum">     436</span>              : };</span>
+<span id="L437"><span class="lineNum">     437</span>              : </span>
+<span id="L438"><span class="lineNum">     438</span>              : /** @brief Parses the application arguments</span>
+<span id="L439"><span class="lineNum">     439</span>              :  *</span>
+<span id="L440"><span class="lineNum">     440</span>              :  * The arguments are parsed and saved in static structure for future use.</span>
+<span id="L441"><span class="lineNum">     441</span>              :  *</span>
+<span id="L442"><span class="lineNum">     442</span>              :  * @param argc The amount of arguments</span>
+<span id="L443"><span class="lineNum">     443</span>              :  * @param argv The table of arguments</span>
+<span id="L444"><span class="lineNum">     444</span>              :  *</span>
+<span id="L445"><span class="lineNum">     445</span>              :  * @return 0 on success, -1 otherwise</span>
+<span id="L446"><span class="lineNum">     446</span>              :  */</span>
+<span id="L447"><span class="lineNum">     447</span> <span class="tlaGNC tlaBgGNC">           2 : static int parse_args(int argc, char *argv[])</span></span>
+<span id="L448"><span class="lineNum">     448</span>              : {</span>
+<span id="L449"><span class="lineNum">     449</span>              :     int c = -1;</span>
+<span id="L450"><span class="lineNum">     450</span> <span class="tlaGNC">           2 :     int long_index = 0;</span></span>
+<span id="L451"><span class="lineNum">     451</span>              : </span>
+<span id="L452"><span class="lineNum">     452</span> <span class="tlaGNC">           6 :     while ((c = getopt_long(argc,</span></span>
+<span id="L453"><span class="lineNum">     453</span>              :                             argv,</span>
+<span id="L454"><span class="lineNum">     454</span>              :                             &quot;:s::t:hSRe:p:d::c:vC:&quot;,</span>
+<span id="L455"><span class="lineNum">     455</span>              :                             long_options,</span>
+<span id="L456"><span class="lineNum">     456</span> <span class="tlaGNC">           6 :                             &amp;long_index)) != -1)</span></span>
+<span id="L457"><span class="lineNum">     457</span> <span class="tlaGNC">           4 :         switch (c) {</span></span>
+<span id="L458"><span class="lineNum">     458</span> <span class="tlaGNC">           2 :         case 's':</span></span>
+<span id="L459"><span class="lineNum">     459</span> <span class="tlaGNC">           2 :             set_default_event_type(EVENT_SYNC_CACHE);</span></span>
+<span id="L460"><span class="lineNum">     460</span>              : </span>
+<span id="L461"><span class="lineNum">     461</span> <span class="tlaGNC">           2 :             if ((optarg != NULL) &amp;&amp; (strlen(optarg) &gt;= DLT_MOUNT_PATH_MAX)) {</span></span>
+<span id="L462"><span class="lineNum">     462</span> <span class="tlaUNC tlaBgUNC">           0 :                 pr_error(&quot;Mount path '%s' too long\n&quot;, optarg);</span></span>
+<span id="L463"><span class="lineNum">     463</span> <span class="tlaUNC">           0 :                 return -1;</span></span>
+<span id="L464"><span class="lineNum">     464</span>              :             }</span>
+<span id="L465"><span class="lineNum">     465</span>              : </span>
+<span id="L466"><span class="lineNum">     466</span> <span class="tlaGNC tlaBgGNC">           2 :             set_default_path(optarg);</span></span>
+<span id="L467"><span class="lineNum">     467</span> <span class="tlaGNC">           2 :             break;</span></span>
+<span id="L468"><span class="lineNum">     468</span> <span class="tlaUNC tlaBgUNC">           0 :         case 't':</span></span>
+<span id="L469"><span class="lineNum">     469</span> <span class="tlaUNC">           0 :             if (optarg != NULL)</span></span>
+<span id="L470"><span class="lineNum">     470</span> <span class="tlaUNC">           0 :                 set_timeout((int) strtol(optarg, NULL, 10));</span></span>
+<span id="L471"><span class="lineNum">     471</span>              :             break;</span>
+<span id="L472"><span class="lineNum">     472</span> <span class="tlaUNC">           0 :         case 'S':</span></span>
+<span id="L473"><span class="lineNum">     473</span>              :         {</span>
+<span id="L474"><span class="lineNum">     474</span> <span class="tlaUNC">           0 :             set_send_serial_header(1);</span></span>
+<span id="L475"><span class="lineNum">     475</span> <span class="tlaUNC">           0 :             break;</span></span>
+<span id="L476"><span class="lineNum">     476</span>              :         }</span>
+<span id="L477"><span class="lineNum">     477</span> <span class="tlaUNC">           0 :         case 'R':</span></span>
+<span id="L478"><span class="lineNum">     478</span>              :         {</span>
+<span id="L479"><span class="lineNum">     479</span> <span class="tlaUNC">           0 :             set_resync_serial_header(1);</span></span>
+<span id="L480"><span class="lineNum">     480</span> <span class="tlaUNC">           0 :             break;</span></span>
+<span id="L481"><span class="lineNum">     481</span>              :         }</span>
+<span id="L482"><span class="lineNum">     482</span> <span class="tlaUNC">           0 :         case 'h':</span></span>
+<span id="L483"><span class="lineNum">     483</span> <span class="tlaUNC">           0 :             usage();</span></span>
+<span id="L484"><span class="lineNum">     484</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L485"><span class="lineNum">     485</span> <span class="tlaUNC">           0 :         case 'e':</span></span>
+<span id="L486"><span class="lineNum">     486</span> <span class="tlaUNC">           0 :             set_ecuid(optarg);</span></span>
+<span id="L487"><span class="lineNum">     487</span> <span class="tlaUNC">           0 :             break;</span></span>
+<span id="L488"><span class="lineNum">     488</span> <span class="tlaUNC">           0 :         case 'd':</span></span>
+<span id="L489"><span class="lineNum">     489</span> <span class="tlaUNC">           0 :             pr_verbose(&quot;Choosing handler.\n&quot;);</span></span>
+<span id="L490"><span class="lineNum">     490</span> <span class="tlaUNC">           0 :             set_handler_type(optarg);</span></span>
+<span id="L491"><span class="lineNum">     491</span> <span class="tlaUNC">           0 :             pr_verbose(&quot;Handler chosen: %d.\n&quot;, get_handler_type());</span></span>
+<span id="L492"><span class="lineNum">     492</span>              :             break;</span>
+<span id="L493"><span class="lineNum">     493</span> <span class="tlaUNC">           0 :         case 'p':</span></span>
+<span id="L494"><span class="lineNum">     494</span>              : </span>
+<span id="L495"><span class="lineNum">     495</span> <span class="tlaUNC">           0 :             if ((optarg != NULL) &amp;&amp; (strlen(optarg) &gt;= DLT_MOUNT_PATH_MAX)) {</span></span>
+<span id="L496"><span class="lineNum">     496</span> <span class="tlaUNC">           0 :                 pr_error(&quot;Mount path '%s' too long\n&quot;, optarg);</span></span>
+<span id="L497"><span class="lineNum">     497</span> <span class="tlaUNC">           0 :                 return -1;</span></span>
+<span id="L498"><span class="lineNum">     498</span>              :             }</span>
+<span id="L499"><span class="lineNum">     499</span>              : </span>
+<span id="L500"><span class="lineNum">     500</span> <span class="tlaUNC">           0 :             set_default_path(optarg);</span></span>
+<span id="L501"><span class="lineNum">     501</span> <span class="tlaUNC">           0 :             break;</span></span>
+<span id="L502"><span class="lineNum">     502</span> <span class="tlaUNC">           0 :         case 'c':</span></span>
+<span id="L503"><span class="lineNum">     503</span> <span class="tlaUNC">           0 :             if (optarg != NULL)</span></span>
+<span id="L504"><span class="lineNum">     504</span> <span class="tlaUNC">           0 :                 set_default_event_type(strtol(optarg, NULL, 10));</span></span>
+<span id="L505"><span class="lineNum">     505</span>              :             break;</span>
+<span id="L506"><span class="lineNum">     506</span> <span class="tlaUNC">           0 :         case 'v':</span></span>
+<span id="L507"><span class="lineNum">     507</span> <span class="tlaUNC">           0 :             set_verbosity(1);</span></span>
+<span id="L508"><span class="lineNum">     508</span> <span class="tlaUNC">           0 :             pr_verbose(&quot;Now in verbose mode.\n&quot;);</span></span>
+<span id="L509"><span class="lineNum">     509</span>              :             break;</span>
+<span id="L510"><span class="lineNum">     510</span> <span class="tlaGNC tlaBgGNC">           2 :         case 'C':</span></span>
+<span id="L511"><span class="lineNum">     511</span> <span class="tlaGNC">           2 :             set_conf(optarg);</span></span>
+<span id="L512"><span class="lineNum">     512</span> <span class="tlaGNC">           2 :             pr_verbose(&quot;Set %s to read options\n&quot;, optarg);</span></span>
+<span id="L513"><span class="lineNum">     513</span>              :             break;</span>
+<span id="L514"><span class="lineNum">     514</span> <span class="tlaUNC tlaBgUNC">           0 :         case ':':</span></span>
+<span id="L515"><span class="lineNum">     515</span> <span class="tlaUNC">           0 :             pr_error(&quot;Option -%c requires an argument.\n&quot;, optopt);</span></span>
+<span id="L516"><span class="lineNum">     516</span> <span class="tlaUNC">           0 :             usage();</span></span>
+<span id="L517"><span class="lineNum">     517</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L518"><span class="lineNum">     518</span> <span class="tlaUNC">           0 :         case '?':</span></span>
+<span id="L519"><span class="lineNum">     519</span>              : </span>
+<span id="L520"><span class="lineNum">     520</span> <span class="tlaUNC">           0 :             if (isprint(optopt))</span></span>
+<span id="L521"><span class="lineNum">     521</span> <span class="tlaUNC">           0 :                 pr_error(&quot;Unknown option -%c.\n&quot;, optopt);</span></span>
+<span id="L522"><span class="lineNum">     522</span>              :             else</span>
+<span id="L523"><span class="lineNum">     523</span> <span class="tlaUNC">           0 :                 pr_error(&quot;Unknown option character \\x%x.\n&quot;, optopt);</span></span>
+<span id="L524"><span class="lineNum">     524</span>              : </span>
+<span id="L525"><span class="lineNum">     525</span> <span class="tlaUNC">           0 :             usage();</span></span>
+<span id="L526"><span class="lineNum">     526</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L527"><span class="lineNum">     527</span> <span class="tlaUNC">           0 :         default:</span></span>
+<span id="L528"><span class="lineNum">     528</span> <span class="tlaUNC">           0 :             pr_error(&quot;Try %s -h for more information.\n&quot;, argv[0]);</span></span>
+<span id="L529"><span class="lineNum">     529</span> <span class="tlaUNC">           0 :             return -1;</span></span>
+<span id="L530"><span class="lineNum">     530</span>              :         }</span>
+<span id="L531"><span class="lineNum">     531</span>              : </span>
+<span id="L532"><span class="lineNum">     532</span>              : </span>
+<span id="L533"><span class="lineNum">     533</span>              : </span>
+<span id="L534"><span class="lineNum">     534</span> <span class="tlaGNC tlaBgGNC">           4 :     if ((get_default_event_type() == EVENT_SYNC_CACHE) &amp;&amp;</span></span>
+<span id="L535"><span class="lineNum">     535</span> <span class="tlaGNC">           2 :         (get_handler_type() != CTRL_NOHANDLER)) {</span></span>
+<span id="L536"><span class="lineNum">     536</span> <span class="tlaUNC tlaBgUNC">           0 :         pr_error(&quot;Sync caches not available in daemon mode\n&quot;);</span></span>
+<span id="L537"><span class="lineNum">     537</span> <span class="tlaUNC">           0 :         return -1;</span></span>
+<span id="L538"><span class="lineNum">     538</span>              :     }</span>
+<span id="L539"><span class="lineNum">     539</span>              : </span>
+<span id="L540"><span class="lineNum">     540</span>              :     /* Retrieve ECUID from dlt.conf */</span>
+<span id="L541"><span class="lineNum">     541</span> <span class="tlaGNC tlaBgGNC">           2 :     if (get_ecuid() == NULL)</span></span>
+<span id="L542"><span class="lineNum">     542</span> <span class="tlaUNC tlaBgUNC">           0 :         set_ecuid(NULL);</span></span>
+<span id="L543"><span class="lineNum">     543</span>              : </span>
+<span id="L544"><span class="lineNum">     544</span>              :     return 0;</span>
+<span id="L545"><span class="lineNum">     545</span>              : }</span>
+<span id="L546"><span class="lineNum">     546</span>              : </span>
+<span id="L547"><span class="lineNum">     547</span>              : #if !defined(DLT_SYSTEMD_ENABLE)</span>
+<span id="L548"><span class="lineNum">     548</span> <span class="tlaUNC">           0 : int sd_notify(int unset_environment, const char *state)</span></span>
+<span id="L549"><span class="lineNum">     549</span>              : {</span>
+<span id="L550"><span class="lineNum">     550</span>              :     /* Satisfy Compiler for warnings */</span>
+<span id="L551"><span class="lineNum">     551</span>              :     (void)unset_environment;</span>
+<span id="L552"><span class="lineNum">     552</span>              :     (void)state;</span>
+<span id="L553"><span class="lineNum">     553</span> <span class="tlaUNC">           0 :     return 0;</span></span>
+<span id="L554"><span class="lineNum">     554</span>              : }</span>
+<span id="L555"><span class="lineNum">     555</span>              : #endif</span>
+<span id="L556"><span class="lineNum">     556</span>              : </span>
+<span id="L557"><span class="lineNum">     557</span>              : /** @brief Entry point</span>
+<span id="L558"><span class="lineNum">     558</span>              :  *</span>
+<span id="L559"><span class="lineNum">     559</span>              :  * Execute the argument parser and call the main feature accordingly.</span>
+<span id="L560"><span class="lineNum">     560</span>              :  *</span>
+<span id="L561"><span class="lineNum">     561</span>              :  * @param argc The amount of arguments</span>
+<span id="L562"><span class="lineNum">     562</span>              :  * @param argv The table of arguments</span>
+<span id="L563"><span class="lineNum">     563</span>              :  *</span>
+<span id="L564"><span class="lineNum">     564</span>              :  * @return 0 on success, -1 otherwise</span>
+<span id="L565"><span class="lineNum">     565</span>              :  */</span>
+<span id="L566"><span class="lineNum">     566</span> <span class="tlaGNC tlaBgGNC">           2 : int main(int argc, char *argv[])</span></span>
+<span id="L567"><span class="lineNum">     567</span>              : {</span>
+<span id="L568"><span class="lineNum">     568</span>              :     int ret = 0;</span>
+<span id="L569"><span class="lineNum">     569</span>              : </span>
+<span id="L570"><span class="lineNum">     570</span> <span class="tlaGNC">           2 :     set_timeout(DLT_CTRL_TIMEOUT);</span></span>
+<span id="L571"><span class="lineNum">     571</span> <span class="tlaGNC">           2 :     set_send_serial_header(0);</span></span>
+<span id="L572"><span class="lineNum">     572</span> <span class="tlaGNC">           2 :     set_resync_serial_header(0);</span></span>
+<span id="L573"><span class="lineNum">     573</span>              : </span>
+<span id="L574"><span class="lineNum">     574</span>              :     /* Get command line arguments */</span>
+<span id="L575"><span class="lineNum">     575</span> <span class="tlaGNC">           2 :     if (parse_args(argc, argv) != 0)</span></span>
+<span id="L576"><span class="lineNum">     576</span>              :         return -1;</span>
+<span id="L577"><span class="lineNum">     577</span>              : </span>
+<span id="L578"><span class="lineNum">     578</span>              :     /* all parameter valid, start communication with daemon or setup</span>
+<span id="L579"><span class="lineNum">     579</span>              :      * communication with control daemon */</span>
+<span id="L580"><span class="lineNum">     580</span> <span class="tlaGNC">           2 :     if (get_handler_type() == CTRL_NOHANDLER) {</span></span>
+<span id="L581"><span class="lineNum">     581</span> <span class="tlaGNC">           2 :         pr_verbose(&quot;One shot.\n&quot;);</span></span>
+<span id="L582"><span class="lineNum">     582</span>              : </span>
+<span id="L583"><span class="lineNum">     583</span> <span class="tlaGNC">           2 :         ret = dlt_logstorage_ctrl_single_request();</span></span>
+<span id="L584"><span class="lineNum">     584</span>              : </span>
+<span id="L585"><span class="lineNum">     585</span> <span class="tlaGNC">           2 :         if (ret &lt; 0)</span></span>
+<span id="L586"><span class="lineNum">     586</span> <span class="tlaUNC tlaBgUNC">           0 :             pr_error(&quot;Message failed to be send. Please check DLT config.\n&quot;);</span></span>
+<span id="L587"><span class="lineNum">     587</span>              :     }</span>
+<span id="L588"><span class="lineNum">     588</span>              :     else {</span>
+<span id="L589"><span class="lineNum">     589</span> <span class="tlaUNC">           0 :         pr_verbose(&quot;Entering in daemon mode.\n&quot;);</span></span>
+<span id="L590"><span class="lineNum">     590</span>              : </span>
+<span id="L591"><span class="lineNum">     591</span>              :         /* Let's daemonize */</span>
+<span id="L592"><span class="lineNum">     592</span>              :         if (sd_notify(0, &quot;READY=1&quot;) &lt;= 0) {</span>
+<span id="L593"><span class="lineNum">     593</span> <span class="tlaUNC">           0 :             pr_verbose(&quot;SD notify failed, manually daemonizing.\n&quot;);</span></span>
+<span id="L594"><span class="lineNum">     594</span>              : </span>
+<span id="L595"><span class="lineNum">     595</span>              :             /* No message can be sent or Systemd is not available.</span>
+<span id="L596"><span class="lineNum">     596</span>              :              * Daemonizing manually.</span>
+<span id="L597"><span class="lineNum">     597</span>              :              */</span>
+<span id="L598"><span class="lineNum">     598</span> <span class="tlaUNC">           0 :             if (daemon(1, 1)) {</span></span>
+<span id="L599"><span class="lineNum">     599</span> <span class="tlaUNC">           0 :                 pr_error(&quot;Failed to daemonize: %s\n&quot;, strerror(errno));</span></span>
+<span id="L600"><span class="lineNum">     600</span> <span class="tlaUNC">           0 :                 return EXIT_FAILURE;</span></span>
+<span id="L601"><span class="lineNum">     601</span>              :             }</span>
+<span id="L602"><span class="lineNum">     602</span>              :         }</span>
+<span id="L603"><span class="lineNum">     603</span>              : </span>
+<span id="L604"><span class="lineNum">     604</span> <span class="tlaUNC">           0 :         pr_verbose(&quot;Executing the event loop\n&quot;);</span></span>
+<span id="L605"><span class="lineNum">     605</span> <span class="tlaUNC">           0 :         ret = dlt_logstorage_ctrl_setup_event_loop();</span></span>
+<span id="L606"><span class="lineNum">     606</span>              :     }</span>
+<span id="L607"><span class="lineNum">     607</span>              : </span>
+<span id="L608"><span class="lineNum">     608</span> <span class="tlaGNC tlaBgGNC">           2 :     pr_verbose(&quot;Exiting.\n&quot;);</span></span>
+<span id="L609"><span class="lineNum">     609</span>              :     return ret;</span>
+<span id="L610"><span class="lineNum">     610</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

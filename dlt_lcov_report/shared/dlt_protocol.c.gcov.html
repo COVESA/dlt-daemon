@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - dlt_final_coverage.info - shared/dlt_protocol.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">shared</a> - dlt_protocol.c<span style="font-size: 80%;"> (source / <a href="dlt_protocol.c.func-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">dlt_final_coverage.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryMed">85.7&nbsp;%</td>
+            <td class="headerCovTableEntry">7</td>
+            <td class="headerCovTableEntry">6</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-12-23 11:07:30</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">1</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : /*</span>
+<span id="L2"><span class="lineNum">       2</span>              :  * SPDX license identifier: MPL-2.0</span>
+<span id="L3"><span class="lineNum">       3</span>              :  *</span>
+<span id="L4"><span class="lineNum">       4</span>              :  * Copyright (C) 2016 Advanced Driver Information Technology.</span>
+<span id="L5"><span class="lineNum">       5</span>              :  * This code is developed by Advanced Driver Information Technology.</span>
+<span id="L6"><span class="lineNum">       6</span>              :  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.</span>
+<span id="L7"><span class="lineNum">       7</span>              :  *</span>
+<span id="L8"><span class="lineNum">       8</span>              :  * This file is part of COVESA Project DLT - Diagnostic Log and Trace.</span>
+<span id="L9"><span class="lineNum">       9</span>              :  *</span>
+<span id="L10"><span class="lineNum">      10</span>              :  * This Source Code Form is subject to the terms of the</span>
+<span id="L11"><span class="lineNum">      11</span>              :  * Mozilla Public License (MPL), v. 2.0.</span>
+<span id="L12"><span class="lineNum">      12</span>              :  * If a copy of the MPL was not distributed with this file,</span>
+<span id="L13"><span class="lineNum">      13</span>              :  * You can obtain one at http://mozilla.org/MPL/2.0/.</span>
+<span id="L14"><span class="lineNum">      14</span>              :  *</span>
+<span id="L15"><span class="lineNum">      15</span>              :  * For further information see http://www.covesa.org/.</span>
+<span id="L16"><span class="lineNum">      16</span>              :  */</span>
+<span id="L17"><span class="lineNum">      17</span>              : </span>
+<span id="L18"><span class="lineNum">      18</span>              : /*!</span>
+<span id="L19"><span class="lineNum">      19</span>              :  * \author</span>
+<span id="L20"><span class="lineNum">      20</span>              :  * Christoph Lipka &lt;clipka@jp.adit-jv.com&gt;</span>
+<span id="L21"><span class="lineNum">      21</span>              :  *</span>
+<span id="L22"><span class="lineNum">      22</span>              :  * \copyright Copyright © 2016 Advanced Driver Information Technology. \n</span>
+<span id="L23"><span class="lineNum">      23</span>              :  * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.</span>
+<span id="L24"><span class="lineNum">      24</span>              :  *</span>
+<span id="L25"><span class="lineNum">      25</span>              :  * \file dlt_protocol.c</span>
+<span id="L26"><span class="lineNum">      26</span>              :  */</span>
+<span id="L27"><span class="lineNum">      27</span>              : </span>
+<span id="L28"><span class="lineNum">      28</span>              : #include &quot;dlt_protocol.h&quot;</span>
+<span id="L29"><span class="lineNum">      29</span>              : </span>
+<span id="L30"><span class="lineNum">      30</span>              : const char *const dlt_service_names[] = {</span>
+<span id="L31"><span class="lineNum">      31</span>              :     &quot;DLT_SERVICE_ID&quot;,</span>
+<span id="L32"><span class="lineNum">      32</span>              :     &quot;DLT_SERVICE_ID_SET_LOG_LEVEL&quot;,</span>
+<span id="L33"><span class="lineNum">      33</span>              :     &quot;DLT_SERVICE_ID_SET_TRACE_STATUS&quot;,</span>
+<span id="L34"><span class="lineNum">      34</span>              :     &quot;DLT_SERVICE_ID_GET_LOG_INFO&quot;,</span>
+<span id="L35"><span class="lineNum">      35</span>              :     &quot;DLT_SERVICE_ID_GET_DEFAULT_LOG_LEVEL&quot;,</span>
+<span id="L36"><span class="lineNum">      36</span>              :     &quot;DLT_SERVICE_ID_STORE_CONFIG&quot;,</span>
+<span id="L37"><span class="lineNum">      37</span>              :     &quot;DLT_SERVICE_ID_RESET_TO_FACTORY_DEFAULT&quot;,</span>
+<span id="L38"><span class="lineNum">      38</span>              :     &quot;DLT_SERVICE_ID_SET_COM_INTERFACE_STATUS&quot;,</span>
+<span id="L39"><span class="lineNum">      39</span>              :     &quot;DLT_SERVICE_ID_SET_COM_INTERFACE_MAX_BANDWIDTH&quot;,</span>
+<span id="L40"><span class="lineNum">      40</span>              :     &quot;DLT_SERVICE_ID_SET_VERBOSE_MODE&quot;,</span>
+<span id="L41"><span class="lineNum">      41</span>              :     &quot;DLT_SERVICE_ID_SET_MESSAGE_FILTERING&quot;,</span>
+<span id="L42"><span class="lineNum">      42</span>              :     &quot;DLT_SERVICE_ID_SET_TIMING_PACKETS&quot;,</span>
+<span id="L43"><span class="lineNum">      43</span>              :     &quot;DLT_SERVICE_ID_GET_LOCAL_TIME&quot;,</span>
+<span id="L44"><span class="lineNum">      44</span>              :     &quot;DLT_SERVICE_ID_USE_ECU_ID&quot;,</span>
+<span id="L45"><span class="lineNum">      45</span>              :     &quot;DLT_SERVICE_ID_USE_SESSION_ID&quot;,</span>
+<span id="L46"><span class="lineNum">      46</span>              :     &quot;DLT_SERVICE_ID_USE_TIMESTAMP&quot;,</span>
+<span id="L47"><span class="lineNum">      47</span>              :     &quot;DLT_SERVICE_ID_USE_EXTENDED_HEADER&quot;,</span>
+<span id="L48"><span class="lineNum">      48</span>              :     &quot;DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL&quot;,</span>
+<span id="L49"><span class="lineNum">      49</span>              :     &quot;DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS&quot;,</span>
+<span id="L50"><span class="lineNum">      50</span>              :     &quot;DLT_SERVICE_ID_GET_SOFTWARE_VERSION&quot;,</span>
+<span id="L51"><span class="lineNum">      51</span>              :     &quot;DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW&quot;</span>
+<span id="L52"><span class="lineNum">      52</span>              : };</span>
+<span id="L53"><span class="lineNum">      53</span>              : const char *const dlt_user_service_names[] = {</span>
+<span id="L54"><span class="lineNum">      54</span>              :     &quot;DLT_USER_SERVICE_ID&quot;,</span>
+<span id="L55"><span class="lineNum">      55</span>              :     &quot;DLT_SERVICE_ID_UNREGISTER_CONTEXT&quot;,</span>
+<span id="L56"><span class="lineNum">      56</span>              :     &quot;DLT_SERVICE_ID_CONNECTION_INFO&quot;,</span>
+<span id="L57"><span class="lineNum">      57</span>              :     &quot;DLT_SERVICE_ID_TIMEZONE&quot;,</span>
+<span id="L58"><span class="lineNum">      58</span>              :     &quot;DLT_SERVICE_ID_MARKER&quot;,</span>
+<span id="L59"><span class="lineNum">      59</span>              :     &quot;DLT_SERVICE_ID_OFFLINE_LOGSTORAGE&quot;,</span>
+<span id="L60"><span class="lineNum">      60</span>              :     &quot;DLT_SERVICE_ID_PASSIVE_NODE_CONNECT&quot;,</span>
+<span id="L61"><span class="lineNum">      61</span>              :     &quot;DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS&quot;,</span>
+<span id="L62"><span class="lineNum">      62</span>              :     &quot;DLT_SERVICE_ID_SET_ALL_LOG_LEVEL&quot;,</span>
+<span id="L63"><span class="lineNum">      63</span>              :     &quot;DLT_SERVICE_ID_SET_ALL_TRACE_STATUS&quot;,</span>
+<span id="L64"><span class="lineNum">      64</span>              :     &quot;DLT_SERVICE_ID_UNDEFINED&quot;, /* 0xF0A is not defined */</span>
+<span id="L65"><span class="lineNum">      65</span>              :     &quot;DLT_SERVICE_ID_RESERVED&quot;,</span>
+<span id="L66"><span class="lineNum">      66</span>              :     &quot;DLT_SERVICE_ID_RESERVED&quot;,</span>
+<span id="L67"><span class="lineNum">      67</span>              :     &quot;DLT_SERVICE_ID_RESERVED&quot;,</span>
+<span id="L68"><span class="lineNum">      68</span>              :     &quot;DLT_SERVICE_ID_RESERVED&quot;</span>
+<span id="L69"><span class="lineNum">      69</span>              : };</span>
+<span id="L70"><span class="lineNum">      70</span>              : </span>
+<span id="L71"><span class="lineNum">      71</span> <span class="tlaGNC tlaBgGNC">          11 : const char *dlt_get_service_name(unsigned int id)</span></span>
+<span id="L72"><span class="lineNum">      72</span>              : {</span>
+<span id="L73"><span class="lineNum">      73</span> <span class="tlaGNC">          11 :     if (id == DLT_SERVICE_ID_CALLSW_CINJECTION)</span></span>
+<span id="L74"><span class="lineNum">      74</span>              :         return &quot;DLT_SERVICE_ID_CALLSW_CINJECTION&quot;;</span>
+<span id="L75"><span class="lineNum">      75</span> <span class="tlaGNC">          11 :     else if ((id == DLT_SERVICE_ID) || (id &gt;= DLT_USER_SERVICE_ID_LAST_ENTRY) ||</span></span>
+<span id="L76"><span class="lineNum">      76</span> <span class="tlaGNC">          11 :              ((id &gt;= DLT_SERVICE_ID_LAST_ENTRY) &amp;&amp; (id &lt;= DLT_USER_SERVICE_ID)))</span></span>
+<span id="L77"><span class="lineNum">      77</span>              :         return &quot;UNDEFINED&quot;;</span>
+<span id="L78"><span class="lineNum">      78</span> <span class="tlaGNC">          11 :     else if ((id &gt; DLT_SERVICE_ID) &amp;&amp; (id &lt; DLT_SERVICE_ID_LAST_ENTRY))</span></span>
+<span id="L79"><span class="lineNum">      79</span> <span class="tlaGNC">          11 :         return dlt_service_names[id];</span></span>
+<span id="L80"><span class="lineNum">      80</span>              :     else /* user services */</span>
+<span id="L81"><span class="lineNum">      81</span> <span class="tlaUNC tlaBgUNC">           0 :         return dlt_user_service_names[id &amp; 0xFF];</span></span>
+<span id="L82"><span class="lineNum">      82</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.0-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>
