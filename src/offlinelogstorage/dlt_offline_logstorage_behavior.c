@@ -383,11 +383,13 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
         if (strncmp(files[i]->d_name, file_name, len) == 0) {
             if (config->num_files == 1 && file_config->logfile_optional_counter) {
                 /* <filename>.dlt or <filename>_<tmsp>.dlt */
-                if ((files[i]->d_name[len] == suffix[0]) ||
+                if (strcmp(files[i]->d_name + len, suffix) == 0 ||
                     (file_config->logfile_timestamp &&
-                     (files[i]->d_name[len] == file_config->logfile_delimiter))) {
+                     (files[i]->d_name[len] ==
+                      file_config->logfile_delimiter))) {
                     current_idx = 1;
-                } else {
+                }
+                else {
                     continue;
                 }
             } else {
