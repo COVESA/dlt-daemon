@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <err.h>
 #include <stdbool.h>
+#include <stdatomic.h>
 
 #include "dlt.h"
 #include "dlt-qnx-system.h"
@@ -35,28 +36,29 @@
 DLT_DECLARE_CONTEXT(dltQnxSystem)
 
 /* Global variables */
+extern _Atomic bool g_inj_disable_slog2_cb;
+extern _Atomic bool g_slog2_thread_alive;
 volatile DltQnxSystemThreads g_threads;
 
 #define INJECTION_SLOG2_ADAPTER     4096
+#define MAX_THREAD_START_RETRIES    3
 
 #define DATA_DISABLED   "00"
 #define DATA_ENABLED    "01"
 
-volatile bool g_inj_disable_slog2_cb = false;
-
 /* Function prototype */
 static void daemonize();
-static void start_threads();
-static void join_threads();
+static void start_thread();
+static void join_thread();
 static int read_configuration_file(const char *file_name);
 static int read_command_line(DltQnxSystemCliOptions *options, int argc, char *argv[]);
 
 static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length);
 
-static DltQnxSystemConfiguration *g_dlt_qnx_conf = NULL;
+static DltQnxSystemConfiguration *g_dlt_qnx_conf;
+
 static void init_configuration();
 static void clean_up();
-
 
 int main(int argc, char* argv[])
 {
@@ -64,7 +66,6 @@ int main(int argc, char* argv[])
     int sigNo = 0;
     int ret = 0;
     sigset_t mask;
-    int i;
 
     if (read_command_line(&options, argc, argv) < 0)
     {
@@ -83,18 +84,6 @@ int main(int argc, char* argv[])
         daemonize();
     }
 
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGTERM);
-    sigaddset(&mask, SIGHUP);
-    sigaddset(&mask, SIGQUIT);
-    sigaddset(&mask, SIGINT);
-    sigaddset(&mask, SIGALRM);
-    if (pthread_sigmask(SIG_BLOCK, &mask, NULL) != 0)
-    {
-        fprintf(stderr, "Couldn't set mask for potential future threads.\n");
-        return -1;
-    }
-
     DLT_REGISTER_APP(g_dlt_qnx_conf->applicationId, "DLT QNX System");
     DLT_REGISTER_CONTEXT(dltQnxSystem, g_dlt_qnx_conf->applicationContextId,
             "Context of main dlt qnx system manager");
@@ -104,22 +93,54 @@ int main(int argc, char* argv[])
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
             DLT_STRING("Setting signals wait for abnormal exit"));
 
-    g_threads.mainThread = pthread_self();
+    g_threads.main_thread = pthread_self();
 
-    DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG, DLT_STRING("Launching threads."));
-    start_threads();
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGTERM);
+    sigaddset(&mask, SIGHUP);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGALRM);
+    if (pthread_sigmask(SIG_BLOCK, &mask, NULL) == -1) {
+        DLT_LOG(dltQnxSystem, DLT_LOG_WARN,
+                DLT_STRING("Failed to block signals!"));
+        DLT_UNREGISTER_APP();
+        return -1;
+    }
+
+    DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG, DLT_STRING("Launching logging thread."));
+    /* Retry to start slog2_thread with a timeout */
+    int retry_count = 0;
+    while (!g_slog2_thread_alive && retry_count < MAX_THREAD_START_RETRIES) {
+        start_thread();
+        if (!g_slog2_thread_alive) {
+            retry_count++;
+            DLT_LOG(dltQnxSystem, DLT_LOG_WARN,
+                    DLT_STRING("Failed to start logging thread. Retrying..."),
+                    DLT_INT(retry_count));
+            sleep(1);
+        }
+    }
+
+    if (!g_slog2_thread_alive) {
+        DLT_LOG(dltQnxSystem, DLT_LOG_ERROR,
+                DLT_STRING("Failed to start logging thread after maximum retries - "),
+                DLT_INT(MAX_THREAD_START_RETRIES));
+        clean_up();
+        DLT_UNREGISTER_APP();
+        return -1;
+    }
 
     ret = sigwait(&mask, &sigNo);
-
-    for (i = 0; i < MAX_THREADS; i++) {
-        pthread_cancel(g_threads.threads[i]);
-    }
-    join_threads();
+    /* Normal exit in main thread will cancel slog2_thread */
+    g_slog2_thread_alive = false;
+    join_thread();
 
     if (ret != 0) {
         DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
                 DLT_STRING("sigwait failed with error: "),
                 DLT_INT(ret));
+        clean_up();
         DLT_UNREGISTER_APP();
         return -1;
     }
@@ -131,7 +152,6 @@ int main(int argc, char* argv[])
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
     clean_up();
     return 0;
-
 }
 
 /**
@@ -215,6 +235,7 @@ static void init_configuration()
     /* Common */
     g_dlt_qnx_conf->applicationId          = strdup("QSYM");
     g_dlt_qnx_conf->applicationContextId   = strdup("QSYC");
+
     /* Slogger2 */
     g_dlt_qnx_conf->qnxslogger2.enable     = 0;
     g_dlt_qnx_conf->qnxslogger2.contextId  = strdup("QSLA");
@@ -234,15 +255,11 @@ static int read_configuration_file(const char *file_name)
     int ret = 0;
 
     init_configuration();
-    if (g_dlt_qnx_conf == NULL) {
-        fprintf(stderr,
-                "dlt-qnx-system, could not allocate memory.\n");
-        return -1;
-    }
 
     file = fopen(file_name, "r");
 
-    if (file == NULL) {
+    if (file == NULL)
+    {
         fprintf(stderr,
                 "dlt-qnx-system, could not open configuration file.\n");
         return -1;
@@ -291,14 +308,17 @@ static int read_configuration_file(const char *file_name)
             {
                 if (g_dlt_qnx_conf->applicationId)
                     free(g_dlt_qnx_conf->applicationId);
-                g_dlt_qnx_conf->applicationId = strndup(value, DLT_ID_SIZE);
+
+                g_dlt_qnx_conf->applicationId = (char *)malloc(DLT_ID_SIZE + 1);
                 MALLOC_ASSERT(g_dlt_qnx_conf->applicationId);
+                strncpy(g_dlt_qnx_conf->applicationId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "ApplicationContextID") == 0)
             {
                 if (g_dlt_qnx_conf->applicationContextId)
                     free(g_dlt_qnx_conf->applicationContextId);
-                g_dlt_qnx_conf->applicationContextId = strndup(value, DLT_ID_SIZE);
+
+                g_dlt_qnx_conf->applicationContextId = (char *)malloc(DLT_ID_SIZE + 1);
                 MALLOC_ASSERT(g_dlt_qnx_conf->applicationContextId);
                 strncpy(g_dlt_qnx_conf->applicationContextId, value, DLT_ID_SIZE);
             }
@@ -311,8 +331,10 @@ static int read_configuration_file(const char *file_name)
             {
                 if (g_dlt_qnx_conf->qnxslogger2.contextId)
                     free(g_dlt_qnx_conf->qnxslogger2.contextId);
-                g_dlt_qnx_conf->qnxslogger2.contextId = strndup(value, DLT_ID_SIZE);
+
+                g_dlt_qnx_conf->qnxslogger2.contextId = (char *)malloc(DLT_ID_SIZE + 1);
                 MALLOC_ASSERT(g_dlt_qnx_conf->qnxslogger2.contextId);
+                strncpy(g_dlt_qnx_conf->qnxslogger2.contextId, value, DLT_ID_SIZE);
             }
             else if (strcmp(token, "QnxSlogger2UseOriginalTimestamp") == 0)
             {
@@ -383,56 +405,24 @@ static void daemonize()
     signal(SIGTTIN, SIG_IGN);
 }
 
-static void start_threads()
+static void start_thread()
 {
-    int i = 0;
-
-    DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-qnx-system, start threads"));
-
-    g_threads.count = 0;
-    g_threads.shutdown = 0;
-
-    for (i = 0; i < MAX_THREADS; i++)
-    {
-        g_threads.threads[i] = 0;
-    }
-
-    if (g_dlt_qnx_conf->qnxslogger2.enable)
-    {
+    if (g_dlt_qnx_conf->qnxslogger2.enable) {
+        printf("Enable dlt_slogger2_adapter, start logging thread.\n");
         start_qnx_slogger2(g_dlt_qnx_conf);
+    } else {
+        printf("Disable dlt_slogger2_adapter, cannot start logging thread.\n");
     }
 }
 
 /**
  * Wait for threads to exit.
  */
-static void join_threads()
+static void join_thread()
 {
-    int i = 0;
+    (void) pthread_join(g_threads.slog2_thread, NULL);
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-        DLT_STRING("dlt-qnx-system, waiting for threads to exit"));
-
-    if (g_threads.count < 1)
-    {
-        DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-                DLT_STRING("dlt-qnx-system, no threads, waiting for signal."));
-    }
-    else
-    {
-        DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-                DLT_STRING("dlt-qnx-system, thread count: "),
-                DLT_INT(g_threads.count));
-
-        for (i = 0; i < g_threads.count; i++)
-        {
-            pthread_join(g_threads.threads[i], NULL);
-            DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-                    DLT_STRING("dlt-qnx-system, thread exit: "),
-                    DLT_INT(g_threads.threads[i]));
-        }
-    }
-
+            DLT_STRING("dlt-qnx-system, thread exit ..."));
     DLT_UNREGISTER_CONTEXT(dltQnxSystem);
 }
 
@@ -448,32 +438,26 @@ static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length)
 
     if (0 == strncmp((char*) data, DATA_DISABLED, sizeof(DATA_DISABLED)-1))
         g_inj_disable_slog2_cb = true;
-    else if (0 == strncmp((char*) data, DATA_ENABLED, sizeof(DATA_ENABLED)-1)) {
-        if (g_inj_disable_slog2_cb == true) {
-            g_inj_disable_slog2_cb = false;
-            start_threads();
-        }
+        DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
+            DLT_STRING("Disabling slog2 callback because of injection request."));
+    if (0 == strncmp((char*) data, DATA_ENABLED, sizeof(DATA_ENABLED)-1)) {
+        g_inj_disable_slog2_cb = false;
+        DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
+            DLT_STRING("Enabling slog2 callback because of injection request."));
     }
-
     return 0;
 }
 
 static void clean_up()
 {
-    if (g_dlt_qnx_conf->applicationId) {
+    clean_qnx_slogger2();
+
+    if (g_dlt_qnx_conf->applicationId)
         free(g_dlt_qnx_conf->applicationId);
-        g_dlt_qnx_conf->applicationId = NULL;
-    }
-    if (g_dlt_qnx_conf->applicationContextId) {
+    if (g_dlt_qnx_conf->applicationContextId)
         free(g_dlt_qnx_conf->applicationContextId);
-        g_dlt_qnx_conf->applicationContextId = NULL;
-    }
-    if (g_dlt_qnx_conf->qnxslogger2.contextId) {
+    if (g_dlt_qnx_conf->qnxslogger2.contextId)
         free(g_dlt_qnx_conf->qnxslogger2.contextId);
-        g_dlt_qnx_conf->qnxslogger2.contextId = NULL;
-    }
-    if (g_dlt_qnx_conf) {
+    if (g_dlt_qnx_conf)
         free(g_dlt_qnx_conf);
-        g_dlt_qnx_conf = NULL;
-    }
 }
