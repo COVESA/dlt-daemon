@@ -1,5 +1,5 @@
 SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++0x")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++17")
 
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
