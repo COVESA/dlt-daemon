@@ -44,5 +44,5 @@ target_link_libraries(dlt-example3 ${DLT_LIBRARIES})
 set_target_properties(dlt-example3 PROPERTIES LINKER_LANGUAGE C)
 
 install(TARGETS dlt-example3
-	RUNTIME DESTINATION bin
-	COMPONENT base)
+        RUNTIME DESTINATION bin
+        COMPONENT base)
