@@ -28,7 +28,7 @@
 #include <sys/slog2.h>
 #include <sys/json.h>
 #include <slog2_parse.h>
-#include <thread>
+#include <atomic>
 #include <set>
 
 #include "dlt-qnx-system.h"
@@ -43,16 +43,28 @@ inline int32_t logToDlt(DltContextData &log, const json_decoder_error_t &value)
     return logToDlt(log, static_cast<int>(value));
 }
 
+std::atomic<bool> g_inj_disable_slog2_cb(false);
+std::atomic<bool> g_slog2_thread_alive(false);
+
 extern DltContext dltQnxSystem;
 
 static DltContext dltQnxSlogger2Context;
+
 static std::set<std::string> dltWarnedMissingMappings;
 
 extern DltQnxSystemThreads g_threads;
 
-extern volatile bool g_inj_disable_slog2_cb;
-
 static std::unordered_map<std::string, DltContext*> g_slog2file;
+
+static void *stackaddr;
+
+void free_stackaddr()
+{
+    if (stackaddr) {
+        free(stackaddr);
+        stackaddr = NULL;
+    }
+}
 
 static void dlt_context_map_read(const char *json_filename)
 {
@@ -95,15 +107,13 @@ static void dlt_context_map_read(const char *json_filename)
             break;
         }
 
-        auto ctxt = new DltContext;
-        g_slog2file.emplace(name, ctxt);
-
         auto search = g_slog2file.find(name);
         if (search == g_slog2file.end()) {
-            DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_INFO,
-                    "Could not emplace slog2ctxt map key: ", name);
-        } else {
+            auto ctxt = new DltContext;
+            g_slog2file.emplace(name, ctxt);
             dlt_register_context(ctxt, ctxtID, description);
+        } else {
+            dlt_register_context(search->second, ctxtID, description);
         }
 
         ret = json_decoder_pop(dec);
@@ -177,18 +187,28 @@ static bool wait_for_buffer_space(const double max_usage_threshold,
  *  Function which is invoked by slog2_parse_all()
  *  See slog2_parse_all api docs on qnx.com for details
  */
-static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *param)
+static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *param)
 {
     DltQnxSystemConfiguration* conf = (DltQnxSystemConfiguration*) param;
 
-    if (param == NULL)
-        return -1;
-
-    if (g_inj_disable_slog2_cb == true) {
-        DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
-                DLT_STRING("Disabling slog2 callback by injection request."));
+    /* Normal exit from main thread during working */
+    if (!g_slog2_thread_alive) {
         return -1;
     }
+
+    if (g_inj_disable_slog2_cb) {
+        do {
+            DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
+                    DLT_STRING("Disabling slog2 callback because of injection request."));
+            sleep(1);
+            /* Unexpected exit when hanging */
+            if (!g_slog2_thread_alive) {
+                return -1;
+            }
+        } while (g_inj_disable_slog2_cb);
+        DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
+                DLT_STRING("Enabling slog2 callback because of injection request."));
+    };
 
     DltLogLevelType loglevel;
     switch (info->severity)
@@ -261,11 +281,16 @@ static int sloggerinfo_callback(slog2_packet_info_t *info, void *payload, void *
 
 static void *slogger2_thread(void *v_conf)
 {
-    int ret = -1;
     DltQnxSystemConfiguration *conf = (DltQnxSystemConfiguration *)v_conf;
 
-    if (v_conf == NULL)
-        return reinterpret_cast<void*>(EINVAL);
+    if (conf == NULL) {
+        DLT_LOG_CXX(dltQnxSystem, DLT_LOG_DEBUG, __func__, ": Invalid config data.");
+        DLT_UNREGISTER_CONTEXT(dltQnxSlogger2Context);
+        /* Try to send SIGTERM to make sure main thread wakes up for cleaning */
+        pthread_kill(g_threads.main_thread, SIGTERM);
+        pthread_exit(NULL);
+        return NULL;
+    }
 
     slog2_packet_info_t packet_info = SLOG2_PACKET_INFO_INIT;
 
@@ -276,39 +301,67 @@ static void *slogger2_thread(void *v_conf)
      * Thread will block inside this function to get new log because
      * flag = SLOG2_PARSE_FLAGS_DYNAMIC
      */
-    ret = slog2_parse_all(
-            SLOG2_PARSE_FLAGS_DYNAMIC, /* live streaming of all buffers merged */
-            NULL, NULL, &packet_info, sloggerinfo_callback, (void*) conf);
-
-    if (ret == -1) {
-        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_ERROR,
-                "slog2_parse_all() returned error=", ret);
-        ret = EBADMSG;
+    if (slog2_parse_all(SLOG2_PARSE_FLAGS_DYNAMIC, NULL, NULL,
+                        &packet_info, slogger2_callback, (void*) conf) == -1) {
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN,
+                    "slog2_parse_all() stops working.\n");
     }
 
     DLT_LOG_CXX(dltQnxSystem, DLT_LOG_DEBUG, __func__, ": Exited main loop.");
 
     DLT_UNREGISTER_CONTEXT(dltQnxSlogger2Context);
-
-    /* process should be shutdown if the callback was not manually disabled */
-    if (g_inj_disable_slog2_cb == false) {
-        for (auto& x: g_slog2file) {
-            if(x.second != NULL) {
-                delete(x.second);
-                x.second = NULL;
-            }
-        }
-	/* Send a signal to main thread to wake up sigwait */
-        pthread_kill(g_threads.mainThread, SIGTERM);
-    }
-
-    return reinterpret_cast<void*>(ret);
+    /* Try to send SIGTERM to make sure main thread wakes up for cleaning */
+    pthread_kill(g_threads.main_thread, SIGTERM);
+    pthread_exit(NULL);
+    return NULL;
 }
 
 void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
 {
-    static pthread_attr_t t_attr;
-    static pthread_t pt;
+    if (conf == NULL) {
+        printf("Error in setup local database. No thread created.\n");
+        return;
+    }
+
+    int ret;
+    pthread_attr_t thread_attr;
+    void *aligned_stackaddr = NULL;
+    size_t stacksize = PTHREAD_STACK_4K * 3;
+
+    ret = pthread_attr_init(&thread_attr);
+    if (ret != 0) {
+        printf("pthread_attr_init returned: %d. Error: %d\n", ret, errno);
+        return;
+    }
+
+    /* Get a big enough stack and align it on 4K boundary. */
+    stackaddr = malloc(PTHREAD_STACK_4K * 4);
+    if (stackaddr != NULL) {
+        aligned_stackaddr = (void *)((((uintptr_t)stackaddr + (PTHREAD_STACK_4K - 1)) /
+                            PTHREAD_STACK_4K) * PTHREAD_STACK_4K);
+        /* Example: stackaddr = 0x1003 (not aligned), boundary: 4K (4096)
+         * Round up to nearest aligned: 0x1003 + 0x0fff = 0x2002
+         * Round down to integer portion: 0x2002 / 4096 = 2
+         * aligned 4K mem: 2 * 0x1000 = 0x2000
+         * In fact, size = 12K < 16K, so the new aligned_stackaddr will be allocated
+         * within, e.g. 0x1003 and max heap address of malloc 16K -> Safe here
+         */
+        printf("Using PTHREAD_STACK_4K to align. Set stackaddr to aligned address %p and stacksize to %zu\n", aligned_stackaddr, stacksize);
+    } else {
+        printf("Unable to allocate stack memory.\n");
+        pthread_attr_destroy(&thread_attr);
+        return;
+    }
+
+    ret = pthread_attr_setstack(&thread_attr, aligned_stackaddr, stacksize);
+    if (ret != 0) {
+        free_stackaddr();
+        pthread_attr_destroy(&thread_attr);
+        printf("pthread_attr_setstack returned: %d. Error: %d\n", ret, errno);
+        return;
+    } else {
+        printf("Successfully set stackaddr and stacksize.\n");
+    }
 
     DLT_REGISTER_CONTEXT(dltQnxSlogger2Context, conf->qnxslogger2.contextId,
                          "SLOGGER2 Adapter");
@@ -318,12 +371,30 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
     DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
             "dlt-qnx-slogger2-adapter, start syslog");
 
-    pthread_attr_init(&t_attr);
-
-    const int ret = pthread_create(&pt, &t_attr, slogger2_thread, conf);
-    if (0 != ret) {
-        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_ERROR, __func__, "pthread_create failed with error, ret=", ret);
+    ret = pthread_create(&g_threads.slog2_thread, &thread_attr, slogger2_thread, conf);
+    if (ret != 0) {
+        pthread_attr_destroy(&thread_attr);
+        clean_qnx_slogger2();
+        fprintf(stderr, "Failed to create thread: %d %s\n", ret, strerror(ret));
+        return;
     } else {
-        g_threads.threads[g_threads.count++] = pt;
+        g_slog2_thread_alive = true;
+    }
+
+    ret = pthread_attr_destroy(&thread_attr);
+    if (ret != 0) {
+        printf("Error in pthread_attr_destroy. Returned: %d, Error: %d\n", ret, errno);
+        return;
+    }
+}
+
+void clean_qnx_slogger2()
+{
+    free_stackaddr();
+    for (auto& x: g_slog2file) {
+        if(x.second != NULL) {
+            delete(x.second);
+            x.second = NULL;
+        }
     }
 }

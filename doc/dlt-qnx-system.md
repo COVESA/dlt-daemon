@@ -7,13 +7,33 @@ The application listens to the system logs on QNX (slogger2) and sends them to
 DLT. The prerequisite is that dlt-daemon is already started and running.
 dlt-qnx-system loads by default the configuration file ```/etc/dlt-qnx-system.conf```.
 
-> In order to catch all logs via slog2, the syslog needs to forward to slogger2 in [syslog.conf](http://www.qnx.com/developers/docs/7.0.0/index.html#com.qnx.doc.neutrino.utilities/topic/s/syslog.conf.html).
+> In order to catch all logs via slog2, the syslog needs to forward to slogger2 in [syslog.conf](http://www.qnx.com/developers/docs/7.0.0/index.html#com.qnx.doc.neutrino.utilities/topic/s/syslog.conf.html). [Deprecated]
 
 To change the log level, use application ID and context ID set in configuration
 file. ```DLT_INITIAL_LOG_LEVEL``` can be set on startup phase, or control
 message can be sent from DLT client (e.g. dlt-control, DLT Viewer) at runtime.
 Refer to [dlt_for_developers.md](dlt_for_developers.md) for more detail.
 
+## Single Threaded Design (v2.18.10+)
+
+> **Note:** Starting from version 2.18.10, `dlt-qnx-system` uses a single-threaded design for QNX logging management.
+
+- The main process initializes and manages the logging thread for the slogger2 adapter.
+- Signal handling is centralized in the main thread, ensuring clean shutdown and resource release.
+- The slogger2 adapter thread is started with retries and monitored for successful startup.
+- Runtime enable/disable of the slog2 adapter via injection is still supported.
+
+The design shall improve reliability and simplifies the process structure, making it more suitable for embedded and high-load QNX systems.
+
+### Architecture Comparison
+
+**Original Design:**
+
+<img src="images/dlt_qnx_system_original_design.png" alt="Original Design" width="700px" />
+
+**New Single Threaded Design:**
+
+<img src="images/dlt_qnx_system_new_design.png" alt="Original Design" width="700px" />
 
 ## Usage
 
@@ -100,7 +120,6 @@ The description field is in the registration with libdlt.
   }
 }
 ```
-
 
 ### Runtime enable/disable slog2 adapter
 

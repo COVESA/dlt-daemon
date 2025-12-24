@@ -52,13 +52,12 @@
 #define DLT_QNX_SYSTEM_H_
 
 #include "dlt.h"
-#include "dlt_user_macros.h"
 
 /* Constants */
 #define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-qnx-system.conf")
 
 #define MAX_LINE 1024
-#define MAX_THREADS 8
+#define PTHREAD_STACK_4K 4096
 
 /* Macros */
 #define MALLOC_ASSERT(x)\
@@ -95,13 +94,13 @@ typedef struct {
 } DltQnxSystemConfiguration;
 
 typedef struct {
-    pthread_t threads[MAX_THREADS];
-    pthread_t mainThread;
-    int count;
-    int shutdown;
+    pthread_t slog2_thread;
+    pthread_t main_thread;
 } DltQnxSystemThreads;
 
 void start_qnx_slogger2(DltQnxSystemConfiguration *conf);
+void clean_qnx_slogger2();
+void free_stackaddr(void);
 
 #ifdef __cplusplus
 } // extern "C"
