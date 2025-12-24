@@ -247,7 +247,7 @@ endif()
 
 add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-std=gnu11>
-    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++14>
+    $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>
     -Wall
     -Wextra
     -pedantic
