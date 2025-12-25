@@ -428,7 +428,7 @@ int dlt_env_ids_match(char const *const a, char const *const b)
  */
 int dlt_env_ids_match_v2(char const *const a, char const *const b, int8_t len)
 {
-    if (strncmp(a, b, len)) {
+    if (strncmp(a, b, (size_t)len)) {
         return 0;
     }
     return 1;
