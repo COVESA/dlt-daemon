@@ -70,6 +70,7 @@
 #define DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE              1
 
 #define DLT_OFFLINE_LOGSTORAGE_SYNC_CACHES              2 /* sync logstorage caches */
+#define DLT_OFFLINE_LOGSTORAGE_SYNC_RING_BUFFER         3 /* sync ring buffer */
 
 #define DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN         15  /* Maximum size for key */
 #define DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN   100 /* Maximum file name length of the log file including path under mount point */
