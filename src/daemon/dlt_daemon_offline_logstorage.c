@@ -398,13 +398,16 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_update_passive_node_context_v2(
     ctrl.type = CONTROL_MESSAGE_ON_DEMAND;
 
     /* TODO: Check apid is null terminated, to use strlen(apid) */
-    req.apidlen = strlen(apid);
-    dlt_set_id_v2(req.apid, apid, req.apidlen);
+    req.apidlen = (uint8_t)strlen(apid);
+    char apid_buf[DLT_V2_ID_SIZE];
+    dlt_set_id_v2(apid_buf, apid, req.apidlen);
+    req.apid = apid_buf;
     /* TODO: Check ctid is null terminated, to use strlen(apid) */
-    req.ctidlen = strlen(ctid);
-    dlt_set_id_v2(req.ctid, ctid, req.ctidlen);
-
-    req.log_level = loglevel;
+    req.ctidlen = (uint8_t)strlen(ctid);
+    char ctid_buf[DLT_V2_ID_SIZE];
+    dlt_set_id_v2(ctid_buf, ctid, req.ctidlen);
+    req.ctid = ctid_buf;
+    req.log_level = (uint8_t)loglevel;
     /* Check if need to pass ecuidlen also */
     if (dlt_gateway_send_control_message_v2(con, &ctrl, (void *)&req, verbose) != 0) {
         dlt_vlog(LOG_ERR,
@@ -511,7 +514,7 @@ DLT_STATIC DltReturnValue dlt_daemon_logstorage_send_log_level_v2(DltDaemon *dae
     if (strncmp(ecuid, daemon->ecuid2, daemon->ecuid2len) == 0) {
         old_log_level = context->storage_log_level;
 
-        context->storage_log_level = DLT_OFFLINE_LOGSTORAGE_MAX(loglevel,
+        context->storage_log_level = (int8_t)DLT_OFFLINE_LOGSTORAGE_MAX(loglevel,
                                                                 context->storage_log_level);
 
         if (context->storage_log_level > old_log_level) {
@@ -752,7 +755,7 @@ DltReturnValue dlt_logstorage_update_all_contexts_v2(DltDaemon *daemon,
     DltDaemonRegisteredUsers *user_list = NULL;
     int i = 0;
     uint8_t tmp_id_size = 0;
-    char *tmp_id = NULL;
+    char tmp_id[DLT_V2_ID_SIZE];
 
     if ((daemon == NULL) || (daemon_local == NULL) || (id == NULL) ||
         (ecuid == NULL) || (cmp_flag <= DLT_DAEMON_LOGSTORAGE_CMP_MIN) ||
@@ -762,7 +765,7 @@ DltReturnValue dlt_logstorage_update_all_contexts_v2(DltDaemon *daemon,
     }
 
     /* Check ecuid length is captured using strlen in runtime */
-    user_list = dlt_daemon_find_users_list_v2(daemon, strlen(ecuid), ecuid, verbose);
+    user_list = dlt_daemon_find_users_list_v2(daemon, (uint8_t)strlen(ecuid), ecuid, verbose);
 
     if (user_list == NULL)
         return DLT_RETURN_ERROR;
@@ -770,18 +773,18 @@ DltReturnValue dlt_logstorage_update_all_contexts_v2(DltDaemon *daemon,
     for (i = 0; i < user_list->num_contexts; i++) {
         if (cmp_flag == DLT_DAEMON_LOGSTORAGE_CMP_APID) {
             /* Check tmp_id_size = apid2len + 1 is required for null termination */
-            tmp_id_size = user_list->contexts[i].apid2len + 1;
-            dlt_set_id_v2(&tmp_id, user_list->contexts[i].apid2, user_list->contexts[i].apid2len);
+            tmp_id_size = (uint8_t)(user_list->contexts[i].apid2len + 1);
+            dlt_set_id_v2(tmp_id, user_list->contexts[i].apid2, user_list->contexts[i].apid2len);
         }
         else if (cmp_flag == DLT_DAEMON_LOGSTORAGE_CMP_CTID) {
             /* Check tmp_id_size = ctid2len + 1 is required for null termination */
-            tmp_id_size = user_list->contexts[i].ctid2len + 1;
-            dlt_set_id_v2(&tmp_id, user_list->contexts[i].ctid2, user_list->contexts[i].ctid2len);
+            tmp_id_size = (uint8_t)(user_list->contexts[i].ctid2len + 1);
+            dlt_set_id_v2(tmp_id, user_list->contexts[i].ctid2, user_list->contexts[i].ctid2len);
         }
         else {
             /* this is for the case when both apid and ctid are wildcard */
             dlt_set_id(tmp_id, ".*");
-            tmp_id_size = strlen(tmp_id); // 3 (2 chars + null termination)
+            tmp_id_size = (uint8_t)strlen(tmp_id); // 3 (2 chars + null termination)
         }
 
         if (strncmp(id, tmp_id, tmp_id_size) == 0) {
@@ -994,12 +997,9 @@ DltReturnValue dlt_logstorage_update_context_loglevel_v2(DltDaemon *daemon,
                                                       int verbose)
 {
     int cmp_flag = 0;
-    uint8_t apidlen = 0;
-    char *apid = NULL;
-    uint8_t ctidlen = 0;
-    char *ctid = NULL;
-    uint8_t ecuidlen = 0;
-    char *ecuid = NULL;
+    char apid[DLT_ID_SIZE + 1] = { '\0' };
+    char ctid[DLT_ID_SIZE + 1] = { '\0' };
+    char ecuid[DLT_ID_SIZE + 1] = { '\0' };
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1013,8 +1013,8 @@ DltReturnValue dlt_logstorage_update_context_loglevel_v2(DltDaemon *daemon,
         return DLT_RETURN_ERROR;
     }
 
-    if (ecuid == NULL) /* ECU id was not specified in filter configuration */
-        dlt_set_id_v2(&ecuid, daemon->ecuid2, daemon->ecuid2len);
+    if (ecuid[0] == '\0') /* ECU id was not specified in filter configuration */
+        dlt_set_id_v2(ecuid, daemon->ecuid2, daemon->ecuid2len);
 
     /* check wildcard for both apid and ctid first of all */
     if (strcmp(ctid, ".*") == 0 && strcmp(apid, ".*") == 0) {

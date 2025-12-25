@@ -216,6 +216,11 @@
  */
 #   define DLT_ID_SIZE 4
 
+/**
+ * The maximum size of a DLT v2 ID (variable length, max 255)
+ */
+#   define DLT_V2_ID_SIZE 255
+
 #   define DLT_SIZE_WEID DLT_ID_SIZE
 #   define DLT_SIZE_WSID (sizeof(uint32_t))
 #   define DLT_SIZE_WTMS (sizeof(uint32_t))
@@ -1236,7 +1241,7 @@ void dlt_set_id(char *id, const char *text);
  * @param text string to be copied into char array.
  * @param len length of string to be copied into ID
  */
-void dlt_set_id_v2(char **id, const char *text, int8_t len);
+void dlt_set_id_v2(char *id, const char *text, uint8_t len);
 
 /**
  * Helper function to remove not nice to print characters, e.g. NULL or carage return.

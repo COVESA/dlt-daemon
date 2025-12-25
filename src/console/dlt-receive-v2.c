@@ -493,11 +493,11 @@ int main(int argc, char *argv[])
     }
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
-        dltclient.port = dltdata.port;
+        dltclient.port = (uint16_t)dltdata.port;
 
         unsigned int servIPLength = 1; // Counting the terminating 0 byte
         for (index = optind; index < argc; index++) {
-            servIPLength += strlen(argv[index]);
+            servIPLength += (unsigned int)strlen(argv[index]);
             if (index > optind) {
                 servIPLength++; // For the comma delimiter
             }
@@ -604,14 +604,13 @@ int main(int argc, char *argv[])
     }
 
     if (dltdata.evalue) {
-        dltdata.ecuidlen = strlen(dltdata.evalue);
+        dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
         dltdata.ecuid = NULL;
-        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
     }else {
-        dltdata.ecuidlen = strlen(DLT_RECEIVE_ECU_ID);
+        dltdata.ecuidlen = (uint8_t)strlen(DLT_RECEIVE_ECU_ID);
         dltdata.ecuid = NULL;
-        dlt_set_id_v2(&(dltdata.ecuid), DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);}
-
+        dlt_set_id_v2(dltdata.ecuid, DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);}
     while (true) {
         /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
@@ -621,7 +620,7 @@ int main(int argc, char *argv[])
 
             if (dltdata.rflag == 1 && sig_close_recv == false) {
                 dlt_vlog(LOG_INFO, "Reconnect to server with %d milli seconds specified\n", dltdata.rvalue);
-                sleep(dltdata.rvalue / 1000);
+                sleep((unsigned int)(dltdata.rvalue / 1000));
             } else {
                 /* Dlt Client Cleanup */
                 dlt_client_cleanup(&dltclient, dltdata.vflag);
@@ -663,20 +662,20 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     else
         dlt_set_storageheader_v2(&(message->storageheaderv2), dltdata->ecuidlen, dltdata->ecuid);
 
-    message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
+    message->storageheadersizev2 = (uint8_t)(STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen);
 
     /* Add Storage Header to Header Buffer and update header size*/
     uint8_t temp_buffer[message->headersizev2];
-    memcpy(temp_buffer, message->headerbufferv2, message->headersizev2);
+    memcpy(temp_buffer, message->headerbufferv2, (size_t)message->headersizev2);
     free(message->headerbufferv2);
-    message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+    message->headersizev2 = (uint8_t)(message->headersizev2 + (int32_t)message->storageheadersizev2);
 
-    message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
+    message->headerbufferv2 = (uint8_t *)malloc((size_t)message->headersizev2);
 
     if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
         return -1;
 
-    memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2 - message->storageheadersizev2);
+    memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
 
     if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
         (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
@@ -712,7 +711,7 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
             iov[1].iov_len = (uint32_t)message->datasize;
 
             if (dltdata->climit > -1) {
-                uint32_t bytes_to_write = message->headersizev2 + message->datasize;
+                uint32_t bytes_to_write = (uint32_t)message->headersizev2 + (uint32_t)message->datasize;
 
                 if ((bytes_to_write + dltdata->totalbytes > dltdata->climit)) {
                     dlt_receive_close_output_file(dltdata);

@@ -1817,14 +1817,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     /* Set ECU id of daemon */
     if (daemon_local->flags.evalue[0]){
         dlt_set_id(daemon->ecuid, daemon_local->flags.evalue);
-        daemon->ecuid2len = strlen(daemon_local->flags.evalue);
-        dlt_set_id_v2(&(daemon->ecuid2),daemon_local->flags.evalue, daemon->ecuid2len);
+        daemon->ecuid2len = (uint8_t)strlen(daemon_local->flags.evalue);
+        dlt_set_id_v2(daemon->ecuid2, daemon_local->flags.evalue, daemon->ecuid2len);
 
     }
     else{
         dlt_set_id(daemon->ecuid, DLT_DAEMON_ECU_ID);
-        daemon->ecuid2len = strlen(DLT_DAEMON_ECU_ID);
-        dlt_set_id_v2(&(daemon->ecuid2),DLT_DAEMON_ECU_ID, daemon->ecuid2len);
+        daemon->ecuid2len = (uint8_t)strlen(DLT_DAEMON_ECU_ID);
+        dlt_set_id_v2(daemon->ecuid2, DLT_DAEMON_ECU_ID, daemon->ecuid2len);
     }
 
     /* Set flag for optional sending of serial header */
@@ -2634,14 +2634,14 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
         msg.baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(msgcontent);
         /* Ecu Id, App Id, Ctx Id and Session Id*/
-        msg.extendedheadersizev2 = DLT_DAEMON_ECU_ID_LEN + 1 + strlen(app_id) + 1 + strlen(ctx_id) + 1 + sizeof(uint32_t);
+        msg.extendedheadersizev2 = (uint32_t)(DLT_DAEMON_ECU_ID_LEN + 1 + strlen(app_id) + 1 + strlen(ctx_id) + 1 + sizeof(uint32_t));
 
-        msg.headersizev2 = (uint32_t) (msg.storageheadersizev2 +
+        msg.headersizev2 = (int32_t) (msg.storageheadersizev2 +
                                        msg.baseheadersizev2 +
                                        msg.baseheaderextrasizev2 +
                                        msg.extendedheadersizev2);
 
-        msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
+        msg.headerbufferv2 = (uint8_t*)malloc((size_t)msg.headersizev2);
 
         if (dlt_set_storageheader_v2(&(msg.storageheaderv2), DLT_DAEMON_ECU_ID_LEN, DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
@@ -2660,8 +2660,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.baseheaderv2->mcnt = uiMsgCount++;
 
         /* Fill base header conditional parameters */
-        msg.headerextrav2.msin = DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-                                 ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN);
+        msg.headerextrav2.msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
+                                 ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
         msg.headerextrav2.noar = 1; /* number of arguments */
         memset(msg.headerextrav2.seconds, 0, 5);
         msg.headerextrav2.nanoseconds = 0;
@@ -2673,38 +2673,38 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             tcnt_seconds = tcnt / 100;
             tcnt_ns = (tcnt - (tcnt*100)) * 10000;
             msg.headerextrav2.seconds[0]=(tcnt_seconds >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(tcnt_seconds >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(tcnt_seconds >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(tcnt_seconds >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= tcnt_seconds & 0xFF;
+            msg.headerextrav2.seconds[1]=(uint8_t)((tcnt_seconds >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((tcnt_seconds >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((tcnt_seconds >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]= (uint8_t)(tcnt_seconds & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = tcnt_ns;
             }
         }else{
-            msg.headerextrav2.seconds[0]=(t >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(t >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(t >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(t >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= t & 0xFF;
+            msg.headerextrav2.seconds[0]=(uint8_t)((t >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1]=(uint8_t)((t >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((t >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((t >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]= (uint8_t)(t & 0xFF);
             msg.headerextrav2.nanoseconds |= 0x8000;
         }
 #else
         struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]= (uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
         }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]= (uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
@@ -2721,15 +2721,15 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         /* Fill out extended header */
         if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
             msg.extendedheaderv2.ecidlen = DLT_DAEMON_ECU_ID_LEN;
-            dlt_set_id_v2(&(msg.extendedheaderv2.ecid), DLT_DAEMON_ECU_ID, DLT_DAEMON_ECU_ID_LEN);
+            dlt_set_id_v2(msg.extendedheaderv2.ecid, DLT_DAEMON_ECU_ID, DLT_DAEMON_ECU_ID_LEN);
         }
 
         if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
-            msg.extendedheaderv2.apidlen = strlen(app_id);
-            dlt_set_id_v2(&(msg.extendedheaderv2.apid), app_id, strlen(app_id));
+            msg.extendedheaderv2.apidlen = (uint8_t)strlen(app_id);
+            dlt_set_id_v2(msg.extendedheaderv2.apid, app_id, (uint8_t)strlen(app_id));
 
-            msg.extendedheaderv2.ctidlen = strlen(ctx_id);
-            dlt_set_id_v2(&(msg.extendedheaderv2.ctid), ctx_id, strlen(ctx_id));
+            msg.extendedheaderv2.ctidlen = (uint8_t)strlen(ctx_id);
+            dlt_set_id_v2(msg.extendedheaderv2.ctid, ctx_id, (uint8_t)strlen(ctx_id));
         }
 
         if (DLT_IS_HTYP2_WSID(msg.baseheaderv2->htyp2)) {
@@ -2744,7 +2744,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         /* Set payload data... */
         uiType = DLT_TYPE_INFO_STRG;
         uiSize = (uint16_t) (strlen(str) + 1);
-        msg.datasize = (uint32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
+        msg.datasize = (int32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
 
         msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
         msg.databuffersize = msg.datasize;
@@ -2756,19 +2756,19 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         msg.datasize = 0;
         memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
-        msg.datasize += (uint32_t) sizeof(uint32_t);
+        msg.datasize += (int32_t) sizeof(uint32_t);
         memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
-        msg.datasize += (uint32_t) sizeof(uint16_t);
+        msg.datasize += (int32_t) sizeof(uint16_t);
         memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
         msg.datasize += uiSize;
 
         /* Calc length */
-        msg.baseheaderv2->len = (uint16_t)(msg.headersizev2 - msg.storageheadersizev2 + msg.datasize);
+        msg.baseheaderv2->len = (uint16_t)(msg.headersizev2 - (int32_t)msg.storageheadersizev2 + msg.datasize);
 
         dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
-                            msg.headerbufferv2, msg.storageheadersizev2,
+                            msg.headerbufferv2, (int)msg.storageheadersizev2,
                             msg.headerbufferv2 + msg.storageheadersizev2,
-                            (int) (msg.headersizev2 - msg.storageheadersizev2),
+                            (int) (msg.headersizev2 - (int32_t)msg.storageheadersizev2),
                             msg.databuffer, (int) msg.datasize, verbose);
 
         dlt_message_free_v2(&msg, 0);
@@ -3240,7 +3240,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                                      &(daemon_local->msgv2),
                                                      daemon_local->flags.vflag);
             bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
-                daemon_local->msgv2.datasize - daemon_local->msgv2.storageheadersizev2);
+                daemon_local->msgv2.datasize - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3288,7 +3288,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
             }
         } /* while */
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
@@ -3339,8 +3339,6 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
                             (unsigned int) receiver->bytesRcvd,
                             daemon_local->flags.mflag,
                             daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
-        uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
@@ -3517,7 +3515,7 @@ int dlt_daemon_process_control_messages(
         return -1;
     }
     uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
-    dlt_version = (firstByteWithVersion >> 5) & (0x07);
+    int8_t dlt_version = (firstByteWithVersion >> 5) & (0x07);
 
     if(dlt_version == DLT_VERSION2) {
         /* Process all received messages */
@@ -3535,8 +3533,9 @@ int dlt_daemon_process_control_messages(
                                                      daemon_local,
                                                      &(daemon_local->msgv2),
                                                      daemon_local->flags.vflag);
-            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
-                daemon_local->msgv2.datasize - daemon_local->msgv2.storageheadersizev2);
+            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2
+                                         + daemon_local->msgv2.datasize
+                                         - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int) sizeof(dltSerialHeader);
@@ -3906,13 +3905,11 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltReceiver *rec,
                                                          int verbose)
 {
-    uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
     uint32_t to_remove = 0;
     DltDaemonApplication *application = NULL;
     DltDaemonApplication *old_application = NULL;
     pid_t old_pid = 0;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
-    DltUserControlMsgRegisterApplication userapp;
     char *origin;
     int fd = -1;
 
@@ -3927,9 +3924,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     uint8_t dlt_version = (uint8_t)rec->buf[3];
 
     if(dlt_version == DLT_VERSION2) {
+        uint32_t len = sizeof(DltUserControlMsgRegisterApplicationV2);
         DltUserControlMsgRegisterApplicationV2 usercontext;
         memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterApplicationV2));
-        uint32_t len = sizeof(DltUserControlMsgRegisterApplicationV2);
         usercontext.apid = NULL;
         int usercontextSize;
         uint8_t *buffer;
@@ -3937,9 +3934,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         int offset = 0;
 
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-        usercontextSize = sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t);
+        usercontextSize = (int) (sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t));
 
-        buffer = (uint8_t*)malloc(usercontextSize);
+        buffer = (uint8_t*)malloc((size_t)usercontextSize);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
@@ -3954,9 +3951,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         /* We shall not remove data before checking that everything is there. */
         temp = dlt_receiver_check_and_get(rec,
-                                            buffer,
-                                            usercontextSize,
-                                            DLT_RCV_SKIP_HEADER);
+                                          buffer,
+                                          (unsigned int)usercontextSize,
+                                          DLT_RCV_SKIP_HEADER);
 
         if (temp < 0) {
             /* Not enough bytes received */
@@ -3977,7 +3974,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
         offset += usercontext.apidlen;
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
-        offset += sizeof(pid_t);
+        offset += (int)sizeof(pid_t);
         memcpy(&(usercontext.description_length), (buffer + offset), 4);
         offset = 0;
 
@@ -4067,6 +4064,8 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 #endif
         free(buffer);
     } else if(dlt_version == DLT_VERSION1) {
+        DltUserControlMsgRegisterApplication userapp;
+        uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
         memset(&userapp, 0, sizeof(DltUserControlMsgRegisterApplication));
         origin = rec->buf;
 
@@ -4075,9 +4074,9 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         /* We shall not remove data before checking that everything is there. */
         temp = dlt_receiver_check_and_get(rec,
-                                            &userapp,
-                                            len,
-                                            DLT_RCV_SKIP_HEADER);
+                                          &userapp,
+                                          len,
+                                          DLT_RCV_SKIP_HEADER);
 
         if (temp < 0)
             /* Not enough bytes received */
@@ -4086,7 +4085,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             to_remove = (uint32_t) temp;
         }
 
-        len = userapp.description_length;
+        len = 0;
 
         if (len > DLT_DAEMON_DESCSIZE) {
             len = DLT_DAEMON_DESCSIZE;
@@ -4176,15 +4175,12 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                                      int verbose)
 {
     uint32_t to_remove = 0;
-    uint32_t len = sizeof(DltUserControlMsgRegisterContext);
+    uint32_t len = (uint32_t)(sizeof(DltUserControlMsgRegisterContext));
     DltUserControlMsgRegisterContext userctxt;
     char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context = NULL;
-    DltServiceGetLogInfoRequest *req = NULL;
     char *origin;
-
-    DltMessage msg;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -4198,14 +4194,13 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
     if (dlt_version == DLT_VERSION2) {
         DltUserControlMsgRegisterContextV2 usercontext;
+        DltServiceGetLogInfoRequestV2 *req = NULL;
         memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterContextV2));
         usercontext.apid = NULL;
         usercontext.ctid = NULL;
-        DltMessageV2 msg;
         int usercontextSize;
         uint8_t *buffer;
-        DltServiceGetLogInfoRequestV2 req;
-
+        DltMessageV2 msg;
         int offset = 0;
 
         PRINT_FUNCTION_VERBOSE(verbose);
@@ -4213,10 +4208,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
 
-        usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
-        uint32_t len = usercontextSize;
-        buffer = (uint8_t*)malloc(usercontextSize);
+        usercontextSize = (int)(sizeof(uint8_t) + usercontext.apidlen +
+                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t));
+        len = (uint32_t)usercontextSize;
+        buffer = (uint8_t*)malloc((size_t)usercontextSize);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
@@ -4230,9 +4225,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         int temp = 0;
 
         temp = dlt_receiver_check_and_get(rec,
-                                            buffer,
-                                            len,
-                                            DLT_RCV_SKIP_HEADER);
+                                          buffer,
+                                          (unsigned int)len,
+                                          DLT_RCV_SKIP_HEADER);
 
         if (temp < 0)
             /* Not enough bytes received */
@@ -4244,7 +4239,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
 
-        usercontext.apid = (char *)malloc(usercontext.apidlen + 1);
+        usercontext.apid = (char *)malloc((size_t)usercontext.apidlen + 1);
         if (usercontext.apid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
             return -1;
@@ -4254,7 +4249,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        usercontext.ctid = (char *)malloc(usercontext.ctidlen + 1);
+        usercontext.ctid = (char *)malloc((size_t)usercontext.ctidlen + 1);
         if (usercontext.ctid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
             return -1;
@@ -4263,13 +4258,13 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
         offset += usercontext.ctidlen;
         memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
-        offset += sizeof(int32_t);
+        offset += (int)sizeof(int32_t);
         memcpy(&(usercontext.log_level), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
+        offset += (int)sizeof(int8_t);
         memcpy(&(usercontext.trace_status), (buffer + offset), sizeof(int8_t));
-        offset += sizeof(int8_t);
+        offset += (int)sizeof(int8_t);
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
-        offset += sizeof(pid_t);
+        offset += (int)sizeof(pid_t);
         memcpy(&(usercontext.description_length), (buffer + offset), 4);
 
         len = usercontext.description_length;
@@ -4400,10 +4395,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 return -1;
             }
 
-            msg.datasize = sizeof(uint32_t) + sizeof(uint8_t) +
+            msg.datasize = (int)(sizeof(uint32_t) + sizeof(uint8_t) +
                         sizeof(uint8_t) + usercontext.apidlen +
                         sizeof(uint8_t) + usercontext.ctidlen +
-                        DLT_ID_SIZE;
+                        DLT_ID_SIZE);
 
             if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
                 free(msg.databuffer);
@@ -4411,7 +4406,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
 
             if (msg.databuffer == 0) {
-                msg.databuffer = (uint8_t *)malloc(msg.datasize);
+                msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
                 msg.databuffersize = msg.datasize;
             }
 
@@ -4420,30 +4415,34 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 return -1;
             }
 
-            req.service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-            req.options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
-            req.apidlen = usercontext.apidlen;
-            req.ctidlen = usercontext.ctidlen;
-            req.apid = NULL;
-            req.ctid = NULL;
-            dlt_set_id_v2(&(req.apid), usercontext.apid, usercontext.apidlen);
-            dlt_set_id_v2(&(req.ctid), usercontext.ctid, usercontext.ctidlen);
-            dlt_set_id(req.com, "remo");
+            req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+            req->options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
+            req->apidlen = usercontext.apidlen;
+            req->ctidlen = usercontext.ctidlen;
+            req->apid = NULL;
+            req->ctid = NULL;
+            char apid_buf[DLT_V2_ID_SIZE];
+            dlt_set_id_v2(apid_buf, usercontext.apid, usercontext.apidlen);
+            req->apid = apid_buf;
+            char ctid_buf[DLT_V2_ID_SIZE];
+            dlt_set_id_v2(ctid_buf, usercontext.ctid, usercontext.ctidlen);
+            req->ctid = ctid_buf;
+            dlt_set_id(req->com, "remo");
 
             offset = 0;
-            memcpy(msg.databuffer + offset, &(req.service_id), sizeof(uint32_t));
-            offset += sizeof(uint32_t);
-            memcpy(msg.databuffer + offset, &(req.options), sizeof(uint8_t));
-            offset += sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, &(req.apidlen), sizeof(uint8_t));
-            offset += sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, req.apid, usercontext.apidlen);
+            memcpy(msg.databuffer + offset, &(req->service_id), sizeof(uint32_t));
+            offset += (int)sizeof(uint32_t);
+            memcpy(msg.databuffer + offset, &(req->options), sizeof(uint8_t));
+            offset += (int)sizeof(uint8_t);
+            memcpy(msg.databuffer + offset, &(req->apidlen), sizeof(uint8_t));
+            offset += (int)sizeof(uint8_t);
+            memcpy(msg.databuffer + offset, req->apid, usercontext.apidlen);
             offset += usercontext.apidlen;
-            memcpy(msg.databuffer + offset, &(req.ctidlen), sizeof(uint8_t));
-            offset += sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, req.ctid, usercontext.ctidlen);
+            memcpy(msg.databuffer + offset, &(req->ctidlen), sizeof(uint8_t));
+            offset += (int)sizeof(uint8_t);
+            memcpy(msg.databuffer + offset, req->ctid, usercontext.ctidlen);
             offset += usercontext.ctidlen;
-            memcpy(msg.databuffer + offset, req.com, DLT_ID_SIZE);
+            memcpy(msg.databuffer + offset, req->com, DLT_ID_SIZE);
             offset = 0;
 
             dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
@@ -4463,6 +4462,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
         }
     } else if (dlt_version == DLT_VERSION1) {
+        DltMessage msg;
+        DltServiceGetLogInfoRequest *req = NULL;
         memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
         origin = rec->buf;
 
@@ -4658,8 +4659,6 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                                                            DltReceiver *rec,
                                                            int verbose)
 {
-    uint32_t len = sizeof(DltUserControlMsgUnregisterApplication);
-    DltUserControlMsgUnregisterApplication userapp;
     DltDaemonApplication *application = NULL;
     DltDaemonContext *context;
     int i, offset_base;
@@ -4675,14 +4674,15 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     }
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
     if (dlt_version == DLT_VERSION2) {
+        uint32_t len = sizeof(DltUserControlMsgUnregisterApplicationV2);
         DltUserControlMsgUnregisterApplicationV2 userapp;
         int userappSize;
         uint8_t *buffer;
         userapp.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         userapp.apid = NULL;
-        userappSize = sizeof(uint8_t) + userapp.apidlen + sizeof(pid_t);
-        uint32_t len = userappSize;
-        buffer = (uint8_t*)malloc(userappSize);
+        userappSize = (int)sizeof(uint8_t) + userapp.apidlen + (int)sizeof(pid_t);
+        len = (uint32_t)userappSize;
+        buffer = (uint8_t*)malloc((size_t)userappSize);
 
         int offset = 0;
 
@@ -4695,7 +4695,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         memcpy(&(userapp.apidlen), buffer, 1);
         offset = 1;
-        dlt_set_id_v2(&(userapp.apid), buffer + offset, userapp.apidlen);
+        char apid_buf[DLT_V2_ID_SIZE];
+        dlt_set_id_v2(apid_buf, (const char *)(buffer + offset), userapp.apidlen);
+        userapp.apid = apid_buf;
         offset += userapp.apidlen;
         memcpy(&(userapp.pid), (buffer + offset), sizeof(pid_t));
         user_list = dlt_daemon_find_users_list_v2(daemon, daemon->ecuid2len, daemon->ecuid2, verbose);
@@ -4763,10 +4765,12 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
             }
         }
     } else if (dlt_version == DLT_VERSION1) {
+        uint32_t len = sizeof(DltUserControlMsgUnregisterApplication);
+        DltUserControlMsgUnregisterApplication userapp;
         if (dlt_receiver_check_and_get(rec,
-                                    &userapp,
-                                    len,
-                                    DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+                                       &userapp,
+                                       len,
+                                       DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
             return -1;
 
@@ -4848,7 +4852,6 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                        DltReceiver *rec,
                                                        int verbose)
 {
-    uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
     DltUserControlMsgUnregisterContext userctxt;
     DltDaemonContext *context;
 
@@ -4865,6 +4868,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
     uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
 
     if (dlt_version == DLT_VERSION2) {
+        uint32_t len = sizeof(DltUserControlMsgUnregisterContextV2);
         DltUserControlMsgUnregisterContextV2 usercontext;
         int usercontextSize;
         uint8_t *buffer;
@@ -4872,10 +4876,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
         usercontext.ctid = NULL;
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
-        usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t);
-        uint32_t len = usercontextSize;
-        buffer = (uint8_t*)malloc(usercontextSize);
+        usercontextSize = (int)(sizeof(uint8_t) + usercontext.apidlen +
+                        sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t));
+        len = (uint32_t)usercontextSize;
+        buffer = (uint8_t*)malloc((size_t)usercontextSize);
 
         int offset = 0;
 
@@ -4889,14 +4893,14 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
-        dlt_set_id_v2(&(usercontext.apid), buffer + offset, usercontext.apidlen);
+        dlt_set_id_v2(usercontext.apid, (const char *)(buffer + offset), usercontext.apidlen);
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        dlt_set_id_v2(&(usercontext.ctid), buffer + offset, usercontext.ctidlen);
+        dlt_set_id_v2(usercontext.ctid, (const char *)(buffer + offset), usercontext.ctidlen);
         offset += usercontext.ctidlen;
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
-        offset += sizeof(pid_t);
+        offset += (int)sizeof(pid_t);
 
         context = dlt_daemon_context_find_v2(daemon,
                                         usercontext.apidlen,
@@ -4917,8 +4921,8 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
             if (dlt_daemon_context_del_v2(daemon, context, daemon->ecuid2len, daemon->ecuid2, verbose) == -1) {
                 dlt_vlog(LOG_WARNING,
                         "Can't delete CtID '%s' for ApID '%s' in %s\n",
-                        usercontext.ctid,
-                        usercontext.apid,
+                        usercontext.ctid ? usercontext.ctid : "<NULL>",
+                        usercontext.apid ? usercontext.apid : "<NULL>",
                         __func__);
                 return -1;
             }
@@ -4926,10 +4930,10 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                 char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
 
                 snprintf(local_str,
-                        DLT_DAEMON_TEXTBUFSIZE,
-                        "Unregistered CtID '%s' for ApID '%s'",
-                        usercontext.ctid,
-                        usercontext.apid);
+                         DLT_DAEMON_TEXTBUFSIZE,
+                         "Unregistered CtID '%s' for ApID '%s'",
+                         usercontext.ctid ? usercontext.ctid : "<NULL>",
+                         usercontext.apid ? usercontext.apid : "<NULL>");
 
                 if (verbose){
                     dlt_daemon_log_internal(daemon, daemon_local, local_str,
@@ -4954,10 +4958,11 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                         verbose);
     }
     else if (dlt_version == DLT_VERSION1) {
+        uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
         if (dlt_receiver_check_and_get(rec,
-                                    &userctxt,
-                                    len,
-                                    DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+                                       &userctxt,
+                                       len,
+                                       DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
             return -1;
 
@@ -5025,7 +5030,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     bool keep_message = true;
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    uint8_t dlt_version = rec->buf[3];
+    uint8_t dlt_version = (uint8_t)rec->buf[3];
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);
@@ -5142,8 +5147,8 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         /* keep not read data in buffer */
         size = (int) (daemon_local->msgv2.headersizev2 +
             daemon_local->msgv2.datasize +
-            sizeof(DltUserHeader) -
-            daemon_local->msgv2.storageheadersizev2);
+            (int32_t)sizeof(DltUserHeader) -
+            (int32_t) daemon_local->msgv2.storageheadersizev2);
 
         if (daemon_local->msgv2.found_serialheader)
             size += (int) sizeof(dltSerialHeader);
@@ -5744,7 +5749,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         } else if (daemon->daemon_version == DLT_VERSION1) {
             dlt_daemon_user_send_all_log_state(daemon, verbose);
         } else {
-            dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+            dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
             return -1;
         }
 
@@ -5770,7 +5775,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
                                                    "",
                                                    verbose);
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
