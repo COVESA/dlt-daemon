@@ -254,6 +254,7 @@ add_compile_options(
     -Wno-variadic-macros
     -Wno-strict-aliasing
     -Werror
+    -Wfatal-errors
     -Wconversion
     -Wshadow
     -Wundef
