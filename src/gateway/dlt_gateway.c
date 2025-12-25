@@ -1649,8 +1649,8 @@ int dlt_gateway_forward_control_message_v2(DltGateway *gateway,
     }
 
     if (con->send_serial) { /* send serial header */
-        ret = send(con->client.sock,
-                   (void *)dltSerialHeader,
+        ret = (int)send(con->client.sock,
+                   (const void *)dltSerialHeader,
                    sizeof(dltSerialHeader),
                    0);
 
@@ -1662,9 +1662,9 @@ int dlt_gateway_forward_control_message_v2(DltGateway *gateway,
 
     //TBD: Review if storage header needs to be sent for v2
     //TBD: Review msg->storageheadersizev2 or need to calculate size
-    ret = send(con->client.sock,
-               msg->headerbufferv2 + msg->storageheadersizev2,
-               msg->headersizev2 - msg->storageheadersizev2,
+    ret = (int)send(con->client.sock,
+               (const void *)(msg->headerbufferv2 + msg->storageheadersizev2),
+               (size_t)(msg->headersizev2 - (int32_t)msg->storageheadersizev2),
                0);
 
     if (ret == -1) {
@@ -1672,7 +1672,7 @@ int dlt_gateway_forward_control_message_v2(DltGateway *gateway,
         return DLT_RETURN_ERROR;
     }
     else {
-        ret = send(con->client.sock, msg->databuffer, msg->datasize, 0);
+        ret = (int)send(con->client.sock, msg->databuffer, (size_t)msg->datasize, 0);
 
         if (ret == -1) {
             dlt_log(LOG_ERR, "Sending message to passive DLT Daemon failed\n");
@@ -1691,11 +1691,11 @@ int dlt_gateway_forward_control_message_v2(DltGateway *gateway,
     return DLT_RETURN_OK;
 }
 
-int dlt_gateway_process_on_demand_request(DltGateway *gateway,
-                                          DltDaemonLocal *daemon_local,
-                                          char *node_id,
-                                          int conn_status,
-                                          int verbose)
+DltReturnValue dlt_gateway_process_on_demand_request(DltGateway *gateway,
+                                                     DltDaemonLocal *daemon_local,
+                                                     char *node_id,
+                                                     int conn_status,
+                                                     int verbose)
 {
     int i = 0;
     DltGatewayConnection *con = NULL;
@@ -1872,8 +1872,8 @@ int dlt_gateway_send_control_message_v2(DltGatewayConnection *con,
     }
 
     if (con->send_serial) { /* send serial header */
-        ret = send(con->client.sock,
-                   (void *)dltSerialHeader,
+        ret = (int)send(con->client.sock,
+                   (const void *)dltSerialHeader,
                    sizeof(dltSerialHeader),
                    0);
 

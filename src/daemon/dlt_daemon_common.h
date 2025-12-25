@@ -197,7 +197,7 @@ typedef struct
     int num_contexts;                    /**< Total number of all contexts in all applications in this list */
     char ecu[DLT_ID_SIZE];               /**< ECU ID of where contexts are registered */
     uint8_t ecuid2len;                   /**< Length of ECU ID of where contexts are registered */
-    char *ecuid2;
+    char ecuid2[DLT_V2_ID_SIZE];
 } DltDaemonRegisteredUsers;
 
 /**
@@ -213,6 +213,8 @@ typedef struct
     unsigned int overflow_counter;               /**< counts the number of lost messages. */
     int runtime_context_cfg_loaded;              /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
     char ecuid[DLT_ID_SIZE];                     /**< ECU ID of daemon */
+    uint8_t ecuid2len;                           /**< Length of ECU ID of daemon for DLT V2*/
+    char ecuid2[DLT_V2_ID_SIZE];                 /**< ECU ID of daemon for DLT V2*/
     int sendserialheader;                        /**< 1: send serial header; 0 don't send serial header */
     int timingpackets;                           /**< 1: send continous timing packets; 0 don't send continous timing packets */
     DltBuffer client_ringbuffer;                 /**< Ring-buffer for storing received logs while no client connection is available */
@@ -225,6 +227,7 @@ typedef struct
     DltDaemonState state;                        /**< the current logging state of dlt daemon. */
     DltLogStorage *storage_handle;               /**< the storage handler. */
     int maintain_logstorage_loglevel;            /**< Permission to maintain the logstorage loglevel*/
+    int daemon_version;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     int received_message_since_last_watchdog_interval;
 #endif

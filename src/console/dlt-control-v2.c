@@ -226,7 +226,7 @@ void dlt_process_get_log_info_v2(void)
                 dlt_client_cleanup_get_log_info_v2(resp);
                 return;
             }
-            apid = (char *)malloc(app.app_id2len + 1);
+            apid = (char *)malloc((size_t)(app.app_id2len + 1));
             if (apid == NULL) {
                 dlt_vlog(LOG_ERR, "%s: malloc failed for application id\n", __func__);
                 dlt_client_cleanup_get_log_info_v2(resp);
@@ -248,7 +248,7 @@ void dlt_process_get_log_info_v2(void)
                     dlt_client_cleanup_get_log_info_v2(resp);
                     return;
                 }
-                ctid = (char *)malloc(con.context_id2len + 1);
+                ctid = (char *)malloc((size_t)(con.context_id2len + 1));
                 if (ctid == NULL) {
                     dlt_vlog(LOG_ERR, "%s: malloc failed for context id\n", __func__);
                     dlt_client_cleanup_get_log_info_v2(resp);
@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
     }
 
     if (g_dltclient.mode == DLT_CLIENT_MODE_TCP) {
-        g_dltclient.port = dltdata.port;
+        g_dltclient.port = (uint16_t)dltdata.port;
         for (index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1) {
                 pr_error("set server ip didn't succeed\n");
@@ -581,19 +581,19 @@ int main(int argc, char *argv[])
     dlt_filter_init(&(dltdata.filter), dltdata.vflag);
 
     if (dltdata.evalue) {
-        dltdata.ecuidlen = strlen(dltdata.evalue);
-        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
+        dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
         g_dltclient.ecuid2len = dltdata.ecuidlen;
-        dlt_set_id_v2(&(g_dltclient.ecuid2), dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, g_dltclient.ecuid2len);
     }
     else {
         dltdata.evalue = NULL;
 
         if (dlt_parse_config_param("ECUId", &dltdata.evalue) == 0) {
-        dltdata.ecuidlen = strlen(dltdata.evalue);
-        dlt_set_id_v2(&(dltdata.ecuid), dltdata.evalue, dltdata.ecuidlen);
+        dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
+        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
         g_dltclient.ecuid2len = dltdata.ecuidlen;
-        dlt_set_id_v2(&(g_dltclient.ecuid2), dltdata.evalue, dltdata.ecuidlen);
+        dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, dltdata.ecuidlen);
         free (dltdata.evalue);
         }
         else {
@@ -845,20 +845,20 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
                                           message->extendedheaderv2.ecid);
                 else
                     dlt_set_storageheader_v2(&(message->storageheaderv2), 4, "LCTL");
-                message->storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen;
+                message->storageheadersizev2 = (uint32_t)(STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen);
 
                 /* Add Storage Header to Header Buffer and update header size*/
                 uint8_t temp_buffer[message->headersizev2];
-                memcpy(temp_buffer, message->headerbufferv2, message->headersizev2);
+                memcpy(temp_buffer, message->headerbufferv2, (size_t)message->headersizev2);
                 free(message->headerbufferv2);
-                message->headersizev2 = message->headersizev2 + message->storageheadersizev2;
+                message->headersizev2 = message->headersizev2 + (int32_t)message->storageheadersizev2;
 
-                message->headerbufferv2 = (uint8_t *)malloc(message->headersizev2);
+                message->headerbufferv2 = (uint8_t *)malloc((size_t)message->headersizev2);
 
                 if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
                     return -1;
 
-                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, message->headersizev2 - message->storageheadersizev2);
+                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
 
                 /* get response data */
                 ret = dlt_message_header_v2(message, resp_text,

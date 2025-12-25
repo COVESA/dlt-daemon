@@ -101,7 +101,7 @@
 #define DLT_DAEMON_ECU_ID "ECU1"
 
 /* Default ECU ID Length, used in extended header and transmitted to client*/
-#define DLT_DAEMON_ECU_ID_LEN 4
+#define DLT_DAEMON_ECU_ID_LEN         4
 
 /* Default baudrate for serial interface */
 #define DLT_DAEMON_SERIAL_DEFAULT_BAUDRATE 115200
@@ -111,4 +111,3 @@
 /************************/
 
 #endif /* DLT_DAEMON_CFG_H */
-

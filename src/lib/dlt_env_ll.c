@@ -426,9 +426,9 @@ int dlt_env_ids_match(char const *const a, char const *const b)
  * DLTv2
  * @return 1 if matching, 0 if not
  */
-int dlt_env_ids_match_v2(char const *const a, char const *const b, int8_t len)
+int dlt_env_ids_match_v2(char const *const a, char const *const b, uint8_t len)
 {
-    if (strncmp(a, b, len)) {
+    if (strncmp(a, b, (size_t)len)) {
         return 0;
     }
     return 1;
@@ -484,9 +484,9 @@ int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
  */
 int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
                                          char const *const apid,
-                                         int8_t apidlen,
+                                         uint8_t apidlen,
                                          char const *const ctid,
-                                         int8_t ctidlen)
+                                         uint8_t ctidlen)
 {
     if ((!item) || (!apid) || (!ctid)) {
         return -1;
@@ -559,9 +559,9 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
  */
 int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
                                   char const *const apid,
-                                  int8_t apidlen,
+                                  uint8_t apidlen,
                                   char const *const ctid,
-                                  int8_t ctidlen,
+                                  uint8_t ctidlen,
                                   int const ll)
 {
     if ((!ll_set) || (!apid) || (!ctid)) {
@@ -587,5 +587,3 @@ int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
 
     return res;
 }
-
-

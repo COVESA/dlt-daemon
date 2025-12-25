@@ -287,7 +287,7 @@ int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
-        dlt_print_mixed_string(text, 1024, data, length, 0);
+        dlt_print_mixed_string(text, 1024, data, (int)length, 0);
         printf("%s \n", text);
     }
 

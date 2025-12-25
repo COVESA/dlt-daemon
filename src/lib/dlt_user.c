@@ -250,7 +250,7 @@ static DltReturnValue dlt_user_log_write_sized_string_utils_attr(DltContextData 
 
 static DltReturnValue dlt_unregister_app_util(bool force_sending_messages);
 static DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages);
-static int dlt_get_extendedheadersize_v2(DltUser dlt_user, int contextIDSize);
+static int dlt_get_extendedheadersize_v2(DltUser dlt_user_param, int contextIDSize);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /* For trace load control feature */
@@ -846,7 +846,7 @@ DltReturnValue dlt_init_common(void)
 
     dlt_set_id(dlt_user.ecuID, DLT_USER_DEFAULT_ECU_ID);
     dlt_user.ecuID2len = strlen(DLT_USER_DEFAULT_ECU_ID);
-    dlt_set_id_v2(&dlt_user.ecuID2, DLT_USER_DEFAULT_ECU_ID, dlt_user.ecuID2len);
+    dlt_set_id_v2(dlt_user.ecuID2, DLT_USER_DEFAULT_ECU_ID, dlt_user.ecuID2len);
     dlt_set_id(dlt_user.appID, "");
     dlt_user.appID2len = 0;
     dlt_user.appID2 = NULL;
@@ -1456,19 +1456,23 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
 
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
 
-    int8_t apidlen = strlen(apid);
+    size_t apidlen_sz = strlen(apid);
+    if (apidlen_sz > INT8_MAX) {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+    uint8_t apidlen = (uint8_t)apidlen_sz;
 
     if ((apid == NULL) || (apidlen == 0))
         return DLT_RETURN_WRONG_PARAMETER;
 
 
     if (dlt_user.appID2len != 0) {
-        if (!strncmp(apid, dlt_user.appID2, apidlen)) {
+        if (!strncmp(apid, dlt_user.appID2, (size_t)apidlen)) {
             return DLT_RETURN_OK;
         }
     }
@@ -1476,7 +1480,7 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     dlt_mutex_lock();
 
     /* Store locally application id and application description */
-    dlt_set_id_v2(&dlt_user.appID2, apid, apidlen);
+    dlt_set_id_v2(dlt_user.appID2, apid, apidlen);
     dlt_user.appID2len = apidlen;
     if (dlt_user.application_description != NULL)
         free(dlt_user.application_description);
@@ -1548,7 +1552,7 @@ DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid
 
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
@@ -1556,7 +1560,10 @@ DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid
     if (contextid == NULL) {
         return DLT_RETURN_WRONG_PARAMETER;
     }
-    int8_t contextidlen = strlen(contextid);
+    size_t contextidlen_sz = strlen(contextid);
+    if (contextidlen_sz > INT8_MAX) {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     return dlt_register_context_ll_ts_v2(handle,
                                       contextid,
@@ -1849,7 +1856,11 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
     if ((handle == NULL) || (contextid == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    int8_t contextidlen = strlen(contextid);
+    size_t contextidlen_sz = strlen(contextid);
+    if (contextidlen_sz > INT8_MAX) {
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+    uint8_t contextidlen = (uint8_t)contextidlen_sz;
 
     /* forbid dlt usage in child after fork */
     if (g_dlt_is_child)
@@ -1962,8 +1973,8 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
     /* Store locally context id and context description */
     ctx_entry->contextID2 = NULL;
-    dlt_set_id_v2(&ctx_entry->contextID2, contextid, contextidlen);
-    ctx_entry->contextID2len = contextidlen;
+    dlt_set_id_v2(ctx_entry->contextID2, contextid, contextidlen);
+    ctx_entry->contextID2len = (uint8_t)contextidlen;
 
     if (ctx_entry->context_description != 0)
         free(ctx_entry->context_description);
@@ -2022,8 +2033,8 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
     /* Prepare transfer struct */
     handle->contextID2 = NULL;
-    dlt_set_id_v2(&handle->contextID2, contextid, contextidlen);
-    handle->contextID2len = contextidlen;
+    dlt_set_id_v2(handle->contextID2, contextid, contextidlen);
+    handle->contextID2len = (uint8_t)contextidlen;
     handle->log_level_pos = (int32_t) dlt_user.dlt_ll_ts_num_entries;
 
     handle->log_level_ptr = ctx_entry->log_level_ptr;
@@ -2067,8 +2078,8 @@ DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
                                                                                     uint8_t log_level,
                                                                                     uint8_t trace_status))
 {
-    int8_t contextidlen = strlen(contextid);
-    if ((handle == NULL) || (contextid == NULL) || (contextidlen == 0))
+    size_t contextidlen_sz = strlen(contextid);
+    if ((handle == NULL) || (contextid == NULL) || (contextidlen_sz == 0) || (contextidlen_sz > INT8_MAX))
         return DLT_RETURN_WRONG_PARAMETER;
 
     /* forbid dlt usage in child after fork */
@@ -2077,17 +2088,17 @@ DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
 
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
 
     return dlt_register_context_ll_ts_llccb_v2(handle,
-                                            contextid,
-                                            description,
-                                            DLT_USER_LOG_LEVEL_NOT_SET,
-                                            DLT_USER_TRACE_STATUS_NOT_SET,
-                                            dlt_log_level_changed_callback_v2);
+                                               contextid,
+                                               description,
+                                               DLT_USER_LOG_LEVEL_NOT_SET,
+                                               DLT_USER_TRACE_STATUS_NOT_SET,
+                                               dlt_log_level_changed_callback_v2);
 }
 
 /* If force_sending_messages is set to true, do not clean appIDs when there are
@@ -2142,7 +2153,7 @@ DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages)
     }
 
     if (!DLT_USER_INITIALIZED) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __func__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -2177,6 +2188,11 @@ DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages)
 DltReturnValue dlt_unregister_app(void)
 {
     return dlt_unregister_app_util(false);
+}
+
+DltReturnValue dlt_unregister_app_v2(void)
+{
+    return dlt_unregister_app_util_v2(false);
 }
 
 DltReturnValue dlt_unregister_app_flush_buffered_logs(void)
@@ -2422,7 +2438,7 @@ DltReturnValue dlt_set_log_mode_v2(DltUserLogMode mode)
 
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < 0) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
@@ -4627,27 +4643,27 @@ DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id)
 DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int linr)
 {
     if (fina == NULL){
-            dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Wrong parameter", __func__);
             return DLT_RETURN_ERROR;
     }
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
 
     /* Set filename and line number */
     dlt_user.with_filename_and_line_number = 1;
-    dlt_user.filenamelen = strlen(fina);
+    dlt_user.filenamelen = (uint8_t)strlen(fina);
     if (dlt_user.filename == NULL){
         free(dlt_user.filename);
         dlt_user.filename = NULL;
     }
 
-    dlt_user.filename = (char*)malloc(dlt_user.filenamelen + 1);
+    dlt_user.filename = (char*)malloc((size_t)dlt_user.filenamelen + 1);
     if (dlt_user.filename == NULL){
-        dlt_vlog(LOG_ERR, "%s Could not allocate memory for filename", __FUNCTION__);
+        dlt_vlog(LOG_ERR, "%s Could not allocate memory for filename", __func__);
         return DLT_RETURN_ERROR;
     }
     strcpy(dlt_user.filename, fina);
@@ -4660,7 +4676,7 @@ DltReturnValue dlt_with_prlv(uint8_t prlv)
 {
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
@@ -4674,12 +4690,12 @@ DltReturnValue dlt_with_prlv(uint8_t prlv)
 
 DltReturnValue dlt_with_tags(const char *firstTag, ...) {
     if (firstTag == NULL){
-            dlt_vlog(LOG_ERR, "%s Wrong parameter", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Wrong parameter", __func__);
             return DLT_RETURN_ERROR;
     }
     if (!DLT_USER_INITIALIZED) {
         if (dlt_init() < DLT_RETURN_OK) {
-            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __FUNCTION__);
+            dlt_vlog(LOG_ERR, "%s Failed to initialise dlt", __func__);
             return DLT_RETURN_ERROR;
         }
     }
@@ -4704,8 +4720,12 @@ DltReturnValue dlt_with_tags(const char *firstTag, ...) {
     int size = 0;
     va_start(args, firstTag);
     while (currentTag != NULL) {
-        tag[i].taglen = strlen(currentTag);
-        tag[i].tagname = (char *)currentTag;
+        tag[i].taglen = (uint8_t)strlen(currentTag);
+        tag[i].tagname = (char *)malloc((size_t)(tag[i].taglen + 1));
+        if (tag[i].tagname != NULL) {
+            memcpy(tag[i].tagname, currentTag, tag[i].taglen);
+            tag[i].tagname[tag[i].taglen] = '\0';
+        }
         size = size + 1 + tag[i].taglen;
         i++;
         currentTag = va_arg(args, const char *);
@@ -4870,7 +4890,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
 {
     DltMessage msg;
     DltUserHeader userheader;
-    int32_t len;
+    uint32_t len;
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     uint32_t time_stamp;
 #else
@@ -5016,14 +5036,18 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                          + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
     }
 
-    len = (int32_t)msg.headersize - (int32_t)sizeof(DltStorageHeader) + (int32_t)log->size;
-
-    if (len > UINT16_MAX) {
+    int32_t tmplen = (int32_t)msg.headersize - (int32_t)sizeof(DltStorageHeader) + (int32_t)log->size;
+    if (log->size < 0 || tmplen < 0) {
+        dlt_log(LOG_WARNING, "Negative message length!\n");
+        dlt_mutex_unlock();
+        return DLT_RETURN_ERROR;
+    }
+    if ((uint32_t)tmplen > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
     }
-
+    len = (uint32_t)tmplen;
     msg.standardheader->len = DLT_HTOBE_16(len);
 
     /* print to std out, if enabled */
@@ -5266,7 +5290,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 {
     DltMessageV2 msg;
     DltUserHeader userheader;
-    int32_t len;
+    uint32_t len;
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     uint32_t time_stamp;
@@ -5277,7 +5301,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     DltReturnValue ret = DLT_RETURN_OK;
     if (!DLT_USER_INITIALIZED_NOT_FREEING) {
-        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __FUNCTION__, dlt_user_init_state, dlt_user_freeing);
+        dlt_vlog(LOG_WARNING, "%s dlt_user_init_state=%i (expected INIT_DONE), dlt_user_freeing=%i\n", __func__, dlt_user_init_state, dlt_user_freeing);
         return DLT_RETURN_ERROR;
     }
 
@@ -5295,20 +5319,20 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
-    msg.storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + dlt_user.ecuID2len;
+    msg.storageheadersizev2 = STORAGE_HEADER_V2_FIXED_SIZE + (uint32_t)dlt_user.ecuID2len;
     msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
     msg.baseheaderextrasizev2 = (uint32_t)dlt_message_get_extraparameters_size_v2(msgcontent);
     msg.extendedheadersizev2 = (uint32_t)dlt_get_extendedheadersize_v2(dlt_user, log->handle->contextID2len);
 
-    msg.headersizev2 = msg.storageheadersizev2 + msg.baseheadersizev2 +
-                       msg.baseheaderextrasizev2 + msg.extendedheadersizev2;
+    msg.headersizev2 = (int32_t)(msg.storageheadersizev2 + msg.baseheadersizev2 +
+                                 msg.baseheaderextrasizev2 + msg.extendedheadersizev2);
 
     if (msg.headerbufferv2 != NULL) {
         free(msg.headerbufferv2);
         msg.headerbufferv2 = NULL;
     }
 
-    msg.headerbufferv2 = (uint8_t*)malloc(msg.headersizev2);
+    msg.headerbufferv2 = (uint8_t*)malloc((size_t)msg.headersizev2);
 
     if (dlt_set_storageheader_v2(&(msg.storageheaderv2), dlt_user.ecuID2len, dlt_user.ecuID2) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
@@ -5410,20 +5434,20 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     #else
         struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]=(uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
         }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
-            msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
-            msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
-            msg.headerextrav2.seconds[4]= ts.tv_sec & 0xFF;
+            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4]=(uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
@@ -5448,14 +5472,16 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     /* Fill out extended header, if extended header should be provided */
     if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.ecidlen = dlt_user.ecuID2len;
-        dlt_set_id_v2(&(msg.extendedheaderv2.ecid), dlt_user.ecuID2, msg.extendedheaderv2.ecidlen);
+        char *ecid = msg.extendedheaderv2.ecid;
+        dlt_set_id_v2(ecid, dlt_user.ecuID2, msg.extendedheaderv2.ecidlen);
+        memcpy(msg.extendedheaderv2.ecid, ecid, msg.extendedheaderv2.ecidlen);
     }
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.apidlen = dlt_user.appID2len;
-        dlt_set_id_v2(&(msg.extendedheaderv2.apid), dlt_user.appID2, msg.extendedheaderv2.apidlen);
+        dlt_set_id_v2(msg.extendedheaderv2.apid, dlt_user.appID2, msg.extendedheaderv2.apidlen);
         msg.extendedheaderv2.ctidlen = log->handle->contextID2len;
-        dlt_set_id_v2(&(msg.extendedheaderv2.ctid), log->handle->contextID2, msg.extendedheaderv2.ctidlen);
+        dlt_set_id_v2(msg.extendedheaderv2.ctid, log->handle->contextID2, msg.extendedheaderv2.ctidlen);
     }
 
     if (DLT_IS_HTYP2_WSID(msg.baseheaderv2->htyp2)) {
@@ -5467,7 +5493,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     if (DLT_IS_HTYP2_WSFLN(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.finalen = dlt_user.filenamelen;
-        dlt_set_id_v2(&(msg.extendedheaderv2.fina), dlt_user.filename, msg.extendedheaderv2.finalen);
+        dlt_set_id_v2(msg.extendedheaderv2.fina, dlt_user.filename, msg.extendedheaderv2.finalen);
         msg.extendedheaderv2.linr = dlt_user.linenumber;
     }
 
@@ -5490,19 +5516,22 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 
     /* To update: Segmentation part
     if (DLT_IS_HTYP2_WSGM(msg.baseheaderv2->htyp2)) {
-
     }
     */
 
     if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
-    len = (uint32_t) (msg.headersizev2 - msg.storageheadersizev2 + log->size);
-
-    if (len > UINT16_MAX) {
+    int32_t tmplen = (int32_t)msg.headersizev2 - (int32_t)msg.storageheadersizev2 + (int32_t)log->size;
+    if (log->size < 0 || tmplen < 0) {
+        dlt_log(LOG_WARNING, "Negative message length!\n");
+        return DLT_RETURN_ERROR;
+    }
+    if ((uint32_t)tmplen > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
         return DLT_RETURN_ERROR;
     }
+    len = (uint32_t)tmplen;
 
     msg.baseheaderv2->len = (uint16_t) len;
 
@@ -5531,8 +5560,12 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                      st.st_size);
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
-            unsigned int msg_size = st.st_size + (unsigned int) msg.headersizev2 +
-                                    (unsigned int) log->size;
+            unsigned int msg_size = 0;
+            if (st.st_size < 0 || st.st_size > UINT_MAX) {
+                dlt_vlog(LOG_ERR, "%s: File size (%ld bytes) is invalid or too large for unsigned int\n", __func__, st.st_size);
+                return DLT_RETURN_FILESZERR;
+            }
+            msg_size = (unsigned int)st.st_size + (unsigned int) msg.headersizev2 + (unsigned int) log->size;
             if (msg_size > dlt_user.filesize_max) {
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
@@ -5542,9 +5575,15 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             }
             else {
                 /* log to file */
+                int32_t headersizev2 = msg.headersizev2;
+                int32_t logsize = log->size;
+                if (headersizev2 < 0 || logsize < 0) {
+                    dlt_log(LOG_WARNING, "Negative header or log size!\n");
+                    return DLT_RETURN_ERROR;
+                }
                 ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
-                                        msg.headerbufferv2, msg.headersizev2,
-                                        log->buffer, log->size);
+                                        msg.headerbufferv2, (size_t)headersizev2,
+                                        log->buffer, (size_t)logsize);
                 return ret;
             }
         }
@@ -5617,11 +5656,17 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             }
 #endif
 
+            int32_t header_size = (int32_t)msg.headersizev2 - (int32_t)msg.storageheadersizev2;
+            int32_t logsize = log->size;
+            if (header_size < 0 || logsize < 0) {
+                dlt_log(LOG_WARNING, "Negative header or log size!\n");
+                return DLT_RETURN_ERROR;
+            }
             ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                                     &(userheader), sizeof(DltUserHeader),
                                     msg.headerbufferv2 + msg.storageheadersizev2,
-                                    msg.headersizev2 - msg.storageheadersizev2,
-                                    log->buffer, log->size);
+                                    (uint32_t)header_size,
+                                    log->buffer, (size_t)logsize);
 
 #endif
         }
@@ -5633,15 +5678,26 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
 #else
         if ((ret != DLT_RETURN_OK) || (dlt_user.appID2len == 0))
 #endif
-            process_error_ret = dlt_user_log_out_error_handling(&(userheader),
-                                                  sizeof(DltUserHeader),
-                                                  msg.headerbufferv2 + msg.storageheadersizev2,
-                                                  msg.headersizev2 - msg.storageheadersizev2,
-                                                  log->buffer,
-                                                  log->size);
+    {
+        int32_t header_size2 = (int32_t)msg.headersizev2 - (int32_t)msg.storageheadersizev2;
+        int32_t logsize2 = log->size;
+        if (header_size2 < 0 || logsize2 < 0) {
+        dlt_log(LOG_WARNING, "Negative header or log size!\n");
+        return DLT_RETURN_ERROR;
+        }
+        process_error_ret = dlt_user_log_out_error_handling(&(userheader),
+                          sizeof(DltUserHeader),
+                          msg.headerbufferv2 + msg.storageheadersizev2,
+                          (uint32_t)header_size2,
+                          log->buffer,
+                          (size_t)logsize2);
+    }
 
         if (process_error_ret == DLT_RETURN_OK) {
-            dlt_user_free_buffer(&(msg.headerbufferv2));
+            {
+                unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
+                dlt_user_free_buffer(&headerbufferv2_ptr);
+            }
             return DLT_RETURN_OK;
         }
 
@@ -5684,7 +5740,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         }
         case DLT_RETURN_OK:
         {
-            dlt_user_free_buffer(&(msg.headerbufferv2));
+            {
+                unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
+                dlt_user_free_buffer(&headerbufferv2_ptr);
+            }
             return DLT_RETURN_OK;
         }
         default:
@@ -5695,7 +5754,8 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
         }
     }
 
-    dlt_user_free_buffer(&(msg.headerbufferv2));
+    unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
+    dlt_user_free_buffer(&headerbufferv2_ptr);
     return DLT_RETURN_OK;
 }
 
@@ -5759,7 +5819,7 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(&(usercontext.apid), dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len); /* application id */
     usercontext.apidlen = dlt_user.appID2len;
     usercontext.pid = getpid();
 
@@ -5771,18 +5831,23 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
 
-    usercontextSize = sizeof(uint8_t) + dlt_user.appID2len + sizeof(pid_t) + sizeof(uint32_t);
-    buffer = (uint8_t*)malloc(usercontextSize);
+    usercontextSize = (int)sizeof(uint8_t) + usercontext.apidlen + (int)sizeof(pid_t) + (int)sizeof(uint32_t);
+    buffer = (uint8_t*)malloc((size_t)usercontextSize);
+    if (!buffer)
+        return DLT_RETURN_ERROR;
 
     memset(buffer, usercontext.apidlen, 1);
+    if (usercontext.apid == NULL && usercontext.apidlen > 0) {
+        free(buffer);
+        return DLT_RETURN_ERROR;
+    }
     memcpy(buffer + 1, usercontext.apid, usercontext.apidlen);
     memcpy((buffer + 1 + usercontext.apidlen), &(usercontext.pid), sizeof(pid_t));
-    memcpy((buffer + 1 + usercontext.apidlen + sizeof(pid_t)), &(usercontext.description_length), 4);
-
+    memcpy((buffer + 1 + usercontext.apidlen + sizeof(pid_t)), &(usercontext.description_length), sizeof(uint32_t));
 
     ret = dlt_user_log_out3(dlt_user.dlt_log_handle,
                             &(userheader), sizeof(DltUserHeader),
-                            buffer, usercontextSize,
+                            buffer, (size_t)usercontextSize,
                             dlt_user.application_description, usercontext.description_length);
 
     /* store message in ringbuffer, if an error has occured */
@@ -5790,7 +5855,7 @@ DltReturnValue dlt_user_log_send_register_application_v2(void)
         ret = dlt_user_log_out_error_handling(&(userheader),
                                               sizeof(DltUserHeader),
                                               buffer,
-                                              usercontextSize,
+                                              (size_t)usercontextSize,
                                               dlt_user.application_description,
                                               usercontext.description_length);
 
@@ -5852,15 +5917,17 @@ DltReturnValue dlt_user_log_send_unregister_application_v2(void)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(&(usercontext.apid), dlt_user.appID2, dlt_user.appID2len);       /* application id */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len); /* application id */
     usercontext.apidlen = dlt_user.appID2len;
     usercontext.pid = getpid();
 
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
 
-    usercontextSize = sizeof(uint8_t) + dlt_user.appID2len + sizeof(pid_t);
-    buffer = (uint8_t*)malloc(usercontextSize);
+    usercontextSize = (int)sizeof(uint8_t) + usercontext.apidlen + (int)sizeof(pid_t);
+    buffer = (uint8_t*)malloc((size_t)usercontextSize);
+    if (!buffer)
+        return DLT_RETURN_ERROR;
 
     memset(buffer, usercontext.apidlen, 1);
     memcpy(buffer + 1, usercontext.apid, usercontext.apidlen);
@@ -5868,14 +5935,14 @@ DltReturnValue dlt_user_log_send_unregister_application_v2(void)
 
     ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader), sizeof(DltUserHeader),
-                            buffer, usercontextSize);
+                            buffer, (size_t)usercontextSize);
 
     /* store message in ringbuffer, if an error has occured */
     if (ret < DLT_RETURN_OK)
         ret = dlt_user_log_out_error_handling(&(userheader),
                                               sizeof(DltUserHeader),
                                               buffer,
-                                              usercontextSize,
+                                              (size_t)usercontextSize,
                                               NULL,
                                               0);
     free(buffer);
@@ -5965,9 +6032,9 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_REGISTER_CONTEXT) < DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
     /* set usercontext */
-    dlt_set_id_v2(&(usercontext.apid), dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len); /* application id */
     usercontext.apidlen = dlt_user.appID2len;
-    dlt_set_id_v2(&(usercontext.ctid), log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len); /* context id */
     usercontext.ctidlen = log->handle->contextID2len;
     usercontext.log_level_pos = log->handle->log_level_pos;
     usercontext.pid = getpid();
@@ -5983,9 +6050,11 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
 
-    usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                      sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t);
-    buffer = (uint8_t*)malloc(usercontextSize);
+    usercontextSize = (int)sizeof(uint8_t) + usercontext.apidlen +
+                      (int)sizeof(uint8_t) + usercontext.ctidlen + 10 + (int)sizeof(pid_t);
+    buffer = (uint8_t*)malloc((size_t)usercontextSize);
+    if (!buffer)
+        return DLT_RETURN_ERROR;
 
     memset(buffer, usercontext.apidlen, 1);
     offset = 1;
@@ -6002,7 +6071,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
     memcpy(buffer + offset, &(usercontext.trace_status), sizeof(int8_t));
     offset = offset + 1;
     memcpy(buffer + offset, &(usercontext.pid), sizeof(pid_t));
-    offset = offset + sizeof(pid_t);
+    offset = offset + (int)sizeof(pid_t);
     memcpy(buffer + offset, &(usercontext.description_length), sizeof(uint32_t));
     offset = offset + 4;
 
@@ -6012,7 +6081,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
                               &(userheader),
                               sizeof(DltUserHeader),
                               buffer,
-                              usercontextSize,
+                              (size_t)usercontextSize,
                               log->context_description,
                               usercontext.description_length);
 
@@ -6021,7 +6090,7 @@ DltReturnValue dlt_user_log_send_register_context_v2(DltContextData *log)
         ret = dlt_user_log_out_error_handling(&(userheader),
                                               sizeof(DltUserHeader),
                                               buffer,
-                                              usercontextSize,
+                                              (size_t)usercontextSize,
                                               log->context_description,
                                               usercontext.description_length);
 
@@ -6099,18 +6168,20 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    dlt_set_id_v2(&(usercontext.apid), dlt_user.appID2, dlt_user.appID2len);                    /* application id */
+    dlt_set_id_v2(usercontext.apid, dlt_user.appID2, dlt_user.appID2len); /* application id */
     usercontext.apidlen = dlt_user.appID2len;
-    dlt_set_id_v2(&(usercontext.ctid), log->handle->contextID2, log->handle->contextID2len);    /* context id */
+    dlt_set_id_v2(usercontext.ctid, log->handle->contextID2, log->handle->contextID2len); /* context id */
     usercontext.ctidlen = log->handle->contextID2len;
     usercontext.pid = getpid();
 
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
 
-    usercontextSize = sizeof(uint8_t) + usercontext.apidlen +
-                      sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t);
-    buffer = (uint8_t*)malloc(usercontextSize);
+    usercontextSize = (int)sizeof(uint8_t) + usercontext.apidlen +
+                      (int)sizeof(uint8_t) + usercontext.ctidlen + (int)sizeof(pid_t);
+    buffer = (uint8_t*)malloc((size_t)usercontextSize);
+    if (!buffer)
+        return DLT_RETURN_ERROR;
 
     memset(buffer, usercontext.apidlen, 1);
     offset = 1;
@@ -6121,20 +6192,20 @@ DltReturnValue dlt_user_log_send_unregister_context_v2(DltContextData *log)
     memcpy(buffer + offset, usercontext.ctid, usercontext.ctidlen);
     offset = offset + usercontext.ctidlen;
     memcpy(buffer + offset, &(usercontext.pid), sizeof(pid_t));
-    offset = offset + sizeof(pid_t);
+    offset = offset + (int)sizeof(pid_t);
 
     ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader),
                             sizeof(DltUserHeader),
                             buffer,
-                            usercontextSize);
+                            (size_t)usercontextSize);
 
     /* store message in ringbuffer, if an error has occured */
     if (ret < DLT_RETURN_OK)
         ret = dlt_user_log_out_error_handling(&(userheader),
                                               sizeof(DltUserHeader),
                                               buffer,
-                                              usercontextSize,
+                                              (size_t)usercontextSize,
                                               NULL,
                                               0);
     free(buffer);
@@ -6213,20 +6284,27 @@ DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid, DltLogLevelType log
         return DLT_RETURN_ERROR;
 
     /* set usercontext */
-    usercontext.apidlen = strlen(apid);
-    dlt_set_id_v2(&(usercontext.apid), apid, usercontext.apidlen);       /* application id */
+    size_t apidlen_sz = strlen(apid);
+    if (apidlen_sz > UINT8_MAX) {
+        dlt_vlog(LOG_ERR, "apidlen too large");
+        return DLT_RETURN_ERROR;
+    }
+    usercontext.apidlen = (uint8_t)apidlen_sz;
+    dlt_set_id_v2(usercontext.apid, apid, usercontext.apidlen); /* application id */
     usercontext.log_level = loglevel;
     usercontext.trace_status = tracestatus;
 
-    int buffersize = sizeof(uint8_t) + usercontext.apidlen + sizeof(uint8_t) + sizeof(uint8_t);
-    uint8_t buffer[buffersize];
-    int offset = 0;
+    size_t buffersize = sizeof(uint8_t) + usercontext.apidlen + sizeof(uint8_t) + sizeof(uint8_t);
+    uint8_t buffer[DLT_ID_SIZE + 3];
+    size_t offset = 0;
     memcpy(buffer + offset, &(usercontext.apidlen), sizeof(uint8_t));
-    offset = offset + sizeof(uint8_t);
-    memcpy(buffer + offset, usercontext.apid, usercontext.apidlen);
-    offset = offset + usercontext.apidlen;
+    offset += sizeof(uint8_t);
+    if (usercontext.apid != NULL && usercontext.apidlen > 0) {
+        memcpy(buffer + offset, usercontext.apid, usercontext.apidlen);
+    }
+    offset += usercontext.apidlen;
     memcpy(buffer + offset, &(usercontext.log_level), sizeof(uint8_t));
-    offset = offset + sizeof(uint8_t);
+    offset += sizeof(uint8_t);
     memcpy(buffer + offset, &(usercontext.trace_status), sizeof(uint8_t));
 
     if (dlt_user.dlt_is_file)
@@ -6234,14 +6312,14 @@ DltReturnValue dlt_send_app_ll_ts_limit_v2(const char *apid, DltLogLevelType log
 
     ret = dlt_user_log_out2(dlt_user.dlt_log_handle,
                             &(userheader), sizeof(DltUserHeader),
-                            buffer, buffersize);
+                            buffer, (size_t)buffersize);
 
     /* store message in ringbuffer, if an error has occured */
     if (ret < DLT_RETURN_OK)
         return dlt_user_log_out_error_handling(&(userheader),
                                                sizeof(DltUserHeader),
                                                buffer,
-                                               buffersize,
+                                               (size_t)buffersize,
                                                NULL,
                                                0);
 
@@ -6369,8 +6447,8 @@ DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log)
 DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
 {
     uint8_t *databuffer_tmp;
-    uint32_t datasize_tmp;
-    uint32_t databuffersize_tmp;
+    int32_t datasize_tmp;
+    int32_t databuffersize_tmp;
     static char text[DLT_USER_TEXT_LENGTH];
     if ((msg == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -6386,8 +6464,11 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     //dlt_message_get_extraparameters_v2(msg, 0);
 
     msg->databuffer = log->buffer;
-    msg->datasize = (uint32_t) log->size;
-    msg->databuffersize = (uint32_t) log->size;
+    if (log->size < 0) {
+        return DLT_RETURN_ERROR;
+    }
+    msg->datasize = log->size;
+    msg->databuffersize = log->size;
 
     /* Print message as ASCII */
     if (dlt_message_print_ascii_v2(msg, text, DLT_USER_TEXT_LENGTH, 0) == DLT_RETURN_ERROR)
@@ -6402,16 +6483,16 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     return DLT_RETURN_OK;
 }
 
-int dlt_get_extendedheadersize_v2(DltUser dlt_user, int contextIDSize){
+int dlt_get_extendedheadersize_v2(DltUser dlt_user_param, int contextIDSize) {
     int size = 0;
-    size += ((dlt_user.ecuID2len)+1)*(dlt_user.with_ecu_id);
-    size += (sizeof(uint32_t))*(dlt_user.with_session_id);
-    size += ((dlt_user.appID2len)+1+(contextIDSize)+1)*(dlt_user.with_app_and_context_id);
-    size += ((dlt_user.filenamelen)+1+sizeof(dlt_user.linenumber))*(dlt_user.with_filename_and_line_number);
-    size += ((dlt_user.tagbuffersize)+1)*(dlt_user.with_tags);
-    size += (sizeof(dlt_user.prlv))*(dlt_user.with_privacy_level);
+    size += (((int)dlt_user_param.ecuID2len)+1)*((int)dlt_user_param.with_ecu_id);
+    size += (int)(sizeof(uint32_t))*((int)dlt_user_param.with_session_id);
+    size += (((int)dlt_user_param.appID2len)+1+(contextIDSize)+1)*((int)dlt_user_param.with_app_and_context_id);
+    size += (((int)dlt_user_param.filenamelen)+1+(int)sizeof(dlt_user_param.linenumber))*((int)dlt_user_param.with_filename_and_line_number);
+    size += (((int)dlt_user_param.tagbuffersize)+1)*((int)dlt_user_param.with_tags);
+    size += (int)(sizeof(dlt_user_param.prlv))*((int)dlt_user_param.with_privacy_level);
     //To Update: 8 with segmentation data size depending on type of frame (8, 4 or 0)
-    size += ((sizeof(uint8_t))+(sizeof(uint8_t))+8)*(dlt_user.with_segmentation);
+    size += ((int)(sizeof(uint8_t))+(int)(sizeof(uint8_t))+8)*((int)dlt_user_param.with_segmentation);
 
     return size;
 }
@@ -6553,7 +6634,7 @@ DltReturnValue dlt_user_log_check_user_message(void)
                                     delayed_log_level_changed_callback.contextID2len = dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2len;
                                     delayed_log_level_changed_callback.contextID2 = NULL;
 
-                                    dlt_set_id_v2(&(delayed_log_level_changed_callback.contextID2),
+                                    dlt_set_id_v2(delayed_log_level_changed_callback.contextID2,
                                                   dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2,
                                                   dlt_user.dlt_ll_ts[usercontextll->log_level_pos].contextID2len);
 
@@ -6948,14 +7029,16 @@ DltReturnValue dlt_user_log_resend_buffer(void)
                         DltUserControlMsgRegisterContextV2 usercontextv2;
                         usercontextv2.apid = NULL;
                         usercontextv2.apidlen = dlt_user.appID2len;
-                        dlt_set_id_v2(&(usercontextv2.apid), dlt_user.appID2, dlt_user.appID2len);
+                        dlt_set_id_v2(usercontextv2.apid, dlt_user.appID2, dlt_user.appID2len);
 
                         memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader),
                                &(usercontextv2.apidlen),
                                1);
-                        memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + 1,
-                               usercontextv2.apid,
-                               usercontextv2.apidlen);
+                        if (usercontextv2.apid != NULL && usercontextv2.apidlen > 0) {
+                            memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + 1,
+                                usercontextv2.apid,
+                                usercontextv2.apidlen);
+                           }
                         break;
                     }
                     case DLT_USER_MESSAGE_LOG:
@@ -6964,7 +7047,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
                         DltExtendedHeaderV2 extendedheaderv2;
                         extendedheaderv2.apid = NULL;
                         extendedheaderv2.apidlen = dlt_user.appID2len;
-                        dlt_set_id_v2(&(extendedheaderv2.apid), dlt_user.appID2, dlt_user.appID2len);
+                        dlt_set_id_v2(extendedheaderv2.apid, dlt_user.appID2, dlt_user.appID2len);
                         if (dlt_user.with_ecu_id) {
                             offset = dlt_user.ecuID2len + 1;
                         };
@@ -6973,10 +7056,12 @@ DltReturnValue dlt_user_log_resend_buffer(void)
                                &(extendedheaderv2.apidlen),
                                1);
 
-                        memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + BASE_HEADER_V2_FIXED_SIZE +
-                               dlt_message_get_extraparameters_size_v2(msgcontent) + offset + 1,
-                               extendedheaderv2.apid,
-                               extendedheaderv2.apidlen);
+                        if (extendedheaderv2.apid != NULL && extendedheaderv2.apidlen > 0) {
+                            memcpy(dlt_user.resend_buffer + sizeof(DltUserHeader) + BASE_HEADER_V2_FIXED_SIZE +
+                                   dlt_message_get_extraparameters_size_v2(msgcontent) + offset + 1,
+                                   extendedheaderv2.apid,
+                                   extendedheaderv2.apidlen);
+                           }
                         break;
                     }
                     default:
@@ -7076,13 +7161,13 @@ void dlt_user_log_reattach_to_daemon(void)
 
         dlt_log(LOG_NOTICE, "Logging (re-)enabled!\n");
 
-        /* Re-register application */        
+        /* Re-register application */
         if (dlt_user.appID[0] != '\0') {
             if (dlt_user_log_send_register_application() < DLT_RETURN_ERROR)
                 return;
         }else if (dlt_user.appID2len != 0) {
             if (dlt_user_log_send_register_application_v2() < DLT_RETURN_ERROR)
-                return;            
+                return;
         }
 
         dlt_mutex_lock();
@@ -7110,11 +7195,11 @@ void dlt_user_log_reattach_to_daemon(void)
                 /* it is necessary in the for(;;) test, in order to have coherent dlt_user data all over the critical section. */
                 dlt_mutex_lock();
             }
-            /* Register V2 apids and context if present*/
-            else if ((dlt_user.appID2len != 0) && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID2[0] != NULL))
+            /* Register DLTv2 apids and context if present*/
+            else if ((dlt_user.appID2len != 0) && (dlt_user.dlt_ll_ts) && (dlt_user.dlt_ll_ts[num].contextID2[0] != 0))
             {
                 handle.contextID2len = dlt_user.dlt_ll_ts[num].contextID2len;
-                dlt_set_id_v2(&(handle.contextID2), dlt_user.dlt_ll_ts[num].contextID2, handle.contextID2len);
+                dlt_set_id_v2(handle.contextID2, dlt_user.dlt_ll_ts[num].contextID2, handle.contextID2len);
                 handle.log_level_pos = (int32_t) num;
                 log_new.context_description = dlt_user.dlt_ll_ts[num].context_description;
 
@@ -7140,9 +7225,9 @@ void dlt_user_log_reattach_to_daemon(void)
 
 DltReturnValue dlt_user_log_send_overflow(void)
 {
-    DltUserHeader userheader;
-    DltUserControlMsgBufferOverflow userpayload;
-    DltUserControlMsgBufferOverflowV2 userpayload2;
+    DltUserHeader userheader = {0};
+    DltUserControlMsgBufferOverflow userpayload = {0};
+    DltUserControlMsgBufferOverflowV2 userpayload2 = {0};
 
     if (dlt_user.dlt_is_file)
         return DLT_RETURN_OK;
@@ -7153,10 +7238,9 @@ DltReturnValue dlt_user_log_send_overflow(void)
             return DLT_RETURN_ERROR;
 
         /* set user message parameters */
-        userpayload.overflow_counter = dlt_user.overflow_counter;
-
-        dlt_set_id(userpayload.apid, dlt_user.appID);
-
+        userpayload2.overflow_counter = dlt_user.overflow_counter;
+        userpayload2.apidlen = dlt_user.appID2len;
+        dlt_set_id_v2(userpayload2.apid, dlt_user.appID2, dlt_user.appID2len);
         return dlt_user_log_out2(dlt_user.dlt_log_handle,
                                  &(userheader), sizeof(DltUserHeader),
                                  &(userpayload), sizeof(DltUserControlMsgBufferOverflow));
@@ -7168,17 +7252,19 @@ DltReturnValue dlt_user_log_send_overflow(void)
         /* set user message parameters */
         userpayload2.overflow_counter = dlt_user.overflow_counter;
         userpayload2.apidlen = dlt_user.appID2len;
-        dlt_set_id_v2(&(userpayload2.apid), dlt_user.appID2, dlt_user.appID2len);
+        dlt_set_id_v2(userpayload2.apid, dlt_user.appID2, dlt_user.appID2len);
 
-        int buffersize = sizeof(uint32_t) + sizeof(uint8_t) + userpayload2.apidlen;
+        int buffersize = (int)sizeof(uint32_t) + (int)sizeof(uint8_t) + (int)userpayload2.apidlen;
         uint8_t buffer[buffersize];
         memcpy(buffer, &(userpayload2.overflow_counter), sizeof(uint32_t));
         memcpy(buffer + sizeof(uint32_t), &(userpayload2.apidlen), sizeof(uint8_t));
-        memcpy(buffer + sizeof(uint32_t) + sizeof(uint8_t), userpayload2.apid, userpayload2.apidlen);
+        if (userpayload2.apid != NULL && userpayload2.apidlen > 0) {
+            memcpy(buffer + sizeof(uint32_t) + sizeof(uint8_t), userpayload2.apid, userpayload2.apidlen);
+        }
 
         return dlt_user_log_out2(dlt_user.dlt_log_handle,
                                  &(userheader), sizeof(DltUserHeader),
-                                 buffer, buffersize);
+                                 buffer, (size_t)buffersize);
     } else {
         return DLT_RETURN_ERROR;
     }
