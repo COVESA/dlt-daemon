@@ -74,125 +74,128 @@
  * aw          13.01.2010   initial
  */
 
-#include <dirent.h>
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <sys/uio.h> /* writev() */
-
-#include "dlt_common.h"
-
-#define COMMAND_SIZE        1024    /* Size of command */
-#define FILENAME_SIZE       1024    /* Size of filename */
-#define DLT_EXTENSION       "dlt"
-#define DLT_CONVERT_WS      "/tmp/dlt_convert_workspace/"
-
-/**
- * Print usage information of tool.
- */
-void usage(void)
-{
-    char version[DLT_CONVERT_TEXTBUFSIZE];
-
-    dlt_get_version(version, 255);
-
-    printf("Usage: dlt-convert [options] [commands] file1 [file2]\n");
-    printf("Read DLT files, print DLT messages as ASCII and store the messages again.\n");
-    printf("Use filters to filter DLT messages.\n");
-    printf("Use Ranges and Output file to cut DLT files.\n");
-    printf("Use two files and Output file to join DLT files.\n");
-    printf("%s \n", version);
-    printf("Commands:\n");
-    printf("  -h            Usage\n");
-    printf("  -a            Print DLT file; payload as ASCII\n");
-    printf("  -x            Print DLT file; payload as hex\n");
-    printf("  -m            Print DLT file; payload as hex and ASCII\n");
-    printf("  -s            Print DLT file; only headers\n");
-    printf("  -o filename   Output messages in new DLT file\n");
-    printf("Options:\n");
-    printf("  -v            Verbose mode\n");
-    printf("  -c            Count number of messages\n");
-    printf("  -f filename   Enable filtering of messages\n");
-    printf("  -b number     First <number> messages to be handled\n");
-    printf("  -e number     Last <number> messages to be handled\n");
-    printf("  -w            Follow dlt file while file is increasing\n");
-    printf("  -t            Handling input compressed files (tar.gz)\n");
-}
-
-void empty_dir(const char *dir)
-{
-    struct dirent **files = { 0 };
-    struct stat st;
-    char tmp_filename[FILENAME_SIZE] = { 0 };
-
-    if (dir == NULL) {
-        fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
-        return;
-    }
-
-    if (stat(dir, &st) == 0) {
-        if (S_ISDIR(st.st_mode)) {
-            int n = scandir(dir, &files, NULL, alphasort);
-            if (n < 0) {
-                fprintf(stderr, "ERROR: Failed to scan %s with error %s\n", dir, strerror(errno));
-                if (files) {
-                    free(files);
-                }
-                return;
-            }
-            /* Do not include /. and /.. */
-            if (n < 2) {
-                fprintf(stderr, "ERROR: Failed to scan %s with error %s\n",
-                        dir, strerror(errno));
-                if (files) {
-                    for (int i = 0; i < n; i++)
-                        if (files[i])
-                            free(files[i]);
-                    free(files);
-                }
-                return;
-            }
-            else if (n == 2)
-                printf("%s is already empty\n", dir);
-            else {
-                for (int i = 2; i < n; i++) {
-                    memset(tmp_filename, 0, FILENAME_SIZE);
-                    /* Validate filename to prevent path traversal */
-                    if (strstr(files[i]->d_name, "/") == NULL && strstr(files[i]->d_name, "..") == NULL) {
-                        snprintf(tmp_filename, FILENAME_SIZE, "%s%s", dir, files[i]->d_name);
-                        if (remove(tmp_filename) != 0)
-                            fprintf(stderr, "ERROR: Failed to delete %s with error %s\n",
-                                    tmp_filename, strerror(errno));
-                    } else {
-                        fprintf(stderr, "WARNING: Skipping suspicious filename: %s\n", files[i]->d_name);
-                    }
-                }
-            }
-            if (files) {
-                for (int i = 0; i < n ; i++)
-                    if (files[i]) {
-                        free(files[i]);
-                        files[i] = NULL;
-                    }
-                free(files);
-                files = NULL;
-            }
-        }
-        else
-            fprintf(stderr, "ERROR: %s is not a directory\n", dir);
-    }
-    else
-        fprintf(stderr, "ERROR: Failed to stat %s with error %s\n", dir, strerror(errno));
-}
-
+ #include <dirent.h>
+ #include <getopt.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <string.h>
+ #include <ctype.h>
+ #include <errno.h>
+ 
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ 
+ #include <sys/uio.h> /* writev() */
+ 
+ #include "dlt_common.h"
+ 
+ #define COMMAND_SIZE        1024    /* Size of command */
+ #define FILENAME_SIZE       1024    /* Size of filename */
+ #define DLT_EXTENSION       "dlt"
+ #define DLT_CONVERT_WS      "/tmp/dlt_convert_workspace/"
+ 
+ /**
+  * Print usage information of tool.
+  */
+ void usage(void)
+ {
+     char version[DLT_CONVERT_TEXTBUFSIZE];
+ 
+     dlt_get_version(version, 255);
+ 
+     printf("Usage: dlt-convert [options] [commands] file1 [file2]\n");
+     printf("Read DLT files, print DLT messages as ASCII and store the messages again.\n");
+     printf("Use filters to filter DLT messages.\n");
+     printf("Use Ranges and Output file to cut DLT files.\n");
+     printf("Use two files and Output file to join DLT files.\n");
+     printf("%s \n", version);
+     printf("Commands:\n");
+     printf("  -h            Usage\n");
+     printf("  -a            Print DLT file; payload as ASCII\n");
+     printf("  -x            Print DLT file; payload as hex\n");
+     printf("  -m            Print DLT file; payload as hex and ASCII\n");
+     printf("  -s            Print DLT file; only headers\n");
+     printf("  -o filename   Output messages in new DLT file\n");
+     printf("Options:\n");
+     printf("  -v            Verbose mode\n");
+     printf("  -c            Count number of messages\n");
+     printf("  -f filename   Enable filtering of messages\n");
+     printf("  -b number     First <number> messages to be handled\n");
+     printf("  -e number     Last <number> messages to be handled\n");
+     printf("  -w            Follow dlt file while file is increasing\n");
+     printf("  -t            Handling input compressed files (tar.gz)\n");
+ }
+ 
+ void empty_dir(const char *dir)
+ {
+     struct dirent **files = { 0 };
+     struct stat st;
+     char tmp_filename[FILENAME_SIZE] = { 0 };
+ 
+     if (dir == NULL) {
+         fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
+         return;
+     }
+ 
+     if (stat(dir, &st) == 0) {
+         if (S_ISDIR(st.st_mode)) {
+             int n = scandir(dir, &files, NULL, alphasort);
+             if (n < 0) {
+                 fprintf(stderr, "ERROR: Failed to scan %s with error %s\n", dir, strerror(errno));
+                 if (files) {
+                     free(files);
+                 }
+                 return;
+             }
+             /* Do not include /. and /.. */
+             if (n < 2) {
+                 fprintf(stderr, "ERROR: Failed to scan %s with error %s\n",
+                         dir, strerror(errno));
+                 if (files) {
+                     for (int i = 0; i < n; i++)
+                         if (files[i])
+                             free(files[i]);
+                     free(files);
+                 }
+                 return;
+             }
+             else if (n == 2)
+                 printf("%s is already empty\n", dir);
+             else {
+                 for (int i = 2; i < n; i++) {
+                     memset(tmp_filename, 0, FILENAME_SIZE);
+                     /* Validate filename to prevent path traversal */
+                     if (strstr(files[i]->d_name, "/") == NULL && strstr(files[i]->d_name, "..") == NULL) {
+                         snprintf(tmp_filename, FILENAME_SIZE, "%s%s", dir, files[i]->d_name);
+                         if (remove(tmp_filename) != 0)
+                             fprintf(stderr, "ERROR: Failed to delete %s with error %s\n",
+                                     tmp_filename, strerror(errno));
+                     } else {
+                         fprintf(stderr, "WARNING: Skipping suspicious filename: %s\n", files[i]->d_name);
+                     }
+                 }
+             }
+             if (files) {
+                 for (int i = 0; i < n ; i++)
+                     if (files[i]) {
+                         free(files[i]);
+                         files[i] = NULL;
+                     }
+                 free(files);
+                 files = NULL;
+             }
+         }
+         else
+             fprintf(stderr, "ERROR: %s is not a directory\n", dir);
+     }
+     else
+         fprintf(stderr, "ERROR: Failed to stat %s with error %s\n", dir, strerror(errno));
+ }
+ 
+ /**
+  * Main function of tool.
+  */
 /**
  * Main function of tool.
  */
@@ -229,6 +232,11 @@ int main(int argc, char *argv[])
     memset(&st, 0, sizeof(struct stat));
     struct dirent **files = { 0 };
     int n = 0;
+
+    /* Fix: Introduce variables to handle the effective argument list safely */
+    char **work_argv = argv;    /* Pointer to the arguments we will actually use */
+    int work_argc = argc;       /* The number of arguments we will use */
+    int work_argv_allocated = 0; /* Flag to check if we need to free work_argv */
 
     struct iovec iov[2];
     int bytes_written = 0;
@@ -397,20 +405,45 @@ int main(int argc, char *argv[])
         }
 
         /* do not include ./ and ../ in the files */
-        argc = optind + (n - 2);
+        /* FIX: Calculate new argc but DO NOT assign to local 'argc' yet to avoid confusion.
+           Instead, allocate a new pointer array large enough to hold the file list. */
+        work_argc = optind + (n - 2);
+        
+        /* Allocate memory for the new argument list.
+           We need indices from 0 to work_argc-1 to be accessible. */
+        work_argv = (char **)calloc((size_t)work_argc, sizeof(char *));
+        if (work_argv == NULL) {
+            fprintf(stderr, "ERROR: Memory allocation failed for file list!\n");
+            if (ovalue) {
+                close(ohandle);
+                ohandle = -1;
+            }
+            /* Clean up scandir results */
+            if (files) {
+                for (int i = 0; i < n ; i++) {
+                    if (files[i]) free(files[i]);
+                }
+                free(files);
+            }
+            return -1;
+        }
+        work_argv_allocated = 1;
     }
 
-    for (index = optind; index < argc; index++) {
+    /* FIX: Loop using the safe work_argc and work_argv */
+    for (index = optind; index < work_argc; index++) {
         if (tflag) {
             memset(tmp_filename, 0, FILENAME_SIZE);
             snprintf(tmp_filename, FILENAME_SIZE, "%s%s",
-                    DLT_CONVERT_WS, files[index - optind + 2]->d_name);
+                     DLT_CONVERT_WS, files[index - optind + 2]->d_name);
 
-            argv[index] = tmp_filename;
+            /* FIX: Write to the dynamically allocated array, not the original fixed argv */
+            work_argv[index] = tmp_filename;
         }
 
         /* load, analyze data file and create index list */
-        if (dlt_file_open(&file, argv[index], vflag) >= DLT_RETURN_OK) {
+        /* FIX: Use work_argv[index] */
+        if (dlt_file_open(&file, work_argv[index], vflag) >= DLT_RETURN_OK) {
             while (dlt_file_read(&file, vflag) >= DLT_RETURN_OK) {
             }
         }
@@ -433,6 +466,12 @@ int main(int argc, char *argv[])
                     ohandle = -1;
                 }
                 dlt_file_free(&file, vflag);
+                /* Fix: cleanup memory before return */
+                if (work_argv_allocated && work_argv) free(work_argv);
+                if (tflag && files) {
+                     for (int i = 0; i < n ; i++) if (files[i]) free(files[i]);
+                     free(files);
+                }
                 return -1;
             }
 
@@ -443,6 +482,12 @@ int main(int argc, char *argv[])
                     ohandle = -1;
                 }
                 dlt_file_free(&file, vflag);
+                /* Fix: cleanup memory before return */
+                if (work_argv_allocated && work_argv) free(work_argv);
+                if (tflag && files) {
+                     for (int i = 0; i < n ; i++) if (files[i]) free(files[i]);
+                     free(files);
+                }
                 return -1;
             }
 
@@ -496,6 +541,8 @@ int main(int argc, char *argv[])
                         close(ohandle);
                         ohandle = -1;
                         dlt_file_free(&file, vflag);
+                        /* Fix: cleanup memory before return */
+                        if (work_argv_allocated && work_argv) free(work_argv);
                         return -1;
                     }
                 }
@@ -547,6 +594,13 @@ int main(int argc, char *argv[])
         }
         rmdir(DLT_CONVERT_WS);
     }
+    
+    /* Fix: Free the allocated work_argv if it was used */
+    if (work_argv_allocated && work_argv) {
+        free(work_argv);
+        work_argv = NULL;
+    }
+
     if (index == optind) {
         /* no file selected, show usage and terminate */
         fprintf(stderr, "ERROR: No file selected\n");
