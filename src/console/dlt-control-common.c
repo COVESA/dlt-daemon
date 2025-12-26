@@ -897,8 +897,8 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
 
     for (int num = 0; num < filter->counter; num++) {
         struct json_object *tmp_json_obj = json_object_new_object();
-        char filter_name[JSON_FILTER_NAME_SIZE];
-        sprintf(filter_name, "filter%i", num);
+        char filter_name[JSON_FILTER_NAME_SIZE + 1];
+        snprintf(filter_name, sizeof(filter_name), "filter%i", num);
 
         if (filter->apid[num][DLT_ID_SIZE - 1] != 0)
             json_object_object_add(tmp_json_obj, "AppId", json_object_new_string_len(filter->apid[num], DLT_ID_SIZE));
@@ -941,8 +941,9 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
     json_encoder_start_object(j_encoder, NULL);
 
     for (int num = 0; num < filter->counter; num++) {
-        char filter_name[JSON_FILTER_NAME_SIZE];
-        sprintf(filter_name, "filter%i", num);
+        char filter_name[JSON_FILTER_NAME_SIZE + 1];
+        snprintf(filter_name, sizeof(filter_name), "filter%i", num);
+
         json_encoder_start_object(j_encoder, filter_name);
 
         strncpy(s_app_id, filter->apid[num], DLT_ID_SIZE);
