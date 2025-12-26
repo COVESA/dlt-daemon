@@ -1,0 +1,26 @@
+Determining if the function floor exists failed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d4563/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d4563.dir/build.make CMakeFiles/cmTC_d4563.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d4563.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=floor -o CMakeFiles/cmTC_d4563.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘floor’; expected ‘double(double)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘floor’ is declared in header ‘<math.h>’
+  +++ |+#include <math.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_d4563
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d4563.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=floor  -fsanitize=address  CMakeFiles/cmTC_d4563.dir/CheckFunctionExists.c.o -o cmTC_d4563 
+/usr/bin/ld: CMakeFiles/cmTC_d4563.dir/CheckFunctionExists.c.o: undefined reference to symbol 'floor@@GLIBC_2.2.5'
+/usr/bin/ld: /lib/x86_64-linux-gnu/libm.so.6: error adding symbols: DSO missing from command line
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_d4563.dir/build.make:99: cmTC_d4563] Error 1
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_d4563/fast] Error 2
+
+
+

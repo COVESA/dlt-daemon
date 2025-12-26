@@ -1,0 +1,1 @@
+/usr/bin/cc  -g3 -O0 -fsanitize=address -g  -fsanitize=address CMakeFiles/dlt-test-preregister-context.dir/dlt-test-preregister-context.c.o -o dlt-test-preregister-context  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/src/lib: ../lib/libdlt.so.2.18.10 -lrt 

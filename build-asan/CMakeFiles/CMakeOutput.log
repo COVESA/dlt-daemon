@@ -1,0 +1,1152 @@
+The system is: Linux - 6.2.0-26-generic - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/bin/cc 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/3.22.1/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/bin/c++ 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/3.22.1/CompilerIdCXX/a.out"
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ec528/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ec528.dir/build.make CMakeFiles/cmTC_ec528.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o
+/usr/bin/cc   -v -o CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c
+Using built-in specs.
+COLLECT_GCC=/usr/bin/cc
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/'
+ /usr/lib/gcc/x86_64-linux-gnu/12/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ec528.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccxR7SB6.s
+GNU C17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)
+	compiled by GNU C version 12.3.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/include-fixed"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/lib/gcc/x86_64-linux-gnu/12/include
+ /usr/local/include
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+GNU C17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)
+	compiled by GNU C version 12.3.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 3b3e5ca6847cd8b7efa555b335574cff
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/'
+ as -v --64 -o CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o /tmp/ccxR7SB6.s
+GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.'
+Linking C executable cmTC_ec528
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ec528.dir/link.txt --verbose=1
+/usr/bin/cc  -v CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -o cmTC_ec528 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/cc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ec528' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ec528.'
+ /usr/lib/gcc/x86_64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/cc60lY2F.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_ec528 /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/12/../../.. CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ec528' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ec528.'
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Parsed C implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/lib/gcc/x86_64-linux-gnu/12/include]
+    add: [/usr/local/include]
+    add: [/usr/include/x86_64-linux-gnu]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/12/include] ==> [/usr/lib/gcc/x86_64-linux-gnu/12/include]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/usr/lib/gcc/x86_64-linux-gnu/12/include;/usr/local/include;/usr/include/x86_64-linux-gnu;/usr/include]
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ec528/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ec528.dir/build.make CMakeFiles/cmTC_ec528.dir/build]
+  ignore line: [gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp']
+  ignore line: [Building C object CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/cc]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c ada c++ go d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [Supported LTO compression algorithms: zlib zstd]
+  ignore line: [gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/12/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ec528.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccxR7SB6.s]
+  ignore line: [GNU C17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 12.3.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/include-fixed"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/12/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 12.3.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: 3b3e5ca6847cd8b7efa555b335574cff]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o /tmp/ccxR7SB6.s]
+  ignore line: [GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.']
+  ignore line: [Linking C executable cmTC_ec528]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ec528.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/cc  -v CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -o cmTC_ec528 ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/cc]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c ada c++ go d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [Supported LTO compression algorithms: zlib zstd]
+  ignore line: [gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ec528' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ec528.']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/cc60lY2F.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_ec528 /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/12/../../.. CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cc60lY2F.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_ec528] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../..]
+    arg [CMakeFiles/cmTC_ec528.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o] ==> [/usr/lib/x86_64-linux-gnu/Scrt1.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o] ==> [/usr/lib/x86_64-linux-gnu/crti.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o] ==> [/usr/lib/x86_64-linux-gnu/crtn.o]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12] ==> [/usr/lib/gcc/x86_64-linux-gnu/12]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../..] ==> [/usr/lib]
+  implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+  implicit objs: [/usr/lib/x86_64-linux-gnu/Scrt1.o;/usr/lib/x86_64-linux-gnu/crti.o;/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o;/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o;/usr/lib/x86_64-linux-gnu/crtn.o]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/12;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d77c0/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d77c0.dir/build.make CMakeFiles/cmTC_d77c0.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++   -v -o CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/'
+ /usr/lib/gcc/x86_64-linux-gnu/12/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_d77c0.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccchDnkW.s
+GNU C++17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)
+	compiled by GNU C version 12.3.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/12"
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/include-fixed"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/include/c++/12
+ /usr/include/x86_64-linux-gnu/c++/12
+ /usr/include/c++/12/backward
+ /usr/lib/gcc/x86_64-linux-gnu/12/include
+ /usr/local/include
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+GNU C++17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)
+	compiled by GNU C version 12.3.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 0d370165627a7e26039599c56dc32a7a
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/'
+ as -v --64 -o CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccchDnkW.s
+GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.'
+Linking CXX executable cmTC_d77c0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d77c0.dir/link.txt --verbose=1
+/usr/bin/c++  -v CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_d77c0 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c,ada,c++,go,d,fortran,objc,obj-c++,m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr,amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d77c0' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d77c0.'
+ /usr/lib/gcc/x86_64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/ccCGrw8G.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_d77c0 /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/12/../../.. CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d77c0' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d77c0.'
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/include/c++/12]
+    add: [/usr/include/x86_64-linux-gnu/c++/12]
+    add: [/usr/include/c++/12/backward]
+    add: [/usr/lib/gcc/x86_64-linux-gnu/12/include]
+    add: [/usr/local/include]
+    add: [/usr/include/x86_64-linux-gnu]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/usr/include/c++/12] ==> [/usr/include/c++/12]
+  collapse include dir [/usr/include/x86_64-linux-gnu/c++/12] ==> [/usr/include/x86_64-linux-gnu/c++/12]
+  collapse include dir [/usr/include/c++/12/backward] ==> [/usr/include/c++/12/backward]
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/12/include] ==> [/usr/lib/gcc/x86_64-linux-gnu/12/include]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/usr/include/c++/12;/usr/include/x86_64-linux-gnu/c++/12;/usr/include/c++/12/backward;/usr/lib/gcc/x86_64-linux-gnu/12/include;/usr/local/include;/usr/include/x86_64-linux-gnu;/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d77c0/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d77c0.dir/build.make CMakeFiles/cmTC_d77c0.dir/build]
+  ignore line: [gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c ada c++ go d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [Supported LTO compression algorithms: zlib zstd]
+  ignore line: [gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/12/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_d77c0.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccchDnkW.s]
+  ignore line: [GNU C++17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 12.3.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/12"]
+  ignore line: [ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/include-fixed"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/include/c++/12]
+  ignore line: [ /usr/include/x86_64-linux-gnu/c++/12]
+  ignore line: [ /usr/include/c++/12/backward]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/12/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C++17 (Ubuntu 12.3.0-1ubuntu1~22.04.2) version 12.3.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 12.3.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: 0d370165627a7e26039599c56dc32a7a]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccchDnkW.s]
+  ignore line: [GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.']
+  ignore line: [Linking CXX executable cmTC_d77c0]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d77c0.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++  -v CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_d77c0 ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 12.3.0-1ubuntu1~22.04.2' --with-bugurl=file:///usr/share/doc/gcc-12/README.Bugs --enable-languages=c ada c++ go d fortran objc obj-c++ m2 --prefix=/usr --with-gcc-major-version-only --program-suffix=-12 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-plugin --enable-default-pie --with-system-zlib --enable-libphobos-checking=release --with-target-system-zlib=auto --enable-objc-gc=auto --enable-multiarch --disable-werror --enable-cet --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-nvptx/usr amdgcn-amdhsa=/build/gcc-12-dNWB6h/gcc-12-12.3.0/debian/tmp-gcn/usr --enable-offload-defaulted --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [Supported LTO compression algorithms: zlib zstd]
+  ignore line: [gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/12/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/12/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d77c0' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d77c0.']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/12/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper -plugin-opt=-fresolution=/tmp/ccCGrw8G.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_d77c0 /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/12 -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/12/../../.. CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/12/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccCGrw8G.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_d77c0] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/12/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../..]
+    arg [CMakeFiles/cmTC_d77c0.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/Scrt1.o] ==> [/usr/lib/x86_64-linux-gnu/Scrt1.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crti.o] ==> [/usr/lib/x86_64-linux-gnu/crti.o]
+  collapse obj [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu/crtn.o] ==> [/usr/lib/x86_64-linux-gnu/crtn.o]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12] ==> [/usr/lib/gcc/x86_64-linux-gnu/12]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/12/../../..] ==> [/usr/lib]
+  implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit objs: [/usr/lib/x86_64-linux-gnu/Scrt1.o;/usr/lib/x86_64-linux-gnu/crti.o;/usr/lib/gcc/x86_64-linux-gnu/12/crtbeginS.o;/usr/lib/gcc/x86_64-linux-gnu/12/crtendS.o;/usr/lib/x86_64-linux-gnu/crtn.o]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/12;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+Determining if the include file pthread.h exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_602d6/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_602d6.dir/build.make CMakeFiles/cmTC_602d6.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_602d6.dir/CheckIncludeFile.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_602d6.dir/CheckIncludeFile.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_602d6
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_602d6.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_602d6.dir/CheckIncludeFile.c.o -o cmTC_602d6 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD succeeded with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b70fc/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b70fc.dir/build.make CMakeFiles/cmTC_b70fc.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b70fc.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_b70fc.dir/src.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_b70fc
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b70fc.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_b70fc.dir/src.c.o -o cmTC_b70fc 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if files arpa/inet.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a7853/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a7853.dir/build.make CMakeFiles/cmTC_a7853.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a7853.dir/HAVE_ARPAINET_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_a7853.dir/HAVE_ARPAINET_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_ARPAINET_H.c
+Linking C executable cmTC_a7853
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a7853.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_a7853.dir/HAVE_ARPAINET_H.c.o -o cmTC_a7853 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files fcntl.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_96a4b/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_96a4b.dir/build.make CMakeFiles/cmTC_96a4b.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_96a4b.dir/HAVE_FCNTL_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_96a4b.dir/HAVE_FCNTL_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_FCNTL_H.c
+Linking C executable cmTC_96a4b
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_96a4b.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_96a4b.dir/HAVE_FCNTL_H.c.o -o cmTC_96a4b 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files float.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_66027/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_66027.dir/build.make CMakeFiles/cmTC_66027.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_66027.dir/HAVE_FLOAT_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_66027.dir/HAVE_FLOAT_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_FLOAT_H.c
+Linking C executable cmTC_66027
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_66027.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_66027.dir/HAVE_FLOAT_H.c.o -o cmTC_66027 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files limits.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_39b69/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_39b69.dir/build.make CMakeFiles/cmTC_39b69.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_39b69.dir/HAVE_LIMITS_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_39b69.dir/HAVE_LIMITS_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_LIMITS_H.c
+Linking C executable cmTC_39b69
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_39b69.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_39b69.dir/HAVE_LIMITS_H.c.o -o cmTC_39b69 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files netdb.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_2ea05/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_2ea05.dir/build.make CMakeFiles/cmTC_2ea05.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2ea05.dir/HAVE_NETDB_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_2ea05.dir/HAVE_NETDB_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_NETDB_H.c
+Linking C executable cmTC_2ea05
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2ea05.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_2ea05.dir/HAVE_NETDB_H.c.o -o cmTC_2ea05 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files netinet/in.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bf734/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bf734.dir/build.make CMakeFiles/cmTC_bf734.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bf734.dir/HAVE_NETINETIN_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_bf734.dir/HAVE_NETINETIN_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_NETINETIN_H.c
+Linking C executable cmTC_bf734
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bf734.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_bf734.dir/HAVE_NETINETIN_H.c.o -o cmTC_bf734 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stddef.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_fe605/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_fe605.dir/build.make CMakeFiles/cmTC_fe605.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fe605.dir/HAVE_STDDEF_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_fe605.dir/HAVE_STDDEF_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_STDDEF_H.c
+Linking C executable cmTC_fe605
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fe605.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_fe605.dir/HAVE_STDDEF_H.c.o -o cmTC_fe605 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stdint.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_07845/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_07845.dir/build.make CMakeFiles/cmTC_07845.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_07845.dir/HAVE_STDINT_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_07845.dir/HAVE_STDINT_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_STDINT_H.c
+Linking C executable cmTC_07845
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_07845.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_07845.dir/HAVE_STDINT_H.c.o -o cmTC_07845 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stdlib.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_cc33c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cc33c.dir/build.make CMakeFiles/cmTC_cc33c.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cc33c.dir/HAVE_STDLIB_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_cc33c.dir/HAVE_STDLIB_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_STDLIB_H.c
+Linking C executable cmTC_cc33c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cc33c.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_cc33c.dir/HAVE_STDLIB_H.c.o -o cmTC_cc33c 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files string.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_13b5c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_13b5c.dir/build.make CMakeFiles/cmTC_13b5c.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_13b5c.dir/HAVE_STRING_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_13b5c.dir/HAVE_STRING_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_STRING_H.c
+Linking C executable cmTC_13b5c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_13b5c.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_13b5c.dir/HAVE_STRING_H.c.o -o cmTC_13b5c 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/ioctl.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_842cf/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_842cf.dir/build.make CMakeFiles/cmTC_842cf.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_842cf.dir/HAVE_SYSIOCTL_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_842cf.dir/HAVE_SYSIOCTL_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSIOCTL_H.c
+Linking C executable cmTC_842cf
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_842cf.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_842cf.dir/HAVE_SYSIOCTL_H.c.o -o cmTC_842cf 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/socket.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_1d541/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_1d541.dir/build.make CMakeFiles/cmTC_1d541.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1d541.dir/HAVE_SYSSOCKET_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_1d541.dir/HAVE_SYSSOCKET_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSSOCKET_H.c
+Linking C executable cmTC_1d541
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1d541.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_1d541.dir/HAVE_SYSSOCKET_H.c.o -o cmTC_1d541 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/time.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_1a509/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_1a509.dir/build.make CMakeFiles/cmTC_1a509.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1a509.dir/HAVE_SYSTIME_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_1a509.dir/HAVE_SYSTIME_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSTIME_H.c
+Linking C executable cmTC_1a509
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1a509.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_1a509.dir/HAVE_SYSTIME_H.c.o -o cmTC_1a509 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files unistd.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_6a329/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_6a329.dir/build.make CMakeFiles/cmTC_6a329.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6a329.dir/HAVE_UNISTD_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_6a329.dir/HAVE_UNISTD_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_UNISTD_H.c
+Linking C executable cmTC_6a329
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6a329.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_6a329.dir/HAVE_UNISTD_H.c.o -o cmTC_6a329 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/ipc.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_426c9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_426c9.dir/build.make CMakeFiles/cmTC_426c9.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_426c9.dir/HAVE_SYSIPC_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_426c9.dir/HAVE_SYSIPC_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSIPC_H.c
+Linking C executable cmTC_426c9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_426c9.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_426c9.dir/HAVE_SYSIPC_H.c.o -o cmTC_426c9 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files ctype.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_79899/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_79899.dir/build.make CMakeFiles/cmTC_79899.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_79899.dir/HAVE_CTYPE_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_79899.dir/HAVE_CTYPE_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_CTYPE_H.c
+Linking C executable cmTC_79899
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_79899.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_79899.dir/HAVE_CTYPE_H.c.o -o cmTC_79899 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files signal.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_03047/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_03047.dir/build.make CMakeFiles/cmTC_03047.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_03047.dir/HAVE_SIGNAL_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_03047.dir/HAVE_SIGNAL_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SIGNAL_H.c
+Linking C executable cmTC_03047
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_03047.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_03047.dir/HAVE_SIGNAL_H.c.o -o cmTC_03047 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files syslog.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_6cb82/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_6cb82.dir/build.make CMakeFiles/cmTC_6cb82.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6cb82.dir/HAVE_SYSLOG_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_6cb82.dir/HAVE_SYSLOG_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSLOG_H.c
+Linking C executable cmTC_6cb82
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6cb82.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_6cb82.dir/HAVE_SYSLOG_H.c.o -o cmTC_6cb82 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/stat.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_73fd9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_73fd9.dir/build.make CMakeFiles/cmTC_73fd9.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_73fd9.dir/HAVE_SYSSTAT_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_73fd9.dir/HAVE_SYSSTAT_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSSTAT_H.c
+Linking C executable cmTC_73fd9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_73fd9.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_73fd9.dir/HAVE_SYSSTAT_H.c.o -o cmTC_73fd9 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files linux/stat.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_666a6/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_666a6.dir/build.make CMakeFiles/cmTC_666a6.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_666a6.dir/HAVE_LINUXSTAT_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_666a6.dir/HAVE_LINUXSTAT_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_LINUXSTAT_H.c
+Linking C executable cmTC_666a6
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_666a6.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_666a6.dir/HAVE_LINUXSTAT_H.c.o -o cmTC_666a6 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/uio.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_364e6/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_364e6.dir/build.make CMakeFiles/cmTC_364e6.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_364e6.dir/HAVE_SYSUIO_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_364e6.dir/HAVE_SYSUIO_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_SYSUIO_H.c
+Linking C executable cmTC_364e6
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_364e6.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_364e6.dir/HAVE_SYSUIO_H.c.o -o cmTC_364e6 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files termios.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_5f038/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_5f038.dir/build.make CMakeFiles/cmTC_5f038.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5f038.dir/HAVE_TERMIOS_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_5f038.dir/HAVE_TERMIOS_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_TERMIOS_H.c
+Linking C executable cmTC_5f038
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5f038.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_5f038.dir/HAVE_TERMIOS_H.c.o -o cmTC_5f038 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files mqueue.h exist passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8f169/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8f169.dir/build.make CMakeFiles/cmTC_8f169.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8f169.dir/HAVE_MQUEUE_H.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address  -o CMakeFiles/cmTC_8f169.dir/HAVE_MQUEUE_H.c.o -c /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CheckIncludeFiles/HAVE_MQUEUE_H.c
+Linking C executable cmTC_8f169
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8f169.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address   -fsanitize=address  CMakeFiles/cmTC_8f169.dir/HAVE_MQUEUE_H.c.o -o cmTC_8f169 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function clock_gettime exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d42a4/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d42a4.dir/build.make CMakeFiles/cmTC_d42a4.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d42a4.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=clock_gettime -o CMakeFiles/cmTC_d42a4.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d42a4
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d42a4.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=clock_gettime  -fsanitize=address  CMakeFiles/cmTC_d42a4.dir/CheckFunctionExists.c.o -o cmTC_d42a4 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function fork exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_99c37/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_99c37.dir/build.make CMakeFiles/cmTC_99c37.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_99c37.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=fork -o CMakeFiles/cmTC_99c37.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘fork’; expected ‘int(void)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+Linking C executable cmTC_99c37
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_99c37.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=fork  -fsanitize=address  CMakeFiles/cmTC_99c37.dir/CheckFunctionExists.c.o -o cmTC_99c37 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function gethostbyname exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_e85d9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_e85d9.dir/build.make CMakeFiles/cmTC_e85d9.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e85d9.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=gethostbyname -o CMakeFiles/cmTC_e85d9.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_e85d9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e85d9.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=gethostbyname  -fsanitize=address  CMakeFiles/cmTC_e85d9.dir/CheckFunctionExists.c.o -o cmTC_e85d9 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function gettimeofday exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_be617/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_be617.dir/build.make CMakeFiles/cmTC_be617.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_be617.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=gettimeofday -o CMakeFiles/cmTC_be617.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_be617
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_be617.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=gettimeofday  -fsanitize=address  CMakeFiles/cmTC_be617.dir/CheckFunctionExists.c.o -o cmTC_be617 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function inet_ntoa exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_55673/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_55673.dir/build.make CMakeFiles/cmTC_55673.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_55673.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=inet_ntoa -o CMakeFiles/cmTC_55673.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_55673
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_55673.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=inet_ntoa  -fsanitize=address  CMakeFiles/cmTC_55673.dir/CheckFunctionExists.c.o -o cmTC_55673 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function malloc exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_53c0a/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_53c0a.dir/build.make CMakeFiles/cmTC_53c0a.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_53c0a.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=malloc -o CMakeFiles/cmTC_53c0a.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘malloc’; expected ‘void *(long unsigned int)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘malloc’ is declared in header ‘<stdlib.h>’
+  +++ |+#include <stdlib.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_53c0a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_53c0a.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=malloc  -fsanitize=address  CMakeFiles/cmTC_53c0a.dir/CheckFunctionExists.c.o -o cmTC_53c0a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function memmove exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_62834/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_62834.dir/build.make CMakeFiles/cmTC_62834.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_62834.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=memmove -o CMakeFiles/cmTC_62834.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘memmove’; expected ‘void *(void *, const void *, long unsigned int)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘memmove’ is declared in header ‘<string.h>’
+  +++ |+#include <string.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_62834
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_62834.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=memmove  -fsanitize=address  CMakeFiles/cmTC_62834.dir/CheckFunctionExists.c.o -o cmTC_62834 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function memset exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_222f3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_222f3.dir/build.make CMakeFiles/cmTC_222f3.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_222f3.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=memset -o CMakeFiles/cmTC_222f3.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘memset’; expected ‘void *(void *, int,  long unsigned int)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘memset’ is declared in header ‘<string.h>’
+  +++ |+#include <string.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_222f3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_222f3.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=memset  -fsanitize=address  CMakeFiles/cmTC_222f3.dir/CheckFunctionExists.c.o -o cmTC_222f3 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mkfifo exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8d2f3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8d2f3.dir/build.make CMakeFiles/cmTC_8d2f3.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8d2f3.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mkfifo -o CMakeFiles/cmTC_8d2f3.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_8d2f3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8d2f3.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mkfifo  -fsanitize=address  CMakeFiles/cmTC_8d2f3.dir/CheckFunctionExists.c.o -o cmTC_8d2f3 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function select exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bed1f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bed1f.dir/build.make CMakeFiles/cmTC_bed1f.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bed1f.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=select -o CMakeFiles/cmTC_bed1f.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_bed1f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bed1f.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=select  -fsanitize=address  CMakeFiles/cmTC_bed1f.dir/CheckFunctionExists.c.o -o cmTC_bed1f 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function socket exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d3d83/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d3d83.dir/build.make CMakeFiles/cmTC_d3d83.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d3d83.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=socket -o CMakeFiles/cmTC_d3d83.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d3d83
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d3d83.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=socket  -fsanitize=address  CMakeFiles/cmTC_d3d83.dir/CheckFunctionExists.c.o -o cmTC_d3d83 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function strchr exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a044d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a044d.dir/build.make CMakeFiles/cmTC_a044d.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a044d.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strchr -o CMakeFiles/cmTC_a044d.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘strchr’; expected ‘char *(const char *, int)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘strchr’ is declared in header ‘<string.h>’
+  +++ |+#include <string.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_a044d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a044d.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strchr  -fsanitize=address  CMakeFiles/cmTC_a044d.dir/CheckFunctionExists.c.o -o cmTC_a044d 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function strerror exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_3f139/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_3f139.dir/build.make CMakeFiles/cmTC_3f139.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3f139.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strerror -o CMakeFiles/cmTC_3f139.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_3f139
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3f139.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strerror  -fsanitize=address  CMakeFiles/cmTC_3f139.dir/CheckFunctionExists.c.o -o cmTC_3f139 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function strstr exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b5424/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b5424.dir/build.make CMakeFiles/cmTC_b5424.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b5424.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strstr -o CMakeFiles/cmTC_b5424.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘strstr’; expected ‘char *(const char *, const char *)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.22/Modules/CheckFunctionExists.c:1:1: note: ‘strstr’ is declared in header ‘<string.h>’
+  +++ |+#include <string.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_b5424
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b5424.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strstr  -fsanitize=address  CMakeFiles/cmTC_b5424.dir/CheckFunctionExists.c.o -o cmTC_b5424 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function strtol exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_2756c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_2756c.dir/build.make CMakeFiles/cmTC_2756c.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2756c.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strtol -o CMakeFiles/cmTC_2756c.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_2756c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2756c.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=strtol  -fsanitize=address  CMakeFiles/cmTC_2756c.dir/CheckFunctionExists.c.o -o cmTC_2756c 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mq_open exists in the /usr/lib/x86_64-linux-gnu/librt.a passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_f1972/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_f1972.dir/build.make CMakeFiles/cmTC_f1972.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f1972.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_open -o CMakeFiles/cmTC_f1972.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f1972
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f1972.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_open  -fsanitize=address  CMakeFiles/cmTC_f1972.dir/CheckFunctionExists.c.o -o cmTC_f1972   -L/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h /usr/lib/x86_64-linux-gnu/librt.a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mq_close exists in the /usr/lib/x86_64-linux-gnu/librt.a passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_0c961/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_0c961.dir/build.make CMakeFiles/cmTC_0c961.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0c961.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_close -o CMakeFiles/cmTC_0c961.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_0c961
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0c961.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_close  -fsanitize=address  CMakeFiles/cmTC_0c961.dir/CheckFunctionExists.c.o -o cmTC_0c961   -L/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h /usr/lib/x86_64-linux-gnu/librt.a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mq_unlink exists in the /usr/lib/x86_64-linux-gnu/librt.a passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_e6acd/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_e6acd.dir/build.make CMakeFiles/cmTC_e6acd.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e6acd.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_unlink -o CMakeFiles/cmTC_e6acd.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_e6acd
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e6acd.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_unlink  -fsanitize=address  CMakeFiles/cmTC_e6acd.dir/CheckFunctionExists.c.o -o cmTC_e6acd   -L/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h /usr/lib/x86_64-linux-gnu/librt.a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mq_send exists in the /usr/lib/x86_64-linux-gnu/librt.a passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a068c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a068c.dir/build.make CMakeFiles/cmTC_a068c.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a068c.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_send -o CMakeFiles/cmTC_a068c.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_a068c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a068c.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_send  -fsanitize=address  CMakeFiles/cmTC_a068c.dir/CheckFunctionExists.c.o -o cmTC_a068c   -L/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h /usr/lib/x86_64-linux-gnu/librt.a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function mq_receive exists in the /usr/lib/x86_64-linux-gnu/librt.a passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a23fc/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a23fc.dir/build.make CMakeFiles/cmTC_a23fc.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a23fc.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_receive -o CMakeFiles/cmTC_a23fc.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_a23fc
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a23fc.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=mq_receive  -fsanitize=address  CMakeFiles/cmTC_a23fc.dir/CheckFunctionExists.c.o -o cmTC_a23fc   -L/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h  -Wl,-rpath,/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp/mqueue.h /usr/lib/x86_64-linux-gnu/librt.a 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function pthread_setname_np exists passed with the following output:
+Change Dir: /home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_9d7a7/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_9d7a7.dir/build.make CMakeFiles/cmTC_9d7a7.dir/build
+gmake[1]: Entering directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9d7a7.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=pthread_setname_np -o CMakeFiles/cmTC_9d7a7.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_9d7a7
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d7a7.dir/link.txt --verbose=1
+/usr/bin/cc  -g3 -O0 -fsanitize=address -DCHECK_FUNCTION_EXISTS=pthread_setname_np  -fsanitize=address  CMakeFiles/cmTC_9d7a7.dir/CheckFunctionExists.c.o -o cmTC_9d7a7 
+gmake[1]: Leaving directory '/home/shangzhi/fuz/fix/dlt-daemon/build-asan/CMakeFiles/CMakeTmp'
+
+
+

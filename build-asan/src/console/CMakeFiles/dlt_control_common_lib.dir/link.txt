@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdlt_control_common_lib.a CMakeFiles/dlt_control_common_lib.dir/dlt-control-common.c.o
+/usr/bin/ranlib libdlt_control_common_lib.a
