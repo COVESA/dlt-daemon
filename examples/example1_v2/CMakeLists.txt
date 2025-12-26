@@ -17,7 +17,7 @@
 # DLT example implementation
 #
 
-project( automotive-dlt-example2 )
+project( automotive-dlt-example1 )
 
 #
 # find dependency packages
@@ -38,11 +38,11 @@ include_directories(
 # build project
 #
 
-set(dlt_example2_SRCS example2.c)
-add_executable(dlt-example2 ${dlt_example2_SRCS})
-target_link_libraries(dlt-example2 ${DLT_LIBRARIES})
-set_target_properties(dlt-example2 PROPERTIES LINKER_LANGUAGE C)
+set(dlt_example1_SRCS example1.c)
+add_executable(dlt-example1 ${dlt_example1_SRCS})
+target_link_libraries(dlt-example1 ${DLT_LIBRARIES})
+set_target_properties(dlt-example1 PROPERTIES LINKER_LANGUAGE C)
 
-install(TARGETS dlt-example2
+install(TARGETS dlt-example1
         RUNTIME DESTINATION bin
         COMPONENT base)

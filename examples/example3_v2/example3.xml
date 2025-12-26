@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fx:FIBEX xmlns:ho="http://www.asam.net/xml" xmlns:fx="http://www.asam.net/xml/fbx">
+    <fx:PROJECT ID="projectEntry">
+        <ho:SHORT-NAME>projectEntry</ho:SHORT-NAME>
+    </fx:PROJECT>
+    <fx:ELEMENTS>
+        <fx:ECUS>
+            <fx:ECU ID="Entry">
+                <ho:SHORT-NAME>Entry</ho:SHORT-NAME>
+                <fx:MANUFACTURER-EXTENSION>
+                    <SW_VERSION>unknown</SW_VERSION>
+                    <APPLICATIONS>
+                        <APPLICATION>
+                            <APPLICATION_ID>EXA3</APPLICATION_ID>
+                            <APPLICATION_DESCRIPTION>Third Example</APPLICATION_DESCRIPTION>
+                            <CONTEXTS>
+                                <CONTEXT>
+                                    <CONTEXT_ID>CON</CONTEXT_ID>
+                                    <CONTEXT_DESCRIPTION>First context</CONTEXT_DESCRIPTION>
+                                </CONTEXT>
+                            </CONTEXTS>
+                        </APPLICATION>
+                    </APPLICATIONS>
+                </fx:MANUFACTURER-EXTENSION>
+            </fx:ECU>
+        </fx:ECUS>
+        <fx:PDUS>
+            <fx:PDU ID="PDU_1000_0">
+                <ho:SHORT-NAME>PDU_1000_0</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+                <fx:SIGNAL-INSTANCES>
+                    <fx:SIGNAL-INSTANCE ID="S_1000_0">
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                        <fx:SIGNAL-REF ID-REF="S_SINT32"/>
+                    </fx:SIGNAL-INSTANCE>
+                </fx:SIGNAL-INSTANCES>
+            </fx:PDU>
+            <fx:PDU ID="PDU_1000_1">
+                <ho:SHORT-NAME>PDU_1000_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 1!</ho:DESC>
+                <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+            </fx:PDU>
+            <fx:PDU ID="PDU_1001_0">
+                <ho:SHORT-NAME>PDU_1001_0</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+                <fx:SIGNAL-INSTANCES>
+                    <fx:SIGNAL-INSTANCE ID="S_1001_0">
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                        <fx:SIGNAL-REF ID-REF="S_SINT32"/>
+                    </fx:SIGNAL-INSTANCE>
+                </fx:SIGNAL-INSTANCES>
+            </fx:PDU>
+            <fx:PDU ID="PDU_1001_1">
+                <ho:SHORT-NAME>PDU_1001_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 2!</ho:DESC>
+                <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+            </fx:PDU>
+            <fx:PDU ID="PDU_1002_0">
+                <ho:SHORT-NAME>PDU_1002_0</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+                <fx:SIGNAL-INSTANCES>
+                    <fx:SIGNAL-INSTANCE ID="S_1002_0">
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                        <fx:SIGNAL-REF ID-REF="S_SINT32"/>
+                    </fx:SIGNAL-INSTANCE>
+                </fx:SIGNAL-INSTANCES>
+            </fx:PDU>
+            <fx:PDU ID="PDU_1002_1">
+                <ho:SHORT-NAME>PDU_1002_1</ho:SHORT-NAME>
+                <ho:DESC>Hello world 3!</ho:DESC>
+                <fx:BYTE-LENGTH>0</fx:BYTE-LENGTH>
+                <fx:PDU-TYPE>OTHER</fx:PDU-TYPE>
+            </fx:PDU>
+        </fx:PDUS>
+        <fx:FRAMES>
+            <fx:FRAME ID="ID_1000">
+                <ho:SHORT-NAME>ID_1000</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:FRAME-TYPE>OTHER</fx:FRAME-TYPE>
+                <fx:PDU-INSTANCES>
+                    <fx:PDU-INSTANCE ID="P_1000_0">
+                        <fx:PDU-REF ID-REF="PDU_1000_0"/>
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                    <fx:PDU-INSTANCE ID="P_1000_1">
+                        <fx:PDU-REF ID-REF="PDU_1000_1"/>
+                        <fx:SEQUENCE-NUMBER>1</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                </fx:PDU-INSTANCES>
+                <fx:MANUFACTURER-EXTENSION>
+                    <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
+                    <MESSAGE_INFO>DLT_LOG_INFO</MESSAGE_INFO>
+                    <APPLICATION_ID>EXA3</APPLICATION_ID>
+                    <CONTEXT_ID>CON</CONTEXT_ID>
+                    <MESSAGE_SOURCE_FILE>/home/alex/workspace/ascgit/dlt-daemon/examples/example3/example3.c</MESSAGE_SOURCE_FILE>
+                    <MESSAGE_LINE_NUMBER>64</MESSAGE_LINE_NUMBER>
+                </fx:MANUFACTURER-EXTENSION>
+            </fx:FRAME>
+            <fx:FRAME ID="ID_1001">
+                <ho:SHORT-NAME>ID_1001</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:FRAME-TYPE>OTHER</fx:FRAME-TYPE>
+                <fx:PDU-INSTANCES>
+                    <fx:PDU-INSTANCE ID="P_1001_0">
+                        <fx:PDU-REF ID-REF="PDU_1001_0"/>
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                    <fx:PDU-INSTANCE ID="P_1001_1">
+                        <fx:PDU-REF ID-REF="PDU_1001_1"/>
+                        <fx:SEQUENCE-NUMBER>1</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                </fx:PDU-INSTANCES>
+                <fx:MANUFACTURER-EXTENSION>
+                    <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
+                    <MESSAGE_INFO>DLT_LOG_ERROR</MESSAGE_INFO>
+                    <APPLICATION_ID>EXA3</APPLICATION_ID>
+                    <CONTEXT_ID>CON</CONTEXT_ID>
+                    <MESSAGE_SOURCE_FILE>/home/alex/workspace/ascgit/dlt-daemon/examples/example3/example3.c</MESSAGE_SOURCE_FILE>
+                    <MESSAGE_LINE_NUMBER>65</MESSAGE_LINE_NUMBER>
+                </fx:MANUFACTURER-EXTENSION>
+            </fx:FRAME>
+            <fx:FRAME ID="ID_1002">
+                <ho:SHORT-NAME>ID_1002</ho:SHORT-NAME>
+                <fx:BYTE-LENGTH>4</fx:BYTE-LENGTH>
+                <fx:FRAME-TYPE>OTHER</fx:FRAME-TYPE>
+                <fx:PDU-INSTANCES>
+                    <fx:PDU-INSTANCE ID="P_1002_0">
+                        <fx:PDU-REF ID-REF="PDU_1002_0"/>
+                        <fx:SEQUENCE-NUMBER>0</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                    <fx:PDU-INSTANCE ID="P_1002_1">
+                        <fx:PDU-REF ID-REF="PDU_1002_1"/>
+                        <fx:SEQUENCE-NUMBER>1</fx:SEQUENCE-NUMBER>
+                    </fx:PDU-INSTANCE>
+                </fx:PDU-INSTANCES>
+                <fx:MANUFACTURER-EXTENSION>
+                    <MESSAGE_TYPE>DLT_TYPE_LOG</MESSAGE_TYPE>
+                    <MESSAGE_INFO>DLT_LOG_WARN</MESSAGE_INFO>
+                    <APPLICATION_ID>EXA3</APPLICATION_ID>
+                    <CONTEXT_ID>CON</CONTEXT_ID>
+                    <MESSAGE_SOURCE_FILE>/home/alex/workspace/ascgit/dlt-daemon/examples/example3/example3.c</MESSAGE_SOURCE_FILE>
+                    <MESSAGE_LINE_NUMBER>66</MESSAGE_LINE_NUMBER>
+                </fx:MANUFACTURER-EXTENSION>
+            </fx:FRAME>
+        </fx:FRAMES>
+    </fx:ELEMENTS>
+</fx:FIBEX>

@@ -116,6 +116,24 @@ void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
                                                        int verbose);
 
 /**
+ * dlt_daemon_logstorage_update_application_loglevel_v2
+ *
+ * DLTv2 Update log level of all running applications with new filter configuration
+ * available due to newly attached DltLogstorage device for DLT version 2.
+ * The log level is only updated when the current application log level is less
+ * than the log level obtained from the storage configuration file.
+ *
+ * @param daemon        Pointer to DLT Daemon structure
+ * @param daemon_local  Pointer to DLT Daemon local structure
+ * @param dev_num       Number of attached DLT Logstorage device
+ * @param verbose       if set to true verbose information is printed out
+ */
+void dlt_daemon_logstorage_update_application_loglevel_v2(DltDaemon *daemon,
+                                                       DltDaemonLocal *daemon_local,
+                                                       int dev_num,
+                                                       int verbose);
+
+/**
  * dlt_daemon_logstorage_write
  *
  * Write log message to all attached storage device. If the called
