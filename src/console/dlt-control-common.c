@@ -919,7 +919,7 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
     }
 
     printf("Saving current filter into '%s'\n", filename);
-    json_object_to_file((char*)filename, json_filter_obj);
+    json_object_to_file(filename, json_filter_obj);
 
     return DLT_RETURN_OK;
 }
