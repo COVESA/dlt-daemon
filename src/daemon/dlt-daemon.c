@@ -5509,9 +5509,6 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     int ret;
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
     int length;
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    uint32_t curr_time = 0U;
-#endif
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -5554,9 +5551,6 @@ int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *d
     int ret;
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
     int length;
-#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    uint32_t curr_time = 0U;
-#endif
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
