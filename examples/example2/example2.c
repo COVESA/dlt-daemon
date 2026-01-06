@@ -50,7 +50,7 @@
 
 #include "dlt_id.h"
 
-DLT_DECLARE_CONTEXT(con_exa2);
+DLT_DECLARE_CONTEXT(con_exa2)
 
 int main()
 {
