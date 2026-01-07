@@ -67,7 +67,9 @@ string t_load_json_file()
     string pattern;
     string json_sequence;
 
-    file.is_open();
+    if(!file.is_open())
+        return "";
+
     while (!file.eof()) {
         getline(file, pattern);
         if (pattern.size() == 0) {
