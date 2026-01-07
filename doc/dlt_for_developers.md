@@ -30,7 +30,7 @@ this document.
 ```
 #include <dlt/dlt.h>
 
-DLT_DECLARE_CONTEXT(ctx); /* declare context */
+DLT_DECLARE_CONTEXT(ctx) /* declare context */
 
 int main()
 {
@@ -531,18 +531,18 @@ declared once. Therefore a unique variable name for each context has to be
 used.
 
 ```
-DLT_DECLARE_CONTEXT(myContext1);
-DLT_DECLARE_CONTEXT(myContext2);
-DLT_DECLARE_CONTEXT(myContext3);
+DLT_DECLARE_CONTEXT(myContext1)
+DLT_DECLARE_CONTEXT(myContext2)
+DLT_DECLARE_CONTEXT(myContext3)
 ```
 
 If contexts from another C or CPP file shall be used, these contexts can be
 imported by calling:
 
 ```
-DLT_IMPORT_CONTEXT(myContext1);
-DLT_IMPORT_CONTEXT(myContext2);
-DLT_IMPORT_CONTEXT(myContext3);
+DLT_IMPORT_CONTEXT(myContext1)
+DLT_IMPORT_CONTEXT(myContext2)
+DLT_IMPORT_CONTEXT(myContext3)
 ```
 
 After the application is registered and contexts are declared, contexts need to
