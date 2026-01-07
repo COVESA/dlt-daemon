@@ -437,6 +437,9 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
                                         con->ev_mask);
 
             con->status = ACTIVE;
+            printf("Connection activated: fd=%d, type=%u\n",
+                   con->receiver->fd,
+                   con->type);
         }
 
         break;
