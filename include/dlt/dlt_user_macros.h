@@ -114,6 +114,15 @@
         (void)dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION); \
         (void)dlt_register_app(APPID, DESCRIPTION); } while(false)
 
+/**
+ * DLTv2 Register application.
+ * @param APPID application id
+ * @param DESCRIPTION ASCII string containing description
+ */
+#define DLT_REGISTER_APP_V2(APPID, DESCRIPTION) do { \
+        (void)dlt_check_library_version(_DLT_PACKAGE_MAJOR_VERSION, _DLT_PACKAGE_MINOR_VERSION); \
+        (void)dlt_register_app_v2(APPID, DESCRIPTION); } while(false)
+
 
 /**
  * Unregister application.
@@ -122,10 +131,22 @@
         (void)dlt_unregister_app(); } while(false)
 
 /**
+ * DLTv2 Unregister application.
+ */
+#define DLT_UNREGISTER_APP_V2() do { \
+        (void)dlt_unregister_app_v2(); } while(false)
+
+/**
  * Unregister application and flush the logs buffered in startup buffer if any.
  */
 #define DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS() do { \
         (void)dlt_unregister_app_flush_buffered_logs(); } while(false)
+
+/**
+ * DLTv2 Unregister application and flush the logs buffered in startup buffer if any.
+ */
+#define DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS_V2() do { \
+        (void)dlt_unregister_app_flush_buffered_logs_v2(); } while(false)
 
 /**
  * To Get application ID.
@@ -135,6 +156,13 @@
     dlt_get_appid(APPID);} while(false)
 
 /**
+ * DLTv2 To Get application ID.
+ * @Param APPID character pointer
+ */
+#define DLT_GET_APPID_V2(APPID) do{\
+    dlt_get_appid_v2(&APPID);} while(false)
+
+/**
  * Register context (with default log level and default trace status)
  * @param CONTEXT object containing information about one special logging context
  * @param CONTEXTID context id with maximal four characters
@@ -142,6 +170,15 @@
  */
 #define DLT_REGISTER_CONTEXT(CONTEXT, CONTEXTID, DESCRIPTION) do { \
         (void)dlt_register_context(&(CONTEXT), CONTEXTID, DESCRIPTION); } while (false)
+
+/**
+ * DLTv2 Register context (with default log level and default trace status)
+ * @param CONTEXT object containing information about one special logging context
+ * @param CONTEXTID context id
+ * @param DESCRIPTION ASCII string containing description
+ */
+#define DLT_REGISTER_CONTEXT_V2(CONTEXT, CONTEXTID, DESCRIPTION) do { \
+        (void)dlt_register_context_v2(&(CONTEXT), CONTEXTID, DESCRIPTION); } while (false)
 
 /**
  * Register context with pre-defined log level and pre-defined trace status.
@@ -157,6 +194,19 @@
         (void)dlt_register_context_ll_ts(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS); } while (false)
 
 /**
+ * DLTv2 Register context with pre-defined log level and pre-defined trace status.
+ * @param CONTEXT object containing information about one special logging context
+ * @param CONTEXTID context id
+ * @param DESCRIPTION ASCII string containing description
+ * @param LOGLEVEL log level to be pre-set for this context
+ * (DLT_LOG_DEFAULT is not allowed here)
+ * @param TRACESTATUS trace status to be pre-set for this context
+ * (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+ */
+#define DLT_REGISTER_CONTEXT_LL_TS_V2(CONTEXT, CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS) do { \
+        (void)dlt_register_context_ll_ts_v2(&(CONTEXT), CONTEXTID, DESCRIPTION, LOGLEVEL, TRACESTATUS); } while (false)
+
+/**
  * Register context (with default log level and default trace status and log level change callback)
  * @param CONTEXT object containing information about one special logging context
  * @param CONTEXTID context id with maximal four characters
@@ -167,11 +217,28 @@
         (void)dlt_register_context_llccb(&(CONTEXT), CONTEXTID, DESCRIPTION, CBK); } while(false)
 
 /**
+ * DLTv2 Register context (with default log level and default trace status and log level change callback)
+ * @param CONTEXT object containing information about one special logging context
+ * @param CONTEXTID context id
+ * @param DESCRIPTION ASCII string containing description
+ * @param CBK log level change callback to be registered
+ */
+#define DLT_REGISTER_CONTEXT_LLCCB_V2(CONTEXT, CONTEXTID, DESCRIPTION, CBK) do { \
+        (void)dlt_register_context_llccb_v2(&(CONTEXT), CONTEXTID, DESCRIPTION, CBK); } while(false)
+
+/**
  * Unregister context.
  * @param CONTEXT object containing information about one special logging context
  */
 #define DLT_UNREGISTER_CONTEXT(CONTEXT) do { \
         (void)dlt_unregister_context(&(CONTEXT)); } while(false)
+
+/**
+ * DLTv2 Unregister context.
+ * @param CONTEXT object containing information about one special logging context
+ */
+#define DLT_UNREGISTER_CONTEXT_V2(CONTEXT) do { \
+        (void)dlt_unregister_context_v2(&(CONTEXT)); } while(false)
 
 /**
  * Register callback function called when injection message was received
@@ -201,6 +268,14 @@
         (void)dlt_register_log_level_changed_callback(&(CONTEXT), CALLBACK); } while(false)
 
 /**
+ * DLTv2 Register callback function called when log level of context was changed
+ * @param CONTEXT object containing information about one special logging context
+ * @param CALLBACK function pointer to callback function
+ */
+#define DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK_V2(CONTEXT, CALLBACK) do { \
+        (void)dlt_register_log_level_changed_callback_v2(&(CONTEXT), CALLBACK); } while(false)
+
+/**
  * Send log message with variable list of messages (intended for verbose mode)
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -222,6 +297,32 @@
         { \
             __VA_ARGS__; \
             (void)dlt_user_log_write_finish(&log_local); \
+        } \
+    } while (false)
+#endif
+
+/**
+ * DLTv2 Send log message with variable list of messages (intended for verbose mode)
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param ... variable list of arguments
+ * @note To avoid the MISRA warning "The comma operator has been used outside a for statement"
+ *       use a semicolon instead of a comma to separate the __VA_ARGS__.
+ *       Example: DLT_LOG(hContext, DLT_LOG_INFO, DLT_STRING("Hello world"); DLT_INT(123));
+ */
+#ifdef _MSC_VER
+/* DLT_LOG_V2 is not supported by MS Visual C++ */
+/* use function interface instead            */
+#else
+#   define DLT_LOG_V2(CONTEXT, LOGLEVEL, ...) \
+    do { \
+        DltContextData log_local; \
+        int dlt_local; \
+        dlt_local = dlt_user_log_write_start(&CONTEXT, &log_local, LOGLEVEL); \
+        if (dlt_local == DLT_RETURN_TRUE) \
+        { \
+            __VA_ARGS__; \
+            (void)dlt_user_log_write_finish_v2(&log_local); \
         } \
     } while (false)
 #endif
@@ -315,6 +416,28 @@
         } \
     } while(false)
 #endif
+
+/**
+ * Send log with filename and line number
+ * @param FILENAME filename string
+ * @param LINR int line number
+ */
+#define DLT_WITH_FILENAME_LINENUMBER(FILENAME, LINR) \
+    (void)dlt_with_filename_and_line_number(FILENAME, LINR)
+
+/**
+ * Send log with tags
+ * @param Tag list of string tags, minimum 1 tag to be provided
+ */
+#define DLT_WITH_TAGS(TAG, ...) \
+    (void)dlt_with_tags(TAG, __VA_ARGS__, NULL)
+
+/**
+ * Send privacy level in logs
+ * @param prlv uint privacy level
+ */
+#define DLT_WITH_PRIVACYLEVEL(PRLV) \
+    (void)dlt_with_prlv(PRLV)
 
 /**
  * Add string parameter to the log messsage.
@@ -696,6 +819,20 @@
     } while(false)
 
 /**
+ * DLTv2 Send log message with string parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TEXT ASCII string
+ */
+#define DLT_LOG_STRING_V2(CONTEXT, LOGLEVEL, TEXT) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_v2(&(CONTEXT), LOGLEVEL, TEXT); \
+        } \
+    } while(false)
+
+/**
  * Send log message with string parameter and integer parameter.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log messages
@@ -707,6 +844,21 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_string_int(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
+        } \
+    } while(false)
+
+/**
+ * DLTv2 Send log message with string parameter and integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log messages
+ * @param TEXT ASCII string
+ * @param INT_VAR integer value
+ */
+#define DLT_LOG_STRING_INT_V2(CONTEXT, LOGLEVEL, TEXT, INT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_int_v2(&(CONTEXT), LOGLEVEL, TEXT, INT_VAR); \
         } \
     } while(false)
 
@@ -726,6 +878,21 @@
     } while(false)
 
 /**
+ * DLTv2 Send log message with string parameter and unsigned integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param TEXT ASCII string
+ * @param UINT_VAR unsigned integer value
+ */
+#define DLT_LOG_STRING_UINT_V2(CONTEXT, LOGLEVEL, TEXT, UINT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_string_uint_v2(&(CONTEXT), LOGLEVEL, TEXT, UINT_VAR); \
+        } \
+    } while(false)
+
+/**
  * Send log message with unsigned integer parameter.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -736,6 +903,20 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_uint(&(CONTEXT), LOGLEVEL, UINT_VAR); \
+        } \
+    } while(false)
+
+/**
+ * DLTv2 Send log message with unsigned integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param UINT_VAR unsigned integer value
+ */
+#define DLT_LOG_UINT_V2(CONTEXT, LOGLEVEL, UINT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_uint_v2(&(CONTEXT), LOGLEVEL, UINT_VAR); \
         } \
     } while(false)
 
@@ -754,6 +935,20 @@
     } while(false)
 
 /**
+ * DLTv2 Send log message with integer parameter.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param INT_VAR integer value
+ */
+#define DLT_LOG_INT_V2(CONTEXT, LOGLEVEL, INT_VAR) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_int_v2(&(CONTEXT), LOGLEVEL, INT_VAR); \
+        } \
+    } while(false)
+
+/**
  * Send log message with binary memory block.
  * @param CONTEXT object containing information about one special logging context
  * @param LOGLEVEL the log level of the log message
@@ -765,6 +960,21 @@
         if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
         { \
             (void)dlt_log_raw(&(CONTEXT), LOGLEVEL, BUF, LEN); \
+        } \
+    } while(false)
+
+/**
+ * DLTv2 Send log message with binary memory block.
+ * @param CONTEXT object containing information about one special logging context
+ * @param LOGLEVEL the log level of the log message
+ * @param BUF pointer to memory block
+ * @param LEN length of memory block
+ */
+#define DLT_LOG_RAW_V2(CONTEXT, LOGLEVEL, BUF, LEN) \
+    do { \
+        if (dlt_user_is_logLevel_enabled(&CONTEXT, LOGLEVEL) == DLT_RETURN_TRUE) \
+        { \
+            (void)dlt_log_raw_v2(&(CONTEXT), LOGLEVEL, BUF, LEN); \
         } \
     } while(false)
 

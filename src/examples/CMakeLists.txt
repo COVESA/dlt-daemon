@@ -14,9 +14,11 @@
 #######
 
 set(TARGET_LIST dlt-example-user-func)
+set(TARGET_LIST dlt-example-user-func-v2)
 set(TARGET_LIST ${TARGET_LIST} dlt-example-filetransfer)
 if(NOT WITH_DLT_DISABLE_MACRO)
     set(TARGET_LIST ${TARGET_LIST} dlt-example-user)
+    set(TARGET_LIST ${TARGET_LIST} dlt-example-user-v2)
     set(TARGET_LIST ${TARGET_LIST} dlt-example-user-common-api)
 endif()
 
