@@ -147,7 +147,7 @@ typedef struct
 {
     char apid[DLT_ID_SIZE];         /**< application id */
     uint8_t apid2len;               /**< length of application id */
-    char *apid2;                    /**< application id */
+    char apid2[DLT_V2_ID_SIZE];                    /**< application id */
     pid_t pid;                      /**< process id of user application */
     int user_handle;                /**< connection handle for connection to user application */
     bool owns_user_handle;          /**< user_handle should be closed when reset */

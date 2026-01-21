@@ -1109,10 +1109,7 @@ DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
 
         application = &(user_list->applications[user_list->num_applications - 1]);
 
-        application->apid2 = (char *)malloc(DLT_V2_ID_SIZE * sizeof(char));
-        if (application->apid2 == NULL) {
-            return (DltDaemonApplication *)NULL;
-        }
+        memset(application->apid2, 0, DLT_V2_ID_SIZE);
         application->apid2len = apidlen;
         dlt_set_id_v2(application->apid2, apid, apidlen);
         application->pid = 0;
@@ -1427,7 +1424,8 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
 {
     DltDaemonRegisteredUsers *user_list = NULL;
     PRINT_FUNCTION_VERBOSE(verbose);
-    DltDaemonApplication search_app; // Create temporary search structure
+    DltDaemonApplication search_app;
+    memset(search_app.apid2, 0, DLT_V2_ID_SIZE);
 
     if ((daemon == NULL) || (daemon->user_list == NULL) ||
         (apidlen == 0) || (apid == NULL) ||
@@ -1444,11 +1442,6 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
         return;
     }
 
-    search_app.apid2 = (char *)malloc(DLT_V2_ID_SIZE * sizeof(char));
-    if (search_app.apid2 == NULL) {
-        *application = NULL;
-        return;
-    }
     search_app.apid2len = apidlen;
     dlt_set_id_v2(search_app.apid2, apid, apidlen);
 
@@ -1458,11 +1451,6 @@ void dlt_daemon_application_find_v2(DltDaemon *daemon,
                                            (size_t) user_list->num_applications,
                                            sizeof(DltDaemonApplication),
                                            dlt_daemon_cmp_apid_v2);
-
-    // Free temporary allocated memory
-    if (search_app.apid2) {
-        free(search_app.apid2);
-    }
 
     return;
 }

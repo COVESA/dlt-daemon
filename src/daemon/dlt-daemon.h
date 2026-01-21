@@ -84,9 +84,6 @@
 #define DLT_VERSION_MASK 0xE0
 #define DLT_VERSION_SHIFT 5
 
-/* TODO: naming to DLT_PROTOCOL_VERSION */
-#define DLT_DAEMON_VERSION 2 /* Protocol version should be either 1 or 2 to support v1 or v2 */
-
 /**
  * The flags of a dlt daemon.
  */
@@ -156,6 +153,7 @@ typedef struct
     int  enforceContextLLAndTS;                             /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus   */
     DltBindAddress_t* ipNodes;                              /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses        */
     int  injectionMode;                                     /**< (Boolean) Injection mode                                                                      */
+    int  protocolVersion;                                   /**< (int) Protocol version selected by user (1 or 2, 0=default)                                  */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
@@ -296,7 +294,6 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
-int dlt_get_daemon_version(void);
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)

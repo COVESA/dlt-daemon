@@ -104,7 +104,7 @@
 #include "dlt_client_cfg.h"
 
 // DLTv2 - DLT Version flag for multiplexing v1 and v2 messages
-uint8_t dlt_client_dlt_version = DLT_VERSION1;
+uint8_t dlt_client_dlt_version = DLTProtocolV1;
 
 static int (*message_callback_function)(DltMessage *message, void *data) = NULL;
 static int (*message_callback_function_v2)(DltMessageV2 *message, void *data) = NULL;
@@ -1057,22 +1057,40 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
     /* Fill out extended header */
     if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.ecidlen = client->ecuid2len;
-        dlt_set_id_v2(msg.extendedheaderv2.ecid, client->ecuid2, msg.extendedheaderv2.ecidlen);
+        if (msg.extendedheaderv2.ecidlen > 0) {
+            char ecid_buf[DLT_V2_ID_SIZE];
+            dlt_set_id_v2(ecid_buf, client->ecuid2, msg.extendedheaderv2.ecidlen);
+            msg.extendedheaderv2.ecid = ecid_buf;
+        } else {
+            msg.extendedheaderv2.ecid = NULL;
+        }
     }
 
     if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
         msg.extendedheaderv2.apidlen = appidlen;
-        if (strcmp(apid, "") == 0){
-            dlt_set_id_v2(msg.extendedheaderv2.apid, DLT_CLIENT_DUMMY_APP_ID, msg.extendedheaderv2.apidlen);
+        if (msg.extendedheaderv2.apidlen > 0) {
+            char apid_buf[DLT_V2_ID_SIZE];
+            if (strcmp(apid, "") == 0) {
+                dlt_set_id_v2(apid_buf, DLT_CLIENT_DUMMY_APP_ID, msg.extendedheaderv2.apidlen);
+            } else {
+                dlt_set_id_v2(apid_buf, apid, msg.extendedheaderv2.apidlen);
+            }
+            msg.extendedheaderv2.apid = apid_buf;
         } else {
-            dlt_set_id_v2(msg.extendedheaderv2.apid, apid, msg.extendedheaderv2.apidlen);
+            msg.extendedheaderv2.apid = NULL;
         }
         msg.extendedheaderv2.apidlen = appidlen;
         msg.extendedheaderv2.ctidlen = ctxidlen;
-        if (strcmp(ctid, "") == 0){
-            dlt_set_id_v2(msg.extendedheaderv2.ctid, DLT_CLIENT_DUMMY_CON_ID, msg.extendedheaderv2.ctidlen);
+        if (msg.extendedheaderv2.ctidlen > 0) {
+            char ctid_buf[DLT_V2_ID_SIZE];
+            if (strcmp(ctid, "") == 0) {
+                dlt_set_id_v2(ctid_buf, DLT_CLIENT_DUMMY_CON_ID, msg.extendedheaderv2.ctidlen);
+            } else {
+                dlt_set_id_v2(ctid_buf, ctid, msg.extendedheaderv2.ctidlen);
+            }
+            msg.extendedheaderv2.ctid = ctid_buf;
         } else {
-            dlt_set_id_v2(msg.extendedheaderv2.ctid, ctid, msg.extendedheaderv2.ctidlen);
+            msg.extendedheaderv2.ctid = NULL;
         }
     }
 

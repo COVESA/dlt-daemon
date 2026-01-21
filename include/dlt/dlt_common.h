@@ -202,8 +202,8 @@
 #   define DLT_DAEMON_TCP_PORT 3490
 
 /* DLT Protocol version */
-#   define DLT_VERSION1 1
-#   define DLT_VERSION2 2
+#   define DLTProtocolV1 1
+#   define DLTProtocolV2 2
 
 /* Initial value for file descriptor */
 #   define DLT_FD_INIT -1
@@ -494,7 +494,7 @@ typedef char ID4[DLT_ID_SIZE];
 typedef struct
 {
     uint8_t taglen;
-    char* tagname;
+    char tagname[DLT_V2_ID_SIZE];
 } DltTag;
 
 /**
@@ -526,7 +526,7 @@ typedef struct
     uint8_t seconds[5];        /**< 40 bits for seconds since 1.1.1970 in Big Endian */
     int32_t nanoseconds;      /**< nanoseconds */
     uint8_t ecidlen;              /**< Length of ecu id */
-    char *ecid;
+    char ecid[DLT_V2_ID_SIZE]; /**< ECU id v2 */
 } DLT_PACKED DltStorageHeaderV2;
 
 /**

@@ -4582,12 +4582,12 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
     }
 
     if (daemon_local->flags.sendECUSoftwareVersion > 0){
-        if (daemon->daemon_version == DLT_VERSION2) {
+        if (daemon->daemon_version == DLTProtocolV2) {
             dlt_daemon_control_get_software_version_v2(DLT_DAEMON_SEND_TO_ALL,
                                                        daemon,
                                                        daemon_local,
                                                        daemon_local->flags.vflag);
-        }else if (daemon->daemon_version == DLT_VERSION1) {
+        }else if (daemon->daemon_version == DLTProtocolV1) {
             dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
                                                     daemon,
                                                     daemon_local,
@@ -4607,12 +4607,12 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
         memset((void *)&lt, 0, sizeof(lt));
         tzset();
         localtime_r(&t, &lt);
-        if (daemon->daemon_version == DLT_VERSION2) {
+        if (daemon->daemon_version == DLTProtocolV2) {
             dlt_daemon_control_message_timezone_v2(DLT_DAEMON_SEND_TO_ALL,
                                                    daemon,
                                                    daemon_local,
                                                    daemon_local->flags.vflag);
-        }else if (daemon->daemon_version == DLT_VERSION1) {
+        }else if (daemon->daemon_version == DLTProtocolV1) {
             dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
                                                 daemon,
                                                 daemon_local,

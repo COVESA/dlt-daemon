@@ -154,7 +154,7 @@ typedef struct
 {
     char contextID[DLT_ID_SIZE];      /**< Context ID */
     uint8_t contextID2len;            /**< Version 2 context id length */
-    char *contextID2;                 /**< Version 2 context id of variable length*/
+    char contextID2[DLT_V2_ID_SIZE];  /**< Version 2 context id fixed-size buffer */
     int8_t log_level;                 /**< Log level */
     int8_t trace_status;              /**< Trace status */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
@@ -168,7 +168,7 @@ typedef struct
 {
     char contextID[DLT_ID_SIZE];      /**< Context ID */
     uint8_t contextID2len;            /**< Version 2 context id length */
-    char *contextID2;                 /**< Version 2 context id of variable length*/
+    char contextID2[DLT_V2_ID_SIZE];  /**< Version 2 context id fixed-size buffer */
     int8_t log_level;                 /**< Log level */
     int8_t *log_level_ptr;            /**< Ptr to the log level */
     int8_t trace_status;              /**< Trace status */

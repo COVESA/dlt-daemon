@@ -220,6 +220,7 @@ void usage()
     printf("  -d            Daemonize\n");
     printf("  -h            Usage\n");
     printf("  -c filename   DLT daemon configuration file (Default: %s/dlt.conf)\n", CONFIGURATION_FILES_DIR);
+    printf("  -x version    Protocol version (1=DLT v1, 2=DLT v2)\n");
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     printf("  -t directory  Directory for local fifo and user-pipes (Default: /tmp)\n");
@@ -257,7 +258,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     int c;
     char options[255];
     memset(options, 0, sizeof options);
-    const char *const default_options = "hdc:t:p:";
+    const char *const default_options = "hdc:t:p:x:";
     strcpy(options, default_options);
 
     if (daemon_local == 0) {
@@ -292,6 +293,17 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 #endif
     while ((c = getopt(argc, argv, options)) != -1)
         switch (c) {
+                case 'x':
+                {
+                    int proto = atoi(optarg);
+                    if (proto == 1 || proto == 2) {
+                        daemon_local->flags.protocolVersion = proto;
+                    } else {
+                        fprintf(stderr, "Invalid protocol version '%s'. Use 1 or 2.\n", optarg);
+                        return -1;
+                    }
+                    break;
+                }
         case 'd':
         {
             daemon_local->flags.dflag = 1;
@@ -1455,8 +1467,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Get daemon version*/
-    daemon.daemon_version = dlt_get_daemon_version();
+    /* Set protocol version from option, fallback to env or default */
+    if (daemon_local.flags.protocolVersion == DLTProtocolV1 || daemon_local.flags.protocolVersion == DLTProtocolV2) {
+        daemon.daemon_version = daemon_local.flags.protocolVersion;
+    } else {
+        daemon.daemon_version = DLTProtocolV1;
+    }
 
     /* Configuration file option handling */
     if ((back = option_file_parser(&daemon_local)) < 0) {
@@ -1496,6 +1512,11 @@ int main(int argc, char *argv[])
     dlt_get_version(version, DLT_DAEMON_TEXTBUFSIZE);
 
     dlt_vlog(LOG_NOTICE, "Starting DLT Daemon; %s\n", version);
+    if (daemon.daemon_version == 2) {
+        dlt_vlog(LOG_INFO, "DLT protocol version: 2 (DLTv2)\n");
+    } else {
+        dlt_vlog(LOG_INFO, "DLT protocol version: 1 (DLTv1)\n");
+    }
 
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
@@ -1858,7 +1879,6 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     if (daemon_local->flags.sendMessageTime)
         daemon->timingpackets = 1;
 
-    /* Get ECU version info from a file. If it fails, use dlt_version as fallback. */
     if (dlt_daemon_local_ecu_version_init(daemon, daemon_local, daemon_local->flags.vflag) < 0) {
         daemon->ECUVersionString = malloc(DLT_DAEMON_TEXTBUFSIZE);
 
@@ -2721,15 +2741,33 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         /* Fill out extended header */
         if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
             msg.extendedheaderv2.ecidlen = DLT_DAEMON_ECU_ID_LEN;
-            dlt_set_id_v2(msg.extendedheaderv2.ecid, DLT_DAEMON_ECU_ID, DLT_DAEMON_ECU_ID_LEN);
+            if (msg.extendedheaderv2.ecidlen > 0) {
+                char ecid_buf[DLT_V2_ID_SIZE];
+                dlt_set_id_v2(ecid_buf, DLT_DAEMON_ECU_ID, msg.extendedheaderv2.ecidlen);
+                msg.extendedheaderv2.ecid = ecid_buf;
+            } else {
+                msg.extendedheaderv2.ecid = NULL;
+            }
         }
 
         if (DLT_IS_HTYP2_WACID(msg.baseheaderv2->htyp2)) {
             msg.extendedheaderv2.apidlen = (uint8_t)strlen(app_id);
-            dlt_set_id_v2(msg.extendedheaderv2.apid, app_id, (uint8_t)strlen(app_id));
+            if (msg.extendedheaderv2.apidlen > 0) {
+                char apid_buf[DLT_V2_ID_SIZE];
+                dlt_set_id_v2(apid_buf, app_id, msg.extendedheaderv2.apidlen);
+                msg.extendedheaderv2.apid = apid_buf;
+            } else {
+                msg.extendedheaderv2.apid = NULL;
+            }
 
             msg.extendedheaderv2.ctidlen = (uint8_t)strlen(ctx_id);
-            dlt_set_id_v2(msg.extendedheaderv2.ctid, ctx_id, (uint8_t)strlen(ctx_id));
+            if (msg.extendedheaderv2.ctidlen > 0) {
+                char ctid_buf[DLT_V2_ID_SIZE];
+                dlt_set_id_v2(ctid_buf, ctx_id, msg.extendedheaderv2.ctidlen);
+                msg.extendedheaderv2.ctid = ctid_buf;
+            } else {
+                msg.extendedheaderv2.ctid = NULL;
+            }
         }
 
         if (DLT_IS_HTYP2_WSID(msg.baseheaderv2->htyp2)) {
@@ -3200,7 +3238,6 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
 {
     int bytes_to_be_removed = 0;
     int must_close_socket = -1;
-    uint8_t dlt_version;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -3220,10 +3257,8 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                                 verbose);
         return -1;
     }
-    uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
-    dlt_version = (firstByteWithVersion >> 5) & (0x07);
 
-    if(dlt_version == DLT_VERSION2) {
+    if(daemon->daemon_version == DLTProtocolV2) {
         /* Process all received messages */
         while (dlt_message_read_v2(&(daemon_local->msgv2),
                                    (uint8_t *)receiver->buf,
@@ -3254,7 +3289,7 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
                 return -1;
             }
         } /* while */
-    } else if (dlt_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         /* Process all received messages */
         while (dlt_message_read(&(daemon_local->msg),
                                 (uint8_t *)receiver->buf,
@@ -3514,10 +3549,8 @@ int dlt_daemon_process_control_messages(
                                 verbose);
         return -1;
     }
-    uint8_t firstByteWithVersion = (uint8_t)receiver->buf[0];
-    int8_t dlt_version = (firstByteWithVersion >> 5) & (0x07);
 
-    if(dlt_version == DLT_VERSION2) {
+    if(daemon->daemon_version == DLTProtocolV2) {
         /* Process all received messages */
         while (dlt_message_read_v2(&(daemon_local->msgv2),
                                    (uint8_t *)receiver->buf,
@@ -3550,7 +3583,7 @@ int dlt_daemon_process_control_messages(
             }
         } /* while */
     }
-    else if (dlt_version == DLT_VERSION1) {
+    else if (daemon->daemon_version == DLTProtocolV1) {
         /* Process all received messages */
         while (dlt_message_read(
                 &(daemon_local->msg),
@@ -3595,7 +3628,7 @@ int dlt_daemon_process_control_messages(
             }
         } /* while */
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
@@ -3683,9 +3716,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t)receiver->buf[3];
 
-    if (dlt_version == DLT_VERSION2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         /* Count up number of received bytes from FIFO */
         if (receiver->bytesRcvd > receiver->lastBytesRcvd)
@@ -3749,7 +3781,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
                     "messages\n");
             return -1;
         }
-    } else if (dlt_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         /* Count up number of received bytes from FIFO */
         if (receiver->bytesRcvd > receiver->lastBytesRcvd)
@@ -3815,7 +3847,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             return -1;
         }
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
@@ -3921,9 +3953,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t)rec->buf[3];
-
-    if(dlt_version == DLT_VERSION2) {
+    if(daemon->daemon_version == DLTProtocolV2) {
         uint32_t len = sizeof(DltUserControlMsgRegisterApplicationV2);
         DltUserControlMsgRegisterApplicationV2 usercontext;
         memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterApplicationV2));
@@ -3936,7 +3966,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
         usercontextSize = (int) (sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t));
 
-        buffer = (uint8_t*)malloc((size_t)usercontextSize);
+        buffer = (uint8_t*)calloc((size_t)usercontextSize, 1);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
@@ -3966,12 +3996,10 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         offset = 0;
         memcpy(&usercontext.apidlen, buffer, 1);
         offset += 1;
-        usercontext.apid = (char *)malloc(usercontext.apidlen);
-        if (usercontext.apid == NULL) {
-            dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
-            return -1;
-        }
-        memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
+        char apid_buf[DLT_V2_ID_SIZE + 1] = {0};
+        memcpy(apid_buf, (buffer + offset), usercontext.apidlen);
+        apid_buf[usercontext.apidlen] = '\0';
+        usercontext.apid = apid_buf;
         offset += usercontext.apidlen;
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
         offset += (int)sizeof(pid_t);
@@ -3992,10 +4020,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             dlt_log(LOG_ERR, "Unable to get application description\n");
             /* in case description was not readable, set dummy description */
             memcpy(description, "Unknown", sizeof("Unknown"));
-
-            /* unknown len of original description, set to 0 to not remove in next
-            * step. Because message buffer is re-adjusted the corrupted description
-            * is ignored. */
+            /* unknown len of original description, set to 0 to not remove in next step. Because message buffer is re-adjusted the corrupted description is ignored. */
             len = 0;
         }
 
@@ -4063,7 +4088,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                     application->apid, application->pid);
 #endif
         free(buffer);
-    } else if(dlt_version == DLT_VERSION1) {
+    } else if(daemon->daemon_version == DLTProtocolV1) {
         DltUserControlMsgRegisterApplication userapp;
         uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
         memset(&userapp, 0, sizeof(DltUserControlMsgRegisterApplication));
@@ -4163,7 +4188,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                         application->apid, application->pid);
 #endif
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
     return 0;
@@ -4190,11 +4215,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
-
-    if (dlt_version == DLT_VERSION2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         DltUserControlMsgRegisterContextV2 usercontext;
-        DltServiceGetLogInfoRequestV2 *req = NULL;
+        /* local request pointer removed to avoid overlaying small buffers */
         memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterContextV2));
         usercontext.apid = NULL;
         usercontext.ctid = NULL;
@@ -4415,34 +4438,37 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 return -1;
             }
 
-            req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-            req->options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
-            req->apidlen = usercontext.apidlen;
-            req->ctidlen = usercontext.ctidlen;
-            req->apid = NULL;
-            req->ctid = NULL;
+            /* prepare local request values (do NOT overlay struct onto small buffer) */
+            DltServiceGetLogInfoRequestV2 req_local;
             char apid_buf[DLT_V2_ID_SIZE];
-            dlt_set_id_v2(apid_buf, usercontext.apid, usercontext.apidlen);
-            req->apid = apid_buf;
             char ctid_buf[DLT_V2_ID_SIZE];
-            dlt_set_id_v2(ctid_buf, usercontext.ctid, usercontext.ctidlen);
-            req->ctid = ctid_buf;
-            dlt_set_id(req->com, "remo");
+            char com_buf[DLT_ID_SIZE];
+
+            req_local.service_id = DLT_SERVICE_ID_GET_LOG_INFO;
+            req_local.options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
+            req_local.apidlen = usercontext.apidlen;
+            req_local.ctidlen = usercontext.ctidlen;
+            /* fill id buffers */
+            dlt_set_id_v2(apid_buf, usercontext.apid, req_local.apidlen);
+            dlt_set_id_v2(ctid_buf, usercontext.ctid, req_local.ctidlen);
+            dlt_set_id(com_buf, "remo");
 
             offset = 0;
-            memcpy(msg.databuffer + offset, &(req->service_id), sizeof(uint32_t));
+            memcpy(msg.databuffer + offset, &(req_local.service_id), sizeof(uint32_t));
             offset += (int)sizeof(uint32_t);
-            memcpy(msg.databuffer + offset, &(req->options), sizeof(uint8_t));
+            memcpy(msg.databuffer + offset, &(req_local.options), sizeof(uint8_t));
             offset += (int)sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, &(req->apidlen), sizeof(uint8_t));
+            memcpy(msg.databuffer + offset, &(req_local.apidlen), sizeof(uint8_t));
             offset += (int)sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, req->apid, usercontext.apidlen);
-            offset += usercontext.apidlen;
-            memcpy(msg.databuffer + offset, &(req->ctidlen), sizeof(uint8_t));
+            if (req_local.apidlen > 0)
+                memcpy(msg.databuffer + offset, apid_buf, req_local.apidlen);
+            offset += req_local.apidlen;
+            memcpy(msg.databuffer + offset, &(req_local.ctidlen), sizeof(uint8_t));
             offset += (int)sizeof(uint8_t);
-            memcpy(msg.databuffer + offset, req->ctid, usercontext.ctidlen);
-            offset += usercontext.ctidlen;
-            memcpy(msg.databuffer + offset, req->com, DLT_ID_SIZE);
+            if (req_local.ctidlen > 0)
+                memcpy(msg.databuffer + offset, ctid_buf, req_local.ctidlen);
+            offset += req_local.ctidlen;
+            memcpy(msg.databuffer + offset, com_buf, DLT_ID_SIZE);
             offset = 0;
 
             dlt_daemon_control_get_log_info_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, &msg, verbose);
@@ -4461,7 +4487,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 }
             }
         }
-    } else if (dlt_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         DltMessage msg;
         DltServiceGetLogInfoRequest *req = NULL;
         memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
@@ -4647,7 +4673,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
         }
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
@@ -4672,8 +4698,8 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                  __func__);
         return -1;
     }
-    uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
-    if (dlt_version == DLT_VERSION2) {
+
+    if (daemon->daemon_version == DLTProtocolV2) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterApplicationV2);
         DltUserControlMsgUnregisterApplicationV2 userapp;
         int userappSize;
@@ -4764,7 +4790,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                 }
             }
         }
-    } else if (dlt_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterApplication);
         DltUserControlMsgUnregisterApplication userapp;
         if (dlt_receiver_check_and_get(rec,
@@ -4840,7 +4866,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
             }
         }
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
@@ -4865,9 +4891,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
         return -1;
     }
 
-    uint8_t dlt_version = (uint8_t)rec->buf[3]; // TBD: write function to get dlt version
-
-    if (dlt_version == DLT_VERSION2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterContextV2);
         DltUserControlMsgUnregisterContextV2 usercontext;
         int usercontextSize;
@@ -4957,7 +4981,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                         "remo",
                                                         verbose);
     }
-    else if (dlt_version == DLT_VERSION1) {
+    else if (daemon->daemon_version == DLTProtocolV1) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
         if (dlt_receiver_check_and_get(rec,
                                        &userctxt,
@@ -5014,7 +5038,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
                                                         "remo",
                                                         verbose);
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
     return 0;
@@ -5029,8 +5053,6 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     int size = 0;
     bool keep_message = true;
     PRINT_FUNCTION_VERBOSE(verbose);
-
-    uint8_t dlt_version = (uint8_t)rec->buf[3];
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid function parameters.\n", __func__);
@@ -5101,7 +5123,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     }
 
 #else /* DLT_SHM_ENABLE */
-    if (dlt_version == DLT_VERSION2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         ret = dlt_message_read_v2(&(daemon_local->msgv2),
                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
@@ -5157,7 +5179,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
-    } else if (dlt_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         ret = dlt_message_read(&(daemon_local->msg),
                             (unsigned char *)rec->buf + sizeof(DltUserHeader),
                             (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
@@ -5213,7 +5235,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
     } else {
-        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", dlt_version, __func__);
+        dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 #endif /* DLT_SHM_ENABLE */
@@ -5572,22 +5594,6 @@ int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *d
     return DLT_DAEMON_ERROR_OK;
 }
 
-int dlt_get_daemon_version(void)
-{
-    int version = 0;
-    char *daemon_version_str = getenv("DLT_DAEMON_VERSION");
-
-    if (daemon_version_str != NULL){
-        if (sscanf(daemon_version_str, "%d", &version) == 1){
-            return version;
-        }else{
-            return DLT_DAEMON_VERSION;
-        }
-    }else{
-        return DLT_DAEMON_VERSION;
-    }
-}
-
 #ifdef __QNX__
 static void *timer_thread(void *data)
 {
@@ -5744,9 +5750,9 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
         /* send new log state to all applications */
         daemon->connectionState = 0;
 
-        if (daemon->daemon_version == DLT_VERSION2) {
+        if (daemon->daemon_version == DLTProtocolV2) {
             dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
-        } else if (daemon->daemon_version == DLT_VERSION1) {
+        } else if (daemon->daemon_version == DLTProtocolV1) {
             dlt_daemon_user_send_all_log_state(daemon, verbose);
         } else {
             dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
@@ -5760,14 +5766,14 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
             dlt_daemon_change_state(daemon, DLT_DAEMON_STATE_BUFFER);
     }
 
-    if (daemon->daemon_version == DLT_VERSION2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         dlt_daemon_control_message_connection_info_v2(DLT_DAEMON_SEND_TO_ALL,
                                                       daemon,
                                                       daemon_local,
                                                       DLT_CONNECTION_STATUS_DISCONNECTED,
                                                       "",
                                                       verbose);
-    } else if (daemon->daemon_version == DLT_VERSION1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
                                                    daemon,
                                                    daemon_local,
