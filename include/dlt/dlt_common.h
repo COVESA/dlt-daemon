@@ -1371,6 +1371,14 @@ int dlt_receiver_check_and_get(DltReceiver *receiver,
  */
 DltReturnValue dlt_set_storageheader(DltStorageHeader *storageheader, const char *ecu);
 /**
+ * Fill the storage header of a DLT message with either the real-time clock or the monotonic clock.
+ * @param storageheader Pointer to the storage header of a DLT message.
+ * @param ecu Name of the ECU to be set in the storage header.
+ * @param useUptime If true, the monotonic clock is used as the timestamp; if false, the real-time clock is used.
+ * @return negative value if there was an error
+ */
+DltReturnValue dlt_set_storageheader_with_timestamp_option(DltStorageHeader *storageheader, const char *ecu, bool useUptime);
+/**
  * Check if a storage header contains its marker
  * @param storageheader pointer to storage header of a dlt message
  * @return 0 no, 1 yes, negative value if there was an error

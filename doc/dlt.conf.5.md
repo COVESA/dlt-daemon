@@ -246,6 +246,12 @@ Filename timestamp based or index based. 1 = timestamp based, 0 = index based
 
     Default: Function is disabled
 
+## OfflineTraceUseUptimeOnly
+
+Use uptime in DLT storage header and filename instead of real-time
+
+    Default: Function is disabled
+
 # LOCAL CONSOLE OUTPUT OPTIONS
 
 ## PrintASCII

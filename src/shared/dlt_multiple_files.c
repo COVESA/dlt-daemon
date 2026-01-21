@@ -166,9 +166,18 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
     if (files_buffer->filenameTimestampBased) {
         /* timestamp format: "yyyymmdd_hhmmss" */
         char timestamp[16];
-        t = time(NULL);
-        tzset();
-        localtime_r(&t, &tmp);
+        if (files_buffer->fileNameUptimeBased) {
+            struct timespec ts;
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+
+            t = ts.tv_sec;
+            gmtime_r(&t, &tmp);
+        }
+        else {
+            t = time(NULL);
+            tzset();
+            localtime_r(&t, &tmp);
+        }
 
         strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tmp);
 
@@ -418,6 +427,19 @@ DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
                                           const char *filename_base,
                                           const char *filename_ext)
 {
+        return multiple_files_buffer_init_with_uptime_option(files_buffer, directory, file_size, max_size, filename_timestamp_based, append, filename_base, filename_ext, false);
+}
+
+DltReturnValue multiple_files_buffer_init_with_uptime_option(MultipleFilesRingBuffer *files_buffer,
+                                          const char *directory,
+                                          const int file_size,
+                                          const int max_size,
+                                          const bool filename_timestamp_based,
+                                          const bool append,
+                                          const char *filename_base,
+                                          const char *filename_ext,
+                                          const bool use_uptime_in_filename)
+{
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
         return DLT_RETURN_ERROR;
@@ -433,6 +455,7 @@ DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
     files_buffer->filenameBase[NAME_MAX] = 0;
     strncpy(files_buffer->filenameExt, filename_ext, NAME_MAX);
     files_buffer->filenameExt[NAME_MAX] = 0;
+    files_buffer->fileNameUptimeBased = use_uptime_in_filename;
 
     if (DLT_RETURN_ERROR == multiple_files_buffer_check_size(files_buffer)) return DLT_RETURN_ERROR;
 
